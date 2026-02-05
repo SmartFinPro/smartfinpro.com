@@ -1,0 +1,80 @@
+{
+  "site": {
+    "name": "SmartFinPro",
+    "tagline": "Financial Intelligence for Modern Professionals",
+    "description": "Discover AI-powered tools, cybersecurity solutions, and financial products trusted by over 50,000 professionals."
+  },
+  "nav": {
+    "aiTools": "AI Tools",
+    "cybersecurity": "Cybersecurity",
+    "personalFinance": "Personal Finance",
+    "resources": "Resources",
+    "about": "About",
+    "contact": "Contact"
+  },
+  "hero": {
+    "title": "Financial Intelligence. Automated.",
+    "subtitle": "Discover AI-powered tools, cybersecurity solutions, and trading platforms trusted by 50,000+ professionals.",
+    "cta": {
+      "primary": "Explore Tools",
+      "secondary": "Start Free Trial"
+    }
+  },
+  "trust": {
+    "featuredIn": "As seen in",
+    "activeUsers": "active users",
+    "protectedValue": "protected for clients"
+  },
+  "categories": {
+    "ai-tools": {
+      "name": "AI Tools",
+      "description": "AI-powered software for finance professionals"
+    },
+    "cybersecurity": {
+      "name": "Cybersecurity",
+      "description": "Security solutions for financial services"
+    },
+    "personal-finance": {
+      "name": "Personal Finance",
+      "description": "Loans, credit and personal finance solutions"
+    }
+  },
+  "cta": {
+    "tryFree": "Try Free",
+    "learnMore": "Learn More",
+    "getStarted": "Get Started",
+    "compareAlternatives": "Compare Alternatives",
+    "downloadFree": "Download Free"
+  },
+  "review": {
+    "pros": "Pros",
+    "cons": "Cons",
+    "bestFor": "Best For",
+    "pricing": "Pricing",
+    "rating": "Rating",
+    "verdict": "Our Verdict",
+    "comparison": "Comparison",
+    "faq": "Frequently Asked Questions"
+  },
+  "newsletter": {
+    "title": "Stay Ahead of the Curve",
+    "description": "Get weekly insights on AI tools, cybersecurity trends, and financial strategies.",
+    "placeholder": "Enter your email",
+    "button": "Subscribe",
+    "privacy": "We respect your privacy. Unsubscribe anytime."
+  },
+  "footer": {
+    "about": "SmartFinPro helps finance professionals make smarter decisions with AI-powered tools and trusted reviews.",
+    "legal": {
+      "terms": "Terms of Service",
+      "privacy": "Privacy Policy",
+      "affiliate": "Affiliate Disclosure",
+      "disclaimer": "Disclaimer"
+    },
+    "copyright": "© 2026 SmartFinPro. All rights reserved."
+  },
+  "disclaimers": {
+    "affiliate": "Disclosure: SmartFinPro may earn a commission when you click links and make a purchase. This does not affect our editorial independence.",
+    "investment": "Investment Disclaimer: The information provided is for educational purposes only and should not be considered financial advice."
+  }
+}

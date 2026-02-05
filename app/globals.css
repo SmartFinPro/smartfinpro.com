@@ -1,26 +1,693 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 :root {
+  --radius: 0.625rem;
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #0a0a0a;
+  --card: #ffffff;
+  --card-foreground: #0a0a0a;
+  --popover: #ffffff;
+  --popover-foreground: #0a0a0a;
+  --primary: #171717;
+  --primary-foreground: #fafafa;
+  --secondary: #f5f5f5;
+  --secondary-foreground: #171717;
+  --muted: #f5f5f5;
+  --muted-foreground: #737373;
+  --accent: #f5f5f5;
+  --accent-foreground: #171717;
+  --destructive: #ef4444;
+  --destructive-foreground: #fafafa;
+  --border: #e5e5e5;
+  --input: #e5e5e5;
+  --ring: #a3a3a3;
+  --chart-1: #f97316;
+  --chart-2: #14b8a6;
+  --chart-3: #475569;
+  --chart-4: #eab308;
+  --chart-5: #f59e0b;
+  --sidebar: #fafafa;
+  --sidebar-foreground: #0a0a0a;
+  --sidebar-primary: #171717;
+  --sidebar-primary-foreground: #fafafa;
+  --sidebar-accent: #f5f5f5;
+  --sidebar-accent-foreground: #171717;
+  --sidebar-border: #e5e5e5;
+  --sidebar-ring: #a3a3a3;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+.dark {
+  --background: #0a0a0a;
+  --foreground: #fafafa;
+  --card: #171717;
+  --card-foreground: #fafafa;
+  --popover: #171717;
+  --popover-foreground: #fafafa;
+  --primary: #e5e5e5;
+  --primary-foreground: #171717;
+  --secondary: #262626;
+  --secondary-foreground: #fafafa;
+  --muted: #262626;
+  --muted-foreground: #a3a3a3;
+  --accent: #262626;
+  --accent-foreground: #fafafa;
+  --destructive: #dc2626;
+  --destructive-foreground: #fafafa;
+  --border: rgba(255, 255, 255, 0.1);
+  --input: rgba(255, 255, 255, 0.15);
+  --ring: #737373;
+  --chart-1: #3b82f6;
+  --chart-2: #22c55e;
+  --chart-3: #f59e0b;
+  --chart-4: #a855f7;
+  --chart-5: #ef4444;
+  --sidebar: #171717;
+  --sidebar-foreground: #fafafa;
+  --sidebar-primary: #3b82f6;
+  --sidebar-primary-foreground: #fafafa;
+  --sidebar-accent: #262626;
+  --sidebar-accent-foreground: #fafafa;
+  --sidebar-border: rgba(255, 255, 255, 0.1);
+  --sidebar-ring: #737373;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
   }
 }
 
+/* ============================================================
+   CROSS-BROWSER COMPATIBILITY FIXES
+   Safari, Firefox, Chrome, Edge
+   ============================================================ */
+
+/* Fix Safari mobile 100vh issue - dvh with fallback */
+@supports (min-height: 100dvh) {
+  .min-h-screen {
+    min-height: 100dvh !important;
+  }
+}
+
+/* Safari-specific fixes */
+@supports (-webkit-touch-callout: none) {
+  /* Fix Safari flexbox rendering */
+  .flex {
+    -webkit-box-orient: horizontal;
+    -webkit-box-direction: normal;
+  }
+  .flex-col {
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: normal;
+  }
+}
+
+/* Ensure all backdrop-filter uses are prefixed for Safari */
+@layer utilities {
+  .backdrop-blur,
+  .backdrop-blur-sm,
+  .backdrop-blur-md,
+  .backdrop-blur-lg,
+  .backdrop-blur-xl,
+  .backdrop-blur-2xl,
+  .backdrop-blur-3xl {
+    -webkit-backdrop-filter: var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);
+  }
+
+  /* Explicit 12px blur for Safari — used on glass containers */
+  .backdrop-blur-xl {
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+  }
+}
+
+/* Fix Safari filter rendering on animated elements */
+.glow-emerald,
+.glow-blue,
+.glow-purple {
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+/* Fix Safari rendering of position sticky */
+.sticky {
+  position: -webkit-sticky;
+  position: sticky;
+}
+
+/* Hardware-accelerated sticky inside glass containers (prevents Safari flicker) */
+.isolate .sticky {
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+/* Fix Safari text rendering */
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Fix Safari overflow with border-radius — radial-gradient mask forces
+   WebKit to respect overflow:hidden + border-radius on transformed elements */
+.overflow-hidden {
+  -webkit-mask-image: -webkit-radial-gradient(white, black);
+  mask-image: radial-gradient(white, black);
+}
+
+/* Glass containers with border-radius need isolation for Safari compositing */
+.isolate.overflow-hidden {
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+}
+
+/* Fix Safari gradient text rendering */
+.gradient-text {
+  -webkit-transform: translateZ(0);
+}
+
+/* Safari renders border-opacity ~15-20% dimmer than Chrome.
+   Compensate with a subtle inset shadow on glass containers. */
+@supports (-webkit-touch-callout: none) {
+  .isolate.overflow-hidden {
+    box-shadow:
+      0 8px 32px rgba(0, 0, 0, 0.1),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  }
+}
+
+/* Fix Safari radial-gradient dot pattern rendering.
+   Force GPU layer so sub-pixel dots composite correctly in WebKit. */
+@supports (-webkit-touch-callout: none) {
+  [style*="radial-gradient"][style*="background-size"] {
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+  }
+}
+
+/* Fix Safari animation performance */
+.aurora-bg,
+.aurora-bg::before,
+.aurora-bg::after {
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  will-change: transform, opacity;
+}
+
+/* Fix Safari btn-shimmer pseudo-element rendering */
+.btn-shimmer::before {
+  -webkit-transform: translateX(-100%);
+  transform: translateX(-100%);
+}
+
+/* ============================================================
+   HIGH-END FINTECH DESIGN SYSTEM
+   Stripe/Mercury Level Visual Effects
+   ============================================================ */
+
+/* Aurora Borealis Animated Background */
+@keyframes aurora {
+  0%, 100% {
+    opacity: 0.5;
+    transform: translateY(0) scale(1);
+  }
+  25% {
+    opacity: 0.8;
+    transform: translateY(-20px) scale(1.05);
+  }
+  50% {
+    opacity: 0.6;
+    transform: translateY(-10px) scale(1.02);
+  }
+  75% {
+    opacity: 0.9;
+    transform: translateY(-30px) scale(1.08);
+  }
+}
+
+@keyframes aurora-secondary {
+  0%, 100% {
+    opacity: 0.4;
+    transform: translateX(0) scale(1);
+  }
+  33% {
+    opacity: 0.7;
+    transform: translateX(30px) scale(1.1);
+  }
+  66% {
+    opacity: 0.5;
+    transform: translateX(-20px) scale(1.05);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+/* Shimmer Button Effect */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.btn-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-shimmer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.3),
+    transparent
+  );
+  animation: shimmer 3s infinite;
+}
+
+/* Glow Effects */
+@-webkit-keyframes glow-pulse {
+  0%, 100% {
+    opacity: 0.5;
+    -webkit-filter: blur(40px);
+    filter: blur(40px);
+  }
+  50% {
+    opacity: 0.8;
+    -webkit-filter: blur(60px);
+    filter: blur(60px);
+  }
+}
+@keyframes glow-pulse {
+  0%, 100% {
+    opacity: 0.5;
+    -webkit-filter: blur(40px);
+    filter: blur(40px);
+  }
+  50% {
+    opacity: 0.8;
+    -webkit-filter: blur(60px);
+    filter: blur(60px);
+  }
+}
+
+.glow-emerald {
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.4) 0%, transparent 70%);
+  animation: glow-pulse 4s ease-in-out infinite;
+}
+
+.glow-blue {
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.4) 0%, transparent 70%);
+  animation: glow-pulse 4s ease-in-out infinite 1s;
+}
+
+.glow-purple {
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.3) 0%, transparent 70%);
+  animation: glow-pulse 5s ease-in-out infinite 0.5s;
+}
+
+/* Aurora Container */
+.aurora-bg {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.aurora-bg::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: 20%;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.3) 0%, transparent 60%);
+  -webkit-animation: aurora 8s ease-in-out infinite;
+  animation: aurora 8s ease-in-out infinite;
+  -webkit-filter: blur(80px);
+  filter: blur(80px);
+}
+
+.aurora-bg::after {
+  content: '';
+  position: absolute;
+  top: -30%;
+  right: 10%;
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.25) 0%, transparent 60%);
+  -webkit-animation: aurora-secondary 10s ease-in-out infinite;
+  animation: aurora-secondary 10s ease-in-out infinite;
+  -webkit-filter: blur(80px);
+  filter: blur(80px);
+}
+
+/* Glassmorphism Cards */
+.glass-card {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-card:hover {
+  border-color: rgba(16, 185, 129, 0.4);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    0 0 40px rgba(16, 185, 129, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transform: translateY(-4px);
+}
+
+/* Light mode glass cards */
+.glass-card-light {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-card-light:hover {
+  border-color: rgba(16, 185, 129, 0.3);
+  box-shadow:
+    0 8px 40px rgba(16, 185, 129, 0.12),
+    0 4px 24px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  transform: translateY(-4px);
+}
+
+/* Icon Glow Effect */
+.icon-glow {
+  position: relative;
+}
+
+.icon-glow::before {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  background: inherit;
+  -webkit-filter: blur(16px);
+  filter: blur(16px);
+  opacity: 0.5;
+  border-radius: inherit;
+  z-index: -1;
+}
+
+/* Premium Badge Style */
+.badge-premium {
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(30, 41, 59, 0.9) 100%);
+  border: 1px solid rgba(51, 65, 85, 0.5);
+  color: #e2e8f0;
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* Gradient Text */
+.gradient-text {
+  background: linear-gradient(135deg, #10b981 0%, #3b82f6 50%, #8b5cf6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Letter Spacing for Kicker Lines */
+.kicker {
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* Stat Card Glow */
+.stat-glow {
+  position: relative;
+}
+
+.stat-glow::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%);
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.stat-glow:hover::after {
+  opacity: 1;
+}
+
+/* Smooth scroll */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Selection color */
+::selection {
+  background: rgba(16, 185, 129, 0.3);
+  color: inherit;
+}
+
+/* ============================================================
+   DASHBOARD DESIGN SYSTEM - Canua-inspired Clean Fintech
+   ============================================================ */
+
+/* Dashboard color palette */
+.dashboard {
+  --dash-bg: #f8fafc;
+  --dash-sidebar: #ffffff;
+  --dash-card: #ffffff;
+  --dash-border: #e2e8f0;
+  --dash-text: #1e293b;
+  --dash-text-muted: #64748b;
+  --dash-primary: #10b981;
+  --dash-primary-light: #d1fae5;
+  --dash-secondary: #0f172a;
+  --dash-accent-blue: #1e3a5a;
+  --dash-accent-mint: #6ee7b7;
+  --dash-success: #10b981;
+  --dash-danger: #ef4444;
+}
+
+/* Dashboard Layout */
+.dashboard-layout {
+  background: var(--dash-bg);
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* Dashboard Sidebar */
+.dashboard-sidebar {
+  background: var(--dash-sidebar);
+  border-right: 1px solid var(--dash-border);
+}
+
+.dashboard-sidebar .nav-item {
+  color: var(--dash-text-muted);
+  border-radius: 0.5rem;
+  padding: 0.625rem 0.875rem;
+  transition: all 0.2s ease;
+}
+
+.dashboard-sidebar .nav-item:hover {
+  background: var(--dash-primary-light);
+  color: var(--dash-primary);
+}
+
+.dashboard-sidebar .nav-item.active {
+  background: var(--dash-primary-light);
+  color: var(--dash-primary);
+  border-left: 3px solid var(--dash-primary);
+  margin-left: -3px;
+}
+
+.dashboard-sidebar .nav-item .icon {
+  color: currentColor;
+}
+
+/* Dashboard Cards */
+.dashboard-card {
+  background: var(--dash-card);
+  border: 1px solid var(--dash-border);
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: box-shadow 0.2s ease;
+}
+
+.dashboard-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+/* Dashboard Stat Cards */
+.dashboard-stat {
+  position: relative;
+}
+
+.dashboard-stat .stat-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.625rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dashboard-stat .stat-icon.green {
+  background: var(--dash-primary-light);
+  color: var(--dash-primary);
+}
+
+.dashboard-stat .stat-icon.blue {
+  background: #dbeafe;
+  color: #2563eb;
+}
+
+.dashboard-stat .stat-icon.purple {
+  background: #ede9fe;
+  color: #7c3aed;
+}
+
+.dashboard-stat .stat-icon.amber {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.dashboard-stat .stat-value {
+  font-size: 1.875rem;
+  font-weight: 600;
+  color: var(--dash-text);
+  line-height: 1.2;
+}
+
+.dashboard-stat .stat-label {
+  font-size: 0.875rem;
+  color: var(--dash-text-muted);
+}
+
+.dashboard-stat .stat-change {
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.dashboard-stat .stat-change.positive {
+  color: var(--dash-success);
+}
+
+.dashboard-stat .stat-change.negative {
+  color: var(--dash-danger);
+}
+
+/* Dashboard Header */
+.dashboard-header {
+  background: var(--dash-card);
+  border-bottom: 1px solid var(--dash-border);
+}
+
+/* Dashboard Button Primary */
+.dashboard-btn-primary {
+  background: var(--dash-primary);
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.dashboard-btn-primary:hover {
+  background: #059669;
+}
+
+/* Dashboard Charts - Donut style */
+.dashboard-donut {
+  --donut-navy: #1e3a5a;
+  --donut-teal: #14b8a6;
+  --donut-mint: #6ee7b7;
+  --donut-light-mint: #a7f3d0;
+}
+
+/* Dashboard Table */
+.dashboard-table {
+  width: 100%;
+}
+
+.dashboard-table th {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--dash-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--dash-border);
+}
+
+.dashboard-table td {
+  padding: 0.875rem 1rem;
+  border-bottom: 1px solid var(--dash-border);
+  color: var(--dash-text);
+}
+
+.dashboard-table tr:last-child td {
+  border-bottom: none;
+}
+
+/* Dashboard Progress Bar */
+.dashboard-progress {
+  height: 0.5rem;
+  background: #e2e8f0;
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.dashboard-progress .bar {
+  height: 100%;
+  border-radius: 9999px;
+  transition: width 0.3s ease;
+}
+
+.dashboard-progress .bar.green {
+  background: linear-gradient(90deg, var(--dash-primary), var(--dash-accent-mint));
+}
+
+.dashboard-progress .bar.blue {
+  background: linear-gradient(90deg, var(--dash-accent-blue), #3b82f6);
 }
