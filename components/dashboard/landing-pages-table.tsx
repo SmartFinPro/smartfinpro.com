@@ -92,7 +92,7 @@ export function LandingPagesTable({ data }: LandingPagesTableProps) {
               </td>
               <td className="py-3 px-4 text-right">
                 <span className="text-sm font-semibold text-slate-700">
-                  {page.sessions.toLocaleString()}
+                  {page.sessions.toLocaleString('en-US')}
                 </span>
               </td>
               <td className="py-3 px-4 text-right">

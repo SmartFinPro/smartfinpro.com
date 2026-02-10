@@ -36,7 +36,7 @@ export function TrustBadges({
           ))}
         </div>
         <span className="text-sm text-muted-foreground">
-          {rating}/5 ({reviewCount.toLocaleString()} reviews)
+          {rating}/5 ({reviewCount.toLocaleString('en-US')} reviews)
         </span>
       </div>
 
@@ -44,7 +44,7 @@ export function TrustBadges({
       {userCount && (
         <Badge variant="outline" className="gap-1">
           <Users className="w-4 h-4" />
-          {userCount.toLocaleString()}+ active users
+          {userCount.toLocaleString('en-US')}+ active users
         </Badge>
       )}
 

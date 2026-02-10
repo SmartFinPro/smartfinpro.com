@@ -194,6 +194,41 @@ export async function getRelatedContent(
 }
 
 /**
+ * Related category mapping for cross-cluster linking
+ */
+const relatedCategories: Record<Category, Category[]> = {
+  'ai-tools': ['trading', 'business-banking'],
+  trading: ['forex', 'ai-tools'],
+  forex: ['trading', 'ai-tools'],
+  cybersecurity: ['ai-tools', 'business-banking'],
+  'personal-finance': ['business-banking', 'ai-tools'],
+  'business-banking': ['personal-finance', 'ai-tools'],
+};
+
+/**
+ * Get content from related categories for cross-cluster linking
+ */
+export async function getCrossCategoryContent(
+  market: Market,
+  currentCategory: Category,
+  limit: number = 2
+): Promise<ContentItem[]> {
+  const related = relatedCategories[currentCategory] || [];
+  const items: ContentItem[] = [];
+
+  for (const cat of related) {
+    if (items.length >= limit) break;
+    const catContent = await getContentByMarketAndCategory(market, cat);
+    const reviews = catContent.filter((item) => item.slug !== 'index' && item.meta.rating);
+    if (reviews.length > 0) {
+      items.push(reviews[0]);
+    }
+  }
+
+  return items.slice(0, limit);
+}
+
+/**
  * Get all content items across all markets and categories
  */
 export async function getAllContent(): Promise<ContentItem[]> {

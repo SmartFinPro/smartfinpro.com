@@ -25,83 +25,81 @@ export function ExpertBox({
   variant = 'default',
 }: ExpertBoxProps) {
   return (
-    <Card
-      className={`my-8 ${
+    <div
+      className={`glass-card my-10 p-8 rounded-2xl ${
         variant === 'highlight'
-          ? 'border-primary bg-primary/5'
+          ? 'border-emerald-500/40 shadow-lg shadow-emerald-500/10'
           : variant === 'minimal'
-          ? 'border-muted'
-          : 'border-2'
+          ? 'border-slate-700/50'
+          : ''
       }`}
     >
-      <CardContent className="p-6">
-        <div className="flex items-start gap-4">
-          {/* Expert Avatar */}
-          <div className="shrink-0">
-            {image ? (
-              <Image
-                src={image}
-                alt={name}
-                width={64}
-                height={64}
-                className="rounded-full border-2 border-primary"
-              />
-            ) : (
-              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-                <Award className="h-8 w-8 text-primary" />
-              </div>
-            )}
-          </div>
-
-          {/* Expert Info */}
-          <div className="flex-1">
-            <div className="flex items-center gap-2 flex-wrap mb-1">
-              <h4 className="font-bold text-lg">{name}</h4>
-              <Badge variant="secondary" className="text-xs">
-                <Shield className="h-3 w-3 mr-1" />
-                Verified Expert
-              </Badge>
-            </div>
-            <p className="text-sm text-muted-foreground mb-2">{title}</p>
-            <div className="flex flex-wrap gap-2 mb-4">
-              {credentials.map((cred) => (
-                <span
-                  key={cred}
-                  className="inline-flex items-center gap-1 text-xs bg-muted px-2 py-1 rounded"
-                >
-                  <CheckCircle className="h-3 w-3 text-green-500" />
-                  {cred}
-                </span>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Quote */}
-        <blockquote className="relative pl-4 border-l-4 border-primary mt-4">
-          <Quote className="absolute -left-3 -top-2 h-6 w-6 text-primary/30 bg-background" />
-          <p className="italic text-muted-foreground">{quote}</p>
-          {rating && (
-            <div className="flex items-center gap-2 mt-3">
-              <span className="text-sm font-medium">Expert Rating:</span>
-              <div className="flex items-center gap-1">
-                {[...Array(5)].map((_, i) => (
-                  <Star
-                    key={i}
-                    className={`h-4 w-4 ${
-                      i < Math.floor(rating)
-                        ? 'fill-yellow-400 text-yellow-400'
-                        : 'text-gray-300'
-                    }`}
-                  />
-                ))}
-                <span className="text-sm font-bold ml-1">{rating}/5</span>
-              </div>
+      <div className="flex items-start gap-5">
+        {/* Expert Avatar */}
+        <div className="shrink-0">
+          {image ? (
+            <Image
+              src={image}
+              alt={name}
+              width={72}
+              height={72}
+              className="rounded-full border-2 border-emerald-500/50"
+            />
+          ) : (
+            <div className="w-[72px] h-[72px] rounded-full bg-gradient-to-br from-emerald-500/20 to-blue-500/20 flex items-center justify-center border border-emerald-500/30">
+              <Award className="h-9 w-9 text-emerald-400" />
             </div>
           )}
-        </blockquote>
-      </CardContent>
-    </Card>
+        </div>
+
+        {/* Expert Info */}
+        <div className="flex-1">
+          <div className="flex items-center gap-3 flex-wrap mb-2">
+            <h4 className="font-bold text-xl text-white">{name}</h4>
+            <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-xs">
+              <Shield className="h-3 w-3 mr-1" />
+              Verified Expert
+            </Badge>
+          </div>
+          <p className="text-slate-400 mb-4">{title}</p>
+          <div className="flex flex-wrap gap-2">
+            {credentials.map((cred) => (
+              <span
+                key={cred}
+                className="inline-flex items-center gap-1.5 text-xs bg-slate-800/50 text-slate-300 px-3 py-1.5 rounded-full border border-slate-700/50"
+              >
+                <CheckCircle className="h-3 w-3 text-emerald-400" />
+                {cred}
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Quote */}
+      <blockquote className="relative pl-5 border-l-4 border-emerald-500/50 mt-6">
+        <Quote className="absolute -left-4 -top-2 h-7 w-7 text-emerald-500/30 bg-slate-900 rounded" />
+        <p className="italic text-slate-300 text-lg leading-relaxed">&ldquo;{quote}&rdquo;</p>
+        {rating && (
+          <div className="flex items-center gap-3 mt-4">
+            <span className="text-sm font-medium text-slate-400">Expert Rating:</span>
+            <div className="flex items-center gap-1">
+              {[...Array(5)].map((_, i) => (
+                <Star
+                  key={i}
+                  className={`h-5 w-5 ${
+                    i < Math.floor(rating)
+                      ? 'fill-amber-400 text-amber-400'
+                      : 'text-slate-700'
+                  }`}
+                />
+              ))}
+              <span className="text-lg font-bold gradient-text ml-2">{rating}/5</span>
+            </div>
+          </div>
+        )}
+      </blockquote>
+    </div>
   );
 }
 
@@ -115,21 +113,21 @@ interface ExpertEndorsementProps {
 
 export function ExpertEndorsement({ name, title, verdict, rating }: ExpertEndorsementProps) {
   return (
-    <div className="flex items-center gap-3 p-3 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-900 my-4">
+    <div className="glass-card flex items-center gap-4 p-5 rounded-xl border-emerald-500/30 my-6 hover:border-emerald-500/50 transition-all">
       <div className="shrink-0">
-        <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center">
-          <CheckCircle className="h-5 w-5 text-green-600" />
+        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-500/20 to-blue-500/20 flex items-center justify-center border border-emerald-500/30">
+          <CheckCircle className="h-6 w-6 text-emerald-400" />
         </div>
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium truncate">
-          {name} <span className="text-muted-foreground font-normal">({title})</span>
+        <p className="text-base font-semibold text-white">
+          {name} <span className="text-slate-400 font-normal">({title})</span>
         </p>
-        <p className="text-sm text-muted-foreground">{verdict}</p>
+        <p className="text-sm text-emerald-300/80 italic mt-1">&ldquo;{verdict}&rdquo;</p>
       </div>
       <div className="shrink-0 text-right">
-        <div className="text-xl font-bold text-green-600">{rating}/5</div>
-        <div className="text-xs text-muted-foreground">Expert Score</div>
+        <div className="text-2xl font-bold gradient-text">{rating}/5</div>
+        <div className="text-xs text-slate-500">Expert Score</div>
       </div>
     </div>
   );
@@ -146,12 +144,18 @@ interface TrustAuthorityProps {
 
 export function TrustAuthority({ stats }: TrustAuthorityProps) {
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 my-8 p-6 bg-muted/30 rounded-xl border">
+    <div className="glass-card grid grid-cols-2 md:grid-cols-4 gap-6 my-10 p-8 rounded-2xl">
       {stats.map((stat) => (
-        <div key={stat.label} className="text-center">
-          {stat.icon && <div className="flex justify-center mb-2">{stat.icon}</div>}
-          <div className="text-2xl md:text-3xl font-bold text-primary">{stat.value}</div>
-          <div className="text-xs text-muted-foreground">{stat.label}</div>
+        <div key={stat.label} className="text-center group">
+          {stat.icon && (
+            <div className="flex justify-center mb-3">
+              <div className="w-12 h-12 rounded-xl bg-slate-800/50 flex items-center justify-center group-hover:bg-emerald-500/20 transition-colors">
+                {stat.icon}
+              </div>
+            </div>
+          )}
+          <div className="text-3xl md:text-4xl font-bold gradient-text mb-1">{stat.value}</div>
+          <div className="text-sm text-slate-400">{stat.label}</div>
         </div>
       ))}
     </div>
@@ -173,35 +177,35 @@ export function MethodologyBox({
   hoursResearch = 100,
 }: MethodologyBoxProps) {
   return (
-    <Card className="my-8 bg-muted/30">
-      <CardContent className="p-6">
-        <div className="flex items-center gap-2 mb-4">
-          <Shield className="h-5 w-5 text-primary" />
-          <h4 className="font-bold text-lg">{title}</h4>
+    <div className="glass-card my-10 p-8 rounded-2xl">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
+          <Shield className="h-5 w-5 text-blue-400" />
         </div>
+        <h4 className="font-bold text-xl text-white">{title}</h4>
+      </div>
 
-        <div className="grid md:grid-cols-2 gap-4 mb-4">
-          <div className="flex items-center gap-3 p-3 bg-background rounded-lg">
-            <div className="text-2xl font-bold text-primary">{hoursResearch}+</div>
-            <div className="text-sm text-muted-foreground">Hours of Research</div>
-          </div>
-          <div className="flex items-center gap-3 p-3 bg-background rounded-lg">
-            <div className="text-2xl font-bold text-primary">{dataPoints}+</div>
-            <div className="text-sm text-muted-foreground">Data Points Analyzed</div>
-          </div>
+      <div className="grid md:grid-cols-2 gap-4 mb-8">
+        <div className="flex items-center gap-4 p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+          <div className="text-3xl font-bold gradient-text">{hoursResearch}+</div>
+          <div className="text-sm text-slate-400">Hours of Research</div>
         </div>
+        <div className="flex items-center gap-4 p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+          <div className="text-3xl font-bold gradient-text">{dataPoints.toLocaleString('en-US')}+</div>
+          <div className="text-sm text-slate-400">Data Points Analyzed</div>
+        </div>
+      </div>
 
-        <ol className="space-y-2">
-          {steps.map((step, index) => (
-            <li key={index} className="flex items-start gap-3 text-sm">
-              <span className="shrink-0 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold">
-                {index + 1}
-              </span>
-              <span className="text-muted-foreground">{step}</span>
-            </li>
-          ))}
+      <ol className="space-y-4">
+        {steps.map((step, index) => (
+          <li key={index} className="flex items-start gap-4">
+            <span className="shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-emerald-600 text-white flex items-center justify-center text-sm font-bold shadow-lg shadow-emerald-500/25">
+              {index + 1}
+            </span>
+            <span className="text-slate-300 pt-1">{step}</span>
+          </li>
+        ))}
         </ol>
-      </CardContent>
-    </Card>
+      </div>
   );
 }

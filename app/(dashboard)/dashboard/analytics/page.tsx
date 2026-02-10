@@ -76,10 +76,10 @@ export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps
             <div>
               <p className="text-sm text-slate-500">Page Views</p>
               <p className="text-3xl font-semibold text-slate-800 mt-1">
-                {stats.overview.pageViewsInRange.toLocaleString()}
+                {stats.overview.pageViewsInRange.toLocaleString('en-US')}
               </p>
               <p className="text-sm text-slate-400 mt-2">
-                {stats.overview.totalPageViews.toLocaleString()} total
+                {stats.overview.totalPageViews.toLocaleString('en-US')} total
               </p>
             </div>
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${iconStyles.pageViews}`}>
@@ -94,7 +94,7 @@ export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps
             <div>
               <p className="text-sm text-slate-500">Unique Sessions</p>
               <p className="text-3xl font-semibold text-slate-800 mt-1">
-                {stats.overview.uniqueSessions.toLocaleString()}
+                {stats.overview.uniqueSessions.toLocaleString('en-US')}
               </p>
               <p className="text-sm text-slate-400 mt-2">unique visitors</p>
             </div>

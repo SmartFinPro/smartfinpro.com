@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 48" fill="none">
+  <circle cx="24" cy="24" r="20" fill="#6FDA44"/>
+  <path d="M18 18 L30 24 L18 30Z" fill="white"/>
+  <text x="54" y="32" font-family="system-ui, -apple-system, sans-serif" font-size="26" font-weight="700" fill="white">eToro</text>
+</svg>

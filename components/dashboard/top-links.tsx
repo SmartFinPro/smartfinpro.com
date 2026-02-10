@@ -27,7 +27,7 @@ export function TopLinks() {
               </Badge>
             </div>
             <span className="text-sm font-medium">
-              ${link.revenue.toLocaleString()}
+              ${link.revenue.toLocaleString('en-US')}
             </span>
           </div>
           <div className="flex items-center gap-2">
@@ -36,7 +36,7 @@ export function TopLinks() {
               className="h-2"
             />
             <span className="text-xs text-muted-foreground w-16 text-right">
-              {link.clicks.toLocaleString()}
+              {link.clicks.toLocaleString('en-US')}
             </span>
           </div>
         </div>

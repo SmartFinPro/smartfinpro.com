@@ -35,14 +35,23 @@ const countryPaths: Record<string, { path: string; cx: number; cy: number }> = {
   // Add more countries as needed
 };
 
-// Color scale from light to dark based on intensity
+// Light theme color palette - blue/emerald for data visualization
+const COLORS = {
+  muted: '#e2e8f0', // slate-200
+  land: '#f1f5f9', // slate-100
+  border: '#cbd5e1', // slate-300
+  primary: '#10b981', // emerald-500
+  text: '#64748b', // slate-500
+};
+
+// Color scale based on intensity - emerald shades
 function getColor(percentage: number): string {
-  if (percentage === 0) return 'hsl(var(--muted))';
-  if (percentage < 5) return 'hsl(var(--primary) / 0.2)';
-  if (percentage < 15) return 'hsl(var(--primary) / 0.4)';
-  if (percentage < 30) return 'hsl(var(--primary) / 0.6)';
-  if (percentage < 50) return 'hsl(var(--primary) / 0.8)';
-  return 'hsl(var(--primary))';
+  if (percentage === 0) return COLORS.muted;
+  if (percentage < 5) return '#d1fae5'; // emerald-100
+  if (percentage < 15) return '#a7f3d0'; // emerald-200
+  if (percentage < 30) return '#6ee7b7'; // emerald-300
+  if (percentage < 50) return '#34d399'; // emerald-400
+  return '#10b981'; // emerald-500
 }
 
 export function WorldMap({ data }: WorldMapProps) {
@@ -75,14 +84,11 @@ export function WorldMap({ data }: WorldMapProps) {
         className="w-full h-auto"
         style={{ maxHeight: '220px' }}
       >
-        {/* Background */}
-        <rect width="600" height="300" fill="hsl(var(--muted) / 0.3)" rx="8" />
+        {/* Background - light blue for ocean */}
+        <rect width="600" height="300" fill="#f0f9ff" rx="8" />
 
-        {/* Water/Ocean pattern */}
-        <rect width="600" height="300" fill="hsl(var(--background))" rx="8" />
-
-        {/* Continents outline (simplified) */}
-        <g className="fill-muted stroke-border stroke-[0.5]">
+        {/* Continents outline (simplified) - light gray land */}
+        <g fill={COLORS.land} stroke={COLORS.border} strokeWidth="0.5">
           {/* North America */}
           <path d="M40,50 Q60,40 100,45 L140,55 L145,95 L130,130 L100,155 L55,155 L50,130 L55,95 L40,70 Z" />
           {/* South America */}
@@ -109,7 +115,7 @@ export function WorldMap({ data }: WorldMapProps) {
               <path
                 d={path}
                 fill={getColor(percentage)}
-                className="transition-all duration-300 hover:brightness-110"
+                className="transition-all duration-300 hover:brightness-95"
                 style={{ cursor: stat ? 'pointer' : 'default' }}
               />
               {/* Click indicator dot */}
@@ -119,15 +125,15 @@ export function WorldMap({ data }: WorldMapProps) {
                     cx={cx}
                     cy={cy}
                     r={Math.min(4 + (clicks / maxClicks) * 12, 16)}
-                    fill="hsl(var(--primary))"
-                    opacity={0.6}
+                    fill={COLORS.primary}
+                    opacity={0.4}
                     className="animate-pulse"
                   />
                   <circle
                     cx={cx}
                     cy={cy}
                     r={3}
-                    fill="hsl(var(--primary-foreground))"
+                    fill="#ffffff"
                   />
                 </g>
               )}
@@ -137,27 +143,27 @@ export function WorldMap({ data }: WorldMapProps) {
 
         {/* Legend */}
         <g transform="translate(20, 260)">
-          <text x="0" y="0" className="text-[10px] fill-muted-foreground">
+          <text x="0" y="0" fill={COLORS.text} fontSize="10">
             Click intensity:
           </text>
-          <rect x="80" y="-10" width="20" height="12" fill="hsl(var(--primary) / 0.2)" rx="2" />
-          <rect x="105" y="-10" width="20" height="12" fill="hsl(var(--primary) / 0.4)" rx="2" />
-          <rect x="130" y="-10" width="20" height="12" fill="hsl(var(--primary) / 0.6)" rx="2" />
-          <rect x="155" y="-10" width="20" height="12" fill="hsl(var(--primary) / 0.8)" rx="2" />
-          <rect x="180" y="-10" width="20" height="12" fill="hsl(var(--primary))" rx="2" />
-          <text x="85" y="15" className="text-[8px] fill-muted-foreground">Low</text>
-          <text x="175" y="15" className="text-[8px] fill-muted-foreground">High</text>
+          <rect x="80" y="-10" width="20" height="12" fill="#d1fae5" rx="2" />
+          <rect x="105" y="-10" width="20" height="12" fill="#a7f3d0" rx="2" />
+          <rect x="130" y="-10" width="20" height="12" fill="#6ee7b7" rx="2" />
+          <rect x="155" y="-10" width="20" height="12" fill="#34d399" rx="2" />
+          <rect x="180" y="-10" width="20" height="12" fill="#10b981" rx="2" />
+          <text x="85" y="15" fill={COLORS.text} fontSize="8">Low</text>
+          <text x="175" y="15" fill={COLORS.text} fontSize="8">High</text>
         </g>
       </svg>
 
       {/* Top countries overlay */}
-      <div className="absolute top-2 right-2 bg-background/90 backdrop-blur-sm rounded-lg p-2 text-xs border">
-        <div className="font-medium mb-1">Top Countries</div>
+      <div className="absolute top-2 right-2 bg-white/95 backdrop-blur-sm rounded-lg p-2 text-xs border border-slate-200 shadow-sm">
+        <div className="font-medium text-slate-900 mb-1">Top Countries</div>
         {data.slice(0, 3).map((stat) => (
           <div key={stat.country_code} className="flex items-center gap-1.5">
             <span className="w-4">{getCountryFlag(stat.country_code)}</span>
-            <span className="text-muted-foreground">{stat.country_code}</span>
-            <span className="font-medium ml-auto">{stat.clicks}</span>
+            <span className="text-slate-500">{stat.country_code}</span>
+            <span className="font-medium text-slate-900 ml-auto">{stat.clicks}</span>
           </div>
         ))}
       </div>

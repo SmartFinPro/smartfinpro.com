@@ -387,7 +387,7 @@ export function SmartFinderQuiz({ className = '' }: { className?: string }) {
 
     return (
       <Card className={cn('overflow-hidden', className)}>
-        <CardHeader className="bg-gradient-to-r from-green-600 to-emerald-600 text-white">
+        <CardHeader className="bg-gradient-to-r from-violet-600 to-purple-600 text-white">
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <CheckCircle className="h-6 w-6" />

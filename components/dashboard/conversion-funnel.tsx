@@ -28,7 +28,7 @@ export function ConversionFunnel({
   const stages = [
     {
       name: 'Clicks',
-      value: clicks.toLocaleString(),
+      value: clicks.toLocaleString('en-US'),
       icon: MousePointer,
       width: clickWidth,
       bgColor: 'bg-slate-50',
@@ -38,7 +38,7 @@ export function ConversionFunnel({
     },
     {
       name: 'Conversions',
-      value: conversions.toLocaleString(),
+      value: conversions.toLocaleString('en-US'),
       icon: UserPlus,
       width: conversionWidth,
       bgColor: 'bg-slate-50',

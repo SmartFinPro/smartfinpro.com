@@ -1,6 +1,8 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import Image from 'next/image';
 import { MDXRemote } from 'next-mdx-remote/rsc';
+import remarkGfm from 'remark-gfm';
 import { getPillarContent, getContentByMarketAndCategory } from '@/lib/mdx';
 import { mdxComponents } from '@/lib/mdx/components';
 import {
@@ -12,10 +14,58 @@ import {
   categoryConfig,
 } from '@/lib/i18n/config';
 import { generateAlternates, getCanonicalUrl } from '@/lib/seo/hreflang';
+import { generateArticleSchema } from '@/lib/seo/schema';
 import { Button } from '@/components/ui/button';
-import { Calendar, Clock, ArrowRight, CheckCircle, Sparkles, ChevronRight, Star, Trophy } from 'lucide-react';
+import { Calendar, Clock, ArrowRight, CheckCircle, Sparkles, Star, Trophy, Shield, TrendingUp, Wrench } from 'lucide-react';
 import Link from 'next/link';
 import { StarRating } from '@/components/marketing/trust-badges';
+import { NetworkAnimation } from '@/components/marketing/network-animation';
+import { Breadcrumb } from '@/components/marketing/breadcrumb';
+
+
+const categoryTools: Record<string, { name: string; href: string; description: string }[]> = {
+  trading: [
+    { name: 'Trading Cost Calculator', href: '/tools/trading-cost-calculator', description: 'Compare broker fees' },
+    { name: 'Broker Finder Quiz', href: '/tools/broker-finder', description: 'Find your ideal broker' },
+  ],
+  forex: [
+    { name: 'Trading Cost Calculator', href: '/tools/trading-cost-calculator', description: 'Compare forex spreads' },
+    { name: 'Broker Comparison', href: '/tools/broker-comparison', description: 'Side-by-side comparison' },
+  ],
+  'ai-tools': [
+    { name: 'AI ROI Calculator', href: '/tools/ai-roi-calculator', description: 'Calculate AI investment returns' },
+  ],
+  'personal-finance': [
+    { name: 'Loan Calculator', href: '/tools/loan-calculator', description: 'Monthly payments & amortization' },
+  ],
+  'business-banking': [
+    { name: 'Broker Comparison', href: '/tools/broker-comparison', description: 'Compare banking options' },
+  ],
+};
+
+// Category header images
+// Category header images and overlay configuration
+const categoryHeaderImages: Record<string, string> = {
+  'ai-tools': '/images/ai-tools-header.jpg',
+  'trading': '/images/Forex_Trading_header.jpg',
+  'cybersecurity': '/images/Cybersecurity_Tools_header.jpg',
+  'personal-finance': '/images/Personal_Loans_header.jpg',
+};
+
+const categoryOverlays: Record<string, { base: number; brandFrom: number; brandVia: number; brandTo: number; bottomFrom: number; bottomVia: number; topFrom: number }> = {
+  'ai-tools':         { base: 0.56, brandFrom: 0.66, brandVia: 0.36, brandTo: 0.46, bottomFrom: 0.83, bottomVia: 0.16, topFrom: 0.46 },
+  'trading':          { base: 0.56, brandFrom: 0.66, brandVia: 0.36, brandTo: 0.46, bottomFrom: 0.83, bottomVia: 0.16, topFrom: 0.46 },
+  'cybersecurity':    { base: 0.56, brandFrom: 0.66, brandVia: 0.36, brandTo: 0.46, bottomFrom: 0.83, bottomVia: 0.16, topFrom: 0.46 },
+  'personal-finance': { base: 0.56, brandFrom: 0.66, brandVia: 0.36, brandTo: 0.46, bottomFrom: 0.83, bottomVia: 0.16, topFrom: 0.46 },
+};
+
+const defaultOverlay = { base: 0.60, brandFrom: 0.70, brandVia: 0.40, brandTo: 0.50, bottomFrom: 0.87, bottomVia: 0.20, topFrom: 0.50 };
+
+const categoryImagePosition: Record<string, string> = {
+  'trading': 'calc(50% + 300px) calc(50% - 200px)',
+  'cybersecurity': 'calc(50% + 350px) center',
+  'ai-tools': 'calc(50% + 200px) center',
+};
 
 interface CategoryPageProps {
   params: Promise<{
@@ -76,34 +126,82 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
   // For US market, use clean URLs without /us prefix
   const marketPrefix = market === 'us' ? '' : `/${market}`;
 
+  const overlay = categoryOverlays[category] || defaultOverlay;
+  const imgPosition = categoryImagePosition[category] || 'center center';
+
   // If we have a pillar page (index.mdx), render it with MDX
   if (pillarContent) {
+    const canonicalUrl = getCanonicalUrl(market as Market, `/${category}`);
+
     return (
       <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
-        {/* Hero Header */}
-        <section className="relative overflow-hidden">
-          {/* Aurora Background */}
+        {/* Article Schema for pillar page */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(generateArticleSchema({
+              title: pillarContent.meta.title || `Best ${categoryInfo.name} 2026`,
+              description: pillarContent.meta.description || categoryInfo.description,
+              publishDate: pillarContent.meta.publishDate || new Date().toISOString(),
+              modifiedDate: pillarContent.meta.modifiedDate || new Date().toISOString(),
+              author: pillarContent.meta.author || 'SmartFinPro',
+              url: canonicalUrl,
+            })),
+          }}
+        />
+
+        {/* Hero Header with Network Animation */}
+        <section className="relative overflow-hidden bg-[#0f0a1a]">
+          {/* Header Background Image (if available for category) */}
+          {categoryHeaderImages[category] && (
+            <div className="absolute inset-0 z-0" aria-hidden="true">
+              <Image
+                src={categoryHeaderImages[category]}
+                alt={`${categoryInfo.name} category header`}
+                fill
+                priority
+                className="object-cover"
+                style={{ objectPosition: imgPosition }}
+                sizes="100vw"
+              />
+              {/* Multi-layer gradient overlay */}
+              <div className="absolute inset-0" style={{ backgroundColor: `rgba(15, 10, 26, ${overlay.base})` }} />
+              <div className="absolute inset-0" style={{ background: `linear-gradient(to bottom right, rgba(26, 15, 46, ${overlay.brandFrom}), rgba(15, 10, 26, ${overlay.brandVia}), rgba(26, 15, 46, ${overlay.brandTo}))` }} />
+              <div className="absolute inset-0" style={{ background: `linear-gradient(to top, rgba(15, 10, 26, ${overlay.bottomFrom}), rgba(15, 10, 26, ${overlay.bottomVia}), transparent)` }} />
+              <div className="absolute inset-0" style={{ background: `linear-gradient(to bottom, rgba(15, 10, 26, ${overlay.topFrom}), transparent, transparent)` }} />
+            </div>
+          )}
+
+          {/* Network Animation Background */}
+          <NetworkAnimation className={categoryHeaderImages[category] ? 'opacity-20' : 'opacity-40'} />
+
+          {/* Aurora Background Glows */}
           <div className="aurora-bg" aria-hidden="true">
-            <div className="absolute top-1/4 left-1/3 w-[600px] h-[600px] glow-emerald" />
-            <div className="absolute top-1/3 right-1/4 w-[500px] h-[500px] glow-blue" />
-            <div className="absolute bottom-0 left-1/2 w-[400px] h-[400px] glow-purple" />
+            <div className={`absolute top-1/4 left-1/3 w-[600px] h-[600px] glow-emerald ${categoryHeaderImages[category] ? 'opacity-30' : ''}`} />
+            <div className={`absolute top-1/3 right-1/4 w-[500px] h-[500px] glow-blue ${categoryHeaderImages[category] ? 'opacity-25' : ''}`} />
+            <div className={`absolute bottom-0 left-1/2 w-[400px] h-[400px] glow-purple ${categoryHeaderImages[category] ? 'opacity-20' : ''}`} />
           </div>
 
           <div className="container relative z-10 mx-auto px-4 py-16 lg:py-24">
             {/* Breadcrumb */}
-            <nav className="flex items-center gap-2 text-sm text-slate-500 mb-8">
-              <Link href={marketPrefix || '/'} className="hover:text-emerald-400 transition-colors">
-                Home
-              </Link>
-              <ChevronRight className="h-4 w-4" />
-              <span className="text-slate-300">{categoryInfo.name}</span>
-            </nav>
+            <Breadcrumb
+              items={[
+                { label: 'Home', href: marketPrefix || '/' },
+                { label: categoryInfo.name },
+              ]}
+            />
 
             <div className="max-w-3xl">
-              {/* Kicker Badge */}
-              <div className="inline-flex items-center gap-2 rounded-full badge-premium px-4 py-2 mb-6">
-                <Sparkles className="h-4 w-4 text-emerald-400" />
-                <span className="kicker text-slate-300">Expert Guide {new Date().getFullYear()}</span>
+              {/* Kicker Badge with Scarcity */}
+              <div className="flex flex-wrap items-center gap-3 mb-6">
+                <div className="inline-flex items-center gap-2 rounded-full badge-premium px-4 py-2">
+                  <Sparkles className="h-4 w-4 text-emerald-400" />
+                  <span className="kicker text-slate-300">Expert Guide 2026</span>
+                </div>
+                <div className="inline-flex items-center gap-2 rounded-full bg-amber-500/10 border border-amber-500/20 px-3 py-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="text-xs text-amber-400 font-medium">2026 Edition - Updated February</span>
+                </div>
               </div>
 
               {/* Page Title */}
@@ -123,17 +221,45 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
                 </p>
               )}
 
-              <div className="flex flex-wrap items-center gap-6 text-sm text-slate-500">
-                <span className="flex items-center gap-2">
+              {/* Meta Info & Expert Badge */}
+              <div className="flex flex-wrap items-center gap-4 text-sm text-slate-500 mb-8">
+                <time dateTime={pillarContent.meta.modifiedDate || new Date().toISOString()} className="flex items-center gap-2">
                   <Calendar className="h-4 w-4 text-emerald-400" />
                   Updated {new Date(pillarContent.meta.modifiedDate || Date.now()).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-                </span>
+                </time>
                 {pillarContent.readingTime && (
                   <span className="flex items-center gap-2">
                     <Clock className="h-4 w-4 text-blue-400" />
                     {pillarContent.readingTime.text}
                   </span>
                 )}
+                {/* CFO-Approved Badge */}
+                <span className="flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-medium">
+                  <Shield className="h-3.5 w-3.5" />
+                  CFO-Approved
+                </span>
+              </div>
+
+              {/* Quick Jump CTA */}
+              <div className="flex flex-wrap gap-3">
+                <Button
+                  asChild
+                  className="btn-shimmer bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 border-0 shadow-lg shadow-emerald-500/25 gap-2"
+                >
+                  <a href="#top-picks">
+                    See Top 5 Tools
+                    <ArrowRight className="h-4 w-4" />
+                  </a>
+                </Button>
+                <Button
+                  asChild
+                  variant="outline"
+                  className="border-slate-700 bg-slate-800/50 text-slate-300 hover:bg-slate-700 hover:text-white hover:border-slate-600"
+                >
+                  <a href="#comparison">
+                    Compare All
+                  </a>
+                </Button>
               </div>
             </div>
           </div>
@@ -142,10 +268,49 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
           <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-slate-900 to-transparent" />
         </section>
 
+        {/* Market Overview CTA Banner */}
+        <div className="relative -mt-[110px] pt-0 pb-10 bg-transparent overflow-hidden z-20">
+          {/* Background glow effects */}
+          <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[200px] rounded-full" style={{ background: 'radial-gradient(ellipse, rgba(6, 182, 212, 0.15), transparent 70%)' }} />
+            <div className="absolute top-1/2 left-1/3 -translate-y-1/2 w-[400px] h-[200px] rounded-full" style={{ background: 'radial-gradient(ellipse, rgba(139, 92, 246, 0.1), transparent 70%)' }} />
+          </div>
+
+          <div className="container relative z-10 mx-auto px-4 flex justify-center">
+            <Link
+              href={`${marketPrefix}/${category}/overview`}
+              className="group relative inline-flex items-center gap-4 rounded-2xl px-10 py-5 text-lg font-bold text-white overflow-hidden transition-all duration-500 hover:scale-105 border border-violet-500/30 hover:border-violet-400/60"
+              style={{
+                background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(139, 92, 246, 0.25), rgba(59, 130, 246, 0.15))',
+                boxShadow: '0 0 30px rgba(139, 92, 246, 0.15), 0 0 60px rgba(59, 130, 246, 0.1), inset 0 1px 0 rgba(255,255,255,0.08)',
+              }}
+            >
+              {/* Animated shimmer */}
+              <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+              {/* Outer glow on hover - purple/blue */}
+              <span
+                className="absolute -inset-[3px] rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 -z-10"
+                style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6, #3b82f6)', filter: 'blur(18px)' }}
+              />
+              {/* Inner intensified glow on hover */}
+              <span
+                className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                style={{ background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.25), rgba(139, 92, 246, 0.35), rgba(59, 130, 246, 0.25))' }}
+              />
+              <TrendingUp className="h-6 w-6 text-violet-400 group-hover:text-violet-300 transition-colors relative z-10" />
+              <span className="relative z-10">
+                <span className="block text-lg">{categoryInfo.name} Market Overview 2026</span>
+                <span className="block text-xs font-normal text-slate-400 group-hover:text-slate-300 transition-colors">Comprehensive market analysis, trends &amp; insights</span>
+              </span>
+              <ArrowRight className="h-5 w-5 text-violet-400 group-hover:text-blue-300 group-hover:translate-x-2 transition-all duration-300 relative z-10" />
+            </Link>
+          </div>
+        </div>
+
         {/* MDX Content with dark prose styling */}
         <div className="container mx-auto px-4 pb-20">
-          <article className="prose prose-lg prose-invert max-w-4xl mx-auto prose-headings:text-white prose-headings:scroll-mt-20 prose-p:text-slate-300 prose-a:text-emerald-400 prose-strong:text-white prose-code:text-emerald-400 prose-pre:bg-slate-900/50 prose-pre:border prose-pre:border-slate-800 prose-li:text-slate-300 prose-blockquote:text-slate-400 prose-blockquote:border-emerald-500/50">
-            <MDXRemote source={pillarContent.content} components={mdxComponents} />
+          <article className="max-w-4xl mx-auto">
+            <MDXRemote source={pillarContent.content} components={mdxComponents} options={{ mdxOptions: { remarkPlugins: [remarkGfm] } }} />
           </article>
         </div>
       </div>
@@ -159,19 +324,38 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
     <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
       {/* Hero Header */}
       <section className="relative overflow-hidden">
+        {/* Header Background Image (if available for category) */}
+        {categoryHeaderImages[category] && (
+          <div className="absolute inset-0" aria-hidden="true">
+            <Image
+              src={categoryHeaderImages[category]}
+              alt={`${categoryInfo.name} category header`}
+              fill
+              priority
+              className="object-cover"
+              style={{ objectPosition: imgPosition }}
+              sizes="100vw"
+            />
+            {/* Multi-layer gradient overlay */}
+            <div className="absolute inset-0" style={{ backgroundColor: `rgba(15, 10, 26, ${overlay.base})` }} />
+            <div className="absolute inset-0" style={{ background: `linear-gradient(to bottom right, rgba(26, 15, 46, ${overlay.brandFrom}), rgba(15, 10, 26, ${overlay.brandVia}), rgba(26, 15, 46, ${overlay.brandTo}))` }} />
+            <div className="absolute inset-0" style={{ background: `linear-gradient(to top, rgba(15, 10, 26, ${overlay.bottomFrom}), rgba(15, 10, 26, ${overlay.bottomVia}), transparent)` }} />
+            <div className="absolute inset-0" style={{ background: `linear-gradient(to bottom, rgba(15, 10, 26, ${overlay.topFrom}), transparent, transparent)` }} />
+          </div>
+        )}
+
         {/* Background glows */}
-        <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-emerald-500/10 rounded-full blur-[120px]" />
-        <div className="absolute top-0 right-1/4 w-[400px] h-[400px] bg-blue-500/10 rounded-full blur-[100px]" />
+        <div className={`absolute top-0 left-1/4 w-[600px] h-[600px] bg-emerald-500/10 rounded-full blur-[120px] ${categoryHeaderImages[category] ? 'opacity-30' : ''}`} />
+        <div className={`absolute top-0 right-1/4 w-[400px] h-[400px] bg-blue-500/10 rounded-full blur-[100px] ${categoryHeaderImages[category] ? 'opacity-25' : ''}`} />
 
         <div className="container relative z-10 mx-auto px-4 py-16 lg:py-24">
           {/* Breadcrumb */}
-          <nav className="flex items-center gap-2 text-sm text-slate-500 mb-8">
-            <Link href={marketPrefix || '/'} className="hover:text-emerald-400 transition-colors">
-              Home
-            </Link>
-            <ChevronRight className="h-4 w-4" />
-            <span className="text-slate-300">{categoryInfo.name}</span>
-          </nav>
+          <Breadcrumb
+            items={[
+              { label: 'Home', href: marketPrefix || '/' },
+              { label: categoryInfo.name },
+            ]}
+          />
 
           {/* Header */}
           <div className="max-w-3xl">
@@ -318,6 +502,33 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
             </div>
           ))}
         </div>
+
+        {/* Useful Tools */}
+        {categoryTools[category] && categoryTools[category].length > 0 && (
+          <div className="max-w-4xl mx-auto mt-12">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'rgba(139,92,246,0.15)' }}>
+                <Wrench className="h-4 w-4 text-violet-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-white">Useful Tools</h3>
+            </div>
+            <div className="grid sm:grid-cols-2 gap-3">
+              {categoryTools[category].map((tool) => (
+                <Link
+                  key={tool.href}
+                  href={tool.href}
+                  className="glass-card rounded-xl p-4 transition-all duration-300 hover:border-violet-500/30 group flex items-center gap-3"
+                >
+                  <div>
+                    <p className="text-sm font-medium text-white group-hover:text-violet-400 transition-colors">{tool.name}</p>
+                    <p className="text-xs text-slate-500">{tool.description}</p>
+                  </div>
+                  <ArrowRight className="h-4 w-4 text-slate-600 group-hover:text-violet-400 ml-auto shrink-0 group-hover:translate-x-1 transition-all" />
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Disclaimer */}
         <aside className="max-w-4xl mx-auto mt-12 glass-card rounded-xl p-5 text-sm text-slate-500">

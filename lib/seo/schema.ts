@@ -28,13 +28,10 @@ export function generateWebsiteSchema() {
     '@type': 'WebSite',
     name: 'SmartFinPro',
     url: BASE_URL,
-    potentialAction: {
-      '@type': 'SearchAction',
-      target: {
-        '@type': 'EntryPoint',
-        urlTemplate: `${BASE_URL}/search?q={search_term_string}`,
-      },
-      'query-input': 'required name=search_term_string',
+    description: 'Financial Intelligence for Modern Professionals. Expert reviews, AI-powered tools, and trading platforms trusted by 50,000+ professionals.',
+    publisher: {
+      '@type': 'Organization',
+      name: 'SmartFinPro',
     },
   };
 }

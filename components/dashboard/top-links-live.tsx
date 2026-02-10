@@ -48,7 +48,7 @@ export function TopLinksLive({ links }: TopLinksLiveProps) {
               </Badge>
             </div>
             <span className="text-sm font-bold shrink-0 ml-2">
-              {link.clicks.toLocaleString()}
+              {link.clicks.toLocaleString('en-US')}
             </span>
           </div>
 

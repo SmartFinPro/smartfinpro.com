@@ -92,7 +92,7 @@ export default async function MarketHomePage({ params }: MarketPageProps) {
         }}
         secondaryCta={{
           text: 'Start Free Trial',
-          href: `/${market}/resources`,
+          href: '/tools',
         }}
       />
 

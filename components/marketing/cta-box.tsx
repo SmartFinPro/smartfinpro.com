@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { ArrowRight, Check, Shield } from 'lucide-react';
+import { ArrowRight, Check, Shield, Sparkles } from 'lucide-react';
 
 interface CTABoxProps {
   headline: string;
@@ -26,31 +25,35 @@ export function CTABox({
   guarantees = ['30-day money-back guarantee', 'No credit card required'],
   variant = 'default',
 }: CTABoxProps) {
-  const bgClasses = {
-    default: 'bg-muted',
-    highlight: 'bg-primary/5 border-primary/20',
-    dark: 'bg-primary text-primary-foreground',
-  };
-
   return (
-    <Card className={`${bgClasses[variant]} border-2`}>
-      <CardContent className="p-8 text-center">
-        <h3
-          className={`text-2xl font-bold mb-2 ${
-            variant === 'dark' ? 'text-primary-foreground' : ''
-          }`}
-        >
+    <div
+      className={`relative my-10 p-8 md:p-10 rounded-2xl text-center overflow-hidden ${
+        variant === 'highlight'
+          ? 'glass-card border-emerald-500/40 shadow-lg shadow-emerald-500/10'
+          : variant === 'dark'
+          ? 'bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700'
+          : 'glass-card'
+      }`}
+    >
+      {/* Background glow for highlight variant */}
+      {variant === 'highlight' && (
+        <div className="absolute inset-0 overflow-hidden rounded-2xl" aria-hidden="true">
+          <div className="absolute top-0 left-1/4 w-64 h-64 bg-emerald-500/10 rounded-full blur-[80px]" />
+          <div className="absolute bottom-0 right-1/4 w-48 h-48 bg-blue-500/10 rounded-full blur-[60px]" />
+        </div>
+      )}
+
+      <div className="relative z-10">
+        <div className="inline-flex items-center gap-2 mb-4">
+          <Sparkles className="h-5 w-5 text-emerald-400" />
+        </div>
+
+        <h3 className="text-2xl md:text-3xl font-bold mb-3 text-white">
           {headline}
         </h3>
 
         {description && (
-          <p
-            className={`mb-6 ${
-              variant === 'dark'
-                ? 'text-primary-foreground/80'
-                : 'text-muted-foreground'
-            }`}
-          >
+          <p className="mb-8 text-slate-400 max-w-xl mx-auto leading-relaxed">
             {description}
           </p>
         )}
@@ -59,10 +62,9 @@ export function CTABox({
           <Button
             asChild
             size="lg"
-            variant={variant === 'dark' ? 'secondary' : 'default'}
-            className="gap-2"
+            className="btn-shimmer bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 border-0 shadow-lg shadow-emerald-500/25 gap-2 px-8"
           >
-            <Link href={primaryCta.href}>
+            <Link href={primaryCta.href} target="_blank" rel="noopener sponsored">
               {primaryCta.text}
               <ArrowRight className="h-4 w-4" />
             </Link>
@@ -71,8 +73,9 @@ export function CTABox({
           {secondaryCta && (
             <Button
               asChild
-              variant={variant === 'dark' ? 'outline' : 'ghost'}
+              variant="outline"
               size="lg"
+              className="border-slate-700 bg-slate-800/50 text-slate-300 hover:bg-slate-700 hover:text-white hover:border-slate-600"
             >
               <Link href={secondaryCta.href}>{secondaryCta.text}</Link>
             </Button>
@@ -80,24 +83,20 @@ export function CTABox({
         </div>
 
         {guarantees.length > 0 && (
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-4">
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-5">
             {guarantees.map((guarantee) => (
               <div
                 key={guarantee}
-                className={`flex items-center gap-1 text-sm ${
-                  variant === 'dark'
-                    ? 'text-primary-foreground/80'
-                    : 'text-muted-foreground'
-                }`}
+                className="flex items-center gap-2 text-sm text-slate-500"
               >
-                <Shield className="h-4 w-4" />
+                <Shield className="h-4 w-4 text-emerald-500/70" />
                 <span>{guarantee}</span>
               </div>
             ))}
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
 
@@ -119,58 +118,66 @@ export function QuickVerdictBox({
   productName,
 }: QuickVerdictBoxProps) {
   return (
-    <Card className="bg-muted/50 border-2">
-      <CardContent className="p-6">
-        <h3 className="text-lg font-bold mb-4">Quick Verdict</h3>
+    <div className="glass-card my-8 p-6 md:p-8 rounded-2xl">
+      <h3 className="text-lg font-bold mb-6 text-white flex items-center gap-2">
+        <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center">
+          <Sparkles className="h-4 w-4 text-emerald-400" />
+        </div>
+        Quick Verdict
+      </h3>
 
-        <div className="grid md:grid-cols-2 gap-6">
-          {/* Pros */}
-          <div>
-            <h4 className="font-semibold text-green-600 mb-2 flex items-center gap-1">
-              <Check className="h-4 w-4" /> Pros
-            </h4>
-            <ul className="space-y-1">
-              {pros.map((pro, i) => (
-                <li key={i} className="text-sm flex items-start gap-2">
-                  <Check className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
-                  <span>{pro}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Cons */}
-          <div>
-            <h4 className="font-semibold text-red-600 mb-2">Cons</h4>
-            <ul className="space-y-1">
-              {cons.map((con, i) => (
-                <li key={i} className="text-sm flex items-start gap-2">
-                  <span className="text-red-500 mt-0.5 shrink-0">✕</span>
-                  <span>{con}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
+      <div className="grid md:grid-cols-2 gap-6">
+        {/* Pros */}
+        <div className="bg-emerald-500/5 rounded-xl p-4 border border-emerald-500/20">
+          <h4 className="font-semibold text-emerald-400 mb-3 flex items-center gap-2">
+            <Check className="h-4 w-4" /> Pros
+          </h4>
+          <ul className="space-y-2">
+            {pros.map((pro, i) => (
+              <li key={i} className="text-sm flex items-start gap-2">
+                <Check className="h-4 w-4 text-emerald-400 mt-0.5 shrink-0" />
+                <span className="text-slate-300">{pro}</span>
+              </li>
+            ))}
+          </ul>
         </div>
 
-        <div className="mt-4 pt-4 border-t grid sm:grid-cols-2 gap-4">
-          <div>
-            <span className="text-sm text-muted-foreground">Best For:</span>
-            <p className="font-medium">{bestFor}</p>
-          </div>
-          <div>
-            <span className="text-sm text-muted-foreground">Pricing:</span>
-            <p className="font-medium">{pricing}</p>
-          </div>
+        {/* Cons */}
+        <div className="bg-red-500/5 rounded-xl p-4 border border-red-500/20">
+          <h4 className="font-semibold text-red-400 mb-3 flex items-center gap-2">
+            <span className="text-red-400">✕</span> Cons
+          </h4>
+          <ul className="space-y-2">
+            {cons.map((con, i) => (
+              <li key={i} className="text-sm flex items-start gap-2">
+                <span className="text-red-400 mt-0.5 shrink-0">✕</span>
+                <span className="text-slate-300">{con}</span>
+              </li>
+            ))}
+          </ul>
         </div>
+      </div>
 
-        <Button asChild className="w-full mt-4 gap-2">
-          <Link href={affiliateUrl}>
-            Try {productName} Free
-            <ArrowRight className="h-4 w-4" />
-          </Link>
-        </Button>
-      </CardContent>
-    </Card>
+      <div className="mt-6 pt-6 border-t border-slate-700/50 grid sm:grid-cols-2 gap-4">
+        <div>
+          <span className="text-sm text-slate-500">Best For:</span>
+          <p className="font-medium text-white mt-1">{bestFor}</p>
+        </div>
+        <div>
+          <span className="text-sm text-slate-500">Pricing:</span>
+          <p className="font-medium gradient-text mt-1">{pricing}</p>
+        </div>
+      </div>
+
+      <Button
+        asChild
+        className="w-full mt-6 btn-shimmer bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 border-0 shadow-lg shadow-emerald-500/25 gap-2"
+      >
+        <Link href={affiliateUrl} target="_blank" rel="noopener sponsored">
+          Try {productName} Free
+          <ArrowRight className="h-4 w-4" />
+        </Link>
+      </Button>
+    </div>
   );
 }

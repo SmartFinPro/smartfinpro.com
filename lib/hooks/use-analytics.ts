@@ -73,8 +73,8 @@ export function useAnalytics(options: UseAnalyticsOptions = {}) {
             },
           }),
         });
-      } catch (error) {
-        console.error('Analytics track error:', error);
+      } catch {
+        // Silently ignore analytics failures — they should never affect UX
       }
     },
     [pathname]

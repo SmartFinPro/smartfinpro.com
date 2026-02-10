@@ -13,7 +13,7 @@ interface QuickVerdictCardProps {
   verdict?: string;
   affiliateUrl?: string;
   badge?: string;
-  accentColor?: 'emerald' | 'blue' | 'violet' | 'amber' | 'rose';
+  accentColor?: 'emerald' | 'blue' | 'violet' | 'amber' | 'rose' | 'cyan';
 }
 
 const accentMap: Record<string, {
@@ -82,6 +82,17 @@ const accentMap: Record<string, {
     verdictBg: 'bg-rose-500/5 border-rose-500/20',
     initial: 'bg-rose-500/10 border-rose-500/20 text-rose-400',
   },
+  cyan: {
+    gradient: 'from-cyan-500/20 via-cyan-500/5 to-transparent',
+    border: 'border-cyan-500/25 hover:border-cyan-500/40',
+    badgeBg: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/25',
+    button: 'bg-cyan-500 hover:bg-cyan-600 text-white shadow-lg shadow-cyan-500/20',
+    text: 'text-cyan-400',
+    glow: 'shadow-xl shadow-cyan-500/5',
+    proIcon: 'text-cyan-400',
+    verdictBg: 'bg-cyan-500/5 border-cyan-500/20',
+    initial: 'bg-cyan-500/10 border-cyan-500/20 text-cyan-400',
+  },
 };
 
 export function QuickVerdictCard({
@@ -93,9 +104,9 @@ export function QuickVerdictCard({
   verdict,
   affiliateUrl,
   badge,
-  accentColor = 'emerald',
+  accentColor = 'violet',
 }: QuickVerdictCardProps) {
-  const s = accentMap[accentColor] || accentMap.emerald;
+  const s = accentMap[accentColor] || accentMap.violet;
 
   return (
     <div

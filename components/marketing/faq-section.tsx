@@ -51,7 +51,7 @@ export function FAQSection({
               <span className="font-medium pr-4 text-slate-200">{faq.question}</span>
               <ChevronDown
                 className={cn(
-                  'h-5 w-5 shrink-0 transition-transform duration-200 text-emerald-400',
+                  'h-5 w-5 shrink-0 transition-transform duration-200 text-cyan-400',
                   openIndex === index && 'rotate-180'
                 )}
               />
@@ -83,9 +83,9 @@ export function InlineFAQ({ faqs }: InlineFAQProps) {
   return (
     <div className="space-y-6 my-8">
       {faqs.map((faq, index) => (
-        <div key={index}>
-          <h4 className="font-semibold mb-2">{faq.question}</h4>
-          <p className="text-muted-foreground">{faq.answer}</p>
+        <div key={index} className="glass-card rounded-xl p-5">
+          <h4 className="font-semibold mb-2 text-white">{faq.question}</h4>
+          <p className="text-slate-400 leading-relaxed">{faq.answer}</p>
         </div>
       ))}
     </div>

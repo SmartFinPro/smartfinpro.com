@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 48" fill="none">
+  <rect x="2" y="6" width="36" height="36" rx="6" fill="#D42E2E"/>
+  <text x="8" y="33" font-family="system-ui, -apple-system, sans-serif" font-size="22" font-weight="800" fill="white">IB</text>
+  <text x="48" y="32" font-family="system-ui, -apple-system, sans-serif" font-size="20" font-weight="600" fill="white">Interactive Brokers</text>
+</svg>
