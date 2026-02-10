@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 48" fill="none">
+  <rect x="2" y="4" width="40" height="40" rx="12" fill="#0075EB"/>
+  <path d="M14 16 L14 32 M14 16 L26 16 C30 16 32 18 32 21 C32 24 30 26 26 26 L14 26 M26 26 L32 32" stroke="white" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <text x="52" y="32" font-family="system-ui, -apple-system, sans-serif" font-size="24" font-weight="700" fill="white">Revolut</text>
+</svg>

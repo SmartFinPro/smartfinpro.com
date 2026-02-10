@@ -1,7 +1,6 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { TimeRange } from '@/lib/actions/dashboard';
 
 const ranges: { value: TimeRange; label: string }[] = [
@@ -23,14 +22,22 @@ export function TimeRangeSelector() {
   };
 
   return (
-    <Tabs value={currentRange} onValueChange={handleRangeChange}>
-      <TabsList>
-        {ranges.map((range) => (
-          <TabsTrigger key={range.value} value={range.value}>
-            {range.label}
-          </TabsTrigger>
-        ))}
-      </TabsList>
-    </Tabs>
+    <div className="inline-flex items-center bg-slate-100 border border-slate-200 rounded-lg p-1">
+      {ranges.map((range) => (
+        <button
+          key={range.value}
+          onClick={() => handleRangeChange(range.value)}
+          className={`
+            px-3 py-1.5 text-sm font-medium rounded-md transition-all
+            ${currentRange === range.value
+              ? 'bg-white text-slate-900 shadow-sm'
+              : 'text-slate-500 hover:text-slate-700'
+            }
+          `}
+        >
+          {range.label}
+        </button>
+      ))}
+    </div>
   );
 }

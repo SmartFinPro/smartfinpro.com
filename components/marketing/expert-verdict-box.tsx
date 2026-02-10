@@ -85,9 +85,9 @@ export function ExpertVerdictBox({
   rating,
   affiliateUrl,
   ctaLabel,
-  accentColor = 'emerald',
+  accentColor = 'violet',
 }: ExpertVerdictBoxProps) {
-  const s = accentMap[accentColor] || accentMap.emerald;
+  const s = accentMap[accentColor] || accentMap.violet;
 
   return (
     <div className="not-prose my-8 rounded-2xl border border-slate-800/60 bg-slate-950/70 overflow-hidden backdrop-blur-sm">
@@ -145,9 +145,9 @@ export function ExpertVerdictBox({
           {pros.map((pro, i) => (
             <div
               key={i}
-              className="flex items-start gap-3 rounded-xl px-4 py-3.5 bg-emerald-500/[0.06] border border-emerald-500/15"
+              className="flex items-start gap-3 rounded-xl px-4 py-3.5 bg-cyan-500/[0.06] border border-cyan-500/15"
             >
-              <CheckCircle className="h-5 w-5 text-emerald-400 shrink-0 mt-0.5" />
+              <CheckCircle className="h-5 w-5 text-cyan-400 shrink-0 mt-0.5" />
               <span className="text-sm text-slate-200 leading-relaxed">{pro}</span>
             </div>
           ))}

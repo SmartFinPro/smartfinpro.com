@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import { Toaster } from '@/components/ui/sonner';
 import { AnalyticsProvider } from '@/components/providers/analytics-provider';
+import { generateOrganizationSchema, generateWebsiteSchema } from '@/lib/seo/schema';
 
 const inter = Inter({
   variable: '--font-inter',
@@ -56,9 +57,8 @@ export const metadata: Metadata = {
       'max-snippet': -1,
     },
   },
-  verification: {
-    google: 'your-google-verification-code',
-  },
+  // Add Google verification code when available:
+  // verification: { google: 'ACTUAL-CODE-HERE' },
 };
 
 export default function RootLayout({
@@ -68,6 +68,20 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(generateOrganizationSchema()),
+          }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(generateWebsiteSchema()),
+          }}
+        />
+      </head>
       <body className={`${inter.variable} font-sans antialiased`}>
         <AnalyticsProvider>
           {children}

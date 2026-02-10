@@ -41,8 +41,8 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // If first segment is a category, rewrite to /us/{category}/...
-  if (categories.includes(firstSegment)) {
+  // If first segment is a category or a known sub-section, rewrite to /us/...
+  if (categories.includes(firstSegment) || firstSegment === 'reviews') {
     const newPath = `/us${pathname}`;
     return NextResponse.rewrite(new URL(newPath, request.url));
   }

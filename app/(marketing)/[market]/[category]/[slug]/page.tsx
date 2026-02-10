@@ -1,10 +1,12 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { MDXRemote } from 'next-mdx-remote/rsc';
-import { getContentBySlug, getAllContentSlugs } from '@/lib/mdx';
+import remarkGfm from 'remark-gfm';
+import { getContentBySlug, getAllContentSlugs, getRelatedContent } from '@/lib/mdx';
 import { mdxComponents } from '@/lib/mdx/components';
 import { isValidMarket, isValidCategory, Market, Category, marketConfig } from '@/lib/i18n/config';
 import { generateAlternates, getCanonicalUrl } from '@/lib/seo/hreflang';
+import { generateArticleSchema } from '@/lib/seo/schema';
 import { ReviewTemplate } from '@/components/marketing/review-template';
 
 interface ContentPageProps {
@@ -75,6 +77,13 @@ export default async function ContentPage({ params }: ContentPageProps) {
 
   // For review pages, use the ReviewTemplate
   if (content.meta.rating) {
+    const relatedArticles = await getRelatedContent(
+      market as Market,
+      category as Category,
+      slug,
+      3
+    );
+
     return (
       <ReviewTemplate
         review={{
@@ -101,17 +110,33 @@ export default async function ContentPage({ params }: ContentPageProps) {
           competitors: [],
           content: '', // Will be rendered via MDX below
         }}
+        relatedArticles={relatedArticles}
       />
     );
   }
 
   // For other content types, render MDX directly with dark theme
+  const articleUrl = getCanonicalUrl(market as Market, `/${category}/${slug}`);
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(generateArticleSchema({
+            title: content.meta.title,
+            description: content.meta.description,
+            publishDate: content.meta.publishDate || new Date().toISOString(),
+            modifiedDate: content.meta.modifiedDate || new Date().toISOString(),
+            author: content.meta.author || 'SmartFinPro',
+            url: articleUrl,
+          })),
+        }}
+      />
       <div className="container mx-auto px-4 py-16">
         <article className="max-w-4xl mx-auto prose prose-lg prose-invert prose-headings:text-white prose-p:text-slate-400 prose-a:text-emerald-400 prose-strong:text-white prose-code:text-emerald-400 prose-pre:bg-slate-900/50 prose-pre:border prose-pre:border-slate-800">
           <h1 className="gradient-text">{content.meta.title}</h1>
-          <MDXRemote source={content.content} components={mdxComponents} />
+          <MDXRemote source={content.content} components={mdxComponents} options={{ mdxOptions: { remarkPlugins: [remarkGfm] } }} />
         </article>
       </div>
     </div>

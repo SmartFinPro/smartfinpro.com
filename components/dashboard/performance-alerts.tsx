@@ -97,7 +97,7 @@ export function PerformanceAlerts({ pages, stats }: PerformanceAlertsProps) {
               <DollarSign className="h-5 w-5 text-amber-600" />
             </div>
             <div>
-              <p className="text-2xl font-bold">${stats.potentialLostRevenue.toLocaleString()}</p>
+              <p className="text-2xl font-bold">${stats.potentialLostRevenue.toLocaleString('en-US')}</p>
               <p className="text-xs text-muted-foreground">Est. Lost Revenue</p>
             </div>
           </div>

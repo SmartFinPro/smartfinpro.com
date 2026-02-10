@@ -39,38 +39,38 @@
 }
 
 .dark {
-  --background: #0a0a0a;
+  --background: #0f0a1a;
   --foreground: #fafafa;
-  --card: #171717;
+  --card: #1a0f2e;
   --card-foreground: #fafafa;
-  --popover: #171717;
+  --popover: #1a0f2e;
   --popover-foreground: #fafafa;
-  --primary: #e5e5e5;
-  --primary-foreground: #171717;
-  --secondary: #262626;
+  --primary: #00d4ff;
+  --primary-foreground: #0f0a1a;
+  --secondary: #2d1b4e;
   --secondary-foreground: #fafafa;
-  --muted: #262626;
-  --muted-foreground: #a3a3a3;
-  --accent: #262626;
+  --muted: #2d1b4e;
+  --muted-foreground: #a78bfa;
+  --accent: #2d1b4e;
   --accent-foreground: #fafafa;
   --destructive: #dc2626;
   --destructive-foreground: #fafafa;
-  --border: rgba(255, 255, 255, 0.1);
-  --input: rgba(255, 255, 255, 0.15);
-  --ring: #737373;
-  --chart-1: #3b82f6;
-  --chart-2: #22c55e;
+  --border: rgba(139, 92, 246, 0.2);
+  --input: rgba(139, 92, 246, 0.25);
+  --ring: #8b5cf6;
+  --chart-1: #00d4ff;
+  --chart-2: #8b5cf6;
   --chart-3: #f59e0b;
   --chart-4: #a855f7;
-  --chart-5: #ef4444;
-  --sidebar: #171717;
+  --chart-5: #06b6d4;
+  --sidebar: #1a0f2e;
   --sidebar-foreground: #fafafa;
-  --sidebar-primary: #3b82f6;
-  --sidebar-primary-foreground: #fafafa;
-  --sidebar-accent: #262626;
+  --sidebar-primary: #00d4ff;
+  --sidebar-primary-foreground: #0f0a1a;
+  --sidebar-accent: #2d1b4e;
   --sidebar-accent-foreground: #fafafa;
-  --sidebar-border: rgba(255, 255, 255, 0.1);
-  --sidebar-ring: #737373;
+  --sidebar-border: rgba(139, 92, 246, 0.2);
+  --sidebar-ring: #8b5cf6;
 }
 
 @layer base {
@@ -127,9 +127,9 @@
 }
 
 /* Fix Safari filter rendering on animated elements */
-.glow-emerald,
-.glow-blue,
-.glow-purple {
+.glow-cyan,
+.glow-purple,
+.glow-violet {
   -webkit-transform: translateZ(0);
   transform: translateZ(0);
   -webkit-backface-visibility: hidden;
@@ -317,18 +317,18 @@ body {
   }
 }
 
-.glow-emerald {
-  background: radial-gradient(circle, rgba(16, 185, 129, 0.4) 0%, transparent 70%);
+.glow-cyan {
+  background: radial-gradient(circle, rgba(0, 212, 255, 0.4) 0%, transparent 70%);
   animation: glow-pulse 4s ease-in-out infinite;
 }
 
-.glow-blue {
-  background: radial-gradient(circle, rgba(59, 130, 246, 0.4) 0%, transparent 70%);
+.glow-purple {
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.4) 0%, transparent 70%);
   animation: glow-pulse 4s ease-in-out infinite 1s;
 }
 
-.glow-purple {
-  background: radial-gradient(circle, rgba(139, 92, 246, 0.3) 0%, transparent 70%);
+.glow-violet {
+  background: radial-gradient(circle, rgba(167, 139, 250, 0.3) 0%, transparent 70%);
   animation: glow-pulse 5s ease-in-out infinite 0.5s;
 }
 
@@ -347,7 +347,7 @@ body {
   left: 20%;
   width: 600px;
   height: 600px;
-  background: radial-gradient(circle, rgba(16, 185, 129, 0.3) 0%, transparent 60%);
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.35) 0%, transparent 60%);
   -webkit-animation: aurora 8s ease-in-out infinite;
   animation: aurora 8s ease-in-out infinite;
   -webkit-filter: blur(80px);
@@ -361,7 +361,7 @@ body {
   right: 10%;
   width: 500px;
   height: 500px;
-  background: radial-gradient(circle, rgba(59, 130, 246, 0.25) 0%, transparent 60%);
+  background: radial-gradient(circle, rgba(0, 212, 255, 0.25) 0%, transparent 60%);
   -webkit-animation: aurora-secondary 10s ease-in-out infinite;
   animation: aurora-secondary 10s ease-in-out infinite;
   -webkit-filter: blur(80px);
@@ -381,10 +381,10 @@ body {
 }
 
 .glass-card:hover {
-  border-color: rgba(16, 185, 129, 0.4);
+  border-color: rgba(0, 212, 255, 0.4);
   box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.4),
-    0 0 40px rgba(16, 185, 129, 0.15),
+    0 0 40px rgba(139, 92, 246, 0.2),
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
   transform: translateY(-4px);
 }
@@ -402,9 +402,9 @@ body {
 }
 
 .glass-card-light:hover {
-  border-color: rgba(16, 185, 129, 0.3);
+  border-color: rgba(139, 92, 246, 0.3);
   box-shadow:
-    0 8px 40px rgba(16, 185, 129, 0.12),
+    0 8px 40px rgba(139, 92, 246, 0.12),
     0 4px 24px rgba(0, 0, 0, 0.08),
     inset 0 1px 0 rgba(255, 255, 255, 0.9);
   transform: translateY(-4px);
@@ -441,7 +441,7 @@ body {
 
 /* Gradient Text */
 .gradient-text {
-  background: linear-gradient(135deg, #10b981 0%, #3b82f6 50%, #8b5cf6 100%);
+  background: linear-gradient(135deg, #00d4ff 0%, #8b5cf6 50%, #f59e0b 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -464,7 +464,7 @@ body {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%);
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(0, 212, 255, 0.1) 100%);
   border-radius: inherit;
   opacity: 0;
   transition: opacity 0.3s ease;
@@ -474,6 +474,43 @@ body {
   opacity: 1;
 }
 
+/* ============================================================
+   MARQUEE TRUST TICKER
+   ============================================================ */
+@keyframes marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.trust-marquee {
+  display: flex;
+  width: max-content;
+  animation: marquee 30s linear infinite;
+  will-change: transform;
+}
+
+.trust-marquee:hover {
+  animation-play-state: paused;
+}
+
+/* ============================================================
+   TABULAR NUMBERS — prevents layout shift on dynamic values
+   ============================================================ */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Apply tabular-nums globally to stats/numbers */
+.stat-glow,
+.gradient-text,
+[data-slot="stat"] {
+  font-variant-numeric: tabular-nums;
+}
+
 /* Smooth scroll */
 html {
   scroll-behavior: smooth;
@@ -481,7 +518,7 @@ html {
 
 /* Selection color */
 ::selection {
-  background: rgba(16, 185, 129, 0.3);
+  background: rgba(139, 92, 246, 0.3);
   color: inherit;
 }
 
@@ -497,12 +534,12 @@ html {
   --dash-border: #e2e8f0;
   --dash-text: #1e293b;
   --dash-text-muted: #64748b;
-  --dash-primary: #10b981;
-  --dash-primary-light: #d1fae5;
+  --dash-primary: #8b5cf6;
+  --dash-primary-light: #ede9fe;
   --dash-secondary: #0f172a;
-  --dash-accent-blue: #1e3a5a;
-  --dash-accent-mint: #6ee7b7;
-  --dash-success: #10b981;
+  --dash-accent-blue: #00d4ff;
+  --dash-accent-mint: #a78bfa;
+  --dash-success: #8b5cf6;
   --dash-danger: #ef4444;
 }
 
@@ -639,10 +676,10 @@ html {
 
 /* Dashboard Charts - Donut style */
 .dashboard-donut {
-  --donut-navy: #1e3a5a;
-  --donut-teal: #14b8a6;
-  --donut-mint: #6ee7b7;
-  --donut-light-mint: #a7f3d0;
+  --donut-navy: #1a0f2e;
+  --donut-teal: #00d4ff;
+  --donut-mint: #a78bfa;
+  --donut-light-mint: #c4b5fd;
 }
 
 /* Dashboard Table */
@@ -689,5 +726,5 @@ html {
 }
 
 .dashboard-progress .bar.blue {
-  background: linear-gradient(90deg, var(--dash-accent-blue), #3b82f6);
+  background: linear-gradient(90deg, var(--dash-accent-blue), #8b5cf6);
 }

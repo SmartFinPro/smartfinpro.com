@@ -30,16 +30,19 @@ export async function createClient() {
 
 // Service client for server-side operations with elevated privileges
 export function createServiceClient() {
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return [];
-        },
-        setAll() {},
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_KEY;
+
+  if (!url || !key) {
+    throw new Error('Supabase environment variables not configured');
+  }
+
+  return createServerClient(url, key, {
+    cookies: {
+      getAll() {
+        return [];
       },
-    }
-  );
+      setAll() {},
+    },
+  });
 }

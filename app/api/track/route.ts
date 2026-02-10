@@ -36,6 +36,11 @@ interface TrackPayload {
 
 export async function POST(request: NextRequest) {
   try {
+    // Bail out early if Supabase is not configured
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
+      return NextResponse.json({ success: true, skipped: true });
+    }
+
     // Get client IP
     const forwardedFor = request.headers.get('x-forwarded-for');
     const realIp = request.headers.get('x-real-ip');
@@ -94,8 +99,8 @@ export async function POST(request: NextRequest) {
         });
 
         if (error) {
-          console.error('Error tracking pageview:', error);
-          return NextResponse.json({ error: 'Failed to track pageview' }, { status: 500 });
+          // Log but never fail — analytics must not affect UX
+          if (process.env.NODE_ENV === 'development') console.warn('Analytics: pageview insert failed');
         }
 
         return NextResponse.json({ success: true });
@@ -119,8 +124,7 @@ export async function POST(request: NextRequest) {
         });
 
         if (error) {
-          console.error('Error tracking event:', error);
-          return NextResponse.json({ error: 'Failed to track event' }, { status: 500 });
+          if (process.env.NODE_ENV === 'development') console.warn('Analytics: event insert failed');
         }
 
         return NextResponse.json({ success: true });
@@ -142,8 +146,7 @@ export async function POST(request: NextRequest) {
           .limit(1);
 
         if (error) {
-          console.error('Error updating page view:', error);
-          return NextResponse.json({ error: 'Failed to update' }, { status: 500 });
+          if (process.env.NODE_ENV === 'development') console.warn('Analytics: page view update failed');
         }
 
         return NextResponse.json({ success: true });
@@ -153,8 +156,8 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Unknown track type' }, { status: 400 });
     }
   } catch (error) {
-    console.error('Track API error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    // Analytics should never return errors to the client
+    return NextResponse.json({ success: true, skipped: true });
   }
 }
 

@@ -31,20 +31,20 @@ const iconMap: Record<string, React.ElementType> = {
 };
 
 const factColors = [
-  { bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', icon: 'text-emerald-400', accent: 'text-emerald-400' },
-  { bg: 'bg-blue-500/10', border: 'border-blue-500/20', icon: 'text-blue-400', accent: 'text-blue-400' },
+  { bg: 'bg-cyan-500/10', border: 'border-cyan-500/20', icon: 'text-cyan-400', accent: 'text-cyan-400' },
   { bg: 'bg-violet-500/10', border: 'border-violet-500/20', icon: 'text-violet-400', accent: 'text-violet-400' },
+  { bg: 'bg-amber-500/10', border: 'border-amber-500/20', icon: 'text-amber-400', accent: 'text-amber-400' },
 ];
 
 export function QuickSummary({ facts, lastUpdated, testingNote }: QuickSummaryProps) {
   return (
     <div className="not-prose my-8 rounded-2xl border border-slate-800/60 bg-white/[0.02] backdrop-blur-xl overflow-hidden">
       {/* Header */}
-      <div className="px-6 py-4 border-b border-slate-800/40 bg-gradient-to-r from-emerald-500/5 via-transparent to-blue-500/5">
+      <div className="px-6 py-4 border-b border-violet-500/20 bg-gradient-to-r from-violet-500/5 via-transparent to-cyan-500/5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
-              <Zap className="h-4 w-4 text-emerald-400" />
+            <div className="w-8 h-8 rounded-lg bg-violet-500/10 border border-violet-500/20 flex items-center justify-center">
+              <Zap className="h-4 w-4 text-violet-400" />
             </div>
             <div>
               <h3 className="text-sm font-bold text-white">Quick Summary</h3>
@@ -99,7 +99,7 @@ export function QuickSummary({ facts, lastUpdated, testingNote }: QuickSummaryPr
       {testingNote && (
         <div className="px-6 py-3 border-t border-slate-800/40 bg-slate-900/30">
           <div className="flex items-center gap-2 text-[11px] text-slate-500">
-            <CheckCircle className="h-3 w-3 text-emerald-500/60" />
+            <CheckCircle className="h-3 w-3 text-cyan-500/60" />
             {testingNote}
           </div>
         </div>

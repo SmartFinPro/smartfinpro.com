@@ -5,7 +5,6 @@ import {
   Calendar,
   Clock,
   User,
-  ChevronRight,
   Sparkles,
   CheckCircle,
   XCircle,
@@ -19,16 +18,24 @@ import { QuickVerdictBox } from './cta-box';
 import { FAQSection } from './faq-section';
 import { ComparisonTable } from './comparison-table';
 import { NewsletterBox } from './newsletter-box';
+import { RelatedArticles } from './related-articles';
+import { Breadcrumb } from './breadcrumb';
 import { generateReviewSchema } from '@/lib/seo/schema';
+import { categoryConfig } from '@/lib/i18n/config';
+import type { Market, Category } from '@/lib/i18n/config';
+import type { ContentItem } from '@/lib/mdx';
 import type { ReviewData } from '@/types';
 
 interface ReviewTemplateProps {
   review: ReviewData;
+  relatedArticles?: ContentItem[];
 }
 
-export function ReviewTemplate({ review }: ReviewTemplateProps) {
+export function ReviewTemplate({ review, relatedArticles }: ReviewTemplateProps) {
+  const marketPrefix = review.market === 'us' ? '' : `/${review.market}`;
+  const categoryName = categoryConfig[review.category as Category]?.name || review.category.replace('-', ' ');
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
+    <article className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950" itemScope itemType="https://schema.org/Review">
       {/* Schema Markup */}
       <script
         type="application/ld+json"
@@ -40,30 +47,23 @@ export function ReviewTemplate({ review }: ReviewTemplateProps) {
       {/* Hero Section */}
       <section className="relative overflow-hidden">
         {/* Background glows */}
-        <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-emerald-500/10 rounded-full blur-[120px]" />
+        <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-violet-500/10 rounded-full blur-[120px]" />
         <div className="absolute top-0 right-1/4 w-[400px] h-[400px] bg-blue-500/10 rounded-full blur-[100px]" />
 
         <div className="container relative z-10 mx-auto px-4 py-16 lg:py-20">
           <div className="max-w-4xl mx-auto">
             {/* Breadcrumb */}
-            <nav className="flex items-center gap-2 text-sm text-slate-500 mb-8">
-              <Link href="/" className="hover:text-emerald-400 transition-colors">
-                Home
-              </Link>
-              <ChevronRight className="h-4 w-4" />
-              <Link
-                href={`/${review.category}`}
-                className="hover:text-emerald-400 transition-colors capitalize"
-              >
-                {review.category.replace('-', ' ')}
-              </Link>
-              <ChevronRight className="h-4 w-4" />
-              <span className="text-slate-300">{review.productName}</span>
-            </nav>
+            <Breadcrumb
+              items={[
+                { label: 'Home', href: marketPrefix || '/' },
+                { label: categoryName, href: `${marketPrefix}/${review.category}` },
+                { label: review.productName },
+              ]}
+            />
 
             {/* Badge */}
             <div className="inline-flex items-center gap-2 rounded-full badge-premium px-4 py-2 mb-6">
-              <Sparkles className="h-4 w-4 text-emerald-400" />
+              <Sparkles className="h-4 w-4 text-cyan-400" />
               <span className="kicker text-slate-300">Expert Review</span>
             </div>
 
@@ -82,7 +82,7 @@ export function ReviewTemplate({ review }: ReviewTemplateProps) {
             {/* Meta info */}
             <div className="flex flex-wrap items-center gap-6 text-sm text-slate-500 mb-8">
               <div className="flex items-center gap-2">
-                <User className="h-4 w-4 text-emerald-400" />
+                <User className="h-4 w-4 text-cyan-400" />
                 <span>By {review.author}</span>
               </div>
               {review.reviewedBy && (
@@ -93,14 +93,14 @@ export function ReviewTemplate({ review }: ReviewTemplateProps) {
               )}
               <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-violet-400" />
-                <span>
+                <time dateTime={review.modifiedDate}>
                   Updated{' '}
                   {new Date(review.modifiedDate).toLocaleDateString('en-US', {
                     month: 'long',
                     day: 'numeric',
                     year: 'numeric',
                   })}
-                </span>
+                </time>
               </div>
               <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4 text-amber-400" />
@@ -137,7 +137,7 @@ export function ReviewTemplate({ review }: ReviewTemplateProps) {
             <Button
               asChild
               size="lg"
-              className="btn-shimmer h-14 px-8 text-lg bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 border-0 shadow-lg shadow-emerald-500/25"
+              className="btn-shimmer h-14 px-8 text-lg bg-gradient-to-r from-violet-500 to-violet-600 hover:from-violet-600 hover:to-violet-700 border-0 shadow-lg shadow-violet-500/25"
             >
               <Link href={review.affiliateUrl}>
                 Try {review.productName} Free
@@ -153,8 +153,8 @@ export function ReviewTemplate({ review }: ReviewTemplateProps) {
         <div className="max-w-4xl mx-auto">
           <div className="glass-card rounded-2xl p-8">
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center">
-                <Zap className="h-5 w-5 text-emerald-400" />
+              <div className="w-10 h-10 rounded-lg bg-violet-500/20 flex items-center justify-center">
+                <Zap className="h-5 w-5 text-cyan-400" />
               </div>
               <h2 className="text-xl font-bold text-white">Quick Verdict</h2>
             </div>
@@ -162,13 +162,13 @@ export function ReviewTemplate({ review }: ReviewTemplateProps) {
             <div className="grid md:grid-cols-2 gap-8">
               {/* Pros */}
               <div>
-                <h3 className="text-sm font-semibold text-emerald-400 uppercase tracking-wider mb-4">
+                <h3 className="text-sm font-semibold text-cyan-400 uppercase tracking-wider mb-4">
                   What We Love
                 </h3>
                 <ul className="space-y-3">
                   {review.pros.slice(0, 4).map((pro, i) => (
                     <li key={i} className="flex items-start gap-3">
-                      <CheckCircle className="h-5 w-5 text-emerald-400 shrink-0 mt-0.5" />
+                      <CheckCircle className="h-5 w-5 text-cyan-400 shrink-0 mt-0.5" />
                       <span className="text-slate-300">{pro}</span>
                     </li>
                   ))}
@@ -221,7 +221,7 @@ export function ReviewTemplate({ review }: ReviewTemplateProps) {
                   <a
                     key={section.id}
                     href={`#${section.id}`}
-                    className="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-400 hover:text-emerald-400 hover:bg-slate-800/50 transition-all"
+                    className="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-400 hover:text-cyan-400 hover:bg-slate-800/50 transition-all"
                   >
                     <span className="w-6 h-6 rounded bg-slate-800 flex items-center justify-center text-xs font-medium text-slate-500">
                       {i + 1}
@@ -240,7 +240,7 @@ export function ReviewTemplate({ review }: ReviewTemplateProps) {
         <div className="max-w-4xl mx-auto">
           {/* Content will be rendered via MDX */}
           <div
-            className="prose prose-lg prose-invert max-w-none prose-headings:text-white prose-p:text-slate-400 prose-a:text-emerald-400 prose-strong:text-white"
+            className="prose prose-lg prose-invert max-w-none prose-headings:text-white prose-p:text-slate-400 prose-a:text-cyan-400 prose-strong:text-white"
             dangerouslySetInnerHTML={{ __html: review.content }}
           />
         </div>
@@ -297,8 +297,8 @@ export function ReviewTemplate({ review }: ReviewTemplateProps) {
               {review.testimonials.map((testimonial, i) => (
                 <div key={i} className="glass-card rounded-2xl p-6">
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="h-12 w-12 rounded-full bg-gradient-to-br from-emerald-500/20 to-blue-500/20 flex items-center justify-center border border-slate-700">
-                      <span className="font-semibold text-emerald-400 text-lg">
+                    <div className="h-12 w-12 rounded-full bg-gradient-to-br from-violet-500/20 to-blue-500/20 flex items-center justify-center border border-slate-700">
+                      <span className="font-semibold text-cyan-400 text-lg">
                         {testimonial.name[0]}
                       </span>
                     </div>
@@ -337,12 +337,21 @@ export function ReviewTemplate({ review }: ReviewTemplateProps) {
         </div>
       </section>
 
+      {/* Related Articles */}
+      {relatedArticles && relatedArticles.length > 0 && (
+        <RelatedArticles
+          articles={relatedArticles}
+          market={review.market as Market}
+          category={review.category as Category}
+        />
+      )}
+
       {/* Final CTA */}
       <section className="container mx-auto px-4 mb-16">
         <div className="max-w-4xl mx-auto">
           <div className="glass-card rounded-2xl p-8 md:p-12 text-center relative overflow-hidden">
             {/* Background glow */}
-            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 via-transparent to-blue-500/10" />
+            <div className="absolute inset-0 bg-gradient-to-br from-violet-500/10 via-transparent to-blue-500/10" />
 
             <div className="relative z-10">
               <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
@@ -355,7 +364,7 @@ export function ReviewTemplate({ review }: ReviewTemplateProps) {
                 <Button
                   asChild
                   size="lg"
-                  className="btn-shimmer h-14 px-8 text-lg bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 border-0 shadow-lg shadow-emerald-500/25"
+                  className="btn-shimmer h-14 px-8 text-lg bg-gradient-to-r from-violet-500 to-violet-600 hover:from-violet-600 hover:to-violet-700 border-0 shadow-lg shadow-violet-500/25"
                 >
                   <Link href={review.affiliateUrl}>
                     Start Free Trial
@@ -368,7 +377,7 @@ export function ReviewTemplate({ review }: ReviewTemplateProps) {
                   size="lg"
                   className="h-14 px-8 text-lg border-slate-700 bg-slate-800/50 text-slate-300 hover:bg-slate-700 hover:text-white"
                 >
-                  <Link href={`/${review.category}`}>Compare Alternatives</Link>
+                  <Link href={`${marketPrefix}/${review.category}`}>Compare Alternatives</Link>
                 </Button>
               </div>
             </div>
@@ -386,7 +395,7 @@ export function ReviewTemplate({ review }: ReviewTemplateProps) {
               purchase. This does not affect our editorial independence.{' '}
               <Link
                 href="/affiliate-disclosure"
-                className="text-emerald-400 hover:underline"
+                className="text-cyan-400 hover:underline"
               >
                 Learn more
               </Link>
@@ -403,6 +412,6 @@ export function ReviewTemplate({ review }: ReviewTemplateProps) {
           </div>
         </div>
       </section>
-    </div>
+    </article>
   );
 }

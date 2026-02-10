@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
@@ -17,16 +17,36 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import { subscribeWithEmail } from '@/lib/actions/newsletter';
+import { useNewsletterTracking, useVisibilityTracking } from '@/lib/hooks/use-component-tracking';
 
 interface NewsletterBoxProps {
-  variant?: 'default' | 'compact' | 'hero';
+  variant?: 'default' | 'compact' | 'hero' | 'inline';
   className?: string;
+  headline?: string;
+  description?: string;
 }
 
-export function NewsletterBox({ variant = 'default', className = '' }: NewsletterBoxProps) {
+export function NewsletterBox({
+  variant = 'default',
+  className = '',
+  headline,
+  description,
+}: NewsletterBoxProps) {
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
+
+  // Tracking
+  const { trackFormView, trackFocus, trackSubmit } = useNewsletterTracking(variant);
+  const visibilityRef = useVisibilityTracking(`newsletter_${variant}`);
+  const hasTrackedView = useRef(false);
+
+  useEffect(() => {
+    if (!hasTrackedView.current) {
+      hasTrackedView.current = true;
+      trackFormView();
+    }
+  }, [trackFormView]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,6 +54,7 @@ export function NewsletterBox({ variant = 'default', className = '' }: Newslette
     if (!email || !email.includes('@')) {
       setErrorMessage('Please enter a valid email address');
       setStatus('error');
+      trackSubmit(false, 'invalid_email');
       return;
     }
 
@@ -45,19 +66,25 @@ export function NewsletterBox({ variant = 'default', className = '' }: Newslette
     if (result.success) {
       setStatus('success');
       setEmail('');
+      trackSubmit(true);
     } else {
       setStatus('error');
       setErrorMessage(result.message || 'Something went wrong. Please try again.');
+      trackSubmit(false, result.message);
     }
+  };
+
+  const handleFocus = () => {
+    trackFocus();
   };
 
   // Success State
   if (status === 'success') {
     return (
-      <div className={`glass-card rounded-2xl border-emerald-500/50 ${className}`}>
+      <div className={`glass-card rounded-2xl border-violet-500/50 ${className}`}>
         <div className="p-8 text-center">
-          <div className="w-16 h-16 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-            <CheckCircle className="h-8 w-8 text-emerald-400" />
+          <div className="w-16 h-16 bg-violet-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+            <CheckCircle className="h-8 w-8 text-cyan-400" />
           </div>
           <h3 className="text-2xl font-bold text-white mb-2">
             Check Your Inbox!
@@ -79,8 +106,8 @@ export function NewsletterBox({ variant = 'default', className = '' }: Newslette
       <div className={`glass-card rounded-xl overflow-hidden ${className}`}>
         <div className="p-4">
           <div className="flex items-center gap-2 mb-3">
-            <FileText className="h-5 w-5 text-emerald-400" />
-            <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400">Free PDF</span>
+            <FileText className="h-5 w-5 text-cyan-400" />
+            <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-violet-500/20 text-cyan-400">Free PDF</span>
           </div>
           <h4 className="font-bold text-white mb-2">The 5-Minute AI Finance Workflow</h4>
           <p className="text-sm text-slate-400 mb-3">
@@ -92,10 +119,11 @@ export function NewsletterBox({ variant = 'default', className = '' }: Newslette
               placeholder="Your email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              onFocus={handleFocus}
               className="text-sm bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500"
               disabled={status === 'loading'}
             />
-            <Button type="submit" className="w-full bg-emerald-500 hover:bg-emerald-600 text-white" size="sm" disabled={status === 'loading'}>
+            <Button type="submit" className="w-full bg-violet-500 hover:bg-violet-600 text-white" size="sm" disabled={status === 'loading'}>
               {status === 'loading' ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
@@ -111,11 +139,64 @@ export function NewsletterBox({ variant = 'default', className = '' }: Newslette
     );
   }
 
+  // Inline Variant (for between content blocks)
+  if (variant === 'inline') {
+    return (
+      <div ref={visibilityRef} className={`glass-card rounded-xl overflow-hidden my-8 ${className}`}>
+        <div className="p-5 md:p-6">
+          <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-6">
+            {/* Icon & Text */}
+            <div className="flex items-center gap-3 flex-1">
+              <div className="w-10 h-10 rounded-lg bg-violet-500/20 flex items-center justify-center flex-shrink-0">
+                <FileText className="h-5 w-5 text-violet-400" />
+              </div>
+              <div>
+                <h4 className="font-bold text-white text-sm">{headline || 'Get the Free AI Finance Workflow Guide'}</h4>
+                <p className="text-xs text-slate-400">{description || 'Join 12,000+ finance professionals. Weekly AI tips + exclusive templates.'}</p>
+              </div>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleSubmit} className="flex gap-2 flex-shrink-0">
+              <Input
+                type="email"
+                placeholder="Your email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                onFocus={handleFocus}
+                className="w-48 h-9 text-sm bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500"
+                disabled={status === 'loading'}
+              />
+              <Button
+                type="submit"
+                size="sm"
+                className="h-9 px-4 bg-violet-500 hover:bg-violet-600 text-white gap-1.5"
+                disabled={status === 'loading'}
+              >
+                {status === 'loading' ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <>
+                    Get PDF
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </>
+                )}
+              </Button>
+            </form>
+          </div>
+          {status === 'error' && (
+            <p className="text-red-400 text-xs mt-2 md:text-right">{errorMessage}</p>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   // Default & Hero Variant
   return (
-    <div className={`glass-card rounded-2xl overflow-hidden ${className}`}>
+    <div ref={visibilityRef} className={`glass-card rounded-2xl overflow-hidden ${className}`}>
       {/* Header Banner */}
-      <div className="bg-gradient-to-r from-emerald-500 via-emerald-600 to-teal-600 px-6 py-4 text-white">
+      <div className="bg-gradient-to-r from-violet-500 via-violet-600 to-teal-600 px-6 py-4 text-white">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Sparkles className="h-5 w-5" />
@@ -135,7 +216,7 @@ export function NewsletterBox({ variant = 'default', className = '' }: Newslette
               {/* PDF Mockup */}
               <div className="w-36 h-48 bg-slate-800 rounded-lg shadow-xl border border-slate-700 flex flex-col overflow-hidden">
                 {/* PDF Header */}
-                <div className="bg-emerald-500 p-2">
+                <div className="bg-violet-500 p-2">
                   <div className="h-1 w-12 bg-white/60 rounded mb-1"></div>
                   <div className="h-1 w-8 bg-white/40 rounded"></div>
                 </div>
@@ -145,13 +226,13 @@ export function NewsletterBox({ variant = 'default', className = '' }: Newslette
                   <div className="h-1.5 w-4/5 bg-slate-700 rounded"></div>
                   <div className="h-1.5 w-full bg-slate-700 rounded"></div>
                   <div className="h-1.5 w-3/4 bg-slate-700 rounded"></div>
-                  <div className="h-6 w-full bg-emerald-500/20 rounded mt-3"></div>
+                  <div className="h-6 w-full bg-violet-500/20 rounded mt-3"></div>
                   <div className="h-1.5 w-full bg-slate-700 rounded"></div>
                   <div className="h-1.5 w-2/3 bg-slate-700 rounded"></div>
                 </div>
               </div>
               {/* Badge */}
-              <div className="absolute -top-2 -right-2 bg-emerald-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
+              <div className="absolute -top-2 -right-2 bg-violet-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
                 FREE
               </div>
             </div>
@@ -177,7 +258,7 @@ export function NewsletterBox({ variant = 'default', className = '' }: Newslette
                   '5-point compliance checklist before automating',
                 ].map((item, i) => (
                   <li key={i} className="flex items-start gap-2 text-sm">
-                    <CheckCircle className="h-4 w-4 text-emerald-400 mt-0.5 flex-shrink-0" />
+                    <CheckCircle className="h-4 w-4 text-cyan-400 mt-0.5 flex-shrink-0" />
                     <span className="text-slate-300">{item}</span>
                   </li>
                 ))}
@@ -192,13 +273,14 @@ export function NewsletterBox({ variant = 'default', className = '' }: Newslette
                   placeholder="Enter your best email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="flex-1 h-12 bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500 focus:border-emerald-500"
+                  onFocus={handleFocus}
+                  className="flex-1 h-12 bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500 focus:border-violet-500"
                   disabled={status === 'loading'}
                 />
                 <Button
                   type="submit"
                   size="lg"
-                  className="h-12 px-6 gap-2 btn-shimmer bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 border-0 shadow-lg shadow-emerald-500/25"
+                  className="h-12 px-6 gap-2 btn-shimmer bg-gradient-to-r from-violet-500 to-violet-600 hover:from-violet-600 hover:to-violet-700 border-0 shadow-lg shadow-violet-500/25"
                   disabled={status === 'loading'}
                 >
                   {status === 'loading' ? (
@@ -223,7 +305,7 @@ export function NewsletterBox({ variant = 'default', className = '' }: Newslette
             {/* Trust Signals */}
             <div className="flex flex-wrap items-center gap-4 mt-4 pt-4 border-t border-slate-800 text-xs text-slate-500">
               <span className="flex items-center gap-1">
-                <Users className="h-3 w-3 text-emerald-400" />
+                <Users className="h-3 w-3 text-cyan-400" />
                 5,000+ finance pros
               </span>
               <span className="flex items-center gap-1">

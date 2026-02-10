@@ -155,7 +155,7 @@ export function LinkTable() {
               </span>
             </TableCell>
             <TableCell className="text-right font-medium">
-              {link.clicks.toLocaleString()}
+              {link.clicks.toLocaleString('en-US')}
             </TableCell>
             <TableCell>
               <Badge variant={link.active ? 'default' : 'secondary'}>

@@ -34,25 +34,25 @@ interface SpreadComparisonProps {
 }
 
 const brokerColors: Record<string, string> = {
-  'Interactive Brokers': 'bg-emerald-500',
-  eToro: 'bg-blue-500',
-  'TD Ameritrade': 'bg-violet-500',
+  'Interactive Brokers': 'bg-cyan-500',
+  eToro: 'bg-violet-500',
+  'TD Ameritrade': 'bg-blue-500',
   OANDA: 'bg-amber-500',
   Plus500: 'bg-rose-500',
   'IG Markets': 'bg-red-500',
-  'CMC Markets': 'bg-cyan-500',
-  Questrade: 'bg-teal-500',
+  'CMC Markets': 'bg-teal-500',
+  Questrade: 'bg-indigo-500',
 };
 
 const brokerDots: Record<string, string> = {
-  'Interactive Brokers': 'bg-emerald-400',
-  eToro: 'bg-blue-400',
-  'TD Ameritrade': 'bg-violet-400',
+  'Interactive Brokers': 'bg-cyan-400',
+  eToro: 'bg-violet-400',
+  'TD Ameritrade': 'bg-blue-400',
   OANDA: 'bg-amber-400',
   Plus500: 'bg-rose-400',
   'IG Markets': 'bg-red-400',
-  'CMC Markets': 'bg-cyan-400',
-  Questrade: 'bg-teal-400',
+  'CMC Markets': 'bg-teal-400',
+  Questrade: 'bg-indigo-400',
 };
 
 export function SpreadComparison({ title, data, glass }: SpreadComparisonProps) {
@@ -105,7 +105,7 @@ export function SpreadComparison({ title, data, glass }: SpreadComparisonProps) 
                         </div>
                       </div>
                       {isBest && (
-                        <span className="text-[10px] font-semibold text-emerald-400 uppercase tracking-wider shrink-0">
+                        <span className="text-[10px] font-semibold text-cyan-400 uppercase tracking-wider shrink-0">
                           Best
                         </span>
                       )}
@@ -174,7 +174,7 @@ const costColors: Record<string, { bg: string; icon: string; border: string }> =
   slippage: { bg: 'bg-violet-500/10', icon: 'text-violet-400', border: 'border-violet-500/20' },
   inactivity: { bg: 'bg-slate-500/10', icon: 'text-slate-400', border: 'border-slate-500/20' },
   wire: { bg: 'bg-blue-500/10', icon: 'text-blue-400', border: 'border-blue-500/20' },
-  fx: { bg: 'bg-emerald-500/10', icon: 'text-emerald-400', border: 'border-emerald-500/20' },
+  fx: { bg: 'bg-cyan-500/10', icon: 'text-cyan-400', border: 'border-cyan-500/20' },
   monthly: { bg: 'bg-amber-500/10', icon: 'text-amber-400', border: 'border-amber-500/20' },
   interest: { bg: 'bg-rose-500/10', icon: 'text-rose-400', border: 'border-rose-500/20' },
   origination: { bg: 'bg-orange-500/10', icon: 'text-orange-400', border: 'border-orange-500/20' },
@@ -187,7 +187,7 @@ const costColors: Record<string, { bg: string; icon: string; border: string }> =
   vpn: { bg: 'bg-indigo-500/10', icon: 'text-indigo-400', border: 'border-indigo-500/20' },
   password: { bg: 'bg-purple-500/10', icon: 'text-purple-400', border: 'border-purple-500/20' },
   time: { bg: 'bg-sky-500/10', icon: 'text-sky-400', border: 'border-sky-500/20' },
-  quality: { bg: 'bg-emerald-500/10', icon: 'text-emerald-400', border: 'border-emerald-500/20' },
+  quality: { bg: 'bg-cyan-500/10', icon: 'text-cyan-400', border: 'border-cyan-500/20' },
   security: { bg: 'bg-red-500/10', icon: 'text-red-400', border: 'border-red-500/20' },
   roi: { bg: 'bg-green-500/10', icon: 'text-green-400', border: 'border-green-500/20' },
   subscription: { bg: 'bg-violet-500/10', icon: 'text-violet-400', border: 'border-violet-500/20' },

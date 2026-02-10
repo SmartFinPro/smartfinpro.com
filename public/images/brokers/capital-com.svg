@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 48" fill="none">
+  <rect x="2" y="2" width="44" height="44" rx="10" fill="none" stroke="#E8372C" stroke-width="3"/>
+  <path d="M24 14 C17 14 12 19.5 12 24.5 C12 29.5 17 35 24 35 C28 35 31 33 33 30" stroke="#E8372C" stroke-width="3" stroke-linecap="round" fill="none"/>
+  <text x="56" y="32" font-family="system-ui, -apple-system, sans-serif" font-size="24" font-weight="600" fill="white">Capital.com</text>
+</svg>
