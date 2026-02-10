@@ -61,7 +61,7 @@ export type Category = (typeof categories)[number];
 // Categories available per market
 export const marketCategories: Record<Market, Category[]> = {
   us: ['ai-tools', 'cybersecurity', 'personal-finance', 'trading', 'business-banking'],
-  uk: ['ai-tools', 'cybersecurity', 'trading', 'business-banking'],
+  uk: ['ai-tools', 'cybersecurity', 'trading', 'personal-finance', 'business-banking'],
   ca: ['ai-tools', 'cybersecurity', 'forex', 'personal-finance', 'business-banking'],
   au: ['ai-tools', 'cybersecurity', 'trading', 'forex', 'business-banking'],
 };
