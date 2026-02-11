@@ -8,6 +8,7 @@ import { isValidMarket, isValidCategory, Market, Category, marketConfig } from '
 import { generateAlternates, getCanonicalUrl } from '@/lib/seo/hreflang';
 import { generateArticleSchema } from '@/lib/seo/schema';
 import { ReviewTemplate } from '@/components/marketing/review-template';
+import { CreditCardLeadPopup } from '@/components/ui/credit-card-lead-popup';
 
 interface ContentPageProps {
   params: Promise<{
@@ -85,33 +86,36 @@ export default async function ContentPage({ params }: ContentPageProps) {
     );
 
     return (
-      <ReviewTemplate
-        review={{
-          title: content.meta.title,
-          description: content.meta.description,
-          productName: content.meta.title.split(' ')[0], // Extract product name
-          category: content.meta.category,
-          market: content.meta.market,
-          rating: content.meta.rating,
-          reviewCount: content.meta.reviewCount || 0,
-          affiliateUrl: content.meta.affiliateUrl || '#',
-          pros: content.meta.pros || [],
-          cons: content.meta.cons || [],
-          bestFor: content.meta.bestFor || '',
-          pricing: content.meta.pricing || '',
-          guarantee: content.meta.guarantee,
-          publishDate: content.meta.publishDate,
-          modifiedDate: content.meta.modifiedDate,
-          author: content.meta.author,
-          reviewedBy: content.meta.reviewedBy,
-          faqs: content.meta.faqs || [],
-          sections: content.meta.sections || [],
-          testimonials: [],
-          competitors: [],
-          content: '', // Will be rendered via MDX below
-        }}
-        relatedArticles={relatedArticles}
-      />
+      <>
+        <ReviewTemplate
+          review={{
+            title: content.meta.title,
+            description: content.meta.description,
+            productName: content.meta.title.split(' ')[0], // Extract product name
+            category: content.meta.category,
+            market: content.meta.market,
+            rating: content.meta.rating,
+            reviewCount: content.meta.reviewCount || 0,
+            affiliateUrl: content.meta.affiliateUrl || '#',
+            pros: content.meta.pros || [],
+            cons: content.meta.cons || [],
+            bestFor: content.meta.bestFor || '',
+            pricing: content.meta.pricing || '',
+            guarantee: content.meta.guarantee,
+            publishDate: content.meta.publishDate,
+            modifiedDate: content.meta.modifiedDate,
+            author: content.meta.author,
+            reviewedBy: content.meta.reviewedBy,
+            faqs: content.meta.faqs || [],
+            sections: content.meta.sections || [],
+            testimonials: [],
+            competitors: [],
+            content: '', // Will be rendered via MDX below
+          }}
+          relatedArticles={relatedArticles}
+        />
+        <CreditCardLeadPopup />
+      </>
     );
   }
 
@@ -119,27 +123,30 @@ export default async function ContentPage({ params }: ContentPageProps) {
   const articleUrl = getCanonicalUrl(market as Market, `/${category}/${slug}`);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(generateArticleSchema({
-            title: content.meta.title,
-            description: content.meta.description,
-            publishDate: content.meta.publishDate || new Date().toISOString(),
-            modifiedDate: content.meta.modifiedDate || new Date().toISOString(),
-            author: content.meta.author || 'SmartFinPro',
-            url: articleUrl,
-          })),
-        }}
-      />
-      <div className="container mx-auto px-4 py-16">
-        <article className="max-w-4xl mx-auto prose prose-lg prose-invert prose-headings:text-white prose-p:text-slate-400 prose-a:text-emerald-400 prose-strong:text-white prose-code:text-emerald-400 prose-pre:bg-slate-900/50 prose-pre:border prose-pre:border-slate-800">
-          <h1 className="gradient-text">{content.meta.title}</h1>
-          <MDXRemote source={content.content} components={mdxComponents} options={{ mdxOptions: { remarkPlugins: [remarkGfm] } }} />
-        </article>
+    <>
+      <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(generateArticleSchema({
+              title: content.meta.title,
+              description: content.meta.description,
+              publishDate: content.meta.publishDate || new Date().toISOString(),
+              modifiedDate: content.meta.modifiedDate || new Date().toISOString(),
+              author: content.meta.author || 'SmartFinPro',
+              url: articleUrl,
+            })),
+          }}
+        />
+        <div className="container mx-auto px-4 py-16">
+          <article className="max-w-4xl mx-auto prose prose-lg prose-invert prose-headings:text-white prose-p:text-slate-400 prose-a:text-emerald-400 prose-strong:text-white prose-code:text-emerald-400 prose-pre:bg-slate-900/50 prose-pre:border prose-pre:border-slate-800">
+            <h1 className="gradient-text">{content.meta.title}</h1>
+            <MDXRemote source={content.content} components={mdxComponents} options={{ mdxOptions: { remarkPlugins: [remarkGfm] } }} />
+          </article>
+        </div>
       </div>
-    </div>
+      <CreditCardLeadPopup />
+    </>
   );
 }
 

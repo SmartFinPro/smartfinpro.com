@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
-import { Calculator, Scale, TrendingUp, ArrowRight, Sparkles, Target, BarChart3 } from 'lucide-react';
+import { Calculator, DollarSign, Scale, TrendingUp, ArrowRight, Sparkles, Target, BarChart3 } from 'lucide-react';
 
 export const metadata: Metadata = {
   title: 'Free Financial Tools & Calculators | SmartFinPro',
@@ -28,6 +28,15 @@ const tools = [
     href: '/tools/trading-cost-calculator',
     accent: 'violet',
     category: 'Trading',
+    badge: 'New',
+  },
+  {
+    title: 'Fee Savings Calculator',
+    description: 'See how much you could save by switching from traditional bank mutual funds. Compare fee drag over 10, 20, and 30 years.',
+    icon: DollarSign,
+    href: '/tools/wealthsimple-calculator',
+    accent: 'emerald',
+    category: 'Investing',
     badge: 'New',
   },
   {

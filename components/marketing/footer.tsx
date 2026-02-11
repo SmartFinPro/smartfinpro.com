@@ -20,6 +20,7 @@ const brokerReviews = [
 const toolLinks = [
   { name: 'Broker Finder Quiz', href: '/tools/broker-finder' },
   { name: 'Trading Cost Calculator', href: '/tools/trading-cost-calculator' },
+  { name: 'Fee Savings Calculator', href: '/tools/wealthsimple-calculator' },
   { name: 'AI ROI Calculator', href: '/tools/ai-roi-calculator' },
   { name: 'Loan Calculator', href: '/tools/loan-calculator' },
   { name: 'Broker Comparison', href: '/tools/broker-comparison' },
