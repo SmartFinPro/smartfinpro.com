@@ -32,7 +32,9 @@ schema:
   facts={[
     { icon: "award", label: "Best Overall", value: "IG", detail: "17,000+ markets, FCA regulated since 1974", href: "/go/ig-markets" },
     { icon: "trending", label: "Best for Investors", value: "Hargreaves Lansdown", detail: "£11.95/trade, ISA & SIPP available", href: "/go/hargreaves-lansdown" },
-    { icon: "zap", label: "Best Commission-Free", value: "Trading 212", detail: "£0 commission, fractional shares", href: "/go/trading-212" }
+    { icon: "zap", label: "Best Commission-Free", value: "Trading 212", detail: "£0 commission, fractional shares", href: "/go/trading-212" },
+    { icon: "users", label: "Best Social Trading", value: "eToro", detail: "CopyTrader™, 30M+ users, £0 stocks", href: "/go/etoro" },
+    { icon: "smartphone", label: "Best CFD Mobile", value: "Plus500", detail: "LSE listed, guaranteed stops, spreads from 0.8 pips", href: "/go/plus500" }
   ]}
   lastUpdated="February 2026"
   testingNote="28 FCA-regulated platforms tested over 6 months with 1,800+ real trades"
@@ -72,7 +74,7 @@ The UK offers some of the world's best-regulated trading platforms, with the Fin
 
 ---
 
-## Our Top 5 UK Trading Platforms (2026)
+## Our Top 7 UK Trading Platforms (2026)
 
 After rigorous testing, these platforms offer the best combination of value, features, and reliability for UK investors:
 
@@ -101,6 +103,26 @@ After rigorous testing, these platforms offer the best combination of value, fea
     },
     {
       rank: 3,
+      name: "eToro",
+      slug: "etoro-review",
+      tagline: "Best for Social Trading",
+      rating: 4.6,
+      price: "£0 commission stocks, spreads from 1.0 pip",
+      affiliateUrl: "/go/etoro",
+      highlight: "CopyTrader™, 30M+ users, Smart Portfolios"
+    },
+    {
+      rank: 4,
+      name: "Plus500",
+      slug: "plus500-review",
+      tagline: "Best for CFD Mobile Trading",
+      rating: 4.5,
+      price: "Spreads from 0.8 pips, no commission",
+      affiliateUrl: "/go/plus500",
+      highlight: "LSE listed, simplest CFD platform, guaranteed stops"
+    },
+    {
+      rank: 5,
       name: "Trading 212",
       slug: "trading-212-review",
       tagline: "Best for Commission-Free Trading",
@@ -110,7 +132,7 @@ After rigorous testing, these platforms offer the best combination of value, fea
       highlight: "Truly free investing, 2M+ UK users"
     },
     {
-      rank: 4,
+      rank: 6,
       name: "Interactive Investor",
       slug: "interactive-investor-review",
       tagline: "Best Flat-Fee Platform",
@@ -120,7 +142,7 @@ After rigorous testing, these platforms offer the best combination of value, fea
       highlight: "Simple pricing, great for larger portfolios"
     },
     {
-      rank: 5,
+      rank: 7,
       name: "Freetrade",
       slug: "freetrade-review",
       tagline: "Best for Beginners",
@@ -200,6 +222,40 @@ After rigorous testing, these platforms offer the best combination of value, fea
       verdict: "The best free trading platform in the UK. Commission-free shares plus a competitive CFD offering make it perfect for beginners and cost-conscious traders.",
       pros: ["Zero commission on UK and international shares — truly free trading", "Free ISA with no platform fee and fractional shares from £1", "4.2% interest on uninvested GBP cash in the investment account"],
       con: "E-money licence means no FSCS protection on uninvested cash — different from full banking licence"
+    },
+    {
+      name: "eToro",
+      slug: "etoro",
+      tagline: "Best for Social Trading",
+      rating: 4.6,
+      reviewCount: 34219,
+      leverage: "30:1",
+      leveragePro: "CFD account",
+      spreads: "£0 stocks, from 1.0 pip CFDs",
+      regulation: ["FCA"],
+      minDeposit: "$50 (~£40)",
+      affiliateUrl: "/go/etoro",
+      regions: ["uk"],
+      verdict: "The undisputed leader in social trading. CopyTrader lets you replicate top investors automatically whilst building your own skills. Commission-free real shares plus 30M+ users make it perfect for beginners.",
+      pros: ["CopyTrader™ — automatically copy top-performing investors with verified track records", "Zero commission on real UK and US stock purchases with no platform fee", "30M+ user community with social feeds, sentiment data, and Smart Portfolios"],
+      con: "$5 withdrawal fee, USD-denominated accounts, and wider CFD spreads than specialist brokers"
+    },
+    {
+      name: "Plus500",
+      slug: "plus500",
+      tagline: "Best for CFD Mobile Trading",
+      rating: 4.5,
+      reviewCount: 9421,
+      leverage: "30:1",
+      leveragePro: "Retail (FCA)",
+      spreads: "from 0.8 pips",
+      regulation: ["FCA"],
+      minDeposit: "£100",
+      affiliateUrl: "/go/plus500",
+      regions: ["uk"],
+      verdict: "The cleanest, most intuitive CFD platform available. LSE-listed with guaranteed stop-loss orders and transparent spread-based pricing. Built for mobile-first traders who value simplicity.",
+      pros: ["Intuitive mobile-first platform — cleanest CFD trading interface in the UK", "LSE listed (PLUS.L) with FCA regulation (FRN 509909) and FSCS £85K protection", "Guaranteed stop-loss orders cap your maximum risk on any position"],
+      con: "CFD-only — no real share ownership, no ISA, no spread betting, and limited research tools"
     },
     {
       name: "Interactive Investor",
@@ -287,6 +343,42 @@ After rigorous testing, these platforms offer the best combination of value, fea
   con="Limited investment selection (12,000 vs IG's 17,000+) and no fund access — ETFs only"
   verdict="The best choice for beginners and cost-conscious investors. Trading 212 has made free investing a reality in the UK without compromising on essential features."
 />
+
+<QuickVerdictCard
+  name="eToro"
+  tagline="Best for Social Trading"
+  rating={4.6}
+  badge="Best Social"
+  accentColor="amber"
+  affiliateUrl="/go/etoro"
+  pros={[
+    "CopyTrader™ — automatically replicate top investors with verified track records",
+    "Zero commission on real UK and US stock purchases — own the underlying asset",
+    "30M+ user community with social feeds, Smart Portfolios, and 80+ cryptocurrencies"
+  ]}
+  con="$5 withdrawal fee, USD-only accounts, and wider CFD spreads than specialist brokers like IG"
+  verdict="The clear leader for social trading in the UK. If you want to learn by copying successful investors or value community-driven insights, eToro makes investing accessible and social."
+/>
+
+<QuickVerdictCard
+  name="Plus500"
+  tagline="Best for CFD Mobile Trading"
+  rating={4.5}
+  badge="Best Mobile CFDs"
+  accentColor="blue"
+  affiliateUrl="/go/plus500"
+  pros={[
+    "Cleanest mobile CFD interface — intuitive design built for on-the-go trading",
+    "LSE listed (PLUS.L), FCA regulated (FRN 509909) with FSCS £85K protection",
+    "Guaranteed stop-loss orders — cap your maximum risk on any position"
+  ]}
+  con="CFD-only platform — no real share ownership, no ISA, no spread betting, and limited research tools"
+  verdict="The best mobile CFD platform in the UK. If you trade CFDs and want simplicity, transparency, and guaranteed stops without platform complexity, Plus500 is purpose-built for you."
+/>
+
+<Tip>
+**Can't decide between IG, Plus500, and eToro?** Read our detailed [IG vs Plus500 vs eToro comparison](/uk/trading/ig-vs-plus500-vs-etoro) with head-to-head fee tables, platform comparisons, and specific recommendations by trader profile.
+</Tip>
 
 <SectionHeader title="Best Platform by Investment Style" subtitle="Matched recommendations based on your investing profile and goals." icon="comparison" />
 

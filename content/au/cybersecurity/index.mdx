@@ -25,10 +25,10 @@ schema:
 
 <TrustAuthority
   stats={[
-    { label: "Security Tools Tested", value: "18" },
-    { label: "Attack Simulations", value: "200+" },
-    { label: "Compliance Checks", value: "92" },
-    { label: "AU Finance IT Pros Surveyed", value: "845" }
+    { label: "Security Tools Tested", value: "18", icon: <Shield className="h-5 w-5 text-primary" /> },
+    { label: "Attack Simulations", value: "200+", icon: <AlertTriangle className="h-5 w-5 text-primary" /> },
+    { label: "Compliance Checks", value: "92", icon: <CheckCircle className="h-5 w-5 text-primary" /> },
+    { label: "AU Finance IT Pros Surveyed", value: "845", icon: <Users className="h-5 w-5 text-primary" /> }
   ]}
 />
 
@@ -433,6 +433,15 @@ The Privacy Act applies to all organisations with annual turnover above A$3 mill
 <Tip>
 **NDB scheme tip:** CrowdStrike and Proofpoint provide the forensic capabilities needed to assess whether a suspected breach meets the "serious harm" threshold within the 30-day assessment period. Fast, accurate assessment can be the difference between a contained incident and a reportable breach.
 </Tip>
+
+<HighlightCTA
+  href="/go/crowdstrike"
+  productName="CrowdStrike Falcon"
+  headline="Protect Your Australian Endpoints — Free 15-Day Trial"
+  subtext="Industry-leading threat detection with APRA CPS 234 incident reporting. No credit card required."
+  badge="Best Endpoint Protection"
+  icon="shield"
+/>
 
 ### PCI-DSS Compliance
 

@@ -36,6 +36,8 @@ import {
   Percent,
   Wallet,
   Landmark,
+  Star,
+  Plane,
 } from 'lucide-react';
 
 // Marketing Components
@@ -80,6 +82,7 @@ import { ComparisonMatrix, CompactMatrix } from '@/components/marketing/comparis
 import { NetworkAnimation, NetworkAnimationMini } from '@/components/marketing/network-animation';
 import { AISavingsCalculator, AISavingsCalculatorCompact } from '@/components/marketing/ai-savings-calculator';
 import { NeuralFinanceSVG } from '@/components/marketing/neural-finance-svg';
+import { CreditCardRewardsCalc } from '@/components/marketing/credit-card-rewards-calc';
 
 // Tip Component
 function Tip({ children }: { children: React.ReactNode }) {
@@ -634,6 +637,7 @@ export const mdxComponents = {
   AISavingsCalculatorCompact,
   NeuralFinanceSVG,
   ExecutiveSummary,
+  CreditCardRewardsCalc,
 
   // Pass through Lucide icons for MDX
   Beaker,
@@ -666,4 +670,6 @@ export const mdxComponents = {
   Wallet,
   Landmark,
   XCircle,
+  Star,
+  Plane,
 };

@@ -2,6 +2,7 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { Hero } from '@/components/marketing/hero';
+import { UKBrokerHeroSlider } from '@/components/home/uk-broker-hero-slider';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -95,6 +96,15 @@ export default async function MarketHomePage({ params }: MarketPageProps) {
           href: '/tools',
         }}
       />
+
+      {/* UK Broker Hero Slider — Exclusive to UK Market */}
+      {marketData === 'uk' && (
+        <section className="py-16 sm:py-20 bg-[#0f0a1a]">
+          <div className="container mx-auto px-4">
+            <UKBrokerHeroSlider />
+          </div>
+        </section>
+      )}
 
       {/* Categories Section */}
       <section className="py-20 bg-background">

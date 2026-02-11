@@ -19,6 +19,7 @@ import {
   Plane,
   Radio,
   Shield,
+  Smartphone,
   Sparkles,
   Star,
   TrendingUp,
@@ -47,6 +48,8 @@ const featureIcons: Record<BrokerSlug, React.ElementType[]> = {
   ibkr: [BarChart3, Globe, TrendingUp],
   investing: [Star, Calendar, Radio],
   revolut: [Globe, Lock, CreditCard],
+  ig: [LineChart, Globe, Shield],
+  plus500: [Shield, Smartphone, BarChart3],
 };
 
 const featureColors: Record<BrokerSlug, { color: string; bg: string }[]> = {
@@ -74,6 +77,16 @@ const featureColors: Record<BrokerSlug, { color: string; bg: string }[]> = {
     { color: 'text-cyan-400', bg: 'bg-cyan-500/15' },
     { color: 'text-violet-400', bg: 'bg-violet-500/15' },
     { color: 'text-emerald-400', bg: 'bg-emerald-500/15' },
+  ],
+  ig: [
+    { color: 'text-rose-400', bg: 'bg-rose-500/15' },
+    { color: 'text-cyan-400', bg: 'bg-cyan-500/15' },
+    { color: 'text-amber-400', bg: 'bg-amber-500/15' },
+  ],
+  plus500: [
+    { color: 'text-blue-400', bg: 'bg-blue-500/15' },
+    { color: 'text-emerald-400', bg: 'bg-emerald-500/15' },
+    { color: 'text-violet-400', bg: 'bg-violet-500/15' },
   ],
 };
 

@@ -20,6 +20,7 @@ import {
   BarChart3,
   Calculator,
   Scale,
+  CreditCard,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -54,7 +55,9 @@ const iconMap: Record<string, React.ElementType> = {
 
 // Broker review cards
 const brokerCards = [
+  { name: 'IG Group', slug: 'ig', rating: 4.8, color: 'bg-rose-500/20 text-rose-400' },
   { name: 'eToro', slug: 'etoro', rating: 4.8, color: 'bg-emerald-500/20 text-emerald-400' },
+  { name: 'Plus500', slug: 'plus500', rating: 4.5, color: 'bg-blue-500/20 text-blue-400' },
   { name: 'Capital.com', slug: 'capital-com', rating: 4.7, color: 'bg-rose-500/20 text-rose-400' },
   { name: 'IBKR', slug: 'ibkr', rating: 4.9, color: 'bg-violet-500/20 text-violet-400' },
   { name: 'Investing.com', slug: 'investing', rating: 4.6, color: 'bg-amber-500/20 text-amber-400' },
@@ -75,6 +78,7 @@ const allCategories: Category[] = [
 const toolCards = [
   { name: 'Broker Finder Quiz', description: 'Personalized broker match in 60 seconds', href: '/tools/broker-finder', icon: Target, badge: 'New' },
   { name: 'Trading Cost Calculator', description: 'Compare fees across top brokers', href: '/tools/trading-cost-calculator', icon: BarChart3, badge: 'New' },
+  { name: 'Fee Savings Calculator', description: 'See how much you save vs bank funds', href: '/tools/wealthsimple-calculator', icon: DollarSign, badge: 'New' },
   { name: 'AI ROI Calculator', description: 'Calculate AI tool investment returns', href: '/tools/ai-roi-calculator', icon: TrendingUp, badge: null },
   { name: 'Loan Calculator', description: 'Monthly payments & amortization', href: '/tools/loan-calculator', icon: Calculator, badge: null },
   { name: 'Broker Comparison', description: 'Side-by-side broker comparison', href: '/tools/broker-comparison', icon: Scale, badge: null },
@@ -274,6 +278,46 @@ export function Header({ market: marketProp }: HeaderProps) {
                             </Link>
                           );
                         })}
+                      {market === 'us' && (
+                        <>
+                          <div className="mt-2 pt-2 border-t border-slate-800/40">
+                            <p className="px-3 py-1 text-[10px] font-semibold text-slate-600 uppercase tracking-wider">Credit Cards</p>
+                          </div>
+                          <Link
+                            href="/personal-finance/credit-cards-comparison"
+                            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/50 transition-colors"
+                            onClick={() => setMobileMenuOpen(false)}
+                          >
+                            <CreditCard className="h-4 w-4 text-amber-400" />
+                            <span className="text-sm">Card Comparison</span>
+                            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 font-medium">New</span>
+                          </Link>
+                          <Link
+                            href="/personal-finance/amex-gold-card-review"
+                            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/50 transition-colors"
+                            onClick={() => setMobileMenuOpen(false)}
+                          >
+                            <CreditCard className="h-4 w-4 text-cyan-400" />
+                            <span className="text-sm">Amex Gold</span>
+                          </Link>
+                          <Link
+                            href="/personal-finance/chase-sapphire-preferred-review"
+                            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/50 transition-colors"
+                            onClick={() => setMobileMenuOpen(false)}
+                          >
+                            <CreditCard className="h-4 w-4 text-cyan-400" />
+                            <span className="text-sm">Chase Sapphire Preferred</span>
+                          </Link>
+                          <Link
+                            href="/personal-finance/chase-sapphire-reserve-review"
+                            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/50 transition-colors"
+                            onClick={() => setMobileMenuOpen(false)}
+                          >
+                            <CreditCard className="h-4 w-4 text-cyan-400" />
+                            <span className="text-sm">Chase Sapphire Reserve</span>
+                          </Link>
+                        </>
+                      )}
                     </div>
                   )}
                 </div>
@@ -487,6 +531,49 @@ export function Header({ market: marketProp }: HeaderProps) {
                         ))}
                     </div>
 
+                    {market === 'us' && (
+                      <>
+                        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4">
+                          Credit Cards
+                        </p>
+                        <div className="space-y-2.5 mb-6">
+                          <Link
+                            href="/personal-finance/credit-cards-comparison"
+                            className="group flex items-center gap-2 text-sm text-slate-400 hover:text-cyan-400 transition-colors"
+                            onClick={() => setActiveMenu(null)}
+                          >
+                            <CreditCard className="h-3.5 w-3.5 text-amber-400" />
+                            <span>Card Comparison</span>
+                            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 font-semibold">New</span>
+                          </Link>
+                          <Link
+                            href="/personal-finance/amex-gold-card-review"
+                            className="group flex items-center gap-2 text-sm text-slate-400 hover:text-cyan-400 transition-colors"
+                            onClick={() => setActiveMenu(null)}
+                          >
+                            <span>Amex Gold Review</span>
+                            <ArrowRight className="h-3.5 w-3.5 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
+                          </Link>
+                          <Link
+                            href="/personal-finance/chase-sapphire-preferred-review"
+                            className="group flex items-center gap-2 text-sm text-slate-400 hover:text-cyan-400 transition-colors"
+                            onClick={() => setActiveMenu(null)}
+                          >
+                            <span>Chase Sapphire Preferred</span>
+                            <ArrowRight className="h-3.5 w-3.5 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
+                          </Link>
+                          <Link
+                            href="/personal-finance/chase-sapphire-reserve-review"
+                            className="group flex items-center gap-2 text-sm text-slate-400 hover:text-cyan-400 transition-colors"
+                            onClick={() => setActiveMenu(null)}
+                          >
+                            <span>Chase Sapphire Reserve</span>
+                            <ArrowRight className="h-3.5 w-3.5 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
+                          </Link>
+                        </div>
+                      </>
+                    )}
+
                     <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4">
                       Popular
                     </p>
@@ -562,7 +649,7 @@ export function Header({ market: marketProp }: HeaderProps) {
                   <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-5">
                     Broker Reviews
                   </p>
-                  <div className="grid grid-cols-5 gap-4">
+                  <div className="grid grid-cols-4 xl:grid-cols-7 gap-3">
                     {brokerCards.map((broker) => (
                       <Link
                         key={broker.slug}

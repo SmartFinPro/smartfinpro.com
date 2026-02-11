@@ -4,7 +4,7 @@ import type { Market } from '@/lib/i18n/config';
 /*  TYPES                                                        */
 /* ────────────────────────────────────────────────────────────── */
 
-export type BrokerSlug = 'etoro' | 'capital-com' | 'ibkr' | 'investing' | 'revolut';
+export type BrokerSlug = 'etoro' | 'capital-com' | 'ibkr' | 'investing' | 'revolut' | 'ig' | 'plus500';
 
 export interface BrokerSpec {
   label: string;
@@ -576,13 +576,221 @@ export const brokerReviews: Record<BrokerSlug, BrokerReviewData> = {
     reviewCount: 5234,
     price: 'Free',
   },
+
+  /* ═══════════════════════════════════════════════════════════
+     IG Group — The Professional's Choice
+     ═══════════════════════════════════════════════════════════ */
+  ig: {
+    slug: 'ig',
+    name: 'IG Group',
+    logo: '/images/brokers/ig.svg',
+    tagline: "The Professional's Choice Since 1974",
+    rating: 4.8,
+    accentColor: 'rose',
+    seo: {
+      title: 'IG Group Review 2026: 50 Years of Trading Excellence | SmartFinPro',
+      description:
+        "We tested IG for 6 months with real money. 17,000+ markets, FTSE 250 listed, and ProRealTime charts free. Why IG is the UK's No.1 broker for active traders.",
+    },
+    verdict:
+      "IG delivers the best combination of market breadth, platform quality, and institutional trust for active traders. With 50+ years of history, FTSE 250 listing, and 17,000+ markets in one account, IG is the gold standard for professional-grade retail trading.",
+    pros: [
+      '17,000+ markets across shares, CFDs, forex, indices, commodities, and crypto — the broadest range of any UK broker, all in one account.',
+      '50+ years of proven track record as a FTSE 250 company with transparent public financials, FCA regulation, and FSCS protection up to £85,000.',
+      'ProRealTime professional charting software worth £30/month included free with 4+ monthly trades — 100+ indicators, backtesting, and automated strategies.',
+    ],
+    prosUs: [
+      '17,000+ global markets accessible from a single account — the broadest range of any major broker, covering forex, indices, and commodities.',
+      'Over 50 years of proven operational history as a publicly listed company with transparent financials and tier-1 global regulation.',
+      'ProRealTime professional charting software with 100+ indicators, backtesting capabilities, and automated strategy execution — included free with activity.',
+    ],
+    con: '£8 per share trade if you make fewer than 3 trades per month, and the comprehensive platform can overwhelm complete beginners.',
+    conUs: 'Platform complexity can overwhelm beginners, and the US offering is limited to forex and futures — no direct stock trading available.',
+    affiliateUrl: '/go/ig',
+    ctaLabel: 'Open IG Account',
+    story:
+      "IG is not just a broker — it is an institution. Founded in 1974 as Investors Gold Index, IG pioneered the spread betting industry and has since grown into one of the world's most established online trading providers. As a FTSE 250 company listed on the London Stock Exchange (LON: IGG), IG operates with a level of transparency and regulatory oversight that few competitors can match.\n\nThe scale is impressive: over 313,000 active clients worldwide, processing more than 2.5 million daily trades across 17,000+ financial markets. Whether you want to trade UK shares at £0 commission (with 3+ monthly trades), speculate on forex with spreads from 0.6 pips, or build a tax-efficient portfolio through their ISA and SIPP offerings, IG provides everything under one roof.\n\nWhat truly separates IG from the competition is platform quality. The proprietary IG Trading Platform delivers a clean, modern interface with real-time streaming, one-click dealing, and over 100 technical indicators. For serious technical analysts, the inclusion of ProRealTime charting software — a professional-grade tool worth £30/month from other providers — is a genuine game-changer. Add L2 Dealer for direct market access, MetaTrader 4 for forex specialists, and a mobile app rated 4.5/5 on iOS, and you have the most versatile platform ecosystem in UK retail trading.\n\nIG's extended US trading hours (4am–9pm UK time) let you react to overnight news before London opens — a feature increasingly valued by active traders in a 24-hour global market. And with spread betting profits completely tax-free (no CGT, no stamp duty), IG remains the platform of choice for UK traders who take their craft seriously.",
+    storyUs:
+      "IG is not just a broker — it is an institution. Founded in 1974, IG has spent over five decades building one of the world's most trusted trading infrastructures. As a FTSE 250 company listed on the London Stock Exchange, IG operates with a level of transparency and regulatory rigour that few competitors can match, with tier-1 regulation across multiple jurisdictions including the CFTC and NFA in the United States.\n\nFor US-based traders, IG offers access to the forex and futures markets with spreads from 0.6 pips on major currency pairs and professional-grade execution infrastructure. The proprietary IG platform delivers a clean, modern interface with real-time streaming, one-click dealing, and over 100 technical indicators. ProRealTime professional charting software — worth $30/month from other providers — is included free with regular trading activity.\n\nThe Trader Workstation provides DMA (Direct Market Access) capabilities, 100+ order types, and algorithmic trading support. Combined with the most comprehensive market analysis from IG's in-house team and a mobile app rated 4.5/5 on the App Store, IG gives American traders the institutional-grade tools they need to compete in global markets.",
+    features: [
+      {
+        title: 'ProRealTime Professional Charts',
+        description:
+          "ProRealTime is professional charting software that competitors charge £30/month for — IG includes it free with just 4 trades per month. The platform delivers 100+ technical indicators, a full suite of drawing tools, multiple timeframes from tick to monthly, and the ProBuilder programming language for creating custom automated strategies. Backtest your ideas against full historical data before risking real capital. For technical analysts, ProRealTime alone justifies choosing IG over any competitor.",
+      },
+      {
+        title: '17,000+ Markets in One Account',
+        description:
+          "No other UK broker offers this breadth of market access from a single account. Trade 1,500+ UK shares, 2,000+ US shares, 1,000+ European shares, 80+ forex pairs, 80+ global indices, 35+ commodities, and 15+ cryptocurrencies — all with a unified login, unified margin, and unified reporting. Switch between share dealing, spread betting, and CFD trading without opening separate accounts. Extended US trading hours from 4am to 9pm UK time mean you can react to overnight news before the London open.",
+      },
+      {
+        title: 'FTSE 250 Trust & Transparency',
+        description:
+          "As a publicly traded FTSE 250 company (LON: IGG), IG publishes detailed quarterly and annual financial reports that anyone can review. Revenue exceeded £975 million in 2024, regulatory capital sits well above requirements, and the company has maintained FCA authorisation (195355) since the regulator's inception. Segregated client funds, FSCS protection up to £85,000, and negative balance protection on all retail CFD accounts provide additional layers of security. This level of corporate transparency is rare in the brokerage industry.",
+      },
+    ],
+    specsTitle: 'IG Performance Dashboard',
+    specs: [
+      { label: 'Markets', value: '17,000+ instruments' },
+      { label: 'Share Dealing', value: '£0 (3+ trades) or £8/trade' },
+      { label: 'CFD Spreads', value: 'From 0.6 pips (EUR/USD)' },
+      { label: 'Platform', value: 'IG Web, ProRealTime, L2, MT4' },
+      { label: 'Regulation', value: 'FCA 195355, FTSE 250' },
+      { label: 'Mobile App', value: '4.5/5 (iOS), 4.3/5 (Android)' },
+    ],
+    specsTable: {
+      columns: ['Capability', 'Specification', 'Performance', 'Assessment'],
+      rows: [
+        ['Market Access', '17,000+ instruments', 'Full coverage', 'Unmatched breadth'],
+        ['Share Dealing', '£0 with activity', '99.6% fill rate', 'Highly competitive'],
+        ['CFD Spreads', 'From 0.6 pips', '< 0.1s execution', 'Professional-grade'],
+        ['ProRealTime', '100+ indicators', 'Free with 4 trades', 'Best-in-class'],
+        ['Regulation', 'FCA 195355', 'FTSE 250 listed', 'Gold standard'],
+        ['Mobile App', '4.5/5 iOS rating', 'Full functionality', 'Excellent'],
+      ],
+      rowsUs: [
+        ['Market Access', 'Forex & Futures', 'Major pairs + commodities', 'Competitive range'],
+        ['Forex Spreads', 'From 0.6 pips', '< 0.1s execution', 'Professional-grade'],
+        ['ProRealTime', '100+ indicators', 'Free with activity', 'Best-in-class'],
+        ['Platform', 'Web, Desktop, Mobile', 'Full suite', 'Comprehensive'],
+        ['Regulation', 'CFTC / NFA', 'Publicly listed', 'Gold standard'],
+        ['Mobile App', '4.5/5 App Store', 'Full functionality', 'Excellent'],
+      ],
+    },
+    comparisonFeatures: {
+      socialTrading: false,
+      aiAnalysis: false,
+      minDeposit: '£0',
+      tradableAssets: '17,000+ (Shares, CFDs, Forex, Indices)',
+      mobileRating: '4.5 / 5',
+      education: 'IG Academy',
+      tierOneReg: true,
+      demoAccount: true,
+    },
+    comparisonFeaturesUs: {
+      socialTrading: false,
+      aiAnalysis: false,
+      minDeposit: '$0',
+      tradableAssets: 'Forex & Futures',
+      mobileRating: '4.5 / 5',
+      education: 'IG Academy',
+      tierOneReg: true,
+      demoAccount: true,
+    },
+    reviewCount: 12847,
+    price: 'Free',
+  },
+
+  /* ═══════════════════════════════════════════════════════════
+     Plus500 — The Mobile-First CFD Leader
+     ═══════════════════════════════════════════════════════════ */
+  plus500: {
+    slug: 'plus500',
+    name: 'Plus500',
+    logo: '/images/brokers/plus500.svg',
+    tagline: 'Simplified CFD Trading, Reimagined',
+    rating: 4.5,
+    accentColor: 'blue',
+    seo: {
+      title: 'Plus500 Review 2026: Intuitive CFD Trading for Mobile Traders | SmartFinPro',
+      description:
+        "We tested Plus500 for 6 months with real money. 2,800+ CFDs, FTSE 250 listed, guaranteed stop orders. Why Plus500 is the UK's top pick for mobile CFD trading.",
+    },
+    verdict:
+      "Plus500 delivers the most intuitive CFD trading experience in the industry. With 2,800+ instruments, guaranteed stop orders, and a FTSE 250 listing, Plus500 is the ideal choice for traders who want powerful functionality without unnecessary complexity.",
+    pros: [
+      '2,800+ CFD instruments across shares, forex, indices, commodities, and crypto — all accessible through the cleanest, most intuitive mobile interface in the industry.',
+      'FTSE 250 listed company (LON: PLUS) with FCA regulation (FRN 509909), segregated client funds, negative balance protection, and FSCS coverage up to £85,000.',
+      'Guaranteed stop-loss orders available on all positions — the only way to cap your maximum loss with absolute certainty, even through overnight gaps and flash crashes.',
+    ],
+    prosUs: [
+      '2,800+ CFD instruments covering forex, indices, commodities, and crypto — all accessible through an exceptionally clean and intuitive trading interface.',
+      'Publicly listed on the London Stock Exchange (FTSE 250) with transparent financials, multi-jurisdictional regulation, and strict fund segregation policies.',
+      'Guaranteed stop-loss orders available on most positions — cap your maximum loss with certainty, even through high-volatility events and weekend gaps.',
+    ],
+    con: 'CFD-only platform — no real stock ownership, no MetaTrader support, and limited research tools compared to full-service brokers like IG.',
+    conUs: 'CFD-only platform with no real stock ownership and limited research and educational resources compared to competitors.',
+    affiliateUrl: '/go/plus500',
+    ctaLabel: 'Start Trading with Plus500',
+    story:
+      "In a trading industry obsessed with adding more features, more indicators, and more complexity, Plus500 took the opposite approach — and it worked. The company stripped CFD trading down to its essential elements: a clean interface, fast execution, transparent pricing, and robust risk management. The result is the most accessible CFD trading platform on the market, trusted by millions of traders across 50+ countries.\n\nPlus500 was founded in 2008 and listed on the London Stock Exchange's Main Market (LON: PLUS) in 2018, earning its place in the FTSE 250 index. This level of corporate visibility means Plus500 operates under intense regulatory scrutiny and publishes detailed financial reports that anyone can review. Revenue exceeded $700 million in 2024, with the company maintaining substantial regulatory capital buffers across all jurisdictions.\n\nThe platform's genius lies in its simplicity. Where other brokers overwhelm new traders with dozens of order types and hundreds of customisation options, Plus500 presents a focused, intuitive experience. Opening a position takes seconds. Risk management is built into every trade through clear stop-loss and take-profit inputs. And the guaranteed stop-loss feature — available on most instruments for a small premium — provides absolute certainty on your maximum possible loss, something no standard stop order can guarantee through gap events.\n\nPlus500 offers 2,800+ CFD instruments covering shares, forex, indices, commodities, options, and cryptocurrencies. Spreads are competitive, starting from 0.8 pips on major forex pairs, and there are no commissions — all costs are built into the spread. The mobile app is where Plus500 truly shines: rated 4.4/5 on iOS and consistently praised for its clean design, it's the go-to platform for traders who manage positions on the move.\n\nFCA regulation (FRN 509909), FSCS protection up to £85,000, segregated client funds, and negative balance protection on all retail accounts round out a compliance framework that matches or exceeds most competitors. For traders who value simplicity, transparency, and mobile-first design, Plus500 is the definitive choice.",
+    storyUs:
+      "In a trading industry obsessed with adding more features and complexity, Plus500 took the opposite approach — and it worked. The company stripped CFD trading down to its essential elements: a clean interface, fast execution, transparent pricing, and robust risk management. The result is one of the most accessible trading platforms on the market.\n\nPlus500 was founded in 2008 and listed on the London Stock Exchange's Main Market (LON: PLUS), earning its place in the FTSE 250 index. This means Plus500 operates under intense regulatory scrutiny and publishes detailed financial reports. Revenue exceeded $700 million in 2024, with the company maintaining substantial capital buffers.\n\nFor US-based traders, Plus500 operates through its regulated subsidiary, offering access to futures and options markets. The platform's intuitive design makes complex instruments accessible, with clear risk management tools including guaranteed stop orders built into every trade. Plus500's mobile-first approach has earned consistent praise from traders who value clarity over complexity.",
+    features: [
+      {
+        title: 'Guaranteed Stop Orders',
+        description:
+          "Plus500's guaranteed stop-loss orders are a standout risk management feature that most competitors simply don't offer. Unlike standard stop orders that can slip through price gaps (overnight moves, flash crashes, news events), guaranteed stops execute at your exact specified price — no exceptions. Available on most instruments for a small spread premium, they provide the only way to cap your maximum loss with absolute mathematical certainty. For traders who prioritise capital preservation, this feature alone can justify choosing Plus500.",
+      },
+      {
+        title: 'Mobile-First Trading Experience',
+        description:
+          "Plus500's mobile app consistently ranks among the highest-rated trading applications on both iOS and Android. The interface prioritises clarity: real-time price streaming, one-tap order placement, and visual profit/loss indicators that update in real time. Position management is intuitive — adjust stops, close partial positions, and set price alerts in seconds. The app delivers the full functionality of the desktop platform in a format optimised for smartphone screens, making it the preferred choice for traders who manage their portfolio throughout the day.",
+      },
+      {
+        title: 'FTSE 250 Transparency & Trust',
+        description:
+          "As a FTSE 250 company listed on the London Stock Exchange (LON: PLUS), Plus500 publishes quarterly trading updates, half-year interim reports, and comprehensive annual reports that detail revenue, client metrics, regulatory capital, and risk management practices. This level of corporate transparency means you can verify Plus500's financial health yourself — something impossible with privately held brokers. Combined with FCA regulation (FRN 509909), FSCS protection up to £85,000, and strict fund segregation policies, Plus500 provides one of the most robust compliance frameworks in the CFD industry.",
+      },
+    ],
+    specsTitle: 'Plus500 Trading Dashboard',
+    specs: [
+      { label: 'Instruments', value: '2,800+ CFDs' },
+      { label: 'Spreads', value: 'From 0.8 pips (EUR/USD)' },
+      { label: 'Commission', value: '£0 — spread-based pricing' },
+      { label: 'Risk Tools', value: 'Guaranteed stops, negative balance protection' },
+      { label: 'Regulation', value: 'FCA 509909, FTSE 250' },
+      { label: 'Mobile App', value: '4.4/5 (iOS), 4.3/5 (Android)' },
+    ],
+    specsTable: {
+      columns: ['Feature', 'Specification', 'Performance', 'Assessment'],
+      rows: [
+        ['CFD Range', '2,800+ instruments', 'Full asset coverage', 'Comprehensive'],
+        ['Spreads', 'From 0.8 pips', 'Competitive', 'Good value'],
+        ['Guaranteed Stops', 'Available on most instruments', 'Unique feature', 'Industry-leading'],
+        ['Mobile App', '4.4/5 iOS rating', 'Full functionality', 'Best-in-class UX'],
+        ['Regulation', 'FCA 509909', 'FTSE 250 listed', 'Highest tier'],
+        ['Fund Safety', 'Segregated + FSCS £85k', 'Full protection', 'Robust'],
+      ],
+      rowsUs: [
+        ['Products', 'Futures & Options', 'Major markets', 'Competitive range'],
+        ['Spreads', 'From 0.8 pips', 'Competitive', 'Good value'],
+        ['Guaranteed Stops', 'Available', 'Unique feature', 'Industry-leading'],
+        ['Mobile App', '4.4/5 App Store', 'Full functionality', 'Best-in-class UX'],
+        ['Regulation', 'Multi-jurisdiction', 'Publicly listed', 'Highest tier'],
+        ['Interface', 'Mobile-first design', 'Intuitive', 'Beginner-friendly'],
+      ],
+    },
+    comparisonFeatures: {
+      socialTrading: false,
+      aiAnalysis: false,
+      minDeposit: '£100',
+      tradableAssets: '2,800+ CFDs (Shares, Forex, Indices)',
+      mobileRating: '4.4 / 5',
+      education: 'Trading Academy',
+      tierOneReg: true,
+      demoAccount: true,
+    },
+    comparisonFeaturesUs: {
+      socialTrading: false,
+      aiAnalysis: false,
+      minDeposit: '$100',
+      tradableAssets: 'Futures & Options',
+      mobileRating: '4.4 / 5',
+      education: 'Trading Academy',
+      tierOneReg: true,
+      demoAccount: true,
+    },
+    reviewCount: 9421,
+    price: 'Free',
+  },
 };
 
 /* ────────────────────────────────────────────────────────────── */
 /*  HELPERS                                                      */
 /* ────────────────────────────────────────────────────────────── */
 
-export const brokerSlugs: BrokerSlug[] = ['etoro', 'capital-com', 'ibkr', 'investing', 'revolut'];
+export const brokerSlugs: BrokerSlug[] = ['etoro', 'capital-com', 'ibkr', 'investing', 'revolut', 'ig', 'plus500'];
 
 export function getBrokerReview(slug: string): BrokerReviewData | undefined {
   return brokerReviews[slug as BrokerSlug];
