@@ -126,15 +126,15 @@ export default async function MarketHomePage({ params }: MarketPageProps) {
 
       {/* UK Broker Hero Slider — Exclusive to UK Market */}
       {marketData === 'uk' && (
-        <section className="py-16 sm:py-20" style={{ background: 'var(--sfp-gray)' }}>
+        <section className="py-16 sm:py-20" style={{ background: 'var(--sfp-silo-tint)' }}>
           <div className="container mx-auto px-4">
             <UKBrokerHeroSlider />
           </div>
         </section>
       )}
 
-      {/* Categories Section */}
-      <section className="py-20 bg-background">
+      {/* Categories Section — uses market-specific silo-tint background */}
+      <section className="py-20" style={{ background: 'var(--sfp-silo-tint)' }}>
         <div className="container mx-auto px-4">
           <div className="text-center max-w-2xl mx-auto mb-12">
             <Badge variant="secondary" className="mb-4">
@@ -158,7 +158,8 @@ export default async function MarketHomePage({ params }: MarketPageProps) {
               return (
                 <Card
                   key={category}
-                  className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
+                  className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border-t-4"
+                  style={{ borderTopColor: 'var(--sfp-navy)' }}
                 >
                   <CardHeader>
                     <div
@@ -191,27 +192,29 @@ export default async function MarketHomePage({ params }: MarketPageProps) {
         </div>
       </section>
 
-      {/* Market-specific content */}
-      <section className="py-20 bg-muted/50">
+      {/* Market-specific Trust section — uses silo-tint accent border */}
+      <section className="py-20 bg-background">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold mb-4">
-            Trusted by {config.name} Professionals
-          </h2>
-          <p className="text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Join thousands of finance professionals across {config.name} who use
-            SmartFinPro to find the best tools and make smarter decisions.
-          </p>
+          <div className="max-w-3xl mx-auto rounded-2xl p-10 border-2" style={{ borderColor: 'var(--sfp-silo-tint)', background: 'var(--sfp-gray)' }}>
+            <h2 className="text-3xl font-bold mb-4">
+              Trusted by {config.name} Professionals
+            </h2>
+            <p className="text-muted-foreground mb-8 max-w-2xl mx-auto">
+              Join thousands of finance professionals across {config.name} who use
+              SmartFinPro to find the best tools and make smarter decisions.
+            </p>
 
-          <div className="flex flex-wrap justify-center gap-4">
-            <Badge variant="outline" className="text-base py-2 px-4">
-              {config.currency} Pricing
-            </Badge>
-            <Badge variant="outline" className="text-base py-2 px-4">
-              Local Support
-            </Badge>
-            <Badge variant="outline" className="text-base py-2 px-4">
-              Compliant Reviews
-            </Badge>
+            <div className="flex flex-wrap justify-center gap-4">
+              <Badge className="text-base py-2 px-5 text-white font-semibold" style={{ background: 'var(--sfp-navy)' }}>
+                {config.currency} Pricing
+              </Badge>
+              <Badge className="text-base py-2 px-5 text-white font-semibold" style={{ background: 'var(--sfp-navy)' }}>
+                Local Support
+              </Badge>
+              <Badge className="text-base py-2 px-5 text-white font-semibold" style={{ background: 'var(--sfp-navy)' }}>
+                Compliant Reviews
+              </Badge>
+            </div>
           </div>
         </div>
       </section>

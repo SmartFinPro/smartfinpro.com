@@ -103,7 +103,8 @@ import {
   SectionHeader,
 } from '@/components/marketing/trading-visuals';
 import { ComparisonMatrix, CompactMatrix } from '@/components/marketing/comparison-matrix';
-import { NetworkAnimation, NetworkAnimationMini } from '@/components/marketing/network-animation';
+import NetworkAnimation from '@/components/marketing/network-animation';
+import { NetworkAnimationMini } from '@/components/marketing/network-animation';
 import { AISavingsCalculator, AISavingsCalculatorCompact } from '@/components/marketing/ai-savings-calculator';
 import { NeuralFinanceSVG } from '@/components/marketing/neural-finance-svg';
 import { CreditCardRewardsCalc } from '@/components/marketing/credit-card-rewards-calc';
