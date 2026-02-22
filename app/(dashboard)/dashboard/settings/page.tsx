@@ -1,15 +1,19 @@
 import { Settings, Plug, History, Webhook } from 'lucide-react';
 import { getConnectorsWithStatus, fetchSyncLogs } from '@/lib/actions/connectors';
+import { getSettings, getCredentialStatus } from '@/lib/actions/settings';
 import { ConnectorList } from '@/components/dashboard/connector-list';
 import { SyncLogsTable } from '@/components/dashboard/sync-logs-table';
+import { SystemSettingsPanel } from '@/components/dashboard/system-settings';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export default async function SettingsPage() {
-  const [connectors, syncLogs] = await Promise.all([
+  const [connectors, syncLogs, settings, credentialStatus] = await Promise.all([
     getConnectorsWithStatus(),
     fetchSyncLogs(15),
+    getSettings(),
+    getCredentialStatus(),
   ]);
 
   return (
@@ -21,12 +25,18 @@ export default async function SettingsPage() {
           Settings
         </h1>
         <p className="text-slate-500 mt-1">
-          Configure API connectors and view synchronization history
+          API-Credentials, Autonomy Guardrails und System Controls
         </p>
       </div>
 
+      {/* System Settings (Credentials + Guardrails + Controls) */}
+      <SystemSettingsPanel
+        initialSettings={settings}
+        credentialStatus={credentialStatus}
+      />
+
       {/* API Connectors */}
-      <div className="dashboard-card overflow-hidden">
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         <div className="px-6 py-4 border-b border-slate-100">
           <div className="flex items-center gap-2">
             <Plug className="h-5 w-5 text-slate-400" />
@@ -42,7 +52,7 @@ export default async function SettingsPage() {
       </div>
 
       {/* Webhook Information */}
-      <div className="dashboard-card overflow-hidden">
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         <div className="px-6 py-4 border-b border-slate-100">
           <div className="flex items-center gap-2">
             <Webhook className="h-5 w-5 text-slate-400" />
@@ -85,7 +95,7 @@ export default async function SettingsPage() {
       </div>
 
       {/* Sync History */}
-      <div className="dashboard-card overflow-hidden">
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         <div className="px-6 py-4 border-b border-slate-100">
           <div className="flex items-center gap-2">
             <History className="h-5 w-5 text-slate-400" />

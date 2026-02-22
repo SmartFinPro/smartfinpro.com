@@ -1,5 +1,7 @@
 'use server';
 
+import 'server-only';
+
 import { createServiceClient } from '@/lib/supabase/server';
 import { QuizStats } from '@/components/dashboard/quiz-analytics';
 import { TimeRange } from './dashboard';
@@ -51,6 +53,10 @@ export async function getQuizAnalytics(range: TimeRange = '7d'): Promise<QuizSta
     const { data: events, error } = await eventsQuery;
 
     if (error) {
+      // Table doesn't exist yet — return empty stats silently
+      if (error.code === 'PGRST204' || error.code === '42P01' || error.message?.includes('schema cache') || error.message?.includes('relation')) {
+        return emptyStats;
+      }
       console.error('Error fetching quiz analytics:', error);
       return emptyStats;
     }
@@ -167,6 +173,10 @@ export async function getHighIntentEvents(range: TimeRange = '7d') {
   const { data, error } = await query;
 
   if (error) {
+    // Table doesn't exist yet — return empty silently
+    if (error.code === 'PGRST204' || error.code === '42P01' || error.message?.includes('schema cache') || error.message?.includes('relation')) {
+      return [];
+    }
     console.error('Error fetching high-intent events:', error);
     return [];
   }

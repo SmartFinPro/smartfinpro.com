@@ -18,8 +18,10 @@ import { OverviewTabs } from '@/components/marketing/overview-tabs';
 import {
   BarChart3,
   ArrowRight,
+  Star,
 } from 'lucide-react';
 import { Breadcrumb } from '@/components/marketing/breadcrumb';
+import { getContentByMarketAndCategory } from '@/lib/mdx';
 
 interface OverviewPageProps {
   params: Promise<{
@@ -75,59 +77,66 @@ export default async function OverviewPage({ params }: OverviewPageProps) {
     notFound();
   }
 
+  // Fetch reviews for this market/category (exclude pillar page index)
+  const allContent = await getContentByMarketAndCategory(market as Market, category as Category);
+  const reviews = allContent.filter((item) => item.slug !== 'index');
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
+    <div className="min-h-screen" style={{ background: 'var(--sfp-gray)' }}>
       {/* Hero Section */}
-      <section className="relative overflow-hidden">
-        <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-cyan-500/10 rounded-full blur-[120px]" />
-        <div className="absolute top-0 right-1/4 w-[400px] h-[400px] bg-violet-500/10 rounded-full blur-[100px]" />
+      <section className="relative overflow-hidden" style={{ background: 'var(--sfp-sky)' }}>
 
-        <div className="container relative z-10 mx-auto px-4 py-16 lg:py-24">
+        <div className="container relative z-10 mx-auto px-4 pt-12 pb-16 lg:pt-16 lg:pb-24">
           {/* Breadcrumb */}
-          <Breadcrumb
-            items={[
-              { label: 'Home', href: marketPrefix || '/' },
-              { label: categoryInfo.name, href: categoryHref },
-              { label: 'Overview' },
-            ]}
-          />
+          <div className="max-w-4xl mx-auto mb-8">
+            <Breadcrumb
+              items={[
+                { label: 'Home', href: marketPrefix || '/' },
+                { label: categoryInfo.name, href: categoryHref },
+                { label: 'Overview' },
+              ]}
+            />
+          </div>
 
-          <div className="max-w-4xl">
+          <div className="max-w-4xl mx-auto text-center">
             {/* Badge */}
-            <div className="inline-flex items-center gap-2 rounded-full bg-cyan-500/10 border border-cyan-500/20 px-4 py-2 mb-6">
-              <BarChart3 className="h-4 w-4 text-cyan-400" />
-              <span className="text-sm text-cyan-300">Market Report 2026</span>
+            <div className="inline-flex items-center gap-2 rounded-full px-4 py-2 mb-6 border border-gray-200 bg-white shadow-sm">
+              <BarChart3 className="h-4 w-4" style={{ color: 'var(--sfp-navy)' }} />
+              <span className="text-sm" style={{ color: 'var(--sfp-slate)' }}>Market Report 2026</span>
             </div>
 
             {/* Title */}
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 text-white">
+            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-4 leading-[1.1] tracking-tight" style={{ color: 'var(--sfp-ink)' }}>
               {content.heroTitle}
             </h1>
-            <p className="text-xl md:text-2xl text-cyan-400 mb-8">
+            <p className="text-lg md:text-xl mb-10 max-w-2xl mx-auto" style={{ color: 'var(--sfp-slate)' }}>
               {content.heroSubtitle}
             </p>
 
             {/* Key Stats Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-10 max-w-3xl mx-auto">
               {content.keyStats.map((stat, idx) => (
-                <div key={idx} className={`rounded-xl p-4 text-center ${stat.highlight ? 'bg-gradient-to-br from-cyan-500/20 to-violet-500/20 border border-cyan-500/30' : 'glass-card'}`}>
-                  <div className={`text-2xl md:text-3xl font-bold mb-1 ${stat.highlight ? 'text-cyan-400' : 'text-white'}`}>
+                <div
+                  key={idx}
+                  className="rounded-xl p-4 text-center border border-gray-200 bg-white shadow-sm"
+                >
+                  <div className="text-2xl md:text-3xl font-bold mb-1" style={{ color: stat.highlight ? 'var(--sfp-navy)' : 'var(--sfp-ink)' }}>
                     {stat.value}
                   </div>
-                  <div className="text-xs text-slate-400">{stat.label}</div>
+                  <div className="text-xs" style={{ color: 'var(--sfp-slate)' }}>{stat.label}</div>
                 </div>
               ))}
             </div>
 
             {/* CTA Buttons */}
-            <div className="flex flex-wrap gap-4">
-              <Button asChild className="bg-gradient-to-r from-cyan-500 to-violet-500 hover:from-cyan-600 hover:to-violet-600 border-0">
+            <div className="flex flex-wrap justify-center gap-4">
+              <Button asChild className="rounded-xl border-0 h-11 px-8 text-white" style={{ background: 'var(--sfp-gold)' }}>
                 <Link href={categoryHref}>
                   View All {categoryInfo.name}
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
-              <Button asChild variant="outline" className="border-slate-700 bg-slate-800/50 text-slate-300 hover:bg-slate-700">
+              <Button asChild variant="outline" className="border-gray-300 h-11 px-8 hover:bg-gray-50" style={{ color: 'var(--sfp-navy)' }}>
                 <a href="#overview-content">Read Full Report</a>
               </Button>
             </div>
@@ -159,7 +168,7 @@ export default async function OverviewPage({ params }: OverviewPageProps) {
 
           {/* Main Content */}
           <div className="flex-1 min-w-0">
-            <h2 className="text-2xl md:text-3xl font-bold text-white mb-6">
+            <h2 className="text-2xl md:text-3xl font-bold mb-6" style={{ color: 'var(--sfp-ink)' }}>
               {categoryInfo.name} Market Research Reports
             </h2>
             <OverviewTabs
@@ -170,16 +179,56 @@ export default async function OverviewPage({ params }: OverviewPageProps) {
           </div>
         </div>
       </section>
+
+      {/* Featured Reviews */}
+      {reviews.length > 0 && (
+        <section className="container mx-auto px-4 py-12">
+          <div className="max-w-7xl mx-auto">
+            <h2 className="text-2xl font-bold mb-2" style={{ color: 'var(--sfp-ink)' }}>Featured Reviews</h2>
+            <p className="mb-6" style={{ color: 'var(--sfp-slate)' }}>
+              In-depth expert reviews for {categoryInfo.name.toLowerCase()} in {marketConfig[market as Market].name}.
+            </p>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {reviews.map((review) => (
+                <Link
+                  key={review.slug}
+                  href={`${marketPrefix}/${category}/${review.slug}`}
+                  className="group rounded-xl border border-gray-200 bg-white shadow-sm p-5 transition-all hover:shadow-md hover:border-gray-300"
+                >
+                  <h3 className="font-semibold transition-colors mb-1" style={{ color: 'var(--sfp-ink)' }}>
+                    {review.meta.title}
+                  </h3>
+                  {review.meta.rating && (
+                    <div className="flex items-center gap-1 mb-2">
+                      <Star className="h-3.5 w-3.5 fill-amber-400" style={{ color: 'var(--sfp-gold)' }} />
+                      <span className="text-sm" style={{ color: 'var(--sfp-slate)' }}>{review.meta.rating}/5</span>
+                    </div>
+                  )}
+                  <p className="text-sm line-clamp-2" style={{ color: 'var(--sfp-slate)' }}>{review.meta.description}</p>
+                  <span className="inline-flex items-center gap-1 mt-3 text-xs font-medium" style={{ color: 'var(--sfp-navy)' }}>
+                    Read Review <ArrowRight className="h-3 w-3" />
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
     </div>
   );
 }
 
 export async function generateStaticParams() {
-  const markets = ['us', 'uk', 'ca', 'au'];
-  const categories = ['ai-tools', 'cybersecurity', 'trading', 'personal-finance', 'forex', 'business-banking'];
+  // Uses marketCategories to ensure only valid market/category combos are pre-rendered
+  const allMarketCategories: Record<string, string[]> = {
+    us: ['ai-tools', 'cybersecurity', 'personal-finance', 'trading', 'business-banking', 'credit-repair', 'debt-relief', 'credit-score'],
+    uk: ['ai-tools', 'cybersecurity', 'trading', 'personal-finance', 'business-banking', 'remortgaging', 'cost-of-living', 'savings'],
+    ca: ['ai-tools', 'cybersecurity', 'forex', 'personal-finance', 'business-banking', 'tax-efficient-investing', 'housing'],
+    au: ['ai-tools', 'cybersecurity', 'trading', 'forex', 'personal-finance', 'business-banking', 'superannuation', 'gold-investing', 'savings'],
+  };
 
   const params: { market: string; category: string }[] = [];
-  for (const market of markets) {
+  for (const [market, categories] of Object.entries(allMarketCategories)) {
     for (const category of categories) {
       params.push({ market, category });
     }

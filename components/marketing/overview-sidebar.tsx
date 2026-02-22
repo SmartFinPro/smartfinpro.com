@@ -34,8 +34,8 @@ export function OverviewSidebar({ market, activeCategory }: OverviewSidebarProps
     <>
       {/* Desktop sidebar */}
       <div className="hidden lg:block">
-        <div className="glass-card rounded-2xl p-5">
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-4 px-2">
+        <div className="rounded-2xl border border-gray-200 bg-white shadow-sm p-5">
+          <h3 className="text-xs font-semibold uppercase tracking-wider mb-4 px-2" style={{ color: 'var(--sfp-slate)' }}>
             Report Categories
           </h3>
           <nav className="space-y-1">
@@ -51,11 +51,16 @@ export function OverviewSidebar({ market, activeCategory }: OverviewSidebarProps
                   href={`${prefix}/${cat}/overview`}
                   className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all ${
                     isActive
-                      ? 'bg-gradient-to-r from-violet-500/20 to-purple-500/20 border-l-[3px] border-violet-400 text-white'
-                      : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+                      ? 'border-l-[3px]'
+                      : 'hover:bg-gray-50'
                   }`}
+                  style={
+                    isActive
+                      ? { background: 'var(--sfp-sky)', borderColor: 'var(--sfp-navy)', color: 'var(--sfp-ink)' }
+                      : { color: 'var(--sfp-slate)' }
+                  }
                 >
-                  <Icon className={`h-4 w-4 flex-shrink-0 ${isActive ? 'text-violet-400' : 'text-slate-500'}`} />
+                  <Icon className="h-4 w-4 flex-shrink-0" style={{ color: isActive ? 'var(--sfp-navy)' : 'var(--sfp-slate)' }} />
                   <span>{config.name}</span>
                 </Link>
               );
@@ -79,9 +84,14 @@ export function OverviewSidebar({ market, activeCategory }: OverviewSidebarProps
                 href={`${prefix}/${cat}/overview`}
                 className={`inline-flex items-center gap-2 whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition-all ${
                   isActive
-                    ? 'bg-violet-500 text-white shadow-lg shadow-violet-500/25'
-                    : 'bg-slate-800/50 text-slate-400 hover:text-white hover:bg-slate-700/50'
+                    ? 'text-white shadow-sm'
+                    : 'border border-gray-200 hover:bg-gray-50'
                 }`}
+                style={
+                  isActive
+                    ? { background: 'var(--sfp-navy)' }
+                    : { background: 'white', color: 'var(--sfp-slate)' }
+                }
               >
                 <Icon className="h-3.5 w-3.5" />
                 <span>{config.name}</span>

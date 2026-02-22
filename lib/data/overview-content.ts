@@ -809,4 +809,627 @@ We assess solutions across business sizes\u2014from solo entrepreneurs to growin
     },
     closingCta: 'Explore our business banking reviews to find platforms that streamline your financial operations. From neobanks to expense management to lending solutions, discover tools reviewed with business efficiency in mind.',
   },
+
+  // ============================================================
+  // CREDIT REPAIR OVERVIEW (US)
+  // ============================================================
+  'credit-repair': {
+    pageTitle: 'Credit Repair Services Overview 2026',
+    heroTitle: 'Credit Repair Services Overview 2026',
+    heroSubtitle: 'Comprehensive Guide to Credit Restoration in the United States',
+    introText: 'The credit repair industry helps millions of Americans address inaccurate or unverifiable items on their credit reports. Governed by the Credit Repair Organizations Act (CROA) and the Fair Credit Reporting Act (FCRA), legitimate credit repair companies work within federal law to dispute errors, negotiate with creditors, and help consumers rebuild their financial standing.',
+    keyStats: [
+      { value: '$4.4B', label: 'US Credit Repair Market Size', highlight: true },
+      { value: '34%', label: 'Americans with Credit Errors' },
+      { value: '79 pts', label: 'Average Score Improvement' },
+      { value: '3-6 mo', label: 'Typical Timeline' },
+    ],
+    keyHighlights: [
+      'CROA-regulated industry with strict consumer protection rules',
+      'Companies cannot charge upfront fees before services are rendered',
+      'Focus on disputing inaccurate, incomplete, or unverifiable information',
+      'Growing integration of AI-powered credit monitoring tools',
+    ],
+    sections: [
+      {
+        title: 'How Credit Repair Works',
+        content: 'Credit repair companies review your credit reports from all three bureaus (Equifax, Experian, TransUnion), identify potentially inaccurate or unverifiable items, and file disputes on your behalf. The process leverages consumer rights under the FCRA.',
+        bullets: [
+          'Free initial credit report analysis and consultation',
+          'Systematic dispute filing with all three credit bureaus',
+          'Goodwill letter campaigns to original creditors',
+          'Ongoing monitoring and progress tracking',
+        ],
+      },
+      {
+        title: 'Regulatory Framework',
+        content: 'The Credit Repair Organizations Act (CROA) establishes clear rules: no upfront fees, mandatory written contracts, 3-day cancellation rights, and prohibition of misleading claims. The FTC and CFPB actively enforce these protections.',
+      },
+    ],
+    segments: [
+      { name: 'Full-Service Credit Repair', share: 45, description: 'Companies handling all disputes and negotiations' },
+      { name: 'DIY Platforms', share: 30, description: 'Software tools for self-managed credit repair' },
+      { name: 'Credit Monitoring + Repair', share: 25, description: 'Combined monitoring and dispute services' },
+    ],
+    businessBenefits: {
+      title: 'Benefits for Financial Professionals',
+      intro: 'Understanding credit repair helps financial advisors serve clients holistically.',
+      items: [
+        { title: 'Client Qualification', description: 'Help clients improve creditworthiness for better loan terms and lower interest rates.' },
+        { title: 'Referral Partnerships', description: 'Build relationships with reputable credit repair firms for client referrals.' },
+      ],
+    },
+    personalBenefits: {
+      title: 'Benefits for Consumers',
+      intro: 'Credit repair can unlock significant financial opportunities.',
+      items: [
+        { title: 'Lower Interest Rates', description: 'A higher credit score can save tens of thousands on mortgages and auto loans.' },
+        { title: 'Better Approval Odds', description: 'Improved scores mean better chances for premium credit cards, apartments, and employment.' },
+        { title: 'Financial Confidence', description: 'Understanding your credit report empowers better financial decision-making.' },
+      ],
+    },
+    smartfinproRole: {
+      title: 'How SmartFinPro Evaluates Credit Repair Services',
+      content: 'SmartFinPro reviews credit repair companies based on CROA compliance, pricing transparency, dispute success rates, and customer satisfaction. We verify all companies follow federal law regarding fee structures and contract requirements.',
+    },
+    closingCta: 'Explore our credit repair reviews to find CROA-compliant services that can help you address credit report errors and rebuild your financial profile.',
+  },
+
+  // ============================================================
+  // DEBT RELIEF OVERVIEW (US)
+  // ============================================================
+  'debt-relief': {
+    pageTitle: 'Debt Relief Programs Overview 2026',
+    heroTitle: 'Debt Relief Programs Overview 2026',
+    heroSubtitle: 'Navigating Debt Settlement, Consolidation & Management Options',
+    introText: 'The US debt relief industry provides options for consumers struggling with unsecured debt. From debt settlement to consolidation loans to management plans, these programs offer structured paths to becoming debt-free, though each comes with distinct trade-offs in terms of credit impact, timeline, and total cost.',
+    keyStats: [
+      { value: '$17.5T', label: 'Total US Household Debt', highlight: true },
+      { value: '40-60%', label: 'Typical Settlement Rate' },
+      { value: '24-48mo', label: 'Average Program Duration' },
+      { value: '$10K+', label: 'Min Debt for Settlement' },
+    ],
+    keyHighlights: [
+      'Debt settlement can reduce balances by 40-60% but significantly impacts credit',
+      'Consolidation loans simplify payments and may lower interest rates',
+      'Non-profit credit counseling offers free or low-cost alternatives',
+      'FTC rules prohibit upfront fees for debt settlement companies',
+    ],
+    sections: [
+      {
+        title: 'Types of Debt Relief',
+        content: 'Consumers have several options depending on their debt level, income, and financial goals. Each approach has different impacts on credit scores, timelines, and total cost.',
+        bullets: [
+          'Debt Settlement: Negotiate to pay less than owed (credit impact: severe)',
+          'Debt Consolidation: Combine debts into one lower-rate payment',
+          'Debt Management Plans: Non-profit counselors negotiate lower rates',
+          'Bankruptcy: Legal protection as a last resort (Chapter 7 or 13)',
+        ],
+      },
+    ],
+    segments: [
+      { name: 'Debt Settlement', share: 35, description: 'Negotiating reduced balances with creditors' },
+      { name: 'Consolidation Loans', share: 35, description: 'Personal loans to combine multiple debts' },
+      { name: 'Credit Counseling', share: 20, description: 'Non-profit debt management programs' },
+      { name: 'Bankruptcy Services', share: 10, description: 'Legal debt discharge proceedings' },
+    ],
+    businessBenefits: {
+      title: 'Industry Insights',
+      intro: 'The debt relief sector serves a critical need in consumer financial health.',
+      items: [
+        { title: 'Growing Market', description: 'Rising consumer debt levels drive sustained demand for relief services.' },
+        { title: 'Regulatory Evolution', description: 'FTC and state-level regulations continue to shape industry practices.' },
+      ],
+    },
+    personalBenefits: {
+      title: 'Consumer Benefits',
+      intro: 'Debt relief programs can provide a structured path to financial freedom.',
+      items: [
+        { title: 'Reduced Total Debt', description: 'Settlement programs may reduce what you owe by 40-60%.' },
+        { title: 'Structured Timeline', description: 'Clear milestones and end dates provide motivation and accountability.' },
+        { title: 'Creditor Protection', description: 'Programs may reduce collection calls and legal actions.' },
+      ],
+    },
+    smartfinproRole: {
+      title: 'How SmartFinPro Evaluates Debt Relief',
+      content: 'SmartFinPro reviews debt relief companies based on fee transparency, success rates, BBB ratings, and compliance with FTC regulations. We emphasize programs that clearly disclose risks including credit impact and tax consequences of forgiven debt.',
+    },
+    closingCta: 'Compare debt relief programs to find the right approach for your situation. Understand the trade-offs of settlement, consolidation, and management plans.',
+  },
+
+  // ============================================================
+  // CREDIT SCORE OVERVIEW (US)
+  // ============================================================
+  'credit-score': {
+    pageTitle: 'Credit Score Monitoring Overview 2026',
+    heroTitle: 'Credit Score Monitoring Overview 2026',
+    heroSubtitle: 'Understanding Credit Scores, Monitoring Tools & Score Optimization',
+    introText: 'Credit score monitoring has become essential for financial health. With 200+ million Americans holding credit files, understanding your FICO and VantageScore ratings directly impacts your ability to access favorable loan terms, housing, and even employment opportunities.',
+    keyStats: [
+      { value: '716', label: 'Average US FICO Score', highlight: true },
+      { value: '300-850', label: 'FICO Score Range' },
+      { value: '45%', label: 'Check Score Monthly' },
+      { value: '$50K+', label: 'Lifetime Savings (800+ Score)' },
+    ],
+    keyHighlights: [
+      'Free credit scores now available from most major banks and card issuers',
+      'FICO Score 8 remains the most widely used scoring model',
+      'VantageScore 4.0 gaining adoption among lenders',
+      'Credit monitoring helps detect identity theft and errors early',
+    ],
+    sections: [
+      {
+        title: 'Key Score Factors',
+        content: 'Understanding what drives your credit score enables targeted improvement. Payment history and credit utilization together account for roughly 65% of your FICO score.',
+        bullets: [
+          'Payment History (35%): On-time payments are the single biggest factor',
+          'Credit Utilization (30%): Keep balances below 30% of limits',
+          'Length of History (15%): Longer history improves scores',
+          'Credit Mix (10%): Diverse account types are beneficial',
+          'New Credit (10%): Hard inquiries temporarily lower scores',
+        ],
+      },
+    ],
+    segments: [
+      { name: 'Free Monitoring', share: 50, description: 'Bank-provided and bureau-direct free scores' },
+      { name: 'Premium Monitoring', share: 30, description: 'Paid services with 3-bureau monitoring and alerts' },
+      { name: 'Identity Protection Bundles', share: 20, description: 'Combined credit monitoring and ID theft protection' },
+    ],
+    businessBenefits: {
+      title: 'Industry Perspective',
+      intro: 'Credit score literacy drives better financial outcomes across the economy.',
+      items: [
+        { title: 'Consumer Education', description: 'Informed consumers make better borrowing decisions.' },
+        { title: 'Risk Assessment', description: 'Understanding scores helps professionals assess client readiness.' },
+      ],
+    },
+    personalBenefits: {
+      title: 'Personal Benefits',
+      intro: 'Monitoring your credit score empowers proactive financial management.',
+      items: [
+        { title: 'Early Error Detection', description: 'Catch and dispute inaccuracies before they affect major applications.' },
+        { title: 'Identity Theft Alerts', description: 'Real-time alerts for new accounts opened in your name.' },
+        { title: 'Score Optimization', description: 'Track which actions improve your score over time.' },
+      ],
+    },
+    smartfinproRole: {
+      title: 'How SmartFinPro Evaluates Credit Score Tools',
+      content: 'SmartFinPro reviews credit monitoring platforms based on score accuracy, update frequency, alert speed, and educational resources. We compare free vs paid options to help you find the right level of monitoring for your needs.',
+    },
+    closingCta: 'Compare credit score monitoring tools and learn strategies to improve your score. From free options to premium 3-bureau monitoring, find the right fit.',
+  },
+
+  // ============================================================
+  // REMORTGAGING OVERVIEW (UK)
+  // ============================================================
+  remortgaging: {
+    pageTitle: 'Remortgaging Guide UK 2026',
+    heroTitle: 'Remortgaging Guide UK 2026',
+    heroSubtitle: 'Complete Guide to Switching Your UK Mortgage Deal',
+    introText: 'With mortgage rates fluctuating significantly since 2022, remortgaging remains one of the most impactful financial decisions UK homeowners can make. Whether your fixed-rate deal is ending or you want to release equity, understanding the remortgaging landscape can save thousands per year.',
+    keyStats: [
+      { value: '£1.5T', label: 'UK Mortgage Market', highlight: true },
+      { value: '1.6M', label: 'Remortgages per Year' },
+      { value: '£4,200', label: 'Avg Annual Savings' },
+      { value: '4-8 wks', label: 'Typical Process Time' },
+    ],
+    keyHighlights: [
+      'Fixed-rate deals typically end after 2 or 5 years, reverting to higher SVR',
+      'Mortgage brokers can access deals not available directly from lenders',
+      'Early repayment charges may apply if switching before deal end date',
+      'All mortgage advice must come from FCA-authorised advisors',
+    ],
+    sections: [
+      {
+        title: 'When to Remortgage',
+        content: 'The ideal time to start looking for a new deal is 3-6 months before your current fixed rate ends. Most lenders lock in rates for 6 months, giving you time to secure a competitive rate while still on your existing deal.',
+        bullets: [
+          'Fixed-rate deal ending — avoid costly SVR reversion',
+          'Significant equity built up — access better LTV bands',
+          'Property value increased — improved loan-to-value ratio',
+          'Release equity for home improvements or other purposes',
+        ],
+      },
+    ],
+    segments: [
+      { name: 'Fixed Rate', share: 55, description: '2-year and 5-year fixed rate products' },
+      { name: 'Tracker Rate', share: 25, description: 'Rates linked to Bank of England base rate' },
+      { name: 'Offset Mortgages', share: 12, description: 'Savings linked to reduce interest' },
+      { name: 'Discount Variable', share: 8, description: 'Discount on lender SVR' },
+    ],
+    businessBenefits: {
+      title: 'Mortgage Industry Insights',
+      intro: 'The UK remortgaging market is dynamic and heavily regulated.',
+      items: [
+        { title: 'FCA Regulation', description: 'All mortgage advice must be given by FCA-authorised firms.' },
+        { title: 'Product Innovation', description: 'Green mortgages and cashback deals reshaping the market.' },
+      ],
+    },
+    personalBenefits: {
+      title: 'Homeowner Benefits',
+      intro: 'Proactive remortgaging is one of the biggest money-saving actions UK homeowners can take.',
+      items: [
+        { title: 'Lower Payments', description: 'Switching from SVR to a competitive fixed rate can save hundreds per month.' },
+        { title: 'Payment Certainty', description: 'Fixed-rate deals protect against future rate rises.' },
+        { title: 'Equity Release', description: 'Access home equity for renovations, debt consolidation, or investments.' },
+      ],
+    },
+    smartfinproRole: {
+      title: 'How SmartFinPro Evaluates Mortgage Deals',
+      content: 'SmartFinPro compares remortgage deals based on true cost (including fees and cashback), rate competitiveness, LTV requirements, and lender flexibility. All mortgage providers referenced are FCA-authorised.',
+    },
+    closingCta: 'Compare remortgage deals from UK lenders and brokers. Find out if switching could save you thousands per year on your mortgage payments.',
+  },
+
+  // ============================================================
+  // COST OF LIVING OVERVIEW (UK)
+  // ============================================================
+  'cost-of-living': {
+    pageTitle: 'Cost of Living Savings Guide UK 2026',
+    heroTitle: 'Cost of Living Savings Guide UK 2026',
+    heroSubtitle: 'Practical Strategies to Reduce Household Expenses',
+    introText: 'Rising energy bills, grocery costs, and housing expenses continue to squeeze UK household budgets. Our cost of living hub provides actionable strategies and tool comparisons to help you reduce monthly outgoings and protect your financial wellbeing.',
+    keyStats: [
+      { value: '£2,500', label: 'Avg Annual Energy Bill', highlight: true },
+      { value: '£5,800', label: 'Avg Annual Grocery Spend' },
+      { value: '20%+', label: 'Possible Savings with Switching' },
+      { value: '67%', label: 'UK Adults Worried About Bills' },
+    ],
+    keyHighlights: [
+      'Energy switching and tariff comparison can save hundreds annually',
+      'Meal planning and grocery comparison apps reduce food waste and costs',
+      'Government support programs available for qualifying households',
+      'Insurance and subscription audits often reveal quick savings',
+    ],
+    sections: [
+      {
+        title: 'Key Savings Areas',
+        content: 'The biggest household expenses offer the most room for savings. Energy, groceries, insurance, and subscriptions are the four areas where most UK households can make immediate reductions.',
+        bullets: [
+          'Energy: Compare tariffs, improve insulation, use smart meters',
+          'Groceries: Meal planning, loyalty schemes, budget supermarkets',
+          'Insurance: Annual switching saves 20-40% on average',
+          'Subscriptions: Regular audits eliminate forgotten payments',
+        ],
+      },
+    ],
+    segments: [
+      { name: 'Energy Costs', share: 35, description: 'Gas, electric, and heating expenses' },
+      { name: 'Grocery & Food', share: 30, description: 'Supermarket and food delivery spending' },
+      { name: 'Insurance & Finance', share: 20, description: 'Home, car, and life insurance costs' },
+      { name: 'Subscriptions', share: 15, description: 'Streaming, gym, and recurring payments' },
+    ],
+    businessBenefits: {
+      title: 'Market Context',
+      intro: 'The cost of living crisis has reshaped consumer behavior and fintech innovation.',
+      items: [
+        { title: 'Fintech Response', description: 'Money-saving apps and comparison tools seeing record adoption.' },
+        { title: 'Regulatory Action', description: 'Ofgem energy cap and government interventions continue evolving.' },
+      ],
+    },
+    personalBenefits: {
+      title: 'Household Benefits',
+      intro: 'Small changes across multiple categories add up to significant annual savings.',
+      items: [
+        { title: 'Immediate Savings', description: 'Switching energy tariff or insurance can save money from month one.' },
+        { title: 'Long-term Habits', description: 'Building cost-conscious habits compounds savings over years.' },
+        { title: 'Financial Resilience', description: 'Lower fixed costs create more buffer for unexpected expenses.' },
+      ],
+    },
+    smartfinproRole: {
+      title: 'How SmartFinPro Helps You Save',
+      content: 'SmartFinPro reviews money-saving tools, comparison platforms, and financial products that help UK households reduce their cost of living. We focus on practical, actionable recommendations backed by real savings data.',
+    },
+    closingCta: 'Explore our cost of living guides and tool comparisons. Find practical ways to reduce your monthly bills and protect your household budget.',
+  },
+
+  // ============================================================
+  // SAVINGS OVERVIEW (UK/AU)
+  // ============================================================
+  savings: {
+    pageTitle: 'Savings Accounts Overview 2026',
+    heroTitle: 'Savings Accounts Overview 2026',
+    heroSubtitle: 'High-Yield Savings, ISAs & Term Deposits Compared',
+    introText: 'With interest rates at multi-year highs, savers finally have meaningful options. From easy-access accounts to fixed-term deposits, ISAs, and high-yield savings accounts, choosing the right savings product can make a significant difference to your returns.',
+    keyStats: [
+      { value: '5.0%+', label: 'Top Easy-Access Rate', highlight: true },
+      { value: '£20K', label: 'Annual ISA Allowance (UK)' },
+      { value: '$250K', label: 'ADI Protection (AU)' },
+      { value: '£85K', label: 'FSCS Protection (UK)' },
+    ],
+    keyHighlights: [
+      'Easy-access savings rates at highest levels since 2008',
+      'ISAs (UK) and offset accounts (AU) offer tax-efficient savings',
+      'FSCS (UK) and ADI (AU) deposit protection schemes',
+      'Regular saver accounts often offer the highest rates for small deposits',
+    ],
+    sections: [
+      {
+        title: 'Types of Savings Accounts',
+        content: 'Different savings products suit different goals. Understanding the trade-offs between access, rates, and tax treatment helps you build an optimal savings strategy.',
+        bullets: [
+          'Easy-Access: Full flexibility, competitive rates, instant withdrawals',
+          'Fixed-Term: Higher rates in exchange for locking money away',
+          'ISAs (UK): Tax-free interest within annual allowance',
+          'Offset Accounts (AU): Reduce mortgage interest instead of earning taxable interest',
+        ],
+      },
+    ],
+    segments: [
+      { name: 'Easy-Access', share: 40, description: 'Flexible savings with no lock-in' },
+      { name: 'Fixed-Term Deposits', share: 25, description: '1-5 year term deposits at higher rates' },
+      { name: 'Tax-Efficient (ISA/Offset)', share: 25, description: 'Tax-advantaged savings products' },
+      { name: 'Regular Saver', share: 10, description: 'Monthly deposit accounts with bonus rates' },
+    ],
+    businessBenefits: {
+      title: 'Market Insights',
+      intro: 'The savings market is highly competitive and interest rate sensitive.',
+      items: [
+        { title: 'Rate Environment', description: 'Central bank policy directly impacts savings rates and product availability.' },
+        { title: 'Digital Banks', description: 'Neobanks consistently offer the most competitive savings rates.' },
+      ],
+    },
+    personalBenefits: {
+      title: 'Saver Benefits',
+      intro: 'Strategic savings account selection maximizes your returns.',
+      items: [
+        { title: 'Higher Returns', description: 'Switching from Big 4 to competitive accounts can double your interest.' },
+        { title: 'Tax Efficiency', description: 'ISAs (UK) and offset accounts (AU) reduce tax on savings income.' },
+        { title: 'Deposit Protection', description: 'FSCS and ADI schemes protect your savings up to guaranteed limits.' },
+      ],
+    },
+    smartfinproRole: {
+      title: 'How SmartFinPro Evaluates Savings Accounts',
+      content: 'SmartFinPro compares savings products on headline rates, access terms, minimum deposits, and protection schemes. We highlight where digital challengers outperform traditional banks and identify the best options for different savings goals.',
+    },
+    closingCta: 'Compare the best savings accounts and find the highest rates for your goals. From easy-access to ISAs to fixed-term deposits, maximize your returns.',
+  },
+
+  // ============================================================
+  // SUPERANNUATION OVERVIEW (AU)
+  // ============================================================
+  superannuation: {
+    pageTitle: 'Superannuation Guide Australia 2026',
+    heroTitle: 'Superannuation Guide Australia 2026',
+    heroSubtitle: 'Super Funds, Contribution Strategies & Retirement Planning',
+    introText: 'Superannuation is the cornerstone of Australian retirement planning. With over $3.9 trillion in assets and the Super Guarantee rate rising to 12%, understanding super fund performance, fees, and contribution strategies is essential for building long-term wealth.',
+    keyStats: [
+      { value: '$3.9T', label: 'Total Super Assets', highlight: true },
+      { value: '12%', label: 'Super Guarantee Rate' },
+      { value: '$30K', label: 'Annual Concessional Cap' },
+      { value: '15%', label: 'Concessional Tax Rate' },
+    ],
+    keyHighlights: [
+      'Super Guarantee increased to 12% of ordinary time earnings',
+      'Division 296 tax applies to super balances above $3 million from 2026',
+      'Industry funds consistently outperform retail funds on net returns',
+      'APRA regulates super funds and publishes performance benchmarks',
+    ],
+    sections: [
+      {
+        title: 'Understanding Superannuation',
+        content: 'Australian superannuation is a compulsory retirement savings system. Employers contribute a minimum percentage of your salary, and the funds are invested until you reach preservation age (currently 60 for most Australians).',
+        bullets: [
+          'Employer contributions: 12% Super Guarantee minimum',
+          'Salary sacrifice: Additional pre-tax contributions up to $30K cap',
+          'Investment options: Growth, balanced, conservative, and custom',
+          'Insurance: Most funds include default life and TPD cover',
+        ],
+      },
+    ],
+    segments: [
+      { name: 'Industry Funds', share: 40, description: 'Not-for-profit funds with competitive fees' },
+      { name: 'Retail Funds', share: 30, description: 'For-profit funds offered by financial institutions' },
+      { name: 'SMSF', share: 20, description: 'Self-Managed Super Funds for hands-on investors' },
+      { name: 'Public Sector', share: 10, description: 'Government employee super schemes' },
+    ],
+    businessBenefits: {
+      title: 'Industry Context',
+      intro: 'The Australian superannuation system is one of the largest in the world.',
+      items: [
+        { title: 'APRA Oversight', description: 'Strict regulatory framework ensures fund accountability and transparency.' },
+        { title: 'Performance Testing', description: 'Annual APRA performance tests identify and address underperforming funds.' },
+      ],
+    },
+    personalBenefits: {
+      title: 'Member Benefits',
+      intro: 'Active super management can significantly impact retirement outcomes.',
+      items: [
+        { title: 'Fee Savings', description: 'Switching from a high-fee fund can save tens of thousands over a working life.' },
+        { title: 'Tax Advantages', description: 'Salary sacrifice and spouse contributions offer significant tax benefits.' },
+        { title: 'Insurance Cover', description: 'Default life and income protection insurance within super is often more affordable.' },
+      ],
+    },
+    smartfinproRole: {
+      title: 'How SmartFinPro Evaluates Super Funds',
+      content: 'SmartFinPro reviews super funds based on net investment returns (after fees), insurance quality, member services, and APRA performance ratings. All funds referenced hold appropriate APRA or ASIC licences.',
+    },
+    closingCta: 'Compare Australia\'s top super funds and explore contribution strategies. Find the fund that maximizes your retirement savings with competitive fees and strong performance.',
+  },
+
+  // ============================================================
+  // GOLD INVESTING OVERVIEW (AU)
+  // ============================================================
+  'gold-investing': {
+    pageTitle: 'Gold Investing Guide Australia 2026',
+    heroTitle: 'Gold Investing Guide Australia 2026',
+    heroSubtitle: 'Physical Gold, ETFs & Precious Metals for Australian Investors',
+    introText: 'Australia is one of the world\'s largest gold producers, giving local investors unique advantages in precious metals investing. From Perth Mint products to ASX-listed gold ETFs, Australian investors have diverse options for adding gold exposure to their portfolios.',
+    keyStats: [
+      { value: 'A$4,200+', label: 'Gold Price per oz (AUD)', highlight: true },
+      { value: '#2', label: 'Australia Global Gold Producer' },
+      { value: '5-15%', label: 'Recommended Portfolio Allocation' },
+      { value: '0%', label: 'GST on Investment Gold' },
+    ],
+    keyHighlights: [
+      'Perth Mint provides government-backed gold storage and products',
+      'ASX gold ETFs (GOLD, PMGOLD, QAU) offer convenient exposure',
+      'Investment-grade gold bullion is GST-free in Australia',
+      'Gold has historically served as an effective inflation hedge',
+    ],
+    sections: [
+      {
+        title: 'Ways to Invest in Gold',
+        content: 'Australian investors can access gold through physical bullion, ETFs, mining stocks, and allocated storage programs. Each option has different cost, storage, and liquidity characteristics.',
+        bullets: [
+          'Physical bullion: Bars and coins from Perth Mint or authorised dealers',
+          'Gold ETFs: ASX-listed funds tracking gold price (GOLD, PMGOLD)',
+          'Mining stocks: ASX-listed gold producers (Newmont, Northern Star)',
+          'Perth Mint Depository: Government-backed allocated and unallocated storage',
+        ],
+      },
+    ],
+    segments: [
+      { name: 'Gold ETFs', share: 40, description: 'Exchange-traded funds tracking gold price' },
+      { name: 'Physical Bullion', share: 30, description: 'Gold bars and coins for direct ownership' },
+      { name: 'Mining Equities', share: 20, description: 'Shares in gold mining companies' },
+      { name: 'Allocated Storage', share: 10, description: 'Institutional gold storage programs' },
+    ],
+    businessBenefits: {
+      title: 'Market Context',
+      intro: 'Gold plays a unique role in portfolio diversification.',
+      items: [
+        { title: 'Inflation Hedge', description: 'Gold historically preserves purchasing power during inflationary periods.' },
+        { title: 'Currency Hedge', description: 'AUD-denominated gold benefits when the Australian dollar weakens.' },
+      ],
+    },
+    personalBenefits: {
+      title: 'Investor Benefits',
+      intro: 'Gold offers unique portfolio benefits unavailable from other asset classes.',
+      items: [
+        { title: 'Portfolio Diversification', description: 'Low correlation with equities reduces overall portfolio volatility.' },
+        { title: 'Tax Efficiency', description: 'Investment-grade gold bullion is GST-free in Australia.' },
+        { title: 'Safe Haven', description: 'Historically performs well during market uncertainty and geopolitical events.' },
+      ],
+    },
+    smartfinproRole: {
+      title: 'How SmartFinPro Evaluates Gold Investments',
+      content: 'SmartFinPro reviews gold investment options based on total cost (premiums, fees, storage), authenticity guarantees, liquidity, and suitability for different investor profiles. All products referenced comply with ASIC regulations.',
+    },
+    closingCta: 'Compare gold investment options available to Australian investors. From Perth Mint bullion to ASX-listed ETFs, find the right precious metals strategy for your portfolio.',
+  },
+
+  // ============================================================
+  // TAX-EFFICIENT INVESTING OVERVIEW (CA)
+  // ============================================================
+  'tax-efficient-investing': {
+    pageTitle: 'Tax-Efficient Investing Guide Canada 2026',
+    heroTitle: 'Tax-Efficient Investing Guide Canada 2026',
+    heroSubtitle: 'TFSA, RRSP, FHSA & Tax-Optimized Investment Strategies',
+    introText: 'Canada offers some of the most generous tax-advantaged investment accounts in the world. Understanding how to strategically use your TFSA, RRSP, and FHSA contribution room can save tens of thousands in lifetime taxes and accelerate wealth building.',
+    keyStats: [
+      { value: '$7,000', label: 'TFSA Annual Limit 2026', highlight: true },
+      { value: '18%', label: 'RRSP Contribution Rate' },
+      { value: '$8,000', label: 'FHSA Annual Limit' },
+      { value: '$102K', label: 'TFSA Cumulative Room (since 2009)' },
+    ],
+    keyHighlights: [
+      'TFSA gains are completely tax-free — no tax on withdrawals',
+      'RRSP contributions reduce taxable income in the year of contribution',
+      'FHSA combines TFSA and RRSP benefits for first-time home buyers',
+      'Strategic account placement can save significant taxes over decades',
+    ],
+    sections: [
+      {
+        title: 'Account Comparison',
+        content: 'Each registered account type has different tax treatment, contribution limits, and withdrawal rules. The optimal strategy depends on your income, marginal tax rate, and financial goals.',
+        bullets: [
+          'TFSA: Tax-free growth and withdrawals, no income deduction',
+          'RRSP: Tax-deductible contributions, taxed on withdrawal',
+          'FHSA: Tax-deductible contributions AND tax-free withdrawals for home purchase',
+          'RESP: Government grants for education savings (20% CESG match)',
+        ],
+      },
+    ],
+    segments: [
+      { name: 'TFSA', share: 35, description: 'Tax-Free Savings Account investments' },
+      { name: 'RRSP', share: 35, description: 'Registered Retirement Savings Plans' },
+      { name: 'FHSA', share: 15, description: 'First Home Savings Account' },
+      { name: 'RESP & Other', share: 15, description: 'Education savings and non-registered' },
+    ],
+    businessBenefits: {
+      title: 'Financial Planning Context',
+      intro: 'Tax-efficient investing is fundamental to Canadian financial planning.',
+      items: [
+        { title: 'Account Sequencing', description: 'The order of contributions across accounts significantly impacts lifetime wealth.' },
+        { title: 'Robo-Advisor Growth', description: 'Platforms like Wealthsimple and Questrade simplify tax-efficient investing.' },
+      ],
+    },
+    personalBenefits: {
+      title: 'Investor Benefits',
+      intro: 'Maximizing registered accounts is the most impactful financial decision most Canadians can make.',
+      items: [
+        { title: 'Tax Savings', description: 'Strategic use of TFSA, RRSP, and FHSA can save tens of thousands in taxes.' },
+        { title: 'Government Matching', description: 'FHSA and RESP offer government contributions that boost your savings.' },
+        { title: 'Compounding Power', description: 'Tax-sheltered compounding accelerates wealth building over decades.' },
+      ],
+    },
+    smartfinproRole: {
+      title: 'How SmartFinPro Evaluates Tax-Efficient Investing',
+      content: 'SmartFinPro reviews investment platforms based on registered account support, fee structures, portfolio options, and tax-loss harvesting capabilities. All platforms referenced are CIRO-regulated.',
+    },
+    closingCta: 'Compare TFSA and RRSP investment platforms and learn strategies to minimize your Canadian tax burden. Find the right platform for your tax-efficient investing goals.',
+  },
+
+  // ============================================================
+  // HOUSING OVERVIEW (CA)
+  // ============================================================
+  housing: {
+    pageTitle: 'Canadian Housing & Mortgage Guide 2026',
+    heroTitle: 'Canadian Housing & Mortgage Guide 2026',
+    heroSubtitle: 'Mortgages, First-Time Buyer Programs & Affordability Tools',
+    introText: 'Navigating the Canadian housing market requires understanding OSFI stress tests, CMHC insurance requirements, provincial programs, and first-time buyer incentives like the FHSA and Home Buyers\' Plan. Our housing hub helps you make informed decisions about the biggest purchase of your life.',
+    keyStats: [
+      { value: '$680K', label: 'Avg Home Price (National)', highlight: true },
+      { value: '5.25%', label: 'OSFI Stress Test Rate' },
+      { value: '5%', label: 'Minimum Down Payment' },
+      { value: '$40K', label: 'FHSA Lifetime Limit' },
+    ],
+    keyHighlights: [
+      'OSFI B-20 stress test qualifies borrowers at rate +2% or 5.25% (higher)',
+      'CMHC insurance required for down payments under 20%',
+      'First Home Savings Account (FHSA) offers $40K tax-deductible savings',
+      'Home Buyers\' Plan allows $35K RRSP withdrawal for first home',
+    ],
+    sections: [
+      {
+        title: 'Buying Your First Home in Canada',
+        content: 'Canadian first-time buyers have access to several government programs that can significantly reduce the cost of homeownership. Understanding eligibility and combining programs strategically is key.',
+        bullets: [
+          'FHSA: Save up to $40K tax-free for your first home',
+          'HBP: Withdraw up to $35K from RRSP (repay over 15 years)',
+          'First-Time Home Buyers\' Tax Credit: $10K federal credit ($1,500 value)',
+          'Provincial programs: Land transfer tax rebates vary by province',
+        ],
+      },
+    ],
+    segments: [
+      { name: 'Fixed Rate Mortgages', share: 50, description: 'Locked rate for 1-10 year terms' },
+      { name: 'Variable Rate', share: 25, description: 'Rate fluctuates with Bank of Canada prime' },
+      { name: 'Mortgage Brokers', share: 15, description: 'Multi-lender comparison services' },
+      { name: 'Alt/Private Lending', share: 10, description: 'Non-traditional mortgage solutions' },
+    ],
+    businessBenefits: {
+      title: 'Market Context',
+      intro: 'The Canadian housing market is heavily regulated and regionally diverse.',
+      items: [
+        { title: 'OSFI Regulation', description: 'Federal stress test ensures borrowers can handle rate increases.' },
+        { title: 'CMHC Insurance', description: 'Government-backed mortgage insurance enables lower down payments.' },
+      ],
+    },
+    personalBenefits: {
+      title: 'Homebuyer Benefits',
+      intro: 'Understanding Canadian mortgage rules and programs maximizes your purchasing power.',
+      items: [
+        { title: 'FHSA + HBP Combo', description: 'Combining both programs provides up to $75K in tax-advantaged down payment savings.' },
+        { title: 'Rate Shopping', description: 'Comparing mortgage rates across lenders can save thousands per year.' },
+        { title: 'Stress Test Prep', description: 'Understanding the qualification rate helps you plan realistically.' },
+      ],
+    },
+    smartfinproRole: {
+      title: 'How SmartFinPro Evaluates Mortgage Products',
+      content: 'SmartFinPro compares Canadian mortgage rates, broker services, and first-time buyer programs. We evaluate lenders on rate competitiveness, flexibility (prepayment options, portability), and OSFI-compliant stress test guidance. All mortgage providers referenced are CIRO or provincially regulated.',
+    },
+    closingCta: 'Compare Canadian mortgage rates and explore first-time buyer programs. From FHSA strategies to broker comparisons, find the best path to homeownership.',
+  },
 };

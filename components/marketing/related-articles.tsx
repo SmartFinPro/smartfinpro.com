@@ -20,10 +20,10 @@ export function RelatedArticles({ articles, market, category }: RelatedArticlesP
     <section className="container mx-auto px-4 mb-16">
       <div className="max-w-4xl mx-auto">
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: 'rgba(6,182,212,0.15)' }}>
-            <BookOpen className="h-5 w-5 text-cyan-400" />
+          <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: 'var(--sfp-sky)' }}>
+            <BookOpen className="h-5 w-5" style={{ color: 'var(--sfp-navy)' }} />
           </div>
-          <h2 className="text-xl font-bold text-white">More in {categoryName}</h2>
+          <h2 className="text-xl font-bold" style={{ color: 'var(--sfp-ink)' }}>More in {categoryName}</h2>
         </div>
 
         <div className="grid md:grid-cols-3 gap-4">
@@ -31,7 +31,7 @@ export function RelatedArticles({ articles, market, category }: RelatedArticlesP
             <Link
               key={article.slug}
               href={`${marketPrefix}/${category}/${article.slug}`}
-              className="glass-card rounded-xl p-5 transition-all duration-300 hover:border-cyan-500/30 group"
+              className="rounded-xl border border-gray-200 bg-white shadow-sm p-5 transition-all duration-300 hover:shadow-md hover:border-gray-300 group"
             >
               {article.meta.rating && (
                 <div className="flex items-center gap-1 mb-3">
@@ -41,20 +41,20 @@ export function RelatedArticles({ articles, market, category }: RelatedArticlesP
                       className={`h-3.5 w-3.5 ${
                         i < Math.floor(article.meta.rating || 0)
                           ? 'text-amber-400 fill-amber-400'
-                          : 'text-slate-700'
+                          : 'text-gray-300'
                       }`}
                     />
                   ))}
-                  <span className="text-xs text-slate-500 ml-1">{article.meta.rating}/5</span>
+                  <span className="text-xs ml-1" style={{ color: 'var(--sfp-slate)' }}>{article.meta.rating}/5</span>
                 </div>
               )}
-              <h3 className="font-semibold text-white mb-2 group-hover:text-cyan-400 transition-colors line-clamp-2">
+              <h3 className="font-semibold mb-2 transition-colors line-clamp-2" style={{ color: 'var(--sfp-ink)' }}>
                 {article.meta.title}
               </h3>
-              <p className="text-sm text-slate-500 line-clamp-2 mb-3">
+              <p className="text-sm line-clamp-2 mb-3" style={{ color: 'var(--sfp-slate)' }}>
                 {article.meta.description}
               </p>
-              <span className="text-sm text-cyan-400 flex items-center gap-1">
+              <span className="text-sm flex items-center gap-1" style={{ color: 'var(--sfp-navy)' }}>
                 Read Review
                 <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-1 transition-transform" />
               </span>

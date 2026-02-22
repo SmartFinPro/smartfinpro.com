@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     template: '%s | SmartFinPro',
   },
   description:
-    'Discover AI-powered tools, cybersecurity solutions, and trading platforms trusted by 50,000+ finance professionals.',
+    'Compare AI-powered tools, cybersecurity solutions, and trading platforms across 4 global markets. Expert reviews and free calculators.',
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_SITE_URL || 'https://smartfinpro.com'
   ),
@@ -28,7 +28,7 @@ export const metadata: Metadata = {
     siteName: 'SmartFinPro',
     title: 'SmartFinPro - Financial Intelligence for Modern Professionals',
     description:
-      'Discover AI-powered tools, cybersecurity solutions, and trading platforms trusted by 50,000+ finance professionals.',
+      'Compare AI-powered tools, cybersecurity solutions, and trading platforms across 4 global markets. Expert reviews and free calculators.',
     images: [
       {
         url: '/og-image.png',
@@ -67,8 +67,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <head>
+        {/* Preconnect to image CDN for faster LCP */}
+        <link rel="preconnect" href="https://images.smartfinpro.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://images.smartfinpro.com" />
+        {/* Preconnect to analytics */}
+        <link rel="dns-prefetch" href="https://plausible.io" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{

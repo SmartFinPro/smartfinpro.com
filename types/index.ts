@@ -7,7 +7,17 @@ export type Category =
   | 'trading'
   | 'forex'
   | 'personal-finance'
-  | 'business-banking';
+  | 'business-banking'
+  | 'credit-repair'
+  | 'debt-relief'
+  | 'credit-score'
+  | 'remortgaging'
+  | 'cost-of-living'
+  | 'savings'
+  | 'superannuation'
+  | 'gold-investing'
+  | 'tax-efficient-investing'
+  | 'housing';
 
 // Affiliate Link Types
 export interface AffiliateLink {
@@ -21,6 +31,34 @@ export interface AffiliateLink {
   commission_value: number;
   active: boolean;
   created_at: string;
+  // Registry extensions
+  offer_expires_at?: string | null;
+  last_health_check?: string | null;
+  health_status?: 'healthy' | 'degraded' | 'dead' | 'unchecked';
+  compliance_label?: string | null; // e.g. "Terms Apply", "Capital at Risk"
+  network?: string | null; // e.g. "PartnerStack", "Awin", "Direct"
+}
+
+// Link health check result
+export interface LinkHealthResult {
+  link_id: string;
+  slug: string;
+  status_code: number | null;
+  healthy: boolean;
+  response_time_ms: number | null;
+  checked_at: string;
+  error?: string;
+}
+
+// Market-view matrix entry
+export interface MarketPartnerEntry {
+  partner_name: string;
+  slug: string;
+  category: Category;
+  active: boolean;
+  health_status: 'healthy' | 'degraded' | 'dead' | 'unchecked';
+  clicks_30d: number;
+  offer_expires_at: string | null;
 }
 
 export interface LinkClick {
@@ -56,6 +94,17 @@ export interface Subscriber {
   unsubscribed_at: string | null;
 }
 
+// Expert Types (Supabase-backed)
+export interface ExpertData {
+  name: string;
+  role: string;
+  bio: string | null;
+  image_url: string | null;
+  credentials: string[];
+  linkedin_url: string | null;
+  verified: boolean;
+}
+
 // Content Types
 export interface ReviewData {
   title: string;
@@ -76,6 +125,7 @@ export interface ReviewData {
   modifiedDate: string;
   author: string;
   reviewedBy?: string;
+  readingTime?: string; // e.g. "8 min read"
   faqs: FAQ[];
   sections: Section[];
   testimonials: Testimonial[];

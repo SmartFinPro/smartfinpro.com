@@ -1,5 +1,7 @@
 'use server';
 
+import 'server-only';
+
 import { createServiceClient } from '@/lib/supabase/server';
 import type { PageView, LinkClick } from '@/lib/supabase/types';
 import { TimeRange } from './dashboard';
@@ -152,14 +154,17 @@ export async function getAnalyticsStats(range: TimeRange = '7d'): Promise<Analyt
   // Fetch link clicks for conversion tracking
   let clicksQuery = supabase
     .from('link_clicks')
-    .select('session_id, utm_source, utm_medium, utm_campaign, referrer');
+    .select('id, link_id, utm_source, utm_medium, utm_campaign, referrer');
 
   if (rangeStart) {
     clicksQuery = clicksQuery.gte('clicked_at', rangeStart.toISOString());
   }
 
-  const { data: clicksData } = await clicksQuery;
-  type ClickRecord = Pick<LinkClick, 'session_id' | 'utm_source' | 'utm_medium' | 'utm_campaign' | 'referrer'>;
+  const { data: clicksData, error: clicksError } = await clicksQuery;
+  if (clicksError) {
+    console.error('link_clicks query error:', clicksError.message);
+  }
+  type ClickRecord = { id: string; link_id: string | null; utm_source: string | null; utm_medium: string | null; utm_campaign: string | null; referrer: string | null };
   const clicks = (clicksData || []) as ClickRecord[];
 
   // Get total page views (all time)

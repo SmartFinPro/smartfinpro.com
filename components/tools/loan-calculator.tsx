@@ -105,15 +105,15 @@ export function LoanCalculator() {
       <div className="grid lg:grid-cols-2 gap-8">
         {/* Input Section */}
         <div className="space-y-6">
-          <div className="rounded-2xl border border-slate-700/40 p-6" style={{ background: 'rgba(255,255,255,0.03)' }}>
-            <h3 className="text-lg font-semibold text-white mb-6 flex items-center gap-2">
-              <Calculator className="h-5 w-5 text-violet-400" />
+          <div className="rounded-2xl border border-gray-200 bg-white shadow-sm p-6">
+            <h3 className="text-lg font-semibold mb-6 flex items-center gap-2" style={{ color: 'var(--sfp-ink)' }}>
+              <Calculator className="h-5 w-5" style={{ color: 'var(--sfp-navy)' }} />
               Loan Details
             </h3>
 
             {/* Loan Type Selection */}
             <div className="mb-6">
-              <label className="block text-sm font-medium text-slate-300 mb-3">
+              <label className="block text-sm font-medium mb-3" style={{ color: 'var(--sfp-slate)' }}>
                 Loan Type
               </label>
               <div className="grid grid-cols-2 gap-2">
@@ -123,13 +123,13 @@ export function LoanCalculator() {
                     onClick={() => handleTypeChange(type)}
                     className={`p-3 rounded-xl border text-left transition-all ${
                       selectedType.name === type.name
-                        ? 'border-violet-400 bg-violet-400/10'
-                        : 'border-slate-700/50 hover:border-slate-600'
+                        ? 'border-gray-200'
+                        : 'border-gray-200 hover:border-gray-300'
                     }`}
-                    style={selectedType.name !== type.name ? { background: 'rgba(255,255,255,0.02)' } : undefined}
+                    style={selectedType.name === type.name ? { borderColor: 'var(--sfp-navy)', background: 'rgba(27,79,140,0.1)' } : { background: 'white' }}
                   >
-                    <span className={`text-sm font-medium ${selectedType.name === type.name ? 'text-white' : 'text-slate-300'}`}>{type.name}</span>
-                    <span className="block text-xs text-slate-500 mt-0.5">
+                    <span className="text-sm font-medium" style={{ color: selectedType.name === type.name ? 'var(--sfp-ink)' : 'var(--sfp-slate)' }}>{type.name}</span>
+                    <span className="block text-xs mt-0.5" style={{ color: 'var(--sfp-slate)' }}>
                       {type.minRate}% - {type.maxRate}% APR
                     </span>
                   </button>
@@ -140,11 +140,11 @@ export function LoanCalculator() {
             {/* Loan Amount */}
             <div className="mb-6">
               <div className="flex justify-between items-center mb-3">
-                <label className="text-sm font-medium text-slate-300 flex items-center gap-2">
-                  <DollarSign className="h-4 w-4 text-slate-500" />
+                <label className="text-sm font-medium flex items-center gap-2" style={{ color: 'var(--sfp-slate)' }}>
+                  <DollarSign className="h-4 w-4" style={{ color: 'var(--sfp-slate)' }} />
                   Loan Amount
                 </label>
-                <span className="text-sm font-semibold px-3 py-1 rounded-full" style={{ background: 'rgba(139,92,246,0.15)', color: '#a78bfa' }}>
+                <span className="text-sm font-semibold px-3 py-1 rounded-full" style={{ background: 'rgba(27,79,140,0.1)', color: 'var(--sfp-navy)' }}>
                   ${loanAmount.toLocaleString('en-US')}
                 </span>
               </div>
@@ -166,11 +166,11 @@ export function LoanCalculator() {
             {/* Interest Rate */}
             <div className="mb-6">
               <div className="flex justify-between items-center mb-3">
-                <label className="text-sm font-medium text-slate-300 flex items-center gap-2">
-                  <Percent className="h-4 w-4 text-slate-500" />
+                <label className="text-sm font-medium flex items-center gap-2" style={{ color: 'var(--sfp-slate)' }}>
+                  <Percent className="h-4 w-4" style={{ color: 'var(--sfp-slate)' }} />
                   Interest Rate (APR)
                 </label>
-                <span className="text-sm font-semibold px-3 py-1 rounded-full" style={{ background: 'rgba(139,92,246,0.15)', color: '#a78bfa' }}>
+                <span className="text-sm font-semibold px-3 py-1 rounded-full" style={{ background: 'rgba(27,79,140,0.1)', color: 'var(--sfp-navy)' }}>
                   {interestRate}%
                 </span>
               </div>
@@ -192,11 +192,11 @@ export function LoanCalculator() {
             {/* Loan Term */}
             <div>
               <div className="flex justify-between items-center mb-3">
-                <label className="text-sm font-medium text-slate-300 flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-slate-500" />
+                <label className="text-sm font-medium flex items-center gap-2" style={{ color: 'var(--sfp-slate)' }}>
+                  <Calendar className="h-4 w-4" style={{ color: 'var(--sfp-slate)' }} />
                   Loan Term
                 </label>
-                <span className="text-sm font-semibold px-3 py-1 rounded-full" style={{ background: 'rgba(139,92,246,0.15)', color: '#a78bfa' }}>
+                <span className="text-sm font-semibold px-3 py-1 rounded-full" style={{ background: 'rgba(27,79,140,0.1)', color: 'var(--sfp-navy)' }}>
                   {loanTerm} months ({Math.floor(loanTerm / 12)}y {loanTerm % 12}m)
                 </span>
               </div>
@@ -217,11 +217,11 @@ export function LoanCalculator() {
           </div>
 
           {/* Disclaimer */}
-          <div className="rounded-xl p-4 border border-amber-500/20" style={{ background: 'rgba(245,158,11,0.05)' }}>
+          <div className="rounded-xl p-4 border border-amber-200" style={{ background: 'rgba(245,158,11,0.05)' }}>
             <div className="flex gap-3">
-              <AlertTriangle className="h-5 w-5 text-amber-400 shrink-0 mt-0.5" />
-              <div className="text-xs text-slate-500">
-                <strong className="text-amber-400">Loan Disclaimer:</strong> This calculator provides estimates only.
+              <AlertTriangle className="h-5 w-5 shrink-0 mt-0.5" style={{ color: 'var(--sfp-gold)' }} />
+              <div className="text-xs" style={{ color: 'var(--sfp-slate)' }}>
+                <strong style={{ color: 'var(--sfp-gold)' }}>Loan Disclaimer:</strong> This calculator provides estimates only.
                 Actual rates, terms, and approval depend on your credit profile and the lender.
                 SmartFinPro is not a lender. Representative APR ranges from {selectedType.minRate}% to {selectedType.maxRate}%.
               </div>
@@ -232,81 +232,81 @@ export function LoanCalculator() {
         {/* Results Section */}
         <div className="space-y-6">
           {/* Monthly Payment Highlight */}
-          <div className="bg-gradient-to-br from-violet-500 to-teal-600 rounded-2xl p-6 text-white">
+          <div className="rounded-2xl p-6 text-white" style={{ background: 'var(--sfp-navy)' }}>
             <div className="flex items-center gap-2 mb-2">
               <DollarSign className="h-5 w-5" />
-              <span className="text-sm font-medium text-violet-100">Monthly Payment</span>
+              <span className="text-sm font-medium text-white/80">Monthly Payment</span>
             </div>
             <div className="text-5xl font-bold mb-2">
               ${results.monthlyPayment.toLocaleString('en-US')}
             </div>
-            <p className="text-sm text-violet-100">
+            <p className="text-sm text-white/80">
               Paid off by {results.payoffDate}
             </p>
           </div>
 
           {/* Stats Grid */}
           <div className="grid grid-cols-2 gap-4">
-            <div className="rounded-xl border border-slate-700/40 p-4" style={{ background: 'rgba(255,255,255,0.03)' }}>
+            <div className="rounded-xl border border-gray-200 bg-white shadow-sm p-4">
               <div className="flex items-center gap-2 mb-2">
-                <PiggyBank className="h-4 w-4 text-cyan-400" />
-                <span className="text-xs text-slate-500">Total Repayment</span>
+                <PiggyBank className="h-4 w-4" style={{ color: 'var(--sfp-navy)' }} />
+                <span className="text-xs" style={{ color: 'var(--sfp-slate)' }}>Total Repayment</span>
               </div>
-              <div className="text-2xl font-bold text-white">
+              <div className="text-2xl font-bold" style={{ color: 'var(--sfp-ink)' }}>
                 ${results.totalPayment.toLocaleString('en-US')}
               </div>
             </div>
 
-            <div className="rounded-xl border border-slate-700/40 p-4" style={{ background: 'rgba(255,255,255,0.03)' }}>
+            <div className="rounded-xl border border-gray-200 bg-white shadow-sm p-4">
               <div className="flex items-center gap-2 mb-2">
-                <TrendingDown className="h-4 w-4 text-red-400" />
-                <span className="text-xs text-slate-500">Total Interest</span>
+                <TrendingDown className="h-4 w-4" style={{ color: 'var(--sfp-red)' }} />
+                <span className="text-xs" style={{ color: 'var(--sfp-slate)' }}>Total Interest</span>
               </div>
-              <div className="text-2xl font-bold text-red-400">
+              <div className="text-2xl font-bold" style={{ color: 'var(--sfp-red)' }}>
                 ${results.totalInterest.toLocaleString('en-US')}
               </div>
             </div>
 
-            <div className="rounded-xl border border-slate-700/40 p-4" style={{ background: 'rgba(255,255,255,0.03)' }}>
+            <div className="rounded-xl border border-gray-200 bg-white shadow-sm p-4">
               <div className="flex items-center gap-2 mb-2">
-                <Percent className="h-4 w-4 text-violet-400" />
-                <span className="text-xs text-slate-500">APR</span>
+                <Percent className="h-4 w-4" style={{ color: 'var(--sfp-navy)' }} />
+                <span className="text-xs" style={{ color: 'var(--sfp-slate)' }}>APR</span>
               </div>
-              <div className="text-2xl font-bold text-white">
+              <div className="text-2xl font-bold" style={{ color: 'var(--sfp-ink)' }}>
                 {interestRate}%
               </div>
             </div>
 
-            <div className="rounded-xl border border-slate-700/40 p-4" style={{ background: 'rgba(255,255,255,0.03)' }}>
+            <div className="rounded-xl border border-gray-200 bg-white shadow-sm p-4">
               <div className="flex items-center gap-2 mb-2">
-                <Calendar className="h-4 w-4 text-amber-400" />
-                <span className="text-xs text-slate-500">Loan Term</span>
+                <Calendar className="h-4 w-4" style={{ color: 'var(--sfp-gold)' }} />
+                <span className="text-xs" style={{ color: 'var(--sfp-slate)' }}>Loan Term</span>
               </div>
-              <div className="text-2xl font-bold text-white">
+              <div className="text-2xl font-bold" style={{ color: 'var(--sfp-ink)' }}>
                 {loanTerm} mo
               </div>
             </div>
           </div>
 
           {/* Cost Breakdown */}
-          <div className="rounded-xl border border-slate-700/40 p-4" style={{ background: 'rgba(255,255,255,0.03)' }}>
-            <h4 className="text-sm font-medium text-slate-300 mb-3">Cost Breakdown</h4>
+          <div className="rounded-xl border border-gray-200 bg-white shadow-sm p-4">
+            <h4 className="text-sm font-medium mb-3" style={{ color: 'var(--sfp-slate)' }}>Cost Breakdown</h4>
             <div className="space-y-2">
               <div className="flex justify-between items-center">
-                <span className="text-sm text-slate-400">Principal</span>
-                <span className="text-sm font-medium text-white">
+                <span className="text-sm" style={{ color: 'var(--sfp-slate)' }}>Principal</span>
+                <span className="text-sm font-medium" style={{ color: 'var(--sfp-ink)' }}>
                   ${loanAmount.toLocaleString('en-US')}
                 </span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-slate-400">Interest</span>
-                <span className="text-sm font-medium text-red-400">
+                <span className="text-sm" style={{ color: 'var(--sfp-slate)' }}>Interest</span>
+                <span className="text-sm font-medium" style={{ color: 'var(--sfp-red)' }}>
                   +${results.totalInterest.toLocaleString('en-US')}
                 </span>
               </div>
-              <div className="border-t border-slate-700/40 pt-2 flex justify-between items-center">
-                <span className="text-sm font-medium text-slate-300">Total</span>
-                <span className="text-sm font-bold text-white">
+              <div className="border-t border-gray-200 pt-2 flex justify-between items-center">
+                <span className="text-sm font-medium" style={{ color: 'var(--sfp-slate)' }}>Total</span>
+                <span className="text-sm font-bold" style={{ color: 'var(--sfp-ink)' }}>
                   ${results.totalPayment.toLocaleString('en-US')}
                 </span>
               </div>
@@ -315,36 +315,34 @@ export function LoanCalculator() {
             {/* Visual breakdown */}
             <div className="mt-4 h-3 rounded-full overflow-hidden flex">
               <div
-                className="bg-violet-500"
-                style={{ width: `${(loanAmount / results.totalPayment) * 100}%` }}
+                style={{ width: `${(loanAmount / results.totalPayment) * 100}%`, background: 'var(--sfp-navy)' }}
               />
               <div
-                className="bg-red-400"
-                style={{ width: `${(results.totalInterest / results.totalPayment) * 100}%` }}
+                style={{ width: `${(results.totalInterest / results.totalPayment) * 100}%`, background: 'var(--sfp-red)' }}
               />
             </div>
-            <div className="flex justify-between text-xs text-slate-500 mt-1">
+            <div className="flex justify-between text-xs mt-1" style={{ color: 'var(--sfp-slate)' }}>
               <span>Principal ({Math.round((loanAmount / results.totalPayment) * 100)}%)</span>
               <span>Interest ({Math.round((results.totalInterest / results.totalPayment) * 100)}%)</span>
             </div>
           </div>
 
           {/* CTA */}
-          <div className="rounded-xl border border-slate-700/40 p-6" style={{ background: 'rgba(255,255,255,0.03)' }}>
-            <h4 className="font-semibold text-white mb-2">
+          <div className="rounded-xl border border-gray-200 bg-white shadow-sm p-6">
+            <h4 className="font-semibold mb-2" style={{ color: 'var(--sfp-ink)' }}>
               Compare rates from 23+ lenders
             </h4>
-            <p className="text-sm text-slate-400 mb-4">
+            <p className="text-sm mb-4" style={{ color: 'var(--sfp-slate)' }}>
               Check your rate in minutes without affecting your credit score.
               97% of applicants receive at least one offer.
             </p>
-            <Button asChild className="w-full bg-violet-500 hover:bg-emerald-600">
+            <Button asChild className="w-full text-white hover:opacity-90" style={{ background: 'var(--sfp-gold)' }}>
               <a href="/go/lending-tree" target="_blank" rel="noopener noreferrer">
                 Compare Personal Loan Rates
                 <ArrowRight className="h-4 w-4 ml-2" />
               </a>
             </Button>
-            <p className="text-xs text-slate-500 text-center mt-3">
+            <p className="text-xs text-center mt-3" style={{ color: 'var(--sfp-slate)' }}>
               Free to use. No obligation to accept.
             </p>
           </div>
@@ -352,7 +350,8 @@ export function LoanCalculator() {
           {/* Amortization Toggle */}
           <button
             onClick={() => setShowAmortization(!showAmortization)}
-            className="w-full text-sm text-violet-400 hover:text-violet-300 font-medium flex items-center justify-center gap-2"
+            className="w-full text-sm font-medium flex items-center justify-center gap-2 hover:opacity-80"
+            style={{ color: 'var(--sfp-navy)' }}
           >
             <Info className="h-4 w-4" />
             {showAmortization ? 'Hide' : 'Show'} Amortization Schedule
@@ -362,34 +361,34 @@ export function LoanCalculator() {
 
       {/* Amortization Schedule */}
       {showAmortization && (
-        <div className="mt-8 rounded-2xl border border-slate-700/40 p-6" style={{ background: 'rgba(255,255,255,0.03)' }}>
-          <h3 className="text-lg font-semibold text-white mb-4">
+        <div className="mt-8 rounded-2xl border border-gray-200 bg-white shadow-sm p-6">
+          <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--sfp-ink)' }}>
             Amortization Schedule
           </h3>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-slate-700/40">
-                  <th className="text-left py-3 px-2 text-slate-500 font-medium">Month</th>
-                  <th className="text-right py-3 px-2 text-slate-500 font-medium">Payment</th>
-                  <th className="text-right py-3 px-2 text-slate-500 font-medium">Principal</th>
-                  <th className="text-right py-3 px-2 text-slate-500 font-medium">Interest</th>
-                  <th className="text-right py-3 px-2 text-slate-500 font-medium">Balance</th>
+                <tr className="border-b border-gray-200">
+                  <th className="text-left py-3 px-2 font-medium" style={{ color: 'var(--sfp-slate)' }}>Month</th>
+                  <th className="text-right py-3 px-2 font-medium" style={{ color: 'var(--sfp-slate)' }}>Payment</th>
+                  <th className="text-right py-3 px-2 font-medium" style={{ color: 'var(--sfp-slate)' }}>Principal</th>
+                  <th className="text-right py-3 px-2 font-medium" style={{ color: 'var(--sfp-slate)' }}>Interest</th>
+                  <th className="text-right py-3 px-2 font-medium" style={{ color: 'var(--sfp-slate)' }}>Balance</th>
                 </tr>
               </thead>
               <tbody>
                 {amortizationSchedule.slice(0, 12).map((row) => (
-                  <tr key={row.month} className="border-b border-slate-800/30">
-                    <td className="py-2 px-2 text-slate-400">{row.month}</td>
-                    <td className="py-2 px-2 text-right text-white">${row.payment.toFixed(2)}</td>
-                    <td className="py-2 px-2 text-right text-violet-400">${row.principal.toFixed(2)}</td>
-                    <td className="py-2 px-2 text-right text-red-400">${row.interest.toFixed(2)}</td>
-                    <td className="py-2 px-2 text-right text-white">${row.balance.toFixed(2)}</td>
+                  <tr key={row.month} className="border-b border-gray-100">
+                    <td className="py-2 px-2" style={{ color: 'var(--sfp-slate)' }}>{row.month}</td>
+                    <td className="py-2 px-2 text-right" style={{ color: 'var(--sfp-ink)' }}>${row.payment.toFixed(2)}</td>
+                    <td className="py-2 px-2 text-right" style={{ color: 'var(--sfp-navy)' }}>${row.principal.toFixed(2)}</td>
+                    <td className="py-2 px-2 text-right" style={{ color: 'var(--sfp-red)' }}>${row.interest.toFixed(2)}</td>
+                    <td className="py-2 px-2 text-right" style={{ color: 'var(--sfp-ink)' }}>${row.balance.toFixed(2)}</td>
                   </tr>
                 ))}
                 {loanTerm > 12 && (
                   <tr>
-                    <td colSpan={5} className="py-3 text-center text-slate-600 text-xs">
+                    <td colSpan={5} className="py-3 text-center text-xs" style={{ color: 'var(--sfp-slate)' }}>
                       ... {loanTerm - 12} more months ...
                     </td>
                   </tr>

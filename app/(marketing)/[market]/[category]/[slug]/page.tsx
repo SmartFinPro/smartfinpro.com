@@ -1,14 +1,19 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { MDXRemote } from 'next-mdx-remote/rsc';
+import { serialize } from 'next-mdx-remote/serialize';
 import remarkGfm from 'remark-gfm';
 import { getContentBySlug, getAllContentSlugs, getRelatedContent } from '@/lib/mdx';
-import { mdxComponents } from '@/lib/mdx/components';
-import { isValidMarket, isValidCategory, Market, Category, marketConfig } from '@/lib/i18n/config';
+import { SafeMDX } from '@/components/content/SafeMDX';
+import { isValidMarket, isValidCategory, Market, Category, marketConfig, categoryConfig } from '@/lib/i18n/config';
 import { generateAlternates, getCanonicalUrl } from '@/lib/seo/hreflang';
-import { generateArticleSchema } from '@/lib/seo/schema';
+import { generateArticleSchema, generateFAQSchema } from '@/lib/seo/schema';
 import { ReviewTemplate } from '@/components/marketing/review-template';
 import { CreditCardLeadPopup } from '@/components/ui/credit-card-lead-popup';
+import { Breadcrumb } from '@/components/marketing/breadcrumb';
+import { buildBreadcrumbs } from '@/lib/breadcrumbs';
+import { ExpertVerifier } from '@/components/marketing/expert-verifier';
+import { getMarketExpert } from '@/lib/actions/experts';
+import { getFirstMondayOfMonth } from '@/lib/utils/date-helpers';
 
 interface ContentPageProps {
   params: Promise<{
@@ -51,10 +56,26 @@ export async function generateMetadata({
       title: content.meta.title,
       description: content.meta.description,
       type: 'article',
+      url: canonicalUrl,
+      siteName: 'SmartFinPro',
       locale: marketConfig[market as Market].locale.replace('-', '_'),
       publishedTime: content.meta.publishDate,
       modifiedTime: content.meta.modifiedDate,
       authors: [content.meta.author],
+      images: [
+        {
+          url: '/og-image.png',
+          width: 1200,
+          height: 630,
+          alt: content.meta.title,
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: content.meta.title,
+      description: content.meta.description,
+      images: ['/og-image.png'],
     },
   };
 }
@@ -78,16 +99,15 @@ export default async function ContentPage({ params }: ContentPageProps) {
 
   // For review pages, use the ReviewTemplate
   if (content.meta.rating) {
-    const relatedArticles = await getRelatedContent(
-      market as Market,
-      category as Category,
-      slug,
-      3
-    );
+    const [relatedArticles, expert] = await Promise.all([
+      getRelatedContent(market as Market, category as Category, slug, 3),
+      getMarketExpert(market, category),
+    ]);
 
     return (
       <>
         <ReviewTemplate
+          expert={expert}
           review={{
             title: content.meta.title,
             description: content.meta.description,
@@ -106,6 +126,7 @@ export default async function ContentPage({ params }: ContentPageProps) {
             modifiedDate: content.meta.modifiedDate,
             author: content.meta.author,
             reviewedBy: content.meta.reviewedBy,
+            readingTime: content.readingTime?.text,
             faqs: content.meta.faqs || [],
             sections: content.meta.sections || [],
             testimonials: [],
@@ -119,12 +140,16 @@ export default async function ContentPage({ params }: ContentPageProps) {
     );
   }
 
-  // For other content types, render MDX directly with dark theme
+  // For other content types, render MDX directly with light trust design
   const articleUrl = getCanonicalUrl(market as Market, `/${category}/${slug}`);
+  const [mdxSource, expert] = await Promise.all([
+    serialize(content.content, { mdxOptions: { remarkPlugins: [remarkGfm] } }),
+    getMarketExpert(market, category),
+  ]);
 
   return (
     <>
-      <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
+      <div className="min-h-screen" style={{ background: 'var(--sfp-gray)' }}>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -138,11 +163,44 @@ export default async function ContentPage({ params }: ContentPageProps) {
             })),
           }}
         />
+        {content.meta.faqs && content.meta.faqs.length > 0 && (
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+              __html: JSON.stringify(generateFAQSchema(content.meta.faqs)),
+            }}
+          />
+        )}
         <div className="container mx-auto px-4 py-16">
-          <article className="max-w-4xl mx-auto prose prose-lg prose-invert prose-headings:text-white prose-p:text-slate-400 prose-a:text-emerald-400 prose-strong:text-white prose-code:text-emerald-400 prose-pre:bg-slate-900/50 prose-pre:border prose-pre:border-slate-800">
-            <h1 className="gradient-text">{content.meta.title}</h1>
-            <MDXRemote source={content.content} components={mdxComponents} options={{ mdxOptions: { remarkPlugins: [remarkGfm] } }} />
+          {/* Auto-generated breadcrumbs */}
+          <div className="max-w-4xl mx-auto mb-8">
+            <Breadcrumb
+              items={buildBreadcrumbs(
+                market as Market,
+                category as Category,
+                content.meta.title,
+                slug,
+              )}
+            />
+          </div>
+          <article className="max-w-4xl mx-auto prose prose-lg max-w-none">
+            {!content.meta.customH1 && <h1 style={{ color: 'var(--sfp-ink)' }}>{content.meta.title}</h1>}
+            <SafeMDX source={mdxSource} />
           </article>
+
+          {/* Auto-Injected Expert Verifier — EEAT Trust Signal */}
+          <div className="max-w-4xl mx-auto mt-12">
+            <ExpertVerifier
+              name={expert.name}
+              title={expert.role}
+              credentials={expert.credentials.length > 0 ? expert.credentials : ['Expert Reviewer']}
+              lastFactChecked={getFirstMondayOfMonth()}
+              bio={expert.bio || undefined}
+              image={expert.image_url || undefined}
+              linkedInUrl={expert.linkedin_url || undefined}
+              variant="compact"
+            />
+          </div>
         </div>
       </div>
       <CreditCardLeadPopup />

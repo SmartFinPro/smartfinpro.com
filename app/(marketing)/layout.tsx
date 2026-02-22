@@ -1,6 +1,7 @@
 import { Header } from '@/components/marketing/header';
 import { Footer } from '@/components/marketing/footer';
 import { ExitIntentPopup } from '@/components/marketing/exit-intent-popup';
+import { CookieConsentBanner } from '@/components/marketing/cookie-consent';
 
 export default function MarketingLayout({
   children,
@@ -14,6 +15,7 @@ export default function MarketingLayout({
       <main className="flex-1">{children}</main>
       <Footer />
       <ExitIntentPopup />
+      <CookieConsentBanner />
     </div>
   );
 }

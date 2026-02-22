@@ -179,15 +179,15 @@ export function TradingCostCalculator() {
       <div className="grid lg:grid-cols-2 gap-8">
         {/* ─── Input Panel ─── */}
         <div className="space-y-6">
-          <div className="rounded-2xl border border-slate-700/40 p-6" style={{ background: 'rgba(255,255,255,0.03)' }}>
-            <h3 className="text-lg font-semibold text-white mb-6 flex items-center gap-2">
-              <BarChart3 className="h-5 w-5 text-cyan-400" />
+          <div className="rounded-2xl border border-gray-200 bg-white shadow-sm p-6">
+            <h3 className="text-lg font-semibold mb-6 flex items-center gap-2" style={{ color: 'var(--sfp-ink)' }}>
+              <BarChart3 className="h-5 w-5" style={{ color: 'var(--sfp-navy)' }} />
               Configure Your Scenario
             </h3>
 
             {/* Instrument Type */}
             <div className="mb-6">
-              <label className="block text-sm font-medium text-slate-300 mb-3">Instrument</label>
+              <label className="block text-sm font-medium mb-3" style={{ color: 'var(--sfp-slate)' }}>Instrument</label>
               <div className="grid grid-cols-2 gap-2">
                 {instrumentLabels.map((item) => (
                   <button
@@ -195,13 +195,13 @@ export function TradingCostCalculator() {
                     onClick={() => setInstrument(item.id)}
                     className={`p-3 rounded-xl border text-left transition-all ${
                       instrument === item.id
-                        ? 'border-cyan-400 bg-cyan-400/10'
-                        : 'border-slate-700/50 hover:border-slate-600'
+                        ? 'border-gray-200'
+                        : 'border-gray-200 hover:border-gray-300'
                     }`}
-                    style={instrument !== item.id ? { background: 'rgba(255,255,255,0.02)' } : undefined}
+                    style={instrument === item.id ? { borderColor: 'var(--sfp-navy)', background: 'rgba(27,79,140,0.1)' } : { background: 'white' }}
                   >
-                    <span className={`text-sm font-medium ${instrument === item.id ? 'text-white' : 'text-slate-300'}`}>{item.label}</span>
-                    <span className="block text-xs text-slate-500 mt-0.5">{item.sub}</span>
+                    <span className={`text-sm font-medium`} style={{ color: instrument === item.id ? 'var(--sfp-ink)' : 'var(--sfp-slate)' }}>{item.label}</span>
+                    <span className="block text-xs mt-0.5" style={{ color: 'var(--sfp-slate)' }}>{item.sub}</span>
                   </button>
                 ))}
               </div>
@@ -210,13 +210,13 @@ export function TradingCostCalculator() {
             {/* Trade Amount */}
             <div className="mb-6">
               <div className="flex justify-between items-center mb-3">
-                <label className="text-sm font-medium text-slate-300">Trade Amount</label>
-                <span className="text-sm font-semibold px-3 py-1 rounded-full" style={{ background: 'rgba(6,182,212,0.15)', color: '#06b6d4' }}>
+                <label className="text-sm font-medium" style={{ color: 'var(--sfp-slate)' }}>Trade Amount</label>
+                <span className="text-sm font-semibold px-3 py-1 rounded-full" style={{ background: 'var(--sfp-sky)', color: 'var(--sfp-navy)' }}>
                   ${amount.toLocaleString('en-US')}
                 </span>
               </div>
               <Slider value={[amount]} onValueChange={(v) => setAmount(v[0])} min={100} max={100000} step={100} className="py-2" />
-              <div className="flex justify-between text-xs text-slate-600 mt-1">
+              <div className="flex justify-between text-xs mt-1" style={{ color: 'var(--sfp-slate)' }}>
                 <span>$100</span>
                 <span>$50k</span>
                 <span>$100k</span>
@@ -226,13 +226,13 @@ export function TradingCostCalculator() {
             {/* Trades per Month */}
             <div className="mb-6">
               <div className="flex justify-between items-center mb-3">
-                <label className="text-sm font-medium text-slate-300">Trades / Month</label>
-                <span className="text-sm font-semibold px-3 py-1 rounded-full" style={{ background: 'rgba(6,182,212,0.15)', color: '#06b6d4' }}>
+                <label className="text-sm font-medium" style={{ color: 'var(--sfp-slate)' }}>Trades / Month</label>
+                <span className="text-sm font-semibold px-3 py-1 rounded-full" style={{ background: 'var(--sfp-sky)', color: 'var(--sfp-navy)' }}>
                   {tradesPerMonth} trades
                 </span>
               </div>
               <Slider value={[tradesPerMonth]} onValueChange={(v) => setTradesPerMonth(v[0])} min={1} max={100} step={1} className="py-2" />
-              <div className="flex justify-between text-xs text-slate-600 mt-1">
+              <div className="flex justify-between text-xs mt-1" style={{ color: 'var(--sfp-slate)' }}>
                 <span>1</span>
                 <span>50</span>
                 <span>100</span>
@@ -242,13 +242,13 @@ export function TradingCostCalculator() {
             {/* Leverage */}
             <div className="mb-6">
               <div className="flex justify-between items-center mb-3">
-                <label className="text-sm font-medium text-slate-300">Leverage</label>
-                <span className="text-sm font-semibold px-3 py-1 rounded-full" style={{ background: 'rgba(139,92,246,0.15)', color: '#a78bfa' }}>
+                <label className="text-sm font-medium" style={{ color: 'var(--sfp-slate)' }}>Leverage</label>
+                <span className="text-sm font-semibold px-3 py-1 rounded-full" style={{ background: 'rgba(27,79,140,0.1)', color: 'var(--sfp-navy)' }}>
                   {leverage}x
                 </span>
               </div>
               <Slider value={[leverage]} onValueChange={(v) => setLeverage(v[0])} min={1} max={30} step={1} className="py-2" />
-              <div className="flex justify-between text-xs text-slate-600 mt-1">
+              <div className="flex justify-between text-xs mt-1" style={{ color: 'var(--sfp-slate)' }}>
                 <span>1x</span>
                 <span>15x</span>
                 <span>30x</span>
@@ -257,7 +257,7 @@ export function TradingCostCalculator() {
 
             {/* Holding Period */}
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-3">Holding Period</label>
+              <label className="block text-sm font-medium mb-3" style={{ color: 'var(--sfp-slate)' }}>Holding Period</label>
               <div className="grid grid-cols-2 gap-2">
                 {holdingLabels.map((item) => (
                   <button
@@ -265,13 +265,13 @@ export function TradingCostCalculator() {
                     onClick={() => setHolding(item.id)}
                     className={`p-3 rounded-xl border text-left transition-all ${
                       holding === item.id
-                        ? 'border-violet-400 bg-violet-400/10'
-                        : 'border-slate-700/50 hover:border-slate-600'
+                        ? 'border-gray-200'
+                        : 'border-gray-200 hover:border-gray-300'
                     }`}
-                    style={holding !== item.id ? { background: 'rgba(255,255,255,0.02)' } : undefined}
+                    style={holding === item.id ? { borderColor: 'var(--sfp-navy)', background: 'rgba(27,79,140,0.1)' } : { background: 'white' }}
                   >
-                    <span className={`text-sm font-medium ${holding === item.id ? 'text-white' : 'text-slate-300'}`}>{item.label}</span>
-                    <span className="block text-xs text-slate-500 mt-0.5">{item.sub}</span>
+                    <span className={`text-sm font-medium`} style={{ color: holding === item.id ? 'var(--sfp-ink)' : 'var(--sfp-slate)' }}>{item.label}</span>
+                    <span className="block text-xs mt-0.5" style={{ color: 'var(--sfp-slate)' }}>{item.sub}</span>
                   </button>
                 ))}
               </div>
@@ -281,9 +281,9 @@ export function TradingCostCalculator() {
           {/* Disclaimer */}
           <div className="rounded-xl p-4 border border-amber-500/20" style={{ background: 'rgba(245,158,11,0.05)' }}>
             <div className="flex gap-3">
-              <AlertTriangle className="h-5 w-5 text-amber-400 shrink-0 mt-0.5" />
-              <div className="text-xs text-slate-500">
-                <strong className="text-amber-400">Risk Warning:</strong> Trading involves risk of loss. Costs shown are estimates based on typical market conditions.
+              <AlertTriangle className="h-5 w-5 shrink-0 mt-0.5" style={{ color: 'var(--sfp-gold)' }} />
+              <div className="text-xs" style={{ color: 'var(--sfp-slate)' }}>
+                <strong style={{ color: 'var(--sfp-gold)' }}>Risk Warning:</strong> Trading involves risk of loss. Costs shown are estimates based on typical market conditions.
                 Always verify current fees on the broker&apos;s website.
               </div>
             </div>
@@ -293,14 +293,14 @@ export function TradingCostCalculator() {
         {/* ─── Results Panel ─── */}
         <div className="space-y-6">
           {/* Savings Highlight */}
-          <div className="bg-gradient-to-br from-violet-500 to-teal-600 rounded-2xl p-6 text-white">
+          <div className="rounded-2xl p-6 text-white" style={{ background: 'var(--sfp-green)' }}>
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <TrendingUp className="h-5 w-5" />
-                <span className="text-sm font-medium text-violet-100">Savings with {cheapest.name}</span>
+                <span className="text-sm font-medium text-white/90">Savings with {cheapest.name}</span>
               </div>
               {/* Toggle */}
-              <div className="flex items-center bg-white/10 rounded-full p-1">
+              <div className="flex items-center bg-white/20 rounded-full p-1">
                 <button
                   onClick={() => setShowYearly(false)}
                   className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${!showYearly ? 'bg-white text-slate-900' : 'text-white/60'}`}
@@ -317,16 +317,16 @@ export function TradingCostCalculator() {
             </div>
             <div className="text-5xl font-bold mb-2">
               <AnimatedNumber value={savingsVsAvg} />
-              <span className="text-lg font-normal text-violet-100">/{showYearly ? 'year' : 'month'}</span>
+              <span className="text-lg font-normal text-white/90">/{showYearly ? 'year' : 'month'}</span>
             </div>
-            <p className="text-sm text-violet-100">
+            <p className="text-sm text-white/90">
               vs. average broker cost
             </p>
           </div>
 
           {/* Broker Comparison Bars */}
-          <div className="rounded-xl border border-slate-700/40 p-4" style={{ background: 'rgba(255,255,255,0.03)' }}>
-            <h4 className="text-sm font-medium text-slate-300 mb-4">Cost Comparison</h4>
+          <div className="rounded-xl border border-gray-200 bg-white shadow-sm p-4">
+            <h4 className="text-sm font-medium mb-4" style={{ color: 'var(--sfp-slate)' }}>Cost Comparison</h4>
             <div className="space-y-3">
               {results.map((broker, i) => {
                 const cost = showYearly ? broker.yearlyCost.total : broker.monthlyCost.total;
@@ -345,13 +345,13 @@ export function TradingCostCalculator() {
                           className="h-6 w-auto shrink-0"
                         />
                         {isCheapest && (
-                          <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold shrink-0" style={{ background: 'rgba(6,182,212,0.2)', color: '#06b6d4' }}>
+                          <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold shrink-0" style={{ background: 'rgba(26,107,58,0.1)', color: 'var(--sfp-green)' }}>
                             <Award className="h-2.5 w-2.5" />
                             Best Value
                           </span>
                         )}
                       </div>
-                      <span className={`text-sm font-bold tabular-nums shrink-0 ml-3 ${broker.isDataPlatform ? 'text-slate-500' : isCheapest ? 'text-cyan-400' : 'text-white'}`}>
+                      <span className="text-sm font-bold tabular-nums shrink-0 ml-3" style={{ color: broker.isDataPlatform ? 'var(--sfp-slate)' : isCheapest ? 'var(--sfp-green)' : 'var(--sfp-ink)' }}>
                         {broker.isDataPlatform ? (
                           <span className="flex items-center gap-1 text-xs">
                             <Info className="h-3 w-3" />
@@ -368,10 +368,10 @@ export function TradingCostCalculator() {
                         style={{
                           width: `${Math.max(barWidth, broker.isDataPlatform ? 0 : 2)}%`,
                           background: isCheapest
-                            ? 'linear-gradient(90deg, #06b6d4, #22d3ee)'
+                            ? 'var(--sfp-green)'
                             : broker.isDataPlatform
                               ? 'transparent'
-                              : 'linear-gradient(90deg, #475569, #64748b)',
+                              : 'linear-gradient(90deg, #94a3b8, #cbd5e1)',
                         }}
                       />
                     </div>
@@ -382,39 +382,39 @@ export function TradingCostCalculator() {
           </div>
 
           {/* Cost Breakdown for cheapest */}
-          <div className="rounded-xl border border-slate-700/40 p-4" style={{ background: 'rgba(255,255,255,0.03)' }}>
-            <h4 className="text-sm font-medium text-slate-300 mb-3">Cost Breakdown — {cheapest.name}</h4>
+          <div className="rounded-xl border border-gray-200 bg-white shadow-sm p-4">
+            <h4 className="text-sm font-medium mb-3" style={{ color: 'var(--sfp-slate)' }}>Cost Breakdown — {cheapest.name}</h4>
             <div className="space-y-2">
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-2">
-                  <div className="w-2.5 h-2.5 rounded-full bg-cyan-400" />
-                  <span className="text-sm text-slate-400">Spread</span>
+                  <div className="w-2.5 h-2.5 rounded-full" style={{ background: 'var(--sfp-navy)' }} />
+                  <span className="text-sm" style={{ color: 'var(--sfp-slate)' }}>Spread</span>
                 </div>
-                <span className="text-sm font-medium text-white tabular-nums">
+                <span className="text-sm font-medium tabular-nums" style={{ color: 'var(--sfp-ink)' }}>
                   ${(showYearly ? cheapest.yearlyCost.spread : cheapest.monthlyCost.spread).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </span>
               </div>
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-2">
-                  <div className="w-2.5 h-2.5 rounded-full bg-violet-400" />
-                  <span className="text-sm text-slate-400">Commission</span>
+                  <div className="w-2.5 h-2.5 rounded-full" style={{ background: 'var(--sfp-gold)' }} />
+                  <span className="text-sm" style={{ color: 'var(--sfp-slate)' }}>Commission</span>
                 </div>
-                <span className="text-sm font-medium text-white tabular-nums">
+                <span className="text-sm font-medium tabular-nums" style={{ color: 'var(--sfp-ink)' }}>
                   ${(showYearly ? cheapest.yearlyCost.commission : cheapest.monthlyCost.commission).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </span>
               </div>
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-2">
                   <div className="w-2.5 h-2.5 rounded-full bg-amber-400" />
-                  <span className="text-sm text-slate-400">Overnight</span>
+                  <span className="text-sm" style={{ color: 'var(--sfp-slate)' }}>Overnight</span>
                 </div>
-                <span className="text-sm font-medium text-white tabular-nums">
+                <span className="text-sm font-medium tabular-nums" style={{ color: 'var(--sfp-ink)' }}>
                   ${(showYearly ? cheapest.yearlyCost.overnight : cheapest.monthlyCost.overnight).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </span>
               </div>
-              <div className="border-t border-slate-700/40 pt-2 flex justify-between items-center">
-                <span className="text-sm font-medium text-slate-300">Total</span>
-                <span className="text-sm font-bold text-white tabular-nums">
+              <div className="border-t border-gray-200 pt-2 flex justify-between items-center">
+                <span className="text-sm font-medium" style={{ color: 'var(--sfp-slate)' }}>Total</span>
+                <span className="text-sm font-bold tabular-nums" style={{ color: 'var(--sfp-ink)' }}>
                   ${(showYearly ? cheapest.yearlyCost.total : cheapest.monthlyCost.total).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </span>
               </div>
@@ -426,13 +426,13 @@ export function TradingCostCalculator() {
               const total = c.total || 1;
               return (
                 <div className="mt-4 h-3 rounded-full overflow-hidden flex">
-                  <div className="bg-cyan-400 transition-all duration-500" style={{ width: `${(c.spread / total) * 100}%` }} />
-                  <div className="bg-violet-400 transition-all duration-500" style={{ width: `${(c.commission / total) * 100}%` }} />
+                  <div className="transition-all duration-500" style={{ width: `${(c.spread / total) * 100}%`, background: 'var(--sfp-navy)' }} />
+                  <div className="transition-all duration-500" style={{ width: `${(c.commission / total) * 100}%`, background: 'var(--sfp-gold)' }} />
                   <div className="bg-amber-400 transition-all duration-500" style={{ width: `${(c.overnight / total) * 100}%` }} />
                 </div>
               );
             })()}
-            <div className="flex justify-between text-xs text-slate-500 mt-1">
+            <div className="flex justify-between text-xs mt-1" style={{ color: 'var(--sfp-slate)' }}>
               {(() => {
                 const c = showYearly ? cheapest.yearlyCost : cheapest.monthlyCost;
                 const total = c.total || 1;
@@ -448,26 +448,26 @@ export function TradingCostCalculator() {
           </div>
 
           {/* CTA */}
-          <div className="rounded-xl border border-slate-700/40 p-6" style={{ background: 'rgba(255,255,255,0.03)' }}>
-            <h4 className="font-semibold text-white mb-2">
+          <div className="rounded-xl border border-gray-200 bg-white shadow-sm p-6">
+            <h4 className="font-semibold mb-2" style={{ color: 'var(--sfp-ink)' }}>
               Start trading with {cheapest.name}
             </h4>
-            <p className="text-sm text-slate-400 mb-4">
-              Save up to <span className="text-cyan-400 font-semibold">${savings.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}/{showYearly ? 'year' : 'month'}</span> compared to the most expensive broker.
+            <p className="text-sm mb-4" style={{ color: 'var(--sfp-slate)' }}>
+              Save up to <span className="font-semibold" style={{ color: 'var(--sfp-green)' }}>${savings.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}/{showYearly ? 'year' : 'month'}</span> compared to the most expensive broker.
             </p>
-            <Button asChild className="w-full bg-violet-500 hover:bg-emerald-600">
+            <Button asChild className="w-full hover:opacity-90" style={{ background: 'var(--sfp-gold)' }}>
               <a href={`/go/${cheapest.slug}`} target="_blank" rel="noopener noreferrer">
                 Open Account Free
                 <ArrowRight className="h-4 w-4 ml-2" />
               </a>
             </Button>
-            <p className="text-xs text-slate-500 text-center mt-3">
+            <p className="text-xs text-center mt-3" style={{ color: 'var(--sfp-slate)' }}>
               Free to open. No minimum deposit required.
             </p>
           </div>
 
           {/* Methodology Note */}
-          <p className="text-xs text-slate-600 text-center">
+          <p className="text-xs text-center" style={{ color: 'var(--sfp-slate)' }}>
             * Costs are estimates based on typical market conditions. Actual fees may vary.
           </p>
         </div>

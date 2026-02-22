@@ -29,31 +29,31 @@ export function CTABox({
     <div
       className={`relative my-10 p-8 md:p-10 rounded-2xl text-center overflow-hidden ${
         variant === 'highlight'
-          ? 'glass-card border-emerald-500/40 shadow-lg shadow-emerald-500/10'
+          ? 'rounded-xl border border-gray-200 bg-white shadow-md'
           : variant === 'dark'
-          ? 'bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700'
-          : 'glass-card'
+          ? 'rounded-xl border border-gray-200 bg-white shadow-sm'
+          : 'rounded-xl border border-gray-200 bg-white shadow-sm'
       }`}
     >
       {/* Background glow for highlight variant */}
       {variant === 'highlight' && (
         <div className="absolute inset-0 overflow-hidden rounded-2xl" aria-hidden="true">
-          <div className="absolute top-0 left-1/4 w-64 h-64 bg-emerald-500/10 rounded-full blur-[80px]" />
-          <div className="absolute bottom-0 right-1/4 w-48 h-48 bg-blue-500/10 rounded-full blur-[60px]" />
+          <div className="absolute top-0 left-1/4 w-64 h-64 rounded-full blur-[80px]" style={{ background: 'rgba(26,107,58,0.06)' }} />
+          <div className="absolute bottom-0 right-1/4 w-48 h-48 rounded-full blur-[60px]" style={{ background: 'rgba(27,79,140,0.06)' }} />
         </div>
       )}
 
       <div className="relative z-10">
         <div className="inline-flex items-center gap-2 mb-4">
-          <Sparkles className="h-5 w-5 text-emerald-400" />
+          <Sparkles className="h-5 w-5" style={{ color: 'var(--sfp-gold)' }} />
         </div>
 
-        <h3 className="text-2xl md:text-3xl font-bold mb-3 text-white">
+        <h3 className="text-2xl md:text-3xl font-bold mb-3" style={{ color: 'var(--sfp-ink)' }}>
           {headline}
         </h3>
 
         {description && (
-          <p className="mb-8 text-slate-400 max-w-xl mx-auto leading-relaxed">
+          <p className="mb-8 max-w-xl mx-auto leading-relaxed" style={{ color: 'var(--sfp-slate)' }}>
             {description}
           </p>
         )}
@@ -62,7 +62,8 @@ export function CTABox({
           <Button
             asChild
             size="lg"
-            className="btn-shimmer bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 border-0 shadow-lg shadow-emerald-500/25 gap-2 px-8"
+            className="gap-2 px-8 border-0 shadow-lg text-white"
+            style={{ background: 'var(--sfp-gold)' }}
           >
             <Link href={primaryCta.href} target="_blank" rel="noopener sponsored">
               {primaryCta.text}
@@ -75,7 +76,8 @@ export function CTABox({
               asChild
               variant="outline"
               size="lg"
-              className="border-slate-700 bg-slate-800/50 text-slate-300 hover:bg-slate-700 hover:text-white hover:border-slate-600"
+              className="border-gray-300 bg-white hover:bg-gray-50"
+              style={{ color: 'var(--sfp-ink)' }}
             >
               <Link href={secondaryCta.href}>{secondaryCta.text}</Link>
             </Button>
@@ -87,9 +89,10 @@ export function CTABox({
             {guarantees.map((guarantee) => (
               <div
                 key={guarantee}
-                className="flex items-center gap-2 text-sm text-slate-500"
+                className="flex items-center gap-2 text-sm"
+                style={{ color: 'var(--sfp-slate)' }}
               >
-                <Shield className="h-4 w-4 text-emerald-500/70" />
+                <Shield className="h-4 w-4" style={{ color: 'var(--sfp-green)' }} />
                 <span>{guarantee}</span>
               </div>
             ))}
@@ -118,60 +121,61 @@ export function QuickVerdictBox({
   productName,
 }: QuickVerdictBoxProps) {
   return (
-    <div className="glass-card my-8 p-6 md:p-8 rounded-2xl">
-      <h3 className="text-lg font-bold mb-6 text-white flex items-center gap-2">
-        <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center">
-          <Sparkles className="h-4 w-4 text-emerald-400" />
+    <div className="rounded-xl border border-gray-200 bg-white shadow-sm my-8 p-6 md:p-8 rounded-2xl">
+      <h3 className="text-lg font-bold mb-6 flex items-center gap-2" style={{ color: 'var(--sfp-ink)' }}>
+        <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'var(--sfp-sky)' }}>
+          <Sparkles className="h-4 w-4" style={{ color: 'var(--sfp-gold)' }} />
         </div>
         Quick Verdict
       </h3>
 
       <div className="grid md:grid-cols-2 gap-6">
         {/* Pros */}
-        <div className="bg-emerald-500/5 rounded-xl p-4 border border-emerald-500/20">
-          <h4 className="font-semibold text-emerald-400 mb-3 flex items-center gap-2">
+        <div className="rounded-xl p-4 border" style={{ background: 'rgba(26,107,58,0.05)', borderColor: 'rgba(26,107,58,0.2)' }}>
+          <h4 className="font-semibold mb-3 flex items-center gap-2" style={{ color: 'var(--sfp-green)' }}>
             <Check className="h-4 w-4" /> Pros
           </h4>
           <ul className="space-y-2">
             {pros.map((pro, i) => (
               <li key={i} className="text-sm flex items-start gap-2">
-                <Check className="h-4 w-4 text-emerald-400 mt-0.5 shrink-0" />
-                <span className="text-slate-300">{pro}</span>
+                <Check className="h-4 w-4 mt-0.5 shrink-0" style={{ color: 'var(--sfp-green)' }} />
+                <span style={{ color: 'var(--sfp-ink)' }}>{pro}</span>
               </li>
             ))}
           </ul>
         </div>
 
         {/* Cons */}
-        <div className="bg-red-500/5 rounded-xl p-4 border border-red-500/20">
-          <h4 className="font-semibold text-red-400 mb-3 flex items-center gap-2">
-            <span className="text-red-400">✕</span> Cons
+        <div className="rounded-xl p-4 border" style={{ background: 'rgba(214,64,69,0.05)', borderColor: 'rgba(214,64,69,0.2)' }}>
+          <h4 className="font-semibold mb-3 flex items-center gap-2" style={{ color: 'var(--sfp-red)' }}>
+            <span style={{ color: 'var(--sfp-red)' }}>&#10005;</span> Cons
           </h4>
           <ul className="space-y-2">
             {cons.map((con, i) => (
               <li key={i} className="text-sm flex items-start gap-2">
-                <span className="text-red-400 mt-0.5 shrink-0">✕</span>
-                <span className="text-slate-300">{con}</span>
+                <span className="mt-0.5 shrink-0" style={{ color: 'var(--sfp-red)' }}>&#10005;</span>
+                <span style={{ color: 'var(--sfp-ink)' }}>{con}</span>
               </li>
             ))}
           </ul>
         </div>
       </div>
 
-      <div className="mt-6 pt-6 border-t border-slate-700/50 grid sm:grid-cols-2 gap-4">
+      <div className="mt-6 pt-6 border-t border-gray-200 grid sm:grid-cols-2 gap-4">
         <div>
-          <span className="text-sm text-slate-500">Best For:</span>
-          <p className="font-medium text-white mt-1">{bestFor}</p>
+          <span className="text-sm" style={{ color: 'var(--sfp-slate)' }}>Best For:</span>
+          <p className="font-medium mt-1" style={{ color: 'var(--sfp-ink)' }}>{bestFor}</p>
         </div>
         <div>
-          <span className="text-sm text-slate-500">Pricing:</span>
-          <p className="font-medium gradient-text mt-1">{pricing}</p>
+          <span className="text-sm" style={{ color: 'var(--sfp-slate)' }}>Pricing:</span>
+          <p className="font-medium mt-1" style={{ color: 'var(--sfp-navy)' }}>{pricing}</p>
         </div>
       </div>
 
       <Button
         asChild
-        className="w-full mt-6 btn-shimmer bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 border-0 shadow-lg shadow-emerald-500/25 gap-2"
+        className="w-full mt-6 gap-2 border-0 shadow-lg text-white"
+        style={{ background: 'var(--sfp-gold)' }}
       >
         <Link href={affiliateUrl} target="_blank" rel="noopener sponsored">
           Try {productName} Free

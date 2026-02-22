@@ -1,5 +1,7 @@
 'use server';
 
+import 'server-only';
+
 import { createServiceClient } from '@/lib/supabase/server';
 import { headers } from 'next/headers';
 import crypto from 'crypto';

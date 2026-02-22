@@ -27,7 +27,7 @@ import {
   Wallet,
   Zap,
 } from 'lucide-react';
-import { Market, marketConfig, markets } from '@/lib/i18n/config';
+import { Market, marketConfig, markets, isValidMarket } from '@/lib/i18n/config';
 import {
   getBrokerReview,
   getRegionalCompliance,
@@ -54,39 +54,39 @@ const featureIcons: Record<BrokerSlug, React.ElementType[]> = {
 
 const featureColors: Record<BrokerSlug, { color: string; bg: string }[]> = {
   etoro: [
-    { color: 'text-emerald-400', bg: 'bg-emerald-500/15' },
-    { color: 'text-cyan-400', bg: 'bg-cyan-500/15' },
-    { color: 'text-violet-400', bg: 'bg-violet-500/15' },
+    { color: 'text-[var(--sfp-green)]', bg: 'bg-[#E8F5ED]' },
+    { color: 'text-[var(--sfp-navy)]', bg: 'bg-[var(--sfp-sky)]' },
+    { color: 'text-[var(--sfp-gold)]', bg: 'bg-[#FEF5E7]' },
   ],
   'capital-com': [
-    { color: 'text-blue-400', bg: 'bg-blue-500/15' },
-    { color: 'text-cyan-400', bg: 'bg-cyan-500/15' },
-    { color: 'text-amber-400', bg: 'bg-amber-500/15' },
+    { color: 'text-[var(--sfp-navy)]', bg: 'bg-[var(--sfp-sky)]' },
+    { color: 'text-[var(--sfp-green)]', bg: 'bg-[#E8F5ED]' },
+    { color: 'text-[var(--sfp-gold)]', bg: 'bg-[#FEF5E7]' },
   ],
   ibkr: [
-    { color: 'text-violet-400', bg: 'bg-violet-500/15' },
-    { color: 'text-emerald-400', bg: 'bg-emerald-500/15' },
-    { color: 'text-cyan-400', bg: 'bg-cyan-500/15' },
+    { color: 'text-[var(--sfp-navy)]', bg: 'bg-[var(--sfp-sky)]' },
+    { color: 'text-[var(--sfp-green)]', bg: 'bg-[#E8F5ED]' },
+    { color: 'text-[var(--sfp-gold)]', bg: 'bg-[#FEF5E7]' },
   ],
   investing: [
-    { color: 'text-amber-400', bg: 'bg-amber-500/15' },
-    { color: 'text-blue-400', bg: 'bg-blue-500/15' },
-    { color: 'text-emerald-400', bg: 'bg-emerald-500/15' },
+    { color: 'text-[var(--sfp-gold)]', bg: 'bg-[#FEF5E7]' },
+    { color: 'text-[var(--sfp-navy)]', bg: 'bg-[var(--sfp-sky)]' },
+    { color: 'text-[var(--sfp-green)]', bg: 'bg-[#E8F5ED]' },
   ],
   revolut: [
-    { color: 'text-cyan-400', bg: 'bg-cyan-500/15' },
-    { color: 'text-violet-400', bg: 'bg-violet-500/15' },
-    { color: 'text-emerald-400', bg: 'bg-emerald-500/15' },
+    { color: 'text-[var(--sfp-navy)]', bg: 'bg-[var(--sfp-sky)]' },
+    { color: 'text-[var(--sfp-green)]', bg: 'bg-[#E8F5ED]' },
+    { color: 'text-[var(--sfp-gold)]', bg: 'bg-[#FEF5E7]' },
   ],
   ig: [
-    { color: 'text-rose-400', bg: 'bg-rose-500/15' },
-    { color: 'text-cyan-400', bg: 'bg-cyan-500/15' },
-    { color: 'text-amber-400', bg: 'bg-amber-500/15' },
+    { color: 'text-[var(--sfp-gold)]', bg: 'bg-[#FEF5E7]' },
+    { color: 'text-[var(--sfp-navy)]', bg: 'bg-[var(--sfp-sky)]' },
+    { color: 'text-[var(--sfp-green)]', bg: 'bg-[#E8F5ED]' },
   ],
   plus500: [
-    { color: 'text-blue-400', bg: 'bg-blue-500/15' },
-    { color: 'text-emerald-400', bg: 'bg-emerald-500/15' },
-    { color: 'text-violet-400', bg: 'bg-violet-500/15' },
+    { color: 'text-[var(--sfp-navy)]', bg: 'bg-[var(--sfp-sky)]' },
+    { color: 'text-[var(--sfp-green)]', bg: 'bg-[#E8F5ED]' },
+    { color: 'text-[var(--sfp-gold)]', bg: 'bg-[#FEF5E7]' },
   ],
 };
 
@@ -106,6 +106,7 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { market, broker } = await params;
+  if (!isValidMarket(market)) return {};
   const review = getBrokerReview(broker);
   if (!review) return {};
 
@@ -136,6 +137,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function BrokerReviewPage({ params }: PageProps) {
   const { market: marketStr, broker: brokerStr } = await params;
+
+  if (!isValidMarket(marketStr)) notFound();
+
   const review = getBrokerReview(brokerStr);
   if (!review) notFound();
 
@@ -205,20 +209,16 @@ export default async function BrokerReviewPage({ params }: PageProps) {
       {/* ═══════════════════════════════════════════════════════
           HERO
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative min-h-[70vh] flex items-center bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 overflow-hidden">
-        {/* Background glows */}
-        <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-cyan-500/8 rounded-full blur-[140px]" />
-        <div className="absolute bottom-0 right-1/3 w-[500px] h-[500px] bg-violet-500/8 rounded-full blur-[120px]" />
-
+      <section className="relative min-h-[70vh] flex items-center bg-white overflow-hidden">
         <div className="container relative z-10 mx-auto px-4 py-20 md:py-28">
           <div className="max-w-4xl mx-auto">
             {/* Breadcrumb */}
-            <nav className="flex items-center gap-2 text-sm text-slate-500 mb-8">
-              <Link href={prefix || '/'} className="hover:text-slate-300 transition-colors">Home</Link>
+            <nav className="flex items-center gap-2 text-sm mb-8" style={{ color: 'var(--sfp-slate)' }}>
+              <Link href={prefix || '/'} className="hover:opacity-70 transition-colors" style={{ color: 'var(--sfp-navy)' }}>Home</Link>
               <ChevronRight className="h-3.5 w-3.5" />
-              <Link href={`${prefix}/trading`} className="hover:text-slate-300 transition-colors">Trading</Link>
+              <Link href={`${prefix}/trading`} className="hover:opacity-70 transition-colors" style={{ color: 'var(--sfp-navy)' }}>Trading</Link>
               <ChevronRight className="h-3.5 w-3.5" />
-              <span className="text-slate-300">{review.name}</span>
+              <span style={{ color: 'var(--sfp-ink)' }}>{review.name}</span>
             </nav>
 
             {/* Broker Logo */}
@@ -234,17 +234,17 @@ export default async function BrokerReviewPage({ params }: PageProps) {
             </div>
 
             {/* Badge */}
-            <div className="inline-flex items-center gap-2 rounded-full badge-premium px-4 py-2 mb-6">
-              <Shield className="h-4 w-4 text-emerald-400" />
-              <span className="kicker text-slate-300">SmartFinPro Expert Review</span>
+            <div className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 mb-6 shadow-sm">
+              <Shield className="h-4 w-4" style={{ color: 'var(--sfp-green)' }} />
+              <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--sfp-slate)' }}>SmartFinPro Expert Review</span>
             </div>
 
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 text-white leading-tight">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 leading-tight" style={{ color: 'var(--sfp-ink)' }}>
               {review.name} Review 2026:{' '}
-              <span className="gradient-text">{review.tagline}</span>
+              <span style={{ color: 'var(--sfp-navy)' }}>{review.tagline}</span>
             </h1>
 
-            <p className="text-xl text-slate-400 mb-8 max-w-2xl leading-relaxed">
+            <p className="text-xl mb-8 max-w-2xl leading-relaxed" style={{ color: 'var(--sfp-slate)' }}>
               {review.seo.description}
             </p>
 
@@ -259,16 +259,16 @@ export default async function BrokerReviewPage({ params }: PageProps) {
                         ? 'text-amber-400 fill-amber-400'
                         : i < review.rating
                           ? 'text-amber-400 fill-amber-400/50'
-                          : 'text-slate-700'
+                          : 'text-gray-300'
                     }`}
                   />
                 ))}
-                <span className="ml-2 text-sm text-slate-400 tabular-nums">
+                <span className="ml-2 text-sm tabular-nums" style={{ color: 'var(--sfp-slate)' }}>
                   {review.rating}/5 ({review.reviewCount.toLocaleString('en-US')} reviews)
                 </span>
               </div>
-              <span className="text-slate-700">|</span>
-              <span className="text-sm text-slate-400">
+              <span className="text-gray-300">|</span>
+              <span className="text-sm" style={{ color: 'var(--sfp-slate)' }}>
                 {config.flag} {config.name} — Regulated by {compliance.regulator}
               </span>
             </div>
@@ -278,7 +278,8 @@ export default async function BrokerReviewPage({ params }: PageProps) {
               <Button
                 asChild
                 size="lg"
-                className="btn-shimmer h-14 px-10 text-lg bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 border-0 shadow-lg shadow-emerald-500/25"
+                className="btn-shimmer h-14 px-10 text-lg border-0 text-white shadow-md"
+                style={{ background: 'var(--sfp-gold)' }}
               >
                 <Link href={review.affiliateUrl} target="_blank" rel="noopener sponsored">
                   {review.ctaLabel}
@@ -289,7 +290,8 @@ export default async function BrokerReviewPage({ params }: PageProps) {
                 asChild
                 size="lg"
                 variant="outline"
-                className="h-14 px-10 text-lg border-slate-700 text-slate-300 hover:bg-slate-800/50 hover:text-white"
+                className="h-14 px-10 text-lg border-gray-200 hover:bg-gray-50"
+                style={{ color: 'var(--sfp-ink)' }}
               >
                 <Link href="#comparison">
                   Compare Alternatives
@@ -302,7 +304,7 @@ export default async function BrokerReviewPage({ params }: PageProps) {
         {/* Bottom curve */}
         <div className="absolute bottom-0 left-0 right-0">
           <svg viewBox="0 0 1440 60" fill="none" className="w-full" preserveAspectRatio="none">
-            <path d="M0,60 L0,20 Q360,0 720,20 Q1080,40 1440,20 L1440,60 Z" fill="rgb(2,6,23)" />
+            <path d="M0,60 L0,20 Q360,0 720,20 Q1080,40 1440,20 L1440,60 Z" fill="var(--sfp-gray)" />
           </svg>
         </div>
       </section>
@@ -310,7 +312,7 @@ export default async function BrokerReviewPage({ params }: PageProps) {
       {/* ═══════════════════════════════════════════════════════
           EXPERT VERDICT
           ═══════════════════════════════════════════════════════ */}
-      <section className="py-16 bg-slate-950">
+      <section className="py-16" style={{ background: 'var(--sfp-gray)' }}>
         <div className="container mx-auto px-4 max-w-4xl">
           <ExpertVerdictBox
             name={review.name}
@@ -328,9 +330,7 @@ export default async function BrokerReviewPage({ params }: PageProps) {
       {/* ═══════════════════════════════════════════════════════
           THE STORY — Narrative Introduction
           ═══════════════════════════════════════════════════════ */}
-      <section className="py-24 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 relative overflow-hidden">
-        <div className="absolute top-1/2 left-0 w-[500px] h-[500px] bg-blue-500/5 rounded-full blur-[120px] -translate-y-1/2" />
-
+      <section className="py-24 bg-white relative overflow-hidden">
         <div className="container relative z-10 mx-auto px-4 max-w-4xl">
           <div className="flex items-center gap-5 mb-6">
             <Image
@@ -340,21 +340,21 @@ export default async function BrokerReviewPage({ params }: PageProps) {
               height={34}
               className="h-9 w-auto opacity-60"
             />
-            <div className="h-8 w-px bg-slate-700/50" />
-            <div className="inline-flex items-center gap-2 rounded-full badge-premium px-4 py-2">
-              <Sparkles className="h-4 w-4 text-cyan-400" />
-              <span className="kicker text-slate-300">The Story</span>
+            <div className="h-8 w-px bg-gray-200" />
+            <div className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 shadow-sm">
+              <Sparkles className="h-4 w-4" style={{ color: 'var(--sfp-navy)' }} />
+              <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--sfp-slate)' }}>The Story</span>
             </div>
           </div>
 
-          <h2 className="text-3xl md:text-4xl font-bold mb-8 text-white">
+          <h2 className="text-3xl md:text-4xl font-bold mb-8" style={{ color: 'var(--sfp-ink)' }}>
             What Makes {review.name}{' '}
-            <span className="gradient-text">Different</span>?
+            <span style={{ color: 'var(--sfp-navy)' }}>Different</span>?
           </h2>
 
           <div className="space-y-6">
             {story.split('\n\n').map((paragraph, i) => (
-              <p key={i} className="text-slate-400 text-lg leading-relaxed">
+              <p key={i} className="text-lg leading-relaxed" style={{ color: 'var(--sfp-slate)' }}>
                 {paragraph}
               </p>
             ))}
@@ -365,18 +365,16 @@ export default async function BrokerReviewPage({ params }: PageProps) {
       {/* ═══════════════════════════════════════════════════════
           KEY FEATURES — 3 Deep-Dive Cards
           ═══════════════════════════════════════════════════════ */}
-      <section className="py-24 bg-slate-950 relative overflow-hidden">
-        <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-violet-500/5 rounded-full blur-[120px]" />
-
+      <section className="py-24 relative overflow-hidden" style={{ background: 'var(--sfp-gray)' }}>
         <div className="container relative z-10 mx-auto px-4">
           <div className="text-center max-w-2xl mx-auto mb-16">
-            <div className="inline-flex items-center gap-2 rounded-full badge-premium px-4 py-2 mb-6">
-              <Zap className="h-4 w-4 text-emerald-400" />
-              <span className="kicker text-slate-300">Core Features</span>
+            <div className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 mb-6 shadow-sm">
+              <Zap className="h-4 w-4" style={{ color: 'var(--sfp-green)' }} />
+              <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--sfp-slate)' }}>Core Features</span>
             </div>
-            <h2 className="text-3xl md:text-4xl font-bold mb-6 text-white">
+            <h2 className="text-3xl md:text-4xl font-bold mb-6" style={{ color: 'var(--sfp-ink)' }}>
               Why Traders Choose{' '}
-              <span className="gradient-text">{review.name}</span>
+              <span style={{ color: 'var(--sfp-navy)' }}>{review.name}</span>
             </h2>
           </div>
 
@@ -388,13 +386,13 @@ export default async function BrokerReviewPage({ params }: PageProps) {
               return (
                 <div
                   key={feature.title}
-                  className="glass-card rounded-2xl p-8 group hover:scale-[1.02] transition-all duration-500"
+                  className="rounded-2xl border border-gray-200 bg-white shadow-sm p-8 group hover:scale-[1.02] hover:shadow-md transition-all duration-500"
                 >
-                  <div className={`w-14 h-14 rounded-xl ${style.bg} flex items-center justify-center mb-6 icon-glow`}>
+                  <div className={`w-14 h-14 rounded-xl ${style.bg} flex items-center justify-center mb-6`}>
                     <Icon className={`h-7 w-7 ${style.color}`} />
                   </div>
-                  <h3 className="text-xl font-semibold text-white mb-4">{feature.title}</h3>
-                  <p className="text-sm text-slate-400 leading-relaxed">{desc}</p>
+                  <h3 className="text-xl font-semibold mb-4" style={{ color: 'var(--sfp-ink)' }}>{feature.title}</h3>
+                  <p className="text-sm leading-relaxed" style={{ color: 'var(--sfp-slate)' }}>{desc}</p>
                 </div>
               );
             })}
@@ -405,9 +403,9 @@ export default async function BrokerReviewPage({ params }: PageProps) {
       {/* ═══════════════════════════════════════════════════════
           SPECS TABLE — Multi-Column Matrix
           ═══════════════════════════════════════════════════════ */}
-      <section className="py-24 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 relative overflow-hidden">
+      <section className="py-24 bg-white relative overflow-hidden">
         <div className="container relative z-10 mx-auto px-4 max-w-5xl">
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-10">
+          <h2 className="text-3xl md:text-4xl font-bold mb-10" style={{ color: 'var(--sfp-ink)' }}>
             {review.specsTitle}
           </h2>
 
@@ -415,9 +413,9 @@ export default async function BrokerReviewPage({ params }: PageProps) {
             const table = review.specsTable;
             const rows = regionText(mkt, table.rows, table.rowsUs);
             return (
-              <div className="rounded-2xl overflow-hidden border border-slate-700/40">
-                {/* Gradient Header */}
-                <div className="grid grid-cols-4 bg-gradient-to-r from-violet-600 to-violet-500">
+              <div className="rounded-2xl overflow-hidden border border-gray-200">
+                {/* Header */}
+                <div className="grid grid-cols-4" style={{ background: 'var(--sfp-navy)' }}>
                   {table.columns.map((col) => (
                     <div key={col} className="px-5 py-4 md:px-6 md:py-5">
                       <span className="text-sm md:text-base font-bold text-white">{col}</span>
@@ -429,16 +427,14 @@ export default async function BrokerReviewPage({ params }: PageProps) {
                 {rows.map((row, ri) => (
                   <div
                     key={ri}
-                    className={`grid grid-cols-4 border-t border-slate-700/30 transition-colors hover:bg-violet-500/[0.08] ${
-                      ri % 2 === 0 ? '' : ''
-                    }`}
-                    style={ri % 2 === 0 ? { background: 'rgba(139,92,246,0.06)' } : undefined}
+                    className={`grid grid-cols-4 border-t border-gray-200 transition-colors hover:bg-gray-50`}
+                    style={ri % 2 === 0 ? { background: 'var(--sfp-sky)' } : { background: '#fff' }}
                   >
                     {row.map((cell, ci) => (
                       <div key={ci} className="px-5 py-4 md:px-6 md:py-5">
                         <span className={`text-sm ${
-                          ci === 0 ? 'font-semibold text-white' : 'text-slate-300'
-                        }`}>
+                          ci === 0 ? 'font-semibold' : ''
+                        }`} style={{ color: ci === 0 ? 'var(--sfp-ink)' : 'var(--sfp-slate)' }}>
                           {cell}
                         </span>
                       </div>
@@ -454,19 +450,17 @@ export default async function BrokerReviewPage({ params }: PageProps) {
       {/* ═══════════════════════════════════════════════════════
           COMPARISON TABLE
           ═══════════════════════════════════════════════════════ */}
-      <section id="comparison" className="py-24 bg-slate-950 relative overflow-hidden">
-        <div className="absolute top-1/3 left-0 w-[500px] h-[500px] bg-cyan-500/5 rounded-full blur-[100px]" />
-
+      <section id="comparison" className="py-24 relative overflow-hidden" style={{ background: 'var(--sfp-gray)' }}>
         <div className="container relative z-10 mx-auto px-4 max-w-6xl">
           <div className="text-center max-w-2xl mx-auto mb-4">
-            <div className="inline-flex items-center gap-2 rounded-full badge-premium px-4 py-2 mb-6">
-              <BarChart3 className="h-4 w-4 text-violet-400" />
-              <span className="kicker text-slate-300">Side-by-Side</span>
+            <div className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 mb-6 shadow-sm">
+              <BarChart3 className="h-4 w-4" style={{ color: 'var(--sfp-navy)' }} />
+              <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--sfp-slate)' }}>Side-by-Side</span>
             </div>
-            <h2 className="text-3xl md:text-4xl font-bold mb-6 text-white">
-              How {review.name} <span className="gradient-text">Compares</span>
+            <h2 className="text-3xl md:text-4xl font-bold mb-6" style={{ color: 'var(--sfp-ink)' }}>
+              How {review.name} <span style={{ color: 'var(--sfp-navy)' }}>Compares</span>
             </h2>
-            <p className="text-slate-400 text-lg">
+            <p className="text-lg" style={{ color: 'var(--sfp-slate)' }}>
               Transparent feature comparison across the top trading platforms reviewed by SmartFinPro.
             </p>
           </div>
@@ -482,30 +476,30 @@ export default async function BrokerReviewPage({ params }: PageProps) {
       {/* ═══════════════════════════════════════════════════════
           REGIONAL COMPLIANCE / INFORMATION DISCLOSURE
           ═══════════════════════════════════════════════════════ */}
-      <section className="py-16 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
+      <section className="py-16 bg-white">
         <div className="container mx-auto px-4 max-w-4xl">
-          <div className="glass-card rounded-2xl p-8">
+          <div className="rounded-2xl border border-gray-200 bg-white shadow-sm p-8">
             <div className="flex items-start gap-4 mb-6">
-              <div className="w-12 h-12 rounded-xl bg-amber-500/15 flex items-center justify-center shrink-0">
-                <Shield className="h-6 w-6 text-amber-400" />
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0" style={{ background: '#FEF5E7' }}>
+                <Shield className="h-6 w-6" style={{ color: 'var(--sfp-gold)' }} />
               </div>
               <div>
                 {review.isDataPlatform ? (
                   <>
-                    <h3 className="text-lg font-semibold text-white mb-1">
+                    <h3 className="text-lg font-semibold mb-1" style={{ color: 'var(--sfp-ink)' }}>
                       Information Disclosure — {config.name} {config.flag}
                     </h3>
-                    <p className="text-sm text-slate-400">
+                    <p className="text-sm" style={{ color: 'var(--sfp-slate)' }}>
                       {review.name} is a financial data and research platform, not a broker or investment advisor.
                     </p>
                   </>
                 ) : (
                   <>
-                    <h3 className="text-lg font-semibold text-white mb-1">
+                    <h3 className="text-lg font-semibold mb-1" style={{ color: 'var(--sfp-ink)' }}>
                       Regulatory Information — {config.name} {config.flag}
                     </h3>
-                    <p className="text-sm text-slate-400">
-                      Regulated by the <strong className="text-slate-300">{compliance.regulatorFull}</strong> ({compliance.regulator})
+                    <p className="text-sm" style={{ color: 'var(--sfp-slate)' }}>
+                      Regulated by the <strong style={{ color: 'var(--sfp-ink)' }}>{compliance.regulatorFull}</strong> ({compliance.regulator})
                     </p>
                   </>
                 )}
@@ -513,9 +507,9 @@ export default async function BrokerReviewPage({ params }: PageProps) {
             </div>
 
             {review.isDataPlatform ? (
-              <div className="rounded-xl border border-blue-500/20 bg-blue-500/5 px-5 py-4">
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  <strong className="text-blue-400">Disclosure:</strong>{' '}
+              <div className="rounded-xl border border-blue-200 px-5 py-4" style={{ background: 'var(--sfp-sky)' }}>
+                <p className="text-xs leading-relaxed" style={{ color: 'var(--sfp-slate)' }}>
+                  <strong style={{ color: 'var(--sfp-navy)' }}>Disclosure:</strong>{' '}
                   {review.name} provides financial data, news, and analysis for informational purposes only.
                   It does not provide investment advice, broker services, or execute trades. Any investment
                   decisions should be based on your own research and, where appropriate, professional financial
@@ -525,17 +519,17 @@ export default async function BrokerReviewPage({ params }: PageProps) {
               </div>
             ) : (
               <>
-                <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 px-5 py-4">
-                  <p className="text-xs text-slate-400 leading-relaxed">
-                    <strong className="text-amber-400">Risk Warning:</strong>{' '}
+                <div className="rounded-xl border border-amber-200 px-5 py-4" style={{ background: '#FEF5E7' }}>
+                  <p className="text-xs leading-relaxed" style={{ color: 'var(--sfp-slate)' }}>
+                    <strong style={{ color: 'var(--sfp-gold)' }}>Risk Warning:</strong>{' '}
                     {compliance.riskWarning}
                   </p>
                 </div>
 
                 {isUS && (
-                  <div className="mt-4 rounded-xl border border-blue-500/20 bg-blue-500/5 px-5 py-4">
-                    <p className="text-xs text-slate-400 leading-relaxed">
-                      <strong className="text-blue-400">US Regulation Note:</strong>{' '}
+                  <div className="mt-4 rounded-xl border border-blue-200 px-5 py-4" style={{ background: 'var(--sfp-sky)' }}>
+                    <p className="text-xs leading-relaxed" style={{ color: 'var(--sfp-slate)' }}>
+                      <strong style={{ color: 'var(--sfp-navy)' }}>US Regulation Note:</strong>{' '}
                       CFD trading is not available to US residents. This review covers
                       stocks, ETFs, forex, and other instruments available in the United States.
                       Always verify product availability with your broker.
@@ -551,11 +545,9 @@ export default async function BrokerReviewPage({ params }: PageProps) {
       {/* ═══════════════════════════════════════════════════════
           FINAL CTA
           ═══════════════════════════════════════════════════════ */}
-      <section className="py-24 bg-slate-950 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-emerald-900/10 via-transparent to-transparent" />
-
+      <section className="py-24 relative overflow-hidden" style={{ background: 'var(--sfp-gray)' }}>
         <div className="container relative z-10 mx-auto px-4">
-          <div className="max-w-3xl mx-auto glass-card rounded-2xl p-10 md:p-14 text-center border-t-2 border-emerald-500/30">
+          <div className="max-w-3xl mx-auto rounded-2xl border border-gray-200 bg-white shadow-sm p-10 md:p-14 text-center" style={{ borderTopWidth: '3px', borderTopColor: 'var(--sfp-navy)' }}>
             <div className="mx-auto mb-8">
               <Image
                 src={review.logo}
@@ -565,10 +557,10 @@ export default async function BrokerReviewPage({ params }: PageProps) {
                 className="h-11 w-auto mx-auto"
               />
             </div>
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4" style={{ color: 'var(--sfp-ink)' }}>
               Ready to Get Started with {review.name}?
             </h2>
-            <p className="text-slate-400 text-lg mb-8 max-w-xl mx-auto leading-relaxed">
+            <p className="text-lg mb-8 max-w-xl mx-auto leading-relaxed" style={{ color: 'var(--sfp-slate)' }}>
               Open your free account today and experience why{' '}
               {review.reviewCount.toLocaleString('en-US')}+ traders trust {review.name}.
               No commitment, cancel anytime.
@@ -577,7 +569,8 @@ export default async function BrokerReviewPage({ params }: PageProps) {
               <Button
                 asChild
                 size="lg"
-                className="btn-shimmer h-14 px-10 text-lg bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 border-0 shadow-lg shadow-emerald-500/25"
+                className="btn-shimmer h-14 px-10 text-lg border-0 text-white shadow-md"
+                style={{ background: 'var(--sfp-gold)' }}
               >
                 <Link href={review.affiliateUrl} target="_blank" rel="noopener sponsored">
                   {review.ctaLabel}
@@ -588,7 +581,8 @@ export default async function BrokerReviewPage({ params }: PageProps) {
                 asChild
                 size="lg"
                 variant="outline"
-                className="h-14 px-10 text-lg border-slate-700 text-slate-300 hover:bg-slate-800/50 hover:text-white"
+                className="h-14 px-10 text-lg border-gray-200 hover:bg-gray-50"
+                style={{ color: 'var(--sfp-ink)' }}
               >
                 <Link href={`${prefix}/trading`}>
                   View All Trading Reviews
@@ -596,7 +590,7 @@ export default async function BrokerReviewPage({ params }: PageProps) {
                 </Link>
               </Button>
             </div>
-            <p className="text-xs text-slate-600 mt-6">
+            <p className="text-xs mt-6" style={{ color: 'var(--sfp-slate)' }}>
               {config.currencySymbol} pricing. {compliance.regulator} regulated.
             </p>
           </div>

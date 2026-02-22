@@ -1,7 +1,34 @@
 'use server';
 
+import 'server-only';
+
 import { createServiceClient } from '@/lib/supabase/server';
 import type { LinkClick, Conversion, AffiliateLink, PageView } from '@/lib/supabase/types';
+
+// ============================================================
+// SAFE QUERY HELPER
+// Returns empty data instead of throwing when a table doesn't exist.
+// This prevents the dashboard from crashing if migrations haven't
+// been applied yet (e.g. page_views, leads, newsletter_subscribers).
+// ============================================================
+type SupabaseResult<T> = { data: T[] | null; count: number | null; error: { code?: string; message?: string } | null };
+
+function safeData<T>(result: SupabaseResult<T>): T[] {
+  if (result.error) {
+    // PGRST204 = table not found in schema cache — safe to ignore
+    if (result.error.code === 'PGRST204' || result.error.message?.includes('schema cache')) {
+      return [];
+    }
+    // Log unexpected errors but don't crash
+    console.warn('[dashboard] Query warning:', result.error.message);
+  }
+  return result.data || [];
+}
+
+function safeCount(result: SupabaseResult<unknown>): number {
+  if (result.error) return 0;
+  return result.count || 0;
+}
 
 export type TimeRange = '24h' | '7d' | '30d' | 'all';
 
@@ -567,9 +594,9 @@ export async function getDashboardStats(range: TimeRange = '24h'): Promise<Dashb
     scrollQuery = scrollQuery.gte('viewed_at', rangeStart.toISOString());
   }
 
-  const { data: scrollData } = await scrollQuery;
+  const scrollResult = await scrollQuery;
   type ScrollViewRecord = Pick<PageView, 'page_path' | 'article_slug' | 'page_title' | 'scroll_depth'>;
-  const scrollViews = (scrollData || []) as ScrollViewRecord[];
+  const scrollViews = safeData(scrollResult) as ScrollViewRecord[];
 
   // Aggregate scroll depth by page
   const scrollMap = new Map<string, {
@@ -630,9 +657,9 @@ export async function getDashboardStats(range: TimeRange = '24h'): Promise<Dashb
     engagementQuery = engagementQuery.gte('viewed_at', rangeStart.toISOString());
   }
 
-  const { data: engagementData } = await engagementQuery;
+  const engagementResult = await engagementQuery;
   type EngagementRecord = Pick<PageView, 'page_path' | 'page_title' | 'article_slug' | 'category' | 'time_on_page' | 'scroll_depth'>;
-  const articleViews = (engagementData || []) as EngagementRecord[];
+  const articleViews = safeData(engagementResult) as EngagementRecord[];
 
   // Aggregate engagement by article
   const articleEngagementMap = new Map<string, {
@@ -785,23 +812,23 @@ export async function getDashboardStats(range: TimeRange = '24h'): Promise<Dashb
   }
   const revenueComparison = calculateChange(revenueInRange, previousRevenue);
 
-  // Leads comparison - from newsletter_subscribers
+  // Leads comparison - from newsletter_subscribers (or subscribers fallback)
   let leadsInRange = 0;
   let previousLeads = 0;
   if (rangeStart) {
-    const { count: currentLeadsCount } = await supabase
+    const currentLeadsResult = await supabase
       .from('newsletter_subscribers')
       .select('*', { count: 'exact', head: true })
       .gte('created_at', rangeStart.toISOString());
-    leadsInRange = currentLeadsCount || 0;
+    leadsInRange = safeCount(currentLeadsResult);
   }
   if (previousPeriod) {
-    const { count: prevLeadsCount } = await supabase
+    const prevLeadsResult = await supabase
       .from('newsletter_subscribers')
       .select('*', { count: 'exact', head: true })
       .gte('created_at', previousPeriod.start.toISOString())
       .lt('created_at', previousPeriod.end.toISOString());
-    previousLeads = prevLeadsCount || 0;
+    previousLeads = safeCount(prevLeadsResult);
   }
   const leadsComparison = calculateChange(leadsInRange, previousLeads);
 
@@ -872,13 +899,13 @@ export async function getDashboardStats(range: TimeRange = '24h'): Promise<Dashb
   // ============================================================
 
   // Get newsletter subscribers with engagement data
-  const { data: leadData } = await supabase
+  const leadResult = await supabase
     .from('newsletter_subscribers')
     .select('id, created_at, source_page')
     .order('created_at', { ascending: false })
     .limit(100);
 
-  const leads = leadData || [];
+  const leads = safeData(leadResult);
 
   // Calculate engagement score based on source page scroll depth
   let totalEngagementScore = 0;
@@ -1077,8 +1104,8 @@ export async function getGlobalMarketIntelligence(range: TimeRange = '7d'): Prom
     pageViewsQuery = pageViewsQuery.gte('viewed_at', rangeStart.toISOString());
   }
 
-  const { data: pageViewsData } = await pageViewsQuery;
-  const pageViews = pageViewsData || [];
+  const pageViewsResult = await pageViewsQuery;
+  const pageViews = safeData(pageViewsResult);
 
   // Build market-specific data
   const marketData: Record<MarketCode, {

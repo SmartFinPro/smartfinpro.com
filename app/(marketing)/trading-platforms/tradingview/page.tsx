@@ -155,48 +155,48 @@ const detailedFeatures = [
     title: 'Advanced Customizable Charts',
     description:
       'Choose from 12+ chart types including candlestick, Heikin Ashi, Renko, Kagi, Point & Figure, and Range bars. Customize colors, timeframes, and multi-chart layouts to match your strategy.',
-    color: 'text-emerald-400',
-    bg: 'bg-emerald-500/15',
+    color: 'text-[var(--sfp-green)]',
+    bg: 'bg-[#E8F5ED]',
   },
   {
     icon: Bell,
     title: 'Personalized Smart Alerts',
     description:
       'Set up 12+ alert types based on price levels, indicator values, drawing tool intersections, and custom conditions. Get notified via app, email, SMS, or webhook.',
-    color: 'text-cyan-400',
-    bg: 'bg-cyan-500/15',
+    color: 'text-[var(--sfp-navy)]',
+    bg: 'bg-[var(--sfp-sky)]',
   },
   {
     icon: BrainCircuit,
     title: '100+ Technical Indicators',
     description:
       'From classic RSI and MACD to advanced Ichimoku clouds and volume profiles. Plus 100,000+ community-built indicators you can apply instantly.',
-    color: 'text-violet-400',
-    bg: 'bg-violet-500/15',
+    color: 'text-[var(--sfp-navy)]',
+    bg: 'bg-[var(--sfp-sky)]',
   },
   {
     icon: TrendingUp,
     title: 'Fundamental Analysis Tools',
     description:
       'Access financial statements, key ratios, earnings data, and economic indicators. Overlay fundamental data directly on your charts for a complete picture.',
-    color: 'text-amber-400',
-    bg: 'bg-amber-500/15',
+    color: 'text-[var(--sfp-gold)]',
+    bg: 'bg-[#FEF5E7]',
   },
   {
     icon: Code2,
     title: 'Pine Script Programming',
     description:
       'Build custom indicators, strategies, and automated alerts with Pine Script — TradingView\'s proprietary scripting language. Backtest strategies with historical data.',
-    color: 'text-rose-400',
-    bg: 'bg-rose-500/15',
+    color: 'text-[var(--sfp-red)]',
+    bg: 'bg-[#FEE8E8]',
   },
   {
     icon: Globe,
     title: 'Social Network & Livestreams',
     description:
       'Follow expert traders, share your analysis, and watch live trading sessions. The world\'s largest trading community at your fingertips.',
-    color: 'text-blue-400',
-    bg: 'bg-blue-500/15',
+    color: 'text-[var(--sfp-navy)]',
+    bg: 'bg-[var(--sfp-sky)]',
   },
 ];
 
@@ -277,34 +277,30 @@ export default function TradingViewPage() {
       {/* ═══════════════════════════════════════════════════════
           HERO
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative min-h-[80vh] flex items-center bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 overflow-hidden">
-        {/* Background glows */}
-        <div className="absolute top-0 left-1/4 w-[700px] h-[700px] bg-cyan-500/8 rounded-full blur-[140px]" />
-        <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-violet-500/8 rounded-full blur-[120px]" />
-
+      <section className="relative min-h-[80vh] flex items-center overflow-hidden" style={{ background: 'var(--sfp-navy)' }}>
         <div className="container relative z-10 mx-auto px-4 py-24 md:py-32">
           <div className="max-w-4xl mx-auto text-center">
             {/* Breadcrumb */}
-            <div className="flex items-center justify-center gap-2 text-sm text-slate-500 mb-8">
-              <Link href="/" className="hover:text-slate-300 transition-colors">Home</Link>
+            <div className="flex items-center justify-center gap-2 text-sm mb-8" style={{ color: 'rgba(255,255,255,0.6)' }}>
+              <Link href="/" className="hover:text-white transition-colors">Home</Link>
               <span>/</span>
-              <Link href="/us/trading" className="hover:text-slate-300 transition-colors">Trading</Link>
+              <Link href="/us/trading" className="hover:text-white transition-colors">Trading</Link>
               <span>/</span>
-              <span className="text-slate-300">TradingView</span>
+              <span className="text-white">TradingView</span>
             </div>
 
             {/* Badge */}
-            <div className="inline-flex items-center gap-2 rounded-full badge-premium px-4 py-2 mb-8">
-              <Sparkles className="h-4 w-4 text-cyan-400" />
-              <span className="kicker text-slate-300">Expert-Reviewed Platform</span>
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 mb-8">
+              <Sparkles className="h-4 w-4 text-white" />
+              <span className="text-sm font-medium text-white">Expert-Reviewed Platform</span>
             </div>
 
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-6 text-white leading-tight">
               Trade Smarter with{' '}
-              <span className="gradient-text">TradingView</span>
+              <span style={{ color: 'var(--sfp-gold)' }}>TradingView</span>
             </h1>
 
-            <p className="text-xl text-slate-400 mb-10 max-w-2xl mx-auto leading-relaxed">
+            <p className="text-xl mb-10 max-w-2xl mx-auto leading-relaxed" style={{ color: 'rgba(255,255,255,0.8)' }}>
               The world&apos;s most popular charting platform with 50M+ users. Advanced charts,
               100+ indicators, Pine Script, and a thriving social trading community — all in one place.
             </p>
@@ -314,7 +310,8 @@ export default function TradingViewPage() {
               <Button
                 asChild
                 size="lg"
-                className="btn-shimmer h-14 px-10 text-lg bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-600 hover:to-cyan-700 border-0 shadow-lg shadow-cyan-500/25"
+                className="h-14 px-10 text-lg text-white border-0 shadow-lg"
+                style={{ background: 'var(--sfp-gold)' }}
               >
                 <Link href="https://www.tradingview.com/?aff_id=SMARTFINPRO" target="_blank" rel="noopener sponsored">
                   Try TradingView Free
@@ -325,7 +322,7 @@ export default function TradingViewPage() {
                 asChild
                 size="lg"
                 variant="outline"
-                className="h-14 px-10 text-lg border-slate-700 text-slate-300 hover:bg-slate-800/50 hover:text-white"
+                className="h-14 px-10 text-lg border-white/30 text-white hover:bg-white/10"
               >
                 <Link href="#features">
                   Explore Features
@@ -339,12 +336,12 @@ export default function TradingViewPage() {
               {platformStats.map((stat) => (
                 <div
                   key={stat.label}
-                  className="glass-card rounded-xl px-4 py-4 text-center hover:border-cyan-500/30 transition-colors"
+                  className="rounded-xl px-4 py-4 text-center border border-white/15 bg-white/10 transition-colors"
                 >
-                  <div className="text-2xl md:text-3xl font-bold gradient-text tabular-nums mb-1">
+                  <div className="text-2xl md:text-3xl font-bold tabular-nums mb-1" style={{ color: 'var(--sfp-gold)' }}>
                     {stat.value}
                   </div>
-                  <div className="text-xs text-slate-500">{stat.label}</div>
+                  <div className="text-xs" style={{ color: 'rgba(255,255,255,0.6)' }}>{stat.label}</div>
                 </div>
               ))}
             </div>
@@ -354,7 +351,7 @@ export default function TradingViewPage() {
         {/* Bottom curve */}
         <div className="absolute bottom-0 left-0 right-0">
           <svg viewBox="0 0 1440 60" fill="none" className="w-full" preserveAspectRatio="none">
-            <path d="M0,60 L0,20 Q360,0 720,20 Q1080,40 1440,20 L1440,60 Z" fill="rgb(2,6,23)" />
+            <path d="M0,60 L0,20 Q360,0 720,20 Q1080,40 1440,20 L1440,60 Z" fill="var(--sfp-gray)" />
           </svg>
         </div>
       </section>
@@ -362,19 +359,17 @@ export default function TradingViewPage() {
       {/* ═══════════════════════════════════════════════════════
           DISCOVER TRADINGVIEW
           ═══════════════════════════════════════════════════════ */}
-      <section className="py-24 bg-slate-950 relative overflow-hidden">
-        <div className="absolute top-1/2 right-0 w-[500px] h-[500px] bg-emerald-500/5 rounded-full blur-[100px] -translate-y-1/2" />
-
+      <section className="py-24 relative overflow-hidden" style={{ background: 'var(--sfp-gray)' }}>
         <div className="container relative z-10 mx-auto px-4">
           <div className="text-center max-w-2xl mx-auto mb-16">
-            <div className="inline-flex items-center gap-2 rounded-full badge-premium px-4 py-2 mb-6">
-              <TrendingUp className="h-4 w-4 text-emerald-400" />
-              <span className="kicker text-slate-300">Discover</span>
+            <div className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white shadow-sm px-4 py-2 mb-6">
+              <TrendingUp className="h-4 w-4" style={{ color: 'var(--sfp-green)' }} />
+              <span className="text-sm font-medium" style={{ color: 'var(--sfp-ink)' }}>Discover</span>
             </div>
-            <h2 className="text-4xl md:text-5xl font-bold mb-6 text-white">
-              Discover <span className="gradient-text">TradingView</span>
+            <h2 className="text-4xl md:text-5xl font-bold mb-6" style={{ color: 'var(--sfp-ink)' }}>
+              Discover <span style={{ color: 'var(--sfp-navy)' }}>TradingView</span>
             </h2>
-            <p className="text-slate-400 text-lg">
+            <p className="text-lg" style={{ color: 'var(--sfp-slate)' }}>
               The most popular social network for traders and investors on the web — trusted by
               50+ million users worldwide.
             </p>
@@ -384,13 +379,13 @@ export default function TradingViewPage() {
             {discoverFeatures.map((feature) => (
               <div
                 key={feature.title}
-                className="glass-card rounded-2xl p-8 group hover:scale-[1.03] transition-all duration-500"
+                className="rounded-2xl border border-gray-200 bg-white shadow-sm p-8 group hover:scale-[1.03] transition-all duration-500"
               >
-                <div className="w-14 h-14 rounded-xl bg-cyan-500/15 flex items-center justify-center mb-6 icon-glow">
-                  <feature.icon className="h-7 w-7 text-cyan-400" />
+                <div className="w-14 h-14 rounded-xl flex items-center justify-center mb-6" style={{ background: 'var(--sfp-sky)' }}>
+                  <feature.icon className="h-7 w-7" style={{ color: 'var(--sfp-navy)' }} />
                 </div>
-                <h3 className="text-xl font-semibold text-white mb-3">{feature.title}</h3>
-                <p className="text-slate-400 leading-relaxed">{feature.description}</p>
+                <h3 className="text-xl font-semibold mb-3" style={{ color: 'var(--sfp-ink)' }}>{feature.title}</h3>
+                <p className="leading-relaxed" style={{ color: 'var(--sfp-slate)' }}>{feature.description}</p>
               </div>
             ))}
           </div>
@@ -400,19 +395,17 @@ export default function TradingViewPage() {
       {/* ═══════════════════════════════════════════════════════
           HOW TO GET STARTED — 4 Steps
           ═══════════════════════════════════════════════════════ */}
-      <section className="py-24 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 relative overflow-hidden">
-        <div className="absolute top-0 left-1/3 w-[600px] h-[600px] bg-violet-500/5 rounded-full blur-[120px]" />
-
+      <section className="py-24 bg-white relative overflow-hidden">
         <div className="container relative z-10 mx-auto px-4">
           <div className="text-center max-w-2xl mx-auto mb-16">
-            <div className="inline-flex items-center gap-2 rounded-full badge-premium px-4 py-2 mb-6">
-              <Zap className="h-4 w-4 text-violet-400" />
-              <span className="kicker text-slate-300">Quick Start</span>
+            <div className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white shadow-sm px-4 py-2 mb-6">
+              <Zap className="h-4 w-4" style={{ color: 'var(--sfp-navy)' }} />
+              <span className="text-sm font-medium" style={{ color: 'var(--sfp-ink)' }}>Quick Start</span>
             </div>
-            <h2 className="text-4xl md:text-5xl font-bold mb-6 text-white">
-              Get Started with <span className="gradient-text">TradingView</span>
+            <h2 className="text-4xl md:text-5xl font-bold mb-6" style={{ color: 'var(--sfp-ink)' }}>
+              Get Started with <span style={{ color: 'var(--sfp-navy)' }}>TradingView</span>
             </h2>
-            <p className="text-slate-400 text-lg">
+            <p className="text-lg" style={{ color: 'var(--sfp-slate)' }}>
               Connect your broker and start trading with professional-grade charts in minutes.
             </p>
           </div>
@@ -420,13 +413,13 @@ export default function TradingViewPage() {
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto mb-12">
             {connectionSteps.map((item) => (
               <div key={item.step} className="relative group">
-                <div className="glass-card rounded-2xl p-6 h-full hover:border-violet-500/30 transition-all duration-300">
+                <div className="rounded-2xl border border-gray-200 bg-white shadow-sm p-6 h-full transition-all duration-300">
                   {/* Step number */}
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500 to-violet-600 flex items-center justify-center mb-5 shadow-lg group-hover:scale-110 transition-transform duration-300">
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-5 shadow-lg group-hover:scale-110 transition-transform duration-300" style={{ background: 'var(--sfp-navy)' }}>
                     <span className="text-lg font-bold text-white">{item.step}</span>
                   </div>
-                  <h3 className="text-lg font-semibold text-white mb-3">{item.title}</h3>
-                  <p className="text-sm text-slate-400 leading-relaxed">{item.description}</p>
+                  <h3 className="text-lg font-semibold mb-3" style={{ color: 'var(--sfp-ink)' }}>{item.title}</h3>
+                  <p className="text-sm leading-relaxed" style={{ color: 'var(--sfp-slate)' }}>{item.description}</p>
                 </div>
               </div>
             ))}
@@ -436,7 +429,8 @@ export default function TradingViewPage() {
             <Button
               asChild
               size="lg"
-              className="btn-shimmer h-14 px-10 text-lg bg-gradient-to-r from-violet-500 to-violet-600 hover:from-violet-600 hover:to-violet-700 border-0 shadow-lg shadow-violet-500/25"
+              className="h-14 px-10 text-lg text-white border-0 shadow-lg"
+              style={{ background: 'var(--sfp-navy)' }}
             >
               <Link href="https://www.tradingview.com/?aff_id=SMARTFINPRO" target="_blank" rel="noopener sponsored">
                 Create Free Account
@@ -450,15 +444,13 @@ export default function TradingViewPage() {
       {/* ═══════════════════════════════════════════════════════
           ACCESS / DOWNLOAD OPTIONS
           ═══════════════════════════════════════════════════════ */}
-      <section className="py-24 bg-slate-950 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-cyan-900/10 via-transparent to-transparent" />
-
+      <section className="py-24 relative overflow-hidden" style={{ background: 'var(--sfp-gray)' }}>
         <div className="container relative z-10 mx-auto px-4">
           <div className="text-center max-w-2xl mx-auto mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold mb-6 text-white">
-              Access TradingView <span className="gradient-text">Anywhere</span>
+            <h2 className="text-4xl md:text-5xl font-bold mb-6" style={{ color: 'var(--sfp-ink)' }}>
+              Access TradingView <span style={{ color: 'var(--sfp-navy)' }}>Anywhere</span>
             </h2>
-            <p className="text-slate-400 text-lg">
+            <p className="text-lg" style={{ color: 'var(--sfp-slate)' }}>
               Choose your preferred platform — your charts and settings sync across all devices.
             </p>
           </div>
@@ -467,18 +459,19 @@ export default function TradingViewPage() {
             {accessOptions.map((option) => (
               <div
                 key={`${option.platform}-${option.subtitle}`}
-                className="glass-card rounded-2xl p-6 text-center group hover:scale-[1.03] transition-all duration-500"
+                className="rounded-2xl border border-gray-200 bg-white shadow-sm p-6 text-center group hover:scale-[1.03] transition-all duration-500"
               >
-                <div className="w-14 h-14 rounded-xl bg-cyan-500/15 flex items-center justify-center mx-auto mb-5 icon-glow">
-                  <MonitorSmartphone className="h-7 w-7 text-cyan-400" />
+                <div className="w-14 h-14 rounded-xl flex items-center justify-center mx-auto mb-5" style={{ background: 'var(--sfp-sky)' }}>
+                  <MonitorSmartphone className="h-7 w-7" style={{ color: 'var(--sfp-navy)' }} />
                 </div>
-                <h3 className="text-lg font-semibold text-white mb-1">{option.platform}</h3>
-                <p className="text-sm text-cyan-400 font-medium mb-3">{option.subtitle}</p>
-                <p className="text-sm text-slate-400 mb-5 leading-relaxed">{option.description}</p>
+                <h3 className="text-lg font-semibold mb-1" style={{ color: 'var(--sfp-ink)' }}>{option.platform}</h3>
+                <p className="text-sm font-medium mb-3" style={{ color: 'var(--sfp-navy)' }}>{option.subtitle}</p>
+                <p className="text-sm mb-5 leading-relaxed" style={{ color: 'var(--sfp-slate)' }}>{option.description}</p>
                 <Button
                   asChild
                   size="sm"
-                  className="w-full bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-600 hover:to-cyan-700 border-0"
+                  className="w-full text-white border-0"
+                  style={{ background: 'var(--sfp-gold)' }}
                 >
                   <Link href={option.href} target="_blank" rel="noopener sponsored">
                     {option.cta}
@@ -494,19 +487,17 @@ export default function TradingViewPage() {
       {/* ═══════════════════════════════════════════════════════
           WHY TRADE ON TRADINGVIEW — 3 Key Highlights
           ═══════════════════════════════════════════════════════ */}
-      <section id="features" className="py-24 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 relative overflow-hidden">
-        <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-emerald-500/5 rounded-full blur-[120px]" />
-
+      <section id="features" className="py-24 bg-white relative overflow-hidden">
         <div className="container relative z-10 mx-auto px-4">
           <div className="text-center max-w-2xl mx-auto mb-16">
-            <div className="inline-flex items-center gap-2 rounded-full badge-premium px-4 py-2 mb-6">
-              <Star className="h-4 w-4 text-amber-400" />
-              <span className="kicker text-slate-300">Key Advantages</span>
+            <div className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white shadow-sm px-4 py-2 mb-6">
+              <Star className="h-4 w-4" style={{ color: 'var(--sfp-gold)' }} />
+              <span className="text-sm font-medium" style={{ color: 'var(--sfp-ink)' }}>Key Advantages</span>
             </div>
-            <h2 className="text-4xl md:text-5xl font-bold mb-6 text-white">
-              Why Trade on <span className="gradient-text">TradingView</span>?
+            <h2 className="text-4xl md:text-5xl font-bold mb-6" style={{ color: 'var(--sfp-ink)' }}>
+              Why Trade on <span style={{ color: 'var(--sfp-navy)' }}>TradingView</span>?
             </h2>
-            <p className="text-slate-400 text-lg">
+            <p className="text-lg" style={{ color: 'var(--sfp-slate)' }}>
               The tools, community, and data that make TradingView the go-to platform for serious traders.
             </p>
           </div>
@@ -515,16 +506,17 @@ export default function TradingViewPage() {
             {tradingFeatures.map((feature) => (
               <div
                 key={feature.title}
-                className="glass-card rounded-2xl p-8 group hover:scale-[1.03] transition-all duration-500 border-t-2 border-cyan-500/30"
+                className="rounded-2xl border border-gray-200 bg-white shadow-sm p-8 group hover:scale-[1.03] transition-all duration-500 border-t-2"
+                style={{ borderTopColor: 'var(--sfp-navy)' }}
               >
-                <div className="w-14 h-14 rounded-xl bg-cyan-500/15 flex items-center justify-center mb-6 icon-glow">
-                  <feature.icon className="h-7 w-7 text-cyan-400" />
+                <div className="w-14 h-14 rounded-xl flex items-center justify-center mb-6" style={{ background: 'var(--sfp-sky)' }}>
+                  <feature.icon className="h-7 w-7" style={{ color: 'var(--sfp-navy)' }} />
                 </div>
-                <div className="inline-flex items-center gap-1.5 rounded-full bg-cyan-500/10 px-3 py-1 mb-4">
-                  <span className="text-xs font-medium text-cyan-400">{feature.highlight}</span>
+                <div className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 mb-4" style={{ background: 'var(--sfp-sky)' }}>
+                  <span className="text-xs font-medium" style={{ color: 'var(--sfp-navy)' }}>{feature.highlight}</span>
                 </div>
-                <h3 className="text-xl font-semibold text-white mb-3">{feature.title}</h3>
-                <p className="text-sm text-slate-400 leading-relaxed">{feature.description}</p>
+                <h3 className="text-xl font-semibold mb-3" style={{ color: 'var(--sfp-ink)' }}>{feature.title}</h3>
+                <p className="text-sm leading-relaxed" style={{ color: 'var(--sfp-slate)' }}>{feature.description}</p>
               </div>
             ))}
           </div>
@@ -534,20 +526,18 @@ export default function TradingViewPage() {
       {/* ═══════════════════════════════════════════════════════
           PLATFORM FEATURES — 6 Detailed Cards
           ═══════════════════════════════════════════════════════ */}
-      <section className="py-24 bg-slate-950 relative overflow-hidden">
-        <div className="absolute top-1/4 left-0 w-[500px] h-[500px] bg-violet-500/5 rounded-full blur-[100px]" />
-
+      <section className="py-24 relative overflow-hidden" style={{ background: 'var(--sfp-gray)' }}>
         <div className="container relative z-10 mx-auto px-4">
           <div className="text-center max-w-2xl mx-auto mb-16">
-            <div className="inline-flex items-center gap-2 rounded-full badge-premium px-4 py-2 mb-6">
-              <PenTool className="h-4 w-4 text-violet-400" />
-              <span className="kicker text-slate-300">Deep Dive</span>
+            <div className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white shadow-sm px-4 py-2 mb-6">
+              <PenTool className="h-4 w-4" style={{ color: 'var(--sfp-navy)' }} />
+              <span className="text-sm font-medium" style={{ color: 'var(--sfp-ink)' }}>Deep Dive</span>
             </div>
-            <h2 className="text-4xl md:text-5xl font-bold mb-6 text-white">
+            <h2 className="text-4xl md:text-5xl font-bold mb-6" style={{ color: 'var(--sfp-ink)' }}>
               Powerful Features,{' '}
-              <span className="gradient-text">Endless Possibilities</span>
+              <span style={{ color: 'var(--sfp-navy)' }}>Endless Possibilities</span>
             </h2>
-            <p className="text-slate-400 text-lg">
+            <p className="text-lg" style={{ color: 'var(--sfp-slate)' }}>
               Everything you need to analyze, strategize, and execute — all within one platform.
             </p>
           </div>
@@ -556,13 +546,13 @@ export default function TradingViewPage() {
             {detailedFeatures.map((feature) => (
               <div
                 key={feature.title}
-                className="glass-card rounded-2xl p-8 group hover:scale-[1.02] transition-all duration-500"
+                className="rounded-2xl border border-gray-200 bg-white shadow-sm p-8 group hover:scale-[1.02] transition-all duration-500"
               >
-                <div className={`w-12 h-12 rounded-xl ${feature.bg} flex items-center justify-center mb-5 icon-glow`}>
+                <div className={`w-12 h-12 rounded-xl ${feature.bg} flex items-center justify-center mb-5`}>
                   <feature.icon className={`h-6 w-6 ${feature.color}`} />
                 </div>
-                <h3 className="text-xl font-semibold text-white mb-3">{feature.title}</h3>
-                <p className="text-sm text-slate-400 leading-relaxed">{feature.description}</p>
+                <h3 className="text-xl font-semibold mb-3" style={{ color: 'var(--sfp-ink)' }}>{feature.title}</h3>
+                <p className="text-sm leading-relaxed" style={{ color: 'var(--sfp-slate)' }}>{feature.description}</p>
               </div>
             ))}
           </div>
@@ -572,20 +562,18 @@ export default function TradingViewPage() {
       {/* ═══════════════════════════════════════════════════════
           WHY USE SMARTFINPRO — 6 Value Props
           ═══════════════════════════════════════════════════════ */}
-      <section className="py-24 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 relative overflow-hidden">
-        <div className="absolute bottom-0 left-1/3 w-[600px] h-[600px] bg-cyan-500/5 rounded-full blur-[120px]" />
-
+      <section className="py-24 bg-white relative overflow-hidden">
         <div className="container relative z-10 mx-auto px-4">
           <div className="text-center max-w-2xl mx-auto mb-16">
-            <div className="inline-flex items-center gap-2 rounded-full badge-premium px-4 py-2 mb-6">
-              <Shield className="h-4 w-4 text-emerald-400" />
-              <span className="kicker text-slate-300">SmartFinPro Advantage</span>
+            <div className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white shadow-sm px-4 py-2 mb-6">
+              <Shield className="h-4 w-4" style={{ color: 'var(--sfp-green)' }} />
+              <span className="text-sm font-medium" style={{ color: 'var(--sfp-ink)' }}>SmartFinPro Advantage</span>
             </div>
-            <h2 className="text-4xl md:text-5xl font-bold mb-6 text-white">
+            <h2 className="text-4xl md:text-5xl font-bold mb-6" style={{ color: 'var(--sfp-ink)' }}>
               Why Discover TradingView{' '}
-              <span className="gradient-text">Through Us</span>
+              <span style={{ color: 'var(--sfp-navy)' }}>Through Us</span>
             </h2>
-            <p className="text-slate-400 text-lg">
+            <p className="text-lg" style={{ color: 'var(--sfp-slate)' }}>
               We don&apos;t just review TradingView — we help you master it with expert guides,
               broker matching, and exclusive insights.
             </p>
@@ -595,13 +583,13 @@ export default function TradingViewPage() {
             {whySmartFinPro.map((item) => (
               <div
                 key={item.title}
-                className="glass-card rounded-2xl p-8 group hover:scale-[1.02] transition-all duration-500"
+                className="rounded-2xl border border-gray-200 bg-white shadow-sm p-8 group hover:scale-[1.02] transition-all duration-500"
               >
-                <div className="w-12 h-12 rounded-xl bg-emerald-500/15 flex items-center justify-center mb-5 icon-glow">
-                  <item.icon className="h-6 w-6 text-emerald-400" />
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-5" style={{ background: 'rgba(26,107,58,0.08)' }}>
+                  <item.icon className="h-6 w-6" style={{ color: 'var(--sfp-green)' }} />
                 </div>
-                <h3 className="text-xl font-semibold text-white mb-3">{item.title}</h3>
-                <p className="text-sm text-slate-400 leading-relaxed">{item.description}</p>
+                <h3 className="text-xl font-semibold mb-3" style={{ color: 'var(--sfp-ink)' }}>{item.title}</h3>
+                <p className="text-sm leading-relaxed" style={{ color: 'var(--sfp-slate)' }}>{item.description}</p>
               </div>
             ))}
           </div>
@@ -611,7 +599,8 @@ export default function TradingViewPage() {
             <Button
               asChild
               size="lg"
-              className="btn-shimmer h-14 px-10 text-lg bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 border-0 shadow-lg shadow-emerald-500/25"
+              className="h-14 px-10 text-lg text-white border-0 shadow-lg"
+              style={{ background: 'var(--sfp-gold)' }}
             >
               <Link href="/us/trading">
                 Read Our Trading Reviews
@@ -622,7 +611,8 @@ export default function TradingViewPage() {
               asChild
               size="lg"
               variant="outline"
-              className="h-14 px-10 text-lg border-slate-700 text-slate-300 hover:bg-slate-800/50 hover:text-white"
+              className="h-14 px-10 text-lg border-gray-200 hover:bg-gray-50"
+              style={{ color: 'var(--sfp-ink)' }}
             >
               <Link href="https://www.tradingview.com/?aff_id=SMARTFINPRO" target="_blank" rel="noopener sponsored">
                 Try TradingView Free
@@ -636,18 +626,16 @@ export default function TradingViewPage() {
       {/* ═══════════════════════════════════════════════════════
           PLAN COMPARISON — CTA
           ═══════════════════════════════════════════════════════ */}
-      <section className="py-24 bg-slate-950 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-violet-900/10 via-transparent to-transparent" />
-
+      <section className="py-24 relative overflow-hidden" style={{ background: 'var(--sfp-gray)' }}>
         <div className="container relative z-10 mx-auto px-4">
-          <div className="max-w-3xl mx-auto glass-card rounded-2xl p-10 md:p-14 text-center border-t-2 border-cyan-500/30">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-cyan-500 to-violet-500 flex items-center justify-center mx-auto mb-8 shadow-lg">
+          <div className="max-w-3xl mx-auto rounded-2xl border border-gray-200 bg-white shadow-sm p-10 md:p-14 text-center border-t-2" style={{ borderTopColor: 'var(--sfp-navy)' }}>
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-8 shadow-lg" style={{ background: 'var(--sfp-navy)' }}>
               <BarChart3 className="h-8 w-8 text-white" />
             </div>
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4" style={{ color: 'var(--sfp-ink)' }}>
               Ready to Elevate Your Trading?
             </h2>
-            <p className="text-slate-400 text-lg mb-8 max-w-xl mx-auto leading-relaxed">
+            <p className="text-lg mb-8 max-w-xl mx-auto leading-relaxed" style={{ color: 'var(--sfp-slate)' }}>
               Join 50 million traders using the most advanced charting platform.
               Start free and upgrade when you&apos;re ready.
             </p>
@@ -655,7 +643,8 @@ export default function TradingViewPage() {
               <Button
                 asChild
                 size="lg"
-                className="btn-shimmer h-14 px-10 text-lg bg-gradient-to-r from-cyan-500 to-violet-500 hover:from-cyan-600 hover:to-violet-600 border-0 shadow-lg shadow-cyan-500/25"
+                className="h-14 px-10 text-lg text-white border-0 shadow-lg"
+                style={{ background: 'var(--sfp-gold)' }}
               >
                 <Link href="https://www.tradingview.com/?aff_id=SMARTFINPRO" target="_blank" rel="noopener sponsored">
                   Start Trading for Free
@@ -663,7 +652,7 @@ export default function TradingViewPage() {
                 </Link>
               </Button>
             </div>
-            <p className="text-xs text-slate-600 mt-6">
+            <p className="text-xs mt-6" style={{ color: 'var(--sfp-slate)' }}>
               Free plan available. No credit card required.
             </p>
           </div>
@@ -673,13 +662,13 @@ export default function TradingViewPage() {
       {/* ═══════════════════════════════════════════════════════
           FAQ
           ═══════════════════════════════════════════════════════ */}
-      <section className="py-24 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 relative overflow-hidden">
+      <section className="py-24 bg-white relative overflow-hidden">
         <div className="container relative z-10 mx-auto px-4">
           <div className="text-center max-w-2xl mx-auto mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold mb-6 text-white">
-              Frequently Asked <span className="gradient-text">Questions</span>
+            <h2 className="text-4xl md:text-5xl font-bold mb-6" style={{ color: 'var(--sfp-ink)' }}>
+              Frequently Asked <span style={{ color: 'var(--sfp-navy)' }}>Questions</span>
             </h2>
-            <p className="text-slate-400 text-lg">
+            <p className="text-lg" style={{ color: 'var(--sfp-slate)' }}>
               Everything you need to know about TradingView.
             </p>
           </div>
@@ -688,13 +677,13 @@ export default function TradingViewPage() {
             {faqs.map((faq) => (
               <details
                 key={faq.question}
-                className="glass-card rounded-xl group"
+                className="rounded-xl border border-gray-200 bg-white shadow-sm group"
               >
-                <summary className="flex items-center justify-between cursor-pointer p-6 text-white font-medium hover:text-cyan-400 transition-colors list-none">
+                <summary className="flex items-center justify-between cursor-pointer p-6 font-medium transition-colors list-none" style={{ color: 'var(--sfp-ink)' }}>
                   {faq.question}
-                  <ChevronDown className="h-5 w-5 text-slate-500 group-open:rotate-180 transition-transform duration-200 shrink-0 ml-4" />
+                  <ChevronDown className="h-5 w-5 group-open:rotate-180 transition-transform duration-200 shrink-0 ml-4" style={{ color: 'var(--sfp-slate)' }} />
                 </summary>
-                <div className="px-6 pb-6 pt-0 text-sm text-slate-400 leading-relaxed border-t border-slate-800/50 mt-0 pt-4">
+                <div className="px-6 pb-6 pt-0 text-sm leading-relaxed border-t border-gray-200 mt-0 pt-4" style={{ color: 'var(--sfp-slate)' }}>
                   {faq.answer}
                 </div>
               </details>
@@ -706,23 +695,19 @@ export default function TradingViewPage() {
       {/* ═══════════════════════════════════════════════════════
           NEWSLETTER
           ═══════════════════════════════════════════════════════ */}
-      <section className="py-24 bg-slate-950 relative overflow-hidden">
-        <div className="absolute inset-0">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-cyan-500/10 rounded-full blur-[100px]" />
-        </div>
-
+      <section className="py-24 relative overflow-hidden" style={{ background: 'var(--sfp-gray)' }}>
         <div className="container relative z-10 mx-auto px-4 text-center">
           <div className="max-w-2xl mx-auto">
-            <div className="inline-flex items-center gap-2 rounded-full badge-premium px-4 py-2 mb-6">
-              <Sparkles className="h-4 w-4 text-cyan-400" />
-              <span className="kicker text-slate-300">Stay Informed</span>
+            <div className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white shadow-sm px-4 py-2 mb-6">
+              <Sparkles className="h-4 w-4" style={{ color: 'var(--sfp-navy)' }} />
+              <span className="text-sm font-medium" style={{ color: 'var(--sfp-ink)' }}>Stay Informed</span>
             </div>
 
-            <h2 className="text-4xl md:text-5xl font-bold mb-6 text-white">
-              Get Trading <span className="gradient-text">Insights</span>
+            <h2 className="text-4xl md:text-5xl font-bold mb-6" style={{ color: 'var(--sfp-ink)' }}>
+              Get Trading <span style={{ color: 'var(--sfp-navy)' }}>Insights</span>
             </h2>
 
-            <p className="text-slate-400 text-lg mb-10">
+            <p className="text-lg mb-10" style={{ color: 'var(--sfp-slate)' }}>
               Weekly TradingView tips, strategy breakdowns, and platform updates
               delivered to your inbox.
             </p>
@@ -731,19 +716,21 @@ export default function TradingViewPage() {
               <input
                 type="email"
                 placeholder="Enter your email"
-                className="flex-1 px-5 py-4 rounded-xl bg-slate-900/50 border border-slate-700 text-white placeholder:text-slate-500 focus:outline-none focus:border-cyan-500 transition-colors"
+                className="flex-1 px-5 py-4 rounded-xl bg-white border border-gray-200 placeholder:text-gray-400 focus:outline-none focus:border-blue-500 transition-colors"
+                style={{ color: 'var(--sfp-ink)' }}
                 required
               />
               <Button
                 size="lg"
                 type="submit"
-                className="btn-shimmer h-14 px-8 bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-600 hover:to-cyan-700 border-0 shadow-lg shadow-cyan-500/25"
+                className="h-14 px-8 text-white border-0 shadow-lg"
+                style={{ background: 'var(--sfp-gold)' }}
               >
                 Subscribe
               </Button>
             </form>
 
-            <p className="text-xs text-slate-500 mt-6">
+            <p className="text-xs mt-6" style={{ color: 'var(--sfp-slate)' }}>
               Join 10,000+ subscribers. We respect your privacy.
             </p>
           </div>

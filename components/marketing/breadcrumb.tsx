@@ -29,16 +29,16 @@ export function Breadcrumb({ items }: BreadcrumbProps) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(schemaData) }}
       />
-      <nav className="flex items-center gap-2 text-sm text-slate-500 mb-8" aria-label="Breadcrumb">
+      <nav className="flex items-center gap-2 text-sm mb-8" style={{ color: 'var(--sfp-slate)' }} aria-label="Breadcrumb">
         {items.map((item, index) => (
           <span key={index} className="flex items-center gap-2">
             {index > 0 && <ChevronRight className="h-4 w-4" />}
             {item.href ? (
-              <Link href={item.href} className="hover:text-cyan-400 transition-colors">
+              <Link href={item.href} className="transition-colors hover:opacity-70" style={{ color: 'var(--sfp-navy)' }}>
                 {item.label}
               </Link>
             ) : (
-              <span className="text-slate-300">{item.label}</span>
+              <span style={{ color: 'var(--sfp-ink)' }}>{item.label}</span>
             )}
           </span>
         ))}

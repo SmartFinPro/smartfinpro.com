@@ -181,8 +181,8 @@ const brokerMeta: Record<BrokerSlug, { name: string; tagline: string; rating: nu
     rating: 4.8,
     features: ['Copy Trading from top investors', 'Zero-commission stocks', '30M+ global community', 'User-friendly mobile app'],
     affiliateUrl: '/go/etoro',
-    accentGradient: 'from-emerald-500 to-teal-600',
-    accentColor: 'text-emerald-400',
+    accentGradient: 'from-green-600 to-green-700',
+    accentColor: 'text-green-700',
   },
   'capital-com': {
     name: 'Capital.com',
@@ -199,8 +199,8 @@ const brokerMeta: Record<BrokerSlug, { name: string; tagline: string; rating: nu
     rating: 4.9,
     features: ['Lowest commissions industry-wide', '150+ markets in 33 countries', 'Professional TWS platform', 'Up to 4.83% on idle cash'],
     affiliateUrl: '/go/ibkr',
-    accentGradient: 'from-violet-500 to-purple-600',
-    accentColor: 'text-violet-400',
+    accentGradient: 'from-blue-600 to-blue-700',
+    accentColor: 'text-blue-700',
   },
   investing: {
     name: 'Investing.com',
@@ -217,7 +217,7 @@ const brokerMeta: Record<BrokerSlug, { name: string; tagline: string; rating: nu
     rating: 4.5,
     features: ['Commission-free stock trading', 'Crypto with instant conversion', 'Multi-currency accounts', 'All-in-one financial app'],
     affiliateUrl: '/go/revolut',
-    accentGradient: 'from-blue-500 to-indigo-600',
+    accentGradient: 'from-blue-500 to-blue-700',
     accentColor: 'text-blue-400',
   },
 };
@@ -297,8 +297,8 @@ function ProgressRing({ progress, size = 64, strokeWidth = 4 }: { progress: numb
       />
       <defs>
         <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor="#06b6d4" />
-          <stop offset="100%" stopColor="#8b5cf6" />
+          <stop offset="0%" stopColor="#1B4F8C" />
+          <stop offset="100%" stopColor="#1A6B3A" />
         </linearGradient>
       </defs>
     </svg>
@@ -398,30 +398,24 @@ export function BrokerFinderQuiz() {
   /* ─── Quiz View ─── */
   return (
     <div className="relative max-w-4xl mx-auto">
-      {/* Dark container */}
-      <div className="relative rounded-3xl overflow-hidden" style={{ background: 'linear-gradient(135deg, #0f0a1a 0%, #1a0f2e 50%, #0f0a1a 100%)' }}>
-        {/* Aurora glow */}
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-0 right-1/4 w-96 h-96 rounded-full opacity-20" style={{ background: 'radial-gradient(circle, rgba(6,182,212,0.4) 0%, transparent 70%)', filter: 'blur(80px)' }} />
-          <div className="absolute bottom-0 left-1/4 w-96 h-96 rounded-full opacity-20" style={{ background: 'radial-gradient(circle, rgba(139,92,246,0.4) 0%, transparent 70%)', filter: 'blur(80px)' }} />
-        </div>
-
+      {/* Light container */}
+      <div className="relative rounded-3xl overflow-hidden border border-gray-200 bg-white shadow-sm">
         <div className="relative z-10 p-6 md:p-10">
           {/* Header */}
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
               <ProgressRing progress={progress} size={48} strokeWidth={3} />
               <div>
-                <p className="text-sm font-medium text-white">Step {currentStep + 1} of {questions.length}</p>
-                <p className="text-xs text-slate-500">Broker Finder Quiz</p>
+                <p className="text-sm font-medium" style={{ color: 'var(--sfp-ink)' }}>Step {currentStep + 1} of {questions.length}</p>
+                <p className="text-xs" style={{ color: 'var(--sfp-slate)' }}>Broker Finder Quiz</p>
               </div>
             </div>
             {/* Progress bar */}
             <div className="hidden sm:block w-48">
-              <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
+              <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
                 <div
                   className="h-full rounded-full transition-all duration-500 ease-out"
-                  style={{ width: `${((currentStep + 1) / questions.length) * 100}%`, background: 'linear-gradient(90deg, #06b6d4, #8b5cf6)' }}
+                  style={{ width: `${((currentStep + 1) / questions.length) * 100}%`, background: 'var(--sfp-navy)' }}
                 />
               </div>
             </div>
@@ -437,10 +431,10 @@ export function BrokerFinderQuiz() {
                 : 'opacity-100 translate-x-0'
             }`}
           >
-            <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">
+            <h2 className="text-2xl md:text-3xl font-bold mb-2" style={{ color: 'var(--sfp-ink)' }}>
               {currentQuestion.question}
             </h2>
-            <p className="text-sm text-slate-400 mb-8">{currentQuestion.subtitle}</p>
+            <p className="text-sm mb-8" style={{ color: 'var(--sfp-slate)' }}>{currentQuestion.subtitle}</p>
 
             {/* Options Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -450,25 +444,27 @@ export function BrokerFinderQuiz() {
                   <button
                     key={option.id}
                     onClick={() => handleSelect(option.id)}
-                    className={`group relative flex items-center gap-4 p-5 rounded-2xl border text-left transition-all duration-200 ${
+                    className={`group relative flex items-center gap-4 p-5 rounded-2xl border text-left transition-all duration-200 hover:scale-[1.02] ${
                       isSelected
-                        ? 'border-cyan-400 bg-cyan-400/10'
-                        : 'border-slate-700/50 bg-white/[0.03] hover:border-cyan-400/40 hover:bg-cyan-400/[0.05] hover:scale-[1.02]'
+                        ? 'border-gray-200'
+                        : 'border-gray-200 bg-white hover:border-gray-300'
                     }`}
+                    style={isSelected ? { borderColor: 'var(--sfp-navy)', background: 'rgba(27,79,140,0.1)' } : undefined}
                   >
-                    <div className={`flex-shrink-0 w-11 h-11 rounded-xl flex items-center justify-center transition-colors ${
-                      isSelected ? 'bg-cyan-400/20 text-cyan-400' : 'bg-slate-800/60 text-slate-400 group-hover:text-cyan-400'
-                    }`}>
+                    <div
+                      className="flex-shrink-0 w-11 h-11 rounded-xl flex items-center justify-center transition-colors"
+                      style={isSelected ? { background: 'rgba(27,79,140,0.15)', color: 'var(--sfp-navy)' } : { background: 'var(--sfp-gray)', color: 'var(--sfp-slate)' }}
+                    >
                       {option.icon}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className={`font-medium transition-colors ${isSelected ? 'text-white' : 'text-slate-200 group-hover:text-white'}`}>
+                      <p className="font-medium transition-colors" style={{ color: isSelected ? 'var(--sfp-ink)' : 'var(--sfp-slate)' }}>
                         {option.label}
                       </p>
-                      <p className="text-xs text-slate-500 mt-0.5">{option.description}</p>
+                      <p className="text-xs mt-0.5" style={{ color: 'var(--sfp-slate)' }}>{option.description}</p>
                     </div>
                     {isSelected && (
-                      <CheckCircle className="h-5 w-5 text-cyan-400 flex-shrink-0" />
+                      <CheckCircle className="h-5 w-5 flex-shrink-0" style={{ color: 'var(--sfp-navy)' }} />
                     )}
                   </button>
                 );
@@ -478,7 +474,7 @@ export function BrokerFinderQuiz() {
 
           {/* Navigation */}
           {currentStep > 0 && (
-            <button onClick={handleBack} className="mt-6 flex items-center gap-2 text-sm text-slate-500 hover:text-white transition-colors">
+            <button onClick={handleBack} className="mt-6 flex items-center gap-2 text-sm transition-colors" style={{ color: 'var(--sfp-slate)' }}>
               <ArrowLeft className="h-4 w-4" />
               Back
             </button>
@@ -513,21 +509,14 @@ function ResultsView({
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Top Match */}
       <div
-        className={`relative rounded-3xl overflow-hidden transition-all duration-700 ${
+        className={`relative rounded-3xl overflow-hidden border border-gray-200 bg-white shadow-sm transition-all duration-700 ${
           revealed ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
         }`}
-        style={{ background: 'linear-gradient(135deg, #0f0a1a 0%, #1a0f2e 50%, #0f0a1a 100%)' }}
       >
-        {/* Aurora glow */}
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-0 right-0 w-[500px] h-[500px] rounded-full opacity-15" style={{ background: 'radial-gradient(circle, rgba(6,182,212,0.5) 0%, transparent 60%)', filter: 'blur(100px)' }} />
-          <div className="absolute bottom-0 left-0 w-[400px] h-[400px] rounded-full opacity-15" style={{ background: 'radial-gradient(circle, rgba(139,92,246,0.5) 0%, transparent 60%)', filter: 'blur(100px)' }} />
-        </div>
-
         <div className="relative z-10 p-6 md:p-10">
           {/* Badge */}
           <div className="flex items-center gap-2 mb-6">
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold" style={{ background: 'linear-gradient(90deg, rgba(6,182,212,0.2), rgba(139,92,246,0.2))', color: '#06b6d4' }}>
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold" style={{ background: 'rgba(26,107,58,0.1)', color: 'var(--sfp-green)' }}>
               <Award className="h-3.5 w-3.5" />
               #1 Perfect Match
             </div>
@@ -547,8 +536,8 @@ function ResultsView({
                 />
               </div>
 
-              <h2 className="text-3xl md:text-4xl font-bold text-white mb-1">{top.name}</h2>
-              <p className="text-slate-400 mb-4">{top.tagline}</p>
+              <h2 className="text-3xl md:text-4xl font-bold mb-1" style={{ color: 'var(--sfp-ink)' }}>{top.name}</h2>
+              <p className="mb-4" style={{ color: 'var(--sfp-slate)' }}>{top.tagline}</p>
 
               {/* Rating */}
               <div className="flex items-center gap-2 mb-6">
@@ -556,22 +545,22 @@ function ResultsView({
                   {[...Array(5)].map((_, i) => (
                     <Star
                       key={i}
-                      className={`h-4 w-4 ${i < Math.floor(top.rating) ? 'fill-amber-400 text-amber-400' : 'text-slate-700'}`}
+                      className={`h-4 w-4 ${i < Math.floor(top.rating) ? 'fill-amber-400 text-amber-400' : 'text-gray-300'}`}
                     />
                   ))}
                 </div>
-                <span className="text-sm text-slate-400">{top.rating}/5</span>
+                <span className="text-sm" style={{ color: 'var(--sfp-slate)' }}>{top.rating}/5</span>
               </div>
 
               {/* Reason */}
-              <p className="text-sm text-slate-300 mb-6 leading-relaxed">{top.reason}</p>
+              <p className="text-sm mb-6 leading-relaxed" style={{ color: 'var(--sfp-slate)' }}>{top.reason}</p>
 
               {/* Features */}
               <div className="space-y-2.5 mb-8">
                 {top.features.map((feature, i) => (
                   <div key={i} className="flex items-center gap-2.5">
-                    <CheckCircle className="h-4 w-4 text-cyan-400 flex-shrink-0" />
-                    <span className="text-sm text-slate-300">{feature}</span>
+                    <CheckCircle className="h-4 w-4 flex-shrink-0" style={{ color: 'var(--sfp-green)' }} />
+                    <span className="text-sm" style={{ color: 'var(--sfp-slate)' }}>{feature}</span>
                   </div>
                 ))}
               </div>
@@ -581,15 +570,16 @@ function ResultsView({
                 <a
                   href={top.affiliateUrl}
                   onClick={() => onCtaClick(top)}
-                  className="btn-shimmer inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold text-white text-sm transition-all hover:scale-[1.02]"
-                  style={{ background: 'linear-gradient(135deg, #06b6d4, #8b5cf6)' }}
+                  className="btn-shimmer inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold text-white text-sm transition-all hover:scale-[1.02] hover:opacity-90"
+                  style={{ background: 'var(--sfp-gold)' }}
                 >
                   Try {top.name} Free
                   <ArrowRight className="h-4 w-4" />
                 </a>
                 <Link
                   href={`/reviews/${top.slug}`}
-                  className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-medium text-slate-400 text-sm border border-slate-700/50 hover:border-slate-600 hover:text-white transition-all"
+                  className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-medium text-sm border border-gray-200 hover:border-gray-300 transition-all"
+                  style={{ color: 'var(--sfp-navy)' }}
                 >
                   Read Full Review
                 </Link>
@@ -601,8 +591,8 @@ function ResultsView({
               <div className="relative">
                 <ProgressRing progress={top.score} size={160} strokeWidth={8} />
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="text-4xl font-bold text-white">{animatedScore}%</span>
-                  <span className="text-xs text-slate-500">Match</span>
+                  <span className="text-4xl font-bold" style={{ color: 'var(--sfp-ink)' }}>{animatedScore}%</span>
+                  <span className="text-xs" style={{ color: 'var(--sfp-slate)' }}>Match</span>
                 </div>
               </div>
             </div>
@@ -615,18 +605,17 @@ function ResultsView({
         {runners.map((broker, i) => (
           <div
             key={broker.slug}
-            className={`relative rounded-2xl overflow-hidden transition-all duration-700 ${
+            className={`relative rounded-2xl overflow-hidden border border-gray-200 bg-white shadow-sm transition-all duration-700 ${
               revealed ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
             }`}
             style={{
-              background: 'linear-gradient(135deg, #0f0a1a 0%, #1a0f2e 100%)',
               transitionDelay: `${(i + 1) * 200}ms`,
             }}
           >
-            <div className="relative z-10 p-5 md:p-6 border border-slate-800/50 rounded-2xl">
+            <div className="relative z-10 p-5 md:p-6">
               <div className="flex items-start justify-between mb-4">
                 <div>
-                  <span className="text-xs text-slate-500 font-medium">#{i + 2} Runner-up</span>
+                  <span className="text-xs font-medium" style={{ color: 'var(--sfp-slate)' }}>#{i + 2} Runner-up</span>
                   <div className="flex items-center gap-3 mt-1">
                     <Image
                       src={`/images/brokers/${broker.slug}.svg`}
@@ -638,8 +627,8 @@ function ResultsView({
                   </div>
                 </div>
                 <div className="text-right">
-                  <span className="text-2xl font-bold text-white">{broker.score}%</span>
-                  <span className="block text-xs text-slate-500">Match</span>
+                  <span className="text-2xl font-bold" style={{ color: 'var(--sfp-ink)' }}>{broker.score}%</span>
+                  <span className="block text-xs" style={{ color: 'var(--sfp-slate)' }}>Match</span>
                 </div>
               </div>
 
@@ -647,17 +636,18 @@ function ResultsView({
                 {[...Array(5)].map((_, j) => (
                   <Star
                     key={j}
-                    className={`h-3 w-3 ${j < Math.floor(broker.rating) ? 'fill-amber-400 text-amber-400' : 'text-slate-700'}`}
+                    className={`h-3 w-3 ${j < Math.floor(broker.rating) ? 'fill-amber-400 text-amber-400' : 'text-gray-300'}`}
                   />
                 ))}
-                <span className="text-xs text-slate-500 ml-1">{broker.rating}</span>
+                <span className="text-xs ml-1" style={{ color: 'var(--sfp-slate)' }}>{broker.rating}</span>
               </div>
 
-              <p className="text-xs text-slate-400 mb-4 leading-relaxed">{broker.reason}</p>
+              <p className="text-xs mb-4 leading-relaxed" style={{ color: 'var(--sfp-slate)' }}>{broker.reason}</p>
 
               <Link
                 href={`/reviews/${broker.slug}`}
-                className="inline-flex items-center gap-1.5 text-xs font-medium text-cyan-400 hover:text-cyan-300 transition-colors"
+                className="inline-flex items-center gap-1.5 text-xs font-medium transition-colors"
+                style={{ color: 'var(--sfp-navy)' }}
               >
                 View Review
                 <ArrowRight className="h-3 w-3" />
@@ -669,7 +659,7 @@ function ResultsView({
 
       {/* Reset */}
       <div className="text-center">
-        <button onClick={onReset} className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-white transition-colors">
+        <button onClick={onReset} className="inline-flex items-center gap-2 text-sm transition-colors" style={{ color: 'var(--sfp-slate)' }}>
           <RotateCcw className="h-4 w-4" />
           Start Over
         </button>

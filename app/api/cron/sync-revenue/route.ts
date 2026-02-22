@@ -11,28 +11,20 @@ import { syncAllNetworks } from '@/lib/api/affiliate-networks';
  *
  * Schedule: Daily at 2 AM UTC (before sync-conversions at 6 AM)
  *
- * Add to vercel.json:
- * {
- *   "crons": [
- *     {
- *       "path": "/api/cron/sync-revenue",
- *       "schedule": "0 2 * * *"
- *     }
- *   ]
- * }
+ * Self-hosted crontab entry:
+ *   0 2 * * * curl -sf -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/cron/sync-revenue >> /home/master/applications/smartfinpro/logs/cron.log 2>&1
  */
 export async function GET(request: NextRequest) {
-  // Verify cron secret or Vercel cron header
+  // Verify CRON_SECRET — only Bearer token auth (self-hosted)
   const authHeader = request.headers.get('authorization');
   const cronSecret = process.env.CRON_SECRET;
-  const vercelCron = request.headers.get('x-vercel-cron');
 
-  // Allow if: Vercel cron header present, OR auth matches, OR development mode
-  const isVercelCron = vercelCron === '1';
-  const isAuthenticated = cronSecret && authHeader === `Bearer ${cronSecret}`;
-  const isDevelopment = process.env.NODE_ENV === 'development';
+  if (!cronSecret || cronSecret.startsWith('your-')) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
 
-  if (!isVercelCron && !isAuthenticated && !isDevelopment) {
+  if (authHeader !== `Bearer ${cronSecret}`) {
+    console.warn('[sync-revenue] Unauthorized cron attempt');
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -82,6 +74,5 @@ export async function GET(request: NextRequest) {
 
 // POST for manual trigger from dashboard
 export async function POST(request: NextRequest) {
-  // Same handler for manual triggers
   return GET(request);
 }

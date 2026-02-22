@@ -1,7 +1,8 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowLeft, Scale, Lightbulb, Shield } from 'lucide-react';
-import { BrokerComparison } from '@/components/tools/broker-comparison';
+import { DynamicBrokerComparison } from '@/components/tools/dynamic-calculators';
+import { ToolRelatedReviews } from '@/components/marketing/tool-related-reviews';
 
 export const metadata: Metadata = {
   title: 'Broker Comparison Tool - Compare Forex & CFD Brokers | SmartFinPro',
@@ -14,12 +15,13 @@ export const metadata: Metadata = {
 
 export default function BrokerComparisonPage() {
   return (
-    <div className="min-h-screen bg-[#0f0a1a]">
+    <div className="min-h-screen" style={{ background: 'var(--sfp-gray)' }}>
       {/* Breadcrumb */}
       <div className="container mx-auto px-4 py-6">
         <Link
           href="/tools"
-          className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-cyan-400 transition-colors"
+          className="inline-flex items-center gap-2 text-sm transition-colors"
+          style={{ color: 'var(--sfp-slate)' }}
         >
           <ArrowLeft className="h-4 w-4" />
           Back to Tools
@@ -30,14 +32,14 @@ export default function BrokerComparisonPage() {
       <section className="relative py-8 md:py-12 overflow-hidden">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center mb-12">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium mb-6" style={{ background: 'rgba(168,85,247,0.15)', color: '#c084fc' }}>
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium mb-6" style={{ background: 'var(--sfp-sky)', color: 'var(--sfp-navy)' }}>
               <Scale className="h-4 w-4" />
               Comparison Tool
             </div>
-            <h1 className="text-3xl md:text-4xl font-bold text-white mb-4">
+            <h1 className="text-3xl md:text-4xl font-bold mb-4" style={{ color: 'var(--sfp-ink)' }}>
               Broker Comparison
             </h1>
-            <p className="text-lg text-slate-400">
+            <p className="text-lg" style={{ color: 'var(--sfp-slate)' }}>
               Compare top forex and CFD brokers side by side. Filter by your
               market, features, and find the best broker for your needs.
             </p>
@@ -45,26 +47,32 @@ export default function BrokerComparisonPage() {
         </div>
       </section>
 
+      {/* Affiliate Disclosure */}
+      <div className="container mx-auto mb-8 px-4 py-2.5 rounded-lg border border-gray-200 text-xs bg-white shadow-sm" style={{ color: 'var(--sfp-slate)' }}>
+        <strong style={{ color: 'var(--sfp-ink)' }}>Disclosure:</strong> SmartFinPro may earn a commission when you sign up through links on this page. This does not affect our tool results or editorial independence.{' '}
+        <Link href="/affiliate-disclosure" className="hover:underline" style={{ color: 'var(--sfp-navy)' }}>Learn more</Link>
+      </div>
+
       {/* Comparison Tool */}
       <section className="pb-16">
         <div className="container mx-auto px-4">
-          <BrokerComparison />
+          <DynamicBrokerComparison />
         </div>
       </section>
 
       {/* Info Section */}
-      <section className="py-16 border-t border-slate-800/50">
+      <section className="py-16 border-t border-gray-200">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto">
             <div className="flex items-start gap-4 mb-8">
-              <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'rgba(168,85,247,0.15)' }}>
-                <Lightbulb className="h-6 w-6 text-purple-400" />
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'var(--sfp-sky)' }}>
+                <Lightbulb className="h-6 w-6" style={{ color: 'var(--sfp-navy)' }} />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-white mb-2">
+                <h2 className="text-xl font-bold mb-2" style={{ color: 'var(--sfp-ink)' }}>
                   How We Compare Brokers
                 </h2>
-                <p className="text-slate-400">
+                <p style={{ color: 'var(--sfp-slate)' }}>
                   We evaluate brokers based on regulation, trading costs, platform features,
                   and user experience. Our comparisons are updated regularly to reflect
                   current offerings.
@@ -73,9 +81,9 @@ export default function BrokerComparisonPage() {
             </div>
 
             <div className="grid md:grid-cols-2 gap-6 mb-8">
-              <div className="rounded-xl p-6 border border-slate-800/50" style={{ background: 'rgba(255,255,255,0.03)' }}>
-                <h3 className="font-semibold text-white mb-3">What We Consider</h3>
-                <ul className="space-y-2 text-sm text-slate-400">
+              <div className="rounded-xl p-6 border border-gray-200 bg-white shadow-sm">
+                <h3 className="font-semibold mb-3" style={{ color: 'var(--sfp-ink)' }}>What We Consider</h3>
+                <ul className="space-y-2 text-sm" style={{ color: 'var(--sfp-slate)' }}>
                   <li>Regulatory status and licenses</li>
                   <li>Spreads and trading costs</li>
                   <li>Available trading platforms</li>
@@ -83,9 +91,9 @@ export default function BrokerComparisonPage() {
                   <li>Additional features (copy trading, etc.)</li>
                 </ul>
               </div>
-              <div className="rounded-xl p-6 border border-slate-800/50" style={{ background: 'rgba(255,255,255,0.03)' }}>
-                <h3 className="font-semibold text-white mb-3">Regulation Bodies</h3>
-                <ul className="space-y-2 text-sm text-slate-400">
+              <div className="rounded-xl p-6 border border-gray-200 bg-white shadow-sm">
+                <h3 className="font-semibold mb-3" style={{ color: 'var(--sfp-ink)' }}>Regulation Bodies</h3>
+                <ul className="space-y-2 text-sm" style={{ color: 'var(--sfp-slate)' }}>
                   <li>ASIC (Australia)</li>
                   <li>FCA (United Kingdom)</li>
                   <li>CySEC (Cyprus/EU)</li>
@@ -95,12 +103,12 @@ export default function BrokerComparisonPage() {
               </div>
             </div>
 
-            <div className="rounded-xl p-6 border border-blue-500/20" style={{ background: 'rgba(59,130,246,0.08)' }}>
+            <div className="rounded-xl p-6 border border-gray-200 bg-white shadow-sm" style={{ borderLeftWidth: '4px', borderLeftColor: 'var(--sfp-navy)' }}>
               <div className="flex items-start gap-3">
-                <Shield className="h-5 w-5 text-blue-400 shrink-0 mt-0.5" />
+                <Shield className="h-5 w-5 shrink-0 mt-0.5" style={{ color: 'var(--sfp-navy)' }} />
                 <div>
-                  <h3 className="font-semibold text-blue-400 mb-1">Important Notice</h3>
-                  <p className="text-sm text-slate-400">
+                  <h3 className="font-semibold mb-1" style={{ color: 'var(--sfp-navy)' }}>Important Notice</h3>
+                  <p className="text-sm" style={{ color: 'var(--sfp-slate)' }}>
                     Trading CFDs and forex involves significant risk. Only trade with money you can
                     afford to lose. This comparison is for informational purposes only and does not
                     constitute financial advice. Always do your own research before choosing a broker.
@@ -109,6 +117,23 @@ export default function BrokerComparisonPage() {
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Related Reviews */}
+      <section className="container mx-auto px-4 pb-16">
+        <div className="max-w-4xl mx-auto">
+          <ToolRelatedReviews
+            title="Broker Reviews"
+            subtitle="Deep-dive into individual broker reviews for detailed analysis."
+            reviews={[
+              { name: 'eToro Review', href: '/reviews/etoro', rating: 4.8, badge: 'Popular' },
+              { name: 'Capital.com Review', href: '/reviews/capital-com', rating: 4.7 },
+              { name: 'Interactive Brokers', href: '/reviews/ibkr', rating: 4.9, badge: 'Pro' },
+              { name: 'IG Group Review', href: '/reviews/ig', rating: 4.8 },
+              { name: 'Plus500 Review', href: '/reviews/plus500', rating: 4.5 },
+            ]}
+          />
         </div>
       </section>
     </div>

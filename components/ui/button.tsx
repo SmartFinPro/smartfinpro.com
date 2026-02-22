@@ -11,14 +11,18 @@ const buttonVariants = cva(
       variant: {
         default: "bg-primary text-primary-foreground hover:bg-primary/90",
         destructive:
-          "bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
+          "bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20",
         outline:
-          "border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50",
+          "border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground",
         secondary:
           "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost:
-          "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
+          "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
+        // SmartFinPro Variants
+        gold: "bg-sfp-gold text-white font-bold uppercase tracking-[0.02em] hover:bg-sfp-gold-dark shadow-md hover:shadow-lg transition-all",
+        navy: "bg-sfp-navy text-white font-bold uppercase tracking-[0.02em] hover:bg-sfp-navy-dark shadow-md hover:shadow-lg transition-all",
+        green: "bg-sfp-green text-white font-semibold hover:bg-sfp-green/90 shadow-md hover:shadow-lg transition-all",
       },
       size: {
         default: "h-9 px-4 py-2 has-[>svg]:px-3",

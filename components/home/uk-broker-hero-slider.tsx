@@ -1,8 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
-import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowRight,
   Shield,
@@ -46,7 +45,7 @@ function IGLogo({ className }: { className?: string }) {
         fontFamily="system-ui, -apple-system, sans-serif"
         fontSize="21"
         fontWeight="700"
-        fill="white"
+        fill="#1A1A2E"
         letterSpacing="0.5"
       >
         IG Group
@@ -80,7 +79,7 @@ function Plus500Logo({ className }: { className?: string }) {
         fontFamily="system-ui, -apple-system, sans-serif"
         fontSize="20"
         fontWeight="700"
-        fill="white"
+        fill="#1A1A2E"
         letterSpacing="0.3"
       >
         Plus500
@@ -121,7 +120,7 @@ function EToroLogo({ className }: { className?: string }) {
         fontFamily="system-ui, -apple-system, sans-serif"
         fontSize="22"
         fontWeight="700"
-        fill="white"
+        fill="#1A1A2E"
       >
         eToro
       </text>
@@ -164,8 +163,8 @@ const slides: BrokerSlide[] = [
     href: '/go/ig',
     reviewHref: '/uk/trading/ig-markets-review',
     accentColor: '#DC3545',
-    glowColor: 'rgba(220, 53, 69, 0.15)',
-    bgGradient: 'linear-gradient(135deg, rgba(220,53,69,0.08) 0%, rgba(15,10,26,0.95) 60%)',
+    glowColor: 'rgba(220, 53, 69, 0.08)',
+    bgGradient: 'linear-gradient(135deg, rgba(220,53,69,0.05) 0%, rgba(255,255,255,1) 60%)',
     riskWarning:
       'Spread bets and CFDs are complex instruments. 70% of retail investor accounts lose money when trading with this provider.',
     icon: TrendingUp,
@@ -180,8 +179,8 @@ const slides: BrokerSlide[] = [
     href: '/go/plus500',
     reviewHref: '/uk/trading/plus500-review',
     accentColor: '#0A6CFF',
-    glowColor: 'rgba(10, 108, 255, 0.15)',
-    bgGradient: 'linear-gradient(135deg, rgba(10,108,255,0.08) 0%, rgba(15,10,26,0.95) 60%)',
+    glowColor: 'rgba(10, 108, 255, 0.08)',
+    bgGradient: 'linear-gradient(135deg, rgba(10,108,255,0.05) 0%, rgba(255,255,255,1) 60%)',
     riskWarning:
       '80% of retail investor accounts lose money when trading CFDs with this provider. You should consider whether you can afford to take the high risk of losing your money.',
     icon: Smartphone,
@@ -196,8 +195,8 @@ const slides: BrokerSlide[] = [
     href: '/go/etoro',
     reviewHref: '/uk/trading/etoro-review',
     accentColor: '#6FDA44',
-    glowColor: 'rgba(111, 218, 68, 0.15)',
-    bgGradient: 'linear-gradient(135deg, rgba(111,218,68,0.08) 0%, rgba(15,10,26,0.95) 60%)',
+    glowColor: 'rgba(111, 218, 68, 0.08)',
+    bgGradient: 'linear-gradient(135deg, rgba(111,218,68,0.05) 0%, rgba(255,255,255,1) 60%)',
     riskWarning:
       "51% of retail investor accounts lose money when trading CFDs with this provider. You should consider whether you understand how CFDs work and whether you can afford to take the high risk of losing your money. Don't invest unless you're prepared to lose all the money you invest.",
     icon: Users,
@@ -225,21 +224,13 @@ function ProgressDots({
           key={i}
           onClick={() => onSelect(i)}
           aria-label={`Go to slide ${i + 1}`}
-          className="relative h-2 rounded-full transition-all duration-500 cursor-pointer"
+          className="relative h-2 rounded-full cursor-pointer"
           style={{
             width: i === active ? 32 : 8,
             background: i === active ? accentColor : 'rgba(148,163,184,0.3)',
+            transition: 'width 0.4s cubic-bezier(0.4,0,0.2,1), background 0.4s ease',
           }}
-        >
-          {i === active && (
-            <motion.div
-              layoutId="activeDot"
-              className="absolute inset-0 rounded-full"
-              style={{ background: accentColor }}
-              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-            />
-          )}
-        </button>
+        />
       ))}
     </div>
   );
@@ -257,13 +248,14 @@ function AutoProgressBar({
   accentColor: string;
 }) {
   return (
-    <div className="h-0.5 w-full rounded-full overflow-hidden" style={{ background: 'rgba(148,163,184,0.15)' }}>
-      <motion.div
+    <div className="h-0.5 w-full rounded-full overflow-hidden" style={{ background: 'rgba(0,0,0,0.08)' }}>
+      <div
         className="h-full rounded-full"
-        style={{ background: accentColor }}
-        initial={{ width: '0%' }}
-        animate={{ width: isActive ? '100%' : '0%' }}
-        transition={{ duration: isActive ? duration / 1000 : 0, ease: 'linear' }}
+        style={{
+          background: accentColor,
+          width: isActive ? '100%' : '0%',
+          transition: isActive ? `width ${duration / 1000}s linear` : 'width 0s linear',
+        }}
         key={isActive ? 'active' : 'reset'}
       />
     </div>
@@ -328,45 +320,46 @@ function fireTrackingEvent(slide: BrokerSlide, action: 'cta_click' | 'review_cli
 
 const AUTOPLAY_INTERVAL = 6000;
 
-const slideVariants = {
-  enter: (direction: number) => ({
-    x: direction > 0 ? 60 : -60,
-    opacity: 0,
-    scale: 0.97,
-  }),
-  center: {
-    x: 0,
-    opacity: 1,
-    scale: 1,
-  },
-  exit: (direction: number) => ({
-    x: direction > 0 ? -60 : 60,
-    opacity: 0,
-    scale: 0.97,
-  }),
-};
+/* CSS-based slide transition classes */
+const SLIDE_DURATION = 450; // ms — matches the CSS transition
 
 export function UKBrokerHeroSlider() {
   const [[activeIndex, direction], setActiveIndex] = useState([0, 0]);
   const [isPaused, setIsPaused] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const transitionTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const currentSlide = slides[activeIndex];
 
+  const triggerTransition = useCallback((setter: () => void) => {
+    if (isTransitioning) return;
+    setIsTransitioning(true);
+    setter();
+    clearTimeout(transitionTimer.current);
+    transitionTimer.current = setTimeout(() => setIsTransitioning(false), SLIDE_DURATION);
+  }, [isTransitioning]);
+
   const goTo = useCallback(
     (index: number) => {
-      const dir = index > activeIndex ? 1 : -1;
-      setActiveIndex([index, dir]);
+      triggerTransition(() => {
+        const dir = index > activeIndex ? 1 : -1;
+        setActiveIndex([index, dir]);
+      });
     },
-    [activeIndex]
+    [activeIndex, triggerTransition]
   );
 
   const goNext = useCallback(() => {
-    setActiveIndex(([prev]) => [(prev + 1) % slides.length, 1]);
-  }, []);
+    triggerTransition(() => {
+      setActiveIndex(([prev]) => [(prev + 1) % slides.length, 1]);
+    });
+  }, [triggerTransition]);
 
   const goPrev = useCallback(() => {
-    setActiveIndex(([prev]) => [(prev - 1 + slides.length) % slides.length, -1]);
-  }, []);
+    triggerTransition(() => {
+      setActiveIndex(([prev]) => [(prev - 1 + slides.length) % slides.length, -1]);
+    });
+  }, [triggerTransition]);
 
   /* Autoplay */
   useEffect(() => {
@@ -417,32 +410,30 @@ export function UKBrokerHeroSlider() {
       {/* Section Header */}
       <div className="text-center mb-8">
         <div
-          className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-semibold tracking-widest uppercase mb-4"
-          style={{
-            background: 'rgba(255,255,255,0.04)',
-            border: '1px solid rgba(100,116,139,0.3)',
-            color: '#94a3b8',
-          }}
+          className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-semibold tracking-widest uppercase mb-4 border border-gray-200 bg-white shadow-sm"
+          style={{ color: 'var(--sfp-slate)' }}
         >
-          <Shield className="h-3.5 w-3.5 text-cyan-400" />
+          <Shield className="h-3.5 w-3.5" style={{ color: 'var(--sfp-green)' }} />
           FCA-Regulated Brokers
         </div>
-        <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2">
+        <h2 className="text-2xl sm:text-3xl font-bold mb-2" style={{ color: 'var(--sfp-ink)' }}>
           Top UK Trading Platforms
         </h2>
-        <p className="text-slate-400 text-sm sm:text-base max-w-xl mx-auto">
+        <p className="text-sm sm:text-base max-w-xl mx-auto" style={{ color: 'var(--sfp-slate)' }}>
           Compare the UK&apos;s most trusted, FCA-regulated brokers — all with FSCS investor protection.
         </p>
       </div>
 
       {/* Slider Container */}
       <div className="relative max-w-4xl mx-auto">
-        {/* Glow Effect Behind Card */}
-        <motion.div
+        {/* Glow Effect Behind Card — CSS transition */}
+        <div
           className="absolute inset-0 rounded-2xl blur-3xl -z-10"
-          animate={{ background: currentSlide.glowColor }}
-          transition={{ duration: 0.8 }}
-          style={{ transform: 'scale(1.1)' }}
+          style={{
+            background: currentSlide.glowColor,
+            transform: 'scale(1.1)',
+            transition: 'background 0.8s ease',
+          }}
         />
 
         {/* Navigation Arrows — Desktop only */}
@@ -452,14 +443,10 @@ export function UKBrokerHeroSlider() {
             setIsPaused(true);
             setTimeout(() => setIsPaused(false), 8000);
           }}
-          className="hidden md:flex absolute -left-14 top-1/2 -translate-y-1/2 z-20 h-10 w-10 items-center justify-center rounded-full transition-all duration-300 cursor-pointer"
-          style={{
-            background: 'rgba(255,255,255,0.05)',
-            border: '1px solid rgba(100,116,139,0.3)',
-          }}
+          className="hidden md:flex absolute -left-14 top-1/2 -translate-y-1/2 z-20 h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white shadow-sm transition-all duration-300 cursor-pointer hover:shadow-md"
           aria-label="Previous broker"
         >
-          <ChevronLeft className="h-5 w-5 text-slate-400" />
+          <ChevronLeft className="h-5 w-5" style={{ color: 'var(--sfp-slate)' }} />
         </button>
 
         <button
@@ -468,51 +455,36 @@ export function UKBrokerHeroSlider() {
             setIsPaused(true);
             setTimeout(() => setIsPaused(false), 8000);
           }}
-          className="hidden md:flex absolute -right-14 top-1/2 -translate-y-1/2 z-20 h-10 w-10 items-center justify-center rounded-full transition-all duration-300 cursor-pointer"
-          style={{
-            background: 'rgba(255,255,255,0.05)',
-            border: '1px solid rgba(100,116,139,0.3)',
-          }}
+          className="hidden md:flex absolute -right-14 top-1/2 -translate-y-1/2 z-20 h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white shadow-sm transition-all duration-300 cursor-pointer hover:shadow-md"
           aria-label="Next broker"
         >
-          <ChevronRight className="h-5 w-5 text-slate-400" />
+          <ChevronRight className="h-5 w-5" style={{ color: 'var(--sfp-slate)' }} />
         </button>
 
-        {/* Card */}
+        {/* Card — CSS transition replaces framer-motion AnimatePresence */}
         <div className="relative overflow-hidden rounded-2xl" style={{ minHeight: 340 }}>
-          <AnimatePresence mode="wait" custom={direction}>
-            <motion.div
-              key={currentSlide.id}
-              custom={direction}
-              variants={slideVariants}
-              initial="enter"
-              animate="center"
-              exit="exit"
-              transition={{ duration: 0.45, ease: [0.25, 0.46, 0.45, 0.94] }}
-              className="w-full rounded-2xl p-6 sm:p-8 lg:p-10"
-              style={{
-                background: currentSlide.bgGradient,
-                border: '1px solid rgba(100,116,139,0.3)',
-                backdropFilter: 'blur(16px)',
-              }}
-            >
+          <div
+            key={currentSlide.id}
+            className="w-full rounded-2xl p-6 sm:p-8 lg:p-10 shadow-sm"
+            style={{
+              background: currentSlide.bgGradient,
+              border: '1px solid #e5e7eb',
+              animation: isTransitioning ? 'slideIn 0.45s cubic-bezier(0.25,0.46,0.45,0.94) both' : 'none',
+            }}
+          >
               {/* Top Row: Inline SVG Logo + Trust Badge */}
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
                 <div className="flex items-center gap-4">
                   {/* Inline SVG — no HTTP request, instant render */}
-                  <motion.div
-                    className="flex-shrink-0"
-                    whileHover={{ scale: 1.05 }}
-                    transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-                    style={{ filter: 'drop-shadow(0 0 12px rgba(255,255,255,0.1))' }}
+                  <div
+                    className="flex-shrink-0 transition-transform duration-200 hover:scale-105"
                   >
                     {LogoComponent && (
                       <LogoComponent className="h-8 sm:h-9 w-auto" />
                     )}
-                  </motion.div>
+                  </div>
                   <div
-                    className="hidden sm:block h-8 w-px"
-                    style={{ background: 'rgba(100,116,139,0.3)' }}
+                    className="hidden sm:block h-8 w-px bg-gray-200"
                   />
                   <SlideIcon
                     className="hidden sm:block h-5 w-5"
@@ -523,9 +495,9 @@ export function UKBrokerHeroSlider() {
                 <div
                   className="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium self-start sm:self-auto"
                   style={{
-                    background: 'rgba(16,185,129,0.1)',
-                    border: '1px solid rgba(16,185,129,0.25)',
-                    color: '#34d399',
+                    background: 'rgba(26, 107, 58, 0.08)',
+                    border: '1px solid rgba(26, 107, 58, 0.2)',
+                    color: 'var(--sfp-green)',
                   }}
                 >
                   <Shield className="h-3.5 w-3.5" />
@@ -535,10 +507,10 @@ export function UKBrokerHeroSlider() {
 
               {/* Content */}
               <div className="space-y-4">
-                <h3 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white leading-tight">
+                <h3 className="text-2xl sm:text-3xl lg:text-4xl font-bold leading-tight" style={{ color: 'var(--sfp-ink)' }}>
                   {currentSlide.headline}
                 </h3>
-                <p className="text-base sm:text-lg text-slate-300 max-w-2xl">
+                <p className="text-base sm:text-lg max-w-2xl" style={{ color: 'var(--sfp-slate)' }}>
                   {currentSlide.usp}
                 </p>
               </div>
@@ -560,7 +532,8 @@ export function UKBrokerHeroSlider() {
                 <Link
                   href={currentSlide.reviewHref}
                   onClick={() => handleReviewClick(currentSlide)}
-                  className="inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-white transition-colors"
+                  className="inline-flex items-center gap-1.5 text-sm transition-colors"
+                  style={{ color: 'var(--sfp-navy)' }}
                 >
                   Read Full Review
                   <ArrowRight className="h-3.5 w-3.5" />
@@ -568,14 +541,13 @@ export function UKBrokerHeroSlider() {
               </div>
 
               {/* Risk Warning */}
-              <div className="mt-6 pt-4" style={{ borderTop: '1px solid rgba(100,116,139,0.2)' }}>
-                <p className="text-[11px] leading-relaxed text-slate-500">
-                  <span className="font-semibold text-slate-400">Capital at risk.</span>{' '}
+              <div className="mt-6 pt-4" style={{ borderTop: '1px solid #e5e7eb' }}>
+                <p className="text-[11px] leading-relaxed" style={{ color: 'var(--sfp-slate)' }}>
+                  <span className="font-semibold" style={{ color: 'var(--sfp-red)' }}>Capital at risk.</span>{' '}
                   {currentSlide.riskWarning}
                 </p>
               </div>
-            </motion.div>
-          </AnimatePresence>
+          </div>
         </div>
 
         {/* Bottom Controls */}
@@ -592,7 +564,7 @@ export function UKBrokerHeroSlider() {
           />
 
           <div className="flex items-center gap-3">
-            <span className="text-xs text-slate-500 tabular-nums">
+            <span className="text-xs tabular-nums" style={{ color: 'var(--sfp-slate)' }}>
               {activeIndex + 1}/{slides.length}
             </span>
             <div className="w-20">

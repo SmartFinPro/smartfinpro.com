@@ -10,28 +10,20 @@ import { processNurtureSequence } from '@/lib/email/nurture-sequence';
  *
  * Schedule: Daily at 10 AM UTC (good time for US/EU engagement)
  *
- * Add to vercel.json:
- * {
- *   "crons": [
- *     {
- *       "path": "/api/cron/send-emails",
- *       "schedule": "0 10 * * *"
- *     }
- *   ]
- * }
+ * Self-hosted crontab entry:
+ *   0 10 * * * curl -sf -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/cron/send-emails >> /home/master/applications/smartfinpro/logs/cron.log 2>&1
  */
 export async function GET(request: NextRequest) {
-  // Verify cron secret or Vercel cron header
+  // Verify CRON_SECRET — only Bearer token auth (self-hosted)
   const authHeader = request.headers.get('authorization');
   const cronSecret = process.env.CRON_SECRET;
-  const vercelCron = request.headers.get('x-vercel-cron');
 
-  // Allow if: Vercel cron header present, OR auth matches, OR development mode
-  const isVercelCron = vercelCron === '1';
-  const isAuthenticated = cronSecret && authHeader === `Bearer ${cronSecret}`;
-  const isDevelopment = process.env.NODE_ENV === 'development';
+  if (!cronSecret || cronSecret.startsWith('your-')) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
 
-  if (!isVercelCron && !isAuthenticated && !isDevelopment) {
+  if (authHeader !== `Bearer ${cronSecret}`) {
+    console.warn('[send-emails] Unauthorized cron attempt');
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -75,6 +67,5 @@ export async function GET(request: NextRequest) {
 
 // POST for manual trigger from dashboard
 export async function POST(request: NextRequest) {
-  // Same handler for manual triggers
   return GET(request);
 }

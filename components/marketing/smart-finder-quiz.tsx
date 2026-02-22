@@ -387,7 +387,7 @@ export function SmartFinderQuiz({ className = '' }: { className?: string }) {
 
     return (
       <Card className={cn('overflow-hidden', className)}>
-        <CardHeader className="bg-gradient-to-r from-violet-600 to-purple-600 text-white">
+        <CardHeader className="text-white" style={{ background: 'linear-gradient(to right, var(--sfp-navy), var(--sfp-navy-dark))' }}>
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <CheckCircle className="h-6 w-6" />

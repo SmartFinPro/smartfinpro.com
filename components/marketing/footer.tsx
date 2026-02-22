@@ -1,73 +1,50 @@
+// components/marketing/footer.tsx
+// ============================================================
+// GlobalTrustFooter — E-E-A-T Trust Footer with Silo Isolation
+// Reads all links from config/navigation.ts (Single Source of Truth)
+// ============================================================
+
 'use client';
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Market, marketConfig, markets, marketCategories, categoryConfig } from '@/lib/i18n/config';
 import { Globe } from 'lucide-react';
+import type { Market } from '@/lib/i18n/config';
+import { marketConfig } from '@/lib/i18n/config';
+import {
+  detectMarketFromPath,
+  getMarketPrefix,
+  getAllSiloCategoryLinks,
+  getSiloToolLinks,
+  trustLinks,
+  hubLinks,
+  socialLinks,
+  marketSiloConfig,
+} from '@/config/navigation';
 
 interface FooterProps {
   market?: Market;
 }
 
-const brokerReviews = [
-  { name: 'eToro Review', slug: 'etoro' },
-  { name: 'Capital.com Review', slug: 'capital-com' },
-  { name: 'IBKR Review', slug: 'ibkr' },
-  { name: 'Investing.com Review', slug: 'investing' },
-  { name: 'Revolut Review', slug: 'revolut' },
-];
-
-const toolLinks = [
-  { name: 'Broker Finder Quiz', href: '/tools/broker-finder' },
-  { name: 'Trading Cost Calculator', href: '/tools/trading-cost-calculator' },
-  { name: 'Fee Savings Calculator', href: '/tools/wealthsimple-calculator' },
-  { name: 'AI ROI Calculator', href: '/tools/ai-roi-calculator' },
-  { name: 'Loan Calculator', href: '/tools/loan-calculator' },
-  { name: 'Broker Comparison', href: '/tools/broker-comparison' },
-];
-
-const resourceLinks = [
-  { name: 'TradingView Platform', href: '/trading-platforms/tradingview' },
-  { name: 'AI Finance Workflow', href: '/downloads/ai-finance-workflow' },
-  { name: 'All Tools', href: '/tools' },
-];
-
-const socialLinks = [
-  { name: 'LinkedIn', href: 'https://linkedin.com/company/smartfinpro' },
-  { name: 'YouTube', href: 'https://youtube.com/@smartfinpro' },
-  { name: 'Instagram', href: 'https://instagram.com/smartfinpro' },
-  { name: 'X', href: 'https://twitter.com/smartfinpro' },
-  { name: 'Facebook', href: 'https://facebook.com/smartfinpro' },
-];
-
-// Detect market from pathname
-function detectMarket(pathname: string): Market {
-  const segments = pathname.split('/').filter(Boolean);
-  const firstSegment = segments[0];
-
-  if (firstSegment && markets.includes(firstSegment as Market)) {
-    return firstSegment as Market;
-  }
-  return 'us';
-}
-
 export function Footer({ market: marketProp }: FooterProps) {
   const pathname = usePathname();
-  const market = marketProp || detectMarket(pathname);
-  const prefix = market === 'us' ? '' : `/${market}`;
-  const availableCategories = marketCategories[market] || marketCategories.us;
+  const market = marketProp || detectMarketFromPath(pathname);
+  const prefix = getMarketPrefix(market);
+  const siloCategoryLinks = getAllSiloCategoryLinks(market);
+  const siloToolLinks = getSiloToolLinks(market);
+  const featuredLinks = marketSiloConfig[market]?.featured || [];
 
   return (
-    <footer className="bg-[#0f0a1a]">
-      {/* Newsletter Section */}
-      <div className="border-b border-violet-500/20">
+    <footer style={{ background: 'var(--sfp-ink)' }}>
+      {/* ── Newsletter Section ─────────────────────────────────── */}
+      <div className="border-b border-white/15">
         <div className="container mx-auto px-6 py-12">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
             <div className="max-w-lg">
               <h3 className="text-lg font-bold text-white mb-2">Join our newsletter</h3>
-              <p className="text-sm text-slate-400 leading-relaxed">
-                Distributed monthly, it includes product news, new applications,
-                case studies, events, and discounts. Unsubscribe anytime.
+              <p className="text-sm text-white/70 leading-relaxed">
+                Expert insights on personal finance, trading, and AI tools.
+                Delivered monthly. Unsubscribe anytime.
               </p>
             </div>
             <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
@@ -75,15 +52,20 @@ export function Footer({ market: marketProp }: FooterProps) {
                 <input
                   type="email"
                   placeholder="Enter your email"
-                  className="px-4 py-3 bg-transparent border border-slate-700 rounded text-white placeholder-slate-500 text-sm min-w-[280px] focus:outline-none focus:border-cyan-400 transition-colors"
+                  className="px-4 py-3 bg-white/10 border border-white/30 rounded text-white placeholder-white/50 text-sm min-w-[280px] focus:outline-none focus:border-white/60 transition-colors"
                 />
-                <button className="px-6 py-3 border border-cyan-400 text-cyan-400 rounded text-sm font-medium hover:bg-cyan-400 hover:text-slate-900 transition-colors whitespace-nowrap">
+                <button
+                  className="px-6 py-3 rounded text-sm font-bold text-white uppercase tracking-wide transition-colors whitespace-nowrap"
+                  style={{ background: 'var(--sfp-gold)' }}
+                  onMouseOver={(e) => (e.currentTarget.style.background = 'var(--sfp-gold-dark)')}
+                  onMouseOut={(e) => (e.currentTarget.style.background = 'var(--sfp-gold)')}
+                >
                   Subscribe
                 </button>
               </div>
-              <p className="text-xs text-slate-500 sm:max-w-[200px]">
+              <p className="text-xs text-white/50 sm:max-w-[200px]">
                 By subscribing you agree to our{' '}
-                <Link href="/privacy" className="text-cyan-400 underline hover:text-cyan-300">
+                <Link href="/privacy" className="underline hover:text-white/90" style={{ color: 'var(--sfp-gold)' }}>
                   Privacy Policy
                 </Link>.
               </p>
@@ -92,108 +74,123 @@ export function Footer({ market: marketProp }: FooterProps) {
         </div>
       </div>
 
-      {/* Main Footer Links */}
-      <div className="border-b border-slate-800/50">
+      {/* ── Main Footer Grid ──────────────────────────────────── */}
+      <div className="border-b border-white/15">
         <div className="container mx-auto px-6 py-12">
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-8 lg:gap-5">
-            {/* Categories (market-aware) */}
-            <div>
-              <h4 className="font-semibold text-slate-200 text-sm mb-5">Categories</h4>
-              <ul className="space-y-3">
-                {availableCategories.map((cat) => (
-                  <li key={cat}>
-                    <Link
-                      href={`${prefix}/${cat}`}
-                      className="text-sm text-slate-500 hover:text-cyan-400 transition-colors"
-                    >
-                      {categoryConfig[cat].name}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-8 lg:gap-6">
 
-            {/* Market Overviews (market-aware) */}
+            {/* Column 1: Trust & Legal (E-E-A-T) */}
             <div>
-              <h4 className="font-semibold text-slate-200 text-sm mb-5">Overviews</h4>
+              <h4 className="font-semibold text-white text-sm mb-5">Trust & Legal</h4>
               <ul className="space-y-3">
-                {availableCategories.map((cat) => (
-                  <li key={`overview-${cat}`}>
-                    <Link
-                      href={`${prefix}/${cat}/overview`}
-                      className="text-sm text-slate-500 hover:text-cyan-400 transition-colors"
-                    >
-                      {categoryConfig[cat].name}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Reviews (market-aware) */}
-            <div>
-              <h4 className="font-semibold text-slate-200 text-sm mb-5">Reviews</h4>
-              <ul className="space-y-3">
-                {brokerReviews.map((review) => (
-                  <li key={review.slug}>
-                    <Link
-                      href={`${prefix}/reviews/${review.slug}`}
-                      className="text-sm text-slate-500 hover:text-cyan-400 transition-colors"
-                    >
-                      {review.name}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Tools */}
-            <div>
-              <h4 className="font-semibold text-slate-200 text-sm mb-5">Tools</h4>
-              <ul className="space-y-3">
-                {toolLinks.map((link) => (
+                {trustLinks.map((link) => (
                   <li key={link.href}>
                     <Link
                       href={link.href}
-                      className="text-sm text-slate-500 hover:text-cyan-400 transition-colors"
+                      className="text-sm transition-colors"
+                      style={{ color: '#AAAAAA' }}
+                      onMouseOver={(e) => (e.currentTarget.style.color = '#FFFFFF')}
+                      onMouseOut={(e) => (e.currentTarget.style.color = '#AAAAAA')}
                     >
-                      {link.name}
+                      {link.label}
                     </Link>
                   </li>
                 ))}
               </ul>
             </div>
 
-            {/* Resources */}
+            {/* Column 2: Dynamic Categories (silo-isolated) */}
             <div>
-              <h4 className="font-semibold text-slate-200 text-sm mb-5">Resources</h4>
+              <h4 className="font-semibold text-white text-sm mb-5">
+                {marketConfig[market].name} Categories
+              </h4>
               <ul className="space-y-3">
-                {resourceLinks.map((link) => (
+                {siloCategoryLinks.map((link) => (
                   <li key={link.href}>
                     <Link
                       href={link.href}
-                      className="text-sm text-slate-500 hover:text-cyan-400 transition-colors"
+                      className="text-sm transition-colors"
+                      style={{ color: '#AAAAAA' }}
+                      onMouseOver={(e) => (e.currentTarget.style.color = '#FFFFFF')}
+                      onMouseOut={(e) => (e.currentTarget.style.color = '#AAAAAA')}
                     >
-                      {link.name}
+                      {link.label}
                     </Link>
                   </li>
                 ))}
               </ul>
             </div>
 
-            {/* Social */}
+            {/* Column 3: Featured (market-specific) */}
             <div>
-              <h4 className="font-semibold text-slate-200 text-sm mb-5">Social</h4>
+              <h4 className="font-semibold text-white text-sm mb-5">Featured</h4>
+              <ul className="space-y-3">
+                {featuredLinks.map((link) => (
+                  <li key={link.href}>
+                    <Link
+                      href={link.href}
+                      className="text-sm transition-colors"
+                      style={{ color: '#AAAAAA' }}
+                      onMouseOver={(e) => (e.currentTarget.style.color = '#FFFFFF')}
+                      onMouseOut={(e) => (e.currentTarget.style.color = '#AAAAAA')}
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+                {/* Cross-market hubs */}
+                {hubLinks.map((link) => (
+                  <li key={link.href}>
+                    <Link
+                      href={link.href}
+                      className="text-sm transition-colors"
+                      style={{ color: '#AAAAAA' }}
+                      onMouseOver={(e) => (e.currentTarget.style.color = '#FFFFFF')}
+                      onMouseOut={(e) => (e.currentTarget.style.color = '#AAAAAA')}
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Column 4: Tools */}
+            <div>
+              <h4 className="font-semibold text-white text-sm mb-5">Tools</h4>
+              <ul className="space-y-3">
+                {siloToolLinks.map((link) => (
+                  <li key={link.href}>
+                    <Link
+                      href={link.href}
+                      className="text-sm transition-colors"
+                      style={{ color: '#AAAAAA' }}
+                      onMouseOver={(e) => (e.currentTarget.style.color = '#FFFFFF')}
+                      onMouseOut={(e) => (e.currentTarget.style.color = '#AAAAAA')}
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Column 5: Social */}
+            <div>
+              <h4 className="font-semibold text-white text-sm mb-5">Social</h4>
               <ul className="space-y-3">
                 {socialLinks.map((link) => (
-                  <li key={link.name}>
+                  <li key={link.label}>
                     <Link
                       href={link.href}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-sm text-slate-500 hover:text-cyan-400 transition-colors"
+                      className="text-sm transition-colors"
+                      style={{ color: '#AAAAAA' }}
+                      onMouseOver={(e) => (e.currentTarget.style.color = '#FFFFFF')}
+                      onMouseOut={(e) => (e.currentTarget.style.color = '#AAAAAA')}
                     >
-                      {link.name}
+                      {link.label}
                     </Link>
                   </li>
                 ))}
@@ -203,27 +200,33 @@ export function Footer({ market: marketProp }: FooterProps) {
         </div>
       </div>
 
-      {/* Bottom Bar */}
+      {/* ── Bottom Bar ────────────────────────────────────────── */}
       <div className="container mx-auto px-6 py-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
           {/* Logo */}
           <Link href={prefix || '/'} className="text-xl font-bold text-white">
-            Smart<span className="text-cyan-400">Fin</span>Pro
+            Smart<span style={{ color: 'var(--sfp-gold)' }}>Fin</span>Pro
           </Link>
 
-          {/* Bottom Links */}
+          {/* Bottom Links + Copyright */}
           <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
-            <div className="flex items-center gap-2 text-sm text-slate-500">
+            <div className="flex items-center gap-2 text-sm" style={{ color: '#AAAAAA' }}>
               <Globe className="h-4 w-4" />
               <span>{marketConfig[market].name}</span>
             </div>
-            <Link
-              href="/privacy"
-              className="text-sm text-slate-500 hover:text-cyan-400 transition-colors"
-            >
-              Privacy Policy
+            <Link href="/privacy" className="text-sm transition-colors" style={{ color: '#AAAAAA' }}>
+              Privacy
             </Link>
-            <span className="text-sm text-slate-600">
+            <Link href="/terms" className="text-sm transition-colors" style={{ color: '#AAAAAA' }}>
+              Terms
+            </Link>
+            <Link href="/affiliate-disclosure" className="text-sm transition-colors" style={{ color: '#AAAAAA' }}>
+              Disclosure
+            </Link>
+            <Link href="/imprint" className="text-sm transition-colors" style={{ color: '#AAAAAA' }}>
+              Imprint
+            </Link>
+            <span className="text-sm text-white/40" suppressHydrationWarning>
               &copy; {new Date().getFullYear()} SmartFinPro. All rights reserved.
             </span>
           </div>

@@ -1,0 +1,260 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { createServiceClient } from '@/lib/supabase/server';
+import { sendTelegramAlert } from '@/lib/alerts/telegram';
+
+/**
+ * Ranking Health Check — Cron Job
+ *
+ * Monitors keyword rankings and flags articles that have fallen
+ * outside the top 20 position. Automatically queues them for
+ * content updates via the planning_queue system.
+ *
+ * Process:
+ * 1. Load all keywords where position > 20 from keyword_rankings
+ * 2. Match to source articles via slug field
+ * 3. Insert/update planning_queue entries with status='needs-update'
+ * 4. Send Telegram alert with count of affected articles
+ * 5. Log execution in cron_logs
+ *
+ * Schedule: Daily at 4 AM UTC (after sync-competitors at 3 AM)
+ *
+ * Self-hosted crontab entry:
+ *   0 4 * * * curl -sf -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/cron/check-rankings >> /home/master/applications/smartfinpro/logs/cron.log 2>&1
+ */
+export async function GET(request: NextRequest) {
+  // Verify CRON_SECRET
+  const authHeader = request.headers.get('authorization');
+  const cronSecret = process.env.CRON_SECRET;
+
+  if (!cronSecret || cronSecret.startsWith('your-')) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const isAuthenticated = authHeader === `Bearer ${cronSecret}`;
+  if (!isAuthenticated) {
+    console.warn(
+      `[check-rankings] Unauthorized attempt from ${request.headers.get('x-forwarded-for') || 'unknown'}`,
+    );
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const startTime = Date.now();
+
+  try {
+    const supabase = createServiceClient();
+
+    // 1. Fetch keywords currently ranked outside top 20
+    const { data: poorRankings, error: rankingError } = await supabase
+      .from('keyword_rankings')
+      .select('id, keyword, market, position, page, clicks, ctr')
+      .gt('position', 20)
+      .is('position', null) // Also include unranked (position = null)
+      .order('position', { ascending: true, nullsFirst: false });
+
+    if (rankingError) {
+      throw new Error(`Failed to fetch rankings: ${rankingError.message}`);
+    }
+
+    const poorKeywords = poorRankings || [];
+    console.log(`[check-rankings] Found ${poorKeywords.length} keywords outside top 20`);
+
+    // 2. Group by slug and market to identify affected articles
+    const affectedArticles = new Map<string, {
+      market: string;
+      category: string;
+      keywords: string[];
+      avgPosition: number;
+      totalClicks: number;
+    }>();
+
+    for (const kw of poorKeywords) {
+      const slug = kw.page || '';
+      if (!slug) continue;
+
+      const key = `${slug}:${kw.market}`;
+      const existing = affectedArticles.get(key) || {
+        market: kw.market,
+        category: slug.split('/')[1] || 'unknown',
+        keywords: [] as string[],
+        avgPosition: 0,
+        totalClicks: 0,
+      };
+
+      existing.keywords.push(kw.keyword);
+      existing.totalClicks += kw.clicks || 0;
+
+      affectedArticles.set(key, existing);
+    }
+
+    console.log(
+      `[check-rankings] Mapped to ${affectedArticles.size} affected articles`,
+    );
+
+    // 3. Insert/update planning_queue entries for affected articles
+    const queueUpdates: Array<{
+      slug: string;
+      market: string;
+      category: string;
+      keyword: string;
+      reason: string;
+      status: 'needs-update';
+    }> = [];
+
+    for (const [, article] of affectedArticles) {
+      const slug = Array.from(affectedArticles.keys())
+        .find((k) => k.startsWith(`${article.market}`))
+        ?.split(':')[0];
+
+      if (!slug) continue;
+
+      for (const keyword of article.keywords) {
+        queueUpdates.push({
+          slug,
+          market: article.market,
+          category: article.category,
+          keyword,
+          reason: `Ranking check: keyword dropped outside top 20 (${article.totalClicks} clicks)`,
+          status: 'needs-update',
+        });
+      }
+    }
+
+    // 4. Upsert planning_queue entries
+    let insertedCount = 0;
+    if (queueUpdates.length > 0) {
+      // Get existing entries to avoid duplicates
+      const existingSlugs = queueUpdates.map((q) => q.slug);
+      const { data: existing } = await supabase
+        .from('planning_queue')
+        .select('slug, status')
+        .in('slug', [...new Set(existingSlugs)]);
+
+      const existingMap = new Map(
+        (existing || []).map((e) => [`${e.slug}:${e.status}`, true]),
+      );
+
+      for (const update of queueUpdates) {
+        const key = `${update.slug}:needs-update`;
+        if (existingMap.has(key)) {
+          console.log(`[check-rankings] Skipping duplicate: ${update.slug}`);
+          continue;
+        }
+
+        const { error: insertError } = await supabase
+          .from('planning_queue')
+          .insert({
+            keyword: update.keyword,
+            market: update.market,
+            category: update.category,
+            reason: update.reason,
+            status: update.status,
+            digest_date: new Date().toISOString().split('T')[0],
+            opportunity_score: 75, // Moderate priority for ranking recovery
+          });
+
+        if (insertError) {
+          console.warn(
+            `[check-rankings] Insert error for ${update.keyword}: ${insertError.message}`,
+          );
+        } else {
+          insertedCount++;
+        }
+      }
+    }
+
+    const duration = Date.now() - startTime;
+
+    // 5. Log to cron_logs
+    await supabase.from('cron_logs').insert({
+      job_name: 'check-rankings',
+      status: 'completed',
+      duration_ms: duration,
+      executed_at: new Date().toISOString(),
+    });
+
+    // 6. Send Telegram alert
+    const message = formatRankingCheckAlert({
+      keywordsFound: poorKeywords.length,
+      articlesAffected: affectedArticles.size,
+      itemsQueued: insertedCount,
+      duration,
+    });
+
+    await sendTelegramAlert(message);
+
+    console.log(
+      `[check-rankings] Complete: ${poorKeywords.length} keywords, ${affectedArticles.size} articles, ${insertedCount} queued (${duration}ms)`,
+    );
+
+    return NextResponse.json({
+      success: true,
+      keywordsFound: poorKeywords.length,
+      articlesAffected: affectedArticles.size,
+      itemsQueued: insertedCount,
+      duration: `${duration}ms`,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'Unknown error';
+    console.error('[check-rankings] Job failed:', msg);
+
+    const duration = Date.now() - startTime;
+
+    // Log error to cron_logs
+    const supabase = createServiceClient();
+    await supabase.from('cron_logs').insert({
+      job_name: 'check-rankings',
+      status: 'failed',
+      error: msg,
+      duration_ms: duration,
+      executed_at: new Date().toISOString(),
+    });
+
+    // Send error alert
+    await sendTelegramAlert(
+      `🚨 <b>RANKING CHECK FAILED</b>\n\n${msg}\n\n<i>${new Date().toISOString().replace('T', ' ').slice(0, 19)} UTC</i>`,
+    );
+
+    return NextResponse.json(
+      {
+        success: false,
+        error: msg,
+      },
+      { status: 500 },
+    );
+  }
+}
+
+// ── Message Formatter ────────────────────────────────────────
+
+function formatRankingCheckAlert({
+  keywordsFound,
+  articlesAffected,
+  itemsQueued,
+  duration,
+}: {
+  keywordsFound: number;
+  articlesAffected: number;
+  itemsQueued: number;
+  duration: number;
+}): string {
+  const severity =
+    keywordsFound > 10 ? '🔴 HIGH' : keywordsFound > 5 ? '🟠 MEDIUM' : '🟢 LOW';
+
+  return [
+    `📊 <b>RANKING HEALTH CHECK</b>`,
+    ``,
+    `${severity} — ${keywordsFound} keywords outside top 20`,
+    ``,
+    `🎯 <b>Keywords Affected:</b> ${keywordsFound}`,
+    `📄 <b>Articles to Update:</b> ${articlesAffected}`,
+    `📋 <b>Items Queued:</b> ${itemsQueued}`,
+    `⏱️ <b>Duration:</b> ${duration}ms`,
+    ``,
+    itemsQueued > 0
+      ? `✅ Queued for content refresh (check planning_queue)`
+      : `⚠️ No new items queued (may be duplicates or already processing)`,
+    ``,
+    `<i>${new Date().toISOString().replace('T', ' ').slice(0, 19)} UTC</i>`,
+  ].join('\n');
+}

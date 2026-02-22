@@ -30,7 +30,7 @@ export interface BrokerReviewData {
   logo: string;
   tagline: string;
   rating: number;
-  accentColor: 'emerald' | 'blue' | 'violet' | 'amber' | 'rose';
+  accentColor: 'emerald' | 'blue' | 'navy' | 'amber' | 'rose';
   seo: { title: string; description: string };
   verdict: string;
   pros: string[];
@@ -328,7 +328,7 @@ export const brokerReviews: Record<BrokerSlug, BrokerReviewData> = {
     logo: '/images/brokers/ibkr.svg',
     tagline: 'Institutional Power for Every Investor',
     rating: 4.8,
-    accentColor: 'violet',
+    accentColor: 'navy',
     seo: {
       title: 'Interactive Brokers Review 2026: Institutional Power for Pros | SmartFinPro',
       description:
