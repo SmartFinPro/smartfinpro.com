@@ -80,18 +80,34 @@ const brokerCards = [
   { name: 'Revolut', slug: 'revolut', rating: 4.5 },
 ];
 
-// Tool cards for mega-menu
-const toolCards = [
-  { name: 'Broker Finder Quiz', description: 'Personalized broker match in 60 seconds', href: '/tools/broker-finder', icon: Target, badge: 'New' },
-  { name: 'Trading Cost Calculator', description: 'Compare fees across top brokers', href: '/tools/trading-cost-calculator', icon: BarChart3, badge: 'New' },
-  { name: 'Fee Savings Calculator', description: 'See how much you save vs bank funds', href: '/ca/tools/wealthsimple-calculator', icon: DollarSign, badge: 'New' },
-  { name: 'AI ROI Calculator', description: 'Calculate AI tool investment returns', href: '/tools/ai-roi-calculator', icon: TrendingUp, badge: null },
-  { name: 'Loan Calculator', description: 'Monthly payments & amortization', href: '/tools/loan-calculator', icon: Calculator, badge: null },
-  { name: 'AU Mortgage Calculator', description: 'Home loan repayments, LVR & offset', href: '/au/tools/au-mortgage-calculator', icon: Home, badge: 'New' },
-  { name: 'ISA Tax Savings Calculator', description: 'See your ISA tax shield over time', href: '/uk/tools/isa-tax-savings-calculator', icon: PiggyBank, badge: 'New' },
-  { name: 'Rewards Calculator', description: 'Find your best credit card by spend', href: '/tools/credit-card-rewards-calculator', icon: CreditCard, badge: 'New' },
-  { name: 'Broker Comparison', description: 'Side-by-side broker comparison', href: '/tools/broker-comparison', icon: Scale, badge: null },
+// Tool cards for mega-menu — each card declares which markets it belongs to.
+// Global tools (no market prefix) use `markets: 'all'`.
+// Market-specific tools list their target market(s).
+interface ToolCard {
+  name: string;
+  description: string;
+  href: string;
+  icon: React.ElementType;
+  badge: string | null;
+  markets: 'all' | Market[];
+}
+
+const allToolCards: ToolCard[] = [
+  { name: 'Broker Finder Quiz', description: 'Personalized broker match in 60 seconds', href: '/tools/broker-finder', icon: Target, badge: 'New', markets: 'all' },
+  { name: 'Trading Cost Calculator', description: 'Compare fees across top brokers', href: '/tools/trading-cost-calculator', icon: BarChart3, badge: 'New', markets: 'all' },
+  { name: 'Fee Savings Calculator', description: 'See how much you save vs bank funds', href: '/ca/tools/wealthsimple-calculator', icon: DollarSign, badge: 'New', markets: ['ca'] },
+  { name: 'AI ROI Calculator', description: 'Calculate AI tool investment returns', href: '/tools/ai-roi-calculator', icon: TrendingUp, badge: null, markets: 'all' },
+  { name: 'Loan Calculator', description: 'Monthly payments & amortization', href: '/tools/loan-calculator', icon: Calculator, badge: null, markets: 'all' },
+  { name: 'AU Mortgage Calculator', description: 'Home loan repayments, LVR & offset', href: '/au/tools/au-mortgage-calculator', icon: Home, badge: 'New', markets: ['au'] },
+  { name: 'ISA Tax Savings Calculator', description: 'See your ISA tax shield over time', href: '/uk/tools/isa-tax-savings-calculator', icon: PiggyBank, badge: 'New', markets: ['uk'] },
+  { name: 'Rewards Calculator', description: 'Find your best credit card by spend', href: '/tools/credit-card-rewards-calculator', icon: CreditCard, badge: 'New', markets: 'all' },
+  { name: 'Broker Comparison', description: 'Side-by-side broker comparison', href: '/tools/broker-comparison', icon: Scale, badge: null, markets: 'all' },
 ];
+
+/** Return only the tool cards relevant to the given market silo. */
+function getToolCardsForMarket(m: Market): ToolCard[] {
+  return allToolCards.filter((t) => t.markets === 'all' || t.markets.includes(m));
+}
 
 // Detect market from pathname — delegated to central config
 import { detectMarketFromPath } from '@/config/navigation';
@@ -379,7 +395,7 @@ export function Header({ market: marketProp, trendingPartners: trendingProp = []
                     {mobileExpanded === group.toLowerCase() && (
                       <div className="pb-4 space-y-1">
                         {group === 'Tools' ? (
-                          toolCards.map((tool) => (
+                          getToolCardsForMarket(market).map((tool) => (
                             <Link key={tool.href} href={tool.href} className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-100 transition-colors" style={{ color: 'var(--sfp-ink)' }} onClick={() => setMobileMenuOpen(false)}>
                               <tool.icon className="h-4 w-4" style={{ color: 'var(--sfp-navy)' }} />
                               <span className="text-sm">{tool.name}</span>
@@ -521,7 +537,7 @@ export function Header({ market: marketProp, trendingPartners: trendingProp = []
                 <div>
                   <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-5">Free Tools & Calculators</p>
                   <div className="grid grid-cols-2 xl:grid-cols-3 gap-3">
-                    {toolCards.map((tool) => (
+                    {getToolCardsForMarket(market).map((tool) => (
                       <Link key={tool.href} href={tool.href} className="group flex items-start gap-3 p-4 rounded-xl border border-transparent hover:border-gray-200 hover:bg-gray-50 transition-all duration-200" onClick={() => setActiveMenu(null)}>
                         <div className="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: 'var(--sfp-sky)' }}>
                           <tool.icon className="h-5 w-5" style={{ color: 'var(--sfp-navy)' }} />

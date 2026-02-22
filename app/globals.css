@@ -28,6 +28,7 @@
   --sfp-gray:       #F2F4F8;   /* Seiten-Hintergründe, alternierende Sektionen */
   --sfp-ink:        #1A1A2E;   /* Primärer Fließtext — maximaler Kontrast auf Weiß */
   --sfp-slate:      #555555;   /* Sekundärtext, Meta-Infos, Labels */
+  --sfp-footer-text:#AAAAAA;   /* Footer-Links auf dunklem Hintergrund */
 }
 
 /* === Länderspezifische Silo-Akzentfarben (per body class) === */
