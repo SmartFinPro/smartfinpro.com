@@ -76,9 +76,12 @@ const nextConfig: NextConfig = {
     // Only upgrade insecure requests in production (breaks Safari on localhost HTTP)
     const upgradeInsecure = process.env.NODE_ENV === 'production' ? 'upgrade-insecure-requests;' : '';
 
+    // next-mdx-remote uses new Function() for client-side MDX evaluation.
+    // Allow 'unsafe-eval' so MDX pages hydrate correctly.
+    const unsafeEval = "'unsafe-eval'";
     const ContentSecurityPolicy = `
       default-src 'self';
-      script-src 'self' 'unsafe-inline' https://plausible.io https://www.googletagmanager.com https://www.google-analytics.com;
+      script-src 'self' 'unsafe-inline' ${unsafeEval} https://plausible.io https://www.googletagmanager.com https://www.google-analytics.com;
       style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
       img-src 'self' data: blob: https:;
       font-src 'self' https://fonts.gstatic.com data:;

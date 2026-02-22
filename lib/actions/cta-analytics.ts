@@ -1,16 +1,15 @@
 'use server';
 
-import 'server-only';
-
-import { createServiceClient } from '@/lib/supabase/server';
-import { headers } from 'next/headers';
-import crypto from 'crypto';
-import type { CtaVariant, Market } from '@/lib/supabase/types';
-
 // ============================================================
 // CTA Click Analytics
 // Granular tracking for affiliate CTA buttons
 // ============================================================
+// All Node.js-only imports (crypto, next/headers, supabase/server)
+// are dynamically imported INSIDE each function body to prevent
+// Turbopack HMR crashes in dev mode. See newsletter.ts for details.
+// ============================================================
+
+import type { CtaVariant, Market } from '@/lib/supabase/types';
 
 interface LogCtaClickParams {
   /** Page slug, e.g. '/personal-finance/best-robo-advisors' */
@@ -27,6 +26,10 @@ interface LogCtaClickParams {
 
 export async function logCtaClick(params: LogCtaClickParams) {
   try {
+    const { createServiceClient } = await import('@/lib/supabase/server');
+    const { headers } = await import('next/headers');
+    const crypto = await import('crypto');
+
     const supabase = createServiceClient();
     const headersList = await headers();
 
@@ -75,6 +78,8 @@ interface CtaPerformanceParams {
 
 export async function getCtaPerformance(params: CtaPerformanceParams = {}) {
   try {
+    const { createServiceClient } = await import('@/lib/supabase/server');
+
     const supabase = createServiceClient();
     const daysBack = params.daysBack || 30;
 
@@ -160,6 +165,8 @@ export async function getCtaHeatmapData(
   marketFilter?: Market
 ): Promise<{ success: boolean; data: HeatmapData | null; error: string | null }> {
   try {
+    const { createServiceClient } = await import('@/lib/supabase/server');
+
     const supabase = createServiceClient();
 
     // Calculate time boundary
@@ -313,6 +320,8 @@ export async function getSlugCtr(
   slug: string,
   hoursBack: number = 24
 ): Promise<SlugCtrResult> {
+  const { createServiceClient } = await import('@/lib/supabase/server');
+
   const supabase = createServiceClient();
   const since = new Date();
   since.setHours(since.getHours() - hoursBack);
