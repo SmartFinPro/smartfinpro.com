@@ -88,9 +88,9 @@ export function Footer({ market: marketProp }: FooterProps) {
                     <Link
                       href={link.href}
                       className="text-sm transition-colors"
-                      style={{ color: '#AAAAAA' }}
+                      style={{ color: 'var(--sfp-footer-text)' }}
                       onMouseOver={(e) => (e.currentTarget.style.color = '#FFFFFF')}
-                      onMouseOut={(e) => (e.currentTarget.style.color = '#AAAAAA')}
+                      onMouseOut={(e) => (e.currentTarget.style.color = 'var(--sfp-footer-text)')}
                     >
                       {link.label}
                     </Link>
@@ -110,9 +110,9 @@ export function Footer({ market: marketProp }: FooterProps) {
                     <Link
                       href={link.href}
                       className="text-sm transition-colors"
-                      style={{ color: '#AAAAAA' }}
+                      style={{ color: 'var(--sfp-footer-text)' }}
                       onMouseOver={(e) => (e.currentTarget.style.color = '#FFFFFF')}
-                      onMouseOut={(e) => (e.currentTarget.style.color = '#AAAAAA')}
+                      onMouseOut={(e) => (e.currentTarget.style.color = 'var(--sfp-footer-text)')}
                     >
                       {link.label}
                     </Link>
@@ -130,9 +130,9 @@ export function Footer({ market: marketProp }: FooterProps) {
                     <Link
                       href={link.href}
                       className="text-sm transition-colors"
-                      style={{ color: '#AAAAAA' }}
+                      style={{ color: 'var(--sfp-footer-text)' }}
                       onMouseOver={(e) => (e.currentTarget.style.color = '#FFFFFF')}
-                      onMouseOut={(e) => (e.currentTarget.style.color = '#AAAAAA')}
+                      onMouseOut={(e) => (e.currentTarget.style.color = 'var(--sfp-footer-text)')}
                     >
                       {link.label}
                     </Link>
@@ -144,9 +144,9 @@ export function Footer({ market: marketProp }: FooterProps) {
                     <Link
                       href={link.href}
                       className="text-sm transition-colors"
-                      style={{ color: '#AAAAAA' }}
+                      style={{ color: 'var(--sfp-footer-text)' }}
                       onMouseOver={(e) => (e.currentTarget.style.color = '#FFFFFF')}
-                      onMouseOut={(e) => (e.currentTarget.style.color = '#AAAAAA')}
+                      onMouseOut={(e) => (e.currentTarget.style.color = 'var(--sfp-footer-text)')}
                     >
                       {link.label}
                     </Link>
@@ -164,9 +164,9 @@ export function Footer({ market: marketProp }: FooterProps) {
                     <Link
                       href={link.href}
                       className="text-sm transition-colors"
-                      style={{ color: '#AAAAAA' }}
+                      style={{ color: 'var(--sfp-footer-text)' }}
                       onMouseOver={(e) => (e.currentTarget.style.color = '#FFFFFF')}
-                      onMouseOut={(e) => (e.currentTarget.style.color = '#AAAAAA')}
+                      onMouseOut={(e) => (e.currentTarget.style.color = 'var(--sfp-footer-text)')}
                     >
                       {link.label}
                     </Link>
@@ -186,9 +186,9 @@ export function Footer({ market: marketProp }: FooterProps) {
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-sm transition-colors"
-                      style={{ color: '#AAAAAA' }}
+                      style={{ color: 'var(--sfp-footer-text)' }}
                       onMouseOver={(e) => (e.currentTarget.style.color = '#FFFFFF')}
-                      onMouseOut={(e) => (e.currentTarget.style.color = '#AAAAAA')}
+                      onMouseOut={(e) => (e.currentTarget.style.color = 'var(--sfp-footer-text)')}
                     >
                       {link.label}
                     </Link>
@@ -210,20 +210,20 @@ export function Footer({ market: marketProp }: FooterProps) {
 
           {/* Bottom Links + Copyright */}
           <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
-            <div className="flex items-center gap-2 text-sm" style={{ color: '#AAAAAA' }}>
+            <div className="flex items-center gap-2 text-sm" style={{ color: 'var(--sfp-footer-text)' }}>
               <Globe className="h-4 w-4" />
               <span>{marketConfig[market].name}</span>
             </div>
-            <Link href="/privacy" className="text-sm transition-colors" style={{ color: '#AAAAAA' }}>
+            <Link href="/privacy" className="text-sm transition-colors" style={{ color: 'var(--sfp-footer-text)' }}>
               Privacy
             </Link>
-            <Link href="/terms" className="text-sm transition-colors" style={{ color: '#AAAAAA' }}>
+            <Link href="/terms" className="text-sm transition-colors" style={{ color: 'var(--sfp-footer-text)' }}>
               Terms
             </Link>
-            <Link href="/affiliate-disclosure" className="text-sm transition-colors" style={{ color: '#AAAAAA' }}>
+            <Link href="/affiliate-disclosure" className="text-sm transition-colors" style={{ color: 'var(--sfp-footer-text)' }}>
               Disclosure
             </Link>
-            <Link href="/imprint" className="text-sm transition-colors" style={{ color: '#AAAAAA' }}>
+            <Link href="/imprint" className="text-sm transition-colors" style={{ color: 'var(--sfp-footer-text)' }}>
               Imprint
             </Link>
             <span className="text-sm text-white/40" suppressHydrationWarning>

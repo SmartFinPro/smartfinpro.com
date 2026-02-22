@@ -4,7 +4,7 @@ import { serialize } from 'next-mdx-remote/serialize';
 import remarkGfm from 'remark-gfm';
 import { getContentBySlug, getAllContentSlugs, getRelatedContent } from '@/lib/mdx';
 import { SafeMDX } from '@/components/content/SafeMDX';
-import { isValidMarket, isValidCategory, Market, Category, marketConfig, categoryConfig } from '@/lib/i18n/config';
+import { isValidMarket, isValidCategory, Market, Category, marketConfig } from '@/lib/i18n/config';
 import { generateAlternates, getCanonicalUrl } from '@/lib/seo/hreflang';
 import { generateArticleSchema, generateFAQSchema } from '@/lib/seo/schema';
 import { ReviewTemplate } from '@/components/marketing/review-template';

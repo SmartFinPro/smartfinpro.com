@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Quote, Award, CheckCircle, Shield, Star } from 'lucide-react';
+import { Quote, Award, CheckCircle, Shield, Star, TrendingUp, Clock, DollarSign, BarChart3, Users, FileText, MessageSquare, Building, AlertTriangle, Plane, CreditCard, Calculator, Beaker } from 'lucide-react';
 
 interface ExpertBoxProps {
   name?: string;
@@ -147,30 +147,72 @@ export function ExpertEndorsement({ name, title, verdict, rating }: ExpertEndors
 }
 
 // Trust Authority Section
+// Icon string-ID map — allows MDX files to use simple strings instead of JSX
+const trustIconMap: Record<string, React.ElementType> = {
+  shield: Shield,
+  'trending-up': TrendingUp,
+  trendingUp: TrendingUp,
+  clock: Clock,
+  'dollar-sign': DollarSign,
+  dollarSign: DollarSign,
+  users: Users,
+  'bar-chart': BarChart3,
+  barChart3: BarChart3,
+  'check-circle': CheckCircle,
+  checkCircle: CheckCircle,
+  'file-text': FileText,
+  fileText: FileText,
+  'message-square': MessageSquare,
+  messageSquare: MessageSquare,
+  building: Building,
+  'alert-triangle': AlertTriangle,
+  alertTriangle: AlertTriangle,
+  star: Star,
+  plane: Plane,
+  'credit-card': CreditCard,
+  creditCard: CreditCard,
+  calculator: Calculator,
+  beaker: Beaker,
+};
+
 interface TrustAuthorityProps {
   stats: {
     label: string;
     value: string;
-    icon?: React.ReactNode;
+    /** String icon ID (e.g. "shield") OR legacy JSX ReactNode */
+    icon?: string | React.ReactNode;
   }[];
 }
 
 export function TrustAuthority({ stats }: TrustAuthorityProps) {
   return (
     <div className="rounded-2xl border border-gray-200 bg-white shadow-sm grid grid-cols-2 md:grid-cols-4 gap-6 my-10 p-8">
-      {stats.map((stat) => (
-        <div key={stat.label} className="text-center group">
-          {stat.icon && (
-            <div className="flex justify-center mb-3">
-              <div className="w-12 h-12 rounded-xl flex items-center justify-center transition-colors" style={{ background: 'var(--sfp-sky)' }}>
-                {stat.icon}
+      {stats.map((stat) => {
+        // Resolve icon: string → lookup component, ReactNode → pass through
+        let iconElement: React.ReactNode = null;
+        if (typeof stat.icon === 'string') {
+          const IconComp = trustIconMap[stat.icon];
+          if (IconComp) {
+            iconElement = <IconComp className="h-5 w-5" style={{ color: 'var(--sfp-navy)' }} />;
+          }
+        } else if (stat.icon) {
+          iconElement = stat.icon;
+        }
+
+        return (
+          <div key={stat.label} className="text-center group">
+            {iconElement && (
+              <div className="flex justify-center mb-3">
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center transition-colors" style={{ background: 'var(--sfp-sky)' }}>
+                  {iconElement}
+                </div>
               </div>
-            </div>
-          )}
-          <div className="text-3xl md:text-4xl font-bold mb-1" style={{ color: 'var(--sfp-navy)' }}>{stat.value}</div>
-          <div className="text-sm" style={{ color: 'var(--sfp-slate)' }}>{stat.label}</div>
-        </div>
-      ))}
+            )}
+            <div className="text-3xl md:text-4xl font-bold mb-1" style={{ color: 'var(--sfp-navy)' }}>{stat.value}</div>
+            <div className="text-sm" style={{ color: 'var(--sfp-slate)' }}>{stat.label}</div>
+          </div>
+        );
+      })}
     </div>
   );
 }
