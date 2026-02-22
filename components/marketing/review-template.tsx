@@ -26,21 +26,25 @@ import { StickyTableOfContents } from '@/components/marketing/sticky-toc';
 import { ExpertVerifier } from '@/components/marketing/expert-verifier';
 import { FrictionlessCTA } from '@/components/marketing/frictionless-cta';
 import { StickyFooterCTA } from '@/components/marketing/sticky-footer-cta';
+import { SafeMDX } from '@/components/content/SafeMDX';
 import { generateReviewSchema } from '@/lib/seo/schema';
 import { categoryConfig } from '@/lib/i18n/config';
 import type { Market, Category } from '@/lib/i18n/config';
 import { buildBreadcrumbs } from '@/lib/breadcrumbs';
 import type { ContentItem } from '@/lib/mdx';
 import type { ReviewData, ExpertData } from '@/types';
+import type { MDXRemoteSerializeResult } from 'next-mdx-remote';
 import { getFirstMondayOfMonth } from '@/lib/utils/date-helpers';
 
 interface ReviewTemplateProps {
   review: ReviewData;
+  /** Pre-serialized MDX source — enables full MDX component rendering */
+  mdxSource?: MDXRemoteSerializeResult;
   relatedArticles?: ContentItem[];
   expert?: ExpertData;
 }
 
-export function ReviewTemplate({ review, relatedArticles, expert }: ReviewTemplateProps) {
+export function ReviewTemplate({ review, mdxSource, relatedArticles, expert }: ReviewTemplateProps) {
   const marketPrefix = review.market === 'us' ? '' : `/${review.market}`;
   const categoryName = categoryConfig[review.category as Category]?.name || review.category.replace('-', ' ');
   return (
@@ -253,14 +257,16 @@ export function ReviewTemplate({ review, relatedArticles, expert }: ReviewTempla
         </div>
       )}
 
-      {/* Main Content Area */}
+      {/* Main Content Area — Full MDX Rendering */}
       <section className="container mx-auto px-4 mb-16">
         <div className="max-w-4xl mx-auto">
-          {/* Content will be rendered via MDX */}
-          <div
-            className="prose prose-lg max-w-none"
-            dangerouslySetInnerHTML={{ __html: review.content }}
-          />
+          <div className="prose prose-lg max-w-none">
+            {mdxSource ? (
+              <SafeMDX source={mdxSource} />
+            ) : review.content ? (
+              <div dangerouslySetInnerHTML={{ __html: review.content }} />
+            ) : null}
+          </div>
         </div>
       </section>
 

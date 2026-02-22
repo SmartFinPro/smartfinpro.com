@@ -6,13 +6,14 @@ import { Badge } from '@/components/ui/badge';
 import { Quote, Award, CheckCircle, Shield, Star } from 'lucide-react';
 
 interface ExpertBoxProps {
-  name: string;
+  name?: string;
   title: string;
-  credentials: string[];
+  credentials?: string[];
   image?: string;
-  quote: string;
+  quote?: string;
   rating?: number;
   variant?: 'default' | 'highlight' | 'minimal';
+  children?: React.ReactNode;
 }
 
 export function ExpertBox({
@@ -23,6 +24,7 @@ export function ExpertBox({
   quote,
   rating,
   variant = 'default',
+  children,
 }: ExpertBoxProps) {
   return (
     <div
@@ -41,7 +43,7 @@ export function ExpertBox({
           {image ? (
             <Image
               src={image}
-              alt={name}
+              alt={name || title}
               width={72}
               height={72}
               className="rounded-full border-2"
@@ -57,51 +59,59 @@ export function ExpertBox({
         {/* Expert Info */}
         <div className="flex-1">
           <div className="flex items-center gap-3 flex-wrap mb-2">
-            <h4 className="font-bold text-xl" style={{ color: 'var(--sfp-ink)' }}>{name}</h4>
+            {name && <h4 className="font-bold text-xl" style={{ color: 'var(--sfp-ink)' }}>{name}</h4>}
             <Badge className="text-xs border" style={{ background: 'rgba(26,107,58,0.08)', color: 'var(--sfp-green)', borderColor: 'rgba(26,107,58,0.2)' }}>
               <Shield className="h-3 w-3 mr-1" />
               Verified Expert
             </Badge>
           </div>
           <p style={{ color: 'var(--sfp-slate)' }} className="mb-4">{title}</p>
-          <div className="flex flex-wrap gap-2">
-            {credentials.map((cred) => (
-              <span
-                key={cred}
-                className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border border-gray-200"
-                style={{ background: 'var(--sfp-gray)', color: 'var(--sfp-ink)' }}
-              >
-                <CheckCircle className="h-3 w-3" style={{ color: 'var(--sfp-green)' }} />
-                {cred}
-              </span>
-            ))}
-          </div>
+          {credentials && credentials.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {credentials.map((cred) => (
+                <span
+                  key={cred}
+                  className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border border-gray-200"
+                  style={{ background: 'var(--sfp-gray)', color: 'var(--sfp-ink)' }}
+                >
+                  <CheckCircle className="h-3 w-3" style={{ color: 'var(--sfp-green)' }} />
+                  {cred}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Quote */}
-      <blockquote className="relative pl-5 border-l-4 mt-6" style={{ borderColor: 'var(--sfp-navy)' }}>
-        <Quote className="absolute -left-4 -top-2 h-7 w-7 rounded" style={{ color: 'rgba(27,79,140,0.3)', background: 'white' }} />
-        <p className="italic font-serif text-lg leading-relaxed" style={{ color: 'var(--sfp-ink)' }}>&ldquo;{quote}&rdquo;</p>
-        {rating && (
-          <div className="flex items-center gap-3 mt-4">
-            <span className="text-sm font-medium" style={{ color: 'var(--sfp-slate)' }}>Expert Rating:</span>
-            <div className="flex items-center gap-1">
-              {[...Array(5)].map((_, i) => (
-                <Star
-                  key={i}
-                  className={`h-5 w-5 ${
-                    i < Math.floor(rating)
-                      ? 'fill-amber-400 text-amber-400'
-                      : 'text-gray-300'
-                  }`}
-                />
-              ))}
-              <span className="text-lg font-bold ml-2" style={{ color: 'var(--sfp-navy)' }}>{rating}/5</span>
+      {/* Quote or Children content */}
+      {(quote || children) && (
+        <blockquote className="relative pl-5 border-l-4 mt-6" style={{ borderColor: 'var(--sfp-navy)' }}>
+          <Quote className="absolute -left-4 -top-2 h-7 w-7 rounded" style={{ color: 'rgba(27,79,140,0.3)', background: 'white' }} />
+          {quote ? (
+            <p className="italic font-serif text-lg leading-relaxed" style={{ color: 'var(--sfp-ink)' }}>&ldquo;{quote}&rdquo;</p>
+          ) : (
+            <div className="text-base leading-relaxed" style={{ color: 'var(--sfp-ink)' }}>{children}</div>
+          )}
+          {rating && (
+            <div className="flex items-center gap-3 mt-4">
+              <span className="text-sm font-medium" style={{ color: 'var(--sfp-slate)' }}>Expert Rating:</span>
+              <div className="flex items-center gap-1">
+                {[...Array(5)].map((_, i) => (
+                  <Star
+                    key={i}
+                    className={`h-5 w-5 ${
+                      i < Math.floor(rating)
+                        ? 'fill-amber-400 text-amber-400'
+                        : 'text-gray-300'
+                    }`}
+                  />
+                ))}
+                <span className="text-lg font-bold ml-2" style={{ color: 'var(--sfp-navy)' }}>{rating}/5</span>
+              </div>
             </div>
-          </div>
-        )}
-      </blockquote>
+          )}
+        </blockquote>
+      )}
     </div>
   );
 }

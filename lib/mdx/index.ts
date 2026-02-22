@@ -9,6 +9,7 @@ const contentDirectory = path.join(process.cwd(), 'content');
 
 export interface ContentMeta {
   title: string;
+  seoTitle?: string;
   description: string;
   author: string;
   reviewedBy?: string;
@@ -24,11 +25,58 @@ export interface ContentMeta {
   cons?: string[];
   bestFor?: string;
   pricing?: string;
+  currency?: string;
   guarantee?: string;
   faqs?: { question: string; answer: string }[];
   sections?: { id: string; title: string }[];
   featured?: boolean;
   customH1?: boolean;
+  keywords?: string[];
+}
+
+// ── Currency Map ────────────────────────────────────────────
+const MARKET_CURRENCY: Record<string, string> = {
+  us: 'USD',
+  uk: 'GBP',
+  ca: 'CAD',
+  au: 'AUD',
+};
+
+/**
+ * Normalize raw frontmatter data to the canonical ContentMeta schema.
+ * Handles both camelCase (new) and snake_case (legacy) field names,
+ * and flattens nested `schema` objects used by some older MDX files.
+ */
+function normalizeFrontmatter(raw: Record<string, unknown>): ContentMeta {
+  const today = new Date().toISOString().split('T')[0];
+  const schema = (raw.schema || {}) as Record<string, unknown>;
+
+  return {
+    title: String(raw.title || ''),
+    seoTitle: (raw.seoTitle as string) || undefined,
+    description: String(raw.description || ''),
+    author: String(raw.author || 'SmartFinPro Editorial Team'),
+    reviewedBy: (raw.reviewedBy as string) || undefined,
+    publishDate: String(raw.publishDate || raw.date || today),
+    modifiedDate: String(raw.modifiedDate || raw.date || today),
+    category: (raw.category || '') as Category,
+    market: (raw.market || 'us') as Market,
+    rating: (raw.rating as number) ?? (schema.rating as number) ?? undefined,
+    reviewCount: (raw.reviewCount as number) ?? (schema.review_count as number) ?? undefined,
+    affiliateUrl: (raw.affiliateUrl as string) ?? (raw.affiliate_link as string) ?? undefined,
+    affiliateDisclosure: raw.affiliateDisclosure !== false,
+    pros: (raw.pros as string[]) ?? undefined,
+    cons: (raw.cons as string[]) ?? undefined,
+    bestFor: (raw.bestFor as string) ?? undefined,
+    pricing: (raw.pricing as string) ?? undefined,
+    currency: (raw.currency as string) ?? MARKET_CURRENCY[raw.market as string] ?? 'USD',
+    guarantee: (raw.guarantee as string) ?? undefined,
+    faqs: (raw.faqs as ContentMeta['faqs']) ?? undefined,
+    sections: (raw.sections as ContentMeta['sections']) ?? undefined,
+    featured: Boolean(raw.featured),
+    customH1: Boolean(raw.customH1),
+    keywords: (raw.keywords as string[]) ?? undefined,
+  };
 }
 
 export interface ContentItem {
@@ -66,7 +114,7 @@ export async function getContentByMarketAndCategory(
 
     return {
       slug,
-      meta: data as ContentMeta,
+      meta: normalizeFrontmatter(data as Record<string, unknown>),
       content,
       readingTime: readingTime(content),
     };
@@ -89,7 +137,7 @@ export async function getContentBySlug(
 
   const fileContents = fs.readFileSync(filePath, 'utf8');
   const { data, content } = matter(fileContents);
-  const meta = data as ContentMeta;
+  const meta = normalizeFrontmatter(data as Record<string, unknown>);
 
   // Apply freshness override from content_overrides table (build-time)
   if (meta.modifiedDate) {
@@ -125,7 +173,7 @@ export async function getPillarContent(
 
   return {
     slug: 'index',
-    meta: data as ContentMeta,
+    meta: normalizeFrontmatter(data as Record<string, unknown>),
     content,
     readingTime: readingTime(content),
   };

@@ -46,14 +46,14 @@ export async function generateMetadata({
   const alternates = generateAlternates(`/${category}/${slug}`);
 
   return {
-    title: content.meta.title,
+    title: content.meta.seoTitle || content.meta.title,
     description: content.meta.description,
     alternates: {
       canonical: canonicalUrl,
       languages: alternates,
     },
     openGraph: {
-      title: content.meta.title,
+      title: content.meta.seoTitle || content.meta.title,
       description: content.meta.description,
       type: 'article',
       url: canonicalUrl,
@@ -97,8 +97,9 @@ export default async function ContentPage({ params }: ContentPageProps) {
     notFound();
   }
 
-  // For review pages, use the ReviewTemplate
+  // For review pages, use the ReviewTemplate with full MDX rendering
   if (content.meta.rating) {
+    const mdxSource = await serialize(content.content, { mdxOptions: { remarkPlugins: [remarkGfm] } });
     const [relatedArticles, expert] = await Promise.all([
       getRelatedContent(market as Market, category as Category, slug, 3),
       getMarketExpert(market, category),
@@ -108,8 +109,9 @@ export default async function ContentPage({ params }: ContentPageProps) {
       <>
         <ReviewTemplate
           expert={expert}
+          mdxSource={mdxSource}
           review={{
-            title: content.meta.title,
+            title: content.meta.seoTitle || content.meta.title,
             description: content.meta.description,
             productName: content.meta.title.split(' ')[0], // Extract product name
             category: content.meta.category,
@@ -121,6 +123,7 @@ export default async function ContentPage({ params }: ContentPageProps) {
             cons: content.meta.cons || [],
             bestFor: content.meta.bestFor || '',
             pricing: content.meta.pricing || '',
+            currency: content.meta.currency,
             guarantee: content.meta.guarantee,
             publishDate: content.meta.publishDate,
             modifiedDate: content.meta.modifiedDate,
@@ -131,7 +134,7 @@ export default async function ContentPage({ params }: ContentPageProps) {
             sections: content.meta.sections || [],
             testimonials: [],
             competitors: [],
-            content: '', // Will be rendered via MDX below
+            content: '',
           }}
           relatedArticles={relatedArticles}
         />
