@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowRight, Shield, Users, DollarSign, Sparkles } from 'lucide-react';
 
 const NetworkAnimation = dynamic(
-  () => import('@/components/marketing/network-animation').then(mod => ({ default: mod.NetworkAnimation })),
+  () => import('@/components/marketing/network-animation'),
   { ssr: false }
 );
 

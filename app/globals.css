@@ -69,11 +69,11 @@
     --sfp-silo-tint: #D5E8F0;
   }
 
-  /* === Länderspezifische Silo-Akzentfarben === */
-  body.silo-us { --sfp-silo-tint: #D5E8F0; }
-  body.silo-uk { --sfp-silo-tint: #D5F0E0; }
-  body.silo-au { --sfp-silo-tint: #FFF3D5; }
-  body.silo-ca { --sfp-silo-tint: #FFE5E5; }
+  /* === Länderspezifische Silo-Akzentfarben (html[data-silo] = inline script, body.silo-* = SiloClassProvider) === */
+  html[data-silo="us"], body.silo-us { --sfp-silo-tint: #D5E8F0; }
+  html[data-silo="uk"], body.silo-uk { --sfp-silo-tint: #D5F0E0; }
+  html[data-silo="au"], body.silo-au { --sfp-silo-tint: #FFF3D5; }
+  html[data-silo="ca"], body.silo-ca { --sfp-silo-tint: #FFE5E5; }
 
   /* === Global Base Styles === */
   * {
@@ -750,7 +750,7 @@ a:not([href^="/go/"]):not([href^="http"]):hover {
   --sidebar-ring: #1B4F8C;
 }
 
-body.silo-us { --sfp-silo-tint: #D5E8F0; }
-body.silo-uk { --sfp-silo-tint: #D5F0E0; }
-body.silo-au { --sfp-silo-tint: #FFF3D5; }
-body.silo-ca { --sfp-silo-tint: #FFE5E5; }
+html[data-silo="us"], body.silo-us { --sfp-silo-tint: #D5E8F0; }
+html[data-silo="uk"], body.silo-uk { --sfp-silo-tint: #D5F0E0; }
+html[data-silo="au"], body.silo-au { --sfp-silo-tint: #FFF3D5; }
+html[data-silo="ca"], body.silo-ca { --sfp-silo-tint: #FFE5E5; }

@@ -10,7 +10,7 @@ interface NetworkAnimationProps {
  * Abstract SVG network animation symbolizing AI/data flow
  * Pulsating nodes with connecting lines for a premium tech feel
  */
-export function NetworkAnimation({ className = '' }: NetworkAnimationProps) {
+export default function NetworkAnimation({ className = '' }: NetworkAnimationProps) {
   return (
     <div className={`absolute inset-0 overflow-hidden pointer-events-none ${className}`}>
       <svg

@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import { Toaster } from '@/components/ui/sonner';
 import { AnalyticsProvider } from '@/components/providers/analytics-provider';
+import SiloClassProvider from '@/components/providers/silo-class-provider';
 import { generateOrganizationSchema, generateWebsiteSchema } from '@/lib/seo/schema';
 
 const inter = Inter({
@@ -74,6 +75,13 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="https://images.smartfinpro.com" />
         {/* Preconnect to analytics */}
         <link rel="dns-prefetch" href="https://plausible.io" />
+        {/* Inline silo detection — sets html[data-silo] immediately (no body mutation = no hydration mismatch).
+            CSS uses html[data-silo="uk"] selectors. SiloClassProvider adds body.silo-* after hydration for JS consumers. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){var p=window.location.pathname;var m=p.startsWith('/uk')?'uk':p.startsWith('/ca')?'ca':p.startsWith('/au')?'au':'us';document.documentElement.dataset.silo=m})();`,
+          }}
+        />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -88,6 +96,7 @@ export default function RootLayout({
         />
       </head>
       <body className={`${inter.variable} font-sans antialiased`}>
+        <SiloClassProvider />
         <AnalyticsProvider>
           {children}
         </AnalyticsProvider>
