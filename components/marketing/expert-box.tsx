@@ -26,13 +26,14 @@ export function ExpertBox({
 }: ExpertBoxProps) {
   return (
     <div
-      className={`glass-card my-10 p-8 rounded-2xl ${
+      className={`rounded-2xl border bg-white shadow-sm my-10 p-8 ${
         variant === 'highlight'
-          ? 'border-emerald-500/40 shadow-lg shadow-emerald-500/10'
+          ? 'border-2 shadow-md'
           : variant === 'minimal'
-          ? 'border-slate-700/50'
-          : ''
+          ? 'border-gray-200'
+          : 'border-gray-200'
       }`}
+      style={variant === 'highlight' ? { borderColor: 'var(--sfp-gold)' } : {}}
     >
       <div className="flex items-start gap-5">
         {/* Expert Avatar */}
@@ -43,11 +44,12 @@ export function ExpertBox({
               alt={name}
               width={72}
               height={72}
-              className="rounded-full border-2 border-emerald-500/50"
+              className="rounded-full border-2"
+              style={{ borderColor: 'var(--sfp-navy)' }}
             />
           ) : (
-            <div className="w-[72px] h-[72px] rounded-full bg-gradient-to-br from-emerald-500/20 to-blue-500/20 flex items-center justify-center border border-emerald-500/30">
-              <Award className="h-9 w-9 text-emerald-400" />
+            <div className="w-[72px] h-[72px] rounded-full flex items-center justify-center border border-gray-200" style={{ background: 'var(--sfp-sky)' }}>
+              <Award className="h-9 w-9" style={{ color: 'var(--sfp-navy)' }} />
             </div>
           )}
         </div>
@@ -55,20 +57,21 @@ export function ExpertBox({
         {/* Expert Info */}
         <div className="flex-1">
           <div className="flex items-center gap-3 flex-wrap mb-2">
-            <h4 className="font-bold text-xl text-white">{name}</h4>
-            <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-xs">
+            <h4 className="font-bold text-xl" style={{ color: 'var(--sfp-ink)' }}>{name}</h4>
+            <Badge className="text-xs border" style={{ background: 'rgba(26,107,58,0.08)', color: 'var(--sfp-green)', borderColor: 'rgba(26,107,58,0.2)' }}>
               <Shield className="h-3 w-3 mr-1" />
               Verified Expert
             </Badge>
           </div>
-          <p className="text-slate-400 mb-4">{title}</p>
+          <p style={{ color: 'var(--sfp-slate)' }} className="mb-4">{title}</p>
           <div className="flex flex-wrap gap-2">
             {credentials.map((cred) => (
               <span
                 key={cred}
-                className="inline-flex items-center gap-1.5 text-xs bg-slate-800/50 text-slate-300 px-3 py-1.5 rounded-full border border-slate-700/50"
+                className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border border-gray-200"
+                style={{ background: 'var(--sfp-gray)', color: 'var(--sfp-ink)' }}
               >
-                <CheckCircle className="h-3 w-3 text-emerald-400" />
+                <CheckCircle className="h-3 w-3" style={{ color: 'var(--sfp-green)' }} />
                 {cred}
               </span>
             ))}
@@ -77,12 +80,12 @@ export function ExpertBox({
       </div>
 
       {/* Quote */}
-      <blockquote className="relative pl-5 border-l-4 border-emerald-500/50 mt-6">
-        <Quote className="absolute -left-4 -top-2 h-7 w-7 text-emerald-500/30 bg-slate-900 rounded" />
-        <p className="italic text-slate-300 text-lg leading-relaxed">&ldquo;{quote}&rdquo;</p>
+      <blockquote className="relative pl-5 border-l-4 mt-6" style={{ borderColor: 'var(--sfp-navy)' }}>
+        <Quote className="absolute -left-4 -top-2 h-7 w-7 rounded" style={{ color: 'rgba(27,79,140,0.3)', background: 'white' }} />
+        <p className="italic font-serif text-lg leading-relaxed" style={{ color: 'var(--sfp-ink)' }}>&ldquo;{quote}&rdquo;</p>
         {rating && (
           <div className="flex items-center gap-3 mt-4">
-            <span className="text-sm font-medium text-slate-400">Expert Rating:</span>
+            <span className="text-sm font-medium" style={{ color: 'var(--sfp-slate)' }}>Expert Rating:</span>
             <div className="flex items-center gap-1">
               {[...Array(5)].map((_, i) => (
                 <Star
@@ -90,11 +93,11 @@ export function ExpertBox({
                   className={`h-5 w-5 ${
                     i < Math.floor(rating)
                       ? 'fill-amber-400 text-amber-400'
-                      : 'text-slate-700'
+                      : 'text-gray-300'
                   }`}
                 />
               ))}
-              <span className="text-lg font-bold gradient-text ml-2">{rating}/5</span>
+              <span className="text-lg font-bold ml-2" style={{ color: 'var(--sfp-navy)' }}>{rating}/5</span>
             </div>
           </div>
         )}
@@ -113,21 +116,21 @@ interface ExpertEndorsementProps {
 
 export function ExpertEndorsement({ name, title, verdict, rating }: ExpertEndorsementProps) {
   return (
-    <div className="glass-card flex items-center gap-4 p-5 rounded-xl border-emerald-500/30 my-6 hover:border-emerald-500/50 transition-all">
+    <div className="rounded-xl border border-gray-200 bg-white shadow-sm flex items-center gap-4 p-5 my-6 hover:shadow-md transition-all">
       <div className="shrink-0">
-        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-500/20 to-blue-500/20 flex items-center justify-center border border-emerald-500/30">
-          <CheckCircle className="h-6 w-6 text-emerald-400" />
+        <div className="w-12 h-12 rounded-full flex items-center justify-center border border-gray-200" style={{ background: 'var(--sfp-sky)' }}>
+          <CheckCircle className="h-6 w-6" style={{ color: 'var(--sfp-green)' }} />
         </div>
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-base font-semibold text-white">
-          {name} <span className="text-slate-400 font-normal">({title})</span>
+        <p className="text-base font-semibold" style={{ color: 'var(--sfp-ink)' }}>
+          {name} <span style={{ color: 'var(--sfp-slate)' }} className="font-normal">({title})</span>
         </p>
-        <p className="text-sm text-emerald-300/80 italic mt-1">&ldquo;{verdict}&rdquo;</p>
+        <p className="text-sm italic font-serif mt-1" style={{ color: 'var(--sfp-slate)' }}>&ldquo;{verdict}&rdquo;</p>
       </div>
       <div className="shrink-0 text-right">
-        <div className="text-2xl font-bold gradient-text">{rating}/5</div>
-        <div className="text-xs text-slate-500">Expert Score</div>
+        <div className="text-2xl font-bold" style={{ color: 'var(--sfp-navy)' }}>{rating}/5</div>
+        <div className="text-xs" style={{ color: 'var(--sfp-slate)' }}>Expert Score</div>
       </div>
     </div>
   );
@@ -144,18 +147,18 @@ interface TrustAuthorityProps {
 
 export function TrustAuthority({ stats }: TrustAuthorityProps) {
   return (
-    <div className="glass-card grid grid-cols-2 md:grid-cols-4 gap-6 my-10 p-8 rounded-2xl">
+    <div className="rounded-2xl border border-gray-200 bg-white shadow-sm grid grid-cols-2 md:grid-cols-4 gap-6 my-10 p-8">
       {stats.map((stat) => (
         <div key={stat.label} className="text-center group">
           {stat.icon && (
             <div className="flex justify-center mb-3">
-              <div className="w-12 h-12 rounded-xl bg-slate-800/50 flex items-center justify-center group-hover:bg-emerald-500/20 transition-colors">
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center transition-colors" style={{ background: 'var(--sfp-sky)' }}>
                 {stat.icon}
               </div>
             </div>
           )}
-          <div className="text-3xl md:text-4xl font-bold gradient-text mb-1">{stat.value}</div>
-          <div className="text-sm text-slate-400">{stat.label}</div>
+          <div className="text-3xl md:text-4xl font-bold mb-1" style={{ color: 'var(--sfp-navy)' }}>{stat.value}</div>
+          <div className="text-sm" style={{ color: 'var(--sfp-slate)' }}>{stat.label}</div>
         </div>
       ))}
     </div>
@@ -177,32 +180,32 @@ export function MethodologyBox({
   hoursResearch = 100,
 }: MethodologyBoxProps) {
   return (
-    <div className="glass-card my-10 p-8 rounded-2xl">
+    <div className="rounded-2xl border border-gray-200 bg-white shadow-sm my-10 p-8">
       <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
-          <Shield className="h-5 w-5 text-blue-400" />
+        <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: 'var(--sfp-sky)' }}>
+          <Shield className="h-5 w-5" style={{ color: 'var(--sfp-navy)' }} />
         </div>
-        <h4 className="font-bold text-xl text-white">{title}</h4>
+        <h4 className="font-bold text-xl" style={{ color: 'var(--sfp-ink)' }}>{title}</h4>
       </div>
 
       <div className="grid md:grid-cols-2 gap-4 mb-8">
-        <div className="flex items-center gap-4 p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
-          <div className="text-3xl font-bold gradient-text">{hoursResearch}+</div>
-          <div className="text-sm text-slate-400">Hours of Research</div>
+        <div className="flex items-center gap-4 p-4 rounded-xl border border-gray-200" style={{ background: 'var(--sfp-gray)' }}>
+          <div className="text-3xl font-bold" style={{ color: 'var(--sfp-navy)' }}>{hoursResearch}+</div>
+          <div className="text-sm" style={{ color: 'var(--sfp-slate)' }}>Hours of Research</div>
         </div>
-        <div className="flex items-center gap-4 p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
-          <div className="text-3xl font-bold gradient-text">{dataPoints.toLocaleString('en-US')}+</div>
-          <div className="text-sm text-slate-400">Data Points Analyzed</div>
+        <div className="flex items-center gap-4 p-4 rounded-xl border border-gray-200" style={{ background: 'var(--sfp-gray)' }}>
+          <div className="text-3xl font-bold" style={{ color: 'var(--sfp-navy)' }}>{dataPoints.toLocaleString('en-US')}+</div>
+          <div className="text-sm" style={{ color: 'var(--sfp-slate)' }}>Data Points Analyzed</div>
         </div>
       </div>
 
       <ol className="space-y-4">
         {steps.map((step, index) => (
           <li key={index} className="flex items-start gap-4">
-            <span className="shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-emerald-600 text-white flex items-center justify-center text-sm font-bold shadow-lg shadow-emerald-500/25">
+            <span className="shrink-0 w-8 h-8 rounded-lg text-white flex items-center justify-center text-sm font-bold shadow-lg" style={{ background: 'var(--sfp-navy)' }}>
               {index + 1}
             </span>
-            <span className="text-slate-300 pt-1">{step}</span>
+            <span className="pt-1" style={{ color: 'var(--sfp-ink)' }}>{step}</span>
           </li>
         ))}
         </ol>

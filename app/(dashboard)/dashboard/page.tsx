@@ -9,7 +9,7 @@ import {
   AlertCircle,
   Globe,
 } from 'lucide-react';
-import { getDashboardStats, getGlobalMarketIntelligence, TimeRange, TimeComparison, ActionItem } from '@/lib/actions/dashboard';
+import { getDashboardStats, getGlobalMarketIntelligence, TimeRange, TimeComparison, ActionItem, GlobalMarketIntelligence } from '@/lib/actions/dashboard';
 import { getLowPerformancePages, getPerformanceAlertStats } from '@/lib/actions/performance-alerts';
 import { ClicksChart } from '@/components/dashboard/clicks-chart';
 import { RecentClicksLive } from '@/components/dashboard/recent-clicks-live';
@@ -25,13 +25,23 @@ import { MarketHealthGrid } from '@/components/dashboard/market-health-grid';
 import { MarketOpportunities } from '@/components/dashboard/market-opportunities';
 import { WorldMap } from '@/components/dashboard/world-map';
 import { ClickDetailsTable } from '@/components/dashboard/click-details-table';
+import { SystemIntegrityWidget } from '@/components/dashboard/system-integrity-widget';
 import Link from 'next/link';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
+export const maxDuration = 15; // Hard limit: 15 seconds max server render
 
 interface DashboardPageProps {
   searchParams: Promise<{ range?: string }>;
+}
+
+// ── Timeout wrapper: prevents Supabase from hanging indefinitely ──
+function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((resolve) => setTimeout(() => resolve(fallback), ms)),
+  ]);
 }
 
 // Clean card style - white with subtle border and shadow
@@ -95,11 +105,30 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const params = await searchParams;
   const range = (params.range as TimeRange) || '7d';
 
+  // ── 10s timeout per query, empty fallback prevents infinite hang ──
+  const QUERY_TIMEOUT = 10_000;
+
+  const emptyStats = {
+    totalClicks: 0, totalClicksInRange: 0, totalRevenue: 0, activeLinks: 0,
+    conversionRate: '0.00', recentClicks: [], clicksOverTime: [], topLinks: [],
+    geoStats: [], topPages: [], deviceStats: { mobile: 0, desktop: 0, tablet: 0, mobilePercent: 0, desktopPercent: 0, tabletPercent: 0 },
+    funnelData: { clicks: 0, conversions: 0, approvedConversions: 0, approvedRevenue: 0 },
+    scrollDepthStats: [], averageScrollDepth: 0, problemArticles: [],
+    clicksComparison: { current: 0, previous: 0, change: 0, trend: 'neutral' as const },
+    revenueComparison: { current: 0, previous: 0, change: 0, trend: 'neutral' as const },
+    leadsComparison: { current: 0, previous: 0, change: 0, trend: 'neutral' as const },
+    actionItems: [], leadQuality: { totalLeads: 0, avgEngagementScore: 0, highQualityLeads: 0, conversionPotential: 0 },
+    revenueInRange: 0, leadsInRange: 0,
+  };
+
+  const emptyAlertStats = { totalLowPerformancePages: 0, criticalPages: 0, warningPages: 0, potentialLostRevenue: 0 };
+  const emptyMarkets: GlobalMarketIntelligence = { markets: [], opportunities: [], leaderMarket: 'US', totalGlobalRevenue: 0, totalGlobalClicks: 0 };
+
   const [stats, lowPerformancePages, performanceAlertStats, globalMarkets] = await Promise.all([
-    getDashboardStats(range),
-    getLowPerformancePages(),
-    getPerformanceAlertStats(),
-    getGlobalMarketIntelligence(range),
+    withTimeout(getDashboardStats(range), QUERY_TIMEOUT, emptyStats),
+    withTimeout(getLowPerformancePages(), QUERY_TIMEOUT, []),
+    withTimeout(getPerformanceAlertStats(), QUERY_TIMEOUT, emptyAlertStats),
+    withTimeout(getGlobalMarketIntelligence(range), QUERY_TIMEOUT, emptyMarkets),
   ]);
 
   const rangeLabels: Record<TimeRange, string> = {
@@ -220,6 +249,13 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             </Suspense>
           </div>
         )}
+
+        {/* System Integrity */}
+        <div className="mb-8">
+          <Suspense fallback={<Skeleton className="h-64" />}>
+            <SystemIntegrityWidget />
+          </Suspense>
+        </div>
 
         {/* Charts Row */}
         <div className="grid gap-6 lg:grid-cols-3 mb-8">

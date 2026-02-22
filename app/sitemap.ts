@@ -5,7 +5,7 @@ import { markets, marketCategories, Market } from '@/lib/i18n/config';
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://smartfinpro.com';
 
 // Broker review slugs available across all markets
-const brokerSlugs = ['etoro', 'capital-com', 'ibkr', 'investing', 'revolut'];
+const brokerSlugs = ['etoro', 'capital-com', 'ibkr', 'investing', 'revolut', 'ig', 'plus500'];
 
 // Static tool pages (not market-prefixed)
 const toolPages = [
@@ -15,12 +15,60 @@ const toolPages = [
   '/tools/ai-roi-calculator',
   '/tools/loan-calculator',
   '/tools/broker-comparison',
+  '/ca/tools/wealthsimple-calculator',
+  '/au/tools/au-mortgage-calculator',
+  '/uk/tools/isa-tax-savings-calculator',
+  '/tools/credit-card-rewards-calculator',
+  '/tools/debt-payoff-calculator',
+  '/uk/tools/remortgage-calculator',
+  '/tools/credit-score-simulator',
+  '/au/tools/superannuation-calculator',
+  '/ca/tools/tfsa-rrsp-calculator',
+  '/tools/gold-roi-calculator',
+  '/ca/tools/ca-mortgage-affordability-calculator',
 ];
+
+// Cross-market hub pages (not market-prefixed)
+const hubPages = [
+  '/ai-financial-coaching',
+  '/green-finance',
+];
+
+// New Silo specific pages per market
+const siloPages: Record<string, string[]> = {
+  us: [
+    '/credit-repair',
+    '/debt-relief',
+    '/credit-score',
+  ],
+  uk: [
+    '/remortgaging',
+    '/cost-of-living',
+    '/savings',
+  ],
+  au: [
+    '/superannuation',
+    '/gold-investing',
+    '/savings',
+  ],
+  ca: [
+    '/tax-efficient-investing',
+    '/housing',
+  ],
+};
 
 // Other static pages (not market-prefixed)
 const staticPages = [
   '/trading-platforms/tradingview',
   '/downloads/ai-finance-workflow',
+  '/privacy',
+  '/imprint',
+  '/affiliate-disclosure',
+  '/about',
+  '/editorial-policy',
+  '/contact',
+  '/methodology',
+  '/terms',
 ];
 
 function marketUrl(market: string, path: string): string {
@@ -129,7 +177,36 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }
 
   // ============================================================
-  // 6. TOOL PAGES — Priority 0.75
+  // 6. NEW SILO PAGES (Market-specific) — Priority 0.85
+  // ============================================================
+
+  for (const market of markets) {
+    const pages = siloPages[market] || [];
+    for (const path of pages) {
+      entries.push({
+        url: marketUrl(market, path),
+        lastModified: now,
+        changeFrequency: 'weekly',
+        priority: 0.85,
+      });
+    }
+  }
+
+  // ============================================================
+  // 7. CROSS-MARKET HUB PAGES — Priority 0.8
+  // ============================================================
+
+  for (const path of hubPages) {
+    entries.push({
+      url: `${BASE_URL}${path}`,
+      lastModified: now,
+      changeFrequency: 'weekly',
+      priority: 0.8,
+    });
+  }
+
+  // ============================================================
+  // 8. TOOL PAGES — Priority 0.75
   // ============================================================
 
   for (const path of toolPages) {
@@ -142,7 +219,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }
 
   // ============================================================
-  // 7. STATIC PAGES — Priority 0.5-0.6
+  // 9. STATIC PAGES — Priority 0.5-0.6
   // ============================================================
 
   for (const path of staticPages) {

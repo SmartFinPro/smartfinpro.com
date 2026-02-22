@@ -65,13 +65,13 @@ export function NewsletterOptin({
 
   if (status === 'success') {
     return (
-      <Card className={`bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-800 ${className}`}>
+      <Card className={`bg-green-50 border-green-200 ${className}`}>
         <CardContent className="p-6 text-center">
           <CheckCircle className="h-12 w-12 text-green-600 mx-auto mb-4" />
-          <h3 className="text-xl font-bold text-green-800 dark:text-green-200 mb-2">
+          <h3 className="text-xl font-bold text-green-800 mb-2">
             You&apos;re In!
           </h3>
-          <p className="text-green-700 dark:text-green-300 mb-4">
+          <p className="text-green-700 mb-4">
             Check your inbox for the download link.
           </p>
           {leadMagnet?.downloadUrl && (
@@ -95,7 +95,7 @@ export function NewsletterOptin({
             {/* Left: Lead Magnet Preview */}
             {leadMagnet && (
               <div className="flex-shrink-0">
-                <div className="w-32 h-40 bg-white dark:bg-gray-800 rounded-lg shadow-lg flex flex-col items-center justify-center border-2 border-primary/20 relative">
+                <div className="w-32 h-40 bg-white rounded-lg shadow-lg flex flex-col items-center justify-center border-2 border-primary/20 relative">
                   <Badge className="absolute -top-2 -right-2 bg-primary">FREE</Badge>
                   <FileText className="h-10 w-10 text-primary mb-2" />
                   <span className="text-xs font-medium text-center px-2">PDF Guide</span>
@@ -336,11 +336,11 @@ export function ExitIntentPopup({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 animate-in fade-in duration-300">
-      <div className="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden animate-in zoom-in-95 duration-300">
+      <div className="relative bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden animate-in zoom-in-95 duration-300">
         {/* Close button */}
         <button
           onClick={() => setIsVisible(false)}
-          className="absolute top-4 right-4 p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full z-10"
+          className="absolute top-4 right-4 p-2 hover:bg-gray-100 rounded-full z-10"
           aria-label="Close"
         >
           <X className="h-5 w-5" />

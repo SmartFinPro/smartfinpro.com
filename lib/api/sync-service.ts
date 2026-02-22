@@ -308,8 +308,12 @@ export async function processWebhook(
     ...(connectorConfig.config as Record<string, unknown>),
   });
 
-  // Verify webhook signature if provided
-  if (signature && connector.verifyWebhookSignature) {
+  // Verify webhook signature — mandatory when connector supports it
+  if (connector.verifyWebhookSignature) {
+    if (!signature) {
+      result.errors.push('Missing webhook signature');
+      return result;
+    }
     const payloadString = typeof payload === 'string' ? payload : JSON.stringify(payload);
     if (!connector.verifyWebhookSignature(payloadString, signature)) {
       result.errors.push('Invalid webhook signature');

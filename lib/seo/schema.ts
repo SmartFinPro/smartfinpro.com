@@ -28,7 +28,7 @@ export function generateWebsiteSchema() {
     '@type': 'WebSite',
     name: 'SmartFinPro',
     url: BASE_URL,
-    description: 'Financial Intelligence for Modern Professionals. Expert reviews, AI-powered tools, and trading platforms trusted by 50,000+ professionals.',
+    description: 'Financial Intelligence for Modern Professionals. Expert reviews, AI-powered tools, and trading platform comparisons across 4 global markets.',
     publisher: {
       '@type': 'Organization',
       name: 'SmartFinPro',
@@ -67,9 +67,9 @@ export function generateReviewSchema(review: ReviewData) {
       worstRating: 1,
     },
     author: {
-      '@type': 'Organization',
-      name: 'SmartFinPro',
-      url: BASE_URL,
+      '@type': 'Person',
+      name: review.author || 'SmartFinPro Editorial Team',
+      url: `${BASE_URL}/about`,
     },
     publisher: {
       '@type': 'Organization',
@@ -187,9 +187,9 @@ export function generateArticleSchema(article: {
     description: article.description,
     image: article.image || `${BASE_URL}/og-image.png`,
     author: {
-      '@type': 'Organization',
-      name: article.author,
-      url: BASE_URL,
+      '@type': 'Person',
+      name: article.author || 'SmartFinPro Editorial Team',
+      url: `${BASE_URL}/about`,
     },
     publisher: {
       '@type': 'Organization',
@@ -205,5 +205,177 @@ export function generateArticleSchema(article: {
       '@type': 'WebPage',
       '@id': article.url,
     },
+  };
+}
+
+/**
+ * Person Schema - For author/expert profiles
+ * Used to identify individual contributors and experts on the site
+ */
+export function generatePersonSchema(person: {
+  name: string;
+  url?: string;
+  image?: string;
+  jobTitle?: string;
+  description?: string;
+  affiliateLinks?: string[];
+}) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Person',
+    name: person.name,
+    url: person.url || `${BASE_URL}/about`,
+    image: person.image,
+    jobTitle: person.jobTitle || 'Financial Expert',
+    description: person.description,
+    ...(person.affiliateLinks && {
+      affiliation: person.affiliateLinks.map(link => ({
+        '@type': 'Organization',
+        url: link,
+      })),
+    }),
+  };
+}
+
+/**
+ * HowTo Schema - For problem-solution and step-by-step guides
+ * Helps Google display step-by-step guides in SERPs
+ */
+export function generateHowToSchema(howto: {
+  name: string;
+  description: string;
+  estimatedTime: string;
+  image?: string;
+  steps: Array<{
+    name: string;
+    description: string;
+    image?: string;
+  }>;
+}) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'HowTo',
+    name: howto.name,
+    description: howto.description,
+    estimatedTime: howto.estimatedTime,
+    image: howto.image,
+    step: howto.steps.map((step, index) => ({
+      '@type': 'HowToStep',
+      position: index + 1,
+      name: step.name,
+      description: step.description,
+      image: step.image,
+    })),
+  };
+}
+
+/**
+ * FinancialProduct Schema - For comparing financial products
+ * Helps Google understand financial service offerings and features
+ */
+export function generateFinancialProductSchema(product: {
+  name: string;
+  description: string;
+  brand?: string;
+  rating: number;
+  reviewCount: number;
+  price?: string;
+  priceCurrency?: string;
+  features: string[];
+  url?: string;
+  image?: string;
+  areaServed?: string[];
+}) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'FinancialProduct',
+    name: product.name,
+    description: product.description,
+    brand: {
+      '@type': 'Brand',
+      name: product.brand || product.name,
+    },
+    aggregateRating: {
+      '@type': 'AggregateRating',
+      ratingValue: product.rating,
+      bestRating: 5,
+      worstRating: 1,
+      reviewCount: product.reviewCount,
+    },
+    ...(product.price && {
+      offers: {
+        '@type': 'Offer',
+        price: product.price,
+        priceCurrency: product.priceCurrency || 'USD',
+      },
+    }),
+    url: product.url || `${BASE_URL}`,
+    image: product.image || `${BASE_URL}/og-image.png`,
+    areaServed: product.areaServed || ['US', 'UK', 'CA', 'AU'],
+    potentialAction: {
+      '@type': 'UseAction',
+      target: product.url || `${BASE_URL}`,
+    },
+  };
+}
+
+/**
+ * Product Comparison Schema - For comparison matrices
+ * Helps Google understand product comparison context
+ */
+export function generateComparisonTableSchema(comparison: {
+  title: string;
+  description?: string;
+  products: Array<{
+    name: string;
+    rating: number;
+    reviewCount: number;
+    price: string;
+    currency: string;
+  }>;
+}) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'ComparisonTable',
+    name: comparison.title,
+    description: comparison.description,
+    row: comparison.products.map((product, index) => ({
+      '@type': 'TableRow',
+      rowNumber: index + 1,
+      cell: [
+        {
+          '@type': 'Cell',
+          value: product.name,
+        },
+        {
+          '@type': 'Cell',
+          value: `${product.rating}/5 (${product.reviewCount} reviews)`,
+        },
+        {
+          '@type': 'Cell',
+          value: `${product.currency}${product.price}`,
+        },
+      ],
+    })),
+  };
+}
+
+/**
+ * AggregateRating Schema - For standalone rating displays
+ * Helps Google understand rating context on comparison pages
+ */
+export function generateAggregateRatingSchema(rating: {
+  ratingValue: number;
+  reviewCount: number;
+  ratedBy?: string;
+}) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'AggregateRating',
+    ratingValue: rating.ratingValue,
+    bestRating: 5,
+    worstRating: 1,
+    reviewCount: rating.reviewCount,
+    ratedBy: rating.ratedBy || 'SmartFinPro',
   };
 }

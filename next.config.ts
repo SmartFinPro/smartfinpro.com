@@ -18,6 +18,12 @@ const nextConfig: NextConfig = {
   },
 
   // ============================================================
+  // Transpile MDX package to avoid Turbopack ESM/CJS chunk errors
+  // Recommended by next-mdx-remote README for Turbopack compat
+  // ============================================================
+  transpilePackages: ['next-mdx-remote'],
+
+  // ============================================================
   // Experimental Features for Performance
   // ============================================================
   experimental: {
@@ -44,9 +50,15 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
 
   // ============================================================
-  // Compression (gzip/brotli handled by Vercel Edge)
+  // Compression (gzip handled by Node.js; Brotli by Cloudflare)
   // ============================================================
   compress: true,
+
+  // ============================================================
+  // Output: Standalone for self-hosted deployment (Cloudways VPS)
+  // Creates a minimal .next/standalone folder with all deps
+  // ============================================================
+  output: 'standalone',
 
   // ============================================================
   // Strict Mode for better React performance
@@ -66,9 +78,9 @@ const nextConfig: NextConfig = {
 
     const ContentSecurityPolicy = `
       default-src 'self';
-      script-src 'self' 'unsafe-inline' 'unsafe-eval' https://plausible.io https://www.googletagmanager.com https://www.google-analytics.com;
+      script-src 'self' 'unsafe-inline' https://plausible.io https://www.googletagmanager.com https://www.google-analytics.com;
       style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
-      img-src 'self' data: blob: https: http:;
+      img-src 'self' data: blob: https:;
       font-src 'self' https://fonts.gstatic.com data:;
       connect-src 'self' https://*.supabase.co wss://*.supabase.co https://plausible.io https://www.google-analytics.com https://api.resend.com https://*.partnerstack.com https://*.awin.com https://*.financeads.net;
       frame-src 'self';

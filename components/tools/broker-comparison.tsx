@@ -229,27 +229,27 @@ export function BrokerComparison() {
   return (
     <div className="max-w-5xl mx-auto">
       {/* Filters */}
-      <div className="rounded-2xl border border-slate-700/40 p-6 mb-8" style={{ background: 'rgba(255,255,255,0.03)' }}>
+      <div className="rounded-2xl border border-gray-200 bg-white shadow-sm p-6 mb-8">
         <div className="flex items-center gap-2 mb-4">
-          <Scale className="h-5 w-5 text-violet-400" />
-          <h3 className="text-lg font-semibold text-white">Filter Brokers</h3>
+          <Scale className="h-5 w-5" style={{ color: 'var(--sfp-navy)' }} />
+          <h3 className="text-lg font-semibold" style={{ color: 'var(--sfp-ink)' }}>Filter Brokers</h3>
         </div>
 
         <div className="grid md:grid-cols-3 gap-6">
           {/* Market Filter */}
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
+            <label className="block text-sm font-medium mb-2" style={{ color: 'var(--sfp-ink)' }}>
               <Globe className="h-4 w-4 inline mr-1" />
               Your Market
             </label>
             <select
               value={selectedMarket}
               onChange={(e) => setSelectedMarket(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-xl border border-slate-700/50 text-white focus:outline-none focus:ring-2 focus:ring-violet-500"
-              style={{ background: 'rgba(255,255,255,0.05)' }}
+              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              style={{ color: 'var(--sfp-ink)' }}
             >
               {FILTER_OPTIONS.markets.map((option) => (
-                <option key={option.value} value={option.value} className="bg-slate-900">
+                <option key={option.value} value={option.value}>
                   {option.label}
                 </option>
               ))}
@@ -258,23 +258,23 @@ export function BrokerComparison() {
 
           {/* Sort By */}
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
+            <label className="block text-sm font-medium mb-2" style={{ color: 'var(--sfp-ink)' }}>
               Sort By
             </label>
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-              className="w-full px-4 py-2.5 rounded-xl border border-slate-700/50 text-white focus:outline-none focus:ring-2 focus:ring-violet-500"
-              style={{ background: 'rgba(255,255,255,0.05)' }}
+              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              style={{ color: 'var(--sfp-ink)' }}
             >
-              <option value="rating" className="bg-slate-900">Highest Rating</option>
-              <option value="minDeposit" className="bg-slate-900">Lowest Deposit</option>
+              <option value="rating">Highest Rating</option>
+              <option value="minDeposit">Lowest Deposit</option>
             </select>
           </div>
 
           {/* Feature Filters */}
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
+            <label className="block text-sm font-medium mb-2" style={{ color: 'var(--sfp-ink)' }}>
               Required Features
             </label>
             <div className="flex flex-wrap gap-2">
@@ -284,10 +284,14 @@ export function BrokerComparison() {
                   onClick={() => toggleFeature(feature.value)}
                   className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
                     selectedFeatures.includes(feature.value)
-                      ? 'bg-violet-500 text-white'
-                      : 'text-slate-400 hover:text-slate-300'
+                      ? 'text-white'
+                      : 'border border-gray-200 hover:border-gray-300'
                   }`}
-                  style={!selectedFeatures.includes(feature.value) ? { background: 'rgba(255,255,255,0.05)' } : undefined}
+                  style={
+                    selectedFeatures.includes(feature.value)
+                      ? { background: 'var(--sfp-navy)', color: '#fff' }
+                      : { color: 'var(--sfp-slate)', background: 'var(--sfp-gray)' }
+                  }
                 >
                   {feature.label}
                 </button>
@@ -299,8 +303,8 @@ export function BrokerComparison() {
 
       {/* Results Count */}
       <div className="flex justify-between items-center mb-4">
-        <p className="text-sm text-slate-400">
-          Showing <strong className="text-white">{filteredBrokers.length}</strong> of {BROKERS.length} brokers
+        <p className="text-sm" style={{ color: 'var(--sfp-slate)' }}>
+          Showing <strong style={{ color: 'var(--sfp-ink)' }}>{filteredBrokers.length}</strong> of {BROKERS.length} brokers
         </p>
       </div>
 
@@ -309,33 +313,38 @@ export function BrokerComparison() {
         {filteredBrokers.map((broker, index) => (
           <div
             key={broker.id}
-            className="rounded-2xl border border-slate-700/40 overflow-hidden transition-all hover:border-slate-600/60"
-            style={{ background: 'rgba(255,255,255,0.03)' }}
+            className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden transition-all hover:shadow-md"
           >
             {/* Main Info */}
             <div className="p-6">
               <div className="flex items-start justify-between gap-4">
                 {/* Broker Info */}
                 <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-xl flex items-center justify-center text-lg font-bold" style={{ background: 'rgba(139,92,246,0.15)', color: '#a78bfa' }}>
+                  <div
+                    className="w-12 h-12 rounded-xl flex items-center justify-center text-lg font-bold text-white"
+                    style={{ background: 'var(--sfp-navy)' }}
+                  >
                     {index + 1}
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <h3 className="text-xl font-bold text-white">{broker.name}</h3>
-                      <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: 'rgba(139,92,246,0.15)', color: '#c084fc' }}>
+                      <h3 className="text-xl font-bold" style={{ color: 'var(--sfp-ink)' }}>{broker.name}</h3>
+                      <span
+                        className="text-xs px-2 py-0.5 rounded-full font-medium"
+                        style={{ background: 'var(--sfp-sky)', color: 'var(--sfp-navy)' }}
+                      >
                         {broker.bestFor}
                       </span>
                     </div>
                     <div className="flex items-center gap-4 mt-1">
                       <div className="flex items-center gap-1">
                         <Star className="h-4 w-4 text-amber-400 fill-amber-400" />
-                        <span className="text-sm font-medium text-white">{broker.rating}</span>
-                        <span className="text-xs text-slate-500">({broker.reviews.toLocaleString('en-US')} reviews)</span>
+                        <span className="text-sm font-medium" style={{ color: 'var(--sfp-ink)' }}>{broker.rating}</span>
+                        <span className="text-xs" style={{ color: 'var(--sfp-slate)' }}>({broker.reviews.toLocaleString('en-US')} reviews)</span>
                       </div>
                       <div className="flex items-center gap-1">
-                        <Shield className="h-4 w-4 text-cyan-400" />
-                        <span className="text-xs text-slate-500">{broker.regulation.join(', ')}</span>
+                        <Shield className="h-4 w-4" style={{ color: 'var(--sfp-navy)' }} />
+                        <span className="text-xs" style={{ color: 'var(--sfp-slate)' }}>{broker.regulation.join(', ')}</span>
                       </div>
                     </div>
                   </div>
@@ -343,42 +352,43 @@ export function BrokerComparison() {
 
                 {/* CTA */}
                 <div className="text-right shrink-0">
-                  <Button asChild className="bg-violet-500 hover:bg-violet-600">
+                  <Button asChild className="text-white" style={{ background: 'var(--sfp-gold)' }}>
                     <a href={broker.affiliateLink} target="_blank" rel="noopener noreferrer">
                       Visit Broker
                       <ExternalLink className="h-4 w-4 ml-2" />
                     </a>
                   </Button>
-                  <p className="text-xs text-slate-500 mt-1">
+                  <p className="text-xs mt-1" style={{ color: 'var(--sfp-slate)' }}>
                     Min. deposit: ${broker.minDeposit}
                   </p>
                 </div>
               </div>
 
               {/* Quick Stats */}
-              <div className="grid grid-cols-4 gap-4 mt-6 pt-4 border-t border-slate-700/30">
+              <div className="grid grid-cols-4 gap-4 mt-6 pt-4 border-t border-gray-200">
                 <div>
-                  <p className="text-xs text-slate-500">Min. Deposit</p>
-                  <p className="text-sm font-semibold text-white">${broker.minDeposit}</p>
+                  <p className="text-xs" style={{ color: 'var(--sfp-slate)' }}>Min. Deposit</p>
+                  <p className="text-sm font-semibold" style={{ color: 'var(--sfp-ink)' }}>${broker.minDeposit}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-slate-500">Spreads</p>
-                  <p className="text-sm font-semibold text-white">{broker.spreads}</p>
+                  <p className="text-xs" style={{ color: 'var(--sfp-slate)' }}>Spreads</p>
+                  <p className="text-sm font-semibold" style={{ color: 'var(--sfp-ink)' }}>{broker.spreads}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-slate-500">Leverage</p>
-                  <p className="text-sm font-semibold text-white">{broker.leverage}</p>
+                  <p className="text-xs" style={{ color: 'var(--sfp-slate)' }}>Leverage</p>
+                  <p className="text-sm font-semibold" style={{ color: 'var(--sfp-ink)' }}>{broker.leverage}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-slate-500">Platforms</p>
-                  <p className="text-sm font-semibold text-white">{broker.platforms.slice(0, 2).join(', ')}</p>
+                  <p className="text-xs" style={{ color: 'var(--sfp-slate)' }}>Platforms</p>
+                  <p className="text-sm font-semibold" style={{ color: 'var(--sfp-ink)' }}>{broker.platforms.slice(0, 2).join(', ')}</p>
                 </div>
               </div>
 
               {/* Expand Toggle */}
               <button
                 onClick={() => setExpandedBroker(expandedBroker === broker.id ? null : broker.id)}
-                className="w-full mt-4 pt-4 border-t border-slate-700/30 flex items-center justify-center gap-2 text-sm text-violet-400 hover:text-violet-300 font-medium"
+                className="w-full mt-4 pt-4 border-t border-gray-200 flex items-center justify-center gap-2 text-sm font-medium transition-colors hover:opacity-80"
+                style={{ color: 'var(--sfp-navy)' }}
               >
                 {expandedBroker === broker.id ? (
                   <>
@@ -398,17 +408,17 @@ export function BrokerComparison() {
             {expandedBroker === broker.id && (
               <div className="px-6 pb-6 space-y-4">
                 {/* Features */}
-                <div className="rounded-xl p-4 border border-slate-700/30" style={{ background: 'rgba(255,255,255,0.02)' }}>
-                  <h4 className="text-sm font-medium text-slate-300 mb-3">Features</h4>
+                <div className="rounded-xl p-4 border border-gray-200" style={{ background: 'var(--sfp-gray)' }}>
+                  <h4 className="text-sm font-medium mb-3" style={{ color: 'var(--sfp-ink)' }}>Features</h4>
                   <div className="grid grid-cols-3 gap-2">
                     {Object.entries(broker.features).map(([feature, available]) => (
                       <div key={feature} className="flex items-center gap-2">
                         {available ? (
-                          <Check className="h-4 w-4 text-violet-400" />
+                          <Check className="h-4 w-4" style={{ color: 'var(--sfp-green)' }} />
                         ) : (
-                          <X className="h-4 w-4 text-slate-600" />
+                          <X className="h-4 w-4 text-gray-400" />
                         )}
-                        <span className={`text-xs ${available ? 'text-slate-300' : 'text-slate-600'}`}>
+                        <span className="text-xs" style={{ color: available ? 'var(--sfp-ink)' : 'var(--sfp-slate)' }}>
                           {feature.replace(/([A-Z])/g, ' $1').replace(/^./, (s) => s.toUpperCase())}
                         </span>
                       </div>
@@ -418,29 +428,29 @@ export function BrokerComparison() {
 
                 {/* Pros & Cons */}
                 <div className="grid md:grid-cols-2 gap-4">
-                  <div className="rounded-xl p-4 border border-violet-500/20" style={{ background: 'rgba(139,92,246,0.05)' }}>
-                    <h4 className="text-sm font-medium text-violet-400 mb-2 flex items-center gap-2">
+                  <div className="rounded-xl p-4 border border-green-200" style={{ background: 'rgba(26, 107, 58, 0.04)' }}>
+                    <h4 className="text-sm font-medium mb-2 flex items-center gap-2" style={{ color: 'var(--sfp-green)' }}>
                       <Zap className="h-4 w-4" />
                       Pros
                     </h4>
                     <ul className="space-y-1">
                       {broker.pros.map((pro, i) => (
-                        <li key={i} className="text-xs text-slate-300 flex items-start gap-2">
-                          <Check className="h-3 w-3 mt-0.5 shrink-0 text-violet-400" />
+                        <li key={i} className="text-xs flex items-start gap-2" style={{ color: 'var(--sfp-ink)' }}>
+                          <Check className="h-3 w-3 mt-0.5 shrink-0" style={{ color: 'var(--sfp-green)' }} />
                           {pro}
                         </li>
                       ))}
                     </ul>
                   </div>
-                  <div className="rounded-xl p-4 border border-red-500/20" style={{ background: 'rgba(239,68,68,0.05)' }}>
-                    <h4 className="text-sm font-medium text-red-400 mb-2 flex items-center gap-2">
+                  <div className="rounded-xl p-4 border border-red-200" style={{ background: 'rgba(214, 64, 69, 0.04)' }}>
+                    <h4 className="text-sm font-medium mb-2 flex items-center gap-2" style={{ color: 'var(--sfp-red)' }}>
                       <AlertTriangle className="h-4 w-4" />
                       Cons
                     </h4>
                     <ul className="space-y-1">
                       {broker.cons.map((con, i) => (
-                        <li key={i} className="text-xs text-slate-300 flex items-start gap-2">
-                          <X className="h-3 w-3 mt-0.5 shrink-0 text-red-400" />
+                        <li key={i} className="text-xs flex items-start gap-2" style={{ color: 'var(--sfp-ink)' }}>
+                          <X className="h-3 w-3 mt-0.5 shrink-0" style={{ color: 'var(--sfp-red)' }} />
                           {con}
                         </li>
                       ))}
@@ -454,11 +464,11 @@ export function BrokerComparison() {
       </div>
 
       {/* Risk Disclaimer */}
-      <div className="mt-8 rounded-xl p-4 border border-amber-500/20" style={{ background: 'rgba(245,158,11,0.05)' }}>
+      <div className="mt-8 rounded-xl p-4 border border-amber-200" style={{ background: '#FEF5E7' }}>
         <div className="flex gap-3">
-          <AlertTriangle className="h-5 w-5 text-amber-400 shrink-0 mt-0.5" />
-          <div className="text-xs text-slate-500">
-            <strong className="text-amber-400">Risk Warning:</strong> CFDs are complex instruments and come with a high risk
+          <AlertTriangle className="h-5 w-5 shrink-0 mt-0.5" style={{ color: 'var(--sfp-gold)' }} />
+          <div className="text-xs" style={{ color: 'var(--sfp-slate)' }}>
+            <strong style={{ color: 'var(--sfp-gold)' }}>Risk Warning:</strong> CFDs are complex instruments and come with a high risk
             of losing money rapidly due to leverage. Between 74-89% of retail investor accounts
             lose money when trading CFDs. You should consider whether you understand how CFDs work
             and whether you can afford to take the high risk of losing your money.

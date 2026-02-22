@@ -1,5 +1,7 @@
 'use server';
 
+import 'server-only';
+
 import { createServiceClient } from '@/lib/supabase/server';
 
 // ============================================================
@@ -53,8 +55,15 @@ interface ConversionRecord {
 export async function getLowPerformancePages(): Promise<LowPerformancePage[]> {
   const supabase = createServiceClient();
 
+  // Safe query helper — returns [] if table doesn't exist (pre-migration)
+  const safe = <T>(result: { data: T[] | null; error: { code?: string; message?: string } | null }): T[] => {
+    if (result.error?.code === 'PGRST204' || result.error?.message?.includes('schema cache')) return [];
+    if (result.error) console.warn('[performance-alerts] Query warning:', result.error.message);
+    return result.data || [];
+  };
+
   // Get clicks per affiliate link
-  const { data: clicks } = await supabase
+  const clicksResult = await supabase
     .from('link_clicks')
     .select(`
       link_id,
@@ -67,20 +76,20 @@ export async function getLowPerformancePages(): Promise<LowPerformancePage[]> {
     .not('link_id', 'is', null);
 
   // Get conversions per link
-  const { data: conversions } = await supabase
+  const conversionsResult = await supabase
     .from('conversions')
     .select('link_id')
     .not('link_id', 'is', null);
 
   // Get page views with article info
-  const { data: pageViews } = await supabase
+  const pageViewsResult = await supabase
     .from('page_views')
     .select('page_path, article_slug, page_title')
     .not('article_slug', 'is', null);
 
-  const typedClicks = (clicks || []) as unknown as LinkClickRecord[];
-  const typedConversions = (conversions || []) as unknown as ConversionRecord[];
-  const typedPageViews = (pageViews || []) as unknown as PageViewRecord[];
+  const typedClicks = safe(clicksResult) as unknown as LinkClickRecord[];
+  const typedConversions = safe(conversionsResult) as unknown as ConversionRecord[];
+  const typedPageViews = safe(pageViewsResult) as unknown as PageViewRecord[];
 
   // Aggregate clicks per link
   const clicksPerLink = new Map<string, {

@@ -25,12 +25,11 @@ interface AISavingsCalculatorProps {
 
 const currencyConfig = {
   us: { symbol: '$', locale: 'en-US', name: 'USD' },
-  uk: { symbol: '£', locale: 'en-GB', name: 'GBP' },
+  uk: { symbol: '\u00a3', locale: 'en-GB', name: 'GBP' },
   ca: { symbol: 'C$', locale: 'en-CA', name: 'CAD' },
   au: { symbol: 'A$', locale: 'en-AU', name: 'AUD' },
 };
 
-// Exchange rate multipliers (approximate, for display)
 const rateMultipliers = {
   us: 1,
   uk: 0.79,
@@ -38,10 +37,6 @@ const rateMultipliers = {
   au: 1.53,
 };
 
-/**
- * AI Savings Calculator
- * Interactive ROI calculator showing potential time and cost savings from AI tools
- */
 export function AISavingsCalculator({
   affiliateUrl = '/go/jasper-ai',
   productName = 'Jasper AI',
@@ -56,12 +51,10 @@ export function AISavingsCalculator({
   const currency = currencyConfig[market];
   const rate = rateMultipliers[market];
 
-  // Tracking hooks
   const { trackOpen, trackSliderChange, trackResultView, trackCTAClick } = useCalculatorTracking('ai_savings');
   const visibilityRef = useVisibilityTracking('ai_savings_calculator');
   const hasTrackedOpen = useRef(false);
 
-  // Animate on mount and track view
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsVisible(true);
@@ -73,9 +66,8 @@ export function AISavingsCalculator({
     return () => clearTimeout(timer);
   }, [trackOpen]);
 
-  // Calculate savings
   const calculations = useMemo(() => {
-    const efficiencyGain = 0.40; // 40% time savings (conservative estimate)
+    const efficiencyGain = 0.40;
     const weeklyTimeSaved = weeklyHours * efficiencyGain * teamSize;
     const monthlyTimeSaved = weeklyTimeSaved * 4.33;
     const yearlyTimeSaved = weeklyTimeSaved * 52;
@@ -84,7 +76,6 @@ export function AISavingsCalculator({
     const monthlyCostSavings = monthlyTimeSaved * adjustedRate;
     const yearlyCostSavings = yearlyTimeSaved * adjustedRate;
 
-    // Tool cost estimate (Jasper Team plan)
     const monthlyToolCost = 49 * rate * teamSize;
     const yearlyToolCost = monthlyToolCost * 12;
 
@@ -118,7 +109,6 @@ export function AISavingsCalculator({
     }).format(value);
   };
 
-  // Track result view when calculations change significantly
   useEffect(() => {
     if (isVisible && calculations.netYearlySavings > 0) {
       trackResultView({
@@ -138,27 +128,26 @@ export function AISavingsCalculator({
     >
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
-        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500/20 to-blue-500/20 flex items-center justify-center border border-emerald-500/30">
-          <Calculator className="h-6 w-6 text-emerald-400" />
+        <div className="w-12 h-12 rounded-xl flex items-center justify-center border border-gray-200" style={{ background: 'var(--sfp-sky)' }}>
+          <Calculator className="h-6 w-6" style={{ color: 'var(--sfp-navy)' }} />
         </div>
         <div>
-          <h3 className="text-xl font-bold text-white">AI ROI Calculator</h3>
-          <p className="text-sm text-slate-400">Calculate your potential savings with AI tools</p>
+          <h3 className="text-xl font-bold" style={{ color: 'var(--sfp-ink)' }}>AI ROI Calculator</h3>
+          <p className="text-sm" style={{ color: 'var(--sfp-slate)' }}>Calculate your potential savings with AI tools</p>
         </div>
       </div>
 
-      <div className="glass-card rounded-2xl overflow-hidden border-emerald-500/20">
+      <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
         <div className="grid lg:grid-cols-2 gap-0">
           {/* Input Section */}
-          <div className="p-6 md:p-8 border-b lg:border-b-0 lg:border-r border-slate-700/50">
-            <h4 className="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-6">
+          <div className="p-6 md:p-8 border-b lg:border-b-0 lg:border-r border-gray-200">
+            <h4 className="text-sm font-semibold uppercase tracking-wider mb-6" style={{ color: 'var(--sfp-slate)' }}>
               Your Team Details
             </h4>
 
-            {/* Team Size */}
             <div className="mb-6">
-              <label className="flex items-center gap-2 text-sm text-slate-400 mb-3">
-                <Users className="h-4 w-4 text-emerald-400" />
+              <label className="flex items-center gap-2 text-sm mb-3" style={{ color: 'var(--sfp-slate)' }}>
+                <Users className="h-4 w-4" style={{ color: 'var(--sfp-green)' }} />
                 Team Size
               </label>
               <div className="flex items-center gap-4">
@@ -172,18 +161,17 @@ export function AISavingsCalculator({
                     setTeamSize(value);
                     trackSliderChange('team_size', value);
                   }}
-                  className="flex-1 h-2 bg-slate-700 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:bg-emerald-500 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-lg [&::-webkit-slider-thumb]:shadow-emerald-500/30"
+                  className="flex-1 h-2 bg-gray-200 rounded-full appearance-none cursor-pointer accent-emerald-500"
                 />
-                <div className="w-20 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-center text-white font-bold">
+                <div className="w-20 px-3 py-2 border border-gray-300 rounded-lg text-center font-bold" style={{ color: 'var(--sfp-ink)' }}>
                   {teamSize}
                 </div>
               </div>
             </div>
 
-            {/* Hourly Rate */}
             <div className="mb-6">
-              <label className="flex items-center gap-2 text-sm text-slate-400 mb-3">
-                <DollarSign className="h-4 w-4 text-blue-400" />
+              <label className="flex items-center gap-2 text-sm mb-3" style={{ color: 'var(--sfp-slate)' }}>
+                <DollarSign className="h-4 w-4" style={{ color: 'var(--sfp-navy)' }} />
                 Average Hourly Rate ({currency.symbol})
               </label>
               <div className="flex items-center gap-4">
@@ -198,18 +186,17 @@ export function AISavingsCalculator({
                     setHourlyRate(value);
                     trackSliderChange('hourly_rate', value);
                   }}
-                  className="flex-1 h-2 bg-slate-700 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:bg-blue-500 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-lg [&::-webkit-slider-thumb]:shadow-blue-500/30"
+                  className="flex-1 h-2 bg-gray-200 rounded-full appearance-none cursor-pointer accent-blue-500"
                 />
-                <div className="w-20 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-center text-white font-bold">
+                <div className="w-20 px-3 py-2 border border-gray-300 rounded-lg text-center font-bold" style={{ color: 'var(--sfp-ink)' }}>
                   {currency.symbol}{hourlyRate}
                 </div>
               </div>
             </div>
 
-            {/* Weekly Hours */}
             <div className="mb-6">
-              <label className="flex items-center gap-2 text-sm text-slate-400 mb-3">
-                <Clock className="h-4 w-4 text-violet-400" />
+              <label className="flex items-center gap-2 text-sm mb-3" style={{ color: 'var(--sfp-slate)' }}>
+                <Clock className="h-4 w-4" style={{ color: 'var(--sfp-gold)' }} />
                 Hours Spent on Manual Tasks (per person/week)
               </label>
               <div className="flex items-center gap-4">
@@ -223,18 +210,17 @@ export function AISavingsCalculator({
                     setWeeklyHours(value);
                     trackSliderChange('weekly_hours', value);
                   }}
-                  className="flex-1 h-2 bg-slate-700 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:bg-violet-500 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-lg [&::-webkit-slider-thumb]:shadow-violet-500/30"
+                  className="flex-1 h-2 bg-gray-200 rounded-full appearance-none cursor-pointer accent-amber-500"
                 />
-                <div className="w-20 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-center text-white font-bold">
+                <div className="w-20 px-3 py-2 border border-gray-300 rounded-lg text-center font-bold" style={{ color: 'var(--sfp-ink)' }}>
                   {weeklyHours}h
                 </div>
               </div>
             </div>
 
-            {/* Assumptions Note */}
-            <div className="mt-8 p-4 rounded-xl bg-slate-800/50 border border-slate-700/50">
-              <p className="text-xs text-slate-500 leading-relaxed">
-                <strong className="text-slate-400">Calculation basis:</strong> 40% efficiency gain based on
+            <div className="mt-8 p-4 rounded-xl border border-gray-200" style={{ background: 'var(--sfp-gray)' }}>
+              <p className="text-xs leading-relaxed" style={{ color: 'var(--sfp-slate)' }}>
+                <strong style={{ color: 'var(--sfp-ink)' }}>Calculation basis:</strong> 40% efficiency gain based on
                 average results from finance teams using AI writing tools. Actual results may vary based on
                 use case and implementation.
               </p>
@@ -242,66 +228,60 @@ export function AISavingsCalculator({
           </div>
 
           {/* Results Section */}
-          <div className="p-6 md:p-8 bg-gradient-to-br from-slate-800/50 to-slate-900/50 relative overflow-hidden">
-            {/* Background Glow */}
-            <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-[80px]" />
-            <div className="absolute bottom-0 left-0 w-48 h-48 bg-blue-500/10 rounded-full blur-[60px]" />
-
+          <div className="p-6 md:p-8 relative overflow-hidden" style={{ background: 'var(--sfp-sky)' }}>
             <div className="relative z-10">
-              <h4 className="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-6 flex items-center gap-2">
-                <Sparkles className="h-4 w-4 text-amber-400" />
+              <h4 className="text-sm font-semibold uppercase tracking-wider mb-6 flex items-center gap-2" style={{ color: 'var(--sfp-slate)' }}>
+                <Sparkles className="h-4 w-4" style={{ color: 'var(--sfp-gold)' }} />
                 Your Potential Savings
               </h4>
 
-              {/* Main Savings Display */}
               <div className="mb-8">
-                <div className="text-5xl md:text-6xl font-bold gradient-text mb-2">
+                <div className="text-5xl md:text-6xl font-bold mb-2" style={{ color: 'var(--sfp-navy)' }}>
                   {formatCurrency(calculations.netYearlySavings)}
                 </div>
-                <p className="text-slate-400 text-sm">Annual Net Savings</p>
+                <p className="text-sm" style={{ color: 'var(--sfp-slate)' }}>Annual Net Savings</p>
               </div>
 
-              {/* Stats Grid */}
               <div className="grid grid-cols-2 gap-4 mb-8">
-                <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+                <div className="p-4 rounded-xl border bg-white" style={{ borderColor: 'rgba(26,107,58,0.2)' }}>
                   <div className="flex items-center gap-2 mb-2">
-                    <TrendingUp className="h-4 w-4 text-emerald-400" />
-                    <span className="text-xs text-emerald-400 font-medium">ROI</span>
+                    <TrendingUp className="h-4 w-4" style={{ color: 'var(--sfp-green)' }} />
+                    <span className="text-xs font-medium" style={{ color: 'var(--sfp-green)' }}>ROI</span>
                   </div>
-                  <div className="text-2xl font-bold text-white">{calculations.roi}%</div>
+                  <div className="text-2xl font-bold" style={{ color: 'var(--sfp-ink)' }}>{calculations.roi}%</div>
                 </div>
 
-                <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/20">
+                <div className="p-4 rounded-xl border bg-white" style={{ borderColor: 'rgba(27,79,140,0.2)' }}>
                   <div className="flex items-center gap-2 mb-2">
-                    <Zap className="h-4 w-4 text-blue-400" />
-                    <span className="text-xs text-blue-400 font-medium">Productivity</span>
+                    <Zap className="h-4 w-4" style={{ color: 'var(--sfp-navy)' }} />
+                    <span className="text-xs font-medium" style={{ color: 'var(--sfp-navy)' }}>Productivity</span>
                   </div>
-                  <div className="text-2xl font-bold text-white">+{calculations.productivityGain}%</div>
+                  <div className="text-2xl font-bold" style={{ color: 'var(--sfp-ink)' }}>+{calculations.productivityGain}%</div>
                 </div>
 
-                <div className="p-4 rounded-xl bg-violet-500/10 border border-violet-500/20">
+                <div className="p-4 rounded-xl border bg-white" style={{ borderColor: 'rgba(245,166,35,0.2)' }}>
                   <div className="flex items-center gap-2 mb-2">
-                    <Clock className="h-4 w-4 text-violet-400" />
-                    <span className="text-xs text-violet-400 font-medium">Hours Saved</span>
+                    <Clock className="h-4 w-4" style={{ color: 'var(--sfp-gold)' }} />
+                    <span className="text-xs font-medium" style={{ color: 'var(--sfp-gold)' }}>Hours Saved</span>
                   </div>
-                  <div className="text-2xl font-bold text-white">{calculations.yearlyTimeSaved}h/yr</div>
+                  <div className="text-2xl font-bold" style={{ color: 'var(--sfp-ink)' }}>{calculations.yearlyTimeSaved}h/yr</div>
                 </div>
 
-                <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20">
+                <div className="p-4 rounded-xl border bg-white border-gray-200">
                   <div className="flex items-center gap-2 mb-2">
-                    <BarChart3 className="h-4 w-4 text-amber-400" />
-                    <span className="text-xs text-amber-400 font-medium">Monthly</span>
+                    <BarChart3 className="h-4 w-4" style={{ color: 'var(--sfp-slate)' }} />
+                    <span className="text-xs font-medium" style={{ color: 'var(--sfp-slate)' }}>Monthly</span>
                   </div>
-                  <div className="text-2xl font-bold text-white">{formatCurrency(calculations.netMonthlySavings)}</div>
+                  <div className="text-2xl font-bold" style={{ color: 'var(--sfp-ink)' }}>{formatCurrency(calculations.netMonthlySavings)}</div>
                 </div>
               </div>
 
-              {/* CTA Button */}
               <Button
                 asChild
                 size="lg"
-                className="w-full btn-shimmer bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 border-0 shadow-lg shadow-emerald-500/25 gap-2 h-14 text-base"
+                className="w-full gap-2 h-14 text-base border-0 shadow-lg text-white"
                 onClick={() => trackCTAClick(`start_saving_${productName}`)}
+                style={{ background: 'var(--sfp-gold)' }}
               >
                 <Link href={affiliateUrl} target="_blank" rel="noopener sponsored">
                   Start Saving with {productName}
@@ -309,8 +289,8 @@ export function AISavingsCalculator({
                 </Link>
               </Button>
 
-              <p className="text-center text-xs text-slate-500 mt-3">
-                7-day free trial • No credit card required
+              <p className="text-center text-xs mt-3" style={{ color: 'var(--sfp-slate)' }}>
+                7-day free trial - No credit card required
               </p>
             </div>
           </div>
@@ -320,17 +300,12 @@ export function AISavingsCalculator({
   );
 }
 
-/**
- * Compact inline version for sidebars
- */
 export function AISavingsCalculatorCompact({
   affiliateUrl = '/go/jasper-ai',
   productName = 'Jasper AI',
   market = 'us',
 }: Omit<AISavingsCalculatorProps, 'variant'>) {
   const currency = currencyConfig[market];
-
-  // Fixed quick calculation for 5-person team
   const quickSavings = 45000 * rateMultipliers[market];
 
   const formatCurrency = (value: number) => {
@@ -343,21 +318,22 @@ export function AISavingsCalculatorCompact({
   };
 
   return (
-    <div className="glass-card rounded-xl p-5 my-6">
+    <div className="rounded-xl border border-gray-200 bg-white shadow-sm p-5 my-6">
       <div className="flex items-center gap-2 mb-3">
-        <Calculator className="h-4 w-4 text-emerald-400" />
-        <span className="text-sm font-semibold text-white">Quick ROI Estimate</span>
+        <Calculator className="h-4 w-4" style={{ color: 'var(--sfp-green)' }} />
+        <span className="text-sm font-semibold" style={{ color: 'var(--sfp-ink)' }}>Quick ROI Estimate</span>
       </div>
-      <div className="text-3xl font-bold gradient-text mb-1">
+      <div className="text-3xl font-bold mb-1" style={{ color: 'var(--sfp-navy)' }}>
         {formatCurrency(quickSavings)}+
       </div>
-      <p className="text-xs text-slate-400 mb-4">
+      <p className="text-xs mb-4" style={{ color: 'var(--sfp-slate)' }}>
         Typical annual savings for a 5-person team
       </p>
       <Button
         asChild
         size="sm"
-        className="w-full btn-shimmer bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 border-0 shadow-lg shadow-emerald-500/25 gap-1.5"
+        className="w-full gap-1.5 border-0 shadow-lg text-white"
+        style={{ background: 'var(--sfp-gold)' }}
       >
         <Link href={affiliateUrl} target="_blank" rel="noopener sponsored">
           Calculate Your Savings

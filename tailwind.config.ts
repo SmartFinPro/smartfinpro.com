@@ -1,7 +1,7 @@
 import type { Config } from "tailwindcss";
 
 const config: Config = {
-  darkMode: ["class"],
+  darkMode: ["class"], // Keep for shadcn/ui compatibility, but not used in SmartFinPro
   content: [
     "./pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
@@ -60,6 +60,20 @@ const config: Config = {
           border: "var(--sidebar-border)",
           ring: "var(--sidebar-ring)",
         },
+        // SmartFinPro Brand Colors
+        sfp: {
+          navy: "var(--sfp-navy)",
+          "navy-dark": "var(--sfp-navy-dark)",
+          gold: "var(--sfp-gold)",
+          "gold-dark": "var(--sfp-gold-dark)",
+          green: "var(--sfp-green)",
+          red: "var(--sfp-red)",
+          sky: "var(--sfp-sky)",
+          gray: "var(--sfp-gray)",
+          ink: "var(--sfp-ink)",
+          slate: "var(--sfp-slate)",
+          "silo-tint": "var(--sfp-silo-tint)",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -68,6 +82,7 @@ const config: Config = {
       },
       fontFamily: {
         sans: ["var(--font-inter)", "system-ui", "sans-serif"],
+        serif: ["Georgia", "Lora", "Times New Roman", "serif"],
       },
       keyframes: {
         "accordion-down": {
@@ -78,10 +93,15 @@ const config: Config = {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },
         },
+        fadeSlideUp: {
+          from: { opacity: "0", transform: "translateY(20px)" },
+          to: { opacity: "1", transform: "translateY(0)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "fade-slide-up": "fadeSlideUp 0.4s ease-out both",
       },
     },
   },

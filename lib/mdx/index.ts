@@ -3,6 +3,7 @@ import path from 'path';
 import matter from 'gray-matter';
 import readingTime from 'reading-time';
 import { Market, Category } from '@/lib/i18n/config';
+import { applyFreshnessOverride } from '@/lib/mdx/content-overrides-loader';
 
 const contentDirectory = path.join(process.cwd(), 'content');
 
@@ -27,6 +28,7 @@ export interface ContentMeta {
   faqs?: { question: string; answer: string }[];
   sections?: { id: string; title: string }[];
   featured?: boolean;
+  customH1?: boolean;
 }
 
 export interface ContentItem {
@@ -87,10 +89,19 @@ export async function getContentBySlug(
 
   const fileContents = fs.readFileSync(filePath, 'utf8');
   const { data, content } = matter(fileContents);
+  const meta = data as ContentMeta;
+
+  // Apply freshness override from content_overrides table (build-time)
+  if (meta.modifiedDate) {
+    const urlSlug = market === 'us'
+      ? `/${category}/${slug}`
+      : `/${market}/${category}/${slug}`;
+    meta.modifiedDate = await applyFreshnessOverride(urlSlug, meta.modifiedDate);
+  }
 
   return {
     slug,
-    meta: data as ContentMeta,
+    meta,
     content,
     readingTime: readingTime(content),
   };
@@ -196,13 +207,23 @@ export async function getRelatedContent(
 /**
  * Related category mapping for cross-cluster linking
  */
-const relatedCategories: Record<Category, Category[]> = {
+const relatedCategories: Partial<Record<Category, Category[]>> = {
   'ai-tools': ['trading', 'business-banking'],
   trading: ['forex', 'ai-tools'],
   forex: ['trading', 'ai-tools'],
   cybersecurity: ['ai-tools', 'business-banking'],
   'personal-finance': ['business-banking', 'ai-tools'],
   'business-banking': ['personal-finance', 'ai-tools'],
+  'credit-repair': ['debt-relief', 'credit-score', 'personal-finance'],
+  'debt-relief': ['credit-repair', 'credit-score', 'personal-finance'],
+  'credit-score': ['credit-repair', 'personal-finance'],
+  remortgaging: ['cost-of-living', 'savings', 'personal-finance'],
+  'cost-of-living': ['remortgaging', 'savings'],
+  savings: ['cost-of-living', 'remortgaging', 'personal-finance'],
+  superannuation: ['gold-investing', 'savings', 'personal-finance'],
+  'gold-investing': ['superannuation', 'trading'],
+  'tax-efficient-investing': ['housing', 'personal-finance'],
+  housing: ['tax-efficient-investing', 'personal-finance'],
 };
 
 /**

@@ -44,6 +44,10 @@ faqs:
     answer: "For most Canadian businesses, Wise is better due to lower per-transaction costs. Revolut is better for very high volume (C$200k+/month) where unlimited transfers on Scale plan offset the C$135/month fee."
   - question: "Is Revolut safe in Canada?"
     answer: "Revolut is FINTRAC regulated and safeguards customer funds. However, like Wise, it's not CDIC-insured. Funds are held separately from Revolut's operating capital."
+  - question: "How do I report Revolut Business income for HST/GST filing?"
+    answer: "Report all income received through Revolut on your GST/HST return exactly as you would income from any other bank account. Use the Bank of Canada daily exchange rate for converting foreign currency receipts to CAD."
+  - question: "Does Revolut Business support Interac e-Transfer in Canada?"
+    answer: "Yes, Revolut Business supports receiving Interac e-Transfers with auto-deposit. Sending Interac is available on Grow and Scale plans."
 ---
 
 <TrustAuthority
@@ -127,10 +131,179 @@ Hold balances in 30+ currencies:
 ### 4. Integrations
 
 Connect Revolut to your accounting stack:
-- QuickBooks Online
+- QuickBooks Online (dominant in Canada — native two-way sync)
 - Xero
-- FreshBooks
+- FreshBooks (Canadian-founded — strong integration)
+- Sage Business Cloud
 - Zapier for custom automations
+- Open API for bespoke ERP connections
+
+---
+
+## Canadian Business Features Deep-Dive
+
+### CAD & USD Multi-Currency Accounts
+
+For Canadian businesses, the most valuable Revolut feature is the ability to hold both **CAD and USD balances simultaneously**. Given that roughly 75% of Canadian exports go to the United States, having a dedicated USD account eliminates the chronic pain of CAD-USD conversion fees that Canadian businesses face daily.
+
+With Revolut Business, you receive:
+
+- A **Canadian dollar account** with an institution number, transit number, and account number for receiving domestic EFT payments
+- A **US dollar account** with a routing number and account number, allowing American clients to pay you via domestic ACH transfer (avoiding international wire fees entirely)
+- **EUR, GBP, and 25+ additional currency accounts** with local receiving details where available
+
+This structure means your US client in New York pays you via a standard domestic ACH transfer into your Revolut USD account. The funds arrive in 1-2 business days with zero international wire fees on either side. You then convert to CAD at the mid-market rate (0% markup on Scale, 0.4% on Grow) whenever the exchange rate is favourable.
+
+### EFT and Wire Transfers
+
+Revolut supports both **Electronic Funds Transfer (EFT)** and **wire transfers** for Canadian businesses:
+
+- **EFT payments** (standard domestic transfers) typically settle in 2-3 business days and are free to send on all plans
+- **Wire transfers** for urgent or high-value payments settle same-day or next-day, with fees varying by plan (free on Scale for domestic wires, C$5 on Grow)
+- **International wire transfers** are included in each plan's free transfer allocation (5/month on Free, 50/month on Grow, unlimited on Scale)
+
+### Interac e-Transfer Support
+
+Revolut Business in Canada supports **Interac e-Transfer for receiving payments**. This is a significant advantage for businesses that collect payments from Canadian consumers or small business clients, as Interac e-Transfer is the most widely used peer-to-peer and business payment method in Canada. Key details:
+
+- **Receiving Interac e-Transfers:** Supported — clients can send you Interac e-Transfers directly to your Revolut-linked email or phone number
+- **Sending Interac e-Transfers:** Currently limited — Revolut supports outbound Interac on Grow and Scale plans, though availability may vary
+- **Auto-deposit:** Available, so incoming Interac payments are deposited automatically without needing to answer a security question
+- **Limits:** Standard Interac limits apply (up to C$25,000 per transaction for business accounts, depending on the sender's bank)
+
+---
+
+## Fee Comparison: Revolut vs. Canadian Competitors
+
+Canadian businesses have several options for international and multi-currency banking. Here is how Revolut compares across common business operations:
+
+| Feature | Revolut Free | Revolut Scale | Wise Business | RBC Business | TD Business |
+|---------|-------------|---------------|---------------|--------------|-------------|
+| **Monthly fee** | C$0 | C$135 | C$0 | C$6-44 | C$5-50 |
+| **FX markup (CAD>USD)** | 1.0% | **0%** | 0.4-0.6% | 2.0-2.5% | 2.0-2.5% |
+| **Int'l wire fee** | C$0 (5/mo) | **C$0 (unlimited)** | ~C$4-7 flat | C$30-80 | C$30-80 |
+| **Domestic EFT** | Free | Free | Free | Free | Free |
+| **Interac e-Transfer** | Receive only | Send & receive | Limited | Full | Full |
+| **Physical cards** | 1 | Unlimited | 1 | 1 | 1 |
+| **Virtual cards** | 3 | Unlimited | Unlimited | 0 | 0 |
+| **CDIC insured** | No | No | No | **Yes (C$100k)** | **Yes (C$100k)** |
+| **Credit facilities** | No | No | No | **Yes** | **Yes** |
+| **Branch access** | No | No | No | **Yes** | **Yes** |
+
+<Tip>
+**Hybrid Approach:** Many Canadian businesses maintain an RBC or TD account for domestic banking, CDIC insurance, and credit facilities, while using Revolut or Wise for international transfers. This gives you the best of both worlds — deposit protection for your CAD reserves and low-cost FX for international payments.
+</Tip>
+
+The savings are substantial for businesses with significant cross-border activity. A Canadian company sending C$100,000/month to US suppliers would pay approximately:
+
+| Provider | Monthly Cost (FX + fees) | Annual Cost |
+|----------|--------------------------|-------------|
+| **Revolut Scale** | C$135 (plan fee only) | **C$1,620** |
+| **Wise Business** | ~C$500-600 | C$6,000-7,200 |
+| **RBC Business** | ~C$2,200-2,800 | C$26,400-33,600 |
+| **TD Business** | ~C$2,200-2,800 | C$26,400-33,600 |
+
+---
+
+## FINTRAC Compliance Deep-Dive
+
+### Money Services Business Registration
+
+Revolut is registered with FINTRAC (Financial Transactions and Reports Analysis Centre of Canada) as a **Money Services Business (MSB)**. This registration is mandatory for any entity that provides foreign exchange dealing, money transfer, or payment services in Canada. As an MSB, Revolut must:
+
+- **Report large cash transactions** (C$10,000 or more) to FINTRAC
+- **Report suspicious transactions** regardless of amount
+- **Maintain records** of all transactions for a minimum of 5 years
+- **Implement a compliance program** with designated compliance officers, internal policies, risk assessments, and ongoing staff training
+
+| FINTRAC Requirement | Revolut Status |
+|---------------------|---------------|
+| **MSB Registration** | Active and current |
+| **Compliance Program** | Designated compliance officer in place |
+| **Large Transaction Reporting** | Automated for C$10,000+ |
+| **Suspicious Transaction Reporting** | AI-monitored + manual review |
+| **Record Retention** | 5+ year retention policy |
+| **Third-Party Determination** | Due diligence procedures active |
+
+### Anti-Money Laundering Procedures
+
+When you open a Revolut Business account in Canada, you go through a **Know Your Business (KYB)** process that includes:
+
+- **Business identity verification** — corporate registration documents, articles of incorporation
+- **Beneficial ownership disclosure** — identification of all individuals who own 25% or more of the business
+- **Director and officer identification** — government-issued photo ID for all directors
+- **Source of funds verification** — documentation of how the business generates revenue
+- **Ongoing transaction monitoring** — AI-driven systems continuously monitor for unusual patterns, with manual escalation for flagged activity
+
+### Client Identification Requirements
+
+For each authorised user on a Revolut Business account, FINTRAC requires **dual-method identity verification**:
+
+1. **Government-issued photo ID** — Canadian passport, provincial driver's licence, or permanent resident card
+2. **Proof of address** — utility bill, bank statement, or CRA notice of assessment dated within the last 3 months
+
+Revolut handles most of this verification digitally through the app, using document scanning and selfie verification. The process typically takes 10-15 minutes per user.
+
+---
+
+## Canadian Tax Implications
+
+### Reporting Revolut Business Income for CRA
+
+All income received through your Revolut Business account is **taxable in Canada** and must be reported to the Canada Revenue Agency (CRA). This applies regardless of the currency in which payments are received. Key reporting considerations:
+
+- **Business income** received in foreign currencies must be converted to CAD at the **Bank of Canada daily exchange rate** on the date received (not the rate Revolut gives you when you convert)
+- **Multi-currency balances** do not create a taxable event until converted — holding USD in your Revolut account is not a disposition
+- **Revenue reporting** should include all income deposited to Revolut, just as you would report income from any other bank account
+- **Expense reporting** for business expenses paid through Revolut cards should use the CAD equivalent at the date of transaction
+
+### HST/GST Considerations
+
+If your business is registered for GST/HST, transactions processed through Revolut follow the standard rules:
+
+- **Domestic sales** collected through Revolut are subject to GST/HST the same as any other payment method
+- **Exports to non-residents** are generally zero-rated for GST/HST purposes, but you must maintain documentation proving the recipient is outside Canada
+- **Import of services** (e.g., paying for foreign SaaS subscriptions via Revolut card) may trigger **self-assessment** obligations under the reverse charge mechanism for GST/HST registrants
+- **Input tax credits (ITCs)** for business expenses paid via Revolut cards are claimable as usual, provided you retain receipts and the charge meets standard ITC documentation requirements
+
+<Warning>
+**Bookkeeping Tip:** Revolut's accounting integration with QuickBooks and Xero will automatically categorise transactions, but you must manually verify that foreign currency transactions are recorded at the correct CRA-prescribed exchange rate for tax reporting purposes. The rate Revolut applies for conversion may differ from the Bank of Canada daily rate that CRA requires.
+</Warning>
+
+### Foreign Exchange Gains Reporting
+
+Canadian businesses must report **foreign exchange gains and losses** on their tax returns. When you hold foreign currency in your Revolut account and later convert it to CAD at a different rate than you originally received it, the difference is a taxable gain or deductible loss.
+
+- **Capital gains treatment** applies if you hold foreign currency as an investment or passive holding
+- **Income treatment** applies if the foreign currency is held as part of normal business operations (most common for active businesses)
+- Gains and losses below **C$200 per year** on capital account are generally exempt under the CRA's de minimis rule
+- Revolut's transaction history export (CSV or PDF) provides the data you need to calculate FX gains/losses, but your accountant will need to cross-reference with Bank of Canada rates
+
+---
+
+## Who Should Use Revolut Business in Canada
+
+### Ideal For
+
+**Businesses with heavy US trade exposure** benefit the most. If you regularly pay US suppliers, receive USD from American clients, or operate a cross-border e-commerce store, Revolut's dedicated USD account and 0% FX markup on Scale can save thousands annually compared to RBC, TD, or BMO international wire fees and FX spreads.
+
+**Freelancers and consultants with international clients** — particularly those billing in USD, EUR, or GBP — can receive payments via local transfer in the client's currency and convert to CAD at optimal rates. The free plan is often sufficient for freelancers with fewer than 5 international transactions per month.
+
+**E-commerce businesses** selling across North America benefit from holding USD and CAD simultaneously. Receive USD payouts from Amazon.com, Shopify US, or Stripe into your Revolut USD account, and convert to CAD when rates are favourable rather than accepting automatic daily conversions.
+
+**Startups with distributed teams** that need to pay contractors or employees in multiple countries can use batch payments and multi-currency transfers to streamline operations. The unlimited virtual cards on Scale are also valuable for managing SaaS subscriptions across the business.
+
+**Import/export businesses** dealing with suppliers in China, Europe, or Southeast Asia benefit from the ability to hold and pay in 30+ currencies at competitive rates, combined with batch payment tools for scheduled supplier payment runs.
+
+### NOT Ideal For
+
+**Businesses needing credit facilities** should look elsewhere. Revolut does not offer business lines of credit, overdrafts, or commercial loans in Canada. If you need working capital, an RBC, TD, or BMO business account with a credit line is a better foundation.
+
+**Businesses requiring branch banking** will not find what they need. Revolut has no physical branches in Canada. If you need to deposit cheques or cash, you will need a traditional bank account alongside Revolut.
+
+**Primarily domestic businesses** with minimal cross-border activity will find little incremental value in Revolut. A standard Canadian business account with Interac e-Transfer, full EFT support, and CDIC insurance from a Big 5 bank is more practical.
+
+**Businesses in regulated industries** (cannabis, cryptocurrency exchanges, money services) may face enhanced due diligence or outright account restrictions.
 
 ---
 
@@ -227,6 +400,18 @@ Revolut is registered with FINTRAC as a Money Services Business:
     {
       question: "How does Revolut's FX rate compare?",
       answer: "On Scale plan (C$135/mo), you get the real mid-market rate with 0% markup. On Free plan, there's a 1% markup. Grow plan has 0.4% markup—similar to Wise's per-transaction rate."
+    },
+    {
+      question: "How do I report Revolut Business income for HST/GST filing?",
+      answer: "Report all income received through Revolut on your GST/HST return exactly as you would income from any other bank account. Domestic sales are subject to standard GST/HST rates. Exports to non-residents are generally zero-rated. Use the Bank of Canada daily exchange rate for converting foreign currency receipts to CAD for CRA reporting purposes, not the rate Revolut applies during conversion."
+    },
+    {
+      question: "How does CRA treat foreign currency in my Revolut account?",
+      answer: "Holding foreign currency in your Revolut account is not a taxable event. However, when you convert foreign currency to CAD, any gain or loss based on the exchange rate difference from when you received it to when you converted is reportable. For active businesses, these gains and losses are typically treated as business income or expenses. Your accountant should cross-reference Revolut transaction records with Bank of Canada rates."
+    },
+    {
+      question: "Does Revolut Business support Interac e-Transfer in Canada?",
+      answer: "Yes, Revolut Business supports receiving Interac e-Transfers with auto-deposit capability. Sending Interac e-Transfers is available on Grow and Scale plans, though availability may vary. Standard Interac limits apply (up to C$25,000 per transaction for business accounts, depending on the sender's bank)."
     }
   ]}
 />

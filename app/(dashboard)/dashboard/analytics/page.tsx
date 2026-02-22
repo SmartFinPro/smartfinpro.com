@@ -11,22 +11,25 @@ import {
   Target,
   Link2,
   ArrowUpRight,
+  ChevronDown,
 } from 'lucide-react';
 import { getAnalyticsStats } from '@/lib/actions/analytics';
 import { TimeRange } from '@/lib/actions/dashboard';
 import { TimeRangeSelector } from '@/components/dashboard/time-range-selector';
+import { SimulationButton } from '@/components/dashboard/simulation-button';
 import { TrafficChart } from '@/components/dashboard/traffic-chart';
 import { TrafficSources } from '@/components/dashboard/traffic-sources';
 import { BrowserOSStats } from '@/components/dashboard/browser-os-stats';
 import { LandingPagesTable } from '@/components/dashboard/landing-pages-table';
 import { UTMCampaignsTable } from '@/components/dashboard/utm-campaigns-table';
 import { ReferrersList } from '@/components/dashboard/referrers-list';
+import { SiloFilterDropdown } from '@/components/dashboard/silo-filter-dropdown';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 interface AnalyticsPageProps {
-  searchParams: Promise<{ range?: string }>;
+  searchParams: Promise<{ range?: string; silo?: string }>;
 }
 
 // Stat card icon colors
@@ -41,6 +44,7 @@ const iconStyles = {
 export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps) {
   const params = await searchParams;
   const range = (params.range as TimeRange) || '7d';
+  const silo = params.silo || 'all';
   const stats = await getAnalyticsStats(range);
 
   const rangeLabels: Record<TimeRange, string> = {
@@ -60,12 +64,16 @@ export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps
             Traffic Analytics
           </h1>
           <p className="text-slate-500 mt-1">
-            Detailed traffic analysis for {rangeLabels[range]}
+            Detailed traffic analysis for {rangeLabels[range]} {silo !== 'all' && `• ${silo.replace(/-/g, ' ')}`}
           </p>
         </div>
-        <Suspense fallback={<div className="h-10 w-40 bg-slate-200 animate-pulse rounded-lg" />}>
-          <TimeRangeSelector />
-        </Suspense>
+        <div className="flex items-center gap-3 relative">
+          <SimulationButton />
+          <SiloFilterDropdown currentSilo={silo} />
+          <Suspense fallback={<div className="h-10 w-40 bg-slate-200 animate-pulse rounded-lg" />}>
+            <TimeRangeSelector />
+          </Suspense>
+        </div>
       </div>
 
       {/* Overview Stats */}

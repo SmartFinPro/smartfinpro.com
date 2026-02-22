@@ -1,8 +1,17 @@
 'use server';
 
+import 'server-only';
+
+import { createHash } from 'crypto';
 import { createServiceClient } from '@/lib/supabase/server';
 import { headers } from 'next/headers';
 import type { Market } from '@/lib/supabase/types';
+
+// Hash IP address for GDPR compliance — store pseudonymized, not raw PII
+function hashIp(ip: string | null): string | null {
+  if (!ip) return null;
+  return createHash('sha256').update(ip).digest('hex');
+}
 
 // ============================================================
 // Newsletter Subscription
@@ -88,7 +97,7 @@ export async function subscribeToNewsletter(params: SubscribeParams): Promise<Su
         market: params.market || 'us',
         status: 'pending',
         tags: params.tags || [],
-        ip_address: ip,
+        ip_address: hashIp(ip),
         user_agent: userAgent,
         referrer: params.referrer,
         preferences: {},

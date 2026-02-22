@@ -274,6 +274,72 @@ export interface Database {
         };
         Update: Partial<Database['public']['Tables']['api_sync_logs']['Row']>;
       };
+
+      cta_analytics: {
+        Row: {
+          id: string;
+          clicked_at: string;
+          slug: string;
+          market: Market;
+          provider: string;
+          variant: CtaVariant;
+          session_id: string | null;
+          device_type: DeviceType | null;
+          ip_hash: string | null;
+        };
+        Insert: Partial<Database['public']['Tables']['cta_analytics']['Row']> & {
+          slug: string;
+          provider: string;
+          variant: CtaVariant;
+        };
+        Update: Partial<Database['public']['Tables']['cta_analytics']['Row']>;
+      };
+
+      experts: {
+        Row: {
+          id: string;
+          market_slug: Market;
+          category: Category | null;
+          name: string;
+          role: string;
+          bio: string | null;
+          image_url: string | null;
+          credentials: string[];
+          linkedin_url: string | null;
+          verified: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Omit<Database['public']['Tables']['experts']['Row'], 'id' | 'created_at' | 'updated_at'> & {
+          id?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['experts']['Row']>;
+      };
+
+      partner_metadata: {
+        Row: {
+          id: string;
+          provider_name: string;
+          market: Market | null;
+          category: Category;
+          winner_badge: string | null;
+          winner_badge_type: 'editorial' | 'auto' | null;
+          is_featured: boolean;
+          featured_headline: string | null;
+          featured_offer: string | null;
+          featured_expires_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Omit<Database['public']['Tables']['partner_metadata']['Row'], 'id' | 'created_at' | 'updated_at'> & {
+          id?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['partner_metadata']['Row']>;
+      };
     };
 
     Views: {
@@ -333,6 +399,10 @@ export interface Database {
         Args: { days_back?: number };
         Returns: Json;
       };
+      get_provider_click_counts: {
+        Args: { p_category: string; p_market?: string; p_days_back?: number };
+        Returns: { provider_name: string; click_count: number }[];
+      };
     };
 
     Enums: Record<string, never>;
@@ -340,7 +410,7 @@ export interface Database {
 }
 
 // Enum Types
-export type Category = 'ai-tools' | 'cybersecurity' | 'trading' | 'forex' | 'personal-finance' | 'business-banking';
+export type Category = 'ai-tools' | 'cybersecurity' | 'trading' | 'forex' | 'personal-finance' | 'business-banking' | 'credit-repair' | 'debt-relief' | 'credit-score' | 'remortgaging' | 'cost-of-living' | 'savings' | 'superannuation' | 'gold-investing' | 'tax-efficient-investing' | 'housing';
 export type Market = 'us' | 'uk' | 'ca' | 'au';
 export type CommissionType = 'cpa' | 'recurring' | 'hybrid' | 'revenue-share';
 export type DeviceType = 'desktop' | 'mobile' | 'tablet' | 'unknown';
@@ -349,6 +419,7 @@ export type SubscriberStatus = 'pending' | 'confirmed' | 'unsubscribed' | 'bounc
 export type LeadStatus = 'new' | 'contacted' | 'qualified' | 'converted' | 'lost';
 export type AdminRole = 'admin' | 'editor' | 'viewer';
 export type SyncStatus = 'started' | 'completed' | 'failed';
+export type CtaVariant = 'emerald-shimmer' | 'violet-pill' | 'primary' | 'secondary';
 
 // Helper Types
 export type Tables<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Row'];
@@ -367,6 +438,9 @@ export type AnalyticsEvent = Tables<'analytics_events'>;
 export type AdminUser = Tables<'admin_users'>;
 export type Setting = Tables<'settings'>;
 export type ApiSyncLog = Tables<'api_sync_logs'>;
+export type CtaAnalytics = Tables<'cta_analytics'>;
+export type Expert = Tables<'experts'>;
+export type PartnerMetadata = Tables<'partner_metadata'>;
 
 // Dashboard stats type
 export interface DashboardStats {

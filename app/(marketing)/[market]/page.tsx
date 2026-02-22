@@ -13,6 +13,13 @@ import {
   Building,
   DollarSign,
   ArrowRight,
+  CreditCard,
+  Landmark,
+  Home,
+  PiggyBank,
+  Coins,
+  Wallet,
+  Zap,
 } from 'lucide-react';
 import {
   isValidMarket,
@@ -27,22 +34,42 @@ interface MarketPageProps {
   params: Promise<{ market: string }>;
 }
 
-const categoryIcons = {
+const categoryIcons: Record<string, typeof Sparkles> = {
   'ai-tools': Sparkles,
   cybersecurity: Shield,
   trading: TrendingUp,
   forex: DollarSign,
   'personal-finance': DollarSign,
   'business-banking': Building,
+  'credit-repair': CreditCard,
+  'debt-relief': Wallet,
+  'credit-score': Zap,
+  remortgaging: Home,
+  'cost-of-living': PiggyBank,
+  savings: PiggyBank,
+  superannuation: Landmark,
+  'gold-investing': Coins,
+  'tax-efficient-investing': TrendingUp,
+  housing: Home,
 };
 
-const categoryColors = {
+const categoryColors: Record<string, { text: string; bg: string }> = {
   'ai-tools': { text: 'text-purple-500', bg: 'bg-purple-500/10' },
   cybersecurity: { text: 'text-blue-500', bg: 'bg-blue-500/10' },
   trading: { text: 'text-green-500', bg: 'bg-green-500/10' },
   forex: { text: 'text-yellow-500', bg: 'bg-yellow-500/10' },
   'personal-finance': { text: 'text-emerald-500', bg: 'bg-emerald-500/10' },
-  'business-banking': { text: 'text-indigo-500', bg: 'bg-indigo-500/10' },
+  'business-banking': { text: 'text-blue-500', bg: 'bg-blue-500/10' },
+  'credit-repair': { text: 'text-orange-500', bg: 'bg-orange-500/10' },
+  'debt-relief': { text: 'text-red-500', bg: 'bg-red-500/10' },
+  'credit-score': { text: 'text-blue-500', bg: 'bg-blue-500/10' },
+  remortgaging: { text: 'text-teal-500', bg: 'bg-teal-500/10' },
+  'cost-of-living': { text: 'text-amber-500', bg: 'bg-amber-500/10' },
+  savings: { text: 'text-lime-500', bg: 'bg-lime-500/10' },
+  superannuation: { text: 'text-sky-500', bg: 'bg-sky-500/10' },
+  'gold-investing': { text: 'text-yellow-600', bg: 'bg-yellow-600/10' },
+  'tax-efficient-investing': { text: 'text-rose-500', bg: 'bg-rose-500/10' },
+  housing: { text: 'text-stone-500', bg: 'bg-stone-500/10' },
 };
 
 export async function generateMetadata({
@@ -99,7 +126,7 @@ export default async function MarketHomePage({ params }: MarketPageProps) {
 
       {/* UK Broker Hero Slider — Exclusive to UK Market */}
       {marketData === 'uk' && (
-        <section className="py-16 sm:py-20 bg-[#0f0a1a]">
+        <section className="py-16 sm:py-20" style={{ background: 'var(--sfp-gray)' }}>
           <div className="container mx-auto px-4">
             <UKBrokerHeroSlider />
           </div>

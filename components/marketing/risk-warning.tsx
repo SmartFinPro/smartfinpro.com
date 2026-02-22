@@ -39,9 +39,9 @@ export function RiskWarningBox({
 
   if (variant === 'compact') {
     return (
-      <div className="not-prose my-6 rounded-lg border border-red-500/20 bg-red-950/10 px-4 py-3">
-        <p className="text-[11px] leading-relaxed text-slate-400">
-          <span className="font-semibold text-red-400/80">{warning.title}:</span>{' '}
+      <div className="not-prose my-6 rounded-lg border px-4 py-3" style={{ borderColor: 'rgba(214,64,69,0.2)', background: 'rgba(214,64,69,0.04)' }}>
+        <p className="text-xs leading-relaxed" style={{ color: 'var(--sfp-slate)' }}>
+          <span className="font-semibold" style={{ color: 'var(--sfp-red)' }}>{warning.title}:</span>{' '}
           {text}
         </p>
       </div>
@@ -49,16 +49,16 @@ export function RiskWarningBox({
   }
 
   return (
-    <div className="not-prose my-8 rounded-xl border border-red-500/25 bg-gradient-to-r from-red-950/20 via-red-950/10 to-transparent p-5">
+    <div className="not-prose my-8 rounded-xl border p-5" style={{ borderColor: 'rgba(214,64,69,0.2)', background: 'rgba(214,64,69,0.04)' }}>
       <div className="flex gap-3">
         <div className="shrink-0 mt-0.5">
-          <div className="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center">
-            <AlertTriangle className="h-4 w-4 text-red-400" />
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'rgba(214,64,69,0.08)' }}>
+            <AlertTriangle className="h-4 w-4" style={{ color: 'var(--sfp-red)' }} />
           </div>
         </div>
         <div>
-          <h4 className="text-sm font-semibold text-red-400 mb-1.5">{warning.title}</h4>
-          <p className="text-xs leading-relaxed text-slate-400">
+          <h4 className="text-sm font-semibold mb-1.5" style={{ color: 'var(--sfp-red)' }}>{warning.title}</h4>
+          <p className="text-xs leading-relaxed" style={{ color: 'var(--sfp-slate)' }}>
             {text}
           </p>
         </div>

@@ -44,6 +44,10 @@ faqs:
     answer: "For most Australian businesses, Wise is better due to lower per-transaction costs. Revolut is better for very high volume (A$200k+/month) where unlimited transfers on Scale plan offset the A$149/month fee."
   - question: "Is Revolut safe in Australia?"
     answer: "Revolut is AUSTRAC regulated and safeguards customer funds. However, like Wise, it's not an ADI and not covered by the Government Guarantee. Funds are held separately from Revolut's operating capital."
+  - question: "How long do transfers from Revolut to Australian bank accounts take?"
+    answer: "Domestic AUD transfers from Revolut to Australian bank accounts typically arrive within 1-2 business days via standard transfer. Revolut does not currently support NPP instant transfers in Australia, so same-day settlement is not guaranteed."
+  - question: "Does Revolut Business support PayID in Australia?"
+    answer: "Revolut Business does not currently support PayID for sending or receiving payments in Australia. You can only send and receive AUD via standard BSB and account number transfers."
 ---
 
 <TrustAuthority
@@ -123,6 +127,149 @@ Hold balances in 30+ currencies:
 - Approval workflows
 - Spending budgets per employee
 - Real-time expense tracking
+
+### 4. Integrations
+
+Connect Revolut to your accounting stack:
+- Xero (dominant in Australia — native two-way sync)
+- MYOB Business (AU-specific integration)
+- QuickBooks Online
+- Zapier for custom automations
+- Open API for bespoke ERP connections
+
+---
+
+## Australian Business Features Deep-Dive
+
+### Multi-Currency Accounts with AUD as Base
+
+Revolut Business lets you hold balances in **30+ currencies simultaneously** with AUD as your base currency. Each currency sits in its own sub-account, so you can receive payments in USD, EUR, GBP, or NZD without triggering an automatic conversion. This is critical for Australian importers and exporters who want to time their conversions strategically rather than accepting whatever rate their bank offers at the moment of receipt.
+
+When you open a Revolut Business account in Australia, you receive **local account details** in several major markets. You get a UK sort code and account number for GBP, a US routing number and account number for USD, and European IBAN details for EUR. For Australian counterparts, you hold a standard BSB and account number linked to your AUD balance. This means your overseas clients can pay you via local bank transfer in their own currency, eliminating the international wire fees they would otherwise incur.
+
+### Real-Time FX Rate Comparisons Against Big 4 Banks
+
+One of Revolut's strongest selling points for Australian businesses is its foreign exchange pricing. On the Scale plan, you receive the **real mid-market rate with 0% markup** during market hours (Monday to Friday). Even on the Grow plan, the 0.4% markup is dramatically lower than what CBA, Westpac, ANZ, or NAB charge.
+
+To put this in perspective, here is what a typical A$50,000 AUD-to-USD conversion looks like across providers:
+
+| Provider | FX Markup | Cost on A$50,000 | Speed |
+|----------|-----------|-------------------|-------|
+| **Revolut Scale** | 0.00% | **A$0** | Instant |
+| **Revolut Grow** | 0.40% | A$200 | Instant |
+| **Wise Business** | 0.45-0.60% | A$225-300 | 1-2 hours |
+| **CBA Business** | 1.50-3.00% | A$750-1,500 | 1-2 days |
+| **Westpac Business** | 1.50-2.50% | A$750-1,250 | 1-2 days |
+| **ANZ Business** | 1.50-3.00% | A$750-1,500 | 1-2 days |
+
+On a single A$50,000 conversion, a Scale plan user saves between **A$750 and A$1,500** compared to a Big 4 bank. For businesses converting A$200,000 or more per month, the annual savings can exceed **A$36,000** — enough to hire a part-time employee.
+
+<Warning>
+**Weekend & Holiday FX Rates:** Revolut applies a markup of 0.5-1.0% on currency conversions made outside market hours (Friday 23:00 AEST to Sunday 23:00 AEST and on public holidays). Schedule large conversions during weekday trading hours to avoid this surcharge.
+</Warning>
+
+### Batch Payments for Suppliers
+
+Revolut Business supports **batch payments** on Grow and Scale plans, allowing you to upload a CSV file of supplier payments and process them in a single action. This is particularly valuable for Australian businesses that pay international suppliers on regular cycles — for example, a retailer importing goods from China, Vietnam, and Indonesia who needs to pay 20-30 suppliers on the same day each month.
+
+Batch payment features include:
+
+- **CSV upload** with customisable templates for different payment types
+- **Multi-currency batches** — pay some suppliers in USD, others in EUR, and others in CNY in the same batch
+- **Scheduled batches** — set up recurring payment runs on specific dates
+- **Approval workflows** — require a second team member to authorise batches above a threshold you set (e.g., over A$10,000)
+- **Automatic FX conversion** at the time of processing, or from pre-funded currency balances
+
+For Australian businesses dealing with suppliers across Asia-Pacific, the ability to pay in local currencies (CNY, THB, VND, IDR, MYR, SGD) at near-mid-market rates is a significant operational advantage over traditional bank wire transfers.
+
+---
+
+## Fee Comparison: Revolut vs. Competitors for AU Businesses
+
+Beyond the Revolut vs. Wise comparison, Australian businesses should evaluate the full landscape of international business banking options. Here is how Revolut stacks up across common business operations:
+
+| Feature | Revolut Free | Revolut Grow | Revolut Scale | Wise Business | Airwallex |
+|---------|-------------|-------------|---------------|---------------|-----------|
+| **Monthly fee** | A$0 | A$39 | A$149 | A$0 | A$0 |
+| **FX markup** | 1.0% | 0.4% | **0%** | 0.4-0.6% | 0.5-1.0% |
+| **Int'l transfers/mo** | 5 free | 50 free | **Unlimited** | Pay per transfer | Pay per transfer |
+| **Transfer fee (AUD>USD)** | A$0 (within limit) | A$0 (within limit) | A$0 | ~A$4.50 flat | A$0 |
+| **Physical cards** | 1 | 10 | Unlimited | 1 | 0 |
+| **Virtual cards** | 3 | 50 | Unlimited | Unlimited | Unlimited |
+| **Local AUD account** | Yes | Yes | Yes | Yes | Yes |
+| **Local USD account** | Yes | Yes | Yes | Yes | Yes |
+| **Local GBP account** | Yes | Yes | Yes | Yes | Yes |
+| **API access** | Limited | Full | Full | Full | Full |
+| **Batch payments** | No | Yes | Yes | Yes | Yes |
+| **Accounting sync** | Xero, MYOB | Xero, MYOB | Xero, MYOB | Xero, MYOB | Xero, MYOB |
+
+<Tip>
+**Airwallex Note:** Airwallex is an Australian-founded fintech that competes directly with Revolut for high-volume businesses. Its strength is in collecting payments in foreign currencies (especially for e-commerce), while Revolut excels at outbound payments and expense management. Some businesses use both — Airwallex for collections, Revolut for payouts.
+</Tip>
+
+---
+
+## AUSTRAC Compliance & Security
+
+### Regulatory Status
+
+Revolut operates in Australia under AUSTRAC registration as a **remittance dealer**. It holds an **Australian Financial Services License (AFSL)** authorised by ASIC, which permits it to provide designated payment services. This dual registration means Revolut must comply with both AUSTRAC's Anti-Money Laundering and Counter-Terrorism Financing (AML/CTF) Act and ASIC's financial services regulations.
+
+| Regulatory Detail | Status |
+|-------------------|--------|
+| **AUSTRAC Registration** | Registered remittance dealer |
+| **ASIC AFSL** | Authorised for payment services |
+| **AML/CTF Act Compliance** | Fully compliant |
+| **Identity Verification** | 100 point check (passport, driver licence, or Medicare card) |
+| **Transaction Monitoring** | Automated + manual review |
+| **Suspicious Matter Reporting** | Mandatory reporting to AUSTRAC |
+
+### Segregated Funds & Safeguarding
+
+Revolut is **not an Authorised Deposit-taking Institution (ADI)**, which means your funds are not protected by the Australian Government's Financial Claims Scheme (which guarantees up to A$250,000 per depositor at ADIs like CBA, Westpac, ANZ, and NAB). However, Revolut does **safeguard customer funds** by holding them in segregated accounts at licensed ADIs in Australia. This means:
+
+- Customer funds are **separated from Revolut's operating capital**
+- If Revolut were to become insolvent, customer funds would not be available to Revolut's creditors
+- Funds are held at **tier-1 Australian banks** in trust arrangements
+
+For businesses holding large AUD balances (over A$50,000), we recommend keeping only working capital in Revolut and maintaining your primary reserves at an ADI where the Government Guarantee applies.
+
+### Security Features
+
+Revolut Business provides multiple layers of security for Australian businesses:
+
+- **Two-factor authentication (2FA)** via SMS or authenticator app on every login
+- **Biometric security** — Face ID, Touch ID, or fingerprint authentication on mobile
+- **Device-based security** — transactions can only be authorised from registered devices
+- **Real-time fraud monitoring** — AI-powered systems flag unusual transaction patterns and can freeze cards instantly
+- **Card freeze/unfreeze** — instantly lock lost or stolen cards from the app
+- **Location-based security** — optional GPS-based controls that disable card transactions outside specified geographic areas
+- **3D Secure** for online card transactions, adding an extra verification step
+- **IP whitelisting** for API access on Scale plan, preventing unauthorised programmatic access
+
+---
+
+## Who Should Use Revolut Business in Australia
+
+### Ideal For
+
+**Importers and exporters** processing high volumes of international payments benefit the most from Revolut. If your business regularly pays suppliers in China, the US, Europe, or Southeast Asia, the Scale plan's unlimited free transfers and 0% FX markup can save tens of thousands of dollars annually compared to Big 4 bank wire transfers.
+
+**Freelancers and consultants with international clients** who receive payments in USD, GBP, or EUR can hold those currencies and convert at optimal rates rather than accepting their bank's unfavourable conversion at the point of receipt. The free plan is often sufficient for freelancers with fewer than 5 international transactions per month.
+
+**E-commerce businesses** selling on platforms like Amazon, Shopify, or eBay across multiple markets benefit from Revolut's multi-currency accounts. Receive USD from your US store, GBP from your UK store, and EUR from your European store — all into dedicated local accounts — then convert to AUD when rates are favourable.
+
+**Startups with distributed teams** who need to pay contractors or employees in multiple countries can use batch payments and multi-currency transfers to streamline payroll. The unlimited virtual cards on Scale are also valuable for managing SaaS subscriptions across the business.
+
+### NOT Ideal For
+
+**Businesses needing credit facilities** should look elsewhere. Revolut does not offer overdrafts, business loans, or lines of credit in Australia. If you need working capital financing, a Big 4 bank or a specialist lender like Prospa or Moula is a better fit.
+
+**Businesses requiring branch banking** will find Revolut lacking. There are no physical branches in Australia — everything is managed through the app and web dashboard. If you need to deposit cash or cheques, you will need a separate bank account.
+
+**Businesses handling primarily domestic AUD transactions** with minimal international exposure will not benefit enough from Revolut to justify even the free plan's limitations. A standard Australian business bank account from CBA, Westpac, ANZ, or NAB provides better domestic features, including PayID, BPay integration, and Government Guarantee protection.
+
+**Highly regulated industries** (such as gambling, crypto exchanges, or money remittance businesses) may find it difficult to open or maintain a Revolut Business account due to enhanced due diligence requirements.
 
 ---
 
@@ -215,6 +362,14 @@ Revolut is registered with AUSTRAC:
     {
       question: "Can I get a Revolut business credit card in Australia?",
       answer: "Revolut currently offers debit cards only in Australia. The cards are Visa and work globally, but they draw from your account balance rather than extending credit."
+    },
+    {
+      question: "How long do transfers from Revolut to Australian bank accounts take?",
+      answer: "Domestic AUD transfers from Revolut to Australian bank accounts typically arrive within 1-2 business days via standard transfer. Revolut does not currently support NPP (New Payments Platform) instant transfers in Australia, so same-day settlement is not guaranteed. International transfers to Australia from a Revolut account in another currency usually take 1-3 business days depending on the destination bank and currency pair."
+    },
+    {
+      question: "Does Revolut Business support PayID in Australia?",
+      answer: "Revolut Business does not currently support PayID for sending or receiving payments in Australia. You can only send and receive AUD via standard BSB and account number transfers. This is a notable limitation compared to Big 4 banks and some other fintechs like Wise that have started integrating PayID. If instant domestic payments are critical to your operations, you may need to maintain a separate account with a PayID-enabled bank."
     }
   ]}
 />

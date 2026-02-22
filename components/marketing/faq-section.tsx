@@ -35,25 +35,26 @@ export function FAQSection({
         />
       )}
 
-      <h2 className="text-2xl font-bold mb-6 text-white">{title}</h2>
+      <h2 className="text-2xl font-bold mb-6" style={{ color: 'var(--sfp-ink)' }}>{title}</h2>
 
       <div className="space-y-3">
         {faqs.map((faq, index) => (
           <div
             key={index}
-            className="glass-card rounded-xl overflow-hidden"
+            className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden"
           >
             <button
               onClick={() => setOpenIndex(openIndex === index ? null : index)}
-              className="w-full flex items-center justify-between p-5 text-left hover:bg-slate-800/30 transition-colors"
+              className="w-full flex items-center justify-between p-5 text-left hover:bg-gray-50 transition-colors"
               aria-expanded={openIndex === index}
             >
-              <span className="font-medium pr-4 text-slate-200">{faq.question}</span>
+              <span className="font-medium pr-4" style={{ color: 'var(--sfp-ink)' }}>{faq.question}</span>
               <ChevronDown
                 className={cn(
-                  'h-5 w-5 shrink-0 transition-transform duration-200 text-cyan-400',
+                  'h-5 w-5 shrink-0 transition-transform duration-200',
                   openIndex === index && 'rotate-180'
                 )}
+                style={{ color: 'var(--sfp-navy)' }}
               />
             </button>
 
@@ -63,7 +64,7 @@ export function FAQSection({
                 openIndex === index ? 'max-h-[500px]' : 'max-h-0'
               )}
             >
-              <div className="px-5 pb-5 text-slate-400 leading-relaxed">
+              <div className="px-5 pb-5 leading-relaxed" style={{ color: 'var(--sfp-slate)' }}>
                 {faq.answer}
               </div>
             </div>
@@ -83,9 +84,9 @@ export function InlineFAQ({ faqs }: InlineFAQProps) {
   return (
     <div className="space-y-6 my-8">
       {faqs.map((faq, index) => (
-        <div key={index} className="glass-card rounded-xl p-5">
-          <h4 className="font-semibold mb-2 text-white">{faq.question}</h4>
-          <p className="text-slate-400 leading-relaxed">{faq.answer}</p>
+        <div key={index} className="rounded-xl border border-gray-200 bg-white shadow-sm p-5">
+          <h4 className="font-semibold mb-2" style={{ color: 'var(--sfp-ink)' }}>{faq.question}</h4>
+          <p className="leading-relaxed" style={{ color: 'var(--sfp-slate)' }}>{faq.answer}</p>
         </div>
       ))}
     </div>

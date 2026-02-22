@@ -24,6 +24,9 @@
 .DS_Store
 *.pem
 
+# asset processing temp folder
+/temp_uploads
+
 # debug
 npm-debug.log*
 yarn-debug.log*

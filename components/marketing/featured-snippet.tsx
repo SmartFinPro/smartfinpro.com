@@ -191,9 +191,9 @@ interface KeyTakeawaysProps {
  */
 export function KeyTakeaways({ takeaways }: KeyTakeawaysProps) {
   return (
-    <Card className="my-6 border-2 border-green-200 bg-green-50/50 dark:border-green-900 dark:bg-green-950/20">
+    <Card className="my-6 border-2 border-green-200 bg-green-50/50">
       <CardHeader className="pb-2">
-        <CardTitle className="flex items-center gap-2 text-lg text-green-800 dark:text-green-200">
+        <CardTitle className="flex items-center gap-2 text-lg text-green-800">
           <CheckCircle className="h-5 w-5" />
           Key Takeaways
         </CardTitle>
@@ -274,8 +274,8 @@ export function ProsConsSnippet({ productName, pros, cons }: ProsConsSnippetProp
       </CardHeader>
       <CardContent className="p-0">
         <div className="grid md:grid-cols-2">
-          <div className="p-4 bg-green-50/50 dark:bg-green-950/20">
-            <h4 className="font-semibold text-green-700 dark:text-green-300 mb-3 flex items-center gap-2">
+          <div className="p-4 bg-green-50/50">
+            <h4 className="font-semibold text-green-700 mb-3 flex items-center gap-2">
               <CheckCircle className="h-4 w-4" />
               Pros
             </h4>
@@ -288,8 +288,8 @@ export function ProsConsSnippet({ productName, pros, cons }: ProsConsSnippetProp
               ))}
             </ul>
           </div>
-          <div className="p-4 bg-red-50/50 dark:bg-red-950/20">
-            <h4 className="font-semibold text-red-700 dark:text-red-300 mb-3 flex items-center gap-2">
+          <div className="p-4 bg-red-50/50">
+            <h4 className="font-semibold text-red-700 mb-3 flex items-center gap-2">
               <AlertCircle className="h-4 w-4" />
               Cons
             </h4>

@@ -5,25 +5,24 @@ import { syncConnector } from '@/lib/api/sync-service';
 /**
  * Scheduled sync endpoint for daily conversion synchronization.
  *
- * This endpoint should be called by a cron job (e.g., Vercel Cron, GitHub Actions).
- * It syncs all enabled connectors.
+ * Syncs all enabled connectors from Supabase.
  *
- * Security: Requires CRON_SECRET environment variable to match.
+ * Security: Requires CRON_SECRET environment variable via Bearer token.
  *
- * Vercel Cron configuration (add to vercel.json):
- * {
- *   "crons": [{
- *     "path": "/api/cron/sync-conversions",
- *     "schedule": "0 6 * * *"  // Daily at 6 AM UTC
- *   }]
- * }
+ * Self-hosted crontab entry:
+ *   0 6 * * * curl -sf -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/cron/sync-conversions >> /home/master/applications/smartfinpro/logs/cron.log 2>&1
  */
 export async function GET(request: NextRequest) {
-  // Verify cron secret
+  // Verify CRON_SECRET — only Bearer token auth (self-hosted)
   const authHeader = request.headers.get('authorization');
   const cronSecret = process.env.CRON_SECRET;
 
-  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+  if (!cronSecret || cronSecret.startsWith('your-')) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  if (authHeader !== `Bearer ${cronSecret}`) {
+    console.warn('[sync-conversions] Unauthorized cron attempt');
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -52,7 +51,7 @@ export async function GET(request: NextRequest) {
 
     // Sync each connector
     for (const connector of connectors) {
-      console.log(`Starting scheduled sync for: ${connector.name}`);
+      console.log(`[sync-conversions] Starting scheduled sync for: ${connector.name}`);
 
       const result = await syncConnector(connector.name, 'scheduled');
 
@@ -64,7 +63,7 @@ export async function GET(request: NextRequest) {
         errors: result.errors,
       });
 
-      console.log(`Completed sync for ${connector.name}:`, {
+      console.log(`[sync-conversions] Completed sync for ${connector.name}:`, {
         success: result.success,
         synced: result.records_synced,
         skipped: result.records_skipped,
@@ -80,7 +79,7 @@ export async function GET(request: NextRequest) {
       results,
     });
   } catch (error) {
-    console.error('Cron sync error:', error);
+    console.error('[sync-conversions] Cron sync error:', error);
     return NextResponse.json(
       { error: 'Sync failed', message: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
@@ -90,19 +89,12 @@ export async function GET(request: NextRequest) {
 
 // POST for manual trigger from dashboard
 export async function POST(request: NextRequest) {
-  // Same auth check
   const authHeader = request.headers.get('authorization');
   const cronSecret = process.env.CRON_SECRET;
 
-  // For POST requests, also accept requests from authenticated dashboard sessions
-  // (In production, add proper session validation here)
-
-  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
-    // Check if it's a dashboard request with a valid session
-    // For now, we'll allow POST requests without the secret for testing
-    console.warn('POST request without CRON_SECRET - allowing for development');
+  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  // Delegate to GET handler
   return GET(request);
 }

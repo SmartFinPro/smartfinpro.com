@@ -30,7 +30,7 @@ import {
 export const metadata: Metadata = {
   title: 'SmartFinPro - Financial Intelligence for Modern Professionals',
   description:
-    'Discover AI-powered tools, cybersecurity solutions, and financial products trusted by 50,000+ finance professionals. Expert reviews, comparisons, and guides.',
+    'Discover AI-powered tools, cybersecurity solutions, and financial products for modern professionals. Expert reviews, comparisons, and guides across 4 global markets.',
   alternates: {
     canonical: '/',
     languages: {
@@ -51,9 +51,9 @@ const categories = [
     href: '/ai-tools',
     icon: Sparkles,
     featured: ['Jasper AI', 'Systeme.io', 'Copy.ai'],
-    color: 'text-violet-400',
-    glowColor: 'group-hover:shadow-violet-500/20',
-    iconBg: 'bg-violet-500/20',
+    color: 'text-[var(--sfp-navy)]',
+    glowColor: 'group-hover:shadow-md',
+    iconBg: 'bg-[var(--sfp-sky)]',
   },
   {
     title: 'Cybersecurity',
@@ -62,9 +62,9 @@ const categories = [
     href: '/cybersecurity',
     icon: Shield,
     featured: ['Perimeter 81', 'NordVPN Teams', 'Heimdal'],
-    color: 'text-blue-400',
-    glowColor: 'group-hover:shadow-blue-500/20',
-    iconBg: 'bg-blue-500/20',
+    color: 'text-[var(--sfp-navy)]',
+    glowColor: 'group-hover:shadow-md',
+    iconBg: 'bg-[var(--sfp-sky)]',
   },
   {
     title: 'Personal Finance',
@@ -73,9 +73,9 @@ const categories = [
     href: '/personal-finance',
     icon: Wallet,
     featured: ['Personal Loans', 'Credit Score', 'Debt Consolidation'],
-    color: 'text-emerald-400',
-    glowColor: 'group-hover:shadow-emerald-500/20',
-    iconBg: 'bg-emerald-500/20',
+    color: 'text-[var(--sfp-green)]',
+    glowColor: 'group-hover:shadow-md',
+    iconBg: 'bg-[var(--sfp-sky)]',
   },
 ];
 
@@ -87,10 +87,10 @@ const features = [
 ];
 
 const stats = [
-  { value: '50K+', label: 'Active Users', icon: '👥' },
   { value: '100+', label: 'Products Reviewed', icon: '📊' },
-  { value: '4.9', label: 'Average Rating', icon: '⭐' },
-  { value: '$500M+', label: 'Protected Value', icon: '🔒' },
+  { value: '9', label: 'Free Tools', icon: '🧮' },
+  { value: '4', label: 'Global Markets', icon: '🌍' },
+  { value: '50+', label: 'Expert Comparisons', icon: '📋' },
 ];
 
 export default function HomePage() {
@@ -100,22 +100,20 @@ export default function HomePage() {
       <Hero />
 
       {/* Trust Ticker — E-E-A-T Signal */}
-      <div className="bg-slate-900 border-y border-slate-800/50 overflow-hidden py-3">
+      <div className="border-y border-gray-200 overflow-hidden py-3" style={{ background: 'var(--sfp-sky)' }}>
         <div className="trust-marquee">
           {[...Array(2)].map((_, i) => (
             <div key={i} className="flex items-center gap-8 px-4 shrink-0">
               {[
-                'FCA REGULATED',
-                'ASIC VERIFIED',
+                'WE REVIEW FCA-REGULATED BROKERS',
+                'ASIC-LICENSED PARTNERS',
                 'REAL-TIME MARKET DATA',
-                'SOC 2 CERTIFIED',
-                'CIRO COMPLIANT',
+                'CIRO-COMPLIANT PARTNERS',
                 'EXPERT-REVIEWED',
                 'SECURE & ENCRYPTED',
-                'FINRA VERIFIED',
               ].map((item) => (
-                <span key={`${i}-${item}`} className="flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500 whitespace-nowrap">
-                  <span className="w-1 h-1 rounded-full bg-emerald-500/60 shrink-0" />
+                <span key={`${i}-${item}`} className="flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.2em] whitespace-nowrap" style={{ color: 'var(--sfp-slate)' }}>
+                  <span className="w-1 h-1 rounded-full shrink-0" style={{ background: 'var(--sfp-green)' }} />
                   {item}
                 </span>
               ))}
@@ -124,23 +122,19 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* Categories Section - Dark Theme with Glassmorphism */}
-      <section className="py-24 bg-gradient-to-b from-slate-900 via-slate-950 to-slate-900 relative overflow-hidden">
-        {/* Subtle background glow */}
-        <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-emerald-500/5 rounded-full blur-[100px]" />
-        <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-blue-500/5 rounded-full blur-[100px]" />
-
+      {/* Categories Section - Light Trust Design */}
+      <section className="py-24 relative overflow-hidden" style={{ background: 'var(--sfp-gray)' }}>
         <div className="container relative z-10 mx-auto px-4">
           <div className="text-center max-w-2xl mx-auto mb-16">
-            <div className="inline-flex items-center gap-2 rounded-full badge-premium px-4 py-2 mb-6">
-              <Sparkles className="h-4 w-4 text-emerald-400" />
-              <span className="kicker text-slate-300">Explore Categories</span>
+            <div className="inline-flex items-center gap-2 rounded-full px-4 py-2 mb-6 border border-gray-200 bg-white shadow-sm">
+              <Sparkles className="h-4 w-4" style={{ color: 'var(--sfp-gold)' }} />
+              <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--sfp-slate)' }}>Explore Categories</span>
             </div>
-            <h2 className="text-4xl md:text-5xl font-bold mb-6 text-white">
+            <h2 className="text-4xl md:text-5xl font-bold mb-6" style={{ color: 'var(--sfp-ink)' }}>
               Find the Right Tools for{' '}
-              <span className="gradient-text">Your Business</span>
+              <span style={{ color: 'var(--sfp-navy)' }}>Your Business</span>
             </h2>
-            <p className="text-slate-400 text-lg">
+            <p className="text-lg" style={{ color: 'var(--sfp-slate)' }}>
               We test and review the best financial technology products so you
               can make informed decisions.
             </p>
@@ -151,19 +145,18 @@ export default function HomePage() {
               <Link
                 key={category.title}
                 href={category.href}
-                className={`group glass-card rounded-2xl p-8 transition-all duration-500 hover:scale-[1.03] ${category.glowColor} hover:shadow-2xl`}
+                className={`group rounded-2xl border border-gray-200 bg-white shadow-sm p-8 transition-all duration-500 hover:scale-[1.03] ${category.glowColor} hover:shadow-xl`}
               >
-                {/* Icon with glow effect */}
-                <div className={`relative w-14 h-14 rounded-xl ${category.iconBg} flex items-center justify-center mb-6 icon-glow`}>
+                <div className={`relative w-14 h-14 rounded-xl ${category.iconBg} flex items-center justify-center mb-6`}>
                   <category.icon className={`h-7 w-7 ${category.color}`} />
                 </div>
 
-                <h3 className="text-xl font-semibold text-white flex items-center justify-between mb-4">
+                <h3 className="text-xl font-semibold flex items-center justify-between mb-4" style={{ color: 'var(--sfp-ink)' }}>
                   {category.title}
-                  <ArrowRight className="h-5 w-5 text-slate-500 group-hover:text-emerald-400 group-hover:translate-x-1 transition-all" />
+                  <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-all" style={{ color: 'var(--sfp-gold)' }} />
                 </h3>
 
-                <p className="text-slate-400 mb-6 leading-relaxed">
+                <p className="mb-6 leading-relaxed" style={{ color: 'var(--sfp-slate)' }}>
                   {category.description}
                 </p>
 
@@ -172,7 +165,7 @@ export default function HomePage() {
                   {category.featured.map((item) => (
                     <span
                       key={item}
-                      className="text-xs px-3 py-1 rounded-full bg-slate-800/50 text-slate-300 border border-slate-700/50"
+                      className="text-xs px-3 py-1 rounded-full border border-gray-200" style={{ background: 'var(--sfp-sky)', color: 'var(--sfp-slate)' }}
                     >
                       {item}
                     </span>
@@ -184,47 +177,42 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Stats Section - Floating Cards */}
-      <section className="py-16 bg-slate-950 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-emerald-900/10 via-transparent to-transparent" />
-
+      {/* Stats Section - Light Cards */}
+      <section className="py-16 bg-white relative overflow-hidden">
         <div className="container relative z-10 mx-auto px-4">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
             {stats.map((stat) => (
               <div
                 key={stat.label}
-                className="glass-card rounded-2xl p-6 text-center stat-glow group hover:border-emerald-500/30 hover:scale-[1.03] transition-all duration-300"
+                className="rounded-2xl border border-gray-200 bg-white shadow-sm p-6 text-center group hover:shadow-lg hover:scale-[1.03] transition-all duration-300"
               >
                 <div className="text-3xl mb-3">{stat.icon}</div>
-                <div className="text-3xl md:text-4xl font-bold gradient-text mb-2 tabular-nums">
+                <div className="text-3xl md:text-4xl font-bold mb-2 tabular-nums" style={{ color: 'var(--sfp-navy)' }}>
                   {stat.value}
                 </div>
-                <div className="text-sm text-slate-400">{stat.label}</div>
+                <div className="text-sm" style={{ color: 'var(--sfp-slate)' }}>{stat.label}</div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Value Proposition Section - Premium Dark */}
-      <section className="py-24 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 relative overflow-hidden">
-        {/* Background elements */}
-        <div className="absolute top-1/2 left-0 w-[600px] h-[600px] bg-blue-500/5 rounded-full blur-[120px] -translate-y-1/2" />
-
+      {/* Value Proposition Section - Light Trust Design */}
+      <section className="py-24 relative overflow-hidden" style={{ background: 'var(--sfp-gray)' }}>
         <div className="container relative z-10 mx-auto px-4">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             <div>
-              <div className="inline-flex items-center gap-2 rounded-full badge-premium px-4 py-2 mb-6">
-                <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-                <span className="kicker text-slate-300">Why SmartFinPro?</span>
+              <div className="inline-flex items-center gap-2 rounded-full px-4 py-2 mb-6 border border-gray-200 bg-white shadow-sm">
+                <CheckCircle2 className="h-4 w-4" style={{ color: 'var(--sfp-green)' }} />
+                <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--sfp-slate)' }}>Why SmartFinPro?</span>
               </div>
 
-              <h2 className="text-4xl md:text-5xl font-bold mb-6 text-white leading-tight">
-                Make <span className="gradient-text">Smarter</span> Financial Decisions:{' '}
-                <span className="text-slate-300 text-3xl md:text-4xl">Why We Are Your Essential Advantage</span>
+              <h2 className="text-4xl md:text-5xl font-bold mb-6 leading-tight" style={{ color: 'var(--sfp-ink)' }}>
+                Make <span style={{ color: 'var(--sfp-navy)' }}>Smarter</span> Financial Decisions:{' '}
+                <span className="text-3xl md:text-4xl" style={{ color: 'var(--sfp-slate)' }}>Why We Are Your Essential Advantage</span>
               </h2>
 
-              <p className="text-slate-400 text-lg mb-10 leading-relaxed">
+              <p className="text-lg mb-10 leading-relaxed" style={{ color: 'var(--sfp-slate)' }}>
                 We merge rigorous expert analysis with real-world stress testing to deliver
                 the most comprehensive insights into financial technology. You, the trader,
                 are at the core of everything we do. Our mission is simple: identifying
@@ -242,10 +230,10 @@ export default function HomePage() {
                     key={feature.text}
                     className="flex items-center gap-4 group"
                   >
-                    <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center group-hover:bg-emerald-500/20 transition-colors">
-                      <feature.icon className="h-5 w-5 text-emerald-400" />
+                    <div className="w-10 h-10 rounded-lg flex items-center justify-center transition-colors" style={{ background: 'var(--sfp-sky)' }}>
+                      <feature.icon className="h-5 w-5" style={{ color: 'var(--sfp-green)' }} />
                     </div>
-                    <span className="text-slate-300">{feature.text}</span>
+                    <span style={{ color: 'var(--sfp-ink)' }}>{feature.text}</span>
                   </li>
                 ))}
               </ul>
@@ -253,7 +241,8 @@ export default function HomePage() {
               <Button
                 asChild
                 size="lg"
-                className="btn-shimmer h-14 px-8 text-lg bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 border-0 shadow-lg shadow-emerald-500/25"
+                className="h-14 px-8 text-lg border-0 shadow-md hover:shadow-lg text-white"
+                style={{ background: 'var(--sfp-gold)' }}
               >
                 <Link href="/tools">
                   Get Started Free
@@ -264,15 +253,12 @@ export default function HomePage() {
 
             {/* Visual element - Amber CFO Image */}
             <div className="relative hidden lg:block">
-              {/* Ambient glow behind card */}
-              <div className="absolute -inset-6 bg-gradient-to-br from-emerald-500/15 via-blue-500/10 to-violet-500/15 rounded-[2rem] blur-3xl" />
-
-              {/* Glass frame */}
-              <div className="relative rounded-2xl border border-white/10 p-2 shadow-2xl shadow-black/20" style={{ background: 'rgba(255,255,255,0.03)' }}>
+              {/* Light frame */}
+              <div className="relative rounded-2xl border border-gray-200 bg-white p-2 shadow-xl">
                 {/* Image container */}
                 <div className="relative rounded-xl" style={{ overflow: 'hidden' }}>
                   <Image
-                    src="/images/Amber_CFO.png"
+                    src="/images/Amber_CFO.webp"
                     alt="Amber - CFO & Finance Expert"
                     width={500}
                     height={600}
@@ -281,45 +267,45 @@ export default function HomePage() {
                   />
 
                   {/* Gradient overlay — bottom-up so face stays clear */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/20 via-40% to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-white/90 via-white/20 via-40% to-transparent" />
 
                   {/* Name & title overlay */}
                   <div className="absolute bottom-20 left-0 right-0 px-5">
-                    <p className="text-lg font-bold text-white drop-shadow-lg">Amber Richardson</p>
-                    <p className="text-xs text-slate-300/90 drop-shadow-md">CFO & Senior Financial Analyst</p>
+                    <p className="text-lg font-bold drop-shadow-lg" style={{ color: 'var(--sfp-ink)' }}>Amber Richardson</p>
+                    <p className="text-xs drop-shadow-md" style={{ color: 'var(--sfp-slate)' }}>CFO & Senior Financial Analyst</p>
                   </div>
                 </div>
 
-                {/* Frosted stats bar */}
-                <div className="mt-2 rounded-xl border border-white/[0.06] px-4 py-3" style={{ background: 'rgba(255,255,255,0.04)' }}>
+                {/* Stats bar */}
+                <div className="mt-2 rounded-xl border border-gray-200 px-4 py-3" style={{ background: 'var(--sfp-sky)' }}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
-                      <div className="w-9 h-9 rounded-lg bg-emerald-500/15 flex items-center justify-center">
-                        <TrendingUp className="h-4 w-4 text-emerald-400" />
+                      <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: 'var(--sfp-sky)' }}>
+                        <TrendingUp className="h-4 w-4" style={{ color: 'var(--sfp-green)' }} />
                       </div>
                       <div>
-                        <div className="text-sm font-bold text-white tabular-nums">+127%</div>
-                        <div className="text-[10px] text-slate-500">ROI Increase</div>
+                        <div className="text-sm font-bold tabular-nums" style={{ color: 'var(--sfp-ink)' }}>+127%</div>
+                        <div className="text-[10px]" style={{ color: 'var(--sfp-slate)' }}>ROI Increase</div>
                       </div>
                     </div>
-                    <div className="w-px h-8 bg-white/[0.06]" />
+                    <div className="w-px h-8 bg-gray-200" />
                     <div className="flex items-center gap-2.5">
-                      <div className="w-9 h-9 rounded-lg bg-blue-500/15 flex items-center justify-center">
-                        <BarChart3 className="h-4 w-4 text-blue-400" />
+                      <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: 'var(--sfp-sky)' }}>
+                        <BarChart3 className="h-4 w-4" style={{ color: 'var(--sfp-navy)' }} />
                       </div>
                       <div>
-                        <div className="text-sm font-bold text-white tabular-nums">50K+</div>
-                        <div className="text-[10px] text-slate-500">Professionals</div>
+                        <div className="text-sm font-bold tabular-nums" style={{ color: 'var(--sfp-ink)' }}>50K+</div>
+                        <div className="text-[10px]" style={{ color: 'var(--sfp-slate)' }}>Professionals</div>
                       </div>
                     </div>
-                    <div className="w-px h-8 bg-white/[0.06]" />
+                    <div className="w-px h-8 bg-gray-200" />
                     <div className="flex items-center gap-2.5">
-                      <div className="w-9 h-9 rounded-lg bg-violet-500/15 flex items-center justify-center">
-                        <Shield className="h-4 w-4 text-violet-400" />
+                      <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: 'var(--sfp-sky)' }}>
+                        <Shield className="h-4 w-4" style={{ color: 'var(--sfp-navy)' }} />
                       </div>
                       <div>
-                        <div className="text-sm font-bold text-white">SOC 2</div>
-                        <div className="text-[10px] text-slate-500">Certified</div>
+                        <div className="text-sm font-bold" style={{ color: 'var(--sfp-ink)' }}>SOC 2</div>
+                        <div className="text-[10px]" style={{ color: 'var(--sfp-slate)' }}>Certified</div>
                       </div>
                     </div>
                   </div>
@@ -333,20 +319,18 @@ export default function HomePage() {
       {/* ============================================================
           WHAT YOU GET — 4 Feature Cards
           ============================================================ */}
-      <section className="py-24 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 relative overflow-hidden">
-        <div className="absolute top-1/4 right-0 w-[500px] h-[500px] bg-violet-500/5 rounded-full blur-[100px]" />
-
+      <section className="py-24 bg-white relative overflow-hidden">
         <div className="container relative z-10 mx-auto px-4">
           <div className="text-center max-w-2xl mx-auto mb-16">
-            <div className="inline-flex items-center gap-2 rounded-full badge-premium px-4 py-2 mb-6">
-              <Zap className="h-4 w-4 text-cyan-400" />
-              <span className="kicker text-slate-300">What You Get</span>
+            <div className="inline-flex items-center gap-2 rounded-full px-4 py-2 mb-6 border border-gray-200 bg-white shadow-sm">
+              <Zap className="h-4 w-4" style={{ color: 'var(--sfp-gold)' }} />
+              <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--sfp-slate)' }}>What You Get</span>
             </div>
-            <h2 className="text-4xl md:text-5xl font-bold mb-6 text-white">
+            <h2 className="text-4xl md:text-5xl font-bold mb-6" style={{ color: 'var(--sfp-ink)' }}>
               Everything You Need,{' '}
-              <span className="gradient-text">Nothing You Don&apos;t</span>
+              <span style={{ color: 'var(--sfp-navy)' }}>Nothing You Don&apos;t</span>
             </h2>
-            <p className="text-slate-400 text-lg">
+            <p className="text-lg" style={{ color: 'var(--sfp-slate)' }}>
               Built for professionals who demand precision, speed, and transparency.
             </p>
           </div>
@@ -357,40 +341,40 @@ export default function HomePage() {
                 icon: Zap,
                 title: 'Instant Access to Top Tools',
                 description: 'Get up and running in minutes. We pre-vet every platform so you can start with confidence — no guesswork, no wasted time.',
-                color: 'text-emerald-400',
-                bg: 'bg-emerald-500/15',
+                color: 'var(--sfp-gold)',
+                bg: 'var(--sfp-sky)',
               },
               {
                 icon: LineChart,
                 title: 'Expert-Verified Comparisons',
                 description: 'Side-by-side comparisons of 100+ products with transparent scoring. Every review is backed by real-world testing and data.',
-                color: 'text-cyan-400',
-                bg: 'bg-cyan-500/15',
+                color: 'var(--sfp-navy)',
+                bg: 'var(--sfp-sky)',
               },
               {
                 icon: Shield,
                 title: 'A Platform You Can Trust',
                 description: 'We only recommend regulated, SOC 2 certified partners. Your security and data protection are non-negotiable.',
-                color: 'text-violet-400',
-                bg: 'bg-violet-500/15',
+                color: 'var(--sfp-navy)',
+                bg: 'var(--sfp-sky)',
               },
               {
                 icon: Headphones,
                 title: 'World-Class Support & Education',
                 description: 'Access in-depth guides, expert webinars, and dedicated support. We help you make informed decisions at every stage.',
-                color: 'text-amber-400',
-                bg: 'bg-amber-500/15',
+                color: 'var(--sfp-gold)',
+                bg: 'var(--sfp-sky)',
               },
             ].map((feature) => (
               <div
                 key={feature.title}
-                className="glass-card rounded-2xl p-6 group hover:scale-[1.03] transition-all duration-500"
+                className="rounded-2xl border border-gray-200 bg-white shadow-sm p-6 group hover:scale-[1.03] hover:shadow-lg transition-all duration-500"
               >
-                <div className={`w-12 h-12 rounded-xl ${feature.bg} flex items-center justify-center mb-5 icon-glow`}>
-                  <feature.icon className={`h-6 w-6 ${feature.color}`} />
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-5" style={{ background: feature.bg }}>
+                  <feature.icon className="h-6 w-6" style={{ color: feature.color }} />
                 </div>
-                <h3 className="text-lg font-semibold text-white mb-3">{feature.title}</h3>
-                <p className="text-sm text-slate-400 leading-relaxed">{feature.description}</p>
+                <h3 className="text-lg font-semibold mb-3" style={{ color: 'var(--sfp-ink)' }}>{feature.title}</h3>
+                <p className="text-sm leading-relaxed" style={{ color: 'var(--sfp-slate)' }}>{feature.description}</p>
               </div>
             ))}
           </div>
@@ -400,20 +384,18 @@ export default function HomePage() {
       {/* ============================================================
           WHY SMARTFINPRO — 6 Detailed Benefit Cards
           ============================================================ */}
-      <section className="py-24 bg-slate-950 relative overflow-hidden">
-        <div className="absolute bottom-0 left-1/3 w-[600px] h-[600px] bg-cyan-500/5 rounded-full blur-[120px]" />
-
+      <section className="py-24 relative overflow-hidden" style={{ background: 'var(--sfp-gray)' }}>
         <div className="container relative z-10 mx-auto px-4">
           <div className="text-center max-w-2xl mx-auto mb-16">
-            <div className="inline-flex items-center gap-2 rounded-full badge-premium px-4 py-2 mb-6">
-              <Star className="h-4 w-4 text-amber-400" />
-              <span className="kicker text-slate-300">Why SmartFinPro</span>
+            <div className="inline-flex items-center gap-2 rounded-full px-4 py-2 mb-6 border border-gray-200 bg-white shadow-sm">
+              <Star className="h-4 w-4" style={{ color: 'var(--sfp-gold)' }} />
+              <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--sfp-slate)' }}>Why SmartFinPro</span>
             </div>
-            <h2 className="text-4xl md:text-5xl font-bold mb-6 text-white">
-              Your <span className="gradient-text">Competitive Edge</span> in Finance
+            <h2 className="text-4xl md:text-5xl font-bold mb-6" style={{ color: 'var(--sfp-ink)' }}>
+              Your <span style={{ color: 'var(--sfp-navy)' }}>Competitive Edge</span> in Finance
             </h2>
-            <p className="text-slate-400 text-lg">
-              From AI tools to trading platforms — discover why 50,000+ professionals trust SmartFinPro.
+            <p className="text-lg" style={{ color: 'var(--sfp-slate)' }}>
+              From AI tools to trading platforms — discover why professionals across 4 markets trust SmartFinPro.
             </p>
           </div>
 
@@ -421,65 +403,66 @@ export default function HomePage() {
             {[
               {
                 icon: Globe,
-                title: 'Trusted by 50,000+ Professionals',
-                description: 'Serving finance professionals across the US, UK, Canada, and Australia. Over 100 products rigorously reviewed and ranked.',
+                title: 'Serving 4 Global Markets',
+                description: 'Expert reviews for finance professionals across the US, UK, Canada, and Australia. Over 100 products rigorously reviewed and ranked.',
                 cta: { text: 'Explore our reviews', href: '/trading' },
-                color: 'text-emerald-400',
-                bg: 'bg-emerald-500/15',
+                color: 'var(--sfp-green)',
+                bg: 'var(--sfp-sky)',
               },
               {
                 icon: Zap,
                 title: 'Start in Minutes',
                 description: 'Our curated recommendations get you to the right tool fast. No endless research — just expert-matched solutions for your specific needs.',
                 cta: { text: 'Explore tools', href: '/ai-tools' },
-                color: 'text-cyan-400',
-                bg: 'bg-cyan-500/15',
+                color: 'var(--sfp-gold)',
+                bg: 'var(--sfp-sky)',
               },
               {
                 icon: BarChart3,
                 title: 'Your Markets, Your Strategy',
                 description: 'AI tools, cybersecurity, trading platforms, forex brokers, personal finance, and business banking — all categories, one trusted source.',
                 cta: { text: 'Browse categories', href: '/ai-tools' },
-                color: 'text-violet-400',
-                bg: 'bg-violet-500/15',
+                color: 'var(--sfp-navy)',
+                bg: 'var(--sfp-sky)',
               },
               {
                 icon: Lock,
                 title: 'Transparent & Unbiased',
                 description: 'Zero hidden agendas. We disclose all affiliate relationships and maintain editorial independence. Our revenue model never influences our rankings.',
-                cta: { text: 'Our methodology', href: '/ai-tools' },
-                color: 'text-amber-400',
-                bg: 'bg-amber-500/15',
+                cta: { text: 'Our methodology', href: '/methodology' },
+                color: 'var(--sfp-gold)',
+                bg: 'var(--sfp-sky)',
               },
               {
                 icon: Headphones,
                 title: 'Expert Support & Guidance',
                 description: 'Our team of finance professionals is here to help. Get personalized recommendations, in-depth guides, and responsive support when you need it.',
                 cta: { text: 'Get in touch', href: '/tools' },
-                color: 'text-rose-400',
-                bg: 'bg-rose-500/15',
+                color: 'var(--sfp-green)',
+                bg: 'var(--sfp-sky)',
               },
               {
                 icon: MonitorSmartphone,
                 title: 'Seamless Cross-Platform Experience',
                 description: 'Access reviews, comparisons, and tools on any device. Our platform is optimized for desktop, tablet, and mobile — research anywhere, anytime.',
                 cta: { text: 'Try it now', href: '/ai-tools' },
-                color: 'text-blue-400',
-                bg: 'bg-blue-500/15',
+                color: 'var(--sfp-navy)',
+                bg: 'var(--sfp-sky)',
               },
             ].map((benefit) => (
               <div
                 key={benefit.title}
-                className="glass-card rounded-2xl p-8 group hover:scale-[1.02] transition-all duration-500"
+                className="rounded-2xl border border-gray-200 bg-white shadow-sm p-8 group hover:scale-[1.02] hover:shadow-lg transition-all duration-500"
               >
-                <div className={`w-12 h-12 rounded-xl ${benefit.bg} flex items-center justify-center mb-5 icon-glow`}>
-                  <benefit.icon className={`h-6 w-6 ${benefit.color}`} />
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-5" style={{ background: benefit.bg }}>
+                  <benefit.icon className="h-6 w-6" style={{ color: benefit.color }} />
                 </div>
-                <h3 className="text-xl font-semibold text-white mb-3">{benefit.title}</h3>
-                <p className="text-sm text-slate-400 leading-relaxed mb-5">{benefit.description}</p>
+                <h3 className="text-xl font-semibold mb-3" style={{ color: 'var(--sfp-ink)' }}>{benefit.title}</h3>
+                <p className="text-sm leading-relaxed mb-5" style={{ color: 'var(--sfp-slate)' }}>{benefit.description}</p>
                 <Link
                   href={benefit.cta.href}
-                  className="inline-flex items-center gap-1.5 text-sm font-medium text-cyan-400 hover:text-cyan-300 transition-colors group/link"
+                  className="inline-flex items-center gap-1.5 text-sm font-medium transition-colors group/link"
+                  style={{ color: 'var(--sfp-navy)' }}
                 >
                   {benefit.cta.text}
                   <ArrowRight className="h-4 w-4 group-hover/link:translate-x-1 transition-transform" />
@@ -493,27 +476,25 @@ export default function HomePage() {
       {/* ============================================================
           FOR ALL LEVELS — Beginner vs. Experienced Split
           ============================================================ */}
-      <section className="py-24 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 relative overflow-hidden">
-        <div className="absolute top-0 right-1/4 w-[500px] h-[500px] bg-emerald-500/5 rounded-full blur-[100px]" />
-
+      <section className="py-24 bg-white relative overflow-hidden">
         <div className="container relative z-10 mx-auto px-4">
           <div className="text-center max-w-2xl mx-auto mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold mb-6 text-white">
-              Built for <span className="gradient-text">Every Level</span>
+            <h2 className="text-4xl md:text-5xl font-bold mb-6" style={{ color: 'var(--sfp-ink)' }}>
+              Built for <span style={{ color: 'var(--sfp-navy)' }}>Every Level</span>
             </h2>
-            <p className="text-slate-400 text-lg">
+            <p className="text-lg" style={{ color: 'var(--sfp-slate)' }}>
               Whether you&apos;re just starting out or optimizing an existing stack — we have you covered.
             </p>
           </div>
 
           <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
             {/* Beginners */}
-            <div className="glass-card rounded-2xl p-8 border-t-2 border-emerald-500/50">
-              <div className="w-14 h-14 rounded-xl bg-emerald-500/15 flex items-center justify-center mb-6">
-                <GraduationCap className="h-7 w-7 text-emerald-400" />
+            <div className="rounded-2xl border border-gray-200 bg-white shadow-sm p-8" style={{ borderTopWidth: '3px', borderTopColor: 'var(--sfp-green)' }}>
+              <div className="w-14 h-14 rounded-xl flex items-center justify-center mb-6" style={{ background: 'var(--sfp-sky)' }}>
+                <GraduationCap className="h-7 w-7" style={{ color: 'var(--sfp-green)' }} />
               </div>
-              <h3 className="text-2xl font-bold text-white mb-2">New to Finance Tech?</h3>
-              <p className="text-slate-400 mb-6">Everything you need to get started with confidence.</p>
+              <h3 className="text-2xl font-bold mb-2" style={{ color: 'var(--sfp-ink)' }}>New to Finance Tech?</h3>
+              <p className="mb-6" style={{ color: 'var(--sfp-slate)' }}>Everything you need to get started with confidence.</p>
               <ul className="space-y-3 mb-8">
                 {[
                   'Step-by-step guides and tutorials',
@@ -522,13 +503,13 @@ export default function HomePage() {
                   'Free tools and calculators',
                   'Dedicated support for first-time users',
                 ].map((item) => (
-                  <li key={item} className="flex items-center gap-3 text-sm text-slate-300">
-                    <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+                  <li key={item} className="flex items-center gap-3 text-sm" style={{ color: 'var(--sfp-ink)' }}>
+                    <CheckCircle2 className="h-4 w-4 shrink-0" style={{ color: 'var(--sfp-green)' }} />
                     {item}
                   </li>
                 ))}
               </ul>
-              <Button asChild className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 border-0">
+              <Button asChild className="w-full border-0 text-white shadow-md hover:shadow-lg" style={{ background: 'var(--sfp-gold)' }}>
                 <Link href="/tools">
                   Start Learning
                   <ArrowRight className="ml-2 h-4 w-4" />
@@ -537,12 +518,12 @@ export default function HomePage() {
             </div>
 
             {/* Experienced */}
-            <div className="glass-card rounded-2xl p-8 border-t-2 border-violet-500/50">
-              <div className="w-14 h-14 rounded-xl bg-violet-500/15 flex items-center justify-center mb-6">
-                <LifeBuoy className="h-7 w-7 text-violet-400" />
+            <div className="rounded-2xl border border-gray-200 bg-white shadow-sm p-8" style={{ borderTopWidth: '3px', borderTopColor: 'var(--sfp-navy)' }}>
+              <div className="w-14 h-14 rounded-xl flex items-center justify-center mb-6" style={{ background: 'var(--sfp-sky)' }}>
+                <LifeBuoy className="h-7 w-7" style={{ color: 'var(--sfp-navy)' }} />
               </div>
-              <h3 className="text-2xl font-bold text-white mb-2">Seasoned Professional?</h3>
-              <p className="text-slate-400 mb-6">Advanced tools and insights to sharpen your edge.</p>
+              <h3 className="text-2xl font-bold mb-2" style={{ color: 'var(--sfp-ink)' }}>Seasoned Professional?</h3>
+              <p className="mb-6" style={{ color: 'var(--sfp-slate)' }}>Advanced tools and insights to sharpen your edge.</p>
               <ul className="space-y-3 mb-8">
                 {[
                   'In-depth platform stress tests and benchmarks',
@@ -551,13 +532,13 @@ export default function HomePage() {
                   'Exclusive deals and negotiated pricing',
                   'Priority access to new product reviews',
                 ].map((item) => (
-                  <li key={item} className="flex items-center gap-3 text-sm text-slate-300">
-                    <CheckCircle2 className="h-4 w-4 text-violet-400 shrink-0" />
+                  <li key={item} className="flex items-center gap-3 text-sm" style={{ color: 'var(--sfp-ink)' }}>
+                    <CheckCircle2 className="h-4 w-4 shrink-0" style={{ color: 'var(--sfp-navy)' }} />
                     {item}
                   </li>
                 ))}
               </ul>
-              <Button asChild className="w-full bg-gradient-to-r from-violet-500 to-violet-600 hover:from-violet-600 hover:to-violet-700 border-0">
+              <Button asChild className="w-full border-0 text-white shadow-md hover:shadow-lg" style={{ background: 'var(--sfp-navy)' }}>
                 <Link href="/ai-tools">
                   Explore Pro Tools
                   <ArrowRight className="ml-2 h-4 w-4" />
@@ -571,15 +552,13 @@ export default function HomePage() {
       {/* ============================================================
           GET STARTED — 3 Step Process
           ============================================================ */}
-      <section className="py-24 bg-slate-950 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-violet-900/10 via-transparent to-transparent" />
-
+      <section className="py-24 relative overflow-hidden" style={{ background: 'var(--sfp-gray)' }}>
         <div className="container relative z-10 mx-auto px-4">
           <div className="text-center max-w-2xl mx-auto mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold mb-6 text-white">
-              Ready to Find Your <span className="gradient-text">Perfect Tool</span>?
+            <h2 className="text-4xl md:text-5xl font-bold mb-6" style={{ color: 'var(--sfp-ink)' }}>
+              Ready to Find Your <span style={{ color: 'var(--sfp-navy)' }}>Perfect Tool</span>?
             </h2>
-            <p className="text-slate-400 text-lg">
+            <p className="text-lg" style={{ color: 'var(--sfp-slate)' }}>
               Three simple steps to smarter financial decisions.
             </p>
           </div>
@@ -591,39 +570,36 @@ export default function HomePage() {
                 icon: UserPlus,
                 title: 'Choose Your Category',
                 description: 'Select from AI tools, cybersecurity, trading platforms, forex, personal finance, or business banking.',
-                color: 'text-emerald-400',
-                bg: 'from-emerald-500 to-emerald-600',
+                bgColor: 'var(--sfp-green)',
               },
               {
                 step: '02',
                 icon: BarChart3,
                 title: 'Compare & Analyze',
                 description: 'Use our expert reviews, side-by-side comparisons, and interactive tools to find the best match.',
-                color: 'text-cyan-400',
-                bg: 'from-cyan-500 to-cyan-600',
+                bgColor: 'var(--sfp-navy)',
               },
               {
                 step: '03',
                 icon: Activity,
                 title: 'Start with Confidence',
                 description: 'Sign up through our vetted links with exclusive deals. Every recommendation is backed by real testing.',
-                color: 'text-violet-400',
-                bg: 'from-violet-500 to-violet-600',
+                bgColor: 'var(--sfp-gold)',
               },
             ].map((item) => (
               <div key={item.step} className="text-center group">
-                <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${item.bg} flex items-center justify-center mx-auto mb-6 shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-md group-hover:scale-110 transition-transform duration-300" style={{ background: item.bgColor }}>
                   <item.icon className="h-7 w-7 text-white" />
                 </div>
-                <div className="text-xs font-bold text-slate-600 uppercase tracking-widest mb-2">Step {item.step}</div>
-                <h3 className="text-lg font-semibold text-white mb-3">{item.title}</h3>
-                <p className="text-sm text-slate-400 leading-relaxed">{item.description}</p>
+                <div className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: 'var(--sfp-slate)' }}>Step {item.step}</div>
+                <h3 className="text-lg font-semibold mb-3" style={{ color: 'var(--sfp-ink)' }}>{item.title}</h3>
+                <p className="text-sm leading-relaxed" style={{ color: 'var(--sfp-slate)' }}>{item.description}</p>
               </div>
             ))}
           </div>
 
           <div className="text-center">
-            <Button asChild size="lg" className="btn-shimmer h-14 px-10 text-lg bg-gradient-to-r from-violet-500 to-violet-600 hover:from-violet-600 hover:to-violet-700 border-0 shadow-lg shadow-violet-500/25">
+            <Button asChild size="lg" className="h-14 px-10 text-lg border-0 shadow-md hover:shadow-lg text-white" style={{ background: 'var(--sfp-gold)' }}>
               <Link href="/ai-tools">
                 Get Started Now
                 <ArrowRight className="ml-2 h-5 w-5" />
@@ -633,26 +609,20 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Newsletter Section - Premium Dark with Aurora */}
-      <section className="py-24 bg-slate-950 relative overflow-hidden">
-        {/* Aurora background */}
-        <div className="absolute inset-0">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-emerald-500/10 rounded-full blur-[100px]" />
-          <div className="absolute top-1/3 left-1/3 w-[400px] h-[400px] bg-blue-500/10 rounded-full blur-[80px]" />
-        </div>
-
+      {/* Newsletter Section - Light Trust Design */}
+      <section className="py-24 relative overflow-hidden" style={{ background: 'var(--sfp-sky)' }}>
         <div className="container relative z-10 mx-auto px-4 text-center">
           <div className="max-w-2xl mx-auto">
-            <div className="inline-flex items-center gap-2 rounded-full badge-premium px-4 py-2 mb-6">
-              <Sparkles className="h-4 w-4 text-emerald-400" />
-              <span className="kicker text-slate-300">Newsletter</span>
+            <div className="inline-flex items-center gap-2 rounded-full px-4 py-2 mb-6 border border-gray-200 bg-white shadow-sm">
+              <Sparkles className="h-4 w-4" style={{ color: 'var(--sfp-gold)' }} />
+              <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--sfp-slate)' }}>Newsletter</span>
             </div>
 
-            <h2 className="text-4xl md:text-5xl font-bold mb-6 text-white">
-              Stay <span className="gradient-text">Ahead</span> of the Curve
+            <h2 className="text-4xl md:text-5xl font-bold mb-6" style={{ color: 'var(--sfp-ink)' }}>
+              Stay <span style={{ color: 'var(--sfp-navy)' }}>Ahead</span> of the Curve
             </h2>
 
-            <p className="text-slate-400 text-lg mb-10">
+            <p className="text-lg mb-10" style={{ color: 'var(--sfp-slate)' }}>
               Get weekly insights on AI tools, cybersecurity trends, and
               financial strategies delivered straight to your inbox.
             </p>
@@ -661,20 +631,22 @@ export default function HomePage() {
               <input
                 type="email"
                 placeholder="Enter your email"
-                className="flex-1 px-5 py-4 rounded-xl bg-slate-900/50 border border-slate-700 text-white placeholder:text-slate-500 focus:outline-none focus:border-emerald-500 transition-colors"
+                className="flex-1 px-5 py-4 rounded-xl bg-white border border-gray-200 placeholder:text-gray-400 focus:outline-none transition-colors shadow-sm"
+                style={{ color: 'var(--sfp-ink)', borderColor: undefined }}
                 required
               />
               <Button
                 size="lg"
                 type="submit"
-                className="btn-shimmer h-14 px-8 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 border-0 shadow-lg shadow-emerald-500/25"
+                className="h-14 px-8 border-0 shadow-md hover:shadow-lg text-white"
+                style={{ background: 'var(--sfp-gold)' }}
               >
                 Subscribe
               </Button>
             </form>
 
-            <p className="text-xs text-slate-500 mt-6">
-              Join 10,000+ subscribers. We respect your privacy.
+            <p className="text-xs mt-6" style={{ color: 'var(--sfp-slate)' }}>
+              Free weekly insights. No spam, unsubscribe anytime.
             </p>
           </div>
         </div>

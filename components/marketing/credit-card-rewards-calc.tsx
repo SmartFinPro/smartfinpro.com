@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useMemo, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import {
   CreditCard,
   DollarSign,
@@ -148,19 +147,19 @@ interface SpendingInputProps {
 function SpendingInput({ label, icon, value, onChange }: SpendingInputProps) {
   return (
     <div
-      className="flex items-center gap-3 p-3 rounded-xl border border-slate-700/50 transition-all hover:border-violet-500/30"
-      style={{ background: 'rgba(255,255,255,0.02)' }}
+      className="flex items-center gap-3 p-3 rounded-xl border border-gray-200 transition-all hover:border-gray-300"
+      style={{ background: 'var(--sfp-gray)' }}
     >
       <div
         className="flex items-center justify-center w-10 h-10 rounded-lg shrink-0"
-        style={{ background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(6, 182, 212, 0.1))' }}
+        style={{ background: 'var(--sfp-sky)' }}
       >
         {icon}
       </div>
       <div className="flex-1 min-w-0">
-        <label className="block text-xs text-slate-400 font-medium mb-1">{label}</label>
+        <label className="block text-xs font-medium mb-1" style={{ color: 'var(--sfp-slate)' }}>{label}</label>
         <div className="relative">
-          <span className="absolute left-0 top-1/2 -translate-y-1/2 text-slate-500 text-sm">$</span>
+          <span className="absolute left-0 top-1/2 -translate-y-1/2 text-sm" style={{ color: 'var(--sfp-slate)' }}>$</span>
           <input
             type="number"
             min={0}
@@ -168,10 +167,11 @@ function SpendingInput({ label, icon, value, onChange }: SpendingInputProps) {
             step={50}
             value={value || ''}
             onChange={(e) => onChange(Math.max(0, parseInt(e.target.value) || 0))}
-            className="w-full bg-transparent text-white text-sm font-medium pl-4 pr-2 py-1 rounded border-0 outline-none focus:ring-1 focus:ring-violet-500/40"
+            className="w-full bg-transparent text-sm font-medium pl-4 pr-2 py-1 rounded border-0 outline-none focus:ring-1 focus:ring-blue-300"
+            style={{ color: 'var(--sfp-ink)' }}
             placeholder="0"
           />
-          <span className="absolute right-0 top-1/2 -translate-y-1/2 text-slate-600 text-xs">/mo</span>
+          <span className="absolute right-0 top-1/2 -translate-y-1/2 text-xs" style={{ color: 'var(--sfp-slate)' }}>/mo</span>
         </div>
       </div>
     </div>
@@ -235,25 +235,21 @@ function CardResult({ card, spending, rank, isWinner }: CardResultProps) {
   }, [card.id]);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: rank * 0.1 }}
-      className="relative rounded-2xl overflow-hidden border transition-all"
+    <div
+      className="relative rounded-2xl overflow-hidden border transition-all animate-[fadeSlideUp_0.4s_ease-out_both]"
       style={{
-        borderColor: isWinner ? 'rgba(139, 92, 246, 0.4)' : 'rgba(100, 116, 139, 0.2)',
-        background: isWinner
-          ? 'linear-gradient(135deg, rgba(139, 92, 246, 0.08), rgba(15, 10, 26, 0.95))'
-          : 'linear-gradient(135deg, rgba(15, 10, 26, 0.8), rgba(26, 15, 46, 0.4))',
+        animationDelay: `${rank * 0.1}s`,
+        borderColor: isWinner ? 'var(--sfp-gold)' : 'rgba(209, 213, 219, 1)',
+        background: 'white',
         boxShadow: isWinner
-          ? '0 8px 32px rgba(139, 92, 246, 0.15), inset 0 1px 0 rgba(255,255,255,0.05)'
-          : 'inset 0 1px 0 rgba(255,255,255,0.03)',
+          ? '0 4px 16px rgba(245, 166, 35, 0.12)'
+          : '0 1px 3px rgba(0,0,0,0.06)',
       }}
     >
       {isWinner && (
         <div
           className="h-[2px] w-full"
-          style={{ background: 'linear-gradient(90deg, transparent, #8b5cf6, #06b6d4, #8b5cf6, transparent)' }}
+          style={{ background: 'linear-gradient(90deg, transparent, var(--sfp-gold), var(--sfp-navy), var(--sfp-gold), transparent)' }}
         />
       )}
 
@@ -264,52 +260,52 @@ function CardResult({ card, spending, rank, isWinner }: CardResultProps) {
             {isWinner && (
               <div
                 className="flex items-center justify-center w-8 h-8 rounded-lg"
-                style={{ background: 'linear-gradient(135deg, rgba(250, 204, 21, 0.2), rgba(245, 158, 11, 0.15))' }}
+                style={{ background: 'rgba(245, 166, 35, 0.12)' }}
               >
-                <Award className="h-4 w-4 text-yellow-400" />
+                <Award className="h-4 w-4" style={{ color: 'var(--sfp-gold)' }} />
               </div>
             )}
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-lg font-bold text-white">{card.shortName}</h3>
+                <h3 className="text-lg font-bold" style={{ color: 'var(--sfp-ink)' }}>{card.shortName}</h3>
                 {isWinner && (
-                  <span className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-full text-yellow-300 border border-yellow-500/30" style={{ background: 'rgba(250, 204, 21, 0.1)' }}>
+                  <span className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-full border" style={{ background: 'rgba(245, 166, 35, 0.08)', borderColor: 'rgba(245,166,35,0.3)', color: 'var(--sfp-gold)' }}>
                     Best Match
                   </span>
                 )}
               </div>
-              <p className="text-xs text-slate-500 mt-0.5">${card.annualFee}/yr annual fee</p>
+              <p className="text-xs mt-0.5" style={{ color: 'var(--sfp-slate)' }}>${card.annualFee}/yr annual fee</p>
             </div>
           </div>
 
           <div className="text-right">
-            <div className={`text-2xl font-bold ${netValue >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+            <div className="text-2xl font-bold" style={{ color: netValue >= 0 ? 'var(--sfp-green)' : 'var(--sfp-red)' }}>
               {netValue >= 0 ? '+' : '-'}${Math.abs(Math.round(netValue))}
             </div>
-            <p className="text-[10px] text-slate-500 uppercase tracking-wider">Net Annual Value</p>
+            <p className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--sfp-slate)' }}>Net Annual Value</p>
           </div>
         </div>
 
         {/* Breakdown */}
         <div className="space-y-2 mb-4">
           <div className="flex justify-between text-sm">
-            <span className="text-slate-400">Points earned</span>
-            <span className="text-slate-300 font-medium">{points.toLocaleString()} pts</span>
+            <span style={{ color: 'var(--sfp-slate)' }}>Points earned</span>
+            <span className="font-medium" style={{ color: 'var(--sfp-ink)' }}>{points.toLocaleString()} pts</span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-slate-400">Points value ({card.pointValue}cpp)</span>
-            <span className="text-slate-300 font-medium">${Math.round(pointsValue).toLocaleString()}</span>
+            <span style={{ color: 'var(--sfp-slate)' }}>Points value ({card.pointValue}cpp)</span>
+            <span className="font-medium" style={{ color: 'var(--sfp-ink)' }}>${Math.round(pointsValue).toLocaleString()}</span>
           </div>
           {card.credits.map((credit) => (
             <div key={credit.name} className="flex justify-between text-sm">
-              <span className="text-slate-400">{credit.name}</span>
-              <span className="text-emerald-400 font-medium">+${credit.value}</span>
+              <span style={{ color: 'var(--sfp-slate)' }}>{credit.name}</span>
+              <span className="font-medium" style={{ color: 'var(--sfp-green)' }}>+${credit.value}</span>
             </div>
           ))}
-          <div className="h-px w-full my-1" style={{ background: 'rgba(100, 116, 139, 0.2)' }} />
+          <div className="h-px w-full my-1 bg-gray-200" />
           <div className="flex justify-between text-sm">
-            <span className="text-slate-400">Annual fee</span>
-            <span className="text-red-400 font-medium">-${card.annualFee}</span>
+            <span style={{ color: 'var(--sfp-slate)' }}>Annual fee</span>
+            <span className="font-medium" style={{ color: 'var(--sfp-red)' }}>-${card.annualFee}</span>
           </div>
         </div>
 
@@ -319,19 +315,18 @@ function CardResult({ card, spending, rank, isWinner }: CardResultProps) {
           target="_blank"
           rel="noopener sponsored"
           onClick={handleApply}
-          className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-sm font-semibold transition-all hover:brightness-110"
+          className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-sm font-semibold transition-all hover:brightness-110 text-white"
           style={{
             background: isWinner
-              ? 'linear-gradient(135deg, #8b5cf6, #6d28d9)'
-              : 'rgba(255,255,255,0.06)',
-            color: isWinner ? '#fff' : '#94a3b8',
+              ? 'var(--sfp-gold)'
+              : 'var(--sfp-navy)',
           }}
         >
           {isWinner ? 'Apply Now' : 'Learn More'}
           <ChevronRight className="h-4 w-4" />
         </a>
       </div>
-    </motion.div>
+    </div>
   );
 }
 
@@ -384,40 +379,30 @@ export function CreditCardRewardsCalc() {
 
   return (
     <div className="relative not-prose">
-      {/* Background glow */}
       <div
-        className="absolute -inset-4 rounded-3xl opacity-40 pointer-events-none"
-        style={{ background: 'radial-gradient(ellipse at center, rgba(139, 92, 246, 0.08), transparent 70%)' }}
-      />
-
-      <div
-        className="relative rounded-2xl overflow-hidden border border-violet-500/20"
-        style={{
-          background: 'linear-gradient(135deg, rgba(15, 10, 26, 0.95), rgba(26, 15, 46, 0.6), rgba(15, 10, 26, 0.95))',
-          boxShadow: '0 8px 40px rgba(0, 0, 0, 0.3), 0 0 60px rgba(139, 92, 246, 0.06)',
-        }}
+        className="relative rounded-2xl overflow-hidden border border-gray-200 bg-white shadow-sm"
       >
         {/* Top accent */}
-        <div className="h-[2px] w-full" style={{ background: 'linear-gradient(90deg, transparent, #8b5cf6, #06b6d4, #8b5cf6, transparent)' }} />
+        <div className="h-[2px] w-full" style={{ background: 'linear-gradient(90deg, transparent, var(--sfp-gold), var(--sfp-navy), var(--sfp-gold), transparent)' }} />
 
         {/* Header */}
         <div className="px-6 sm:px-8 pt-7 pb-5">
           <div className="flex items-center gap-3 mb-2">
             <div
-              className="flex items-center justify-center w-10 h-10 rounded-xl"
-              style={{ background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(6, 182, 212, 0.15))' }}
+              className="flex items-center justify-center w-10 h-10 rounded-xl border border-gray-200"
+              style={{ background: 'var(--sfp-sky)' }}
             >
-              <Sparkles className="h-5 w-5 text-violet-400" />
+              <Sparkles className="h-5 w-5" style={{ color: 'var(--sfp-gold)' }} />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-white">Credit Card Rewards Calculator</h2>
-              <p className="text-xs text-slate-500">Enter your monthly spending to find your best card</p>
+              <h2 className="text-xl font-bold" style={{ color: 'var(--sfp-ink)' }}>Credit Card Rewards Calculator</h2>
+              <p className="text-xs" style={{ color: 'var(--sfp-slate)' }}>Enter your monthly spending to find your best card</p>
             </div>
           </div>
         </div>
 
         {/* Divider */}
-        <div className="mx-6 sm:mx-8 h-px" style={{ background: 'linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.3), transparent)' }} />
+        <div className="mx-6 sm:mx-8 h-px bg-gray-200" />
 
         {/* Content */}
         <div className="px-6 sm:px-8 py-6">
@@ -425,52 +410,52 @@ export function CreditCardRewardsCalc() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
             <SpendingInput
               label="Dining & Restaurants"
-              icon={<UtensilsCrossed className="h-5 w-5 text-violet-400" />}
+              icon={<UtensilsCrossed className="h-5 w-5" style={{ color: 'var(--sfp-gold)' }} />}
               value={spending.dining}
               onChange={(v) => updateSpending('dining', v)}
             />
             <SpendingInput
               label="Travel & Flights"
-              icon={<Plane className="h-5 w-5 text-cyan-400" />}
+              icon={<Plane className="h-5 w-5" style={{ color: 'var(--sfp-navy)' }} />}
               value={spending.travel}
               onChange={(v) => updateSpending('travel', v)}
             />
             <SpendingInput
               label="Groceries"
-              icon={<ShoppingBag className="h-5 w-5 text-emerald-400" />}
+              icon={<ShoppingBag className="h-5 w-5" style={{ color: 'var(--sfp-green)' }} />}
               value={spending.groceries}
               onChange={(v) => updateSpending('groceries', v)}
             />
             <SpendingInput
               label="Transit & Gas"
-              icon={<TrendingUp className="h-5 w-5 text-amber-400" />}
+              icon={<TrendingUp className="h-5 w-5" style={{ color: 'var(--sfp-gold)' }} />}
               value={spending.transit}
               onChange={(v) => updateSpending('transit', v)}
             />
             <SpendingInput
               label="Everything Else"
-              icon={<DollarSign className="h-5 w-5 text-slate-400" />}
+              icon={<DollarSign className="h-5 w-5" style={{ color: 'var(--sfp-slate)' }} />}
               value={spending.other}
               onChange={(v) => updateSpending('other', v)}
             />
             <div
-              className="flex items-center justify-center gap-2 p-3 rounded-xl border border-dashed border-slate-700/50"
-              style={{ background: 'rgba(139, 92, 246, 0.03)' }}
+              className="flex items-center justify-center gap-2 p-3 rounded-xl border border-dashed border-gray-300"
+              style={{ background: 'var(--sfp-sky)' }}
             >
-              <CreditCard className="h-5 w-5 text-violet-400" />
+              <CreditCard className="h-5 w-5" style={{ color: 'var(--sfp-navy)' }} />
               <div>
-                <p className="text-xs text-slate-500">Total Monthly</p>
-                <p className="text-lg font-bold text-white">${totalMonthly.toLocaleString()}</p>
+                <p className="text-xs" style={{ color: 'var(--sfp-slate)' }}>Total Monthly</p>
+                <p className="text-lg font-bold" style={{ color: 'var(--sfp-ink)' }}>${totalMonthly.toLocaleString()}</p>
               </div>
             </div>
           </div>
 
           {/* Info Note */}
-          <div className="flex items-start gap-2 mb-6 px-3 py-2.5 rounded-lg" style={{ background: 'rgba(6, 182, 212, 0.05)' }}>
-            <Info className="h-4 w-4 text-cyan-500 shrink-0 mt-0.5" />
-            <div className="text-xs text-slate-400 space-y-1">
+          <div className="flex items-start gap-2 mb-6 px-3 py-2.5 rounded-lg" style={{ background: 'var(--sfp-sky)' }}>
+            <Info className="h-4 w-4 shrink-0 mt-0.5" style={{ color: 'var(--sfp-navy)' }} />
+            <div className="text-xs space-y-1" style={{ color: 'var(--sfp-slate)' }}>
               <p>
-                Travel rewards use <strong className="text-slate-300">direct booking rates</strong> (not portal). Chase Travel portal boosts: CSP 5x, CSR 8x. Welcome bonuses ($600-$1,500+) not included.
+                Travel rewards use <strong style={{ color: 'var(--sfp-ink)' }}>direct booking rates</strong> (not portal). Chase Travel portal boosts: CSP 5x, CSR 8x. Welcome bonuses ($600-$1,500+) not included.
               </p>
               <p>
                 Point values: Amex MR at 1.0cpp baseline (transfers can yield 1.5-2.0cpp). Chase UR at portal redemption floor (CSP 1.25cpp, CSR 1.5cpp).
@@ -479,27 +464,25 @@ export function CreditCardRewardsCalc() {
           </div>
 
           {/* Results */}
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={JSON.stringify(spending)}
-              className="grid grid-cols-1 md:grid-cols-3 gap-4"
-            >
-              {rankedCards.map(({ card }, index) => (
-                <CardResult
-                  key={card.id}
-                  card={card}
-                  spending={spending}
-                  rank={index}
-                  isWinner={index === 0}
-                />
-              ))}
-            </motion.div>
-          </AnimatePresence>
+          <div
+            key={JSON.stringify(spending)}
+            className="grid grid-cols-1 md:grid-cols-3 gap-4"
+          >
+            {rankedCards.map(({ card }, index) => (
+              <CardResult
+                key={card.id}
+                card={card}
+                spending={spending}
+                rank={index}
+                isWinner={index === 0}
+              />
+            ))}
+          </div>
         </div>
 
         {/* Footer Disclaimer */}
-        <div className="px-6 sm:px-8 py-4 border-t border-slate-800/50">
-          <p className="text-[11px] text-slate-600 leading-relaxed">
+        <div className="px-6 sm:px-8 py-4 border-t border-gray-200" style={{ background: 'var(--sfp-gray)' }}>
+          <p className="text-[11px] leading-relaxed" style={{ color: 'var(--sfp-slate)' }}>
             Affiliate Disclosure: SmartFinPro may receive compensation when you apply through our links. Point values are estimates based on average redemption rates. Actual value may vary by redemption method. Welcome bonus requirements and values subject to change. See card issuer sites for current terms.
           </p>
         </div>

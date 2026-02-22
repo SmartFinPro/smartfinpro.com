@@ -31,28 +31,28 @@ const iconMap: Record<string, React.ElementType> = {
 };
 
 const factColors = [
-  { bg: 'bg-cyan-500/10', border: 'border-cyan-500/20', icon: 'text-cyan-400', accent: 'text-cyan-400' },
-  { bg: 'bg-violet-500/10', border: 'border-violet-500/20', icon: 'text-violet-400', accent: 'text-violet-400' },
-  { bg: 'bg-amber-500/10', border: 'border-amber-500/20', icon: 'text-amber-400', accent: 'text-amber-400' },
+  { bg: 'rgba(27,79,140,0.08)', border: 'rgba(27,79,140,0.15)', iconColor: 'var(--sfp-navy)', accent: 'var(--sfp-navy)' },
+  { bg: 'rgba(245,166,35,0.08)', border: 'rgba(245,166,35,0.15)', iconColor: 'var(--sfp-gold)', accent: 'var(--sfp-gold)' },
+  { bg: 'rgba(26,107,58,0.08)', border: 'rgba(26,107,58,0.15)', iconColor: 'var(--sfp-green)', accent: 'var(--sfp-green)' },
 ];
 
 export function QuickSummary({ facts, lastUpdated, testingNote }: QuickSummaryProps) {
   return (
-    <div className="not-prose my-8 rounded-2xl border border-slate-800/60 bg-white/[0.02] backdrop-blur-xl overflow-hidden">
+    <div className="not-prose my-8 rounded-2xl border border-gray-200 bg-white overflow-hidden shadow-sm">
       {/* Header */}
-      <div className="px-6 py-4 border-b border-violet-500/20 bg-gradient-to-r from-violet-500/5 via-transparent to-cyan-500/5">
+      <div className="px-6 py-4 border-b border-gray-200" style={{ background: 'var(--sfp-gray)' }}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-violet-500/10 border border-violet-500/20 flex items-center justify-center">
-              <Zap className="h-4 w-4 text-violet-400" />
+            <div className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center" style={{ background: 'var(--sfp-sky)' }}>
+              <Zap className="h-4 w-4" style={{ color: 'var(--sfp-navy)' }} />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-white">Quick Summary</h3>
-              <p className="text-[11px] text-slate-500">Our top picks at a glance</p>
+              <h3 className="text-sm font-bold" style={{ color: 'var(--sfp-ink)' }}>Quick Summary</h3>
+              <p className="text-[11px]" style={{ color: 'var(--sfp-slate)' }}>Our top picks at a glance</p>
             </div>
           </div>
           {lastUpdated && (
-            <div className="flex items-center gap-1.5 text-[11px] text-slate-500">
+            <div className="flex items-center gap-1.5 text-[11px]" style={{ color: 'var(--sfp-slate)' }}>
               <Clock className="h-3 w-3" />
               Updated {lastUpdated}
             </div>
@@ -61,29 +61,30 @@ export function QuickSummary({ facts, lastUpdated, testingNote }: QuickSummaryPr
       </div>
 
       {/* Facts Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-slate-800/40">
+      <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-gray-200">
         {facts.slice(0, 3).map((fact, i) => {
           const color = factColors[i % factColors.length];
           const IconComponent = iconMap[fact.icon || 'award'] || Award;
 
           return (
-            <div key={i} className="px-6 py-5 group hover:bg-white/[0.02] transition-colors">
+            <div key={i} className="px-6 py-5 group hover:bg-gray-50 transition-colors">
               <div className="flex items-start gap-3">
-                <div className={`w-10 h-10 rounded-xl ${color.bg} border ${color.border} flex items-center justify-center shrink-0`}>
-                  <IconComponent className={`h-5 w-5 ${color.icon}`} />
+                <div className="w-10 h-10 rounded-xl border flex items-center justify-center shrink-0" style={{ background: color.bg, borderColor: color.border }}>
+                  <IconComponent className="h-5 w-5" style={{ color: color.iconColor }} />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[11px] text-slate-500 uppercase tracking-wider font-medium mb-1">{fact.label}</p>
-                  <p className={`text-base font-bold text-white leading-tight`}>{fact.value}</p>
+                  <p className="text-[11px] uppercase tracking-wider font-medium mb-1" style={{ color: 'var(--sfp-slate)' }}>{fact.label}</p>
+                  <p className="text-base font-bold leading-tight" style={{ color: 'var(--sfp-ink)' }}>{fact.value}</p>
                   {fact.detail && (
-                    <p className="text-xs text-slate-400 mt-1 leading-relaxed">{fact.detail}</p>
+                    <p className="text-xs mt-1 leading-relaxed" style={{ color: 'var(--sfp-slate)' }}>{fact.detail}</p>
                   )}
                   {fact.href && (
                     <Link
                       href={fact.href}
                       target="_blank"
                       rel="noopener sponsored"
-                      className={`inline-flex items-center gap-1 text-xs font-medium ${color.accent} hover:underline mt-2`}
+                      className="inline-flex items-center gap-1 text-xs font-medium hover:underline mt-2"
+                      style={{ color: color.accent }}
                     >
                       Visit Site <ExternalLink className="h-3 w-3" />
                     </Link>
@@ -97,9 +98,9 @@ export function QuickSummary({ facts, lastUpdated, testingNote }: QuickSummaryPr
 
       {/* Footer */}
       {testingNote && (
-        <div className="px-6 py-3 border-t border-slate-800/40 bg-slate-900/30">
-          <div className="flex items-center gap-2 text-[11px] text-slate-500">
-            <CheckCircle className="h-3 w-3 text-cyan-500/60" />
+        <div className="px-6 py-3 border-t border-gray-200" style={{ background: 'var(--sfp-gray)' }}>
+          <div className="flex items-center gap-2 text-[11px]" style={{ color: 'var(--sfp-slate)' }}>
+            <CheckCircle className="h-3 w-3" style={{ color: 'var(--sfp-green)' }} />
             {testingNote}
           </div>
         </div>
