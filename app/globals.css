@@ -4,48 +4,16 @@
 @tailwind utilities;
 
 /* ============================================================
-   SMARTFINPRO BRAND COLOR SYSTEM (Light Trust Design)
-   Navy/Gold/Green — No Dark Mode, No Glassmorphism
-   Single Source of Truth — Psychologisch optimiert für
-   Vertrauen (Navy), Conversion (Gold), Erfolg (Green)
-   ============================================================ */
-
-/* ============================================================
-   BRAND COLORS — Outside @layer to prevent Tailwind tree-shaking.
-   These are used via inline styles (style={{ color: 'var(--sfp-navy)' }})
-   and MUST survive CSS compilation regardless of Tailwind usage.
-   ============================================================ */
-
-:root {
-  /* === SmartFinPro Brand Colors (YMYL Trust System) === */
-  --sfp-navy:       #1B4F8C;   /* Trust Navy — Primärfarbe: Header, Navigation, primäre Sections */
-  --sfp-navy-dark:  #163D6E;   /* Hover-Zustand Navy */
-  --sfp-gold:       #F5A623;   /* Conversion Gold — ALLE CTA-Buttons, Highlights, Best-Pick-Badges */
-  --sfp-gold-dark:  #D48B1A;   /* Hover-Zustand Gold */
-  --sfp-green:      #1A6B3A;   /* Success Green — Pro-Listen, Trust-Badges, positive KPIs, Regulierungs-Siegel */
-  --sfp-red:        #D64045;   /* Alert Red — NUR für echte Warnungen und Cons, NIE dekorativ */
-  --sfp-sky:        #E8F0FB;   /* Info-Boxen, Answer-Block-Hintergründe, Sekundäre Highlights */
-  --sfp-gray:       #F2F4F8;   /* Seiten-Hintergründe, alternierende Sektionen */
-  --sfp-ink:        #1A1A2E;   /* Primärer Fließtext — maximaler Kontrast auf Weiß */
-  --sfp-slate:      #555555;   /* Sekundärtext, Meta-Infos, Labels */
-  --sfp-footer-text:#AAAAAA;   /* Footer-Links auf dunklem Hintergrund */
-}
-
-/* === Länderspezifische Silo-Akzentfarben (per body class) === */
-:root                 { --sfp-silo-tint: #D5E8F0; }
-body.silo-us          { --sfp-silo-tint: #D5E8F0; }
-body.silo-uk          { --sfp-silo-tint: #D5F0E0; }
-body.silo-au          { --sfp-silo-tint: #FFF3D5; }
-body.silo-ca          { --sfp-silo-tint: #FFE5E5; }
-
-/* ============================================================
-   BASE LAYER — Shadcn Mappings + Global Element Styles
-   Must be inside @layer base to override Tailwind defaults.
+   SMARTFINPRO CSS DESIGN SYSTEM
+   ============================================================
+   IMPORTANT: ALL CSS custom properties live INSIDE @layer base.
+   @tailwind base injects Shadcn/Tailwind defaults first, then
+   OUR @layer base block follows — winning by source order.
    ============================================================ */
 
 @layer base {
   :root {
-    /* === Shadcn/UI Compatibility Mapping === */
+    /* === Shadcn/UI Theme Tokens === */
     --radius: 0.625rem;
     --background: #F2F4F8;
     --foreground: #1A1A2E;
@@ -84,9 +52,30 @@ body.silo-ca          { --sfp-silo-tint: #FFE5E5; }
     --sidebar-border: #e5e5e5;
     --sidebar-ring: #1B4F8C;
 
+    /* === SmartFinPro Brand Colors (YMYL Trust System) === */
+    --sfp-navy:       #1B4F8C;
+    --sfp-navy-dark:  #163D6E;
+    --sfp-gold:       #F5A623;
+    --sfp-gold-dark:  #D48B1A;
+    --sfp-green:      #1A6B3A;
+    --sfp-red:        #D64045;
+    --sfp-sky:        #E8F0FB;
+    --sfp-gray:       #F2F4F8;
+    --sfp-ink:        #1A1A2E;
+    --sfp-slate:      #555555;
+    --sfp-footer-text:#AAAAAA;
+
+    /* === Default Silo Tint === */
+    --sfp-silo-tint: #D5E8F0;
   }
 
-  /* === Global Element Styles === */
+  /* === Länderspezifische Silo-Akzentfarben === */
+  body.silo-us { --sfp-silo-tint: #D5E8F0; }
+  body.silo-uk { --sfp-silo-tint: #D5F0E0; }
+  body.silo-au { --sfp-silo-tint: #FFF3D5; }
+  body.silo-ca { --sfp-silo-tint: #FFE5E5; }
+
+  /* === Global Base Styles === */
   * {
     @apply border-border;
   }
@@ -701,3 +690,67 @@ a:not([href^="/go/"]):not([href^="http"]):hover {
   color: var(--sfp-navy-dark);
   text-decoration: underline;
 }
+
+/* ============================================================
+   FORCE INJECTION: SMARTFINPRO BRAND COLORS & SHADCN OVERRIDES
+   Bypassing Tailwind @layer to prevent Turbopack purging.
+   Turbopack has a known bug where @layer base :root variables
+   are overridden by Shadcn defaults. This vanilla :root block
+   sits OUTSIDE any @layer and at the END of the file, giving it
+   the highest cascade priority in the DOM.
+   ============================================================ */
+:root {
+  /* SmartFinPro Brand Colors */
+  --sfp-navy:       #1B4F8C;
+  --sfp-navy-dark:  #163D6E;
+  --sfp-gold:       #F5A623;
+  --sfp-gold-dark:  #D48B1A;
+  --sfp-green:      #1A6B3A;
+  --sfp-red:        #D64045;
+  --sfp-sky:        #E8F0FB;
+  --sfp-gray:       #F2F4F8;
+  --sfp-ink:        #1A1A2E;
+  --sfp-slate:      #555555;
+  --sfp-footer-text:#AAAAAA;
+  --sfp-silo-tint:  #D5E8F0;
+
+  /* Shadcn/UI Theme Overrides (SmartFinPro brand) */
+  --radius: 0.625rem;
+  --background: #F2F4F8;
+  --foreground: #1A1A2E;
+  --card: #ffffff;
+  --card-foreground: #1A1A2E;
+  --popover: #ffffff;
+  --popover-foreground: #1A1A2E;
+  --primary: #1B4F8C;
+  --primary-foreground: #ffffff;
+  --secondary: #E8F0FB;
+  --secondary-foreground: #1B4F8C;
+  --muted: #F2F4F8;
+  --muted-foreground: #555555;
+  --accent: #F5A623;
+  --accent-foreground: #ffffff;
+  --destructive: #D64045;
+  --destructive-foreground: #ffffff;
+  --border: #e5e5e5;
+  --input: #e5e5e5;
+  --ring: #1B4F8C;
+  --chart-1: #F5A623;
+  --chart-2: #1A6B3A;
+  --chart-3: #1B4F8C;
+  --chart-4: #E8F0FB;
+  --chart-5: #555555;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #1A1A2E;
+  --sidebar-primary: #1B4F8C;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #E8F0FB;
+  --sidebar-accent-foreground: #1B4F8C;
+  --sidebar-border: #e5e5e5;
+  --sidebar-ring: #1B4F8C;
+}
+
+body.silo-us { --sfp-silo-tint: #D5E8F0; }
+body.silo-uk { --sfp-silo-tint: #D5F0E0; }
+body.silo-au { --sfp-silo-tint: #FFF3D5; }
+body.silo-ca { --sfp-silo-tint: #FFE5E5; }
