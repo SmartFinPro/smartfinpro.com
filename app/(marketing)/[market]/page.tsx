@@ -126,15 +126,15 @@ export default async function MarketHomePage({ params }: MarketPageProps) {
 
       {/* UK Broker Hero Slider — Exclusive to UK Market */}
       {marketData === 'uk' && (
-        <section className="py-16 sm:py-20" style={{ background: 'var(--sfp-silo-tint)' }}>
+        <section className="py-16 sm:py-20" style={{ background: 'var(--sfp-gray)' }}>
           <div className="container mx-auto px-4">
             <UKBrokerHeroSlider />
           </div>
         </section>
       )}
 
-      {/* Categories Section — uses market-specific silo-tint background */}
-      <section className="py-20" style={{ background: 'var(--sfp-silo-tint)' }}>
+      {/* Categories Section */}
+      <section className="py-20" style={{ background: 'var(--sfp-gray)' }}>
         <div className="container mx-auto px-4">
           <div className="text-center max-w-2xl mx-auto mb-12">
             <Badge variant="secondary" className="mb-4">
@@ -192,10 +192,10 @@ export default async function MarketHomePage({ params }: MarketPageProps) {
         </div>
       </section>
 
-      {/* Market-specific Trust section — uses silo-tint accent border */}
+      {/* Trust Section */}
       <section className="py-20 bg-background">
         <div className="container mx-auto px-4 text-center">
-          <div className="max-w-3xl mx-auto rounded-2xl p-10 border-2" style={{ borderColor: 'var(--sfp-silo-tint)', background: 'var(--sfp-gray)' }}>
+          <div className="max-w-3xl mx-auto rounded-2xl p-10 border-2" style={{ borderColor: 'var(--sfp-navy)', background: 'var(--sfp-gray)' }}>
             <h2 className="text-3xl font-bold mb-4">
               Trusted by {config.name} Professionals
             </h2>
