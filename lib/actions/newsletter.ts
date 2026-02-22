@@ -1,15 +1,22 @@
 'use server';
 
-import 'server-only';
+// ============================================================
+// Newsletter Server Actions
+// ============================================================
+// All Node.js-only imports (crypto, next/headers, supabase/server)
+// are dynamically imported INSIDE each function body.
+// Reason: Turbopack creates a client-side Server Reference stub for
+// 'use server' modules. Top-level imports of Node.js-only modules
+// (crypto, next/headers, @supabase/ssr) make Turbopack try — and
+// fail — to bundle them into the client, crashing HMR in dev mode.
+// ============================================================
 
-import { createHash } from 'crypto';
-import { createServiceClient } from '@/lib/supabase/server';
-import { headers } from 'next/headers';
 import type { Market } from '@/lib/supabase/types';
 
-// Hash IP address for GDPR compliance — store pseudonymized, not raw PII
-function hashIp(ip: string | null): string | null {
+// Hash IP address for GDPR compliance — store pseudonymized, not raw PII.
+async function hashIp(ip: string | null): Promise<string | null> {
   if (!ip) return null;
+  const { createHash } = await import('crypto');
   return createHash('sha256').update(ip).digest('hex');
 }
 
@@ -38,6 +45,9 @@ export async function subscribeToNewsletter(params: SubscribeParams): Promise<Su
     if (!params.email || !isValidEmail(params.email)) {
       return { success: false, message: 'Please enter a valid email address' };
     }
+
+    const { createServiceClient } = await import('@/lib/supabase/server');
+    const { headers } = await import('next/headers');
 
     const supabase = createServiceClient();
     const headersList = await headers();
@@ -97,7 +107,7 @@ export async function subscribeToNewsletter(params: SubscribeParams): Promise<Su
         market: params.market || 'us',
         status: 'pending',
         tags: params.tags || [],
-        ip_address: hashIp(ip),
+        ip_address: await hashIp(ip),
         user_agent: userAgent,
         referrer: params.referrer,
         preferences: {},
@@ -131,6 +141,8 @@ export async function subscribeToNewsletter(params: SubscribeParams): Promise<Su
 
 export async function unsubscribe(params: { email?: string; subscriberId?: string }) {
   try {
+    const { createServiceClient } = await import('@/lib/supabase/server');
+
     const supabase = createServiceClient();
 
     let query = supabase

@@ -1,5 +1,6 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 import { useTransition } from 'react';
 import Link from 'next/link';
@@ -64,12 +65,29 @@ import {
   DecisionCTA,
 } from '@/components/marketing/tracked-cta';
 import { QuickPicks, CompactPicks } from '@/components/marketing/quick-picks';
-import {
-  NewsletterOptin,
-  StickyNewsletterBar,
-  ExitIntentPopup,
-} from '@/components/marketing/newsletter-optin';
-import { NewsletterBox, NewsletterInline } from '@/components/marketing/newsletter-box';
+// Dynamic imports — these components import Server Actions (newsletter.ts)
+// which use Node.js `crypto` + `next/headers`. Static imports crash Turbopack
+// HMR because it can't create the Server Reference proxy in the client bundle.
+const NewsletterOptin = dynamic(
+  () => import('@/components/marketing/newsletter-optin').then((m) => m.NewsletterOptin),
+  { ssr: false },
+);
+const StickyNewsletterBar = dynamic(
+  () => import('@/components/marketing/newsletter-optin').then((m) => m.StickyNewsletterBar),
+  { ssr: false },
+);
+const ExitIntentPopup = dynamic(
+  () => import('@/components/marketing/newsletter-optin').then((m) => m.ExitIntentPopup),
+  { ssr: false },
+);
+const NewsletterBox = dynamic(
+  () => import('@/components/marketing/newsletter-box').then((m) => m.NewsletterBox),
+  { ssr: false },
+);
+const NewsletterInline = dynamic(
+  () => import('@/components/marketing/newsletter-box').then((m) => m.NewsletterInline),
+  { ssr: false },
+);
 import { SmartFinderQuiz, SmartFinderInline } from '@/components/marketing/smart-finder-quiz';
 import { BrokerComparisonTablePremium } from '@/components/marketing/broker-comparison-premium';
 import { RiskWarningBox } from '@/components/marketing/risk-warning';
