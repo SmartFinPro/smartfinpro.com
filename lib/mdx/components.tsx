@@ -43,6 +43,7 @@ import {
   Landmark,
   Star,
   Plane,
+  ChevronDown,
 } from 'lucide-react';
 
 // Marketing Components
@@ -92,6 +93,7 @@ import { SmartFinderQuiz, SmartFinderInline } from '@/components/marketing/smart
 import { BrokerComparisonTablePremium } from '@/components/marketing/broker-comparison-premium';
 import { RiskWarningBox } from '@/components/marketing/risk-warning';
 import { QuickVerdictCard } from '@/components/marketing/quick-verdict-card';
+import { SmartFinCard } from '@/components/marketing/smartfin-card';
 import { ExpertVerdictBox } from '@/components/marketing/expert-verdict-box';
 import { QuickSummary } from '@/components/marketing/quick-summary';
 import {
@@ -109,6 +111,8 @@ import { AISavingsCalculator, AISavingsCalculatorCompact } from '@/components/ma
 import { NeuralFinanceSVG } from '@/components/marketing/neural-finance-svg';
 import { CreditCardRewardsCalc } from '@/components/marketing/credit-card-rewards-calc';
 import { ComparisonHub } from '@/components/marketing/comparison-hub';
+// import { ReportHighlight, DataSummary } from '@/components/marketing/report-highlights';
+// import { AnalysisTable, ScopeTable, RankingTable } from '@/components/marketing/enterprise-table';
 import { FrictionlessCTA } from '@/components/marketing/frictionless-cta';
 import { StickyComparisonBar } from '@/components/marketing/sticky-comparison-bar';
 import { ExpertVerifier } from '@/components/marketing/expert-verifier';
@@ -265,7 +269,7 @@ function AffiliateButton({
         rel="nofollow noopener sponsored"
         onClick={handleClick}
         className="inline-flex items-center justify-center gap-2 rounded-lg text-sm font-semibold text-white transition-all px-6 py-3 shadow-sm hover:shadow-md"
-        style={{ background: 'var(--sfp-gold)' }}
+        style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}
       >
         {children || `Try ${productName || 'Now'} Free`}
         <ArrowRight className="h-4 w-4" />
@@ -627,7 +631,7 @@ function StyledHr() {
 
 function StyledTable({ children }: { children: React.ReactNode }) {
   return (
-    <div className="my-8 not-prose overflow-x-auto">
+    <div className="my-8 not-prose overflow-x-auto enterprise-table">
       <div className="rounded-xl overflow-hidden border border-gray-200 bg-white shadow-sm">
         <table className="w-full text-sm">
           {children}
@@ -639,7 +643,7 @@ function StyledTable({ children }: { children: React.ReactNode }) {
 
 function StyledThead({ children }: { children: React.ReactNode }) {
   return (
-    <thead style={{ background: 'var(--sfp-sky)' }}>
+    <thead style={{ background: 'linear-gradient(to bottom, var(--sfp-navy), #2563EB)' }}>
       {children}
     </thead>
   );
@@ -647,7 +651,7 @@ function StyledThead({ children }: { children: React.ReactNode }) {
 
 function StyledTh({ children }: { children: React.ReactNode }) {
   return (
-    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider border-b border-gray-200" style={{ color: 'var(--sfp-navy)' }}>
+    <th className="px-5 py-4 text-left text-xs font-bold uppercase tracking-wider text-white">
       {children}
     </th>
   );
@@ -655,7 +659,7 @@ function StyledTh({ children }: { children: React.ReactNode }) {
 
 function StyledTd({ children }: { children: React.ReactNode }) {
   return (
-    <td className="px-4 py-3 border-b border-gray-100 [&>strong]:font-semibold" style={{ color: 'var(--sfp-ink)' }}>
+    <td className="px-5 py-4 border-b border-gray-100 [&>strong]:font-semibold text-sm" style={{ color: 'var(--sfp-ink)' }}>
       {children}
     </td>
   );
@@ -663,7 +667,7 @@ function StyledTd({ children }: { children: React.ReactNode }) {
 
 function StyledTr({ children }: { children: React.ReactNode }) {
   return (
-    <tr className="transition-colors hover:bg-gray-50">
+    <tr>
       {children}
     </tr>
   );
@@ -800,6 +804,7 @@ export const mdxComponents = {
   BrokerComparisonTablePremium,
   RiskWarningBox,
   QuickVerdictCard,
+  SmartFinCard,
   ExpertVerdictBox,
   QuickSummary,
   SpreadComparison,
@@ -828,6 +833,11 @@ export const mdxComponents = {
   StickyFooterCTA,
   AnswerBlock,
   TrustBar,
+  // ReportHighlight,
+  // DataSummary,
+  // AnalysisTable,
+  // ScopeTable,
+  // RankingTable,
 
   // Pass through Lucide icons for MDX
   Beaker,
