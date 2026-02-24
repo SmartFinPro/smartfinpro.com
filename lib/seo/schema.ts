@@ -19,6 +19,19 @@ export function generateOrganizationSchema() {
       contactType: 'customer service',
       email: 'support@smartfinpro.com',
     },
+    publishingPrinciples: `${BASE_URL}/editorial-policy`,
+    ethicsPolicy: `${BASE_URL}/editorial-policy`,
+    correctionsPolicy: `${BASE_URL}/corrections-policy`,
+    ownershipFundingInfo: `${BASE_URL}/affiliate-disclosure`,
+    knowsAbout: [
+      'Financial Product Reviews',
+      'Trading Platforms',
+      'Personal Finance',
+      'Cybersecurity',
+      'AI Tools',
+      'Forex Trading',
+      'Business Banking',
+    ],
   };
 }
 
