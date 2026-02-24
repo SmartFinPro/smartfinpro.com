@@ -1,19 +1,12 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { serialize } from 'next-mdx-remote/serialize';
-import remarkGfm from 'remark-gfm';
-import { getContentBySlug, getAllContentSlugs, getRelatedContent } from '@/lib/mdx';
-import { SafeMDX } from '@/components/content/SafeMDX';
+import { serializeMDX } from '@/lib/mdx/serialize';
+import { getContentBySlug, getAllContentSlugs, getRelatedContent, getContentByMarketAndCategory } from '@/lib/mdx';
 import { isValidMarket, isValidCategory, Market, Category, marketConfig } from '@/lib/i18n/config';
 import { generateAlternates, getCanonicalUrl } from '@/lib/seo/hreflang';
-import { generateArticleSchema, generateFAQSchema } from '@/lib/seo/schema';
-import { ReviewTemplate } from '@/components/marketing/review-template';
+import { ReportLayout } from '@/components/marketing/report-layout';
 import { CreditCardLeadPopup } from '@/components/ui/credit-card-lead-popup';
-import { Breadcrumb } from '@/components/marketing/breadcrumb';
-import { buildBreadcrumbs } from '@/lib/breadcrumbs';
-import { ExpertVerifier } from '@/components/marketing/expert-verifier';
 import { getMarketExpert } from '@/lib/actions/experts';
-import { getFirstMondayOfMonth } from '@/lib/utils/date-helpers';
 
 interface ContentPageProps {
   params: Promise<{
@@ -97,19 +90,28 @@ export default async function ContentPage({ params }: ContentPageProps) {
     notFound();
   }
 
-  // For review pages, use the ReviewTemplate with full MDX rendering
+  // For review pages, use the ReportLayout (Premium Research Report style)
   if (content.meta.rating) {
-    const mdxSource = await serialize(content.content, { mdxOptions: { remarkPlugins: [remarkGfm] } });
-    const [relatedArticles, expert] = await Promise.all([
+    const [mdxSource, relatedArticles, expert, allCategoryContent] = await Promise.all([
+      serializeMDX(content.content),
       getRelatedContent(market as Market, category as Category, slug, 3),
       getMarketExpert(market, category),
+      getContentByMarketAndCategory(market as Market, category as Category),
     ]);
+
+    // Filter sibling reviews (exclude current + index pages)
+    const siblingReviews = allCategoryContent
+      .filter(item => item.slug !== slug && item.slug !== 'index' && item.meta.rating);
 
     return (
       <>
-        <ReviewTemplate
+        <ReportLayout
           expert={expert}
           mdxSource={mdxSource}
+          relatedArticles={relatedArticles}
+          siblingReviews={siblingReviews}
+          market={market as Market}
+          category={category as Category}
           review={{
             title: content.meta.seoTitle || content.meta.title,
             description: content.meta.description,
@@ -136,76 +138,61 @@ export default async function ContentPage({ params }: ContentPageProps) {
             competitors: [],
             content: '',
           }}
-          relatedArticles={relatedArticles}
         />
         <CreditCardLeadPopup />
       </>
     );
   }
 
-  // For other content types, render MDX directly with light trust design
-  const articleUrl = getCanonicalUrl(market as Market, `/${category}/${slug}`);
-  const [mdxSource, expert] = await Promise.all([
-    serialize(content.content, { mdxOptions: { remarkPlugins: [remarkGfm] } }),
+  // For other content types (guides, articles), use the same ReportLayout in "guide mode"
+  // This gives identical Two-Column Premium layout — just without rating stars, CTA buttons, and pros/cons
+  const [mdxSource, relatedArticles, expert, allCategoryContent] = await Promise.all([
+    serializeMDX(content.content),
+    getRelatedContent(market as Market, category as Category, slug, 3),
     getMarketExpert(market, category),
+    getContentByMarketAndCategory(market as Market, category as Category),
   ]);
+
+  // Filter sibling reviews (exclude current + index pages)
+  const siblingReviews = allCategoryContent
+    .filter(item => item.slug !== slug && item.slug !== 'index');
 
   return (
     <>
-      <div className="min-h-screen" style={{ background: 'var(--sfp-gray)' }}>
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify(generateArticleSchema({
-              title: content.meta.title,
-              description: content.meta.description,
-              publishDate: content.meta.publishDate || new Date().toISOString(),
-              modifiedDate: content.meta.modifiedDate || new Date().toISOString(),
-              author: content.meta.author || 'SmartFinPro',
-              url: articleUrl,
-            })),
-          }}
-        />
-        {content.meta.faqs && content.meta.faqs.length > 0 && (
-          <script
-            type="application/ld+json"
-            dangerouslySetInnerHTML={{
-              __html: JSON.stringify(generateFAQSchema(content.meta.faqs)),
-            }}
-          />
-        )}
-        <div className="container mx-auto px-4 py-16">
-          {/* Auto-generated breadcrumbs */}
-          <div className="max-w-4xl mx-auto mb-8">
-            <Breadcrumb
-              items={buildBreadcrumbs(
-                market as Market,
-                category as Category,
-                content.meta.title,
-                slug,
-              )}
-            />
-          </div>
-          <article className="max-w-4xl mx-auto prose prose-lg max-w-none">
-            {!content.meta.customH1 && <h1 style={{ color: 'var(--sfp-ink)' }}>{content.meta.title}</h1>}
-            <SafeMDX source={mdxSource} />
-          </article>
-
-          {/* Auto-Injected Expert Verifier — EEAT Trust Signal */}
-          <div className="max-w-4xl mx-auto mt-12">
-            <ExpertVerifier
-              name={expert.name}
-              title={expert.role}
-              credentials={expert.credentials.length > 0 ? expert.credentials : ['Expert Reviewer']}
-              lastFactChecked={getFirstMondayOfMonth()}
-              bio={expert.bio || undefined}
-              image={expert.image_url || undefined}
-              linkedInUrl={expert.linkedin_url || undefined}
-              variant="compact"
-            />
-          </div>
-        </div>
-      </div>
+      <ReportLayout
+        expert={expert}
+        mdxSource={mdxSource}
+        relatedArticles={relatedArticles}
+        siblingReviews={siblingReviews}
+        market={market as Market}
+        category={category as Category}
+        review={{
+          title: content.meta.seoTitle || content.meta.title,
+          description: content.meta.description,
+          productName: content.meta.title.split(':')[0].trim(), // Extract main topic
+          category: content.meta.category,
+          market: content.meta.market,
+          rating: 0,
+          reviewCount: 0,
+          affiliateUrl: '#',
+          pros: [],
+          cons: [],
+          bestFor: '',
+          pricing: '',
+          currency: content.meta.currency,
+          publishDate: content.meta.publishDate,
+          modifiedDate: content.meta.modifiedDate,
+          author: content.meta.author,
+          reviewedBy: content.meta.reviewedBy,
+          readingTime: content.readingTime?.text,
+          faqs: content.meta.faqs || [],
+          sections: content.meta.sections || [],
+          testimonials: [],
+          competitors: [],
+          content: '',
+          isGuide: true,
+        }}
+      />
       <CreditCardLeadPopup />
     </>
   );

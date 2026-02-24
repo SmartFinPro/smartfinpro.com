@@ -2,10 +2,8 @@
 
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
-import { useTransition } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { logCtaClick } from '@/lib/actions/cta-analytics';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -91,9 +89,11 @@ const NewsletterInline = dynamic(
 );
 import { SmartFinderQuiz, SmartFinderInline } from '@/components/marketing/smart-finder-quiz';
 import { BrokerComparisonTablePremium } from '@/components/marketing/broker-comparison-premium';
+import { ComparisonTablePremium } from '@/components/marketing/comparison-table-premium';
 import { RiskWarningBox } from '@/components/marketing/risk-warning';
 import { QuickVerdictCard } from '@/components/marketing/quick-verdict-card';
 import { SmartFinCard } from '@/components/marketing/smartfin-card';
+import { ProviderCard } from '@/components/marketing/provider-card';
 import { ExpertVerdictBox } from '@/components/marketing/expert-verdict-box';
 import { QuickSummary } from '@/components/marketing/quick-summary';
 import {
@@ -112,7 +112,7 @@ import { NeuralFinanceSVG } from '@/components/marketing/neural-finance-svg';
 import { CreditCardRewardsCalc } from '@/components/marketing/credit-card-rewards-calc';
 import { ComparisonHub } from '@/components/marketing/comparison-hub';
 // import { ReportHighlight, DataSummary } from '@/components/marketing/report-highlights';
-// import { AnalysisTable, ScopeTable, RankingTable } from '@/components/marketing/enterprise-table';
+import { AnalysisTable, ScopeTable, RankingTable } from '@/components/marketing/enterprise-table';
 import { FrictionlessCTA } from '@/components/marketing/frictionless-cta';
 import { StickyComparisonBar } from '@/components/marketing/sticky-comparison-bar';
 import { ExpertVerifier } from '@/components/marketing/expert-verifier';
@@ -240,24 +240,26 @@ function AffiliateButton({
   children?: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const [, startTransition] = useTransition();
-
   const handleClick = () => {
     // Derive slug & market from the current URL path
     const slug = pathname || '/';
     const resolvedProvider = provider || productName || 'unknown';
     const resolvedMarket = market || detectMarketFromPath(pathname);
 
-    // Fire-and-forget: tracking runs in the background via server action
-    startTransition(() => {
-      logCtaClick({
+    // Fire-and-forget: POST to API route instead of dynamic server action
+    // import. Using fetch() avoids the Turbopack module resolution error
+    // that occurs when a 'use client' file dynamically imports 'use server'.
+    fetch('/api/track-cta', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
         slug,
         provider: resolvedProvider,
         variant,
         market: resolvedMarket,
-      }).catch(() => {
-        // Silently ignore — analytics must never break UX
-      });
+      }),
+    }).catch(() => {
+      // Silently ignore — analytics must never break UX
     });
   };
 
@@ -577,7 +579,7 @@ function StyledUl({ children }: { children: React.ReactNode }) {
   return (
     <div className="relative my-6 not-prose">
       <div className="rounded-xl px-6 py-5 border border-gray-200 bg-white shadow-sm">
-        <ul className="space-y-2.5">
+        <ul className="space-y-2.5" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
           {children}
         </ul>
       </div>
@@ -589,7 +591,7 @@ function StyledOl({ children }: { children: React.ReactNode }) {
   return (
     <div className="relative my-6 not-prose">
       <div className="rounded-xl px-6 py-5 border border-gray-200 bg-white shadow-sm">
-        <ol className="space-y-2.5 list-none counter-reset-[item]">
+        <ol className="space-y-2.5 list-none counter-reset-[item]" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
           {children}
         </ol>
       </div>
@@ -599,7 +601,7 @@ function StyledOl({ children }: { children: React.ReactNode }) {
 
 function StyledLi({ children }: { children: React.ReactNode }) {
   return (
-    <li style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', fontSize: '16px', color: 'var(--sfp-ink)', lineHeight: '1.7', paddingTop: '2px', paddingBottom: '2px' }}>
+    <li style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', fontSize: '16px', color: 'var(--sfp-ink)', lineHeight: '1.7', paddingTop: '2px', paddingBottom: '2px', listStyle: 'none' }}>
       <span style={{ position: 'relative', marginTop: '7px', width: '10px', height: '10px', minWidth: '10px', flexShrink: 0 }}>
         <span
           style={{
@@ -641,35 +643,113 @@ function StyledTable({ children }: { children: React.ReactNode }) {
   );
 }
 
-function StyledThead({ children }: { children: React.ReactNode }) {
+function StyledThead({ children, style, ...props }: React.HTMLAttributes<HTMLTableSectionElement>) {
   return (
-    <thead style={{ background: 'linear-gradient(to bottom, var(--sfp-navy), #2563EB)' }}>
+    <thead style={style || { background: 'linear-gradient(to bottom, var(--sfp-navy), #2563EB)' }} {...props}>
       {children}
     </thead>
   );
 }
 
-function StyledTh({ children }: { children: React.ReactNode }) {
+function StyledTh({ children, className, style, ...props }: React.ThHTMLAttributes<HTMLTableCellElement>) {
   return (
-    <th className="px-5 py-4 text-left text-xs font-bold uppercase tracking-wider text-white">
+    <th
+      className={className || "px-5 py-4 text-left text-xs font-bold uppercase tracking-wider text-white"}
+      style={style}
+      {...props}
+    >
       {children}
     </th>
   );
 }
 
-function StyledTd({ children }: { children: React.ReactNode }) {
+function StyledTd({ children, className, style, ...props }: React.TdHTMLAttributes<HTMLTableCellElement>) {
   return (
-    <td className="px-5 py-4 border-b border-gray-100 [&>strong]:font-semibold text-sm" style={{ color: 'var(--sfp-ink)' }}>
+    <td
+      className={className || "px-5 py-4 border-b border-gray-100 [&>strong]:font-semibold text-sm"}
+      style={style || { color: 'var(--sfp-ink)' }}
+      {...props}
+    >
       {children}
     </td>
   );
 }
 
-function StyledTr({ children }: { children: React.ReactNode }) {
+function StyledTr({ children, className, style, ...props }: React.HTMLAttributes<HTMLTableRowElement>) {
   return (
-    <tr>
+    <tr className={className} style={style} {...props}>
       {children}
     </tr>
+  );
+}
+
+// === Winner Column Components (Enterprise "Top Pick" Highlighting) ===
+// Used in comparison tables to visually highlight the recommended provider column.
+// These bypass the MDX props limitation by being dedicated custom components.
+
+function WinnerTh({ children, label }: { children: React.ReactNode; label?: string }) {
+  return (
+    <th
+      className="px-5 py-5 text-center font-bold uppercase tracking-wider text-white"
+      style={{
+        background: 'linear-gradient(to bottom, var(--sfp-navy), #2563EB)',
+        borderLeft: '3px solid rgba(245,166,35,0.5)',
+        borderRight: '3px solid rgba(245,166,35,0.5)',
+      }}
+    >
+      <div
+        className="inline-block mb-1.5 px-3 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider"
+        style={{ background: 'rgba(245,166,35,0.3)', border: '1px solid rgba(245,166,35,0.6)', color: '#FDE68A' }}
+      >
+        ★ Top Pick
+      </div>
+      <div className="text-sm font-bold">{children}</div>
+      {label && <div className="text-[10px] font-normal mt-0.5 text-amber-200">★ {label}</div>}
+    </th>
+  );
+}
+
+function WinnerTd({ children, alt }: { children: React.ReactNode; alt?: boolean }) {
+  return (
+    <td
+      className="px-5 py-4 text-center"
+      style={{
+        background: alt ? 'rgba(245,166,35,0.09)' : 'rgba(245,166,35,0.07)',
+        borderLeft: '3px solid rgba(245,166,35,0.35)',
+        borderRight: '3px solid rgba(245,166,35,0.35)',
+      }}
+    >
+      {children}
+    </td>
+  );
+}
+
+function WinnerCta({ href, children }: { href: string; children: React.ReactNode }) {
+  return (
+    <td
+      className="px-5 py-4 text-center"
+      style={{
+        background: 'rgba(245,166,35,0.09)',
+        borderLeft: '3px solid rgba(245,166,35,0.35)',
+        borderRight: '3px solid rgba(245,166,35,0.35)',
+      }}
+    >
+      <a
+        href={href}
+        target="_blank"
+        rel="nofollow noopener sponsored"
+        className="btn-shimmer inline-flex items-center justify-center h-10 px-6 rounded-lg text-xs font-bold whitespace-nowrap no-underline transition-all duration-200"
+        style={{
+          background: 'var(--sfp-gold)',
+          color: 'white',
+          boxShadow: '0 4px 15px rgba(245,166,35,0.4)',
+          border: 'none',
+          textDecoration: 'none',
+        }}
+      >
+        {children}
+      </a>
+    </td>
   );
 }
 
@@ -802,9 +882,11 @@ export const mdxComponents = {
   SmartFinderQuiz,
   SmartFinderInline,
   BrokerComparisonTablePremium,
+  ComparisonTablePremium,
   RiskWarningBox,
   QuickVerdictCard,
   SmartFinCard,
+  ProviderCard,
   ExpertVerdictBox,
   QuickSummary,
   SpreadComparison,
@@ -835,9 +917,9 @@ export const mdxComponents = {
   TrustBar,
   // ReportHighlight,
   // DataSummary,
-  // AnalysisTable,
-  // ScopeTable,
-  // RankingTable,
+  AnalysisTable,
+  ScopeTable,
+  RankingTable,
 
   // Pass through Lucide icons for MDX
   Beaker,
@@ -873,4 +955,9 @@ export const mdxComponents = {
   XCircle,
   Star,
   Plane,
+
+  // Winner column components (Enterprise Top Pick highlighting)
+  WinnerTh,
+  WinnerTd,
+  WinnerCta,
 };
