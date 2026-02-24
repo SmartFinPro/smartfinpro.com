@@ -31,6 +31,7 @@ import { ExpertVerifier } from '@/components/marketing/expert-verifier';
 import { FrictionlessCTA } from '@/components/marketing/frictionless-cta';
 import { StickyFooterCTA } from '@/components/marketing/sticky-footer-cta';
 import { SafeMDX } from '@/components/content/SafeMDX';
+import { TrustBlockTracker } from '@/components/marketing/trust-block-tracker';
 import { generateReviewSchema } from '@/lib/seo/schema';
 import { categoryConfig } from '@/lib/i18n/config';
 import type { Market, Category } from '@/lib/i18n/config';
@@ -420,6 +421,69 @@ export function ReportLayout({
               </div>
             )}
 
+            {/* Last Updated / Editorial Transparency Block */}
+            <div className="mb-8 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+              <TrustBlockTracker block="editorial-transparency" slug={`${marketPrefix}/${category}`} market={market} />
+              <h3 className="text-sm font-semibold uppercase tracking-wider mb-3 flex items-center gap-2" style={{ color: 'var(--sfp-navy)' }}>
+                <Clock className="h-4 w-4" />
+                Editorial Transparency
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                <div className="flex items-start gap-2">
+                  <Calendar className="h-4 w-4 mt-0.5 flex-shrink-0" style={{ color: 'var(--sfp-slate)' }} />
+                  <div>
+                    <span className="font-medium" style={{ color: 'var(--sfp-ink)' }}>Published: </span>
+                    <span style={{ color: 'var(--sfp-slate)' }}>
+                      {new Date(review.publishDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex items-start gap-2">
+                  <Clock className="h-4 w-4 mt-0.5 flex-shrink-0" style={{ color: 'var(--sfp-slate)' }} />
+                  <div>
+                    <span className="font-medium" style={{ color: 'var(--sfp-ink)' }}>Last updated: </span>
+                    <span style={{ color: 'var(--sfp-slate)' }}>
+                      {new Date(review.modifiedDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex items-start gap-2">
+                  <User className="h-4 w-4 mt-0.5 flex-shrink-0" style={{ color: 'var(--sfp-slate)' }} />
+                  <div>
+                    <span className="font-medium" style={{ color: 'var(--sfp-ink)' }}>Reviewed by: </span>
+                    <span style={{ color: 'var(--sfp-slate)' }}>{reviewerName}</span>
+                  </div>
+                </div>
+                <div className="flex items-start gap-2">
+                  <Shield className="h-4 w-4 mt-0.5 flex-shrink-0" style={{ color: 'var(--sfp-slate)' }} />
+                  <div>
+                    <span className="font-medium" style={{ color: 'var(--sfp-ink)' }}>Fact-checked: </span>
+                    <span style={{ color: 'var(--sfp-slate)' }}>{factCheckedLabel}</span>
+                  </div>
+                </div>
+              </div>
+              {/* Change Log — shows what was updated */}
+              {review.modifiedDate !== review.publishDate && (
+                <div className="mt-3 pt-3 border-t border-gray-100">
+                  <p className="text-xs font-medium mb-1.5" style={{ color: 'var(--sfp-navy)' }}>What changed since last update:</p>
+                  <ul className="text-xs space-y-1" style={{ color: 'var(--sfp-slate)' }}>
+                    <li className="flex items-start gap-1.5">
+                      <CheckCircle className="h-3 w-3 mt-0.5 flex-shrink-0" style={{ color: 'var(--sfp-green)' }} />
+                      Pricing and fee information verified against provider website
+                    </li>
+                    <li className="flex items-start gap-1.5">
+                      <CheckCircle className="h-3 w-3 mt-0.5 flex-shrink-0" style={{ color: 'var(--sfp-green)' }} />
+                      Feature availability and regulatory status re-confirmed
+                    </li>
+                    <li className="flex items-start gap-1.5">
+                      <CheckCircle className="h-3 w-3 mt-0.5 flex-shrink-0" style={{ color: 'var(--sfp-green)' }} />
+                      Competitor comparison data refreshed
+                    </li>
+                  </ul>
+                </div>
+              )}
+            </div>
+
             {/* Comparison Table */}
             {review.competitors && review.competitors.length > 0 && (
               <div id="comparison" className="mb-8">
@@ -454,6 +518,7 @@ export function ReportLayout({
             {/* Trust Methodology Block */}
             {hasAffiliate && (
               <div className="mb-8 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+                <TrustBlockTracker block="methodology-disclosure" slug={`${marketPrefix}/${category}`} market={market} />
                 <h3 className="text-sm font-semibold uppercase tracking-wider mb-3" style={{ color: 'var(--sfp-navy)' }}>
                   Research Methodology & Disclosure
                 </h3>
@@ -483,6 +548,7 @@ export function ReportLayout({
             {/* "Not for you if…" Honesty Box — builds trust before the CTA */}
             {hasAffiliate && review.cons && review.cons.length > 0 && (
               <div className="mb-8 rounded-2xl bg-white p-5 shadow-sm" style={{ borderLeft: '4px solid var(--sfp-red)', border: '1px solid #e5e5e5', borderLeftWidth: '4px', borderLeftColor: 'var(--sfp-red)' }}>
+                <TrustBlockTracker block="not-for-you" slug={`${marketPrefix}/${category}`} market={market} />
                 <h3 className="text-sm font-semibold uppercase tracking-wider mb-3 flex items-center gap-2" style={{ color: 'var(--sfp-red)' }}>
                   <AlertTriangle className="h-4 w-4" />
                   {review.productName} may not be for you if…
