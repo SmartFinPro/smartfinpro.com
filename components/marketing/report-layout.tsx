@@ -20,11 +20,13 @@ import {
   BarChart3,
   ChevronDown,
   BadgeCheck,
+  AlertTriangle,
 } from 'lucide-react';
 import { Breadcrumb } from './breadcrumb';
 import { FAQSection } from './faq-section';
 import { ComparisonTable } from './comparison-table';
 import { ComparisonTablePremium } from './comparison-table-premium';
+import { DebtReliefMiniRecommender } from './debt-relief-mini-recommender';
 import { ExpertVerifier } from '@/components/marketing/expert-verifier';
 import { FrictionlessCTA } from '@/components/marketing/frictionless-cta';
 import { StickyFooterCTA } from '@/components/marketing/sticky-footer-cta';
@@ -48,15 +50,36 @@ interface ReportLayoutProps {
   category: Category;
 }
 
-function resolveExpertImageFromReviewedBy(reviewedBy?: string): string | null {
-  if (!reviewedBy) return null;
-
-  const rawName = reviewedBy.split(',')[0]?.trim() || '';
-  const normalized = rawName
+function normalizePersonName(name?: string): string {
+  if (!name) return '';
+  return name
     .toLowerCase()
     .replace(/^dr\.\s+/, '')
     .replace(/\s+/g, ' ')
     .trim();
+}
+
+function looksLikeRole(text: string): boolean {
+  return /(attorney|analyst|specialist|planner|researcher|expert|advisor|editor|examiner)/i.test(text);
+}
+
+function parseReviewedBy(reviewedBy?: string): { name: string; details: string[] } {
+  if (!reviewedBy) return { name: '', details: [] };
+  const parts = reviewedBy
+    .split(',')
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  return {
+    name: parts[0] || '',
+    details: parts.slice(1),
+  };
+}
+
+function resolveExpertImageFromReviewedBy(reviewedBy?: string): string | null {
+  if (!reviewedBy) return null;
+
+  const normalized = normalizePersonName(reviewedBy.split(',')[0]?.trim() || '');
 
   const byName: Record<string, string> = {
     'james miller': '/images/experts/james-miller.jpg',
@@ -100,9 +123,35 @@ export function ReportLayout({
   const hasRating = !isGuide && review.rating > 0;
   const hasAffiliate = !isGuide && review.affiliateUrl && review.affiliateUrl !== '#';
   const hasProscons = !isGuide && (review.pros.length > 0 || review.cons.length > 0);
+  const factCheckedDate = getFirstMondayOfMonth();
+  const factCheckedLabel = new Date(factCheckedDate).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
   const reviewedByImage = resolveExpertImageFromReviewedBy(review.reviewedBy);
   const dbImage = expert?.image_url?.startsWith('/images/experts/') ? expert.image_url : null;
   const expertImage = reviewedByImage || dbImage || undefined;
+  const parsedReviewedBy = parseReviewedBy(review.reviewedBy);
+  const reviewerName = parsedReviewedBy.name || expert?.name || 'Expert Reviewer';
+  const sameReviewerAsExpert =
+    normalizePersonName(parsedReviewedBy.name) &&
+    normalizePersonName(parsedReviewedBy.name) === normalizePersonName(expert?.name);
+  const firstDetail = parsedReviewedBy.details[0] || '';
+  const inferredRole = firstDetail && looksLikeRole(firstDetail) ? firstDetail : '';
+  const reviewerTitle = inferredRole || (sameReviewerAsExpert ? expert?.role : '') || 'Expert Reviewer';
+  const reviewerCredentials = (() => {
+    if (parsedReviewedBy.details.length > 0) {
+      if (inferredRole) {
+        return parsedReviewedBy.details.slice(1);
+      }
+      return parsedReviewedBy.details;
+    }
+    return expert?.credentials || [];
+  })();
+  const reviewerBio = sameReviewerAsExpert ? expert?.bio || undefined : undefined;
+  const reviewerLinkedIn = sameReviewerAsExpert ? expert?.linkedin_url || undefined : undefined;
+  const showExpertCards = reviewerName !== 'SmartFinPro Team';
 
   return (
     <article className="min-h-screen" style={{ background: 'var(--sfp-gray)' }}>
@@ -329,16 +378,16 @@ export function ReportLayout({
                   </span>
                   <ChevronDown className="h-5 w-5 transition-transform group-open:rotate-180" style={{ color: 'var(--sfp-slate)' }} />
                 </summary>
-                <nav className="mt-4 space-y-0.5 pl-8">
+                <nav className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-x-3 gap-y-1.5 pl-0 md:pl-1">
                   {review.sections.map((section) => (
                     <a
                       key={section.id}
                       href={`#${section.id}`}
-                      className="group/toc flex items-center gap-2 text-sm py-1.5 px-2 rounded-lg hover:bg-gray-50 transition-colors no-underline hover:no-underline"
+                      className="group/toc flex items-center justify-between gap-2 text-[13px] md:text-sm py-1.5 px-2 rounded-md hover:bg-gray-50 transition-colors no-underline hover:no-underline"
                       style={{ color: 'var(--sfp-ink)', textDecoration: 'none' }}
                     >
-                      <span className="font-medium">{section.title}</span>
-                      <ArrowRight className="h-3 w-3 opacity-0 -translate-x-1 group-hover/toc:opacity-60 group-hover/toc:translate-x-0 transition-all" style={{ color: 'var(--sfp-navy)' }} />
+                      <span className="font-medium leading-tight">{section.title}</span>
+                      <ArrowRight className="h-3 w-3 shrink-0 opacity-0 -translate-x-1 group-hover/toc:opacity-60 group-hover/toc:translate-x-0 transition-all" style={{ color: 'var(--sfp-navy)' }} />
                     </a>
                   ))}
                 </nav>
@@ -357,16 +406,16 @@ export function ReportLayout({
             </div>
 
             {/* Expert Verifier */}
-            {expert && (
+            {showExpertCards && (
               <div className="mb-8">
                 <ExpertVerifier
-                  name={expert.name}
-                  title={expert.role}
-                  credentials={expert.credentials.length > 0 ? expert.credentials : ['Expert Reviewer']}
-                  lastFactChecked={getFirstMondayOfMonth()}
-                  bio={expert.bio || undefined}
+                  name={reviewerName}
+                  title={reviewerTitle}
+                  credentials={reviewerCredentials.length > 0 ? reviewerCredentials : ['Expert Reviewer']}
+                  lastFactChecked={factCheckedDate}
+                  bio={reviewerBio}
                   image={expertImage}
-                  linkedInUrl={expert.linkedin_url || undefined}
+                  linkedInUrl={reviewerLinkedIn}
                 />
               </div>
             )}
@@ -394,6 +443,61 @@ export function ReportLayout({
             {review.faqs && review.faqs.length > 0 && (
               <div id="faq" className="mb-8">
                 <FAQSection faqs={review.faqs} />
+              </div>
+            )}
+
+            {/* Mini Pre-CTA (Debt Relief only) — A: Decision-first */}
+            {hasAffiliate && category === 'debt-relief' && (
+              <DebtReliefMiniRecommender affiliateUrl={review.affiliateUrl} />
+            )}
+
+            {/* Trust Methodology Block */}
+            {hasAffiliate && (
+              <div className="mb-8 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+                <h3 className="text-sm font-semibold uppercase tracking-wider mb-3" style={{ color: 'var(--sfp-navy)' }}>
+                  Research Methodology & Disclosure
+                </h3>
+                <div className="space-y-2 text-sm" style={{ color: 'var(--sfp-ink)' }}>
+                  <p>
+                    <strong>Last fact-check:</strong> {factCheckedLabel}
+                  </p>
+                  <p>
+                    <strong>Data points reviewed:</strong> {review.reviewCount.toLocaleString('en-US')} consumer records, lender pricing pages, and public regulator guidance.
+                  </p>
+                  <p>
+                    <strong>Primary sources:</strong> CFPB, Federal Reserve, IRS, NFCC, and provider disclosures.
+                  </p>
+                  <p style={{ color: 'var(--sfp-slate)' }}>
+                    We may earn a commission from partner links, but rankings and recommendations are set by editorial criteria.
+                  </p>
+                  <div className="flex flex-wrap gap-x-4 gap-y-1 mt-3 pt-3 border-t border-gray-100">
+                    <a href="/methodology" className="text-xs font-medium underline" style={{ color: 'var(--sfp-navy)' }}>Our Methodology</a>
+                    <a href="/review-policy" className="text-xs font-medium underline" style={{ color: 'var(--sfp-navy)' }}>Review Policy</a>
+                    <a href="/editorial-policy" className="text-xs font-medium underline" style={{ color: 'var(--sfp-navy)' }}>Editorial Policy</a>
+                    <a href="/corrections-policy" className="text-xs font-medium underline" style={{ color: 'var(--sfp-navy)' }}>Corrections Policy</a>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* "Not for you if…" Honesty Box — builds trust before the CTA */}
+            {hasAffiliate && review.cons && review.cons.length > 0 && (
+              <div className="mb-8 rounded-2xl bg-white p-5 shadow-sm" style={{ borderLeft: '4px solid var(--sfp-red)', border: '1px solid #e5e5e5', borderLeftWidth: '4px', borderLeftColor: 'var(--sfp-red)' }}>
+                <h3 className="text-sm font-semibold uppercase tracking-wider mb-3 flex items-center gap-2" style={{ color: 'var(--sfp-red)' }}>
+                  <AlertTriangle className="h-4 w-4" />
+                  {review.productName} may not be for you if…
+                </h3>
+                <ul className="space-y-2 text-sm" style={{ color: 'var(--sfp-ink)' }}>
+                  {review.cons.slice(0, 3).map((con, idx) => (
+                    <li key={idx} className="flex items-start gap-2">
+                      <XCircle className="h-4 w-4 mt-0.5 flex-shrink-0" style={{ color: 'var(--sfp-red)' }} />
+                      <span>{con}</span>
+                    </li>
+                  ))}
+                </ul>
+                <p className="text-xs mt-3 pt-3 border-t border-gray-100" style={{ color: 'var(--sfp-slate)' }}>
+                  We believe honest disclosure of limitations helps you make better financial decisions.
+                </p>
               </div>
             )}
 
@@ -453,6 +557,9 @@ export function ReportLayout({
                     ]}
                     expandableVerdict={true}
                   />
+                  <div className="mt-3 text-xs" style={{ color: 'var(--sfp-slate)' }}>
+                    Not legal, tax, or bankruptcy advice. Terms vary by state and credit profile.
+                  </div>
                 </div>
               );
             })()}
@@ -520,13 +627,13 @@ export function ReportLayout({
             <div className="lg:sticky lg:top-24 space-y-6">
 
               {/* Expert Photo Card */}
-              {expert && expert.name !== 'SmartFinPro Team' && (
+              {showExpertCards && (
                 <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
                   {expertImage && (
                     <div className="relative w-full aspect-[4/3] overflow-hidden" style={{ background: 'var(--sfp-sky)' }}>
                       <Image
                         src={expertImage}
-                        alt={`${expert.name} — ${expert.role}`}
+                        alt={`${reviewerName} — ${reviewerTitle}`}
                         fill
                         className="object-cover object-top"
                         sizes="300px"
@@ -539,13 +646,13 @@ export function ReportLayout({
                       ✓ Reviewed &amp; Verified
                     </div>
                     <div className="flex items-center justify-center gap-1.5 mb-1">
-                      <span className="text-sm font-bold" style={{ color: 'var(--sfp-ink)' }}>{expert.name}</span>
+                      <span className="text-sm font-bold" style={{ color: 'var(--sfp-ink)' }}>{reviewerName}</span>
                       <BadgeCheck className="h-4 w-4" style={{ color: 'var(--sfp-navy)' }} />
                     </div>
-                    <div className="text-xs mb-2" style={{ color: 'var(--sfp-slate)' }}>{expert.role}</div>
-                    {expert.credentials && expert.credentials.length > 0 && (
+                    <div className="text-xs mb-2" style={{ color: 'var(--sfp-slate)' }}>{reviewerTitle}</div>
+                    {reviewerCredentials.length > 0 && (
                       <div className="flex flex-wrap justify-center gap-1.5">
-                        {expert.credentials.slice(0, 3).map((cred, i) => (
+                        {reviewerCredentials.slice(0, 3).map((cred, i) => (
                           <span
                             key={i}
                             className="text-[10px] font-medium px-2 py-0.5 rounded-full border"
@@ -556,9 +663,9 @@ export function ReportLayout({
                         ))}
                       </div>
                     )}
-                    {expert.linkedin_url && (
+                    {reviewerLinkedIn && (
                       <a
-                        href={expert.linkedin_url}
+                        href={reviewerLinkedIn}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-1 text-[10px] mt-2 no-underline hover:underline"
@@ -626,15 +733,20 @@ export function ReportLayout({
 
                   {/* Primary CTA (reviews with affiliate only) */}
                   {hasAffiliate && (
-                    <Link
-                      href={review.affiliateUrl}
-                      target="_blank"
-                      rel="noopener sponsored"
-                      className="w-full h-12 text-base font-semibold border-0 shadow-md hover:shadow-lg transition-all rounded-xl inline-flex items-center justify-center no-underline hover:no-underline hover:brightness-110"
-                      style={{ background: 'var(--sfp-gold)', color: '#ffffff', textDecoration: 'none' }}
-                    >
-                      Visit {review.productName} <ArrowRight className="ml-2 h-4 w-4" />
-                    </Link>
+                    <>
+                      <Link
+                        href={review.affiliateUrl}
+                        target="_blank"
+                        rel="noopener sponsored"
+                        className="w-full h-12 text-base font-semibold border-0 shadow-md hover:shadow-lg transition-all rounded-xl inline-flex items-center justify-center no-underline hover:no-underline hover:brightness-110"
+                        style={{ background: 'var(--sfp-gold)', color: '#ffffff', textDecoration: 'none' }}
+                      >
+                        Visit {review.productName} <ArrowRight className="ml-2 h-4 w-4" />
+                      </Link>
+                      <p className="mt-2 text-[11px] leading-snug" style={{ color: 'var(--sfp-slate)' }}>
+                        No obligation. Approval, fees, and outcomes depend on your debt profile and state regulations.
+                      </p>
+                    </>
                   )}
                 </div>
               </div>
