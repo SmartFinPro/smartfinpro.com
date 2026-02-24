@@ -141,6 +141,10 @@ supabase/
 content/
 └── [market]/[category]/[slug].mdx   # 108+ MDX-Artikel
 
+public/images/experts/               # Expert-Porträts (EEAT Sidebar Card)
+├── [vorname-nachname].jpg           # 640×480 JPEG, 50-65KB, 4:3 Retina
+└── expert-extra-*.jpg               # Reserve-Fotos für neue Experten
+
 ecosystem.config.js                  # PM2 Prozess-Konfiguration
 next.config.ts                       # output: standalone, CSP Headers
 tailwind.css                         # Tailwind v4 Theme (NICHT tailwind.config.js)
@@ -298,6 +302,7 @@ if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
 | `'use client'` importiert Server Action | Turbopack-Crash! Statt `import('@/lib/actions/...')` → `fetch('/api/...')` nutzen. Check: `npm run check:imports` |
 | MDX `_missingMdxReference` Fehler | `lib/mdx/serialize.ts` Wrapper strippt diese Checks. Nie `serialize()` direkt aus `next-mdx-remote` nutzen, immer `serializeMDX()` |
 | Turbopack instabil in Dev | Fallback: `npm run dev:webpack` startet Webpack-Dev-Server statt Turbopack |
+| Expert-Bild falsch formatiert | Immer 640×480 JPEG, `[vorname-nachname].jpg`, Dateiname = DB `image_url`. Kein SVG, kein PNG |
 
 ---
 
