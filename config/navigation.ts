@@ -30,10 +30,10 @@ export const marketSiloConfig: Record<Market, MarketSiloConfig> = {
   us: {
     primaryNav: ['credit-repair', 'debt-relief', 'personal-finance', 'ai-tools', 'trading', 'business-banking'],
     featured: [
-      { label: 'Best Robo-Advisors 2026', href: '/personal-finance/best-robo-advisors' },
-      { label: 'Credit Card Comparison', href: '/personal-finance/credit-cards-comparison' },
-      { label: 'Amex Gold Review', href: '/personal-finance/amex-gold-card-review' },
-      { label: 'Chase Sapphire Preferred', href: '/personal-finance/chase-sapphire-preferred-review' },
+      { label: 'Best Robo-Advisors 2026', href: '/us/personal-finance/best-robo-advisors' },
+      { label: 'Credit Card Comparison', href: '/us/personal-finance/credit-cards-comparison' },
+      { label: 'Amex Gold Review', href: '/us/personal-finance/amex-gold-card-review' },
+      { label: 'Chase Sapphire Preferred', href: '/us/personal-finance/chase-sapphire-preferred-review' },
     ],
   },
   uk: {
@@ -72,6 +72,8 @@ export const trustLinks: NavLink[] = [
   { label: 'Contact', href: '/contact' },
   { label: 'Our Methodology', href: '/methodology' },
   { label: 'Editorial Policy', href: '/editorial-policy' },
+  { label: 'Review Policy', href: '/review-policy' },
+  { label: 'Corrections Policy', href: '/corrections-policy' },
   { label: 'Affiliate Disclosure', href: '/affiliate-disclosure' },
   { label: 'Privacy Policy', href: '/privacy' },
   { label: 'Terms of Service', href: '/terms' },
@@ -136,22 +138,22 @@ export const socialLinks: NavLink[] = [
 
 /**
  * Detect market from a URL pathname.
- * US has no prefix, UK/CA/AU use /{market}/ prefix.
+ * All markets use /{market}/ prefix: /us/, /uk/, /ca/, /au/
  */
 export function detectMarketFromPath(pathname: string): Market {
   const segments = pathname.split('/').filter(Boolean);
   const first = segments[0];
-  if (first && ['uk', 'ca', 'au'].includes(first)) {
+  if (first && ['us', 'uk', 'ca', 'au'].includes(first)) {
     return first as Market;
   }
   return 'us';
 }
 
 /**
- * Get URL prefix for a market. US = '', others = '/uk', '/ca', '/au'.
+ * Get URL prefix for a market. All markets use /{market} prefix.
  */
 export function getMarketPrefix(market: Market): string {
-  return market === 'us' ? '' : `/${market}`;
+  return `/${market}`;
 }
 
 /**
