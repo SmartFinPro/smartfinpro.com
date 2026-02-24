@@ -295,6 +295,30 @@ if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
 | Supabase RLS ignoriert | Service Role Key nur Server-seitig, alle neuen Tabellen mit RLS-Policies |
 | MDX ohne Pflicht-Frontmatter | `title`, `description`, `market`, `category`, `affiliate_link` sind Pflichtfelder |
 | Cron ohne Auth-Check | `process.env.CRON_SECRET` in jeder Cron-Route prüfen |
+| `'use client'` importiert Server Action | Turbopack-Crash! Statt `import('@/lib/actions/...')` → `fetch('/api/...')` nutzen. Check: `npm run check:imports` |
+| MDX `_missingMdxReference` Fehler | `lib/mdx/serialize.ts` Wrapper strippt diese Checks. Nie `serialize()` direkt aus `next-mdx-remote` nutzen, immer `serializeMDX()` |
+| Turbopack instabil in Dev | Fallback: `npm run dev:webpack` startet Webpack-Dev-Server statt Turbopack |
+
+---
+
+## 🔧 Turbopack / MDX Troubleshooting
+
+### Problem: `Module [project]/lib/actions/data:HASH [app-client]`
+**Ursache:** `'use client'`-Datei importiert dynamisch eine `'use server'`-Datei. Turbopack kann den Server-Action-Proxy nicht auflösen.
+**Fix-Pattern:** Server Action durch `fetch('/api/...')` API-Route ersetzen.
+**Beispiel:** `lib/mdx/components.tsx` → `fetch('/api/track-cta')` statt `import('@/lib/actions/cta-analytics')`
+**Prävention:** `npm run check:imports` vor jedem Build (läuft automatisch via `prebuild`).
+
+### Problem: `Expected component ProviderCard to be defined`
+**Ursache:** `next-mdx-remote/serialize` hard-coded `development: true` (Zeile 24 in `node_modules`), emittiert `_missingMdxReference()`-Checks die vor SafeMDX-Injection werfen.
+**Fix:** `lib/mdx/serialize.ts` — Custom Wrapper der diese Checks per Regex aus dem kompilierten Output entfernt.
+**Regel:** Immer `serializeMDX()` aus `@/lib/mdx/serialize` nutzen, nie `serialize()` direkt.
+
+### Fallback: Webpack Dev Server
+```bash
+npm run dev:webpack    # Startet next dev --webpack
+```
+Nutzen wenn Turbopack instabil wird (z.B. nach Cache-Löschung, großen Dependency-Updates).
 
 ---
 

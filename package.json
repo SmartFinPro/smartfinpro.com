@@ -5,9 +5,10 @@
   "scripts": {
     "predev": "rm -rf .next/dev/lock && (lsof -ti:${PORT:-3000} 2>/dev/null | xargs kill -9 2>/dev/null || true)",
     "dev": "next dev --turbopack",
-    "dev:webpack": "next dev",
+    "dev:webpack": "next dev --webpack",
     "dev:clean": "bash bin/fix-cache.sh --restart",
     "check:imports": "bash scripts/check-client-server-imports.sh",
+    "prebuild": "bash scripts/check-client-server-imports.sh",
     "build": "next build",
     "postbuild": "node scripts/inject-critical-css.mjs",
     "build:prod": "next build && node scripts/inject-critical-css.mjs",
