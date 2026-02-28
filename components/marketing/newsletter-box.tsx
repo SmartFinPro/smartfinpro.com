@@ -16,7 +16,7 @@ import {
   Sparkles,
   ArrowRight,
 } from 'lucide-react';
-import { subscribeWithEmail } from '@/lib/actions/newsletter';
+import { subscribeWithEmail } from '@/lib/newsletter-client';
 import { useNewsletterTracking, useVisibilityTracking } from '@/lib/hooks/use-component-tracking';
 
 interface NewsletterBoxProps {
@@ -144,7 +144,7 @@ export function NewsletterBox({
                 <a href="/privacy" className="underline hover:no-underline" style={{ color: 'var(--sfp-navy)' }}>Privacy Policy</a>.
               </span>
             </label>
-            <Button type="submit" className="w-full text-white" size="sm" disabled={status === 'loading'} style={{ background: 'var(--sfp-gold)' }}>
+            <Button type="submit" className="w-full text-white" size="sm" disabled={status === 'loading'} style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}>
               {status === 'loading' ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
@@ -195,7 +195,7 @@ export function NewsletterBox({
                   size="sm"
                   className="h-9 px-4 text-white gap-1.5"
                   disabled={status === 'loading'}
-                  style={{ background: 'var(--sfp-gold)' }}
+                  style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}
                 >
                   {status === 'loading' ? (
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -270,7 +270,7 @@ export function NewsletterBox({
                 </div>
               </div>
               {/* Badge */}
-              <div className="absolute -top-2 -right-2 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg" style={{ background: 'var(--sfp-gold)' }}>
+              <div className="absolute -top-2 -right-2 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg" style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}>
                 FREE
               </div>
             </div>
@@ -321,7 +321,7 @@ export function NewsletterBox({
                   size="lg"
                   className="h-12 px-6 gap-2 border-0 shadow-lg text-white"
                   disabled={status === 'loading'}
-                  style={{ background: 'var(--sfp-gold)' }}
+                  style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}
                 >
                   {status === 'loading' ? (
                     <>

@@ -16,7 +16,7 @@ import {
   Clock,
   Gift,
 } from 'lucide-react';
-import { subscribeWithEmail } from '@/lib/actions/newsletter';
+import { subscribeWithEmail } from '@/lib/newsletter-client';
 
 interface NewsletterOptinProps {
   title?: string;

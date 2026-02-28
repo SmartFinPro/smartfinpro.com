@@ -23,7 +23,7 @@ import {
   ArrowRight,
   FileText,
 } from 'lucide-react';
-import { subscribeWithEmail } from '@/lib/actions/newsletter';
+import { subscribeWithEmail } from '@/lib/newsletter-client';
 
 const STORAGE_KEY = 'sfp_exit_popup_shown';
 const COOLDOWN_DAYS = 7;
@@ -193,7 +193,7 @@ export function ExitIntentPopup() {
                     <div className="h-1 w-full bg-gray-200 rounded"></div>
                   </div>
                 </div>
-                <div className="absolute -top-2 -right-2 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg" style={{ background: 'var(--sfp-gold)' }}>
+                <div className="absolute -top-2 -right-2 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg" style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}>
                   FREE
                 </div>
               </div>
@@ -246,7 +246,7 @@ export function ExitIntentPopup() {
                 <Button
                   type="submit"
                   className="w-full h-12 gap-2 border-0 shadow-lg text-white"
-                  style={{ background: 'var(--sfp-gold)' }}
+                  style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}
                   disabled={status === 'loading'}
                 >
                   {status === 'loading' ? (

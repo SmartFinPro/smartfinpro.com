@@ -5,7 +5,6 @@ import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import {
   Info,
   AlertTriangle,
@@ -42,6 +41,7 @@ import {
   Star,
   Plane,
   ChevronDown,
+  Layers,
 } from 'lucide-react';
 
 // Marketing Components
@@ -68,24 +68,39 @@ import { QuickPicks, CompactPicks } from '@/components/marketing/quick-picks';
 // which use Node.js `crypto` + `next/headers`. Static imports crash Turbopack
 // HMR because it can't create the Server Reference proxy in the client bundle.
 const NewsletterOptin = dynamic(
-  () => import('@/components/marketing/newsletter-optin').then((m) => m.NewsletterOptin),
-  { ssr: false },
+  () =>
+    import('@/components/marketing/newsletter-optin').then((m) => ({
+      default: m.NewsletterOptin,
+    })),
+  { ssr: false, loading: () => null },
 );
 const StickyNewsletterBar = dynamic(
-  () => import('@/components/marketing/newsletter-optin').then((m) => m.StickyNewsletterBar),
-  { ssr: false },
+  () =>
+    import('@/components/marketing/newsletter-optin').then((m) => ({
+      default: m.StickyNewsletterBar,
+    })),
+  { ssr: false, loading: () => null },
 );
 const ExitIntentPopup = dynamic(
-  () => import('@/components/marketing/newsletter-optin').then((m) => m.ExitIntentPopup),
-  { ssr: false },
+  () =>
+    import('@/components/marketing/newsletter-optin').then((m) => ({
+      default: m.ExitIntentPopup,
+    })),
+  { ssr: false, loading: () => null },
 );
 const NewsletterBox = dynamic(
-  () => import('@/components/marketing/newsletter-box').then((m) => m.NewsletterBox),
-  { ssr: false },
+  () =>
+    import('@/components/marketing/newsletter-box').then((m) => ({
+      default: m.NewsletterBox,
+    })),
+  { ssr: false, loading: () => null },
 );
 const NewsletterInline = dynamic(
-  () => import('@/components/marketing/newsletter-box').then((m) => m.NewsletterInline),
-  { ssr: false },
+  () =>
+    import('@/components/marketing/newsletter-box').then((m) => ({
+      default: m.NewsletterInline,
+    })),
+  { ssr: false, loading: () => null },
 );
 import { SmartFinderQuiz, SmartFinderInline } from '@/components/marketing/smart-finder-quiz';
 import { BrokerComparisonTablePremium } from '@/components/marketing/broker-comparison-premium';
@@ -121,6 +136,9 @@ import { StickyTableOfContents } from '@/components/marketing/sticky-toc';
 import { StickyFooterCTA } from '@/components/marketing/sticky-footer-cta';
 import { AnswerBlock } from '@/components/ui/answer-block';
 import { TrustBar } from '@/components/marketing/trust-bar';
+// MiniQuiz uses Dialog which causes Turbopack bundling issues in mdxComponents.
+// Render MiniQuiz via ReportLayout instead (outside MDX pipeline).
+function MiniQuiz() { return null; }
 
 // Tip Component — Sky background + Navy left border (per Konzept 7.3 Info-Box)
 function Tip({ children }: { children: React.ReactNode }) {
@@ -210,17 +228,51 @@ function ProsCons({
   );
 }
 
-// Rating Component
+// Rating Component — Split-Panel Proof Design (matches TrustAuthority)
 function Rating({ value }: { value: number }) {
   return (
-    <div className="flex items-center gap-2 my-4">
-      <StarRating value={value} size="lg" />
-      <span className="text-2xl font-bold">{value}/5</span>
+    <div className="my-10 not-prose">
+      <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+        {/* Gradient accent bar */}
+        <div className="h-1" style={{ background: 'linear-gradient(90deg, var(--sfp-navy) 0%, var(--sfp-gold) 100%)' }} />
+
+        <div className="flex flex-col lg:flex-row">
+          {/* Left panel: Label */}
+          <div
+            className="shrink-0 px-6 py-5 lg:px-8 lg:py-0 flex flex-col justify-center lg:w-[260px] border-b lg:border-b-0 lg:border-r border-gray-100"
+            style={{ background: 'var(--sfp-sky)' }}
+          >
+            <div className="flex items-center gap-2.5 mb-1.5">
+              <div
+                className="w-7 h-7 rounded-lg flex items-center justify-center"
+                style={{ background: 'rgba(245,166,35,0.12)' }}
+              >
+                <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+              </div>
+              <span
+                className="text-sm font-bold uppercase tracking-wider leading-tight"
+                style={{ color: 'var(--sfp-navy)' }}
+              >
+                Our Rating
+              </span>
+            </div>
+            <p style={{ color: 'var(--sfp-slate)', fontSize: '11px' }} className="lg:pl-[38px]">
+              Expert Score
+            </p>
+          </div>
+
+          {/* Right panel: Stars + Value */}
+          <div className="flex-1 flex items-center gap-3 px-6 py-4 lg:px-8">
+            <StarRating value={value} size="lg" />
+            <span className="font-bold" style={{ color: 'var(--sfp-navy)', fontSize: '18px' }}>{value}/5</span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
 
-// Affiliate Button Component — with CTA click tracking
+// Affiliate Button Component — Split-Panel Design with CTA click tracking
 function AffiliateButton({
   href,
   productName,
@@ -241,14 +293,10 @@ function AffiliateButton({
 }) {
   const pathname = usePathname();
   const handleClick = () => {
-    // Derive slug & market from the current URL path
     const slug = pathname || '/';
     const resolvedProvider = provider || productName || 'unknown';
     const resolvedMarket = market || detectMarketFromPath(pathname);
 
-    // Fire-and-forget: POST to API route instead of dynamic server action
-    // import. Using fetch() avoids the Turbopack module resolution error
-    // that occurs when a 'use client' file dynamically imports 'use server'.
     fetch('/api/track-cta', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -258,24 +306,130 @@ function AffiliateButton({
         variant,
         market: resolvedMarket,
       }),
-    }).catch(() => {
-      // Silently ignore — analytics must never break UX
-    });
+    }).catch(() => {});
   };
 
   return (
-    <div className="my-6 not-prose">
-      <Link
-        href={href}
-        target="_blank"
-        rel="nofollow noopener sponsored"
-        onClick={handleClick}
-        className="inline-flex items-center justify-center gap-2 rounded-lg text-sm font-semibold text-white transition-all px-6 py-3 shadow-sm hover:shadow-md"
-        style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}
+    <div className="my-10 not-prose">
+      <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+        {/* Gradient accent bar */}
+        <div className="h-1" style={{ background: 'linear-gradient(90deg, var(--sfp-navy) 0%, var(--sfp-gold) 100%)' }} />
+
+        <div className="flex flex-col lg:flex-row">
+          {/* Left panel: Label */}
+          <div
+            className="shrink-0 px-6 py-5 lg:px-8 lg:py-0 flex flex-col justify-center lg:w-[260px] border-b lg:border-b-0 lg:border-r border-gray-100"
+            style={{ background: 'var(--sfp-sky)' }}
+          >
+            <div className="flex items-center gap-2.5 mb-1.5">
+              <div
+                className="w-7 h-7 rounded-lg flex items-center justify-center"
+                style={{ background: 'rgba(26,107,58,0.1)' }}
+              >
+                <ArrowRight className="h-3.5 w-3.5" style={{ color: 'var(--sfp-gold)' }} />
+              </div>
+              <span
+                className="text-sm font-bold uppercase tracking-wider leading-tight"
+                style={{ color: 'var(--sfp-navy)' }}
+              >
+                Get Started
+              </span>
+            </div>
+            <p style={{ color: 'var(--sfp-slate)', fontSize: '11px' }} className="lg:pl-[38px]">
+              Official Partner Link
+            </p>
+          </div>
+
+          {/* Right panel: CTA */}
+          <div className="flex-1 flex items-center justify-center px-6 py-4 lg:px-8">
+            <Link
+              href={href}
+              target="_blank"
+              rel="nofollow noopener sponsored"
+              onClick={handleClick}
+              className="inline-flex items-center justify-center gap-2 rounded-lg font-semibold text-white transition-all px-5 py-2.5 shadow-sm hover:shadow-md whitespace-nowrap"
+              style={{ background: 'var(--sfp-gold)', color: '#ffffff', fontSize: '13px' }}
+            >
+              {children || `Try ${productName || 'Now'} Free`}
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Collapsible Section — Split-Panel Proof Design Accordion
+// Uses native <details>/<summary> for zero-JS open/close
+function CollapsibleSection({
+  title,
+  count,
+  defaultOpen = false,
+  children,
+}: {
+  title: string;
+  count?: number;
+  defaultOpen?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="my-8 not-prose">
+      <details
+        className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden group"
+        open={defaultOpen || undefined}
       >
-        {children || `Try ${productName || 'Now'} Free`}
-        <ArrowRight className="h-4 w-4" />
-      </Link>
+        {/* Gradient accent bar */}
+        <div className="h-1" style={{ background: 'linear-gradient(90deg, var(--sfp-navy) 0%, var(--sfp-gold) 100%)' }} />
+
+        <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden flex flex-col lg:flex-row">
+          {/* Left panel: Label */}
+          <div
+            className="shrink-0 px-6 py-5 lg:px-8 lg:py-0 flex flex-col justify-center lg:w-[260px] border-b lg:border-b-0 lg:border-r border-gray-100"
+            style={{ background: 'var(--sfp-sky)' }}
+          >
+            <div className="flex items-center gap-2.5">
+              <div
+                className="w-7 h-7 rounded-lg flex items-center justify-center"
+                style={{ background: 'rgba(27,79,140,0.08)' }}
+              >
+                <Layers className="h-3.5 w-3.5" style={{ color: 'var(--sfp-navy)' }} />
+              </div>
+              <span
+                className="text-sm font-bold uppercase tracking-wider leading-tight"
+                style={{ color: 'var(--sfp-navy)' }}
+              >
+                {title}
+              </span>
+              {count != null && (
+                <span
+                  className="text-[10px] font-bold rounded-full px-2 py-0.5"
+                  style={{ background: 'var(--sfp-navy)', color: '#fff' }}
+                >
+                  {count}
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Right panel: Chevron toggle hint */}
+          <div className="flex-1 flex items-center justify-between px-6 py-4 lg:px-8">
+            <span className="text-sm" style={{ color: 'var(--sfp-slate)' }}>
+              <span className="group-open:hidden">Show details</span>
+              <span className="hidden group-open:inline">Hide details</span>
+            </span>
+            <ChevronDown
+              className="h-4 w-4 transition-transform duration-200 group-open:rotate-180"
+              style={{ color: 'var(--sfp-slate)' }}
+            />
+          </div>
+        </summary>
+
+        {/* Collapsible content */}
+        <div className="border-t border-gray-100 px-6 py-5 lg:px-8">
+          {children}
+        </div>
+      </details>
     </div>
   );
 }
@@ -289,51 +443,50 @@ function detectMarketFromPath(pathname: string | null): 'us' | 'uk' | 'ca' | 'au
   return 'us'; // US uses clean URLs (no /us prefix)
 }
 
-// Executive Summary Component - Premium Trust Design
+// Executive Summary Component — Split-Panel Design (matches TrustAuthority proof design)
 function ExecutiveSummary({
   children,
-  title = 'Executive Summary',
+  title = 'Key Findings',
 }: {
   children: React.ReactNode;
   title?: string;
 }) {
   return (
-    <div className="relative my-12 not-prose">
-      <div
-        className="relative rounded-2xl overflow-hidden border border-gray-200 bg-white"
-        style={{ boxShadow: '0 4px 24px rgba(27, 79, 140, 0.08)' }}
-      >
-        {/* Top accent line */}
-        <div className="h-[2px] w-full" style={{ background: 'linear-gradient(90deg, transparent, var(--sfp-navy), var(--sfp-gold), var(--sfp-navy), transparent)' }} />
+    <div className="relative my-10 not-prose">
+      <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+        {/* Gradient accent bar */}
+        <div className="h-1" style={{ background: 'linear-gradient(90deg, var(--sfp-navy) 0%, var(--sfp-gold) 100%)' }} />
 
-        {/* Header */}
-        <div className="flex items-center gap-3 px-8 pt-7 pb-4">
+        <div className="flex flex-col lg:flex-row">
+          {/* Left panel: Title */}
           <div
-            className="flex items-center justify-center w-10 h-10 rounded-xl"
+            className="shrink-0 px-6 py-5 lg:px-8 lg:py-6 flex flex-col justify-center lg:w-[260px] border-b lg:border-b-0 lg:border-r border-gray-100"
             style={{ background: 'var(--sfp-sky)' }}
           >
-            <FileText className="h-5 w-5" style={{ color: 'var(--sfp-navy)' }} />
+            <div className="flex items-center gap-2.5 mb-1.5">
+              <div
+                className="w-7 h-7 rounded-lg flex items-center justify-center"
+                style={{ background: 'rgba(26,107,58,0.1)' }}
+              >
+                <FileText className="h-3.5 w-3.5" style={{ color: 'var(--sfp-green)' }} />
+              </div>
+              <span
+                className="text-sm font-bold uppercase tracking-wider leading-tight"
+                style={{ color: 'var(--sfp-navy)' }}
+              >
+                {title}
+              </span>
+            </div>
+            <p style={{ color: 'var(--sfp-slate)', fontSize: '11px' }} className="lg:pl-[38px]">
+              Key Findings &amp; Analysis
+            </p>
           </div>
-          <div>
-            <h2 className="text-xl font-bold tracking-tight" style={{ color: 'var(--sfp-ink)' }}>{title}</h2>
-            <div className="text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--sfp-slate)' }}>Key Findings & Analysis</div>
-          </div>
-          <div className="ml-auto hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full border border-gray-200" style={{ background: 'var(--sfp-sky)' }}>
-            <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: 'var(--sfp-green)' }} />
-            <span className="text-xs font-medium" style={{ color: 'var(--sfp-navy)' }}>Research-backed</span>
+
+          {/* Right panel: Content */}
+          <div className="flex-1 px-6 py-5 lg:px-8 lg:py-6 text-[14px] leading-relaxed space-y-3 [&>p]:mb-3 [&>p:last-child]:mb-0 [&_strong]:font-semibold" style={{ color: 'var(--sfp-ink)' }}>
+            {children}
           </div>
         </div>
-
-        {/* Divider */}
-        <div className="mx-8 h-px" style={{ background: 'linear-gradient(90deg, transparent, var(--sfp-navy), var(--sfp-gold), transparent)', opacity: 0.2 }} />
-
-        {/* Content */}
-        <div className="px-8 py-6 text-[15px] leading-relaxed space-y-4 [&>p]:mb-4 [&>p:last-child]:mb-0 [&_strong]:font-semibold" style={{ color: 'var(--sfp-ink)' }}>
-          {children}
-        </div>
-
-        {/* Bottom accent */}
-        <div className="h-[1px] w-full" style={{ background: 'linear-gradient(90deg, transparent, var(--sfp-navy), transparent)', opacity: 0.15 }} />
       </div>
     </div>
   );
@@ -535,7 +688,7 @@ function StyledH1({ children, ...props }: React.HTMLAttributes<HTMLHeadingElemen
 
 function StyledH2({ children, ...props }: React.HTMLAttributes<HTMLHeadingElement>) {
   return (
-    <div className="relative mt-16 mb-8 not-prose">
+    <div className="relative mt-7 mb-6 not-prose">
       <div className="flex items-center gap-4">
         <div
           className="w-1 h-8 rounded-full shrink-0"
@@ -622,7 +775,7 @@ function StyledLi({ children }: { children: React.ReactNode }) {
 
 function StyledHr() {
   return (
-    <div className="my-12 not-prose">
+    <div className="my-6 not-prose">
       <div
         className="h-px w-full"
         style={{ background: 'linear-gradient(90deg, transparent, var(--sfp-navy), var(--sfp-gold), var(--sfp-navy), transparent)', opacity: 0.3 }}
@@ -644,18 +797,30 @@ function StyledTable({ children }: { children: React.ReactNode }) {
 }
 
 function StyledThead({ children, style, ...props }: React.HTMLAttributes<HTMLTableSectionElement>) {
+  // Keep backwards compatibility for non-color layout styles,
+  // but enforce current design tokens for header background/text.
+  const mergedStyle: React.CSSProperties = {
+    ...(style || {}),
+    background: 'var(--sfp-sky)',
+    backgroundColor: 'var(--sfp-sky)',
+    color: 'var(--sfp-navy)',
+  };
   return (
-    <thead style={style || { background: 'linear-gradient(to bottom, var(--sfp-navy), #2563EB)' }} {...props}>
+    <thead style={mergedStyle} {...props}>
       {children}
     </thead>
   );
 }
 
 function StyledTh({ children, className, style, ...props }: React.ThHTMLAttributes<HTMLTableCellElement>) {
+  const mergedStyle: React.CSSProperties = {
+    ...(style || {}),
+    color: 'var(--sfp-navy)',
+  };
   return (
     <th
-      className={className || "px-5 py-4 text-left text-xs font-bold uppercase tracking-wider text-white"}
-      style={style}
+      className={className || "px-5 py-4 text-left text-xs font-bold uppercase tracking-wider"}
+      style={mergedStyle}
       {...props}
     >
       {children}
@@ -690,21 +855,22 @@ function StyledTr({ children, className, style, ...props }: React.HTMLAttributes
 function WinnerTh({ children, label }: { children: React.ReactNode; label?: string }) {
   return (
     <th
-      className="px-5 py-5 text-center font-bold uppercase tracking-wider text-white"
+      className="px-5 py-5 text-center font-bold uppercase tracking-wider"
       style={{
-        background: 'linear-gradient(to bottom, var(--sfp-navy), #2563EB)',
+        background: 'var(--sfp-sky)',
+        color: 'var(--sfp-navy)',
         borderLeft: '3px solid rgba(245,166,35,0.5)',
         borderRight: '3px solid rgba(245,166,35,0.5)',
       }}
     >
       <div
         className="inline-block mb-1.5 px-3 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider"
-        style={{ background: 'rgba(245,166,35,0.3)', border: '1px solid rgba(245,166,35,0.6)', color: '#FDE68A' }}
+        style={{ background: 'rgba(245,166,35,0.15)', border: '1px solid rgba(245,166,35,0.4)', color: 'var(--sfp-gold-dark)' }}
       >
         ★ Top Pick
       </div>
-      <div className="text-sm font-bold">{children}</div>
-      {label && <div className="text-[10px] font-normal mt-0.5 text-amber-200">★ {label}</div>}
+      <div className="text-sm font-bold" style={{ color: 'var(--sfp-navy)' }}>{children}</div>
+      {label && <div className="text-[10px] font-normal mt-0.5" style={{ color: 'var(--sfp-gold-dark)' }}>★ {label}</div>}
     </th>
   );
 }
@@ -903,6 +1069,7 @@ export const mdxComponents = {
   AISavingsCalculatorCompact,
   NeuralFinanceSVG,
   ExecutiveSummary,
+  CollapsibleSection,
   CreditCardRewardsCalc,
   RegionalHeroImage,
   AffiliateLink,
@@ -915,6 +1082,7 @@ export const mdxComponents = {
   StickyFooterCTA,
   AnswerBlock,
   TrustBar,
+  MiniQuiz,
   // ReportHighlight,
   // DataSummary,
   AnalysisTable,

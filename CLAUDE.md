@@ -40,7 +40,7 @@ Du bist autonomer Senior Full-Stack-Entwickler für **SmartFinPro.com** — eine
   --sfp-gold-dark: #D48B1A;   /* Hover-Zustand Gold */
   --sfp-green:     #1A6B3A;   /* Success — Pro-Listen, Trust-Badges, positive KPIs */
   --sfp-red:       #D64045;   /* Alert — NUR für Warnungen und Cons, nie dekorativ */
-  --sfp-sky:       #E8F0FB;   /* Info-Boxen, Answer-Block-Hintergründe */
+  --sfp-sky:       #E8F0FB;   /* Info-Boxen, Tabellen-Header, Split-Panel Links, Answer-Block-Hintergründe */
   --sfp-gray:      #F2F4F8;   /* Seiten- und Karten-Hintergründe */
   --sfp-ink:       #1A1A2E;   /* Primärer Fließtext */
   --sfp-slate:     #555555;   /* Sekundärtext, Meta-Infos */
@@ -303,6 +303,7 @@ if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
 | MDX `_missingMdxReference` Fehler | `lib/mdx/serialize.ts` Wrapper strippt diese Checks. Nie `serialize()` direkt aus `next-mdx-remote` nutzen, immer `serializeMDX()` |
 | Turbopack instabil in Dev | Fallback: `npm run dev:webpack` startet Webpack-Dev-Server statt Turbopack |
 | Expert-Bild falsch formatiert | Immer 640×480 JPEG, `[vorname-nachname].jpg`, Dateiname = DB `image_url`. Kein SVG, kein PNG |
+| HTML-Kommentar in MDX | MDX = JSX-Syntax! `<!-- -->` verursacht `Unexpected character '!'`. Immer `{/* */}` verwenden. Check: `npm run check:mdx` |
 
 ---
 

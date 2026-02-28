@@ -27,19 +27,50 @@ import { FAQSection } from './faq-section';
 import { ComparisonTable } from './comparison-table';
 import { ComparisonTablePremium } from './comparison-table-premium';
 import { DebtReliefMiniRecommender } from './debt-relief-mini-recommender';
+import { TrackedAffiliateLink } from './tracked-affiliate-link';
 import { ExpertVerifier } from '@/components/marketing/expert-verifier';
 import { FrictionlessCTA } from '@/components/marketing/frictionless-cta';
 import { StickyFooterCTA } from '@/components/marketing/sticky-footer-cta';
 import { SafeMDX } from '@/components/content/SafeMDX';
 import { TrustBlockTracker } from '@/components/marketing/trust-block-tracker';
-import { generateReviewSchema } from '@/lib/seo/schema';
+import { MiniQuiz } from '@/components/marketing/mini-quiz';
+import { generateReviewSchema, generatePersonSchema, generateArticleSchema } from '@/lib/seo/schema';
 import { categoryConfig } from '@/lib/i18n/config';
 import type { Market, Category } from '@/lib/i18n/config';
 import { buildBreadcrumbs } from '@/lib/breadcrumbs';
+import { normalizeExpertName, resolveExpertImage } from '@/lib/experts/image-routing';
 import type { ContentItem } from '@/lib/mdx';
 import type { ReviewData, ExpertData } from '@/types';
 import type { MDXRemoteSerializeResult } from '@/lib/mdx/types';
 import { getFirstMondayOfMonth } from '@/lib/utils/date-helpers';
+import { CTASlot } from '@/components/marketing/cta-slot';
+import type { EnrichedCtaPartner } from '@/lib/types/page-cta';
+
+// ── Auto-Quiz: derive topic from page category ──────────────────
+type QuizTopic = 'trading' | 'personal-finance' | 'forex' | 'business-banking' | 'ai-tools' | 'broker' | 'banking';
+
+const CATEGORY_TO_TOPIC: Record<string, QuizTopic> = {
+  'trading': 'trading',
+  'forex': 'forex',
+  'personal-finance': 'personal-finance',
+  'business-banking': 'business-banking',
+  'ai-tools': 'ai-tools',
+  'credit-repair': 'personal-finance',
+  'debt-relief': 'personal-finance',
+  'savings': 'banking',
+  'remortgaging': 'personal-finance',
+  'superannuation': 'personal-finance',
+  'cybersecurity': 'ai-tools',
+  'gold-investing': 'trading',
+  'tax-efficient-investing': 'personal-finance',
+  'housing': 'personal-finance',
+};
+
+interface MiniQuizConfig {
+  topic: string;
+  market?: string;
+  title?: string;
+}
 
 interface ReportLayoutProps {
   review: ReviewData;
@@ -49,15 +80,10 @@ interface ReportLayoutProps {
   expert?: ExpertData;
   market: Market;
   category: Category;
-}
-
-function normalizePersonName(name?: string): string {
-  if (!name) return '';
-  return name
-    .toLowerCase()
-    .replace(/^dr\.\s+/, '')
-    .replace(/\s+/g, ' ')
-    .trim();
+  /** Optional MiniQuiz config — rendered after MDX content, outside MDX pipeline */
+  miniQuiz?: MiniQuizConfig;
+  /** Dashboard-configured CTA partners for this page */
+  ctaPartners?: EnrichedCtaPartner[];
 }
 
 function looksLikeRole(text: string): boolean {
@@ -77,29 +103,6 @@ function parseReviewedBy(reviewedBy?: string): { name: string; details: string[]
   };
 }
 
-function resolveExpertImageFromReviewedBy(reviewedBy?: string): string | null {
-  if (!reviewedBy) return null;
-
-  const normalized = normalizePersonName(reviewedBy.split(',')[0]?.trim() || '');
-
-  const byName: Record<string, string> = {
-    'james miller': '/images/experts/james-miller.jpg',
-    'michael torres': '/images/experts/michael-torres.jpg',
-    'robert hayes': '/images/experts/robert-hayes.jpg',
-    'james mitchell': '/images/experts/james-mitchell.jpg',
-    'michael chen': '/images/experts/michael-chen.jpg',
-    'sarah chen': '/images/experts/sarah-chen.jpg',
-    'sarah thompson': '/images/experts/sarah-thompson.jpg',
-    'james blackwood': '/images/experts/james-blackwood.jpg',
-    'marc fontaine': '/images/experts/marc-fontaine.jpg',
-    'philippe leblanc': '/images/experts/philippe-leblanc.jpg',
-    'daniel whitfield': '/images/experts/daniel-whitfield.jpg',
-    'james liu': '/images/experts/james-liu.jpg',
-  };
-
-  return byName[normalized] || null;
-}
-
 export function ReportLayout({
   review,
   mdxSource,
@@ -108,6 +111,8 @@ export function ReportLayout({
   expert,
   market,
   category,
+  miniQuiz,
+  ctaPartners,
 }: ReportLayoutProps) {
   const marketPrefix = `/${market}`;
   const categoryName = categoryConfig[category]?.name || category.replace('-', ' ');
@@ -124,20 +129,26 @@ export function ReportLayout({
   const hasRating = !isGuide && review.rating > 0;
   const hasAffiliate = !isGuide && review.affiliateUrl && review.affiliateUrl !== '#';
   const hasProscons = !isGuide && (review.pros.length > 0 || review.cons.length > 0);
+  const primaryCtaLabel =
+    category === 'debt-relief' ? 'Get Free Debt Analysis' : `Visit ${review.productName}`;
   const factCheckedDate = getFirstMondayOfMonth();
   const factCheckedLabel = new Date(factCheckedDate).toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
   });
-  const reviewedByImage = resolveExpertImageFromReviewedBy(review.reviewedBy);
-  const dbImage = expert?.image_url?.startsWith('/images/experts/') ? expert.image_url : null;
-  const expertImage = reviewedByImage || dbImage || undefined;
+  const expertImage = resolveExpertImage({
+    reviewedBy: review.reviewedBy,
+    expertName: expert?.name,
+    expertImageUrl: expert?.image_url,
+    market,
+    category,
+  });
   const parsedReviewedBy = parseReviewedBy(review.reviewedBy);
   const reviewerName = parsedReviewedBy.name || expert?.name || 'Expert Reviewer';
   const sameReviewerAsExpert =
-    normalizePersonName(parsedReviewedBy.name) &&
-    normalizePersonName(parsedReviewedBy.name) === normalizePersonName(expert?.name);
+    normalizeExpertName(parsedReviewedBy.name) &&
+    normalizeExpertName(parsedReviewedBy.name) === normalizeExpertName(expert?.name);
   const firstDetail = parsedReviewedBy.details[0] || '';
   const inferredRole = firstDetail && looksLikeRole(firstDetail) ? firstDetail : '';
   const reviewerTitle = inferredRole || (sameReviewerAsExpert ? expert?.role : '') || 'Expert Reviewer';
@@ -150,18 +161,61 @@ export function ReportLayout({
     }
     return expert?.credentials || [];
   })();
-  const reviewerBio = sameReviewerAsExpert ? expert?.bio || undefined : undefined;
+  const reviewerBio = (() => {
+    if (sameReviewerAsExpert && expert?.bio) return expert.bio;
+    // Generate a contextual fallback bio from available data
+    const creds = reviewerCredentials.length > 0 ? reviewerCredentials.join(', ') : '';
+    const roleSnippet = reviewerTitle && reviewerTitle !== 'Expert Reviewer' ? reviewerTitle : 'financial analyst';
+    const categoryLabel = categoryConfig[category]?.name || category.replace(/-/g, ' ');
+    if (creds) {
+      return `${reviewerName} is a ${roleSnippet} with ${creds} certification${reviewerCredentials.length > 1 ? 's' : ''}. Specializing in ${categoryLabel}, they bring hands-on expertise to every review.`;
+    }
+    return `${reviewerName} is a ${roleSnippet} specializing in ${categoryLabel}. They evaluate products through hands-on testing and primary-source research.`;
+  })();
   const reviewerLinkedIn = sameReviewerAsExpert ? expert?.linkedin_url || undefined : undefined;
   const showExpertCards = reviewerName !== 'SmartFinPro Team';
 
   return (
     <article className="min-h-screen" style={{ background: 'var(--sfp-gray)' }}>
-      {/* Schema.org JSON-LD — only review schema for actual reviews */}
+      {/* Schema.org JSON-LD — Review schema for actual reviews */}
       {!isGuide && (
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
             __html: JSON.stringify(generateReviewSchema(review)),
+          }}
+        />
+      )}
+
+      {/* Schema.org JSON-LD — Article schema for guide pages */}
+      {isGuide && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(generateArticleSchema({
+              title: review.title,
+              description: review.description,
+              publishDate: review.publishDate,
+              modifiedDate: review.modifiedDate,
+              author: review.author || 'SmartFinPro Editorial Team',
+              url: `https://smartfinpro.com/${market === 'us' ? '' : `${market}/`}${category}/${review.productName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}`,
+            })),
+          }}
+        />
+      )}
+
+      {/* Schema.org JSON-LD — Person schema for expert reviewer (EEAT) */}
+      {showExpertCards && reviewerName && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(generatePersonSchema({
+              name: reviewerName,
+              jobTitle: reviewerTitle !== 'Expert Reviewer' ? reviewerTitle : undefined,
+              image: expertImage ? `https://smartfinpro.com${expertImage}` : undefined,
+              description: reviewerBio,
+              url: reviewerLinkedIn || 'https://smartfinpro.com/about',
+            })),
           }}
         />
       )}
@@ -271,15 +325,19 @@ export function ReportLayout({
                 </a>
               )}
               {hasAffiliate && (
-                <a
+                <TrackedAffiliateLink
                   href={review.affiliateUrl}
-                  target="_blank"
-                  rel="noopener sponsored"
                   className="ml-auto px-5 py-3 text-sm font-semibold rounded-t-lg transition-colors flex items-center gap-2 no-underline hover:no-underline"
                   style={{ background: 'var(--sfp-gold)', color: '#ffffff', textDecoration: 'none' }}
+                  eventLabel={primaryCtaLabel}
+                  market={market}
+                  category={category}
+                  pageType="review"
+                  layoutVariant="decision_first"
+                  placement="hero_top"
                 >
-                  Visit {review.productName} <ArrowRight className="h-4 w-4" />
-                </a>
+                  {primaryCtaLabel} <ArrowRight className="h-4 w-4" />
+                </TrackedAffiliateLink>
               )}
             </div>
           </div>
@@ -289,7 +347,7 @@ export function ReportLayout({
       {/* ═══════════════════════════════════════════════════════════════
           2. TWO-COLUMN LAYOUT
           ═══════════════════════════════════════════════════════════════ */}
-      <section className="container mx-auto px-4 py-8">
+      <section className="container mx-auto px-4 pt-5 pb-8">
         <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-8">
 
           {/* ── LEFT: Main Content (~70%) ────────────────────────────── */}
@@ -338,21 +396,59 @@ export function ReportLayout({
                   </div>
                 </div>
 
-                {/* Best For + Pricing */}
-                <div className="flex flex-wrap gap-4 pt-4 border-t border-gray-100">
-                  {review.bestFor && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <span className="font-semibold" style={{ color: 'var(--sfp-navy)' }}>Best For:</span>
-                      <span style={{ color: 'var(--sfp-ink)' }}>{review.bestFor}</span>
+                {/* MiniQuiz — auto-derived from page category */}
+                {(() => {
+                  const quizTopic = miniQuiz?.topic
+                    ? (miniQuiz.topic as QuizTopic)
+                    : CATEGORY_TO_TOPIC[category];
+                  const quizMarket = miniQuiz?.market
+                    ? (miniQuiz.market as Market)
+                    : market;
+                  if (!quizTopic) return null;
+                  return (
+                    <div className="pt-4 border-t border-gray-100">
+                      <MiniQuiz
+                        topic={quizTopic}
+                        market={quizMarket}
+                        title={miniQuiz?.title}
+                      />
                     </div>
-                  )}
-                  {review.pricing && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <span className="font-semibold" style={{ color: 'var(--sfp-navy)' }}>Pricing:</span>
-                      <span style={{ color: 'var(--sfp-ink)' }}>{review.pricing}</span>
+                  );
+                })()}
+
+                {/* Rating — Split-Panel Proof Design */}
+                {review.rating && (
+                  <div className="mt-4 rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+                    <div className="h-1" style={{ background: 'linear-gradient(90deg, var(--sfp-navy) 0%, var(--sfp-gold) 100%)' }} />
+                    <div className="flex flex-col sm:flex-row">
+                      <div
+                        className="shrink-0 px-6 py-4 sm:py-0 flex flex-col justify-center sm:w-[200px] border-b sm:border-b-0 sm:border-r border-gray-100"
+                        style={{ background: 'var(--sfp-sky)' }}
+                      >
+                        <div className="flex items-center gap-2.5 mb-1">
+                          <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: 'rgba(245,166,35,0.12)' }}>
+                            <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                          </div>
+                          <span className="text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--sfp-navy)' }}>
+                            Our Rating
+                          </span>
+                        </div>
+                        <p style={{ color: 'var(--sfp-slate)', fontSize: '10px' }} className="sm:pl-[34px]">Expert Score</p>
+                      </div>
+                      <div className="flex-1 flex items-center gap-2.5 px-6 py-3">
+                        <div className="flex items-center gap-0.5">
+                          {[1, 2, 3, 4, 5].map((i) => (
+                            <Star
+                              key={`qv-star-${i}`}
+                              className={`h-5 w-5 ${i <= Math.floor(review.rating!) ? 'fill-amber-400 text-amber-400' : i - 0.5 <= review.rating! ? 'fill-amber-400/50 text-amber-400' : 'fill-gray-200 text-gray-200'}`}
+                            />
+                          ))}
+                        </div>
+                        <span className="font-bold" style={{ color: 'var(--sfp-navy)', fontSize: '16px' }}>{review.rating}/5</span>
+                      </div>
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -404,7 +500,15 @@ export function ReportLayout({
                   <p style={{ color: 'var(--sfp-slate)' }}>Review content is being prepared.</p>
                 )}
               </div>
+
             </div>
+
+            {/* CTA Slot — Placement 2 (Middle / Mitte) */}
+            {ctaPartners && ctaPartners.length > 0 && (
+              <div className="mb-8">
+                <CTASlot partners={ctaPartners} placement={2} market={market} category={category} />
+              </div>
+            )}
 
             {/* Expert Verifier */}
             {showExpertCards && (
@@ -510,6 +614,13 @@ export function ReportLayout({
               </div>
             )}
 
+            {/* CTA Slot — Placement 3 (Bottom / Unten) */}
+            {ctaPartners && ctaPartners.length > 0 && (
+              <div className="mb-8">
+                <CTASlot partners={ctaPartners} placement={3} market={market} category={category} />
+              </div>
+            )}
+
             {/* Mini Pre-CTA (Debt Relief only) — A: Decision-first */}
             {hasAffiliate && category === 'debt-relief' && (
               <DebtReliefMiniRecommender affiliateUrl={review.affiliateUrl} />
@@ -603,7 +714,7 @@ export function ReportLayout({
                   <ComparisonTablePremium
                     title={`Ready to try ${review.productName}?`}
                     market={market}
-                    ctaLabel="Get Started"
+                    ctaLabel={category === 'debt-relief' ? 'Get Free Debt Analysis' : 'Get Started'}
                     editorChoiceLabel="Our Pick"
                     columns={columns}
                     items={[
@@ -716,6 +827,14 @@ export function ReportLayout({
                       <BadgeCheck className="h-4 w-4" style={{ color: 'var(--sfp-navy)' }} />
                     </div>
                     <div className="text-xs mb-2" style={{ color: 'var(--sfp-slate)' }}>{reviewerTitle}</div>
+                    {reviewerBio && (
+                      <p
+                        className="text-[11px] leading-relaxed mb-2.5 line-clamp-3"
+                        style={{ color: 'var(--sfp-slate)' }}
+                      >
+                        {reviewerBio}
+                      </p>
+                    )}
                     {reviewerCredentials.length > 0 && (
                       <div className="flex flex-wrap justify-center gap-1.5">
                         {reviewerCredentials.slice(0, 3).map((cred, i) => (
@@ -741,6 +860,96 @@ export function ReportLayout({
                       </a>
                     )}
                   </div>
+                </div>
+              )}
+
+              {/* Expert Bio Card — below photo, compact authority signal */}
+              {showExpertCards && (
+                <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden p-4">
+                  <h4 className="text-[10px] font-semibold uppercase tracking-widest mb-3" style={{ color: 'var(--sfp-navy)' }}>
+                    About the Reviewer
+                  </h4>
+
+                  {/* Bio text */}
+                  {reviewerBio && (
+                    <p className="text-xs leading-relaxed mb-3" style={{ color: 'var(--sfp-slate)' }}>
+                      {reviewerBio}
+                    </p>
+                  )}
+
+                  {/* Focus areas — derived from category */}
+                  <div className="mb-3">
+                    <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--sfp-ink)' }}>
+                      Focus Areas
+                    </span>
+                    <div className="flex flex-wrap gap-1.5 mt-1.5">
+                      {(() => {
+                        const focusMap: Record<string, string[]> = {
+                          'ai-tools': ['AI & Fintech', 'Automation', 'Machine Learning'],
+                          'cybersecurity': ['Enterprise Security', 'Data Protection', 'Threat Analysis'],
+                          'trading': ['Equities', 'Options', 'Platform Analysis'],
+                          'forex': ['Currency Markets', 'CFD Trading', 'Broker Regulation'],
+                          'personal-finance': ['Investing', 'Credit', 'Wealth Management'],
+                          'business-banking': ['SMB Banking', 'Payment Processing', 'Cash Flow'],
+                          'debt-relief': ['Debt Management', 'Credit Recovery', 'Financial Planning'],
+                          'credit-repair': ['Credit Scoring', 'Dispute Resolution', 'Credit Building'],
+                          'credit-score': ['FICO Analysis', 'Score Optimization', 'Credit Monitoring'],
+                        };
+                        const areas = focusMap[category] || ['Financial Products', 'Market Analysis', 'Consumer Protection'];
+                        return areas.map((area, i) => (
+                          <span
+                            key={i}
+                            className="text-[10px] font-medium px-2 py-0.5 rounded-full"
+                            style={{ color: 'var(--sfp-green)', background: 'rgba(26,107,58,0.08)' }}
+                          >
+                            {area}
+                          </span>
+                        ));
+                      })()}
+                    </div>
+                  </div>
+
+                  {/* Credentials + last verified */}
+                  {reviewerCredentials.length > 0 && (
+                    <div className="mb-3">
+                      <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--sfp-ink)' }}>
+                        Credentials
+                      </span>
+                      <div className="flex flex-wrap gap-1.5 mt-1.5">
+                        {reviewerCredentials.map((cred, i) => (
+                          <span
+                            key={i}
+                            className="text-[10px] font-medium px-2 py-0.5 rounded-full border"
+                            style={{ color: 'var(--sfp-navy)', background: 'var(--sfp-sky)', borderColor: 'rgba(27,79,140,0.15)' }}
+                          >
+                            {cred}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Last review date */}
+                  <div className="pt-2.5 border-t border-gray-100 flex items-center gap-1.5">
+                    <Clock className="h-3 w-3" style={{ color: 'var(--sfp-slate)' }} />
+                    <span className="text-[10px]" style={{ color: 'var(--sfp-slate)' }}>
+                      Last reviewed: {factCheckedLabel}
+                    </span>
+                  </div>
+
+                  {/* LinkedIn profile link */}
+                  {reviewerLinkedIn && (
+                    <a
+                      href={reviewerLinkedIn}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 text-[11px] font-medium mt-2.5 no-underline hover:underline"
+                      style={{ color: 'var(--sfp-navy)' }}
+                    >
+                      <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+                      View LinkedIn Profile
+                    </a>
+                  )}
                 </div>
               )}
 
@@ -799,20 +1008,24 @@ export function ReportLayout({
 
                   {/* Primary CTA (reviews with affiliate only) */}
                   {hasAffiliate && (
-                    <>
-                      <Link
+                    <div className="pt-3 border-t border-gray-100">
+                      <TrackedAffiliateLink
                         href={review.affiliateUrl}
-                        target="_blank"
-                        rel="noopener sponsored"
                         className="w-full h-12 text-base font-semibold border-0 shadow-md hover:shadow-lg transition-all rounded-xl inline-flex items-center justify-center no-underline hover:no-underline hover:brightness-110"
                         style={{ background: 'var(--sfp-gold)', color: '#ffffff', textDecoration: 'none' }}
+                        eventLabel={primaryCtaLabel}
+                        market={market}
+                        category={category}
+                        pageType="review"
+                        layoutVariant="decision_first"
+                        placement="sidebar_primary"
                       >
-                        Visit {review.productName} <ArrowRight className="ml-2 h-4 w-4" />
-                      </Link>
+                        {primaryCtaLabel} <ArrowRight className="ml-2 h-4 w-4" />
+                      </TrackedAffiliateLink>
                       <p className="mt-2 text-[11px] leading-snug" style={{ color: 'var(--sfp-slate)' }}>
                         No obligation. Approval, fees, and outcomes depend on your debt profile and state regulations.
                       </p>
-                    </>
+                    </div>
                   )}
                 </div>
               </div>
@@ -894,15 +1107,19 @@ export function ReportLayout({
                   </div>
                 )}
               </div>
-              <Link
+              <TrackedAffiliateLink
                 href={review.affiliateUrl}
-                target="_blank"
-                rel="noopener sponsored"
                 className="h-10 px-5 text-sm font-semibold border-0 rounded-lg shrink-0 inline-flex items-center justify-center no-underline hover:no-underline hover:brightness-110 transition-all"
                 style={{ background: 'var(--sfp-gold)', color: '#ffffff', textDecoration: 'none' }}
+                eventLabel={category === 'debt-relief' ? 'Get Analysis' : 'Visit Site'}
+                market={market}
+                category={category}
+                pageType="review"
+                layoutVariant="decision_first"
+                placement="mobile_fixed"
               >
-                Visit Site <ArrowRight className="ml-1 h-3.5 w-3.5" />
-              </Link>
+                {category === 'debt-relief' ? 'Get Analysis' : 'Visit Site'} <ArrowRight className="ml-1 h-3.5 w-3.5" />
+              </TrackedAffiliateLink>
             </div>
           </div>
           {/* Spacer for mobile fixed CTA */}
