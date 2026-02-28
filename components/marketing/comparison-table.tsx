@@ -26,11 +26,11 @@ interface ComparisonProduct {
   features: Record<string, boolean | string>;
 }
 
-const winnerBadgeColors: Record<string, string> = {
-  'Best Overall': 'bg-[var(--sfp-green)]/10 border-[var(--sfp-green)]/20 text-[var(--sfp-green)]',
-  'Best Value': 'bg-[var(--sfp-navy)]/10 border-[var(--sfp-navy)]/20 text-[var(--sfp-navy)]',
-  'Most Popular': 'bg-[var(--sfp-gold)]/10 border-[var(--sfp-gold)]/20 text-[var(--sfp-gold)]',
-  'Best for Beginners': 'bg-[var(--sfp-navy)]/10 border-[var(--sfp-navy)]/20 text-[var(--sfp-navy)]',
+const winnerBadgeStyles: Record<string, React.CSSProperties> = {
+  'Best Overall': { background: 'rgba(27,79,140,0.1)', border: '1px solid rgba(27,79,140,0.2)', color: 'var(--sfp-navy)' },
+  'Best Value': { background: 'rgba(26,107,58,0.1)', border: '1px solid rgba(26,107,58,0.2)', color: 'var(--sfp-green)' },
+  'Most Popular': { background: 'rgba(245,166,35,0.15)', border: '1px solid rgba(245,166,35,0.3)', color: 'var(--sfp-gold-dark)' },
+  'Best for Beginners': { background: 'rgba(27,79,140,0.08)', border: '1px solid rgba(27,79,140,0.15)', color: 'var(--sfp-navy)' },
 };
 
 // MDX simplified item shape (used by new silo content)
@@ -75,11 +75,11 @@ export function ComparisonTable({
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow className="border-b border-gray-200" style={{ background: 'var(--sfp-gray)' }}>
+                <TableRow className="border-b-0" style={{ background: 'var(--sfp-sky)' }}>
                   {items.map((item) => (
                     <TableHead key={item.name} className="text-center min-w-[200px]">
                       <div className="flex flex-col items-center gap-2 py-3">
-                        <span className="font-bold" style={{ color: 'var(--sfp-ink)' }}>{item.name}</span>
+                        <span className="font-bold" style={{ color: 'var(--sfp-navy)' }}>{item.name}</span>
                         <div className="flex items-center gap-1.5">
                           <div className="flex items-center gap-0.5">
                             {[...Array(5)].map((_, i) => (
@@ -96,7 +96,7 @@ export function ComparisonTable({
                           <span className="text-xs" style={{ color: 'var(--sfp-slate)' }}>{item.rating}</span>
                         </div>
                         {item.fee && (
-                          <span className="text-sm font-semibold" style={{ color: 'var(--sfp-green)' }}>{item.fee}</span>
+                          <span className="text-sm font-semibold" style={{ color: 'var(--sfp-ink)' }}>{item.fee}</span>
                         )}
                       </div>
                     </TableHead>
@@ -124,15 +124,15 @@ export function ComparisonTable({
 
                 {/* CTA Row */}
                 {items.some((it) => it.ctaLink) && (
-                  <TableRow className="border-0" style={{ background: 'var(--sfp-gray)' }}>
+                  <TableRow className="border-0" style={{ background: 'var(--sfp-sky)' }}>
                     {items.map((item) => (
                       <TableCell key={item.name} className="text-center py-5">
                         {item.ctaLink ? (
                           <Button
                             asChild
                             size="sm"
-                            className="rounded-lg border-0 text-white hover:opacity-90"
-                            style={{ background: 'var(--sfp-gold)' }}
+                            className="rounded-lg border-0 text-white hover:opacity-90 font-bold"
+                            style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}
                           >
                             <Link href={item.ctaLink} target="_blank" rel="noopener sponsored">
                               {item.cta || 'Visit Site'}
@@ -173,18 +173,16 @@ export function ComparisonTable({
           <Table>
             <TableHeader>
               {/* Header row */}
-              <TableRow className="border-b border-gray-200" style={{ background: 'var(--sfp-gray)' }}>
-                <TableHead className="w-[200px] font-medium" style={{ color: 'var(--sfp-slate)' }}>Feature</TableHead>
+              <TableRow className="border-b-0" style={{ background: 'var(--sfp-sky)' }}>
+                <TableHead className="w-[200px] font-semibold uppercase text-xs tracking-wider" style={{ color: 'var(--sfp-navy)' }}>Feature</TableHead>
                 {resolvedProducts.map((product) => (
                   <TableHead key={product.slug} className="text-center min-w-[160px]">
                     <div className="flex flex-col items-center gap-2 py-3">
-                      <span className="font-bold" style={{ color: 'var(--sfp-ink)' }}>{product.name}</span>
+                      <span className="font-bold" style={{ color: 'var(--sfp-navy)' }}>{product.name}</span>
                       {product.winnerBadge && (
                         <Badge
-                          className={`text-xs border ${
-                            winnerBadgeColors[product.winnerBadge] ||
-                            'bg-gray-100 border-gray-200 text-[var(--sfp-slate)]'
-                          }`}
+                          className="text-xs"
+                          style={{ background: 'rgba(27,79,140,0.1)', border: '1px solid rgba(27,79,140,0.2)', color: 'var(--sfp-navy)' }}
                         >
                           <Trophy className="h-3 w-3 mr-1" />
                           {product.winnerBadge}
@@ -192,8 +190,8 @@ export function ComparisonTable({
                       )}
                       {!product.winnerBadge && product.isRecommended && (
                         <Badge
-                          className="text-xs"
-                          style={{ background: 'rgba(26,107,58,0.1)', color: 'var(--sfp-green)', border: '1px solid rgba(26,107,58,0.2)' }}
+                          className="text-xs font-semibold"
+                          style={{ background: 'var(--sfp-green)', color: '#ffffff' }}
                         >
                           <Sparkles className="h-3 w-3 mr-1" />
                           Recommended
@@ -247,7 +245,7 @@ export function ComparisonTable({
               ))}
 
               {/* CTA Row */}
-              <TableRow className="border-0" style={{ background: 'var(--sfp-gray)' }}>
+              <TableRow className="border-0" style={{ background: 'var(--sfp-sky)' }}>
                 <TableCell></TableCell>
                 {resolvedProducts.map((product) => (
                   <TableCell key={product.slug} className="text-center py-5">
@@ -255,7 +253,7 @@ export function ComparisonTable({
                       asChild
                       size="sm"
                       className="rounded-lg border-0 text-white hover:opacity-90"
-                      style={{ background: 'var(--sfp-gold)' }}
+                      style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}
                     >
                       <Link href={product.affiliateUrl} target="_blank" rel="noopener sponsored">
                         Visit Site
@@ -313,10 +311,10 @@ export function SimpleComparison({ items, headers }: SimpleComparisonProps) {
       <div className="overflow-x-auto">
         <Table>
           <TableHeader>
-            <TableRow className="border-b border-gray-200" style={{ background: 'var(--sfp-gray)' }}>
-              <TableHead className="w-[200px] font-medium" style={{ color: 'var(--sfp-slate)' }}>Feature</TableHead>
+            <TableRow className="border-b-0" style={{ background: 'var(--sfp-sky)' }}>
+              <TableHead className="w-[200px] font-semibold uppercase text-xs tracking-wider" style={{ color: 'var(--sfp-navy)' }}>Feature</TableHead>
               {headers.map((header) => (
-                <TableHead key={header} className="text-center font-medium" style={{ color: 'var(--sfp-ink)' }}>
+                <TableHead key={header} className="text-center font-bold" style={{ color: 'var(--sfp-navy)' }}>
                   {header}
                 </TableHead>
               ))}

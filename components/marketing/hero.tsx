@@ -3,12 +3,14 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
-import { Button } from '@/components/ui/button';
 import { ArrowRight, Shield, Users, DollarSign, Sparkles } from 'lucide-react';
 
 const NetworkAnimation = dynamic(
-  () => import('@/components/marketing/network-animation'),
-  { ssr: false }
+  () =>
+    import('@/components/marketing/network-animation').then((m) => ({
+      default: m.default,
+    })),
+  { ssr: false, loading: () => null }
 );
 
 interface HeroProps {
@@ -33,7 +35,7 @@ const trustBadges = [
 export function Hero({
   title = 'Financial Intelligence. Automated.',
   subtitle = 'Discover AI-powered tools, cybersecurity solutions, and trading platforms — expert-reviewed for modern professionals.',
-  primaryCta = { text: 'Explore Tools', href: '/ai-tools' },
+  primaryCta = { text: 'Explore Tools', href: '/us/ai-tools' },
   secondaryCta = { text: 'Start Free Trial', href: '/tools' },
 }: HeroProps) {
   const [firstPart, secondPart] = title.includes('.')
@@ -41,7 +43,7 @@ export function Hero({
     : [title, ''];
 
   return (
-    <section className="relative min-h-[90vh] min-h-[90dvh] flex items-center overflow-hidden" style={{ background: 'var(--sfp-navy)' }}>
+    <section className="relative flex items-center overflow-hidden" style={{ background: 'var(--sfp-navy)' }}>
       {/* Hero Background Image */}
       <div className="absolute inset-0" aria-hidden="true">
         <Image
@@ -53,32 +55,28 @@ export function Hero({
           sizes="100vw"
           quality={85}
         />
-        {/* Multi-layer gradient overlay for navy brand integration */}
-        {/* Base navy overlay for readability */}
-        <div className="absolute inset-0" style={{ background: 'rgba(27, 79, 140, 0.74)' }} />
-        {/* Navy brand tint */}
-        <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom right, rgba(22, 61, 110, 0.84), rgba(27, 79, 140, 0.54), rgba(22, 61, 110, 0.64))' }} />
-        {/* Bottom fade into next section */}
-        <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(27, 79, 140, 0.97), rgba(27, 79, 140, 0.34), transparent)' }} />
-        {/* Top fade from navigation */}
-        <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(27, 79, 140, 0.64), transparent, transparent)' }} />
+        {/* Minimal bottom fade only for smooth transition */}
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(27, 79, 140, 0.6), transparent 50%)' }} />
       </div>
 
       {/* Network Animation Background */}
       <NetworkAnimation className="opacity-20" />
 
-      <div className="container relative z-10 mx-auto px-4 py-20 lg:py-32">
-        <div className="mx-auto max-w-5xl text-center">
+      <div className="container relative z-10 mx-auto px-4 pt-10 pb-16 lg:pt-14 lg:pb-20">
+        <div
+          className="mx-auto max-w-4xl text-center rounded-3xl px-6 py-8 sm:px-10 sm:py-10"
+          style={{ background: 'radial-gradient(ellipse at center, rgba(20, 55, 100, 0.55) 0%, rgba(20, 55, 100, 0.35) 60%, transparent 100%)' }}
+        >
           {/* Kicker Badge */}
-          <div className="mb-8 inline-flex items-center gap-2 rounded-full px-4 py-2 border border-white/20" style={{ background: 'rgba(255,255,255,0.1)' }}>
-            <Sparkles className="h-4 w-4" style={{ color: 'var(--sfp-gold)' }} />
-            <span className="text-xs font-semibold uppercase tracking-widest text-white/80">
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 border border-white/20" style={{ background: 'rgba(255,255,255,0.1)' }}>
+            <Sparkles className="h-3.5 w-3.5" style={{ color: 'var(--sfp-gold)' }} />
+            <span className="text-[11px] font-semibold uppercase tracking-widest text-white/80">
               Trusted by Finance Professionals Worldwide
             </span>
           </div>
 
-          {/* Main Headline with Gradient Effect */}
-          <h1 className="text-5xl font-bold tracking-tight sm:text-6xl md:text-7xl lg:text-8xl">
+          {/* Main Headline — compact but impactful */}
+          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl lg:text-[3.5rem]" style={{ textShadow: '0 2px 12px rgba(0,0,0,0.35)' }}>
             <span className="text-white">{firstPart}.</span>
             {secondPart && (
               <>
@@ -89,71 +87,49 @@ export function Hero({
           </h1>
 
           {/* Subheadline */}
-          <p className="mt-8 text-lg sm:text-xl md:text-2xl max-w-3xl mx-auto leading-relaxed text-white/70">
+          <p className="mt-3 text-sm sm:text-base md:text-lg max-w-2xl mx-auto leading-relaxed text-white/80" style={{ textShadow: '0 1px 6px rgba(0,0,0,0.3)' }}>
             {subtitle}
           </p>
 
           {/* CTAs */}
-          <div className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Button
-              asChild
-              size="lg"
-              className="h-14 px-8 text-lg border-0 shadow-md hover:shadow-lg text-white"
-              style={{ background: 'var(--sfp-gold)' }}
+          <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
+            <Link
+              href={primaryCta.href}
+              className="no-underline inline-flex items-center justify-center h-11 px-6 text-sm font-semibold rounded-md border-0 shadow-md transition-all duration-200 hover:shadow-lg hover:scale-[1.03] hover:brightness-110 hover:no-underline"
+              style={{ color: '#ffffff', background: 'var(--sfp-gold)', textDecoration: 'none' }}
             >
-              <Link href={primaryCta.href}>
-                {primaryCta.text}
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Link>
-            </Button>
-            <Button
-              asChild
-              variant="outline"
-              size="lg"
-              className="h-14 px-8 text-lg border-white/30 text-white hover:text-white"
-              style={{ background: 'rgba(255,255,255,0.1)' }}
+              {primaryCta.text}
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Link>
+            <Link
+              href={secondaryCta.href}
+              className="no-underline hero-secondary-btn inline-flex items-center justify-center h-11 px-6 text-sm font-semibold rounded-md border border-white/50 transition-all duration-300 hover:border-white hover:shadow-[0_0_20px_rgba(255,255,255,0.25)] hover:scale-[1.03] hover:no-underline"
+              style={{ color: '#ffffff', background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(4px)', textDecoration: 'none' }}
             >
-              <Link href={secondaryCta.href}>{secondaryCta.text}</Link>
-            </Button>
+              {secondaryCta.text}
+            </Link>
           </div>
 
-          {/* Trust Badges - Premium Style */}
-          <div className="mt-16 flex flex-wrap items-center justify-center gap-4 sm:gap-6">
+          {/* Trust Badges — inline compact row */}
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
             {trustBadges.map((badge) => (
               <div
                 key={badge.text}
-                className="flex items-center gap-3 rounded-full px-5 py-2.5 border border-white/20"
+                className="flex items-center gap-2 rounded-full px-3.5 py-1.5 border border-white/20"
                 style={{ background: 'rgba(255,255,255,0.1)' }}
               >
-                <badge.icon className="h-5 w-5" style={{ color: 'var(--sfp-gold)' }} />
-                <span className="text-sm font-medium text-white/80">
+                <badge.icon className="h-3.5 w-3.5" style={{ color: 'var(--sfp-gold)' }} />
+                <span className="text-xs font-medium text-white/80">
                   {badge.text}
                 </span>
               </div>
             ))}
           </div>
-
-          {/* Markets Served */}
-          <div className="mt-20 pt-12 border-t border-white/20">
-            <p className="text-xs font-semibold uppercase tracking-widest text-white/50 mb-8">Serving Professionals In</p>
-            <div className="flex flex-wrap items-center justify-center gap-x-12 gap-y-6">
-              {['United States', 'United Kingdom', 'Canada', 'Australia'].map(
-                (market) => (
-                  <span
-                    key={market}
-                    className="text-lg font-semibold text-white/50"
-                  >
-                    {market}
-                  </span>
-                )
-              )}
-            </div>
-          </div>
         </div>
       </div>
 
       {/* Bottom transition: gradient fade + SVG curve */}
-      <div className="absolute bottom-0 left-0 right-0 h-48 pointer-events-none" style={{ background: 'linear-gradient(to top, var(--sfp-sky), rgba(232, 240, 251, 0.8), transparent)' }} />
+      <div className="absolute bottom-0 left-0 right-0 h-16 pointer-events-none" style={{ background: 'linear-gradient(to top, var(--sfp-sky), rgba(232, 240, 251, 0.8), transparent)' }} />
       <div className="absolute -bottom-px left-0 right-0 pointer-events-none">
         <svg
           viewBox="0 0 1440 56"

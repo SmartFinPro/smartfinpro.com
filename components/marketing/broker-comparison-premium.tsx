@@ -109,10 +109,10 @@ export function BrokerComparisonTablePremium({
       <div className="hidden lg:block">
         <div
           className="grid gap-0 border-b border-gray-200 relative z-10"
-          style={{ ...gridCols, background: 'var(--sfp-gray)' }}
+          style={{ ...gridCols, background: 'var(--sfp-sky)' }}
         >
           {['Broker', 'Rating', 'Leverage', 'Spreads', 'Regulation', 'Min. Deposit', ''].map((h) => (
-            <div key={h} className="px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--sfp-slate)' }}>
+            <div key={h} className="px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--sfp-navy)' }}>
               {h}
             </div>
           ))}

@@ -12,10 +12,8 @@
 # use server actions intentionally (rendered inside server
 # component pages). Type-only imports are always safe.
 #
-# KNOWN EXCEPTIONS:
-# - subscribeWithEmail (newsletter): Uses React form action
-#   pattern (not dynamic import), which Turbopack handles
-#   correctly via server action proxy.
+# KNOWN EXCEPTIONS: none — all server actions must go through
+# API routes when called from client components.
 #
 # Usage: bash scripts/check-client-server-imports.sh
 # Exit code 0 = clean, 1 = violations found
@@ -26,8 +24,8 @@ set -euo pipefail
 VIOLATIONS=0
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
-# Known safe server action imports (React form actions, not dynamic imports)
-KNOWN_SAFE="subscribeWithEmail"
+# No exceptions — all server actions must be called via API routes from client code.
+KNOWN_SAFE="__NONE__"
 
 # Directories to check — only MDX runtime & marketing components
 DIRS=(

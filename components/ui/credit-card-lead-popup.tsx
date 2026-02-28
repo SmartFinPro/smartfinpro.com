@@ -11,7 +11,7 @@ import {
   X,
   Sparkles,
 } from 'lucide-react';
-import { subscribeWithEmail } from '@/lib/actions/newsletter';
+import { subscribeWithEmail } from '@/lib/newsletter-client';
 
 const STORAGE_KEY = 'sfp_cc_lead_popup_shown';
 const COOLDOWN_DAYS = 30;
