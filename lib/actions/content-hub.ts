@@ -356,5 +356,5 @@ export const getContentHubData = unstable_cache(
     return { rows: allRows, stats: computeStats(allRows) };
   },
   ['content-hub-data'],
-  { revalidate: 600 } // 10 min TTL
+  { revalidate: 600, tags: ['content-hub'] } // 10 min TTL, invalidate via revalidateTag('content-hub')
 );

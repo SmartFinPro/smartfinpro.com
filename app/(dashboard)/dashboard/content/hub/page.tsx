@@ -14,6 +14,7 @@ import { getContentHubData } from '@/lib/actions/content-hub';
 import { getCtaPartnersForPages } from '@/lib/actions/page-cta-partners';
 import { getAffiliateLinksService } from '@/lib/actions/affiliate-links';
 import { ContentHubTableBody } from '@/components/dashboard/content-hub-table-body';
+import { ContentHubRefreshButton } from '@/components/dashboard/content-hub-refresh-button';
 import type { ContentHubRow, HealthStatus } from '@/lib/actions/content-hub';
 
 export const dynamic = 'force-dynamic';
@@ -149,7 +150,7 @@ export default async function ContentHubPage({ searchParams }: ContentHubPagePro
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
+      <div className="flex items-start justify-between">
         <div className="flex items-center gap-3 mb-1">
           <div className="w-10 h-10 rounded-xl bg-violet-50 flex items-center justify-center">
             <FileSearch className="h-5 w-5 text-violet-500" />
@@ -161,6 +162,7 @@ export default async function ContentHubPage({ searchParams }: ContentHubPagePro
             </p>
           </div>
         </div>
+        <ContentHubRefreshButton />
       </div>
 
       {/* Stat Cards */}
@@ -320,7 +322,7 @@ export default async function ContentHubPage({ searchParams }: ContentHubPagePro
             {stats.totalWords.toLocaleString('en-US')} total words
           </span>
           <span className="text-xs text-slate-400">
-            Cached for 10 min · HTTP checks disabled (enable via API param)
+            Auto-refresh every 10 min · Use &quot;Refresh Content&quot; button for immediate update
           </span>
         </div>
       </div>
