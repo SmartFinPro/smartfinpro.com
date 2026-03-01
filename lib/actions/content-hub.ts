@@ -6,6 +6,7 @@ import fs from 'fs';
 import path from 'path';
 import matter from 'gray-matter';
 import { unstable_cache } from 'next/cache';
+import { createServiceClient } from '@/lib/supabase/server';
 
 // ── Types ──────────────────────────────────────────────────────
 
@@ -17,6 +18,15 @@ export interface SeoHealth {
   descStatus: HealthStatus;
   descLength: number;
   overall: HealthStatus;
+}
+
+export interface ContentQuality {
+  score: number;          // 0-100 overall
+  wordScore: number;      // 0-100 word count quality
+  structureScore: number; // 0-100 heading structure
+  linkScore: number;      // 0-100 internal + external links
+  componentScore: number; // 0-100 MDX components usage
+  breakdown: string;      // "W:85 S:90 L:70 C:95" short form
 }
 
 export interface ContentHubRow {
@@ -32,6 +42,8 @@ export interface ContentHubRow {
   httpStatus: number | null;
   httpHealth: HealthStatus;
   seoHealth: SeoHealth;
+  contentQuality: ContentQuality;
+  cpsScore: number | null;
   indexStatus: string;
   type: 'mdx' | 'core';
 }
@@ -91,6 +103,133 @@ function computeSeoHealth(seoTitle: string | undefined, description: string | un
     descLength: desc.length,
     overall,
   };
+}
+
+// ── Content Quality Scoring ─────────────────────────────────────
+
+const MDX_COMPONENTS = [
+  '<TrustAuthority', '<ExpertBox', '<Rating', '<AffiliateButton',
+  '<ExecutiveSummary', '<CollapsibleSection', '<ComparisonTable',
+  '<SimpleComparison', '<BrokerComparison', '<EnterpriseTable',
+  '<FAQ', '<Pros', '<Cons', '<Info', '<Warning', '<Tip',
+  '<EvidenceCarousel', '<NewsletterBox', '<WinnerAtGlance',
+];
+
+function computeContentQuality(content: string, wordCount: number): ContentQuality {
+  // ── Word Score (30% weight) — target: 4000-7000 words ──
+  let wordScore = 0;
+  if (wordCount >= 4000 && wordCount <= 7000) wordScore = 100;
+  else if (wordCount >= 3000 && wordCount < 4000) wordScore = 70;
+  else if (wordCount > 7000 && wordCount <= 9000) wordScore = 80;
+  else if (wordCount >= 2000 && wordCount < 3000) wordScore = 50;
+  else if (wordCount > 9000) wordScore = 60;
+  else if (wordCount >= 1000) wordScore = 30;
+  else wordScore = 10;
+
+  // ── Structure Score (25% weight) — headings + FAQ ──
+  const h2Count = (content.match(/^## /gm) || []).length;
+  const h3Count = (content.match(/^### /gm) || []).length;
+  const hasFaq = /(<FAQ|^## .*FAQ|^## .*Frequently Asked)/im.test(content);
+  const hasProsCons = /<Pros|<Cons|^## .*Pros|^## .*Cons/im.test(content);
+
+  let structureScore = 0;
+  structureScore += Math.min(h2Count, 8) * 8;  // Up to 64 points for H2s
+  structureScore += Math.min(h3Count, 6) * 3;  // Up to 18 points for H3s
+  if (hasFaq) structureScore += 10;
+  if (hasProsCons) structureScore += 8;
+  structureScore = Math.min(structureScore, 100);
+
+  // ── Link Score (20% weight) — internal + external ──
+  const internalLinks = (content.match(/\]\(\//g) || []).length;
+  const externalLinks = (content.match(/\]\(https?:\/\//g) || []).length;
+
+  let linkScore = 0;
+  linkScore += Math.min(internalLinks, 8) * 7;  // Up to 56 pts for internal
+  linkScore += Math.min(externalLinks, 6) * 7;  // Up to 42 pts for external
+  linkScore = Math.min(linkScore, 100);
+
+  // ── Component Score (25% weight) — MDX components usage ──
+  let componentCount = 0;
+  for (const comp of MDX_COMPONENTS) {
+    if (content.includes(comp)) componentCount++;
+  }
+  const imageCount = (content.match(/!\[.*?\]/g) || []).length;
+
+  let componentScore = 0;
+  componentScore += Math.min(componentCount, 6) * 12; // Up to 72 pts for components
+  componentScore += Math.min(imageCount, 4) * 7;      // Up to 28 pts for images
+  componentScore = Math.min(componentScore, 100);
+
+  // ── Weighted overall score ──
+  const score = Math.round(
+    wordScore * 0.30 +
+    structureScore * 0.25 +
+    linkScore * 0.20 +
+    componentScore * 0.25
+  );
+
+  const breakdown = `W:${wordScore} S:${structureScore} L:${linkScore} C:${componentScore}`;
+
+  return { score, wordScore, structureScore, linkScore, componentScore, breakdown };
+}
+
+const EMPTY_QUALITY: ContentQuality = {
+  score: 0, wordScore: 0, structureScore: 0, linkScore: 0, componentScore: 0, breakdown: '—',
+};
+
+// ── CPS Score Loader (from Serper.dev competitor snapshots) ──────
+
+async function loadCpsScores(): Promise<Map<string, number>> {
+  const cpsMap = new Map<string, number>();
+
+  try {
+    const supabase = createServiceClient();
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const { data, error } = await supabase
+      .from('competitor_serp_snapshots')
+      .select('own_url, cps_score')
+      .not('own_url', 'is', null)
+      .not('cps_score', 'is', null)
+      .gte('scanned_at', thirtyDaysAgo.toISOString())
+      .order('scanned_at', { ascending: false });
+
+    if (error || !data) return cpsMap;
+
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://smartfinpro.com';
+
+    for (const row of data) {
+      const url = row.own_url as string;
+      const cps = Number(row.cps_score);
+      if (isNaN(cps)) continue;
+
+      // Extract path from full URL
+      let urlPath = url;
+      if (url.startsWith(siteUrl)) {
+        urlPath = url.slice(siteUrl.length);
+      } else if (url.startsWith('http')) {
+        try {
+          urlPath = new URL(url).pathname;
+        } catch {
+          continue;
+        }
+      }
+
+      // Normalize: remove trailing slash
+      urlPath = urlPath.replace(/\/$/, '') || '/';
+
+      // Keep the highest CPS score per URL (best opportunity)
+      const existing = cpsMap.get(urlPath);
+      if (!existing || cps > existing) {
+        cpsMap.set(urlPath, cps);
+      }
+    }
+  } catch (err) {
+    console.warn('[content-hub] Failed to load CPS scores:', err);
+  }
+
+  return cpsMap;
 }
 
 // ── URL Builder ────────────────────────────────────────────────
@@ -154,6 +293,8 @@ function scanMdxFiles(): ContentHubRow[] {
             httpStatus: null,
             httpHealth: 'yellow',
             seoHealth: computeSeoHealth(seoTitle, description),
+            contentQuality: computeContentQuality(content, wordCount),
+            cpsScore: null,
             indexStatus: 'Pending GSC Check',
             type: 'mdx',
           });
@@ -172,6 +313,8 @@ function scanMdxFiles(): ContentHubRow[] {
             httpStatus: null,
             httpHealth: 'red',
             seoHealth: computeSeoHealth(undefined, undefined),
+            contentQuality: EMPTY_QUALITY,
+            cpsScore: null,
             indexStatus: 'Parse Error',
             type: 'mdx',
           });
@@ -212,6 +355,8 @@ function scanMdxFiles(): ContentHubRow[] {
           httpStatus: null,
           httpHealth: 'yellow',
           seoHealth: computeSeoHealth(seoTitle, description),
+          contentQuality: computeContentQuality(content, wordCount),
+          cpsScore: null,
           indexStatus: 'Pending GSC Check',
           type: 'mdx',
         });
@@ -246,6 +391,8 @@ function getCoreRouteRows(): ContentHubRow[] {
     httpStatus: null,
     httpHealth: 'yellow',
     seoHealth: { titleStatus: 'yellow', titleLength: 0, descStatus: 'yellow', descLength: 0, overall: 'yellow' },
+    contentQuality: EMPTY_QUALITY,
+    cpsScore: null,
     indexStatus: 'Pending GSC Check',
     type: 'core',
   }));
@@ -297,6 +444,12 @@ export interface ContentHubStats {
   corePages: number;
   avgWordCount: number;
   totalWords: number;
+  avgQuality: number;
+  qualityGreen: number;
+  qualityYellow: number;
+  qualityRed: number;
+  avgCps: number;
+  pagesWithCps: number;
   seoGreen: number;
   seoYellow: number;
   seoRed: number;
@@ -309,6 +462,9 @@ export interface ContentHubStats {
 function computeStats(rows: ContentHubRow[]): ContentHubStats {
   const mdxRows = rows.filter((r) => r.type === 'mdx');
   const totalWords = mdxRows.reduce((sum, r) => sum + r.wordCount, 0);
+  const totalQuality = mdxRows.reduce((sum, r) => sum + r.contentQuality.score, 0);
+  const cpsRows = rows.filter((r) => r.cpsScore !== null);
+  const totalCps = cpsRows.reduce((sum, r) => sum + (r.cpsScore || 0), 0);
   const marketBreakdown: Record<string, number> = {};
 
   for (const row of rows) {
@@ -321,6 +477,12 @@ function computeStats(rows: ContentHubRow[]): ContentHubStats {
     corePages: rows.filter((r) => r.type === 'core').length,
     avgWordCount: mdxRows.length > 0 ? Math.round(totalWords / mdxRows.length) : 0,
     totalWords,
+    avgQuality: mdxRows.length > 0 ? Math.round(totalQuality / mdxRows.length) : 0,
+    qualityGreen: mdxRows.filter((r) => r.contentQuality.score >= 80).length,
+    qualityYellow: mdxRows.filter((r) => r.contentQuality.score >= 50 && r.contentQuality.score < 80).length,
+    qualityRed: mdxRows.filter((r) => r.contentQuality.score < 50).length,
+    avgCps: cpsRows.length > 0 ? Math.round(totalCps / cpsRows.length) : 0,
+    pagesWithCps: cpsRows.length,
     seoGreen: rows.filter((r) => r.seoHealth.overall === 'green').length,
     seoYellow: rows.filter((r) => r.seoHealth.overall === 'yellow').length,
     seoRed: rows.filter((r) => r.seoHealth.overall === 'red').length,
@@ -351,6 +513,19 @@ export const getContentHubData = unstable_cache(
     if (runHttpChecks) {
       const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://smartfinpro.com';
       allRows = await checkHttpHealth(allRows, baseUrl);
+    }
+
+    // Merge CPS scores from competitor snapshots (Serper.dev DB)
+    try {
+      const cpsScores = await loadCpsScores();
+      if (cpsScores.size > 0) {
+        for (const row of allRows) {
+          const urlPath = row.url.replace(/\/$/, '') || '/';
+          row.cpsScore = cpsScores.get(urlPath) ?? null;
+        }
+      }
+    } catch {
+      // CPS loading is optional — don't break the hub if it fails
     }
 
     return { rows: allRows, stats: computeStats(allRows) };

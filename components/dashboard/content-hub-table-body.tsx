@@ -1,9 +1,9 @@
 // components/dashboard/content-hub-table-body.tsx — Client table body for Content Hub
 'use client';
 
-import { ExternalLink, RefreshCw, CheckCircle2, XCircle, Clock } from 'lucide-react';
+import { ExternalLink, RefreshCw, Clock } from 'lucide-react';
 import { CtaPartnerSelect } from './cta-partner-select';
-import type { ContentHubRow, HealthStatus } from '@/lib/actions/content-hub';
+import type { ContentHubRow, HealthStatus, ContentQuality } from '@/lib/actions/content-hub';
 import type { PartnerOption } from './cta-partner-select';
 import type { PartnerAssignmentConfig } from '@/lib/types/page-cta';
 
@@ -60,22 +60,55 @@ function SeoDetail({ seoHealth }: { seoHealth: ContentHubRow['seoHealth'] }) {
   );
 }
 
-function HttpStatusCell({ row }: { row: ContentHubRow }) {
-  if (row.httpStatus === null) {
-    return (
-      <span className="inline-flex items-center gap-1 text-xs text-slate-400">
-        <Clock className="h-3 w-3" />
-        Not checked
-      </span>
-    );
+// ── Quality Score Badge ──────────────────────────────────────────
+
+function QualityBadge({ quality }: { quality: ContentQuality }) {
+  if (quality.score === 0 && quality.breakdown === '—') {
+    return <span className="text-xs text-slate-300">—</span>;
   }
-  const icon = row.httpHealth === 'green'
-    ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
-    : <XCircle className="h-3.5 w-3.5 text-red-500" />;
+
+  const color =
+    quality.score >= 80
+      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+      : quality.score >= 50
+        ? 'bg-amber-50 text-amber-700 border-amber-200'
+        : 'bg-red-50 text-red-700 border-red-200';
+
   return (
-    <span className="inline-flex items-center gap-1 text-xs font-mono">
-      {icon}
-      {row.httpStatus}
+    <div className="flex flex-col items-center gap-0.5">
+      <span
+        className={`inline-flex items-center justify-center w-9 h-9 text-xs font-bold rounded-full border ${color}`}
+        title={`Words: ${quality.wordScore} | Structure: ${quality.structureScore} | Links: ${quality.linkScore} | Components: ${quality.componentScore}`}
+      >
+        {quality.score}
+      </span>
+      <span className="text-[10px] text-slate-400 tabular-nums whitespace-nowrap">
+        {quality.breakdown}
+      </span>
+    </div>
+  );
+}
+
+// ── CPS Score Badge ──────────────────────────────────────────────
+
+function CpsBadge({ cps }: { cps: number | null }) {
+  if (cps === null) {
+    return <span className="text-xs text-slate-300">—</span>;
+  }
+
+  const color =
+    cps >= 70
+      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+      : cps >= 40
+        ? 'bg-amber-50 text-amber-700 border-amber-200'
+        : 'bg-red-50 text-red-700 border-red-200';
+
+  return (
+    <span
+      className={`inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold rounded-md border tabular-nums ${color}`}
+      title={`Conversion Potential Score — ${cps >= 70 ? 'High opportunity' : cps >= 40 ? 'Medium competition' : 'High competition'}`}
+    >
+      {cps.toFixed(1)}
     </span>
   );
 }
@@ -165,9 +198,14 @@ export function ContentHubTableBody({
               </span>
             </td>
 
-            {/* HTTP Status */}
+            {/* Content Quality */}
             <td className="px-3 py-3 text-center">
-              <HttpStatusCell row={row} />
+              <QualityBadge quality={row.contentQuality} />
+            </td>
+
+            {/* CPS Score */}
+            <td className="px-3 py-3 text-center">
+              <CpsBadge cps={row.cpsScore} />
             </td>
 
             {/* SEO Status */}
@@ -199,7 +237,7 @@ export function ContentHubTableBody({
       })}
       {rows.length === 0 && (
         <tr>
-          <td colSpan={11} className="px-4 py-12 text-center text-sm text-slate-400">
+          <td colSpan={12} className="px-4 py-12 text-center text-sm text-slate-400">
             No pages match this filter.
           </td>
         </tr>

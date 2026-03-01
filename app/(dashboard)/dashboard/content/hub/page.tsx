@@ -8,6 +8,8 @@ import {
   TrendingUp,
   AlertTriangle,
   CheckCircle2,
+  BarChart3,
+  Zap,
   X,
 } from 'lucide-react';
 import { getContentHubData } from '@/lib/actions/content-hub';
@@ -166,7 +168,7 @@ export default async function ContentHubPage({ searchParams }: ContentHubPagePro
       </div>
 
       {/* Stat Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
         <StatCard
           label="Total Pages"
           value={stats.totalPages}
@@ -176,16 +178,22 @@ export default async function ContentHubPage({ searchParams }: ContentHubPagePro
           active={seoFilter === 'all'}
         />
         <StatCard
-          label="MDX Content"
-          value={stats.mdxPages}
-          icon={Globe}
-          iconBg="bg-blue-50 text-blue-500"
+          label="Avg CPS"
+          value={stats.pagesWithCps > 0 ? `${stats.avgCps}/100` : '—'}
+          icon={Zap}
+          iconBg="bg-cyan-50 text-cyan-500"
         />
         <StatCard
           label="Avg Word Count"
           value={stats.avgWordCount.toLocaleString('en-US')}
           icon={TrendingUp}
           iconBg="bg-emerald-50 text-emerald-500"
+        />
+        <StatCard
+          label="Avg Quality"
+          value={`${stats.avgQuality}/100`}
+          icon={BarChart3}
+          iconBg="bg-blue-50 text-blue-500"
         />
         <StatCard
           label="SEO Optimal"
@@ -268,7 +276,7 @@ export default async function ContentHubPage({ searchParams }: ContentHubPagePro
       {/* Table */}
       <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[1200px]">
+          <table className="w-full min-w-[1300px]">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200">
                 <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
@@ -293,7 +301,10 @@ export default async function ContentHubPage({ searchParams }: ContentHubPagePro
                   Size
                 </th>
                 <th className="px-3 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                  HTTP
+                  Quality
+                </th>
+                <th className="px-3 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                  CPS
                 </th>
                 <th className="px-3 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
                   SEO
