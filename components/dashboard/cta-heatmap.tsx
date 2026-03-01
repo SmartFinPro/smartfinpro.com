@@ -218,7 +218,7 @@ export function CtaHeatmap({ initialData, initialAlertSettings }: CtaHeatmapProp
         <StatCard
           icon={MousePointerClick}
           label="Total CTA Clicks"
-          value={totalClicks.toLocaleString()}
+          value={totalClicks.toLocaleString('en-US')}
           color="emerald"
         />
         <StatCard
@@ -431,7 +431,7 @@ export function CtaHeatmap({ initialData, initialAlertSettings }: CtaHeatmapProp
                       <Eye className="h-3 w-3 text-blue-500" />
                       Page Views
                     </span>
-                    <span className="font-medium text-slate-700">{hoveredCell.pageViews.toLocaleString()}</span>
+                    <span className="font-medium text-slate-700">{hoveredCell.pageViews.toLocaleString('en-US')}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="flex items-center gap-1">
@@ -541,7 +541,7 @@ export function CtaHeatmap({ initialData, initialAlertSettings }: CtaHeatmapProp
                     {cell.topProvider || '—'}
                   </td>
                   <td className="px-3 py-2.5 text-right text-xs text-slate-500">
-                    {cell.pageViews > 0 ? cell.pageViews.toLocaleString() : '—'}
+                    {cell.pageViews > 0 ? cell.pageViews.toLocaleString('en-US') : '—'}
                   </td>
                   <td className="px-3 py-2.5">
                     <div className="flex items-center gap-2">

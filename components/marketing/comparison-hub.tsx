@@ -31,10 +31,28 @@ import {
   Sparkles,
   Users,
 } from 'lucide-react';
-import type { Market, Category } from '@/lib/i18n/config';
-import type { HubPartner } from '@/lib/actions/genesis';
-import type { AbVariant } from '@/lib/actions/ab-testing';
 import { FeaturedPartnerOffer } from './featured-partner-offer';
+
+// Local type definitions — mirror the server-side types without importing server-only modules
+type AbVariant = 'A' | 'B';
+
+interface HubPartner {
+  providerName: string;
+  cpaValue: number;
+  currency: string;
+  rating: number;
+  tagline: string;
+  affiliateUrl: string;
+  reviewSlug: string | null;
+  benefits: string[];
+  slug: string;
+  winnerBadge: string | null;
+  winnerBadgeType: 'editorial' | 'auto' | null;
+  isFeatured: boolean;
+  featuredHeadline: string | null;
+  featuredOffer: string | null;
+  clickCount30d: number;
+}
 
 interface ComparisonHubProps {
   category?: string;
@@ -138,13 +156,14 @@ export function ComparisonHub({
 
       // If variant B (rating sort), re-fetch client-side for correct sort order
       if (assignedVariant === 'B') {
-        import('@/lib/actions/genesis').then(({ getTopPartnersForHub }) =>
-          getTopPartnersForHub(resolvedMarket as Market, resolvedCategory, limit, 'rating'),
-        ).then((data) => {
-          if (!cancelled && data) setPartners(data);
-        }).catch(() => {
-          // Variant B re-sort failed — keep initial CPA-sorted data (safe fallback)
-        });
+        fetch(`/api/hub-partners?market=${resolvedMarket}&category=${resolvedCategory}&limit=${limit}&sortBy=rating`)
+          .then((res) => res.json())
+          .then((data) => {
+            if (!cancelled && data && data.length > 0) setPartners(data);
+          })
+          .catch(() => {
+            // Variant B re-sort failed — keep initial CPA-sorted data (safe fallback)
+          });
       }
       return () => { cancelled = true; };
     }
@@ -153,13 +172,10 @@ export function ComparisonHub({
     setLoading(true);
 
     // Check if there's already a declared winner
-    import('@/lib/actions/ab-testing')
-      .then(({ getHubWinner }) => {
-        if (cancelled) return null;
-        return getHubWinner(resolvedCategory, resolvedMarket);
-      })
-      .then((winner) => {
-        if (cancelled || winner === null) return;
+    fetch(`/api/hub-ab?category=${resolvedCategory}&market=${resolvedMarket}`)
+      .then((res) => res.json())
+      .then(({ winner }) => {
+        if (cancelled) return;
 
         // Use winner if test concluded, otherwise assign random variant
         const assignedVariant = winner || getOrAssignVariant(hubId);
@@ -167,21 +183,14 @@ export function ComparisonHub({
 
         const sortBy = assignedVariant === 'A' ? 'cpa' : 'rating';
 
-        return import('@/lib/actions/genesis').then(
-          ({ getTopPartnersForHub }) => {
-            if (cancelled) return null;
-            return getTopPartnersForHub(
-              resolvedMarket as Market,
-              resolvedCategory,
-              limit,
-              sortBy,
-            );
-          },
-        );
+        return fetch(`/api/hub-partners?market=${resolvedMarket}&category=${resolvedCategory}&limit=${limit}&sortBy=${sortBy}`)
+          .then((res) => res.json());
       })
       .then((data) => {
-        if (!cancelled && data) {
+        if (!cancelled && data && data.length > 0) {
           setPartners(data);
+          setLoading(false);
+        } else if (!cancelled) {
           setLoading(false);
         }
       })
@@ -203,9 +212,17 @@ export function ComparisonHub({
     impressionLogged.current = true;
 
     const sid = getSessionId();
-    import('@/lib/actions/ab-testing').then(({ logHubImpression }) => {
-      logHubImpression(resolvedCategory, resolvedMarket, variant, sid);
-    });
+    fetch('/api/hub-ab', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'impression',
+        category: resolvedCategory,
+        market: resolvedMarket,
+        variant,
+        sessionId: sid,
+      }),
+    }).catch(() => {});
   }, [variant, partners, resolvedCategory, resolvedMarket]);
 
   // Click handler — logs click + navigates
@@ -213,9 +230,18 @@ export function ComparisonHub({
     (providerName: string) => {
       if (!variant) return;
       const sid = getSessionId();
-      import('@/lib/actions/ab-testing').then(({ logHubClick }) => {
-        logHubClick(resolvedCategory, resolvedMarket, variant, providerName, sid);
-      });
+      fetch('/api/hub-ab', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'click',
+          category: resolvedCategory,
+          market: resolvedMarket,
+          variant,
+          providerName,
+          sessionId: sid,
+        }),
+      }).catch(() => {});
     },
     [variant, resolvedCategory, resolvedMarket],
   );
@@ -444,7 +470,7 @@ function PartnerRow({ partner, index, isWinner, onCtaClick }: PartnerRowProps) {
             <div className="flex items-center gap-1.5 mt-1.5">
               <Users className="h-3 w-3 text-amber-400/80" />
               <span className="text-[11px] text-amber-400/80 font-medium">
-                {partner.clickCount30d.toLocaleString()} users chose this
+                {partner.clickCount30d.toLocaleString('en-US')} users chose this
               </span>
             </div>
           )}
@@ -472,7 +498,7 @@ function PartnerRow({ partner, index, isWinner, onCtaClick }: PartnerRowProps) {
                 : 'border border-gray-200 hover:bg-gray-50'
             }`}
             style={isWinner
-              ? { background: 'var(--sfp-gold)' }
+              ? { background: 'var(--sfp-gold)', color: '#ffffff' }
               : { background: 'white', color: 'var(--sfp-navy)' }
             }
           >
@@ -555,7 +581,7 @@ function PartnerRow({ partner, index, isWinner, onCtaClick }: PartnerRowProps) {
           <div className="flex items-center gap-1.5 mb-4">
             <Users className="h-3 w-3 text-amber-400/80" />
             <span className="text-[11px] text-amber-400/80 font-medium">
-              {partner.clickCount30d.toLocaleString()} users chose this
+              {partner.clickCount30d.toLocaleString('en-US')} users chose this
             </span>
           </div>
         )}
@@ -582,7 +608,7 @@ function PartnerRow({ partner, index, isWinner, onCtaClick }: PartnerRowProps) {
                 : 'border border-gray-200 hover:bg-gray-50'
             }`}
             style={isWinner
-              ? { background: 'var(--sfp-gold)' }
+              ? { background: 'var(--sfp-gold)', color: '#ffffff' }
               : { background: 'white', color: 'var(--sfp-navy)' }
             }
           >

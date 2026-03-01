@@ -5,8 +5,8 @@ import { getContentBySlug, getAllContentSlugs, getRelatedContent, getContentByMa
 import { isValidMarket, isValidCategory, Market, Category, marketConfig } from '@/lib/i18n/config';
 import { generateAlternates, getCanonicalUrl } from '@/lib/seo/hreflang';
 import { ReportLayout } from '@/components/marketing/report-layout';
-import { CreditCardLeadPopup } from '@/components/ui/credit-card-lead-popup';
 import { getMarketExpert } from '@/lib/actions/experts';
+import { getEnrichedCtaPartners } from '@/lib/actions/page-cta-partners';
 
 interface ContentPageProps {
   params: Promise<{
@@ -92,11 +92,12 @@ export default async function ContentPage({ params }: ContentPageProps) {
 
   // For review pages, use the ReportLayout (Premium Research Report style)
   if (content.meta.rating) {
-    const [mdxSource, relatedArticles, expert, allCategoryContent] = await Promise.all([
+    const [mdxSource, relatedArticles, expert, allCategoryContent, ctaPartners] = await Promise.all([
       serializeMDX(content.content),
       getRelatedContent(market as Market, category as Category, slug, 3),
       getMarketExpert(market, category),
       getContentByMarketAndCategory(market as Market, category as Category),
+      getEnrichedCtaPartners(`/${market}/${category}/${slug}`),
     ]);
 
     // Filter sibling reviews (exclude current + index pages)
@@ -106,12 +107,14 @@ export default async function ContentPage({ params }: ContentPageProps) {
     return (
       <>
         <ReportLayout
+          ctaPartners={ctaPartners}
           expert={expert}
           mdxSource={mdxSource}
           relatedArticles={relatedArticles}
           siblingReviews={siblingReviews}
           market={market as Market}
           category={category as Category}
+          miniQuiz={content.meta.miniQuiz}
           review={{
             title: content.meta.seoTitle || content.meta.title,
             description: content.meta.description,
@@ -139,18 +142,18 @@ export default async function ContentPage({ params }: ContentPageProps) {
             content: '',
           }}
         />
-        <CreditCardLeadPopup />
       </>
     );
   }
 
   // For other content types (guides, articles), use the same ReportLayout in "guide mode"
   // This gives identical Two-Column Premium layout — just without rating stars, CTA buttons, and pros/cons
-  const [mdxSource, relatedArticles, expert, allCategoryContent] = await Promise.all([
+  const [mdxSource, relatedArticles, expert, allCategoryContent, ctaPartners] = await Promise.all([
     serializeMDX(content.content),
     getRelatedContent(market as Market, category as Category, slug, 3),
     getMarketExpert(market, category),
     getContentByMarketAndCategory(market as Market, category as Category),
+    getEnrichedCtaPartners(`/${market}/${category}/${slug}`),
   ]);
 
   // Filter sibling reviews (exclude current + index pages)
@@ -160,12 +163,14 @@ export default async function ContentPage({ params }: ContentPageProps) {
   return (
     <>
       <ReportLayout
+        ctaPartners={ctaPartners}
         expert={expert}
         mdxSource={mdxSource}
         relatedArticles={relatedArticles}
         siblingReviews={siblingReviews}
         market={market as Market}
         category={category as Category}
+        miniQuiz={content.meta.miniQuiz}
         review={{
           title: content.meta.seoTitle || content.meta.title,
           description: content.meta.description,
@@ -193,7 +198,6 @@ export default async function ContentPage({ params }: ContentPageProps) {
           isGuide: true,
         }}
       />
-      <CreditCardLeadPopup />
     </>
   );
 }

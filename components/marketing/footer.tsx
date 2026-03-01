@@ -56,7 +56,7 @@ export function Footer({ market: marketProp }: FooterProps) {
                 />
                 <button
                   className="px-6 py-3 rounded text-sm font-bold text-white uppercase tracking-wide transition-colors whitespace-nowrap"
-                  style={{ background: 'var(--sfp-gold)' }}
+                  style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}
                   onMouseOver={(e) => (e.currentTarget.style.background = 'var(--sfp-gold-dark)')}
                   onMouseOut={(e) => (e.currentTarget.style.background = 'var(--sfp-gold)')}
                 >

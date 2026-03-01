@@ -18,10 +18,11 @@ const nextConfig: NextConfig = {
   },
 
   // ============================================================
-  // Transpile MDX package to avoid Turbopack ESM/CJS chunk errors
-  // Recommended by next-mdx-remote README for Turbopack compat
+  // Note: transpilePackages for next-mdx-remote was REMOVED.
+  // transpilePackages pulls in next-mdx-remote/index.js AND its
+  // dependency @mdx-js/react into the client bundle, both of which
+  // crash in Turbopack. SafeMDX uses Direct Pass (no MDXRemote).
   // ============================================================
-  transpilePackages: ['next-mdx-remote'],
 
   // ============================================================
   // Experimental Features for Performance
@@ -168,59 +169,87 @@ const nextConfig: NextConfig = {
     return [
       // ============================================================
       // Static Assets - Aggressive Caching (1 year, immutable)
+      // Hash-basierte Dateinamen → sicher für alle Browser.
+      // no-transform: verhindert Proxy-CSS-Mangling (Opera Mini,
+      // UC Browser, mobile Carrier-Proxies).
       // ============================================================
       {
         source: '/static/:path*',
         headers: [
           {
             key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
+            value: 'public, max-age=31536000, immutable, no-transform',
           },
           ...securityHeaders,
         ],
       },
 
       // ============================================================
-      // Next.js Generated Assets
+      // Next.js Generated Assets (CSS, JS, Chunks)
+      // Alle Dateien unter /_next/static/ haben Content-Hashes im
+      // Dateinamen → immutable ist sicher.
+      // no-transform: verhindert dass Proxies CSS/JS modifizieren
+      // (Ursache für kaputte Styles in Opera Mini, UC Browser,
+      // Samsung Internet über Carrier-Proxies).
       // ============================================================
       {
         source: '/_next/static/:path*',
         headers: [
           {
             key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
+            value: 'public, max-age=31536000, immutable, no-transform',
+          },
+          // Access-Control für cross-origin CSS-Fonts in Firefox
+          {
+            key: 'Access-Control-Allow-Origin',
+            value: '*',
+          },
+          // Korrekte MIME-Types erzwingen (IE11/Edge Legacy Fix)
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
           },
         ],
       },
 
       // ============================================================
-      // Fonts - Long Cache
+      // Fonts - Long Cache + CORS (Firefox cross-origin Fix)
+      // Firefox blockiert Fonts ohne CORS-Header wenn sie von
+      // einem anderen Origin geladen werden.
       // ============================================================
       {
         source: '/:path*.woff2',
         headers: [
           {
             key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
+            value: 'public, max-age=31536000, immutable, no-transform',
+          },
+          {
+            key: 'Access-Control-Allow-Origin',
+            value: '*',
           },
         ],
       },
 
       // ============================================================
       // Images - Long Cache with Revalidation
+      // no-transform: Proxies sollen Bilder nicht re-komprimieren
+      // (verhindert Qualitätsverlust auf mobilen Netzwerken).
       // ============================================================
       {
         source: '/:path*.(jpg|jpeg|png|gif|webp|avif|ico|svg)',
         headers: [
           {
             key: 'Cache-Control',
-            value: 'public, max-age=86400, stale-while-revalidate=604800',
+            value: 'public, max-age=86400, stale-while-revalidate=604800, no-transform',
           },
         ],
       },
 
       // ============================================================
       // API Routes - No Caching, Security Headers
+      // Pragma + Expires für HTTP/1.0 Proxy-Kompatibilität
+      // (ältere Corporate Proxies, IE11).
       // ============================================================
       {
         source: '/api/:path*',
@@ -257,14 +286,53 @@ const nextConfig: NextConfig = {
       },
 
       // ============================================================
-      // HTML Pages - Moderate Caching with Revalidation
+      // HTML Pages - Cross-Browser Cache-Busting
+      // ============================================================
+      // Problem: Browser cachen HTML mit alten CSS/JS-Hashes.
+      // Nach einem Build zeigen sie kaputte Styles.
+      //
+      // Betroffene Browser & Fix:
+      // ┌──────────────────┬──────────────────────────────────┐
+      // │ Safari (alle)    │ max-age=0 + must-revalidate      │
+      // │ Chrome/Edge      │ must-revalidate (304 via ETag)   │
+      // │ Firefox          │ no-cache (immer revalidieren)    │
+      // │ Samsung Internet │ no-cache + Pragma Fallback       │
+      // │ Opera Mini       │ no-transform (kein CSS-Mangling) │
+      // │ IE11/Edge Legacy │ Pragma + Expires Fallback        │
+      // │ UC Browser       │ no-transform + no-cache          │
+      // │ Mobile Proxies   │ proxy-revalidate + Surrogate     │
+      // └──────────────────┴──────────────────────────────────┘
+      //
+      // CDN (Cloudflare): s-maxage=3600 → cached 1h am Edge.
+      // Surrogate-Control: Varnish/Fastly/Cloudways-Proxy.
       // ============================================================
       {
         source: '/:path((?!api|_next|static|favicon).*)',
         headers: [
           {
             key: 'Cache-Control',
-            value: 'public, max-age=3600, stale-while-revalidate=86400',
+            value: 'public, no-cache, must-revalidate, proxy-revalidate, s-maxage=3600, stale-while-revalidate=86400, no-transform',
+          },
+          // HTTP/1.0 Fallback (Samsung Internet, IE11, Corporate Proxies)
+          {
+            key: 'Pragma',
+            value: 'no-cache',
+          },
+          // HTTP/1.0 Fallback (ältere Proxy-Server)
+          {
+            key: 'Expires',
+            value: '0',
+          },
+          // Varnish/Fastly/Cloudways Reverse-Proxy Caching
+          {
+            key: 'Surrogate-Control',
+            value: 'max-age=3600',
+          },
+          // Vary: Browser soll pro Encoding + Accept separaten Cache halten.
+          // Verhindert dass gzip-Version für brotli-Client ausgeliefert wird.
+          {
+            key: 'Vary',
+            value: 'Accept-Encoding, Accept',
           },
         ],
       },

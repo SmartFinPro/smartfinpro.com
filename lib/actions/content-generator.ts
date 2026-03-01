@@ -2,12 +2,12 @@
 
 import 'server-only';
 
-import Anthropic from '@anthropic-ai/sdk';
 import { createClient } from '@/lib/supabase/server';
 import { boostAndDeploy } from '@/lib/actions/content-overrides';
 import { extractDomain, AUTHORITY_DOMAINS } from '@/lib/seo/competitor-keywords';
 import type { Market, Category } from '@/lib/i18n/config';
 import { marketConfig, categoryConfig } from '@/lib/i18n/config';
+import { createClaudeMessage } from '@/lib/claude/client';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -185,8 +185,6 @@ async function generateBriefWithAI(
     return generateFallbackBrief(keyword, market, category);
   }
 
-  const client = new Anthropic({ apiKey });
-
   // Build competitor structure summary
   const competitorSummary = competitorOutlines.map((c, i) => {
     const headingList = c.headings
@@ -235,11 +233,11 @@ The outline should have 6-10 sections (mix of h2 and h3). Include:
 - A verdict/conclusion section`;
 
   try {
-    const response = await client.messages.create({
+    const response = await createClaudeMessage({
       model: 'claude-3-5-sonnet-20241022',
       max_tokens: 2000,
       messages: [{ role: 'user', content: prompt }],
-    });
+    }, { apiKey, operation: 'content_brief' });
 
     // Extract text from response
     const textBlock = response.content.find((b) => b.type === 'text');
@@ -372,7 +370,7 @@ function generateMdxContent(
     .replace(/\s+/g, '-')
     .replace(/-+/g, '-')
     .slice(0, 60);
-  const prefix = brief.market === 'us' ? '' : `/${brief.market}`;
+  const prefix = `/${brief.market}`;
   const imageBase = `/images/content${prefix}/${brief.category}/${slugBase}`;
 
   const hasHero = existingImages.includes('hero.webp');
@@ -624,15 +622,15 @@ export async function generateAIContentBrief(
       .replace(/\s+/g, '-')
       .replace(/-+/g, '-')
       .slice(0, 60);
-    const prefix = market === 'us' ? '' : `/${market}`;
+    const prefix = `/${market}`;
     const fullSlug = `${prefix}/${category}/${slugBase}`.replace(/^\//, '');
     const imageRequirements = buildImageRequirements(fullSlug);
 
     // Step 5: Determine internal link targets
     const internalLinkTargets = [
-      `/${market === 'us' ? '' : `${market}/`}${category}`,
-      ...(category === 'trading' ? [`/${market === 'us' ? '' : `${market}/`}forex`] : []),
-      ...(category === 'forex' ? [`/${market === 'us' ? '' : `${market}/`}trading`] : []),
+      `/${market}/${category}`,
+      ...(category === 'trading' ? [`/${market}/forex`] : []),
+      ...(category === 'forex' ? [`/${market}/trading`] : []),
     ];
 
     const brief: ContentBrief = {
@@ -691,11 +689,11 @@ export async function generateAndPublishPage(
 
     const contentDir = path.join(process.cwd(), 'content', market, category);
     const filePath = path.join(contentDir, `${slugBase}.mdx`);
-    const prefix = market === 'us' ? '' : `/${market}`;
+    const prefix = `/${market}`;
     const slug = `${prefix}/${category}/${slugBase}`;
 
     // Step 3: Check existing images
-    const imageSlugPath = `${market === 'us' ? '' : `${market}/`}${category}/${slugBase}`;
+    const imageSlugPath = `${market}/${category}/${slugBase}`;
     const { existing: existingImages, missing: missingImages } = checkExistingImages(imageSlugPath);
 
     // Step 4: Generate MDX content
@@ -782,8 +780,6 @@ export async function generateLongFormBriefWithAI(
     return generateLongFormFallbackBrief(keyword, market, category);
   }
 
-  const client = new Anthropic({ apiKey });
-
   const competitorSummary = competitorOutlines.map((c, i) => {
     const headingList = c.headings
       .map((h) => `  ${h.tag}: ${h.text}`)
@@ -837,11 +833,11 @@ The outline MUST have 18-28 sections (mix of h2 and h3). Include:
 - A final verdict / conclusion section with CTA`;
 
   try {
-    const response = await client.messages.create({
+    const response = await createClaudeMessage({
       model: 'claude-sonnet-4-20250514',
       max_tokens: 4000,
       messages: [{ role: 'user', content: prompt }],
-    });
+    }, { apiKey, operation: 'content_brief_longform' });
 
     const textBlock = response.content.find((b) => b.type === 'text');
     const rawText = textBlock?.text || '';
@@ -949,7 +945,7 @@ export async function generateLongFormMdxContent(
     .replace(/\s+/g, '-')
     .replace(/-+/g, '-')
     .slice(0, 60);
-  const prefix = brief.market === 'us' ? '' : `/${brief.market}`;
+  const prefix = `/${brief.market}`;
   const imageBase = `/images/content${prefix}/${brief.category}/${slugBase}`;
 
   const hasHero = existingImages.includes('hero.webp');

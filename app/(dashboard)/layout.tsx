@@ -45,42 +45,50 @@ interface NavGroup {
   links: NavLink[];
 }
 
-const sidebarGroups: NavGroup[] = [
-  {
-    label: 'Overview',
-    links: [
-      { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, exact: true },
-      { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart3, exact: true },
-      { name: 'CTA Heatmap', href: '/dashboard/analytics/heatmap', icon: Flame },
-      { name: 'AI-Optimizer', href: '/dashboard/analytics/optimize', icon: Brain, badgeKey: 'optimize' },
-      { name: 'Revenue', href: '/dashboard/revenue', icon: DollarSign },
-    ],
-  },
-  {
-    label: 'Content & SEO',
-    links: [
-      { name: 'Auto-Genesis', href: '/dashboard/content/genesis', icon: Rocket },
-      { name: 'Approval Queue', href: '/dashboard/content/planning', icon: ClipboardCheck, badgeKey: 'planning' },
-      { name: 'Ranking Tracker', href: '/dashboard/ranking', icon: Search },
-      { name: 'Competitor Radar', href: '/dashboard/competitors', icon: Radar, exact: true },
-      { name: 'Keyword Gaps', href: '/dashboard/competitors/gaps', icon: Crosshair },
-    ],
-  },
-  {
-    label: 'Monetization',
-    links: [
-      { name: 'Affiliate Links', href: '/dashboard/links', icon: Link2 },
-      { name: 'Quiz Analytics', href: '/dashboard/quiz', icon: Sparkles },
-    ],
-  },
-  {
-    label: 'Operations',
-    links: [
-      { name: 'Compliance Audit', href: '/dashboard/compliance', icon: Shield },
-      { name: 'Settings', href: '/dashboard/settings', icon: Settings },
-    ],
-  },
-];
+const DEV_BUILD_MARKER =
+  process.env.NEXT_PUBLIC_BUILD_ID ||
+  process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA ||
+  'local-dev';
+
+function getSidebarGroups(): NavGroup[] {
+  return [
+    {
+      label: 'Overview',
+      links: [
+        { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, exact: true },
+        { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart3, exact: true },
+        { name: 'CTA Heatmap', href: '/dashboard/analytics/heatmap', icon: Flame },
+        { name: 'AI-Optimizer', href: '/dashboard/analytics/optimize', icon: Brain, badgeKey: 'optimize' },
+        { name: 'Revenue', href: '/dashboard/revenue', icon: DollarSign },
+      ],
+    },
+    {
+      label: 'Content & SEO',
+      links: [
+        { name: 'Content Hub', href: '/dashboard/content/hub', icon: FileText },
+        { name: 'Auto-Genesis', href: '/dashboard/content/genesis', icon: Rocket },
+        { name: 'Approval Queue', href: '/dashboard/content/planning', icon: ClipboardCheck, badgeKey: 'planning' },
+        { name: 'Ranking Tracker', href: '/dashboard/ranking', icon: Search },
+        { name: 'Competitor Radar', href: '/dashboard/competitors', icon: Radar, exact: true },
+        { name: 'Keyword Gaps', href: '/dashboard/competitors/gaps', icon: Crosshair },
+      ],
+    },
+    {
+      label: 'Monetization',
+      links: [
+        { name: 'Affiliate Links', href: '/dashboard/links', icon: Link2 },
+        { name: 'Quiz Analytics', href: '/dashboard/quiz', icon: Sparkles },
+      ],
+    },
+    {
+      label: 'Operations',
+      links: [
+        { name: 'Compliance Audit', href: '/dashboard/compliance', icon: Shield },
+        { name: 'Settings', href: '/dashboard/settings', icon: Settings },
+      ],
+    },
+  ];
+}
 
 function isLinkActive(pathname: string, link: NavLink): boolean {
   if (link.exact) return pathname === link.href;
@@ -94,6 +102,7 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const sidebarGroups = getSidebarGroups();
   const [badges, setBadges] = useState<Record<string, number>>({});
 
   // Fetch queue counts for badge display (dynamic import to avoid client bundling)
@@ -184,6 +193,11 @@ export default function DashboardLayout({
             <LogOut className="h-4 w-4 text-slate-400" />
             <span>Back to Site</span>
           </Link>
+          {process.env.NODE_ENV === 'development' && (
+            <div className="px-3 pt-3 text-[10px] text-slate-400">
+              Build: <span className="font-mono text-slate-500">{DEV_BUILD_MARKER}</span>
+            </div>
+          )}
         </div>
       </aside>
 

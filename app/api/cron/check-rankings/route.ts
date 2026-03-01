@@ -47,8 +47,7 @@ export async function GET(request: NextRequest) {
     const { data: poorRankings, error: rankingError } = await supabase
       .from('keyword_rankings')
       .select('id, keyword, market, position, page, clicks, ctr')
-      .gt('position', 20)
-      .is('position', null) // Also include unranked (position = null)
+      .or('position.gt.20,position.is.null') // Include both: >20 and unranked
       .order('position', { ascending: true, nullsFirst: false });
 
     if (rankingError) {
@@ -60,6 +59,7 @@ export async function GET(request: NextRequest) {
 
     // 2. Group by slug and market to identify affected articles
     const affectedArticles = new Map<string, {
+      slug: string;
       market: string;
       category: string;
       keywords: string[];
@@ -70,11 +70,14 @@ export async function GET(request: NextRequest) {
     for (const kw of poorKeywords) {
       const slug = kw.page || '';
       if (!slug) continue;
+      const pathParts = slug.replace(/^\/+/, '').split('/');
+      const category = pathParts[1] || 'unknown';
 
       const key = `${slug}:${kw.market}`;
       const existing = affectedArticles.get(key) || {
+        slug,
         market: kw.market,
-        category: slug.split('/')[1] || 'unknown',
+        category,
         keywords: [] as string[],
         avgPosition: 0,
         totalClicks: 0,
@@ -101,15 +104,9 @@ export async function GET(request: NextRequest) {
     }> = [];
 
     for (const [, article] of affectedArticles) {
-      const slug = Array.from(affectedArticles.keys())
-        .find((k) => k.startsWith(`${article.market}`))
-        ?.split(':')[0];
-
-      if (!slug) continue;
-
       for (const keyword of article.keywords) {
         queueUpdates.push({
-          slug,
+          slug: article.slug,
           market: article.market,
           category: article.category,
           keyword,

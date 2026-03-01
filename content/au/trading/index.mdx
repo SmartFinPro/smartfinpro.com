@@ -2,7 +2,7 @@
 title: "Best Trading Platforms Australia 2026: ASIC-Regulated Broker Comparison"
 description: "We tested 22 ASIC-regulated trading platforms over 6 months with real money. Compare spreads, fees, and platforms for the best forex and CFD brokers in Australia."
 author: "SmartFinPro Australia Team"
-reviewedBy: "Daniel Whitfield, CFA, ACA"
+reviewedBy: "Emma Whitfield, CFA, ACA"
 publishDate: "2026-02-05"
 category: "trading"
 market: "au"
@@ -65,7 +65,7 @@ The result: five brokers that consistently deliver transparent pricing, reliable
 </ExecutiveSummary>
 
 <ExpertBox
-  name="Daniel Whitfield"
+  name="Emma Whitfield"
   title="CFA, ACA | Former Institutional Trader, Sydney"
   credentials={["18+ years in Australian financial markets", "Former derivatives desk at Macquarie Group", "ASIC RG 146 compliant adviser"]}
   quote="Australian traders have access to some of the world's best-regulated platforms. ASIC's product intervention powers and the 30:1 leverage cap on major pairs have genuinely improved retail outcomes. But regulation alone does not make a good broker — execution quality, true spread costs, and platform reliability separate the best from the rest."
@@ -79,23 +79,34 @@ The result: five brokers that consistently deliver transparent pricing, reliable
 
 After six months of hands-on testing, these five ASIC-regulated platforms offer the best combination of cost, features, and reliability for Australian traders:
 
-<QuickPicks
-  picks={[
+<ComparisonTablePremium
+  title="Top Trading Platforms in Australia at a Glance"
+  market="au"
+  ctaLabel="Open Account"
+  editorChoiceLabel="Editor's Choice"
+  columns={[
+    { key: "spreads", label: "Spreads" },
+    { key: "minDeposit", label: "Min Deposit" },
+    { key: "regulation", label: "Regulation", isBadgeColumn: true }
+  ]}
+  items={[
     {
-      rank: 1,
       name: "Plus500",
       slug: "plus500-review",
       tagline: "Best for CFDs",
       rating: 4.6,
-      price: "From 0.8 pips, A$100 min deposit",
+      reviewCount: 15234,
       affiliateUrl: "/go/plus500-au",
-      highlight: "Pure CFD platform, simple interface",
-      badge: "Editor's Choice"
+      isEditorsChoice: true,
+      data: { spreads: "From 0.8 pips", minDeposit: "A$100", regulation: "ASIC, FCA, CySEC" },
+      pros: ["Clean, intuitive CFD platform purpose-built for straightforward trading", "ASIC regulated (AFSL #417727) with guaranteed negative balance protection", "Competitive CFD spreads from 0.8 pips with no commission charges"],
+      con: "CFDs only — no access to direct ASX share ownership or physical equities.",
+      verdict: "The best pure CFD platform for Australian traders who want a focused experience without the complexity of multi-asset brokers."
     }
   ]}
 />
 
-<HighlightCTA
+<ProviderCard
   href="/go/interactive-brokers-au"
   productName="Interactive Brokers"
   headline="Trade Forex from 0.1 Pips in Australia"
@@ -480,7 +491,7 @@ Some Australian traders are tempted by offshore brokers offering 500:1 leverage.
 **ASIC warning:** ASIC has published multiple warnings about unlicensed offshore brokers targeting Australian traders. If a broker is not on the ASIC register, do not deposit funds — regardless of leverage or bonus offers.
 </Warning>
 
-<HighlightCTA
+<ProviderCard
   href="/go/etoro-au"
   productName="eToro"
   headline="Practice Risk-Free with A$100K Demo"

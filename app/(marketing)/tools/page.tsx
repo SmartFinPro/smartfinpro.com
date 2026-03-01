@@ -29,6 +29,14 @@ const tools = [
     badge: 'New',
   },
   {
+    title: 'Broker Comparison',
+    description: 'Compare forex and CFD brokers side by side. Filter by features, regulation, and find the best broker for your trading needs.',
+    icon: Scale,
+    href: '/tools/broker-comparison',
+    category: 'Trading',
+    badge: 'Compare',
+  },
+  {
     title: 'Fee Savings Calculator',
     description: 'See how much you could save by switching from traditional bank mutual funds. Compare fee drag over 10, 20, and 30 years.',
     icon: DollarSign,
@@ -107,14 +115,6 @@ const tools = [
     href: '/ca/tools/ca-mortgage-affordability-calculator',
     category: 'Personal Finance',
     badge: 'New',
-  },
-  {
-    title: 'Broker Comparison',
-    description: 'Compare forex and CFD brokers side by side. Filter by features, regulation, and find the best broker for your trading needs.',
-    icon: Scale,
-    href: '/tools/broker-comparison',
-    category: 'Trading',
-    badge: null,
   },
 ];
 
@@ -195,17 +195,26 @@ export default function ToolsPage() {
             Need personalized recommendations?
           </h2>
           <p className="mb-6 max-w-xl mx-auto" style={{ color: 'var(--sfp-slate)' }}>
-            Take our Broker Finder Quiz to get tailored recommendations
-            based on your specific trading needs.
+            Start with the Broker Finder Quiz for a personalized recommendation, then validate your shortlist in Broker Comparison.
           </p>
-          <Link
-            href="/tools/broker-finder"
-            className="inline-flex items-center gap-2 px-6 py-3 text-white rounded-xl font-medium transition-colors hover:shadow-lg"
-            style={{ background: 'var(--sfp-gold)' }}
-          >
-            <Target className="h-5 w-5" />
-            Take the Quiz
-          </Link>
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <Link
+              href="/tools/broker-finder"
+              className="inline-flex items-center gap-2 px-6 py-3 text-white rounded-xl font-medium transition-colors hover:shadow-lg"
+              style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}
+            >
+              <Target className="h-5 w-5" />
+              Take the Quiz
+            </Link>
+            <Link
+              href="/tools/broker-comparison"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-medium border border-gray-200 transition-colors hover:bg-gray-50"
+              style={{ color: 'var(--sfp-navy)', background: '#fff' }}
+            >
+              <Scale className="h-5 w-5" />
+              Open Comparison
+            </Link>
+          </div>
         </div>
       </section>
     </div>

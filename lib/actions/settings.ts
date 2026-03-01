@@ -3,6 +3,7 @@
 import 'server-only';
 
 import { createServiceClient } from '@/lib/supabase/server';
+import { createClaudeMessage } from '@/lib/claude/client';
 
 // ════════════════════════════════════════════════════════════════
 // SYSTEM SETTINGS — Read/Write for system_settings table
@@ -237,14 +238,11 @@ export async function testAnthropicConnection(
       return { success: false, message: 'Kein API-Key konfiguriert.' };
     }
 
-    const Anthropic = (await import('@anthropic-ai/sdk')).default;
-    const client = new Anthropic({ apiKey });
-
-    const response = await client.messages.create({
+    const response = await createClaudeMessage({
       model: 'claude-sonnet-4-20250514',
       max_tokens: 10,
       messages: [{ role: 'user', content: 'Ping' }],
-    });
+    }, { apiKey, operation: 'settings_test_anthropic', maxAttempts: 2, backoffMs: [500, 1000] });
 
     const latencyMs = Date.now() - start;
     const hasContent = response.content.length > 0;

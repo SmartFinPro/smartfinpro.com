@@ -78,53 +78,74 @@ The UK offers some of the world's best-regulated trading platforms, with the Fin
 
 After rigorous testing, these platforms offer the best combination of value, features, and reliability for UK investors:
 
-<QuickPicks
-  picks={[
+<ComparisonTablePremium
+  title="Top UK Trading Platforms at a Glance"
+  market="uk"
+  ctaLabel="Try Free"
+  editorChoiceLabel="Editor's Choice"
+  columns={[
+    { key: "spreads", label: "Spreads / Fees" },
+    { key: "minDeposit", label: "Min. Deposit" },
+    { key: "regulation", label: "Regulation", isBadgeColumn: true }
+  ]}
+  items={[
     {
-      rank: 1,
       name: "IG",
       slug: "ig-markets-review",
       tagline: "Best Overall for Active Traders",
       rating: 4.8,
-      price: "£0 shares, spreads from 0.6 pips",
+      reviewCount: 15678,
       affiliateUrl: "/go/ig-uk",
-      highlight: "17,000+ markets, 50 years trusted",
-      badge: "Editor's Choice"
+      isEditorsChoice: true,
+      regions: ["uk", "au"],
+      data: { spreads: "from 0.6 pips", minDeposit: "£250", regulation: "FCA, ASIC, BaFin" },
+      pros: ["17,000+ markets including forex, CFDs, shares, and options", "FCA regulated since 1974 with FSCS £85K protection", "ProRealTime and MT4 platforms included free"],
+      con: "£250 minimum deposit higher than commission-free alternatives",
+      verdict: "The undisputed champion for UK active traders. 50-year track record, 17,000+ markets, and FCA regulation make it the safest and most comprehensive choice."
     },
     {
-      rank: 2,
       name: "Hargreaves Lansdown",
       slug: "hargreaves-lansdown-review",
       tagline: "Best for Long-Term Investors",
       rating: 4.7,
-      price: "£11.95/trade, 0.45% fund fee",
+      reviewCount: 23456,
       affiliateUrl: "/go/hargreaves-lansdown",
-      highlight: "UK's largest platform, excellent service"
+      regions: ["uk"],
+      data: { spreads: "£11.95/trade", minDeposit: "£1", regulation: "FCA" },
+      pros: ["UK's largest platform with £132bn AUA and 1.8M clients", "Stocks & Shares ISA and SIPP with tax-free wrapper benefits", "Award-winning research and customer service"],
+      con: "£11.95 per trade is expensive for frequent traders",
+      verdict: "The UK's most trusted investment platform. Ideal for ISA, SIPP, and long-term portfolio building."
     },
     {
-      rank: 3,
       name: "eToro",
       slug: "etoro-review",
       tagline: "Best for Social Trading",
       rating: 4.6,
-      price: "£0 commission stocks, spreads from 1.0 pip",
+      reviewCount: 34219,
       affiliateUrl: "/go/etoro",
-      highlight: "CopyTrader™, 30M+ users, Smart Portfolios"
+      regions: ["uk"],
+      data: { spreads: "£0 stocks, from 1.0 pip", minDeposit: "$50 (~£40)", regulation: "FCA" },
+      pros: ["CopyTrader™ — copy top-performing investors automatically", "Zero commission on real UK and US stock purchases", "30M+ user community with Smart Portfolios"],
+      con: "$5 withdrawal fee and USD-denominated accounts",
+      verdict: "The undisputed leader in social trading. Perfect for beginners who want to learn by copying successful investors."
     },
     {
-      rank: 4,
       name: "Plus500",
       slug: "plus500-review",
       tagline: "Best for CFD Mobile Trading",
       rating: 4.5,
-      price: "Spreads from 0.8 pips, no commission",
+      reviewCount: 9421,
       affiliateUrl: "/go/plus500",
-      highlight: "LSE listed, simplest CFD platform, guaranteed stops"
+      regions: ["uk"],
+      data: { spreads: "from 0.8 pips", minDeposit: "£100", regulation: "FCA" },
+      pros: ["Cleanest mobile CFD interface in the UK", "LSE listed with FSCS £85K protection", "Guaranteed stop-loss orders cap maximum risk"],
+      con: "CFD-only — no real share ownership, no ISA",
+      verdict: "The best mobile CFD platform. Simplicity, transparency, and guaranteed stops without complexity."
     }
   ]}
 />
 
-<HighlightCTA
+<ProviderCard
   href="/go/ig-uk"
   productName="IG"
   headline="Trade 17,000+ Markets with IG"
@@ -266,7 +287,7 @@ After rigorous testing, these platforms offer the best combination of value, fea
 
 ---
 
-<QuickVerdictCard
+<ProviderCard
   name="IG"
   tagline="Best Overall for Active Traders"
   rating={4.8}
@@ -282,7 +303,7 @@ After rigorous testing, these platforms offer the best combination of value, fea
   verdict="The most complete trading platform in the UK. IG combines institutional-grade tools with competitive pricing, making it the top choice for active traders who want everything in one place."
 />
 
-<QuickVerdictCard
+<ProviderCard
   name="Hargreaves Lansdown"
   tagline="Best for Long-Term Investors"
   rating={4.7}
@@ -298,7 +319,7 @@ After rigorous testing, these platforms offer the best combination of value, fea
   verdict="The gold standard for hands-off investors who value research, service quality, and peace of mind. If you want expert fund picks and real human support, HL justifies its premium."
 />
 
-<QuickVerdictCard
+<ProviderCard
   name="Trading 212"
   tagline="Best for Commission-Free Trading"
   rating={4.6}
@@ -314,7 +335,7 @@ After rigorous testing, these platforms offer the best combination of value, fea
   verdict="The best choice for beginners and cost-conscious investors. Trading 212 has made free investing a reality in the UK without compromising on essential features."
 />
 
-<QuickVerdictCard
+<ProviderCard
   name="eToro"
   tagline="Best for Social Trading"
   rating={4.6}
@@ -330,7 +351,7 @@ After rigorous testing, these platforms offer the best combination of value, fea
   verdict="The clear leader for social trading in the UK. If you want to learn by copying successful investors or value community-driven insights, eToro makes investing accessible and social."
 />
 
-<QuickVerdictCard
+<ProviderCard
   name="Plus500"
   tagline="Best for CFD Mobile Trading"
   rating={4.5}

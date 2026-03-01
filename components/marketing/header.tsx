@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import {
@@ -26,7 +25,6 @@ import {
   Home,
   PiggyBank,
   Landmark,
-  Flame,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -45,16 +43,10 @@ import {
   Category,
   getNavGroupsForMarket,
 } from '@/lib/i18n/config';
-
-interface TrendingPartner {
-  providerName: string;
-  cpaValue: number;
-  currency: string;
-}
+import { detectMarketFromPath, marketSiloConfig } from '@/config/navigation';
 
 interface HeaderProps {
   market?: Market;
-  trendingPartners?: TrendingPartner[];
 }
 
 // Lucide icon mapping from categoryConfig.icon strings
@@ -110,127 +102,8 @@ function getToolCardsForMarket(m: Market): ToolCard[] {
 }
 
 // Detect market from pathname — delegated to central config
-import { detectMarketFromPath } from '@/config/navigation';
 function detectMarket(pathname: string): Market {
   return detectMarketFromPath(pathname);
-}
-
-// ── Market-Specific Sidebar (Desktop Mega-Menu) ─────────────────
-
-function MarketSidebar({ market, prefix, onClose }: { market: Market; prefix: string; onClose: () => void }) {
-  return (
-    <>
-      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">Market Overviews</p>
-      <div className="space-y-2.5 mb-6">
-        {(marketCategories[market] || []).map((cat) => (
-          <Link key={`ov-${cat}`} href={`${prefix}/${cat}/overview`} className="group flex items-center gap-2 text-sm transition-colors" style={{ color: 'var(--sfp-slate)' }} onClick={onClose}>
-            <span>{categoryConfig[cat].name}</span>
-            <ArrowRight className="h-3.5 w-3.5 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
-          </Link>
-        ))}
-      </div>
-
-      {market === 'us' && (
-        <>
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">Credit Cards</p>
-          <div className="space-y-2.5 mb-6">
-            <Link href="/personal-finance/credit-cards-comparison" className="group flex items-center gap-2 text-sm transition-colors" style={{ color: 'var(--sfp-slate)' }} onClick={onClose}>
-              <CreditCard className="h-3.5 w-3.5" style={{ color: 'var(--sfp-gold)' }} /><span>Card Comparison</span>
-              <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold" style={{ background: 'rgba(245,166,35,0.15)', color: 'var(--sfp-gold-dark)' }}>New</span>
-            </Link>
-            <Link href="/personal-finance/amex-gold-card-review" className="group flex items-center gap-2 text-sm transition-colors" style={{ color: 'var(--sfp-slate)' }} onClick={onClose}>
-              <span>Amex Gold Review</span><ArrowRight className="h-3.5 w-3.5 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
-            </Link>
-            <Link href="/personal-finance/chase-sapphire-preferred-review" className="group flex items-center gap-2 text-sm transition-colors" style={{ color: 'var(--sfp-slate)' }} onClick={onClose}>
-              <span>Chase Sapphire Preferred</span><ArrowRight className="h-3.5 w-3.5 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
-            </Link>
-            <Link href="/personal-finance/chase-sapphire-reserve-review" className="group flex items-center gap-2 text-sm transition-colors" style={{ color: 'var(--sfp-slate)' }} onClick={onClose}>
-              <span>Chase Sapphire Reserve</span><ArrowRight className="h-3.5 w-3.5 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
-            </Link>
-          </div>
-        </>
-      )}
-
-      {market === 'ca' && (
-        <>
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">Wealthsimple</p>
-          <div className="space-y-2.5 mb-6">
-            <Link href="/ca/personal-finance/wealthsimple-review" className="group flex items-center gap-2 text-sm transition-colors" style={{ color: 'var(--sfp-slate)' }} onClick={onClose}>
-              <Landmark className="h-3.5 w-3.5" style={{ color: 'var(--sfp-green)' }} /><span>Wealthsimple Review</span>
-              <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold" style={{ background: 'rgba(26,107,58,0.12)', color: 'var(--sfp-green)' }}>Top Rated</span>
-            </Link>
-            <Link href="/ca/personal-finance/wealthsimple-tax" className="group flex items-center gap-2 text-sm transition-colors" style={{ color: 'var(--sfp-slate)' }} onClick={onClose}>
-              <span>Wealthsimple Tax</span><ArrowRight className="h-3.5 w-3.5 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
-            </Link>
-            <Link href="/ca/personal-finance/wealthsimple-vs-questrade" className="group flex items-center gap-2 text-sm transition-colors" style={{ color: 'var(--sfp-slate)' }} onClick={onClose}>
-              <span>Wealthsimple vs Questrade</span><ArrowRight className="h-3.5 w-3.5 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
-            </Link>
-          </div>
-        </>
-      )}
-
-      {market === 'au' && (
-        <>
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">Home Loans</p>
-          <div className="space-y-2.5 mb-6">
-            <Link href="/au/personal-finance" className="group flex items-center gap-2 text-sm transition-colors" style={{ color: 'var(--sfp-slate)' }} onClick={onClose}>
-              <Home className="h-3.5 w-3.5" style={{ color: 'var(--sfp-gold)' }} /><span>Home Loan Comparison</span>
-              <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold" style={{ background: 'rgba(245,166,35,0.15)', color: 'var(--sfp-gold-dark)' }}>New</span>
-            </Link>
-            <Link href="/au/personal-finance/athena-home-loans-review" className="group flex items-center gap-2 text-sm transition-colors" style={{ color: 'var(--sfp-slate)' }} onClick={onClose}>
-              <span>Athena Home Loans</span><ArrowRight className="h-3.5 w-3.5 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
-            </Link>
-            <Link href="/au/personal-finance/commbank-home-loan-review" className="group flex items-center gap-2 text-sm transition-colors" style={{ color: 'var(--sfp-slate)' }} onClick={onClose}>
-              <span>CommBank Home Loan</span><ArrowRight className="h-3.5 w-3.5 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
-            </Link>
-            <Link href="/au/personal-finance/ubank-home-loan-review" className="group flex items-center gap-2 text-sm transition-colors" style={{ color: 'var(--sfp-slate)' }} onClick={onClose}>
-              <span>ubank Home Loan</span><ArrowRight className="h-3.5 w-3.5 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
-            </Link>
-            <Link href="/au/tools/au-mortgage-calculator" className="group flex items-center gap-2 text-sm transition-colors" style={{ color: 'var(--sfp-slate)' }} onClick={onClose}>
-              <Calculator className="h-3.5 w-3.5" style={{ color: 'var(--sfp-green)' }} /><span>Mortgage Calculator</span>
-              <ArrowRight className="h-3.5 w-3.5 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
-            </Link>
-          </div>
-        </>
-      )}
-
-      {market === 'uk' && (
-        <>
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">ISA Investments</p>
-          <div className="space-y-2.5 mb-6">
-            <Link href="/uk/personal-finance/vanguard-isa-review" className="group flex items-center gap-2 text-sm transition-colors" style={{ color: 'var(--sfp-slate)' }} onClick={onClose}>
-              <PiggyBank className="h-3.5 w-3.5" style={{ color: 'var(--sfp-green)' }} /><span>Vanguard ISA</span>
-              <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold" style={{ background: 'rgba(26,107,58,0.12)', color: 'var(--sfp-green)' }}>Best Value</span>
-            </Link>
-            <Link href="/uk/personal-finance/hargreaves-lansdown-isa-review" className="group flex items-center gap-2 text-sm transition-colors" style={{ color: 'var(--sfp-slate)' }} onClick={onClose}>
-              <span>Hargreaves Lansdown ISA</span><ArrowRight className="h-3.5 w-3.5 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
-            </Link>
-            <Link href="/uk/personal-finance/fidelity-isa-review" className="group flex items-center gap-2 text-sm transition-colors" style={{ color: 'var(--sfp-slate)' }} onClick={onClose}>
-              <span>Fidelity ISA</span><ArrowRight className="h-3.5 w-3.5 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
-            </Link>
-            <Link href="/uk/personal-finance/trading-212-isa-review" className="group flex items-center gap-2 text-sm transition-colors" style={{ color: 'var(--sfp-slate)' }} onClick={onClose}>
-              <span>Trading 212 ISA</span>
-              <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold" style={{ background: 'rgba(26,107,58,0.12)', color: 'var(--sfp-green)' }}>Free</span>
-            </Link>
-            <Link href="/uk/tools/isa-tax-savings-calculator" className="group flex items-center gap-2 text-sm transition-colors" style={{ color: 'var(--sfp-slate)' }} onClick={onClose}>
-              <Calculator className="h-3.5 w-3.5" style={{ color: 'var(--sfp-navy)' }} /><span>ISA Tax Calculator</span>
-              <ArrowRight className="h-3.5 w-3.5 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
-            </Link>
-          </div>
-        </>
-      )}
-
-      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">Popular</p>
-      <div className="space-y-2.5">
-        <Link href="/trading-platforms/tradingview" className="group flex items-center gap-2 text-sm transition-colors" style={{ color: 'var(--sfp-slate)' }} onClick={onClose}>
-          <span>TradingView Platform</span><ArrowRight className="h-3.5 w-3.5 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
-        </Link>
-        <Link href={`${prefix}/reviews/etoro`} className="group flex items-center gap-2 text-sm transition-colors" style={{ color: 'var(--sfp-slate)' }} onClick={onClose}>
-          <span>Top Rated: eToro</span><ArrowRight className="h-3.5 w-3.5 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
-        </Link>
-      </div>
-    </>
-  );
 }
 
 // ── Mobile Market-Specific Links ────────────────────────────────
@@ -242,10 +115,10 @@ function MobileMarketLinks({ market, prefix, onClose }: { market: Market; prefix
       {market === 'us' && (
         <>
           <div className="mt-2 pt-2 border-t border-gray-200"><p className="px-3 py-1 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Credit Cards</p></div>
-          <Link href="/personal-finance/credit-cards-comparison" className={cls} style={{ color: 'var(--sfp-ink)' }} onClick={onClose}><CreditCard className="h-4 w-4" style={{ color: 'var(--sfp-gold)' }} /><span className="text-sm">Card Comparison</span><span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium" style={{ background: 'rgba(245,166,35,0.15)', color: 'var(--sfp-gold-dark)' }}>New</span></Link>
-          <Link href="/personal-finance/amex-gold-card-review" className={cls} style={{ color: 'var(--sfp-ink)' }} onClick={onClose}><CreditCard className="h-4 w-4" style={{ color: 'var(--sfp-navy)' }} /><span className="text-sm">Amex Gold</span></Link>
-          <Link href="/personal-finance/chase-sapphire-preferred-review" className={cls} style={{ color: 'var(--sfp-ink)' }} onClick={onClose}><CreditCard className="h-4 w-4" style={{ color: 'var(--sfp-navy)' }} /><span className="text-sm">Chase Sapphire Preferred</span></Link>
-          <Link href="/personal-finance/chase-sapphire-reserve-review" className={cls} style={{ color: 'var(--sfp-ink)' }} onClick={onClose}><CreditCard className="h-4 w-4" style={{ color: 'var(--sfp-navy)' }} /><span className="text-sm">Chase Sapphire Reserve</span></Link>
+          <Link href="/us/personal-finance/credit-cards-comparison" className={cls} style={{ color: 'var(--sfp-ink)' }} onClick={onClose}><CreditCard className="h-4 w-4" style={{ color: 'var(--sfp-gold)' }} /><span className="text-sm">Card Comparison</span><span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium" style={{ background: 'rgba(245,166,35,0.15)', color: 'var(--sfp-gold-dark)' }}>New</span></Link>
+          <Link href="/us/personal-finance/amex-gold-card-review" className={cls} style={{ color: 'var(--sfp-ink)' }} onClick={onClose}><CreditCard className="h-4 w-4" style={{ color: 'var(--sfp-navy)' }} /><span className="text-sm">Amex Gold</span></Link>
+          <Link href="/us/personal-finance/chase-sapphire-preferred-review" className={cls} style={{ color: 'var(--sfp-ink)' }} onClick={onClose}><CreditCard className="h-4 w-4" style={{ color: 'var(--sfp-navy)' }} /><span className="text-sm">Chase Sapphire Preferred</span></Link>
+          <Link href="/us/personal-finance/chase-sapphire-reserve-review" className={cls} style={{ color: 'var(--sfp-ink)' }} onClick={onClose}><CreditCard className="h-4 w-4" style={{ color: 'var(--sfp-navy)' }} /><span className="text-sm">Chase Sapphire Reserve</span></Link>
         </>
       )}
       {market === 'ca' && (
@@ -282,11 +155,10 @@ function MobileMarketLinks({ market, prefix, onClose }: { market: Market; prefix
 
 // ── Main Header Component ────────────────────────────────────────
 
-export function Header({ market: marketProp, trendingPartners: trendingProp = [] }: HeaderProps) {
+export function Header({ market: marketProp }: HeaderProps) {
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileExpanded, setMobileExpanded] = useState<string | null>(null);
-  const [trendingPartners, setTrendingPartners] = useState<TrendingPartner[]>(trendingProp);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const pathname = usePathname();
 
@@ -298,27 +170,9 @@ export function Header({ market: marketProp, trendingPartners: trendingProp = []
   const detectedMarket = marketProp || detectMarket(pathname);
   const market = mounted ? detectedMarket : 'us';
   const currentMarket = marketConfig[market];
-  const prefix = market === 'us' ? '' : `/${market}`;
+  const prefix = `/${market}`;
   const navGroups = getNavGroupsForMarket(market);
-
-  // Fetch trending partners (top CPA) client-side if not provided via props
-  useEffect(() => {
-    if (trendingProp.length > 0) return;
-    let cancelled = false;
-    import('@/lib/actions/genesis').then(({ getAffiliateRatesForMarket }) => {
-      getAffiliateRatesForMarket(market).then((rates) => {
-        if (cancelled) return;
-        setTrendingPartners(
-          rates.slice(0, 3).map((r) => ({
-            providerName: r.providerName,
-            cpaValue: r.cpaValue,
-            currency: r.currency,
-          })),
-        );
-      }).catch(() => {});
-    }).catch(() => {});
-    return () => { cancelled = true; };
-  }, [market, trendingProp.length]);
+  const featuredLinks = marketSiloConfig[market]?.featured || [];
 
   const openMenu = useCallback((menu: string) => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -372,7 +226,7 @@ export function Header({ market: marketProp, trendingPartners: trendingProp = []
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>
-            <Button asChild className="text-white border-0 font-semibold" style={{ background: 'var(--sfp-gold)' }} onMouseOver={(e) => (e.currentTarget.style.background = 'var(--sfp-gold-dark)')} onMouseOut={(e) => (e.currentTarget.style.background = 'var(--sfp-gold)')}>
+            <Button asChild className="text-white border-0 font-semibold" style={{ background: 'var(--sfp-gold)', color: '#ffffff' }} onMouseOver={(e) => (e.currentTarget.style.background = 'var(--sfp-gold-dark)')} onMouseOut={(e) => (e.currentTarget.style.background = 'var(--sfp-gold)')}>
               <Link href="/tools">Get Started</Link>
             </Button>
           </div>
@@ -444,7 +298,7 @@ export function Header({ market: marketProp, trendingPartners: trendingProp = []
                     ))}
                   </div>
                 </div>
-                <Button asChild className="w-full text-white border-0 mt-2 font-semibold" style={{ background: 'var(--sfp-gold)' }}>
+                <Button asChild className="w-full text-white border-0 mt-2 font-semibold" style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}>
                   <Link href="/tools" onClick={() => setMobileMenuOpen(false)}>Get Started</Link>
                 </Button>
               </nav>
@@ -453,71 +307,55 @@ export function Header({ market: marketProp, trendingPartners: trendingProp = []
         </nav>
       </div>
 
-      {/* ── Mega-menu panels ───────────────────────────────────── */}
+      {/* ── Mega-menu panels (market.us compact style) ──────────── */}
       {activeMenu && (
         <div className="absolute left-0 right-0 z-40 hidden lg:block" onMouseEnter={() => openMenu(activeMenu)} onMouseLeave={closeMenu}>
           <div className="border-b border-gray-200 shadow-xl bg-white">
-            <div className="container mx-auto px-6 py-8">
+            <div className="container mx-auto px-6 py-6">
 
               {/* Category-based panels (Investing, Banking, Trading) */}
               {navGroups
                 .filter(({ group }) => group !== 'Tools' && activeMenu === group.toLowerCase())
                 .map(({ group, categories: groupCats }) => (
-                  <div key={group} className="flex gap-10">
-                    <div className="flex-1">
-                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-5">{group}</p>
-                      <div className={`grid ${groupCats.length <= 2 ? 'grid-cols-2' : 'grid-cols-2 xl:grid-cols-3'} gap-3`}>
-                        {groupCats.map((cat) => {
-                          const config = categoryConfig[cat];
-                          const Icon = iconMap[config.icon] || Sparkles;
-                          return (
-                            <Link key={cat} href={`${prefix}/${cat}`} className="group flex items-start gap-3 p-4 rounded-xl border border-transparent hover:border-gray-200 hover:bg-gray-50 transition-all duration-200" onClick={() => setActiveMenu(null)}>
-                              <div className="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: 'var(--sfp-sky)' }}>
-                                <Icon className="h-5 w-5" style={{ color: 'var(--sfp-navy)' }} />
-                              </div>
-                              <div>
-                                <p className="text-sm font-medium group-hover:text-opacity-80 transition-colors" style={{ color: 'var(--sfp-ink)' }}>{config.name}</p>
-                                <p className="text-xs mt-0.5 leading-relaxed" style={{ color: 'var(--sfp-slate)' }}>{config.description}</p>
-                              </div>
-                            </Link>
-                          );
-                        })}
+                  <div key={group}>
+                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">{group}</p>
+                    <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-8 gap-y-1">
+                      {/* Category links — compact text-only */}
+                      {groupCats.map((cat) => {
+                        const config = categoryConfig[cat];
+                        return (
+                          <Link
+                            key={cat}
+                            href={`${prefix}/${cat}`}
+                            className="group flex items-center gap-2 py-1.5 px-2 rounded-lg hover:bg-gray-50 transition-colors"
+                            onClick={() => setActiveMenu(null)}
+                          >
+                            <span className="text-sm font-medium transition-colors" style={{ color: 'var(--sfp-ink)' }}>
+                              {config.name}
+                            </span>
+                            <ArrowRight className="h-3 w-3 opacity-0 -translate-x-1 group-hover:opacity-60 group-hover:translate-x-0 transition-all" style={{ color: 'var(--sfp-navy)' }} />
+                          </Link>
+                        );
+                      })}
 
-                        {/* Trending Partners */}
-                        {trendingPartners.length > 0 && (
-                          <div className="col-span-full mt-4 pt-4 border-t border-gray-200">
-                            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
-                              <Flame className="h-3.5 w-3.5 text-amber-400" />Trending Partners
-                            </p>
-                            <div className="flex flex-wrap gap-2">
-                              {trendingPartners.slice(0, 3).map((p) => (
-                                <span key={p.providerName} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border" style={{ background: 'rgba(245,166,35,0.1)', color: 'var(--sfp-gold-dark)', borderColor: 'rgba(245,166,35,0.25)' }}>
-                                  <Flame className="h-3 w-3" />{p.providerName}
-                                  <span style={{ color: 'var(--sfp-slate)' }}>${p.cpaValue}</span>
+                      {/* Featured links for this market — inline in the grid */}
+                      {featuredLinks.length > 0 && (
+                        <div className="col-span-1 row-span-3">
+                          <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2 px-2">
+                            Featured in {currentMarket.name}
+                          </p>
+                          <div className="space-y-0.5">
+                            {featuredLinks.map((link) => (
+                              <Link
+                                key={link.href}
+                                href={link.href}
+                                className="group flex items-center gap-2 py-1.5 px-2 rounded-lg hover:bg-gray-50 transition-colors"
+                                onClick={() => setActiveMenu(null)}
+                              >
+                                <span className="text-sm transition-colors" style={{ color: 'var(--sfp-slate)' }}>
+                                  {link.label}
                                 </span>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Broker reviews in Trading mega-panel */}
-                      {group === 'Trading' && (
-                        <div className="mt-6 pt-5 border-t border-gray-200">
-                          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">Broker Reviews</p>
-                          <div className="grid grid-cols-4 xl:grid-cols-7 gap-3">
-                            {brokerCards.map((broker) => (
-                              <Link key={broker.slug} href={`${prefix}/reviews/${broker.slug}`} className="group p-3 rounded-xl border border-transparent hover:border-gray-200 hover:bg-gray-50 transition-all duration-200 text-center" onClick={() => setActiveMenu(null)}>
-                                <div className="h-8 mb-2 flex items-center justify-center">
-                                  <Image src={`/images/brokers/${broker.slug}.svg`} alt={broker.name} width={120} height={32} className="h-6 w-auto transition-all" />
-                                </div>
-                                <div className="flex items-center justify-center gap-1 mb-1">
-                                  <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
-                                  <span className="text-xs font-medium" style={{ color: 'var(--sfp-ink)' }}>{broker.rating}</span>
-                                </div>
-                                <span className="text-[10px] transition-colors flex items-center justify-center gap-0.5" style={{ color: 'var(--sfp-slate)' }}>
-                                  Review <ArrowRight className="h-2.5 w-2.5" />
-                                </span>
+                                <ArrowRight className="h-3 w-3 opacity-0 -translate-x-1 group-hover:opacity-60 group-hover:translate-x-0 transition-all" style={{ color: 'var(--sfp-navy)' }} />
                               </Link>
                             ))}
                           </div>
@@ -525,36 +363,57 @@ export function Header({ market: marketProp, trendingPartners: trendingProp = []
                       )}
                     </div>
 
-                    {/* Sidebar */}
-                    <div className="w-64 border-l border-gray-200 pl-10">
-                      <MarketSidebar market={market} prefix={prefix} onClose={() => setActiveMenu(null)} />
-                    </div>
+                    {/* Broker reviews in Trading mega-panel — compact text pills */}
+                    {group === 'Trading' && (
+                      <div className="mt-4 pt-3 border-t border-gray-100">
+                        <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Broker Reviews</p>
+                        <div className="flex flex-wrap gap-2">
+                          {brokerCards.map((broker) => (
+                            <Link
+                              key={broker.slug}
+                              href={`${prefix}/reviews/${broker.slug}`}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border border-gray-200 hover:bg-gray-50 transition-colors"
+                              style={{ color: 'var(--sfp-ink)' }}
+                              onClick={() => setActiveMenu(null)}
+                            >
+                              {broker.name}
+                              <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                              <span className="text-amber-500">{broker.rating}</span>
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
 
-              {/* Tools Mega-Menu */}
+              {/* Tools Mega-Menu — compact text-only */}
               {activeMenu === 'tools' && (
                 <div>
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-5">Free Tools & Calculators</p>
-                  <div className="grid grid-cols-2 xl:grid-cols-3 gap-3">
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">Free Tools & Calculators</p>
+                  <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-1">
                     {getToolCardsForMarket(market).map((tool) => (
-                      <Link key={tool.href} href={tool.href} className="group flex items-start gap-3 p-4 rounded-xl border border-transparent hover:border-gray-200 hover:bg-gray-50 transition-all duration-200" onClick={() => setActiveMenu(null)}>
-                        <div className="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: 'var(--sfp-sky)' }}>
-                          <tool.icon className="h-5 w-5" style={{ color: 'var(--sfp-navy)' }} />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium transition-colors flex items-center gap-2" style={{ color: 'var(--sfp-ink)' }}>
-                            {tool.name}
-                            {tool.badge && <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold" style={{ background: 'rgba(245,166,35,0.15)', color: 'var(--sfp-gold-dark)' }}>{tool.badge}</span>}
-                          </p>
-                          <p className="text-xs mt-0.5 leading-relaxed" style={{ color: 'var(--sfp-slate)' }}>{tool.description}</p>
-                        </div>
+                      <Link
+                        key={tool.href}
+                        href={tool.href}
+                        className="group flex items-center gap-2 py-1.5 px-2 rounded-lg hover:bg-gray-50 transition-colors"
+                        onClick={() => setActiveMenu(null)}
+                      >
+                        <span className="text-sm font-medium transition-colors" style={{ color: 'var(--sfp-ink)' }}>
+                          {tool.name}
+                        </span>
+                        {tool.badge && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold" style={{ background: 'rgba(245,166,35,0.15)', color: 'var(--sfp-gold-dark)' }}>
+                            {tool.badge}
+                          </span>
+                        )}
                       </Link>
                     ))}
                   </div>
-                  <div className="mt-5 pt-4 border-t border-gray-200">
-                    <Link href="/tools" className="group inline-flex items-center gap-2 text-sm transition-colors" style={{ color: 'var(--sfp-navy)' }} onClick={() => setActiveMenu(null)}>
-                      View All Tools<ArrowRight className="h-3.5 w-3.5 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
+                  <div className="mt-4 pt-3 border-t border-gray-100">
+                    <Link href="/tools" className="group inline-flex items-center gap-2 text-sm font-medium transition-colors" style={{ color: 'var(--sfp-navy)' }} onClick={() => setActiveMenu(null)}>
+                      View All Tools
+                      <ArrowRight className="h-3.5 w-3.5 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
                     </Link>
                   </div>
                 </div>

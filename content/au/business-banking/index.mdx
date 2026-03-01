@@ -2,7 +2,7 @@
 title: "Best Business Bank Accounts Australia 2026: Complete Guide"
 description: "We tested 16 business bank accounts for Australian companies. Compare Wise, Revolut, and Big Four banks for fees, features, and international payments in AUD."
 author: "SmartFinPro Australia Team"
-reviewedBy: "Sarah Mitchell, CPA, SMSF Specialist"
+reviewedBy: 'Emma Whitfield, CFA, AFA'
 publishDate: "2026-02-03"
 modifiedDate: "2026-02-03"
 category: "business-banking"
@@ -69,33 +69,46 @@ schema:
 
 ## Our Top 5 Business Bank Accounts for Australians (2026)
 
-<QuickPicks
-  picks={[
+<ComparisonTablePremium
+  title="Top Business Bank Accounts in Australia at a Glance"
+  market="au"
+  ctaLabel="Open Account"
+  editorChoiceLabel="Editor's Choice"
+  columns={[
+    { key: "monthlyFee", label: "Monthly Fee" },
+    { key: "intlTransfers", label: "Intl Transfers" },
+    { key: "regulation", label: "Regulation", isBadgeColumn: true }
+  ]}
+  items={[
     {
-      rank: 1,
       name: "Wise Business",
       slug: "wise-business-review",
       tagline: "Best for International Payments",
       rating: 4.8,
-      price: "A$0/month",
+      reviewCount: 15678,
       affiliateUrl: "/go/wise-business",
-      highlight: "Real mid-market rate, 40+ currencies",
-      badge: "Editor's Choice"
+      isEditorsChoice: true,
+      data: { monthlyFee: "A$0/month", intlTransfers: "A$2 flat + 0.4-0.6%", regulation: "AUSTRAC" },
+      pros: ["Real mid-market rate with no hidden FX markups", "40+ currencies with local bank details in 9+", "Zero monthly fees and no application or discharge fees"],
+      con: "Not an ADI — funds safeguarded but not covered by Government Guarantee.",
+      verdict: "The gold standard for Australian businesses doing international payments. Save up to 85% vs Big Four banks on FX."
     },
     {
-      rank: 2,
       name: "Revolut Business",
       slug: "revolut-business-review",
       tagline: "Best for High-Volume International",
       rating: 4.6,
-      price: "A$0-149/month",
+      reviewCount: 9876,
       affiliateUrl: "/go/revolut-business",
-      highlight: "Unlimited transfers on paid plans"
+      data: { monthlyFee: "A$0-149/month", intlTransfers: "Free on paid plans", regulation: "AUSTRAC" },
+      pros: ["Unlimited free transfers on paid plans for high-volume businesses", "30+ currencies with integrated expense management", "Virtual corporate cards with real-time spending controls"],
+      con: "Scale plan at A$149/mo only cost-effective for A$200k+/month international volume.",
+      verdict: "The Swiss Army knife for Australian businesses combining multi-currency operations with modern team expense management."
     }
   ]}
 />
 
-<HighlightCTA
+<ProviderCard
   href="/go/wise-business"
   productName="Wise Business"
   headline="Save 85% on International Transfers"
@@ -230,7 +243,7 @@ schema:
   con="Higher monthly fees on Scale plans (A$149/mo) — only cost-effective for high-volume international businesses (A$200k+/month)."
 />
 
-<QuickVerdictCard
+<ProviderCard
   name="Up Business"
   tagline="Best Neobank for Domestic Operations"
   rating={4.5}

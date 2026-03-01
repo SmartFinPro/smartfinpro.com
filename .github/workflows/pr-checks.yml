@@ -8,7 +8,7 @@ on:
 
 jobs:
   quality-checks:
-    name: Imports + Expert Images
+    name: Imports + Expert Images + MDX Syntax + Prose-First
     runs-on: ubuntu-latest
 
     steps:
@@ -29,3 +29,15 @@ jobs:
 
       - name: Check expert images
         run: npm run check:experts
+
+      - name: Check MDX syntax (no HTML comments)
+        run: npm run check:mdx
+
+      - name: Validate MDX frontmatter fields
+        run: npm run check:frontmatter
+
+      - name: Check EEAT trust blocks
+        run: npm run check:trust
+
+      - name: Check prose-first (components after 100 words)
+        run: npm run check:prose

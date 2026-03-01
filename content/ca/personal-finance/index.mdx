@@ -2,7 +2,7 @@
 title: "Best Personal Loans Canada 2026: Compare Top Lenders & Rates"
 description: "We analysed 20 personal loan lenders for Canadians, comparing APRs, fees, and approval requirements. Find the best personal loan for debt consolidation, home improvements, or major purchases in Canada."
 author: "SmartFinPro Canada Finance Team"
-reviewedBy: "Sophie Tremblay, CFP, CFA"
+reviewedBy: 'Marc Fontaine, CFA, CIM'
 publishDate: "2026-02-03"
 modifiedDate: "2026-02-03"
 category: "personal-finance"
@@ -64,23 +64,34 @@ The difference between choosing the right and wrong lender can cost Canadians th
 
 After rigorous analysis, these lenders offer the best combination of rates, terms, and borrower experience for Canadians:
 
-<QuickPicks
-  picks={[
+<ComparisonTablePremium
+  title="Top Personal Finance Platforms in Canada at a Glance"
+  market="ca"
+  ctaLabel="Get Started"
+  editorChoiceLabel="Editor's Choice"
+  columns={[
+    { key: "apr", label: "APR / Fees" },
+    { key: "bestFor", label: "Best For" },
+    { key: "regulation", label: "Regulation", isBadgeColumn: true }
+  ]}
+  items={[
     {
-      rank: 1,
       name: "Wealthsimple",
       slug: "wealthsimple-review",
       tagline: "Best Overall for Canadians",
       rating: 4.7,
-      price: "C$0/trade",
+      reviewCount: 18000,
       affiliateUrl: "/go/wealthsimple",
-      highlight: "Commission-free investing, TFSA/RRSP",
-      badge: "Editor's Choice"
+      isEditorsChoice: true,
+      data: { apr: "C$0/trade", bestFor: "Investing & TFSA/RRSP", regulation: "CIRO, CIPF" },
+      pros: ["Commission-free trading on 14,000+ stocks and ETFs", "All registered accounts: TFSA, RRSP, RESP, FHSA with CRA tracking", "CIPF protection up to C$1,000,000 per account category"],
+      con: "Limited advanced charting and research tools compared to Questrade or IBKR",
+      verdict: "The best investing platform for the vast majority of Canadians building wealth through registered accounts."
     }
   ]}
 />
 
-<HighlightCTA
+<ProviderCard
   href="/go/borrowell"
   productName="Borrowell"
   headline="See Your Matched Loan Offers in Minutes"
@@ -89,7 +100,7 @@ After rigorous analysis, these lenders offer the best combination of rates, term
   icon="dollarSign"
 />
 
-<QuickVerdictCard
+<ProviderCard
   name="Borrowell"
   tagline="AI-Matched Offers from 50+ Canadian Lenders"
   rating={4.7}
@@ -105,7 +116,7 @@ After rigorous analysis, these lenders offer the best combination of rates, term
   verdict="The best starting point for any Canadian looking for a personal loan. Borrowell's AI matching engine compares offers across dozens of lenders simultaneously, saving you time and often finding rates you'd never discover on your own."
 />
 
-<QuickVerdictCard
+<ProviderCard
   name="Fairstone"
   tagline="Personal Loans for Canadians with Fair Credit"
   rating={4.3}
@@ -121,7 +132,7 @@ After rigorous analysis, these lenders offer the best combination of rates, term
   verdict="If the Big Five banks have turned you down, Fairstone is the most reputable alternative lender in Canada. Their extensive branch network and willingness to work with fair-credit borrowers make them a strong option for building your way back."
 />
 
-<QuickVerdictCard
+<ProviderCard
   name="CIBC Personal Loans"
   tagline="Big Five Bank Rates with Flexible Terms"
   rating={4.5}

@@ -20,7 +20,24 @@ import {
   Users,
   Shield,
 } from 'lucide-react';
-import type { HubPartner } from '@/lib/actions/genesis';
+// Local type definition — mirrors genesis.ts HubPartner without importing server-only module
+interface HubPartner {
+  providerName: string;
+  cpaValue: number;
+  currency: string;
+  rating: number;
+  tagline: string;
+  affiliateUrl: string;
+  reviewSlug: string | null;
+  benefits: string[];
+  slug: string;
+  winnerBadge: string | null;
+  winnerBadgeType: 'editorial' | 'auto' | null;
+  isFeatured: boolean;
+  featuredHeadline: string | null;
+  featuredOffer: string | null;
+  clickCount30d: number;
+}
 
 interface FeaturedPartnerOfferProps {
   partner: HubPartner;
@@ -109,7 +126,7 @@ export function FeaturedPartnerOffer({
                 <div className="flex items-center gap-1.5 mt-2">
                   <Users className="h-3.5 w-3.5 text-amber-400/80" />
                   <span className="text-xs text-amber-400/80 font-medium">
-                    {partner.clickCount30d.toLocaleString()} users chose this in
+                    {partner.clickCount30d.toLocaleString('en-US')} users chose this in
                     the last 30 days
                   </span>
                 </div>
@@ -139,7 +156,7 @@ export function FeaturedPartnerOffer({
                 rel="noopener sponsored"
                 onClick={handleClick}
                 className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-bold text-white shadow-md hover:shadow-lg transition-all"
-                style={{ background: 'var(--sfp-gold)' }}
+                style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}
               >
                 Visit {partner.providerName}
                 <ExternalLink className="h-4 w-4" />

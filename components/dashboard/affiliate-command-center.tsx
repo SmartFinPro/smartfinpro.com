@@ -453,10 +453,14 @@ function HealthSummaryPanel({
   links,
   onRunChecks,
   checking,
+  activeFilter,
+  onFilterChange,
 }: {
   links: LinkWithStats[];
   onRunChecks: () => void;
   checking: boolean;
+  activeFilter: string;
+  onFilterChange: (filter: string) => void;
 }) {
   const active = links.filter((l) => l.active);
   const healthy = active.filter((l) => l.health_status === 'healthy').length;
@@ -493,22 +497,23 @@ function HealthSummaryPanel({
       </div>
 
       <div className="grid grid-cols-4 gap-3">
-        <div className="text-center p-3 rounded-lg bg-emerald-50 border border-emerald-100">
-          <p className="text-2xl font-bold text-emerald-600">{healthy}</p>
-          <p className="text-xs text-emerald-600">Healthy</p>
-        </div>
-        <div className="text-center p-3 rounded-lg bg-amber-50 border border-amber-100">
-          <p className="text-2xl font-bold text-amber-600">{degraded}</p>
-          <p className="text-xs text-amber-600">Slow</p>
-        </div>
-        <div className="text-center p-3 rounded-lg bg-red-50 border border-red-100">
-          <p className="text-2xl font-bold text-red-600">{dead}</p>
-          <p className="text-xs text-red-600">Dead</p>
-        </div>
-        <div className="text-center p-3 rounded-lg bg-slate-50 border border-slate-100">
-          <p className="text-2xl font-bold text-slate-500">{unchecked}</p>
-          <p className="text-xs text-slate-500">Unchecked</p>
-        </div>
+        {([
+          { key: 'healthy', value: healthy, label: 'Healthy', bg: 'bg-emerald-50', border: 'border-emerald-100', ring: 'ring-emerald-400', text: 'text-emerald-600' },
+          { key: 'degraded', value: degraded, label: 'Slow', bg: 'bg-amber-50', border: 'border-amber-100', ring: 'ring-amber-400', text: 'text-amber-600' },
+          { key: 'dead', value: dead, label: 'Dead', bg: 'bg-red-50', border: 'border-red-100', ring: 'ring-red-400', text: 'text-red-600' },
+          { key: 'unchecked', value: unchecked, label: 'Unchecked', bg: 'bg-slate-50', border: 'border-slate-100', ring: 'ring-slate-400', text: 'text-slate-500' },
+        ] as const).map((card) => (
+          <button
+            key={card.key}
+            onClick={() => onFilterChange(activeFilter === card.key ? 'all' : card.key)}
+            className={`text-center p-3 rounded-lg ${card.bg} border ${card.border} cursor-pointer transition-all hover:scale-105 ${
+              activeFilter === card.key ? `ring-2 ${card.ring} shadow-sm` : ''
+            }`}
+          >
+            <p className={`text-2xl font-bold ${card.text}`}>{card.value}</p>
+            <p className={`text-xs ${card.text}`}>{card.label}</p>
+          </button>
+        ))}
       </div>
     </div>
   );
@@ -704,6 +709,8 @@ export function AffiliateCommandCenter({ initialLinks }: AffiliateCommandCenterP
           links={links}
           onRunChecks={handleRunHealthChecks}
           checking={checking}
+          activeFilter={healthFilter}
+          onFilterChange={setHealthFilter}
         />
         <ExpiryAlertsPanel report={expiryReport} />
       </div>

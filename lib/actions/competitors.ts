@@ -798,11 +798,11 @@ function resolveSlug(keyword: string, market: string, category: string): string 
 
   if (match) {
     // Return the category index page
-    const prefix = market === 'us' ? '' : `/${market}`;
+    const prefix = `/${market}`;
     return `${prefix}/${match.category}`;
   }
 
   // Fallback: construct from market + category
-  const prefix = market === 'us' ? '' : `/${market}`;
+  const prefix = `/${market}`;
   return `${prefix}/${category}`;
 }

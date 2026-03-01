@@ -56,7 +56,7 @@ The difference between choosing the right and wrong lender can cost you thousand
   variant="highlight"
 />
 
-<HighlightCTA
+<ProviderCard
   title="Looking for Credit Card Rewards Instead?"
   description="Compare Amex Gold vs Chase Sapphire Preferred vs Chase Sapphire Reserve with our interactive calculator."
   href="/personal-finance/credit-cards-comparison"
@@ -70,23 +70,34 @@ The difference between choosing the right and wrong lender can cost you thousand
 
 After rigorous analysis, these lenders offer the best combination of rates, terms, and borrower experience:
 
-<QuickPicks
-  picks={[
+<ComparisonTablePremium
+  title="Top Personal Loan Lenders 2026"
+  market="us"
+  ctaLabel="Check Rate"
+  editorChoiceLabel="Editor's Choice"
+  columns={[
+    { key: "apr", label: "APR Range" },
+    { key: "bestFor", label: "Best For" },
+    { key: "funding", label: "Funding Speed" }
+  ]}
+  items={[
     {
-      rank: 1,
       name: "SoFi",
       slug: "sofi-personal-loans-review",
       tagline: "Best Overall Personal Loans",
       rating: 4.8,
-      price: "8.99%-25.81% APR",
+      reviewCount: 12847,
       affiliateUrl: "/go/sofi-personal-loans",
-      highlight: "No fees + unemployment protection",
-      badge: "Editor's Choice"
+      isEditorsChoice: true,
+      data: { apr: "8.99%-25.81%", bestFor: "Debt Consolidation", funding: "Same Day" },
+      pros: ["Absolutely zero fees — no origination, prepayment, or late fees", "Unemployment protection pauses payments and helps you find work", "Same-day funding available for qualified borrowers"],
+      con: "Requires minimum 680 credit score — not accessible for fair or poor credit borrowers",
+      verdict: "The best all-around personal loan for borrowers with good credit. The zero-fee structure and unemployment protection provide genuine value that competitors cannot match."
     }
   ]}
 />
 
-<HighlightCTA
+<ProviderCard
   href="/go/sofi-personal-loans"
   productName="SoFi"
   headline="Check Your Rate in 2 Minutes"
@@ -95,7 +106,7 @@ After rigorous analysis, these lenders offer the best combination of rates, term
   icon="dollarSign"
 />
 
-<QuickVerdictCard
+<ProviderCard
   name="SoFi"
   tagline="Zero Fees + Unemployment Protection"
   rating={4.8}
@@ -111,7 +122,7 @@ After rigorous analysis, these lenders offer the best combination of rates, term
   verdict="The best all-around personal loan for borrowers with good credit. The zero-fee structure and unemployment protection provide genuine value that competitors can't match."
 />
 
-<QuickVerdictCard
+<ProviderCard
   name="LightStream"
   tagline="Lowest Rates in the Industry"
   rating={4.7}
@@ -127,7 +138,7 @@ After rigorous analysis, these lenders offer the best combination of rates, term
   verdict="If your credit score is 720+, LightStream offers the absolute lowest cost of borrowing. The Rate Beat guarantee ensures you always get the best deal."
 />
 
-<QuickVerdictCard
+<ProviderCard
   name="Upstart"
   tagline="AI-Powered Approval for All Credit Levels"
   rating={4.4}

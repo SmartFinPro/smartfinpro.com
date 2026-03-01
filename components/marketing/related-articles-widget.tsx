@@ -41,7 +41,7 @@ export async function RelatedArticlesWidget({
 
   if (siblings.length === 0) return null;
 
-  const marketPrefix = market === 'us' ? '' : `/${market}`;
+  const marketPrefix = `/${market}`;
   const categoryName = categoryConfig[category]?.name || category;
 
   // Take top articles (prefer rated, then by publish date)

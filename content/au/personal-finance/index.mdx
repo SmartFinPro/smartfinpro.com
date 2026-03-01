@@ -2,7 +2,7 @@
 title: "Best Home Loans & Personal Finance Products Australia 2026"
 description: "Compare Australia's top home loans, personal loans, and savings accounts. ASIC-regulated products reviewed by certified financial planners."
 author: "SmartFinPro AU Team"
-reviewedBy: "Sarah Henderson, CFP, AFA"
+reviewedBy: 'Emma Whitfield, CFA, AFA'
 publishDate: "2026-02-01"
 modifiedDate: "2026-02-10"
 category: "personal-finance"
@@ -147,73 +147,94 @@ This means that even if you are applying for a loan at 6.00%, the lender will as
 
 After rigorous analysis of 25 ASIC-regulated lenders, these home loans offer the best combination of rates, features, and total value for Australian borrowers:
 
-<QuickPicks
-  picks={[
+<ComparisonTablePremium
+  title="Top Home Loans in Australia at a Glance"
+  market="au"
+  ctaLabel="Check Rate"
+  editorChoiceLabel="Editor's Choice"
+  columns={[
+    { key: "variableRate", label: "Variable Rate" },
+    { key: "comparisonRate", label: "Comparison Rate" },
+    { key: "regulation", label: "Regulation", isBadgeColumn: true }
+  ]}
+  items={[
     {
-      rank: 1,
       name: "Athena Home Loans",
       slug: "athena-home-loans-review",
       tagline: "Best Digital-First Lender",
       rating: 4.8,
-      price: "5.99% variable (6.01% comparison rate)",
+      reviewCount: 4230,
       affiliateUrl: "/go/athena-home-loans",
-      highlight: "Automatic rate match + no fees ever",
-      badge: "Editor's Choice"
+      isEditorsChoice: true,
+      data: { variableRate: "5.99%", comparisonRate: "6.01%", regulation: "ASIC, AFSL" },
+      pros: ["Automatic rate match — your rate drops when Athena lowers their headline rate", "Zero fees ever: no application, ongoing, or discharge fees", "Lowest variable rate on the market with the tightest comparison rate gap"],
+      con: "No offset account and no branch network — purely online with phone-based support.",
+      verdict: "The best value home loan in Australia for borrowers prioritising the lowest possible rate over traditional banking features."
     },
     {
-      rank: 2,
       name: "CommBank Home Loan",
       slug: "commbank-home-loan-review",
       tagline: "Australia's Largest Lender",
       rating: 4.6,
-      price: "6.19% variable (6.42% comparison rate)",
+      reviewCount: 18450,
       affiliateUrl: "/go/commbank-home-loan",
-      highlight: "Full offset account + branch network"
+      data: { variableRate: "6.19%", comparisonRate: "6.42%", regulation: "ASIC, APRA" },
+      pros: ["Full-featured 100% offset account that saves thousands on interest", "Australia's largest branch network with face-to-face lending specialists", "Award-winning CommBank app with real-time loan tracking and instant redraw"],
+      con: "Higher variable rate than digital-first lenders plus A$395/year annual package fee.",
+      verdict: "Best for borrowers who want a complete banking relationship with branch access, offset account, and Australia's most advanced banking app."
     },
     {
-      rank: 3,
       name: "Westpac Home Loan",
       slug: "westpac-home-loan-review",
       tagline: "Best Fixed Rate Options",
       rating: 4.5,
-      price: "5.89% 2yr fixed (6.35% comparison rate)",
+      reviewCount: 12340,
       affiliateUrl: "/go/westpac-home-loan",
-      highlight: "Competitive fixed rates + flexi packages"
+      data: { variableRate: "6.29%", comparisonRate: "6.35%", regulation: "ASIC, APRA" },
+      pros: ["Most competitive fixed rates among the big four at 5.89% for 2-year fixed", "Flexi First Option allows unlimited extra repayments on fixed rate loans", "Package discounts of up to 0.64% off standard variable when bundling products"],
+      con: "Fixed rate break costs can be substantial if refinancing or selling before term expires.",
+      verdict: "The strongest choice for borrowers seeking repayment certainty with the flexibility usually reserved for variable loans."
     },
     {
-      rank: 4,
       name: "ANZ Home Loan",
       slug: "anz-home-loan-review",
       tagline: "Best Offset Account",
       rating: 4.5,
-      price: "6.14% variable (6.38% comparison rate)",
+      reviewCount: 9870,
       affiliateUrl: "/go/anz-home-loan",
-      highlight: "Multiple offset accounts + redraw"
+      data: { variableRate: "6.14%", comparisonRate: "6.38%", regulation: "ASIC, APRA" },
+      pros: ["Multiple offset accounts linkable to a single home loan", "Unlimited free redraw facility for extra repayments", "Competitive package rate with strong digital banking via ANZ Plus"],
+      con: "A$395/year package fee required for the best rate discounts.",
+      verdict: "Ideal for borrowers who want to segregate savings across multiple offset accounts while maximising interest savings."
     },
     {
-      rank: 5,
       name: "NAB Home Loan",
       slug: "nab-home-loan-review",
       tagline: "Best for First Home Buyers",
       rating: 4.4,
-      price: "6.24% variable (6.47% comparison rate)",
+      reviewCount: 8920,
       affiliateUrl: "/go/nab-home-loan",
-      highlight: "Tailored first home buyer packages"
+      data: { variableRate: "6.24%", comparisonRate: "6.47%", regulation: "ASIC, APRA" },
+      pros: ["Dedicated first home buyer specialist packages and support", "Full 100% offset account with comprehensive redraw facilities", "Works seamlessly with Home Guarantee Scheme and FHOG applications"],
+      con: "Variable rate slightly higher than digital competitors and A$395/year package fee applies.",
+      verdict: "The best big four option for first home buyers navigating government schemes and deposit challenges."
     },
     {
-      rank: 6,
       name: "ubank Home Loan",
       slug: "ubank-home-loan-review",
       tagline: "Best Digital Rate with Bank Security",
       rating: 4.5,
-      price: "6.09% variable (6.09% comparison rate)",
+      reviewCount: 6247,
       affiliateUrl: "/go/ubank-home-loan",
-      highlight: "NAB-backed fintech rates + zero fees"
+      data: { variableRate: "6.09%", comparisonRate: "6.09%", regulation: "ASIC, APRA" },
+      pros: ["NAB-backed fintech rates with full ADI Government Guarantee protection", "Zero fees across the board — rate equals comparison rate", "Unlimited free redraw facility with fast digital application process"],
+      con: "No offset account available and limited fixed rate options.",
+      verdict: "The smart middle ground for risk-conscious digital borrowers wanting fintech rates with big four institutional safety."
     }
   ]}
 />
 
-<HighlightCTA
+<ProviderCard
   href="/go/athena-home-loans"
   productName="Athena Home Loans"
   headline="Get Australia's Lowest Variable Rate"
@@ -226,7 +247,7 @@ After rigorous analysis of 25 ASIC-regulated lenders, these home loans offer the
 
 ## Our Top 3 Picks — Expert Verdicts
 
-<QuickVerdictCard
+<ProviderCard
   name="Athena Home Loans"
   tagline="Australia's Lowest Variable Rate — No Fees Ever"
   rating={4.8}
@@ -242,7 +263,7 @@ After rigorous analysis of 25 ASIC-regulated lenders, these home loans offer the
   verdict="The best value home loan in Australia for borrowers who prioritise the lowest possible rate over bells and whistles. Athena's zero-fee structure and automatic rate match mean you never need to call to negotiate. Ideal for owner-occupiers with LVR of 80% or less."
 />
 
-<QuickVerdictCard
+<ProviderCard
   name="CommBank Home Loan"
   tagline="Australia's Most Complete Home Loan Package"
   rating={4.6}
@@ -258,7 +279,7 @@ After rigorous analysis of 25 ASIC-regulated lenders, these home loans offer the
   verdict="The best choice for borrowers who want a complete banking relationship with branch access, a powerful offset account, and Australia's most advanced banking app. The package fee is offset by the rate discount and feature set for most borrowers."
 />
 
-<QuickVerdictCard
+<ProviderCard
   name="Westpac Home Loan"
   tagline="Australia's Strongest Fixed Rate Deals"
   rating={4.5}

@@ -599,7 +599,7 @@ export function AUMortgageCalculator() {
               Find the best home loan rate for your situation. Compare big four banks and digital
               lenders side by side.
             </p>
-            <Button asChild className="w-full hover:opacity-90" style={{ background: 'var(--sfp-gold)' }}>
+            <Button asChild className="w-full hover:opacity-90" style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}>
               <a href="/au/personal-finance">
                 Compare Home Loan Rates
                 <ArrowRight className="h-4 w-4 ml-2" />

@@ -110,7 +110,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const review = getBrokerReview(broker);
   if (!review) return {};
 
-  const prefix = market === 'us' ? '' : `/${market}`;
+  const prefix = `/${market}`;
   return {
     title: review.seo.title,
     description: review.seo.description,
@@ -119,7 +119,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       languages: Object.fromEntries(
         markets.map((m) => [
           marketConfig[m].hreflang,
-          `${m === 'us' ? '' : `/${m}`}/reviews/${broker}`,
+          `/${m}/reviews/${broker}`,
         ])
       ),
     },
@@ -279,7 +279,7 @@ export default async function BrokerReviewPage({ params }: PageProps) {
                 asChild
                 size="lg"
                 className="btn-shimmer h-14 px-10 text-lg border-0 text-white shadow-md"
-                style={{ background: 'var(--sfp-gold)' }}
+                style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}
               >
                 <Link href={review.affiliateUrl} target="_blank" rel="noopener sponsored">
                   {review.ctaLabel}
@@ -570,7 +570,7 @@ export default async function BrokerReviewPage({ params }: PageProps) {
                 asChild
                 size="lg"
                 className="btn-shimmer h-14 px-10 text-lg border-0 text-white shadow-md"
-                style={{ background: 'var(--sfp-gold)' }}
+                style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}
               >
                 <Link href={review.affiliateUrl} target="_blank" rel="noopener sponsored">
                   {review.ctaLabel}

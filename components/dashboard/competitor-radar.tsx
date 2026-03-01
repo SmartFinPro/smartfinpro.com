@@ -328,7 +328,7 @@ export function CompetitorRadar({ initialData }: CompetitorRadarProps) {
 
   const handleBoost = useCallback(async (kw: SerpSnapshot) => {
     setBoostingKeyword(kw.keyword);
-    const prefix = kw.market === 'us' ? '' : `/${kw.market}`;
+    const prefix = `/${kw.market}`;
     const slug = `${prefix}/${kw.category}`;
     try {
       const result = await boostAndDeploy(slug, `Competitor opportunity: ${kw.keyword}`);

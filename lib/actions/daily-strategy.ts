@@ -2,7 +2,6 @@
 
 import 'server-only';
 
-import Anthropic from '@anthropic-ai/sdk';
 import { createServiceClient } from '@/lib/supabase/server';
 import { getRevenueForecast } from '@/lib/actions/revenue-forecast';
 import { getRecentRuns } from '@/lib/actions/genesis';
@@ -10,6 +9,7 @@ import { getRankingData } from '@/lib/actions/ranking';
 import { getAlertSettings } from '@/lib/actions/spike-monitor';
 import { getAllContentSlugs } from '@/lib/mdx/index';
 import type { Market } from '@/lib/i18n/config';
+import { createClaudeMessage } from '@/lib/claude/client';
 
 // ════════════════════════════════════════════════════════════════
 // AI-STRATEGIST — Daily Digest Generator
@@ -290,9 +290,7 @@ ${thresholds.join('\n') || '(Not configured)'}
     };
 
     if (anthropicKey) {
-      const anthropic = new Anthropic({ apiKey: anthropicKey });
-
-      const response = await anthropic.messages.create({
+      const response = await createClaudeMessage({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 1200,
         system: `You are the AI Strategy Officer for SmartFinPro, a finance affiliate SEO platform.
@@ -333,7 +331,7 @@ JSON format:
   }
 }`,
         messages: [{ role: 'user', content: dataPrompt }],
-      });
+      }, { apiKey: anthropicKey, operation: 'daily_strategy_digest' });
 
       const aiText = response.content[0].type === 'text' ? response.content[0].text : '';
 
@@ -544,7 +542,7 @@ export async function analyzeAndPlanNextDay(): Promise<{
       // Slug format: /market/category/slug or /category/slug (US)
       const parts = (click.slug || '').split('/').filter(Boolean);
       let category: string;
-      let market: Market = (click.market as Market) || 'us';
+      const market: Market = (click.market as Market) || 'us';
 
       if (parts.length >= 2) {
         // Could be /uk/trading/slug or /trading/slug

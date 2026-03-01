@@ -16,6 +16,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { useCTATracking } from '@/lib/hooks/use-component-tracking';
 import {
   ArrowRight,
   CheckCircle,
@@ -45,6 +46,8 @@ export function FrictionlessCTA({
   const [count, setCount] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const { trackImpression, trackClick } = useCTATracking('frictionless');
+  const impressionFired = useRef(false);
 
   // Animated counter for social proof
   useEffect(() => {
@@ -94,6 +97,14 @@ export function FrictionlessCTA({
     observer.observe(el);
     return () => observer.disconnect();
   }, []);
+
+  // Track CTA impression when visible
+  useEffect(() => {
+    if (isVisible && !impressionFired.current) {
+      impressionFired.current = true;
+      trackImpression();
+    }
+  }, [isVisible, trackImpression]);
 
   // Format the social proof string with animated count
   const formattedSocialProof = socialProof
@@ -155,8 +166,9 @@ export function FrictionlessCTA({
               href={affiliateUrl}
               target="_blank"
               rel="noopener sponsored"
+              onClick={() => trackClick(affiliateUrl)}
               className="inline-flex items-center gap-2 px-8 py-4 rounded-xl text-lg font-bold text-white shadow-md transition-all hover:shadow-lg hover:scale-105"
-              style={{ background: 'var(--sfp-gold)' }}
+              style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}
             >
               <Sparkles className="h-5 w-5" />
               Try {productName} Free

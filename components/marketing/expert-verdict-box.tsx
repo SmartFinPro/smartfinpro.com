@@ -102,7 +102,7 @@ export function ExpertVerdictBox({
       {/* CTA */}
       {affiliateUrl && (
         <div className="px-6 pb-6">
-          <Button asChild size="lg" className="w-full sm:w-auto gap-2 font-semibold text-white" style={{ background: 'var(--sfp-gold)' }}>
+          <Button asChild size="lg" className="w-full sm:w-auto gap-2 font-semibold text-white" style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}>
             <Link href={affiliateUrl} target="_blank" rel="noopener sponsored">
               {ctaLabel || `Visit ${name}`}
               <ExternalLink className="h-4 w-4" />

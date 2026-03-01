@@ -527,7 +527,7 @@ export function WealthsimpleCalculator() {
               Open a Wealthsimple account in minutes. No minimum balance required. Get up to
               C$25,000 managed free for the first year.
             </p>
-            <Button asChild className="w-full text-white" style={{ background: 'var(--sfp-gold)' }}>
+            <Button asChild className="w-full text-white" style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}>
               <a href="/go/wealthsimple" target="_blank" rel="noopener noreferrer">
                 Start Investing with Wealthsimple
                 <ArrowRight className="h-4 w-4 ml-2" />

@@ -147,7 +147,7 @@ export function RevenueForecast({ initialData }: RevenueForecastProps) {
               <span className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Action Clicks</span>
             </div>
             <div className="flex items-end gap-2">
-              <span className="text-xl font-bold text-slate-800">{data.totalEmeraldClicks.toLocaleString()}</span>
+              <span className="text-xl font-bold text-slate-800">{data.totalEmeraldClicks.toLocaleString('en-US')}</span>
               <span className="text-[10px] text-slate-500 mb-0.5">
                 {data.totalMatchedClicks} matched
               </span>

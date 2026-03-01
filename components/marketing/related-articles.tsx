@@ -13,7 +13,7 @@ interface RelatedArticlesProps {
 export function RelatedArticles({ articles, market, category }: RelatedArticlesProps) {
   if (articles.length === 0) return null;
 
-  const marketPrefix = market === 'us' ? '' : `/${market}`;
+  const marketPrefix = `/${market}`;
   const categoryName = categoryConfig[category]?.name || category;
 
   return (

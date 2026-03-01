@@ -543,7 +543,7 @@ export async function createShadowDraft(
     .replace(/-+/g, '-')
     .slice(0, 60);
 
-  const prefix = market === 'us' ? '' : `/${market}`;
+  const prefix = `/${market}`;
   const slug = `${prefix}/${category}/${slugBase}`;
 
   // Generate title
@@ -678,7 +678,7 @@ export async function bridgeTheGap(
   market: Market,
   category: string,
 ): Promise<{ success: boolean; error?: string }> {
-  const prefix = market === 'us' ? '' : `/${market}`;
+  const prefix = `/${market}`;
   const slug = `${prefix}/${category}`;
 
   const result = await boostAndDeploy(slug, `Gap Analysis: bridge gap for "${keyword}"`);

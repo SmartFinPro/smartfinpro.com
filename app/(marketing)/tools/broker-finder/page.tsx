@@ -6,7 +6,7 @@ import { ToolRelatedReviews } from '@/components/marketing/tool-related-reviews'
 
 export const metadata: Metadata = {
   title: 'Broker Finder Quiz - Find Your Perfect Trading Platform | SmartFinPro',
-  description: 'Answer 5 quick questions and get personalized broker recommendations with match scores. Compare eToro, Capital.com, IBKR, and more.',
+  description: 'Answer 4 quick questions and get personalized broker recommendations with match scores. Compare eToro, Capital.com, IBKR, and more.',
   openGraph: {
     title: 'Broker Finder Quiz - Find Your Perfect Trading Platform',
     description: 'Personalized broker recommendations in under a minute. Free quiz, no sign-up required.',
@@ -34,13 +34,13 @@ export default function BrokerFinderPage() {
           <div className="max-w-3xl mx-auto text-center mb-12">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium mb-6" style={{ background: 'var(--sfp-sky)', color: 'var(--sfp-navy)' }}>
               <Target className="h-4 w-4" />
-              5 Questions, 60 Seconds
+              4 Questions, 45 Seconds
             </div>
             <h1 className="text-3xl md:text-4xl font-bold mb-4" style={{ color: 'var(--sfp-ink)' }}>
               Find Your Perfect Broker
             </h1>
             <p className="text-lg" style={{ color: 'var(--sfp-slate)' }}>
-              Answer 5 quick questions about your trading style and goals.
+              Answer 4 quick questions about your trading style and goals.
               We&apos;ll match you with the best platform from our tested selection.
             </p>
           </div>
@@ -73,7 +73,7 @@ export default function BrokerFinderPage() {
                   How Our Matching Works
                 </h2>
                 <p style={{ color: 'var(--sfp-slate)' }}>
-                  Our algorithm scores each broker across 5 dimensions based on your answers,
+                  Our algorithm scores each broker across 4 dimensions based on your answers,
                   then ranks them by overall fit. All brokers are independently reviewed by our team.
                 </p>
               </div>
@@ -104,7 +104,7 @@ export default function BrokerFinderPage() {
                 </div>
                 <h3 className="font-semibold mb-2" style={{ color: 'var(--sfp-ink)' }}>Personalized Results</h3>
                 <p className="text-sm" style={{ color: 'var(--sfp-slate)' }}>
-                  Results are tailored to your experience, goals, budget, and preferred instruments.
+                  Results are tailored to your experience, goals, budget, and risk tolerance.
                 </p>
               </div>
             </div>

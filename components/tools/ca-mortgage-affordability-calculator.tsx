@@ -781,7 +781,7 @@ export function CAMortgageAffordabilityCalculator() {
               Find the best mortgage rate for your situation. Compare rates from Canada&apos;s top
               lenders and brokers side by side.
             </p>
-            <Button asChild className="w-full hover:opacity-90" style={{ background: 'var(--sfp-gold)' }}>
+            <Button asChild className="w-full hover:opacity-90" style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}>
               <a href="/ca/personal-finance">
                 Compare Mortgage Rates
                 <ArrowRight className="h-4 w-4 ml-2" />

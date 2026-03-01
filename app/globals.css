@@ -445,6 +445,13 @@ body {
 }
 
 /* ============================================================
+   ENTERPRISE TABLE — Uniform alternating row backgrounds
+   ============================================================ */
+.enterprise-table tbody tr:nth-child(even) {
+  background: rgba(232, 240, 251, 0.55);
+}
+
+/* ============================================================
    SLIDE TRANSITIONS
    ============================================================ */
 @keyframes slideIn {
@@ -674,19 +681,38 @@ a[href^="/go/"]:hover {
   text-decoration-color: var(--sfp-gold-dark);
 }
 
-a[href^="/go/"]::after {
+a[href^="/go/"]:not(.no-underline)::after {
   content: ' →';
   margin-left: 0.25rem;
 }
 
-/* Internal Links (Navy) */
-a:not([href^="/go/"]):not([href^="http"]) {
+/* Code blocks — prevent horizontal overflow */
+.prose pre,
+article pre,
+pre {
+  overflow-x: auto;
+  max-width: 100%;
+  white-space: pre;
+  word-wrap: normal;
+}
+
+.prose code,
+article code {
+  word-break: break-word;
+}
+
+/* Internal Links (Navy) — ONLY within content areas (prose, articles, sidebar text) */
+.prose a:not([href^="/go/"]):not([href^="http"]):not([data-slot="button"]):not(.no-underline),
+article a:not([href^="/go/"]):not([href^="http"]):not([data-slot="button"]):not(.no-underline),
+.silo-links a:not([href^="/go/"]):not([href^="http"]) {
   color: var(--sfp-navy);
   text-decoration: none;
   transition: color 0.2s ease;
 }
 
-a:not([href^="/go/"]):not([href^="http"]):hover {
+.prose a:not([href^="/go/"]):not([href^="http"]):not([data-slot="button"]):not(.no-underline):hover,
+article a:not([href^="/go/"]):not([href^="http"]):not([data-slot="button"]):not(.no-underline):hover,
+.silo-links a:not([href^="/go/"]):not([href^="http"]):hover {
   color: var(--sfp-navy-dark);
   text-decoration: underline;
 }

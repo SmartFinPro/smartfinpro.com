@@ -1,6 +1,7 @@
 /**
  * Breadcrumb Engine — Auto-generates SEO breadcrumbs from MDX paths
  * ─────────────────────────────────────────────────────────────────
+ * All markets use /{market} prefix (symmetric routing).
  * Usage:
  *   const items = buildBreadcrumbs('uk', 'trading', 'eToro Review 2026', 'etoro-review');
  *   → [{ label: 'Home', href: '/uk' }, { label: 'United Kingdom', href: '/uk' },
@@ -21,7 +22,7 @@ export interface BreadcrumbItem {
 
 /**
  * Build breadcrumb items from market/category/slug.
- * US market uses clean URLs (no /us prefix).
+ * All markets use /{market} prefix (symmetric routing).
  *
  * @param market   - Market code (us, uk, ca, au)
  * @param category - Category slug
@@ -34,20 +35,18 @@ export function buildBreadcrumbs(
   title?: string,
   slug?: string,
 ): BreadcrumbItem[] {
-  const prefix = market === 'us' ? '' : `/${market}`;
+  const prefix = `/${market}`;
   const categoryName = categoryConfig[category]?.name || category;
 
   const items: BreadcrumbItem[] = [
-    { label: 'Home', href: prefix || '/' },
+    { label: 'Home', href: prefix },
   ];
 
-  // For non-US markets, add the market level
-  if (market !== 'us') {
-    items.push({
-      label: marketConfig[market].name,
-      href: `/${market}`,
-    });
-  }
+  // Add the market level breadcrumb
+  items.push({
+    label: marketConfig[market].name,
+    href: `/${market}`,
+  });
 
   // Category level — always links to the category page
   if (title) {

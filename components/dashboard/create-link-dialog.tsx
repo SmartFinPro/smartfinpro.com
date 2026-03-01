@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -21,12 +22,15 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
+import { createAffiliateLink } from '@/lib/actions/affiliate-links';
+import type { Category, Market } from '@/types';
 
 interface CreateLinkDialogProps {
   children: React.ReactNode;
 }
 
 export function CreateLinkDialog({ children }: CreateLinkDialogProps) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -44,21 +48,46 @@ export function CreateLinkDialog({ children }: CreateLinkDialogProps) {
     e.preventDefault();
     setIsLoading(true);
 
-    // TODO: Replace with actual API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    try {
+      const commissionValue = Number(formData.commission_value);
+      if (Number.isNaN(commissionValue) || commissionValue < 0) {
+        toast.error('Commission value must be a valid positive number');
+        return;
+      }
 
-    toast.success('Affiliate link created successfully');
-    setOpen(false);
-    setFormData({
-      partner_name: '',
-      slug: '',
-      destination_url: '',
-      category: '',
-      market: '',
-      commission_type: '',
-      commission_value: '',
-    });
-    setIsLoading(false);
+      const result = await createAffiliateLink({
+        partner_name: formData.partner_name.trim(),
+        slug: formData.slug.trim().toLowerCase(),
+        destination_url: formData.destination_url.trim(),
+        category: formData.category as Category,
+        market: formData.market as Market,
+        commission_type: formData.commission_type as 'cpa' | 'recurring' | 'hybrid',
+        commission_value: commissionValue,
+        active: true,
+      });
+
+      if (result.error) {
+        toast.error(result.error);
+        return;
+      }
+
+      toast.success('Affiliate link created successfully');
+      setOpen(false);
+      setFormData({
+        partner_name: '',
+        slug: '',
+        destination_url: '',
+        category: '',
+        market: '',
+        commission_type: '',
+        commission_value: '',
+      });
+      router.refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to create affiliate link');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const generateSlug = (name: string) => {
@@ -151,6 +180,16 @@ export function CreateLinkDialog({ children }: CreateLinkDialogProps) {
                     <SelectItem value="business-banking">
                       Business Banking
                     </SelectItem>
+                    <SelectItem value="credit-repair">Credit Repair</SelectItem>
+                    <SelectItem value="debt-relief">Debt Relief</SelectItem>
+                    <SelectItem value="credit-score">Credit Score</SelectItem>
+                    <SelectItem value="remortgaging">Remortgaging</SelectItem>
+                    <SelectItem value="cost-of-living">Cost of Living</SelectItem>
+                    <SelectItem value="savings">Savings</SelectItem>
+                    <SelectItem value="superannuation">Superannuation</SelectItem>
+                    <SelectItem value="gold-investing">Gold Investing</SelectItem>
+                    <SelectItem value="tax-efficient-investing">Tax-Efficient Investing</SelectItem>
+                    <SelectItem value="housing">Housing</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

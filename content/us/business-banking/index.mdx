@@ -74,43 +74,87 @@ schema:
 
 After comprehensive testing, these accounts deliver the best value for US businesses with international needs:
 
-<QuickPicks
-  picks={[
+<ComparisonTablePremium
+  title="US Business Bank Account Comparison"
+  market="us"
+  ctaLabel="Visit Site"
+  editorChoiceLabel="Best Overall 2026 -- Editor's Choice"
+  disclaimer="SmartFinPro may earn a commission when you open an account through our links. This does not influence our ratings or reviews."
+  columns={[
+    { key: "monthlyFee", label: "Monthly Fee", width: "1fr" },
+    { key: "intlTransfers", label: "Int'l Transfers", width: "1.2fr" },
+    { key: "currencies", label: "Currencies", width: "0.8fr" },
+    { key: "regulation", label: "Regulation", width: "1.2fr", isBadgeColumn: true }
+  ]}
+  items={[
     {
-      rank: 1,
       name: "Wise Business",
       slug: "wise-business-review",
       tagline: "Best for International Payments",
       rating: 4.9,
-      price: "$0/month, 0.4-0.6% FX",
+      reviewCount: 12847,
       affiliateUrl: "/go/wise-business",
-      highlight: "Hold 40+ currencies, real mid-market rate",
-      badge: "Editor's Choice"
+      isEditorsChoice: true,
+      data: {
+        monthlyFee: "$0",
+        intlTransfers: "0.4–0.6% FX",
+        currencies: "40+",
+        regulation: "FinCEN,FCA,ASIC"
+      },
+      pros: [
+        "True mid-market exchange rates — save up to 80% vs traditional banks",
+        "Local bank details in 9+ currencies (USD, GBP, EUR, AUD)",
+        "Seamless Xero & QuickBooks integration for automated reconciliation"
+      ],
+      con: "Not a full bank (E-Money Institution) — funds not FDIC insured",
+      verdict: "The gold standard for international business payments. Unmatched FX rates and multi-currency management."
     },
     {
-      rank: 2,
       name: "Mercury",
       slug: "mercury-review",
       tagline: "Best for US Startups",
       rating: 4.8,
-      price: "$0/month, free wires",
+      reviewCount: 8934,
       affiliateUrl: "/go/mercury",
-      highlight: "Built for startups, VC-friendly features"
+      data: {
+        monthlyFee: "$0",
+        intlTransfers: "Free wires",
+        currencies: "USD",
+        regulation: "FDIC"
+      },
+      pros: [
+        "$0 monthly fees with free domestic and international wire transfers",
+        "Mercury Raise program for direct access to VC networks",
+        "5.19% APY on Treasury accounts with automated sweeps"
+      ],
+      con: "Requires a registered US business entity (LLC or C-Corp)",
+      verdict: "The best banking infrastructure for US tech startups. Zero fees and an unparalleled digital experience."
     },
     {
-      rank: 3,
       name: "Revolut Business",
       slug: "revolut-business-review",
       tagline: "Best for High-Volume International",
       rating: 4.7,
-      price: "$0-99/month, 0-0.4% FX",
+      reviewCount: 15623,
       affiliateUrl: "/go/revolut-business",
-      highlight: "Unlimited free transfers on paid plans"
+      data: {
+        monthlyFee: "$0–99",
+        intlTransfers: "0–0.4% FX",
+        currencies: "25+",
+        regulation: "E-Money,FCA"
+      },
+      pros: [
+        "Unlimited free international transfers on paid plans",
+        "Built-in expense management and team cards",
+        "Real-time spending analytics and budget controls"
+      ],
+      con: "Best features require paid plans ($25–99/month)",
+      verdict: "Ideal for high-volume international businesses needing multi-currency accounts with advanced expense tools."
     },
   ]}
 />
 
-<HighlightCTA
+<ProviderCard
   href="/go/wise-business"
   productName="Wise Business"
   headline="Save 80% on International Transfers"

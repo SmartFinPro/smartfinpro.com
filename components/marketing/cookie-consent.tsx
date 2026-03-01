@@ -101,7 +101,7 @@ export function CookieConsentBanner() {
               <button
                 onClick={() => handleConsent('all')}
                 className="cursor-pointer rounded-lg px-4 py-2 text-sm font-medium text-white transition-all hover:opacity-90"
-                style={{ background: 'var(--sfp-gold)' }}
+                style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}
               >
                 Accept All
               </button>

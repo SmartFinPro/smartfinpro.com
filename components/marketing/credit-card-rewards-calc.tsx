@@ -290,11 +290,11 @@ function CardResult({ card, spending, rank, isWinner }: CardResultProps) {
         <div className="space-y-2 mb-4">
           <div className="flex justify-between text-sm">
             <span style={{ color: 'var(--sfp-slate)' }}>Points earned</span>
-            <span className="font-medium" style={{ color: 'var(--sfp-ink)' }}>{points.toLocaleString()} pts</span>
+            <span className="font-medium" style={{ color: 'var(--sfp-ink)' }}>{points.toLocaleString('en-US')} pts</span>
           </div>
           <div className="flex justify-between text-sm">
             <span style={{ color: 'var(--sfp-slate)' }}>Points value ({card.pointValue}cpp)</span>
-            <span className="font-medium" style={{ color: 'var(--sfp-ink)' }}>${Math.round(pointsValue).toLocaleString()}</span>
+            <span className="font-medium" style={{ color: 'var(--sfp-ink)' }}>${Math.round(pointsValue).toLocaleString('en-US')}</span>
           </div>
           {card.credits.map((credit) => (
             <div key={credit.name} className="flex justify-between text-sm">
@@ -445,7 +445,7 @@ export function CreditCardRewardsCalc() {
               <CreditCard className="h-5 w-5" style={{ color: 'var(--sfp-navy)' }} />
               <div>
                 <p className="text-xs" style={{ color: 'var(--sfp-slate)' }}>Total Monthly</p>
-                <p className="text-lg font-bold" style={{ color: 'var(--sfp-ink)' }}>${totalMonthly.toLocaleString()}</p>
+                <p className="text-lg font-bold" style={{ color: 'var(--sfp-ink)' }}>${totalMonthly.toLocaleString('en-US')}</p>
               </div>
             </div>
           </div>

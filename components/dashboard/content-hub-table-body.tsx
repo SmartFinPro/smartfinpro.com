@@ -1,0 +1,209 @@
+// components/dashboard/content-hub-table-body.tsx — Client table body for Content Hub
+'use client';
+
+import { ExternalLink, RefreshCw, CheckCircle2, XCircle, Clock } from 'lucide-react';
+import { CtaPartnerSelect } from './cta-partner-select';
+import type { ContentHubRow, HealthStatus } from '@/lib/actions/content-hub';
+import type { PartnerOption } from './cta-partner-select';
+import type { PartnerAssignmentConfig } from '@/lib/types/page-cta';
+
+// ── Helper Components (duplicated from page to keep in client boundary) ──
+
+function HealthDot({ status }: { status: HealthStatus }) {
+  const colors: Record<HealthStatus, string> = {
+    green: 'bg-emerald-500',
+    yellow: 'bg-amber-400',
+    red: 'bg-red-500',
+  };
+  return <span className={`w-2.5 h-2.5 rounded-full inline-block ${colors[status]}`} />;
+}
+
+function MarketBadge({ market }: { market: string }) {
+  const styles: Record<string, string> = {
+    US: 'bg-blue-50 text-blue-700 border-blue-200',
+    UK: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    CA: 'bg-red-50 text-red-700 border-red-200',
+    AU: 'bg-amber-50 text-amber-700 border-amber-200',
+    GLOBAL: 'bg-violet-50 text-violet-700 border-violet-200',
+  };
+  return (
+    <span className={`inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-md border ${styles[market] || 'bg-slate-50 text-slate-600 border-slate-200'}`}>
+      {market}
+    </span>
+  );
+}
+
+function CategoryBadge({ category }: { category: string }) {
+  return (
+    <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-md bg-slate-100 text-slate-600">
+      {category}
+    </span>
+  );
+}
+
+function SeoDetail({ seoHealth }: { seoHealth: ContentHubRow['seoHealth'] }) {
+  return (
+    <div className="flex flex-col gap-1">
+      <div className="flex items-center gap-2">
+        <HealthDot status={seoHealth.titleStatus} />
+        <span className="text-xs text-slate-500">
+          Title: {seoHealth.titleLength > 0 ? `${seoHealth.titleLength} chars` : 'missing'}
+        </span>
+      </div>
+      <div className="flex items-center gap-2">
+        <HealthDot status={seoHealth.descStatus} />
+        <span className="text-xs text-slate-500">
+          Desc: {seoHealth.descLength > 0 ? `${seoHealth.descLength} chars` : 'missing'}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function HttpStatusCell({ row }: { row: ContentHubRow }) {
+  if (row.httpStatus === null) {
+    return (
+      <span className="inline-flex items-center gap-1 text-xs text-slate-400">
+        <Clock className="h-3 w-3" />
+        Not checked
+      </span>
+    );
+  }
+  const icon = row.httpHealth === 'green'
+    ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+    : <XCircle className="h-3.5 w-3.5 text-red-500" />;
+  return (
+    <span className="inline-flex items-center gap-1 text-xs font-mono">
+      {icon}
+      {row.httpStatus}
+    </span>
+  );
+}
+
+// ── Main Table Body ──────────────────────────────────────────────
+
+interface ContentHubTableBodyProps {
+  rows: ContentHubRow[];
+  siteUrl: string;
+  partnerAssignments: Record<string, PartnerAssignmentConfig[]>;
+  partnersByMarket: Record<string, PartnerOption[]>;
+}
+
+export function ContentHubTableBody({
+  rows,
+  siteUrl,
+  partnerAssignments,
+  partnersByMarket,
+}: ContentHubTableBodyProps) {
+  return (
+    <tbody>
+      {rows.map((row) => {
+        const assignedPartners = partnerAssignments[row.url] || [];
+        const available = partnersByMarket[row.market] || [];
+
+        return (
+          <tr
+            key={row.url}
+            className="border-b border-slate-100 hover:bg-slate-50/50 transition-colors"
+          >
+            {/* URL */}
+            <td className="px-4 py-3 max-w-[280px]">
+              <a
+                href={`${siteUrl}${row.url}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-violet-600 hover:text-violet-800 font-medium truncate block"
+                title={row.url}
+              >
+                {row.url}
+                <ExternalLink className="inline-block ml-1 h-3 w-3 opacity-50" />
+              </a>
+              {row.type === 'mdx' && (
+                <span className="text-[11px] text-slate-400 truncate block">
+                  {row.filePath}
+                </span>
+              )}
+            </td>
+
+            {/* Market */}
+            <td className="px-3 py-3">
+              <MarketBadge market={row.market} />
+            </td>
+
+            {/* Category */}
+            <td className="px-3 py-3">
+              <CategoryBadge category={row.category} />
+            </td>
+
+            {/* SEO Title */}
+            <td className="px-3 py-3 max-w-[220px]">
+              <span className="text-xs text-slate-700 line-clamp-2" title={row.seoTitle}>
+                {row.seoTitle || <span className="text-red-400 italic">missing</span>}
+              </span>
+            </td>
+
+            {/* CTA Partner (replaces Focus KW) */}
+            <td className="px-3 py-3 min-w-[160px]">
+              <CtaPartnerSelect
+                pageUrl={row.url}
+                assignedPartners={assignedPartners}
+                availablePartners={available}
+              />
+            </td>
+
+            {/* Word Count */}
+            <td className="px-3 py-3 text-right">
+              <span className="text-xs text-slate-600 tabular-nums font-mono">
+                {row.wordCount > 0 ? row.wordCount.toLocaleString('en-US') : '—'}
+              </span>
+            </td>
+
+            {/* Size */}
+            <td className="px-3 py-3 text-right">
+              <span className="text-xs text-slate-500 tabular-nums font-mono">
+                {row.sizeKB > 0 ? `${row.sizeKB} KB` : '—'}
+              </span>
+            </td>
+
+            {/* HTTP Status */}
+            <td className="px-3 py-3 text-center">
+              <HttpStatusCell row={row} />
+            </td>
+
+            {/* SEO Status */}
+            <td className="px-3 py-3">
+              <SeoDetail seoHealth={row.seoHealth} />
+            </td>
+
+            {/* Index Status */}
+            <td className="px-3 py-3">
+              <span className="inline-flex items-center gap-1 text-xs text-slate-400">
+                <Clock className="h-3 w-3" />
+                {row.indexStatus}
+              </span>
+            </td>
+
+            {/* Action */}
+            <td className="px-3 py-3">
+              <button
+                disabled
+                className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-md bg-slate-100 text-slate-400 cursor-not-allowed"
+                title="Google Indexing API — coming soon"
+              >
+                <RefreshCw className="h-3 w-3" />
+                Re-Index
+              </button>
+            </td>
+          </tr>
+        );
+      })}
+      {rows.length === 0 && (
+        <tr>
+          <td colSpan={11} className="px-4 py-12 text-center text-sm text-slate-400">
+            No pages match this filter.
+          </td>
+        </tr>
+      )}
+    </tbody>
+  );
+}

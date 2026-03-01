@@ -28,7 +28,7 @@ const iconMap: Record<string, LucideIcon> = {
 
 export function OverviewSidebar({ market, activeCategory }: OverviewSidebarProps) {
   const categories = marketCategories[market] || marketCategories.us;
-  const prefix = market === 'us' ? '' : `/${market}`;
+  const prefix = `/${market}`;
 
   return (
     <>

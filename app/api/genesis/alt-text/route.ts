@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import Anthropic from '@anthropic-ai/sdk';
 import sharp from 'sharp';
+import { createClaudeMessage } from '@/lib/claude/client';
 
 export const runtime = 'nodejs';
 export const maxDuration = 30;
@@ -81,9 +81,7 @@ export async function POST(req: NextRequest) {
     else if (file.type === 'image/jpeg' || file.type === 'image/jpg') mediaType = 'image/jpeg';
     else if (file.type === 'image/gif') mediaType = 'image/gif';
 
-    const client = new Anthropic({ apiKey });
-
-    const response = await client.messages.create({
+    const response = await createClaudeMessage({
       model: 'claude-sonnet-4-20250514',
       max_tokens: 150,
       messages: [
@@ -101,7 +99,7 @@ export async function POST(req: NextRequest) {
           ],
         },
       ],
-    });
+    }, { apiKey, operation: 'genesis_alt_text' });
 
     const textBlock = response.content.find((b) => b.type === 'text');
     const altText = textBlock?.text?.trim() || 'Financial product comparison';

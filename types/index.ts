@@ -131,6 +131,8 @@ export interface ReviewData {
   testimonials: Testimonial[];
   competitors: Product[];
   content: string;
+  /** When true, this is a guide/article — no rating stars, no CTA, no pros/cons */
+  isGuide?: boolean;
 }
 
 export interface FAQ {

@@ -152,7 +152,7 @@ export function SimulationButton() {
                     <BarChart3 className="h-3 w-3" /> CTA Clicks
                   </span>
                   <span className="font-semibold text-slate-700 tabular-nums">
-                    {status.clickCount.toLocaleString()}
+                    {status.clickCount.toLocaleString('en-US')}
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-[11px]">

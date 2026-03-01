@@ -145,7 +145,7 @@ export function GenesisEditModal({
       const fullMdx = rebuildMdx(sections);
       const result = await updateGenesisContent(runId, fullMdx);
       if (result.success) {
-        toast.success(`Saved — ${result.wordCount?.toLocaleString()} words`);
+        toast.success(`Saved — ${result.wordCount?.toLocaleString('en-US')} words`);
         onSaved();
       } else {
         toast.error(result.error || 'Failed to save');
@@ -209,7 +209,7 @@ export function GenesisEditModal({
 
   // Image path helper
   const getImageSrc = (filename: string) => {
-    const prefix = market === 'us' ? '' : market + '/';
+    const prefix = market + '/';
     return `/images/content/${prefix}${category}/${slug}/${filename}`;
   };
 

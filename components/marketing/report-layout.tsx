@@ -641,7 +641,12 @@ export function ReportLayout({
                     <strong>Data points reviewed:</strong> {review.reviewCount.toLocaleString('en-US')} consumer records, lender pricing pages, and public regulator guidance.
                   </p>
                   <p>
-                    <strong>Primary sources:</strong> CFPB, Federal Reserve, IRS, NFCC, and provider disclosures.
+                    <strong>Primary sources:</strong> {
+                      market === 'au' ? 'AUSTRAC, ASIC, APRA, AFCA, and provider disclosures.' :
+                      market === 'uk' ? 'FCA, Bank of England, FSCS, FOS, and provider disclosures.' :
+                      market === 'ca' ? 'CIRO, OSFI, FCAC, CDIC, and provider disclosures.' :
+                      'CFPB, Federal Reserve, IRS, NFCC, and provider disclosures.'
+                    }
                   </p>
                   <p style={{ color: 'var(--sfp-slate)' }}>
                     We may earn a commission from partner links, but rankings and recommendations are set by editorial criteria.

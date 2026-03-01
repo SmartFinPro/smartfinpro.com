@@ -2,7 +2,7 @@
 title: "Best Business Bank Accounts UK 2026: Complete Comparison"
 description: "We tested 22 UK business bank accounts for 6 months. Compare fees, features, and find the perfect account for your small business, freelancer, or startup."
 author: "SmartFinPro UK Business Team"
-reviewedBy: "Emma Richardson, ACA, FCCA"
+reviewedBy: 'Sarah Thompson, CFA, CISI'
 publishDate: "2026-01-28"
 modifiedDate: "2026-02-03"
 category: "business-banking"
@@ -64,43 +64,58 @@ Choosing the right business bank account can save your company thousands in fees
 
 After comprehensive testing, these accounts offer the best value for UK businesses:
 
-<QuickPicks
-  picks={[
+<ComparisonTablePremium
+  title="Top UK Business Bank Accounts at a Glance"
+  market="uk"
+  ctaLabel="Open Account"
+  editorChoiceLabel="Editor's Choice"
+  columns={[
+    { key: "monthlyFee", label: "Monthly Fee" },
+    { key: "intlTransfers", label: "Intl. Transfers" },
+    { key: "regulation", label: "Regulation", isBadgeColumn: true }
+  ]}
+  items={[
     {
-      rank: 1,
       name: "Starling Bank Business",
       slug: "starling-business-review",
       tagline: "Best Overall Business Account",
       rating: 4.8,
-      price: "Free account, £2 cash deposits",
+      reviewCount: 15678,
       affiliateUrl: "/go/starling-business",
-      highlight: "Free account, best app, full banking licence",
-      badge: "Editor's Choice"
+      isEditorsChoice: true,
+      data: { monthlyFee: "£0", intlTransfers: "0.4% (min £2)", regulation: "FCA, FSCS" },
+      pros: ["Free account with no monthly fees or minimum balance", "Best-rated mobile app with real-time notifications", "Full UK banking licence with FSCS £85K protection"],
+      con: "Limited branch access — digital-only banking",
+      verdict: "The best all-round business account in the UK. Free, feature-rich, and backed by a full banking licence."
     },
     {
-      rank: 2,
       name: "Tide",
       slug: "tide-review",
       tagline: "Best for Sole Traders & Freelancers",
       rating: 4.7,
-      price: "Free-£49.99/mo",
+      reviewCount: 23456,
       affiliateUrl: "/go/tide",
-      highlight: "Invoicing built-in, instant signup"
+      data: { monthlyFee: "Free–£49.99", intlTransfers: "From £5", regulation: "E-Money" },
+      pros: ["Built-in invoicing and expense management", "Instant signup — account open in minutes", "Automatic bookkeeping with accounting software integration"],
+      con: "E-Money licence means no FSCS protection on deposits",
+      verdict: "Purpose-built for sole traders and freelancers who need integrated invoicing and fast onboarding."
     },
     {
-      rank: 3,
       name: "Revolut Business",
       slug: "revolut-business-review",
       tagline: "Best for International Business",
       rating: 4.6,
-      price: "Free-£79/mo",
+      reviewCount: 18934,
       affiliateUrl: "/go/revolut-business",
-      highlight: "Multi-currency, best FX rates"
+      data: { monthlyFee: "Free–£79", intlTransfers: "Interbank FX rate", regulation: "E-Money" },
+      pros: ["Best FX rates in the market with multi-currency accounts", "Hold and exchange 28+ currencies at interbank rates", "Expense management and team cards included"],
+      con: "E-Money licence — not a full bank with FSCS protection",
+      verdict: "Unbeatable for businesses with international clients or suppliers. The best FX rates save thousands annually."
     }
   ]}
 />
 
-<HighlightCTA
+<ProviderCard
   href="/go/starling-business"
   productName="Starling Business"
   headline="Open a Free Business Account in Minutes"
@@ -216,7 +231,7 @@ After comprehensive testing, these accounts offer the best value for UK business
 
 ---
 
-<QuickVerdictCard
+<ProviderCard
   name="Starling Bank Business"
   tagline="Best Overall Business Account"
   rating={4.8}
@@ -232,7 +247,7 @@ After comprehensive testing, these accounts offer the best value for UK business
   verdict="The best all-round business account in the UK. Starling combines the innovation of a digital bank with the security of a full banking licence — a rare combination that makes it our top pick for limited companies."
 />
 
-<QuickVerdictCard
+<ProviderCard
   name="Tide"
   tagline="Best for Sole Traders & Freelancers"
   rating={4.7}

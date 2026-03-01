@@ -5,6 +5,7 @@ import 'server-only';
 import { createServiceClient } from '@/lib/supabase/server';
 import { sendTelegramAlert } from '@/lib/alerts/telegram';
 import type { Market } from '@/lib/supabase/types';
+import { createClaudeMessage } from '@/lib/claude/client';
 
 // ════════════════════════════════════════════════════════════════
 // WEEKLY PERFORMANCE REPORT — Revenue Radar
@@ -136,7 +137,7 @@ export async function generateWeeklyReport(): Promise<WeeklyReportResult> {
     const marketAgg = new Map<Market, MarketMetrics>();
     const slugRevenue = new Map<string, { slug: string; revenue: number; clicks: number }>();
     let totalRevenue = 0;
-    let totalClicks = currentClicks.length;
+    const totalClicks = currentClicks.length;
 
     for (const row of currentClicks) {
       const m = row.market as Market;
@@ -260,10 +261,7 @@ export async function generateWeeklyReport(): Promise<WeeklyReportResult> {
       const apiKey = keyRow?.value;
 
       if (apiKey && apiKey.length > 10) {
-        const Anthropic = (await import('@anthropic-ai/sdk')).default;
-        const client = new Anthropic({ apiKey });
-
-        const response = await client.messages.create({
+        const response = await createClaudeMessage({
           model: 'claude-sonnet-4-20250514',
           max_tokens: 150,
           messages: [{
@@ -278,7 +276,7 @@ Auto-Pilot: ${freshnessBoosts} Boosts, ${genesisAssets} Genesis Assets, ${optimi
 
 Antworte NUR mit dem Tipp, ohne Einleitung.`,
           }],
-        });
+        }, { apiKey, operation: 'weekly_report_tip' });
 
         if (response.content.length > 0 && response.content[0].type === 'text') {
           aiTip = response.content[0].text.trim();

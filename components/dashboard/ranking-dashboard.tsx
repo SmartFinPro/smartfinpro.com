@@ -784,13 +784,13 @@ export function RankingDashboard({
         />
         <StatCard
           label="Total Clicks"
-          value={stats.totalClicks.toLocaleString()}
+          value={stats.totalClicks.toLocaleString('en-US')}
           icon={MousePointer}
           color="emerald"
         />
         <StatCard
           label="Impressions"
-          value={stats.totalImpressions.toLocaleString()}
+          value={stats.totalImpressions.toLocaleString('en-US')}
           icon={Eye}
           color="slate"
         />
@@ -944,12 +944,12 @@ export function RankingDashboard({
                       </td>
                       <td className="px-3 py-3 text-right">
                         <span className="text-sm tabular-nums text-slate-700">
-                          {kw.clicks > 0 ? kw.clicks.toLocaleString() : '\u2014'}
+                          {kw.clicks > 0 ? kw.clicks.toLocaleString('en-US') : '\u2014'}
                         </span>
                       </td>
                       <td className="px-3 py-3 text-right">
                         <span className="text-sm tabular-nums text-slate-500">
-                          {kw.impressions > 0 ? kw.impressions.toLocaleString() : '\u2014'}
+                          {kw.impressions > 0 ? kw.impressions.toLocaleString('en-US') : '\u2014'}
                         </span>
                       </td>
                       <td className="px-3 py-3 text-right">

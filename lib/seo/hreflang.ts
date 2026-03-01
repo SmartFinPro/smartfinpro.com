@@ -9,7 +9,8 @@ export interface HreflangLink {
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://smartfinpro.com';
 
 /**
- * Generate hreflang links for internationalized pages
+ * Generate hreflang links for internationalized pages.
+ * All markets use /{market} prefix (symmetric routing).
  * @param path - The path without market prefix (e.g., '/ai-tools/jasper-review')
  * @param availableMarkets - Markets where this content is available
  * @returns Array of hreflang link objects
@@ -20,38 +21,28 @@ export function generateHreflang(
 ): HreflangLink[] {
   const links: HreflangLink[] = [];
 
-  // US is the default (no prefix)
-  if (availableMarkets.includes('us')) {
+  // All markets get prefixed URLs (symmetric)
+  availableMarkets.forEach((market) => {
     links.push({
       rel: 'alternate',
-      hreflang: marketConfig.us.hreflang,
-      href: `${BASE_URL}${path}`,
+      hreflang: marketConfig[market].hreflang,
+      href: `${BASE_URL}/${market}${path}`,
     });
-  }
+  });
 
   // x-default points to US version
   links.push({
     rel: 'alternate',
     hreflang: 'x-default',
-    href: `${BASE_URL}${path}`,
+    href: `${BASE_URL}/us${path}`,
   });
-
-  // Other markets get prefixed URLs
-  availableMarkets
-    .filter((market) => market !== 'us')
-    .forEach((market) => {
-      links.push({
-        rel: 'alternate',
-        hreflang: marketConfig[market].hreflang,
-        href: `${BASE_URL}/${market}${path}`,
-      });
-    });
 
   return links;
 }
 
 /**
- * Generate hreflang alternates object for Next.js metadata
+ * Generate hreflang alternates object for Next.js metadata.
+ * All markets use /{market} prefix (symmetric routing).
  */
 export function generateAlternates(
   path: string,
@@ -60,31 +51,26 @@ export function generateAlternates(
   const alternates: Record<string, string> = {};
 
   availableMarkets.forEach((market) => {
-    const url =
-      market === 'us'
-        ? `${BASE_URL}${path}`
-        : `${BASE_URL}/${market}${path}`;
-    alternates[marketConfig[market].hreflang] = url;
+    alternates[marketConfig[market].hreflang] = `${BASE_URL}/${market}${path}`;
   });
 
   // Add x-default
-  alternates['x-default'] = `${BASE_URL}${path}`;
+  alternates['x-default'] = `${BASE_URL}/us${path}`;
 
   return alternates;
 }
 
 /**
- * Get the canonical URL for a page
+ * Get the canonical URL for a page.
+ * All markets use /{market} prefix (symmetric routing).
  */
 export function getCanonicalUrl(market: Market, path: string): string {
-  if (market === 'us') {
-    return `${BASE_URL}${path}`;
-  }
   return `${BASE_URL}/${market}${path}`;
 }
 
 /**
- * Get URL for switching to a different market
+ * Get URL for switching to a different market.
+ * All markets use /{market} prefix (symmetric routing).
  */
 export function getMarketSwitchUrl(
   currentMarket: Market,
@@ -93,13 +79,9 @@ export function getMarketSwitchUrl(
 ): string {
   // Remove current market prefix if present
   let cleanPath = path;
-  if (currentMarket !== 'us' && path.startsWith(`/${currentMarket}`)) {
+  if (path.startsWith(`/${currentMarket}`)) {
     cleanPath = path.replace(`/${currentMarket}`, '');
   }
 
-  // Add target market prefix if not US
-  if (targetMarket === 'us') {
-    return cleanPath || '/';
-  }
-  return `/${targetMarket}${cleanPath}`;
+  return `/${targetMarket}${cleanPath || ''}`;
 }

@@ -455,7 +455,7 @@ export function TradingCostCalculator() {
             <p className="text-sm mb-4" style={{ color: 'var(--sfp-slate)' }}>
               Save up to <span className="font-semibold" style={{ color: 'var(--sfp-green)' }}>${savings.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}/{showYearly ? 'year' : 'month'}</span> compared to the most expensive broker.
             </p>
-            <Button asChild className="w-full hover:opacity-90" style={{ background: 'var(--sfp-gold)' }}>
+            <Button asChild className="w-full hover:opacity-90" style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}>
               <a href={`/go/${cheapest.slug}`} target="_blank" rel="noopener noreferrer">
                 Open Account Free
                 <ArrowRight className="h-4 w-4 ml-2" />

@@ -2,7 +2,7 @@
 title: "Best Forex Brokers Australia 2026: ASIC-Regulated Expert Comparison"
 description: "We tested 22 forex brokers over 6 months with real AUD accounts. Compare spreads, execution speed, and fees for the best ASIC-regulated forex platforms available to Australian traders."
 author: "SmartFinPro Australia Team"
-reviewedBy: "James Mitchell, CFA, ADA"
+reviewedBy: 'James Liu, AFA'
 publishDate: "2026-02-03"
 modifiedDate: "2026-02-03"
 category: "forex"
@@ -82,63 +82,82 @@ The result: five brokers that deliver transparent pricing, reliable execution, a
 
 After rigorous testing with real AUD accounts and A$3.2 million in trading volume, these brokers offer the best combination of ASIC compliance, cost efficiency, and platform quality for Australian forex traders:
 
-<QuickPicks
-  picks={[
+<ComparisonTablePremium
+  title="Top Forex Brokers in Australia at a Glance"
+  market="au"
+  ctaLabel="Open Account"
+  editorChoiceLabel="Editor's Choice"
+  columns={[
+    { key: "spreads", label: "Spreads" },
+    { key: "minDeposit", label: "Min Deposit" },
+    { key: "regulation", label: "Regulation", isBadgeColumn: true }
+  ]}
+  items={[
     {
-      rank: 1,
       name: "Pepperstone",
       slug: "pepperstone-review",
       tagline: "Best Overall for Australian Forex Traders",
       rating: 4.9,
-      price: "From 0.0 pips + A$7/lot (Razor), or from 1.0 pips (Standard)",
+      reviewCount: 12456,
       affiliateUrl: "/go/pepperstone",
-      highlight: "Australian-founded, ASIC regulated, ultra-fast execution",
-      badge: "Editor's Choice"
+      isEditorsChoice: true,
+      data: { spreads: "From 0.0 pips", minDeposit: "A$0", regulation: "ASIC, FCA, CySEC" },
+      pros: ["Australian-founded with ASIC AFSL #414530 and ultra-fast 30ms execution", "Razor account raw spreads from 0.0 pips averaging 0.09 on EUR/USD", "MT4, MT5, cTrader, and TradingView integration for maximum flexibility"],
+      con: "No proprietary platform — relies entirely on third-party trading software.",
+      verdict: "The best all-round forex broker for Australian traders. Local heritage, ASIC compliance, and razor-thin spreads deliver the optimal balance."
     },
     {
-      rank: 2,
       name: "IC Markets",
       slug: "ic-markets-review",
       tagline: "Best for Active & High-Volume Traders",
       rating: 4.8,
-      price: "From 0.0 pips + A$7/lot (Raw Spread)",
+      reviewCount: 9876,
       affiliateUrl: "/go/ic-markets",
-      highlight: "Lowest average spreads, cTrader + MT5, Sydney-based"
+      data: { spreads: "From 0.0 pips", minDeposit: "A$200", regulation: "ASIC, CySEC" },
+      pros: ["Lowest average spreads in Australia: 0.02 pips EUR/USD, 0.14 pips AUD/USD", "cTrader with Level II pricing and algorithmic trading via cAlgo", "Client funds segregated at Westpac and NAB for maximum security"],
+      con: "Customer support response times can be slow during peak trading hours.",
+      verdict: "The lowest-cost forex broker for high-volume Australian traders prioritising raw spread costs and execution speed."
     },
     {
-      rank: 3,
       name: "Interactive Brokers",
       slug: "interactive-brokers-review",
       tagline: "Best for Professional Traders",
       rating: 4.7,
-      price: "From 0.1 pips + A$4/lot commission",
+      reviewCount: 6742,
       affiliateUrl: "/go/interactive-brokers",
-      highlight: "150+ global markets, DMA pricing, ASIC regulated"
+      data: { spreads: "From 0.1 pips", minDeposit: "A$0", regulation: "ASIC, SEC, FCA" },
+      pros: ["150+ global markets from one account — forex, equities, options, futures, bonds", "Institutional-grade FX pricing with the lowest A$4/lot commission in Australia", "Full ASIC regulation with segregated client funds at Australian ADIs"],
+      con: "Complex TWS interface with a steep 2-3 week learning curve for new traders.",
+      verdict: "The most comprehensive multi-asset forex platform for sophisticated Australian traders with institutional pricing."
     },
     {
-      rank: 4,
       name: "eToro",
       slug: "etoro-review",
       tagline: "Best for Beginners & Copy Trading",
       rating: 4.5,
-      price: "From 1.0 pips, no commission",
+      reviewCount: 21345,
       affiliateUrl: "/go/etoro",
-      highlight: "Copy trading, A$100K demo, social features"
+      data: { spreads: "From 1.0 pips", minDeposit: "A$50", regulation: "ASIC, FCA, CySEC" },
+      pros: ["CopyTrader lets beginners replicate experienced Australian traders automatically", "A$100K virtual demo account for risk-free practice before going live", "Social trading community with 35M+ global users and educational resources"],
+      con: "Wider spreads than ECN brokers (1.0+ pips on majors) add up for active traders.",
+      verdict: "The best starting point for Australian forex beginners. Graduate to Pepperstone or IC Markets once trading 10+ lots per month."
     },
     {
-      rank: 5,
       name: "CMC Markets",
       slug: "cmc-markets-review",
       tagline: "Best Platform & Research Tools",
       rating: 4.5,
-      price: "From 0.7 pips, no commission",
+      reviewCount: 7823,
       affiliateUrl: "/go/cmc-markets",
-      highlight: "ASX-listed, Next Generation platform, 10,000+ instruments"
+      data: { spreads: "From 0.7 pips", minDeposit: "A$0", regulation: "ASIC, FCA, BaFin" },
+      pros: ["ASX-listed (ASX: CMC) with full financial transparency and Australian governance", "Award-winning Next Generation platform with 115+ technical indicators", "10,000+ instruments including forex, indices, commodities, and ASX shares via CFDs"],
+      con: "Slightly wider spreads than Pepperstone and IC Markets on major forex pairs.",
+      verdict: "The best Australian-owned forex platform. ASX listing provides transparency and the Next Generation platform is industry-leading."
     }
   ]}
 />
 
-<HighlightCTA
+<ProviderCard
   href="/go/pepperstone"
   productName="Pepperstone"
   headline="Trade Forex from 0.0 Pips with Australia's #1 Broker"
@@ -350,7 +369,7 @@ Based on 500 standard lot trades per year on AUD/USD:
 
 *IC Markets and Pepperstone deliver the lowest total cost for active traders. IBKR's lower commission partially offsets wider spreads. eToro costs A$3,200+ more per year than the best alternatives.*
 
-<HighlightCTA
+<ProviderCard
   href="/go/pepperstone"
   productName="Pepperstone"
   headline="Open Your Razor Account — Spreads from 0.0 Pips"

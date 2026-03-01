@@ -404,7 +404,7 @@ export function PlanningApproval({ initialPlans }: PlanningApprovalProps) {
       ]);
 
       if (result.success) {
-        toast.success(`"${plan.keyword}" generiert! ${result.wordCount?.toLocaleString() || ''} Woerter`);
+        toast.success(`"${plan.keyword}" generiert! ${result.wordCount?.toLocaleString('en-US') || ''} Woerter`);
       } else {
         toast.error(`Fehlgeschlagen: ${result.error || 'Unbekannter Fehler'}`);
       }
@@ -569,7 +569,7 @@ export function PlanningApproval({ initialPlans }: PlanningApprovalProps) {
                   {result.success ? (
                     <p className="text-[10px] text-slate-500">
                       <code className="text-emerald-500">{result.slug}</code>
-                      {result.wordCount && ` \u00B7 ${result.wordCount.toLocaleString()} words`}
+                      {result.wordCount && ` \u00B7 ${result.wordCount.toLocaleString('en-US')} words`}
                     </p>
                   ) : (
                     <p className="text-[10px] text-rose-400">{result.error}</p>

@@ -76,7 +76,7 @@ export function RegionalHeroImage({ market, category, slug, className = '' }: Re
 
   // Build conventional path for Genesis-uploaded images (not in registry)
   // Pattern: /images/content/[prefix]/[category]/[slug]/hero.webp
-  const prefix = market === 'us' ? '' : market;
+  const prefix = market;
   const conventionalSrc = slug
     ? `/images/content/${prefix ? prefix + '/' : ''}${category}/${slug}/hero.webp`
     : null;
@@ -103,8 +103,7 @@ export function RegionalHeroImage({ market, category, slug, className = '' }: Re
             className="object-cover w-full h-full"
             onError={() => setImgError(true)}
           />
-          {/* Bottom gradient for label readability */}
-          <div className="absolute inset-0 bg-gradient-to-t from-white/80 via-transparent to-transparent" />
+          {/* No gradient overlay — clean image, label has its own white bg */}
           {/* Category label overlay */}
           <div className="absolute bottom-4 left-4">
             <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium bg-white border border-gray-200 shadow-sm">

@@ -29,8 +29,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function HousingPillarPage() {
   return (
-    <div className="min-h-screen bg-sfp-gray">
-      <body className="silo-ca">
+    <div className="min-h-screen bg-sfp-gray silo-ca">
         {/* Hero Section */}
         <section className="relative bg-white border-b border-gray-200">
           <div className="light-mesh" />
@@ -181,7 +180,6 @@ export default async function HousingPillarPage() {
             </div>
           </div>
         </article>
-      </body>
     </div>
   );
 }

@@ -45,7 +45,7 @@ export function PillarTemplate({
   modifiedDate,
 }: PillarPageProps) {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://smartfinpro.com';
-  const marketPrefix = market === 'us' ? '' : `/${market}`;
+  const marketPrefix = `/${market}`;
 
   return (
     <article className="max-w-4xl mx-auto px-4 py-12">

@@ -84,7 +84,7 @@ export function TrustBar({ badges, market = 'us', className = '', checkmarks, re
           )}
           {reviewCount && (
             <span style={{ color: 'var(--sfp-slate)' }}>
-              Based on {reviewCount.toLocaleString()} reviews
+              Based on {reviewCount.toLocaleString('en-US')} reviews
             </span>
           )}
         </div>

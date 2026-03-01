@@ -149,7 +149,7 @@ export default function DebtPayoffCalculatorPage() {
             <a
               href="/go/national-debt-relief"
               className="inline-block px-6 py-3 rounded-lg font-semibold text-white transition-all hover:shadow-lg"
-              style={{ background: 'var(--sfp-gold)' }}
+              style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}
             >
               Get Free Debt Relief Consultation →
             </a>

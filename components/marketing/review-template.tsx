@@ -31,9 +31,10 @@ import { generateReviewSchema } from '@/lib/seo/schema';
 import { categoryConfig } from '@/lib/i18n/config';
 import type { Market, Category } from '@/lib/i18n/config';
 import { buildBreadcrumbs } from '@/lib/breadcrumbs';
+import { resolveExpertImage } from '@/lib/experts/image-routing';
 import type { ContentItem } from '@/lib/mdx';
 import type { ReviewData, ExpertData } from '@/types';
-import type { MDXRemoteSerializeResult } from 'next-mdx-remote';
+import type { MDXRemoteSerializeResult } from '@/lib/mdx/types';
 import { getFirstMondayOfMonth } from '@/lib/utils/date-helpers';
 
 interface ReviewTemplateProps {
@@ -45,8 +46,15 @@ interface ReviewTemplateProps {
 }
 
 export function ReviewTemplate({ review, mdxSource, relatedArticles, expert }: ReviewTemplateProps) {
-  const marketPrefix = review.market === 'us' ? '' : `/${review.market}`;
+  const marketPrefix = `/${review.market}`;
   const categoryName = categoryConfig[review.category as Category]?.name || review.category.replace('-', ' ');
+  const expertImage = resolveExpertImage({
+    reviewedBy: review.reviewedBy,
+    expertName: expert?.name,
+    expertImageUrl: expert?.image_url,
+    market: review.market as Market,
+    category: review.category as Category,
+  });
   return (
     <article className="min-h-screen" style={{ background: 'var(--sfp-gray)' }} itemScope itemType="https://schema.org/Review">
       {/* Schema Markup */}
@@ -132,7 +140,7 @@ export function ReviewTemplate({ review, mdxSource, relatedArticles, expert }: R
                 asChild
                 size="lg"
                 className="h-14 px-10 text-lg rounded-xl text-white border-0 shadow-md hover:shadow-lg transition-all"
-                style={{ background: 'var(--sfp-gold)' }}
+                style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}
               >
                 <Link href={review.affiliateUrl} target="_blank" rel="noopener sponsored">
                   {review.category === 'personal-finance' && review.market === 'us' && review.rating
@@ -233,6 +241,40 @@ export function ReviewTemplate({ review, mdxSource, relatedArticles, expert }: R
                 <p className="text-2xl font-bold" style={{ color: 'var(--sfp-navy)' }}>{review.pricing}</p>
               </div>
             </div>
+
+            {/* Rating — Split-Panel Proof Design */}
+            {review.rating && (
+              <div className="mt-6 rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+                <div className="h-1" style={{ background: 'linear-gradient(90deg, var(--sfp-navy) 0%, var(--sfp-gold) 100%)' }} />
+                <div className="flex flex-col sm:flex-row">
+                  <div
+                    className="shrink-0 px-6 py-4 sm:py-0 flex flex-col justify-center sm:w-[200px] border-b sm:border-b-0 sm:border-r border-gray-100"
+                    style={{ background: 'var(--sfp-sky)' }}
+                  >
+                    <div className="flex items-center gap-2.5 mb-1">
+                      <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: 'rgba(245,166,35,0.12)' }}>
+                        <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                      </div>
+                      <span className="text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--sfp-navy)' }}>
+                        Our Rating
+                      </span>
+                    </div>
+                    <p style={{ color: 'var(--sfp-slate)', fontSize: '10px' }} className="sm:pl-[34px]">Expert Score</p>
+                  </div>
+                  <div className="flex-1 flex items-center gap-2.5 px-6 py-3">
+                    <div className="flex items-center gap-0.5">
+                      {[1, 2, 3, 4, 5].map((i) => (
+                        <Star
+                          key={i}
+                          className={`h-5 w-5 ${i <= Math.floor(review.rating!) ? 'fill-amber-400 text-amber-400' : i - 0.5 <= review.rating! ? 'fill-amber-400/50 text-amber-400' : 'fill-gray-200 text-gray-200'}`}
+                        />
+                      ))}
+                    </div>
+                    <span className="font-bold" style={{ color: 'var(--sfp-navy)', fontSize: '16px' }}>{review.rating}/5</span>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </section>
@@ -283,7 +325,7 @@ export function ReviewTemplate({ review, mdxSource, relatedArticles, expert }: R
             }
             lastFactChecked={getFirstMondayOfMonth()}
             bio={expert?.bio || undefined}
-            image={expert?.image_url || undefined}
+            image={expertImage}
             linkedInUrl={expert?.linkedin_url || undefined}
             variant="default"
           />
@@ -424,7 +466,7 @@ export function ReviewTemplate({ review, mdxSource, relatedArticles, expert }: R
                   asChild
                   size="lg"
                   className="h-14 px-10 text-lg rounded-xl text-white border-0 shadow-md hover:shadow-lg transition-all"
-                  style={{ background: 'var(--sfp-gold)' }}
+                  style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}
                 >
                   <Link href={review.affiliateUrl} target="_blank" rel="noopener sponsored">
                     {review.category === 'personal-finance' && review.market === 'us' && review.rating

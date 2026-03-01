@@ -63,7 +63,7 @@ export function CTABox({
             asChild
             size="lg"
             className="gap-2 px-8 border-0 shadow-lg text-white"
-            style={{ background: 'var(--sfp-gold)' }}
+            style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}
           >
             <Link href={primaryCta.href} target="_blank" rel="noopener sponsored">
               {primaryCta.text}
@@ -175,7 +175,7 @@ export function QuickVerdictBox({
       <Button
         asChild
         className="w-full mt-6 gap-2 border-0 shadow-lg text-white"
-        style={{ background: 'var(--sfp-gold)' }}
+        style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}
       >
         <Link href={affiliateUrl} target="_blank" rel="noopener sponsored">
           Try {productName} Free

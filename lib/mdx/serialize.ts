@@ -10,6 +10,12 @@
 // SOLUTION: We use next-mdx-remote/serialize normally (preserving JSX runtime
 // compatibility), then strip the _missingMdxReference calls from the compiled
 // output. This keeps the full plugin chain and runtime intact.
+//
+// v6 MIGRATION: next-mdx-remote@6 defaults blockJS=true and
+// blockDangerousJS=true. Our MDX content uses JSX expressions
+// (e.g. <Component prop={value} />) and is team-authored (trusted),
+// so we set blockJS=false. blockDangerousJS remains true as an
+// additional safety layer (no eval/Function needed in MDX source).
 
 import { serialize } from 'next-mdx-remote/serialize';
 import remarkGfm from 'remark-gfm';
@@ -21,8 +27,15 @@ import type { MDXRemoteSerializeResult } from '@/lib/mdx/types';
  * _missingMdxReference checks that break our Direct Pass architecture.
  */
 export async function serializeMDX(source: string): Promise<MDXRemoteSerializeResult> {
-  const result = await serialize(source, {
+  // Strip HTML comments before compilation — MDX uses JSX syntax ({/* */}),
+  // and <!-- --> causes "Unexpected character '!' (U+0021)" compilation errors.
+  const cleanSource = source.replace(/<!--[\s\S]*?-->/g, '');
+
+  const result = await serialize(cleanSource, {
     mdxOptions: { remarkPlugins: [remarkGfm] },
+    // v6: Allow JSX expressions in MDX (team-authored content, not user input).
+    // blockDangerousJS stays true (default) — no eval/Function in MDX source needed.
+    blockJS: false,
   });
 
   // Strip _missingMdxReference checks from the compiled output.

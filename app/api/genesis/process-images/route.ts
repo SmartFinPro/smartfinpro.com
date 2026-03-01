@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
     const safeSlug = sanitize(slugBase);
 
     // Build output directory with sanitized segments
-    const prefix = safeMarket === 'us' ? '' : safeMarket;
+    const prefix = safeMarket;
     const imageDir = path.join(process.cwd(), 'public', 'images', 'content', prefix, safeCategory, safeSlug);
 
     // Verify resolved path is within expected directory

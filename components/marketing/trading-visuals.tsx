@@ -221,6 +221,7 @@ export function CostBreakdownGrid({ title, costs }: CostBreakdownGridProps) {
 interface ScoringItem {
   name: string;
   weight: number;
+  score?: number;
   description: string;
   icon: string;
 }
@@ -288,13 +289,18 @@ export function ScoringCriteria({ title, criteria }: ScoringCriteriaProps) {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between mb-1">
                   <h4 className="text-sm font-semibold" style={{ color: 'var(--sfp-ink)' }}>{item.name}</h4>
-                  <span className={`text-sm font-bold ${colors.text}`}>{item.weight}%</span>
+                  <div className="flex items-center gap-2">
+                    {item.score != null && (
+                      <span className="text-sm font-bold" style={{ color: 'var(--sfp-navy)' }}>{item.score}/5</span>
+                    )}
+                    <span className={`text-xs font-semibold ${colors.text}`}>({item.weight}%)</span>
+                  </div>
                 </div>
                 <p className="text-xs mb-2" style={{ color: 'var(--sfp-slate)' }}>{item.description}</p>
                 <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
                   <div
                     className={`h-full ${colors.bar} rounded-full transition-all duration-700`}
-                    style={{ width: `${(item.weight / 30) * 100}%` }}
+                    style={{ width: `${item.score != null ? (item.score / 5) * 100 : (item.weight / 30) * 100}%` }}
                   />
                 </div>
               </div>

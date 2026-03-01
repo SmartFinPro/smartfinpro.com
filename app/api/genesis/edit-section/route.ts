@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import Anthropic from '@anthropic-ai/sdk';
 import { genesisApiLimiter } from '@/lib/security/rate-limit';
+import { createClaudeMessage } from '@/lib/claude/client';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -54,9 +54,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing sectionContent or userPrompt' }, { status: 400 });
     }
 
-    const client = new Anthropic({ apiKey });
-
-    const response = await client.messages.create({
+    const response = await createClaudeMessage({
       model: 'claude-sonnet-4-20250514',
       max_tokens: 4000,
       messages: [
@@ -75,7 +73,7 @@ ${sectionContent}
 Please rewrite ONLY this section according to the user's instructions. Keep the same MDX formatting (headings, bold, links, components). Return ONLY the rewritten section content, nothing else — no explanations, no markdown code fences.`,
         },
       ],
-    });
+    }, { apiKey, operation: 'genesis_edit_section' });
 
     const textBlock = response.content.find((b) => b.type === 'text');
     const editedContent = textBlock?.text?.trim() || sectionContent;

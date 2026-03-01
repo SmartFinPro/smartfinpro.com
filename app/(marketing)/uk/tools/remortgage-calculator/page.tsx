@@ -172,7 +172,7 @@ export default function RemortgageCalculatorPage() {
             <a
               href="/go/habito"
               className="inline-block px-6 py-3 rounded-lg font-semibold text-white transition-all hover:shadow-lg"
-              style={{ background: 'var(--sfp-gold)' }}
+              style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}
             >
               Get Free Remortgage Quote →
             </a>
