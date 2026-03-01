@@ -129,6 +129,7 @@ import { ComparisonHub } from '@/components/marketing/comparison-hub';
 // import { ReportHighlight, DataSummary } from '@/components/marketing/report-highlights';
 import { AnalysisTable, ScopeTable, RankingTable } from '@/components/marketing/enterprise-table';
 import { FrictionlessCTA } from '@/components/marketing/frictionless-cta';
+import { EvidenceCarousel } from '@/components/marketing/evidence-carousel';
 import { StickyComparisonBar } from '@/components/marketing/sticky-comparison-bar';
 import { ExpertVerifier } from '@/components/marketing/expert-verifier';
 import { WinnerAtGlance } from '@/components/marketing/winner-at-glance';
@@ -1085,6 +1086,7 @@ export const mdxComponents = {
   MiniQuiz,
   // ReportHighlight,
   // DataSummary,
+  EvidenceCarousel,
   AnalysisTable,
   ScopeTable,
   RankingTable,

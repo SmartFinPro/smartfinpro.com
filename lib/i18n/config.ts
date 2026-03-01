@@ -79,6 +79,8 @@ export const marketCategories: Record<Market, Category[]> = {
     'credit-repair',
     'debt-relief',
     'credit-score',
+    'forex',
+    'gold-investing',
   ],
   uk: [
     'ai-tools',

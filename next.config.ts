@@ -74,8 +74,15 @@ const nextConfig: NextConfig = {
   async headers() {
     // Content Security Policy for financial services
     // Strict but allows necessary functionality
-    // Only upgrade insecure requests in production (breaks Safari on localhost HTTP)
-    const upgradeInsecure = process.env.NODE_ENV === 'production' ? 'upgrade-insecure-requests;' : '';
+    // Only upgrade insecure requests on the deployed site (breaks Safari on localhost HTTP).
+    // next start also sets NODE_ENV=production, so we additionally check for a real
+    // production host indicator (VERCEL, HOSTNAME, or explicit ENABLE_CSP_UPGRADE).
+    const isDeployedProduction =
+      process.env.NODE_ENV === 'production' &&
+      (process.env.VERCEL === '1' ||
+       process.env.ENABLE_CSP_UPGRADE === '1' ||
+       (process.env.HOSTNAME && !process.env.HOSTNAME.includes('localhost')));
+    const upgradeInsecure = isDeployedProduction ? 'upgrade-insecure-requests;' : '';
 
     // next-mdx-remote uses new Function() for client-side MDX evaluation.
     // Allow 'unsafe-eval' so MDX pages hydrate correctly.

@@ -99,6 +99,7 @@ const CATEGORY_FALLBACK_IMAGE: Partial<Record<Market, Partial<Record<Category, s
     'credit-repair': '/images/experts/james-mitchell.jpg',
     'credit-score': '/images/experts/james-mitchell.jpg',
     trading: '/images/experts/robert-hayes.jpg',
+    forex: '/images/experts/robert-hayes.jpg',
     'personal-finance': '/images/experts/michael-torres.jpg',
     'business-banking': '/images/experts/michael-chen.jpg',
     'ai-tools': '/images/experts/sarah-chen.jpg',
