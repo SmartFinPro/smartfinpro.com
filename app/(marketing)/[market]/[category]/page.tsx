@@ -14,13 +14,15 @@ import {
 } from '@/lib/i18n/config';
 import { generateAlternates, getCanonicalUrl } from '@/lib/seo/hreflang';
 import { generateArticleSchema } from '@/lib/seo/schema';
-import { Calendar, FileText, BarChart3, Star, Wrench, ArrowRight } from 'lucide-react';
+import { Calendar, FileText, BarChart3, Star, Wrench, ArrowRight, Shield, CheckCircle, Edit3 } from 'lucide-react';
 import { Breadcrumb } from '@/components/marketing/breadcrumb';
 import { PortalSidebar } from '@/components/marketing/portal-sidebar';
 import { ReportCard } from '@/components/marketing/report-card';
 import { ExpertVerifier } from '@/components/marketing/expert-verifier';
+import { NewsletterBox } from '@/components/marketing/newsletter-box';
 import { getMarketExpert } from '@/lib/actions/experts';
 import { getFirstMondayOfMonth } from '@/lib/utils/date-helpers';
+import { RegionalHeroImage } from '@/components/marketing/regional-hero-image';
 
 const categoryTools: Record<string, { name: string; href: string; description: string }[]> = {
   trading: [
@@ -212,6 +214,21 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
       </section>
 
       {/* ═══════════════════════════════════════════════════════════════
+          1b. HERO IMAGE (category pillar)
+      ═══════════════════════════════════════════════════════════════ */}
+      <div className="bg-white border-b border-gray-100">
+        <div className="container mx-auto px-4 py-4">
+          <div className="max-w-7xl mx-auto">
+            <RegionalHeroImage
+              market={market}
+              category={category}
+              className="w-full"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* ═══════════════════════════════════════════════════════════════
           2. TWO-COLUMN LAYOUT (Sidebar LEFT + Report Feed RIGHT)
       ═══════════════════════════════════════════════════════════════ */}
       <section className="container mx-auto px-4 py-8">
@@ -273,8 +290,48 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
               </div>
             )}
 
+            {/* ─── Editorial Transparency Block ─── */}
+            <div className="mt-8 rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+              {/* Gradient accent bar */}
+              <div style={{ height: 4, background: 'linear-gradient(90deg, var(--sfp-navy) 0%, var(--sfp-gold) 100%)' }} />
+              <div className="flex flex-col sm:flex-row">
+                {/* Left panel */}
+                <div className="flex items-center gap-3 px-5 py-4 sm:w-52 shrink-0" style={{ background: 'var(--sfp-sky)' }}>
+                  <Edit3 className="h-5 w-5 shrink-0" style={{ color: 'var(--sfp-navy)' }} />
+                  <span className="text-xs font-bold uppercase tracking-wide" style={{ color: 'var(--sfp-navy)' }}>
+                    Editorial Info
+                  </span>
+                </div>
+                {/* Right — meta stats */}
+                <div className="flex flex-wrap divide-x divide-gray-100 flex-1">
+                  <div className="flex flex-col justify-center px-5 py-3 min-w-[120px]">
+                    <span className="text-xs font-bold" style={{ color: 'var(--sfp-ink)' }}>Published</span>
+                    <span className="text-xs" style={{ color: 'var(--sfp-slate)' }}>
+                      {pillarContent?.meta.publishDate
+                        ? new Date(pillarContent.meta.publishDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+                        : 'Jan 2026'}
+                    </span>
+                  </div>
+                  <div className="flex flex-col justify-center px-5 py-3 min-w-[120px]">
+                    <span className="text-xs font-bold" style={{ color: 'var(--sfp-ink)' }}>Last Updated</span>
+                    <span className="text-xs" style={{ color: 'var(--sfp-slate)' }}>
+                      {new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                    </span>
+                  </div>
+                  <div className="flex flex-col justify-center px-5 py-3 min-w-[140px]">
+                    <span className="text-xs font-bold" style={{ color: 'var(--sfp-ink)' }}>Reviewed By</span>
+                    <span className="text-xs" style={{ color: 'var(--sfp-slate)' }}>{expert.name}</span>
+                  </div>
+                  <div className="flex flex-col justify-center px-5 py-3 min-w-[130px]">
+                    <span className="text-xs font-bold" style={{ color: 'var(--sfp-ink)' }}>Fact-Checked</span>
+                    <span className="text-xs" style={{ color: 'var(--sfp-slate)' }}>{getFirstMondayOfMonth()}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {/* Expert Verifier */}
-            <div className="mt-8">
+            <div className="mt-6">
               <ExpertVerifier
                 name={expert.name}
                 title={expert.role}
@@ -283,7 +340,6 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
                 bio={expert.bio || undefined}
                 image={expert.image_url || undefined}
                 linkedInUrl={expert.linkedin_url || undefined}
-                variant="compact"
               />
             </div>
 
@@ -312,16 +368,26 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
               </div>
             )}
 
+            {/* Newsletter */}
+            <div className="mt-8">
+              <NewsletterBox />
+            </div>
+
             {/* Disclaimer */}
-            <aside className="mt-8 rounded-xl border border-gray-200 bg-white p-5 text-sm shadow-sm" style={{ color: 'var(--sfp-slate)' }}>
-              <p>
-                <strong style={{ color: 'var(--sfp-ink)' }}>Affiliate Disclosure:</strong> SmartFinPro may earn a commission
-                when you click links and make a purchase. This does not affect our
-                editorial independence.{' '}
-                <Link href="/affiliate-disclosure" className="hover:underline" style={{ color: 'var(--sfp-navy)' }}>
-                  Learn more
-                </Link>
-              </p>
+            <aside className="mt-6 rounded-xl border border-gray-200 bg-white p-5 text-sm shadow-sm" style={{ color: 'var(--sfp-slate)' }}>
+              <div className="flex items-start gap-3">
+                <Shield className="h-4 w-4 mt-0.5 shrink-0" style={{ color: 'var(--sfp-navy)' }} />
+                <div>
+                  <p className="font-semibold mb-1" style={{ color: 'var(--sfp-ink)' }}>Affiliate Disclosure &amp; Editorial Independence</p>
+                  <p>
+                    SmartFinPro may earn a commission when you click links and make a purchase. Our editorial team operates independently — commission relationships do not influence ratings, rankings, or recommendations.
+                    All scores reflect our expert testing methodology.{' '}
+                    <Link href="/affiliate-disclosure" className="hover:underline font-medium" style={{ color: 'var(--sfp-navy)' }}>
+                      Read our full disclosure policy →
+                    </Link>
+                  </p>
+                </div>
+              </div>
             </aside>
 
           </div>

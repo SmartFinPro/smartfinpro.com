@@ -94,8 +94,6 @@ export function RegionalHeroImage({ market, category, slug, className = '' }: Re
     return (
       <div className={`relative overflow-hidden rounded-2xl border border-gray-200 ${className}`}>
         <div className="relative aspect-[21/9]">
-          {/* Shimmer while loading */}
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-gray-100 to-transparent animate-pulse" />
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={resolvedSrc}

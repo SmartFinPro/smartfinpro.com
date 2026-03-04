@@ -45,6 +45,7 @@ import type { MDXRemoteSerializeResult } from '@/lib/mdx/types';
 import { getFirstMondayOfMonth } from '@/lib/utils/date-helpers';
 import { CTASlot } from '@/components/marketing/cta-slot';
 import type { EnrichedCtaPartner } from '@/lib/types/page-cta';
+import { RegionalHeroImage } from '@/components/marketing/regional-hero-image';
 
 // ── Auto-Quiz: derive topic from page category ──────────────────
 type QuizTopic = 'trading' | 'personal-finance' | 'forex' | 'business-banking' | 'ai-tools' | 'broker' | 'banking';
@@ -84,6 +85,8 @@ interface ReportLayoutProps {
   miniQuiz?: MiniQuizConfig;
   /** Dashboard-configured CTA partners for this page */
   ctaPartners?: EnrichedCtaPartner[];
+  /** URL slug (e.g. "etoro-review") — used to resolve review-specific hero image */
+  slug?: string;
 }
 
 function looksLikeRole(text: string): boolean {
@@ -113,6 +116,7 @@ export function ReportLayout({
   category,
   miniQuiz,
   ctaPartners,
+  slug,
 }: ReportLayoutProps) {
   const marketPrefix = `/${market}`;
   const categoryName = categoryConfig[category]?.name || category.replace('-', ' ');
@@ -343,6 +347,22 @@ export function ReportLayout({
           </div>
         </div>
       </section>
+
+      {/* ═══════════════════════════════════════════════════════════════
+          1b. HERO IMAGE (review-specific or category pillar fallback)
+          ═══════════════════════════════════════════════════════════════ */}
+      <div className="bg-white border-b border-gray-100">
+        <div className="container mx-auto px-4 py-4">
+          <div className="max-w-7xl mx-auto">
+            <RegionalHeroImage
+              market={market}
+              category={category}
+              slug={slug}
+              className="w-full"
+            />
+          </div>
+        </div>
+      </div>
 
       {/* ═══════════════════════════════════════════════════════════════
           2. TWO-COLUMN LAYOUT

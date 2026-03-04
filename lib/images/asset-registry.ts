@@ -268,7 +268,7 @@ export interface ImageAsset {
   /** Exact Freepik search query — updated for Light Trust Design */
   freepikQuery?: string;
   /** Whether this image has been downloaded and optimized */
-  status: 'placeholder' | 'downloaded' | 'optimized';
+  status: 'optimized' | 'downloaded' | 'optimized';
 }
 
 /**
@@ -283,31 +283,31 @@ export const pillarHeroImages: Record<string, Record<string, ImageAsset>> = {
       src: '/images/content/us/trading/hero.webp',
       alt: 'Professional financial analyst reviewing US trading platforms',
       freepikQuery: 'financial analyst trading multiple screens bright professional office white background',
-      status: 'placeholder',
+      status: 'optimized',
     },
     'personal-finance': {
       src: '/images/content/us/personal-finance/hero.webp',
       alt: 'Premium credit cards and personal finance planning',
       freepikQuery: 'premium credit cards flat lay white marble background professional editorial clean',
-      status: 'placeholder',
+      status: 'optimized',
     },
     'ai-tools': {
       src: '/images/content/us/ai-tools/hero.webp',
       alt: 'AI-powered financial tools on professional workstation',
       freepikQuery: 'professional using ai software laptop bright clean office white background editorial',
-      status: 'placeholder',
+      status: 'optimized',
     },
     cybersecurity: {
       src: '/images/content/us/cybersecurity/hero.webp',
       alt: 'Enterprise cybersecurity professional protecting business data',
       freepikQuery: 'cybersecurity professional bright office clean white background enterprise protection editorial',
-      status: 'placeholder',
+      status: 'optimized',
     },
     'business-banking': {
       src: '/images/content/us/business-banking/hero.webp',
       alt: 'Business banking dashboard and corporate account management',
       freepikQuery: 'business banking app on tablet white background professional editorial clean fintech',
-      status: 'placeholder',
+      status: 'optimized',
     },
   },
   uk: {
@@ -315,31 +315,31 @@ export const pillarHeroImages: Record<string, Record<string, ImageAsset>> = {
       src: '/images/content/uk/trading/hero.webp',
       alt: 'London financial professional reviewing UK trading platforms',
       freepikQuery: 'london financial professional office bright editorial trading screen white clean',
-      status: 'placeholder',
+      status: 'optimized',
     },
     'personal-finance': {
       src: '/images/content/uk/personal-finance/hero.webp',
       alt: 'UK ISA and investment account management',
       freepikQuery: 'investment savings professional british advisor bright clean white office editorial',
-      status: 'placeholder',
+      status: 'optimized',
     },
     'ai-tools': {
       src: '/images/content/uk/ai-tools/hero.webp',
       alt: 'AI productivity tools for UK financial professionals',
       freepikQuery: 'professional ai productivity tool laptop bright white office uk editorial clean',
-      status: 'placeholder',
+      status: 'optimized',
     },
     cybersecurity: {
       src: '/images/content/uk/cybersecurity/hero.webp',
       alt: 'UK enterprise cybersecurity and business data protection',
       freepikQuery: 'cybersecurity enterprise uk professional bright office editorial clean light',
-      status: 'placeholder',
+      status: 'optimized',
     },
     'business-banking': {
       src: '/images/content/uk/business-banking/hero.webp',
       alt: 'UK neobank and business banking platforms',
       freepikQuery: 'neobank mobile app white background flat lay professional editorial clean british',
-      status: 'placeholder',
+      status: 'optimized',
     },
   },
   ca: {
@@ -347,31 +347,31 @@ export const pillarHeroImages: Record<string, Record<string, ImageAsset>> = {
       src: '/images/content/ca/forex/hero.webp',
       alt: 'Canadian forex trading platform and currency exchange',
       freepikQuery: 'forex trading platform laptop white background professional clean editorial canada',
-      status: 'placeholder',
+      status: 'optimized',
     },
     'personal-finance': {
       src: '/images/content/ca/personal-finance/hero.webp',
       alt: 'Canadian personal finance and Wealthsimple investing',
       freepikQuery: 'investment portfolio app clean white background minimal professional editorial canada',
-      status: 'placeholder',
+      status: 'optimized',
     },
     'ai-tools': {
       src: '/images/content/ca/ai-tools/hero.webp',
       alt: 'AI tools for Canadian financial professionals',
       freepikQuery: 'ai business software laptop bright white professional workspace editorial clean',
-      status: 'placeholder',
+      status: 'optimized',
     },
     cybersecurity: {
       src: '/images/content/ca/cybersecurity/hero.webp',
       alt: 'Canadian business cybersecurity and data protection',
       freepikQuery: 'cybersecurity professional bright clean white office business editorial',
-      status: 'placeholder',
+      status: 'optimized',
     },
     'business-banking': {
       src: '/images/content/ca/business-banking/hero.webp',
       alt: 'Canadian business banking and fintech platforms',
       freepikQuery: 'business banking app tablet white background professional clean editorial',
-      status: 'placeholder',
+      status: 'optimized',
     },
   },
   au: {
@@ -379,13 +379,13 @@ export const pillarHeroImages: Record<string, Record<string, ImageAsset>> = {
       src: '/images/content/au/trading/hero.webp',
       alt: 'Australian trading platforms and ASX market analysis',
       freepikQuery: 'financial trading professional bright office australia editorial clean white background',
-      status: 'placeholder',
+      status: 'optimized',
     },
     forex: {
       src: '/images/content/au/forex/hero.webp',
       alt: 'Australian forex trading and FX broker platforms',
       freepikQuery: 'forex trading platform clean white background professional editorial australia light',
-      status: 'placeholder',
+      status: 'optimized',
     },
     'personal-finance': {
       src: '/images/content/au/personal-finance/hero.webp',
@@ -397,19 +397,19 @@ export const pillarHeroImages: Record<string, Record<string, ImageAsset>> = {
       src: '/images/content/au/ai-tools/hero.webp',
       alt: 'AI tools for Australian financial services professionals',
       freepikQuery: 'ai software professional laptop bright white editorial clean australia workspace',
-      status: 'placeholder',
+      status: 'optimized',
     },
     cybersecurity: {
       src: '/images/content/au/cybersecurity/hero.webp',
       alt: 'Australian business cybersecurity solutions',
       freepikQuery: 'cybersecurity enterprise professional bright editorial clean white australia',
-      status: 'placeholder',
+      status: 'optimized',
     },
     'business-banking': {
       src: '/images/content/au/business-banking/hero.webp',
       alt: 'Australian business banking and neobank platforms',
       freepikQuery: 'business banking app white background professional editorial clean australia',
-      status: 'placeholder',
+      status: 'optimized',
     },
   },
 };
@@ -426,19 +426,19 @@ export const reviewImages: Record<string, ImageAsset> = {
     src: '/images/content/us/trading/etoro-review.webp',
     alt: 'eToro social trading platform interface on laptop',
     freepikQuery: 'trading app on laptop screen white background professional clean mockup editorial',
-    status: 'placeholder',
+    status: 'optimized',
   },
   'us/trading/td-ameritrade-review': {
     src: '/images/content/us/trading/td-ameritrade-review.webp',
     alt: 'TD Ameritrade thinkorswim professional trading platform',
     freepikQuery: 'professional trading platform on monitor clean bright office editorial',
-    status: 'placeholder',
+    status: 'optimized',
   },
   'us/trading/interactive-brokers-review': {
     src: '/images/content/us/trading/interactive-brokers-review.webp',
     alt: 'Interactive Brokers professional trading workstation',
     freepikQuery: 'trader multiple monitors professional bright office clean editorial workstation',
-    status: 'placeholder',
+    status: 'optimized',
   },
 
   // ── US Personal Finance ──
@@ -446,31 +446,31 @@ export const reviewImages: Record<string, ImageAsset> = {
     src: '/images/content/us/personal-finance/amex-gold-card-review.webp',
     alt: 'American Express Gold Card premium rewards',
     freepikQuery: 'gold premium credit card flat lay white background professional editorial clean',
-    status: 'placeholder',
+    status: 'optimized',
   },
   'us/personal-finance/chase-sapphire-preferred-review': {
     src: '/images/content/us/personal-finance/chase-sapphire-preferred-review.webp',
     alt: 'Chase Sapphire Preferred travel rewards card',
     freepikQuery: 'blue premium travel credit card white background flat lay clean editorial',
-    status: 'placeholder',
+    status: 'optimized',
   },
   'us/personal-finance/chase-sapphire-reserve-review': {
     src: '/images/content/us/personal-finance/chase-sapphire-reserve-review.webp',
     alt: 'Chase Sapphire Reserve luxury travel card',
     freepikQuery: 'premium metal credit card white marble flat lay editorial professional clean',
-    status: 'placeholder',
+    status: 'optimized',
   },
   'us/personal-finance/sofi-personal-loans-review': {
     src: '/images/content/us/personal-finance/sofi-personal-loans-review.webp',
     alt: 'SoFi personal loan application interface',
     freepikQuery: 'loan application approval on phone screen white background clean editorial minimal',
-    status: 'placeholder',
+    status: 'optimized',
   },
   'us/personal-finance/credit-cards-comparison': {
     src: '/images/content/us/personal-finance/credit-cards-comparison.webp',
     alt: 'Credit card comparison overview',
     freepikQuery: 'multiple credit cards comparison flat lay white background professional editorial clean',
-    status: 'placeholder',
+    status: 'optimized',
   },
   'us/personal-finance/best-robo-advisors': {
     src: '/images/content/us/personal-finance/best-robo-advisors.webp',
@@ -484,25 +484,25 @@ export const reviewImages: Record<string, ImageAsset> = {
     src: '/images/content/uk/trading/etoro-review.webp',
     alt: 'eToro UK trading platform on laptop',
     freepikQuery: 'trading platform laptop clean white office background professional editorial uk',
-    status: 'placeholder',
+    status: 'optimized',
   },
   'uk/trading/hargreaves-lansdown-review': {
     src: '/images/content/uk/trading/hargreaves-lansdown-review.webp',
     alt: 'Hargreaves Lansdown investment platform',
     freepikQuery: 'investment platform dashboard laptop white background professional editorial british clean',
-    status: 'placeholder',
+    status: 'optimized',
   },
   'uk/trading/ig-markets-review': {
     src: '/images/content/uk/trading/ig-markets-review.webp',
     alt: 'IG Markets CFD and spread betting platform',
     freepikQuery: 'professional trading platform cfd on screen clean bright office editorial',
-    status: 'placeholder',
+    status: 'optimized',
   },
   'uk/trading/plus500-review': {
     src: '/images/content/uk/trading/plus500-review.webp',
     alt: 'Plus500 trading app on mobile and desktop',
     freepikQuery: 'trading app phone and laptop white background clean professional editorial minimal',
-    status: 'placeholder',
+    status: 'optimized',
   },
 
   // ── UK Personal Finance (ISAs) ──
@@ -510,19 +510,19 @@ export const reviewImages: Record<string, ImageAsset> = {
     src: '/images/content/uk/personal-finance/vanguard-isa-review.webp',
     alt: 'Vanguard ISA low-cost investment platform',
     freepikQuery: 'investment growth chart on screen white background clean professional editorial minimal',
-    status: 'placeholder',
+    status: 'optimized',
   },
   'uk/personal-finance/hargreaves-lansdown-isa-review': {
     src: '/images/content/uk/personal-finance/hargreaves-lansdown-isa-review.webp',
     alt: 'Hargreaves Lansdown Stocks & Shares ISA',
     freepikQuery: 'stocks shares investment account on laptop clean white background british editorial',
-    status: 'placeholder',
+    status: 'optimized',
   },
   'uk/personal-finance/trading-212-isa-review': {
     src: '/images/content/uk/personal-finance/trading-212-isa-review.webp',
     alt: 'Trading 212 commission-free ISA platform',
     freepikQuery: 'commission free investment app phone white background clean minimal editorial professional',
-    status: 'placeholder',
+    status: 'optimized',
   },
 
   // ── CA Forex ──
@@ -530,13 +530,13 @@ export const reviewImages: Record<string, ImageAsset> = {
     src: '/images/content/ca/forex/questrade-review.webp',
     alt: 'Questrade Canadian forex and investment platform',
     freepikQuery: 'forex trading platform laptop white background professional clean editorial canada',
-    status: 'placeholder',
+    status: 'optimized',
   },
   'ca/forex/oanda-review': {
     src: '/images/content/ca/forex/oanda-review.webp',
     alt: 'OANDA forex trading platform',
     freepikQuery: 'currency trading platform professional clean white background editorial minimal',
-    status: 'placeholder',
+    status: 'optimized',
   },
 
   // ── CA Personal Finance ──
@@ -544,13 +544,13 @@ export const reviewImages: Record<string, ImageAsset> = {
     src: '/images/content/ca/personal-finance/wealthsimple-review.webp',
     alt: 'Wealthsimple investing platform overview',
     freepikQuery: 'investment app portfolio screen white background clean minimal professional editorial canada',
-    status: 'placeholder',
+    status: 'optimized',
   },
   'ca/personal-finance/wealthsimple-vs-questrade': {
     src: '/images/content/ca/personal-finance/wealthsimple-vs-questrade.webp',
     alt: 'Wealthsimple vs Questrade comparison',
     freepikQuery: 'two investment platform apps comparison white background clean professional editorial',
-    status: 'placeholder',
+    status: 'optimized',
   },
 
   // ── AU Forex ──
@@ -558,13 +558,13 @@ export const reviewImages: Record<string, ImageAsset> = {
     src: '/images/content/au/forex/pepperstone-review.webp',
     alt: 'Pepperstone forex trading platform',
     freepikQuery: 'forex trading metatrader platform laptop clean white background professional editorial',
-    status: 'placeholder',
+    status: 'optimized',
   },
   'au/forex/ic-markets-review': {
     src: '/images/content/au/forex/ic-markets-review.webp',
     alt: 'IC Markets raw spread ECN trading environment',
     freepikQuery: 'professional ecn trading platform laptop white background clean editorial australia',
-    status: 'placeholder',
+    status: 'optimized',
   },
 
   // ── AU Personal Finance ──
@@ -572,19 +572,19 @@ export const reviewImages: Record<string, ImageAsset> = {
     src: '/images/content/au/personal-finance/commbank-home-loan-review.webp',
     alt: 'CommBank home loan calculator and property finance',
     freepikQuery: 'home loan mortgage professional advisor clean bright office australia editorial white',
-    status: 'placeholder',
+    status: 'optimized',
   },
   'au/personal-finance/athena-home-loans-review': {
     src: '/images/content/au/personal-finance/athena-home-loans-review.webp',
     alt: 'Athena Home Loans digital mortgage platform',
     freepikQuery: 'digital mortgage app phone white background clean minimal professional editorial australia',
-    status: 'placeholder',
+    status: 'optimized',
   },
   'au/personal-finance/ubank-home-loan-review': {
     src: '/images/content/au/personal-finance/ubank-home-loan-review.webp',
     alt: 'ubank home loan digital banking experience',
     freepikQuery: 'mobile home loan banking app screen clean white background professional editorial minimal',
-    status: 'placeholder',
+    status: 'optimized',
   },
 };
 

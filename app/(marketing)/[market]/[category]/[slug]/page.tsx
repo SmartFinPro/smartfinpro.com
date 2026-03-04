@@ -126,6 +126,7 @@ export default async function ContentPage({ params }: ContentPageProps) {
           siblingReviews={siblingReviews}
           market={market as Market}
           category={category as Category}
+          slug={slug}
           miniQuiz={content.meta.miniQuiz}
           review={{
             title: content.meta.seoTitle || content.meta.title,
@@ -182,6 +183,7 @@ export default async function ContentPage({ params }: ContentPageProps) {
         siblingReviews={siblingReviews}
         market={market as Market}
         category={category as Category}
+        slug={slug}
         miniQuiz={content.meta.miniQuiz}
         review={{
           title: content.meta.seoTitle || content.meta.title,
