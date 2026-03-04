@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { serializeMDX } from '@/lib/mdx/serialize';
 import { getContentBySlug, getAllContentSlugs, getRelatedContent, getContentByMarketAndCategory } from '@/lib/mdx';
 import { isValidMarket, isValidCategory, Market, Category, marketConfig } from '@/lib/i18n/config';
@@ -87,6 +87,18 @@ export default async function ContentPage({ params }: ContentPageProps) {
   );
 
   if (!content) {
+    // Check if this page was archived (soft-deleted) — redirect to replacement
+    try {
+      const { getArchivedRedirect } = await import('@/lib/actions/archived-pages');
+      const marketPrefix = market === 'us' ? '' : `/${market}`;
+      const pageUrl = `${marketPrefix}/${category}/${slug}`;
+      const redirectTarget = await getArchivedRedirect(pageUrl);
+      if (redirectTarget) {
+        redirect(redirectTarget);
+      }
+    } catch {
+      // If archived_pages table doesn't exist yet or query fails, fall through to notFound
+    }
     notFound();
   }
 

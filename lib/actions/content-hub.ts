@@ -48,6 +48,13 @@ export interface ContentHubRow {
   backlinkNew30d: number | null;
   indexStatus: string;
   type: 'mdx' | 'core';
+  // Archive fields (optional — only populated when archive data exists)
+  archiveStatus?: 'active' | 'archived';
+  archivedAt?: string;
+  archivedPageId?: string;
+  canHardDelete?: boolean;
+  daysUntilHardDelete?: number;
+  redirectTarget?: string;
 }
 
 // ── Constants ──────────────────────────────────────────────────
@@ -542,6 +549,7 @@ export interface ContentHubStats {
   totalPages: number;
   mdxPages: number;
   corePages: number;
+  archivedCount: number;
   avgWordCount: number;
   totalWords: number;
   avgQuality: number;
@@ -580,6 +588,7 @@ function computeStats(rows: ContentHubRow[]): ContentHubStats {
     totalPages: rows.length,
     mdxPages: mdxRows.length,
     corePages: rows.filter((r) => r.type === 'core').length,
+    archivedCount: rows.filter((r) => r.archiveStatus === 'archived').length,
     avgWordCount: mdxRows.length > 0 ? Math.round(totalWords / mdxRows.length) : 0,
     totalWords,
     avgQuality: mdxRows.length > 0 ? Math.round(totalQuality / mdxRows.length) : 0,
@@ -650,6 +659,79 @@ export const getContentHubData = unstable_cache(
       }
     } catch {
       // Backlink loading is optional — don't break the hub if it fails
+    }
+
+    // Merge archive status from archived_pages table
+    try {
+      const { getArchivedPageMap } = await import('@/lib/actions/archived-pages');
+      const archivedMap = await getArchivedPageMap();
+
+      if (archivedMap.size > 0) {
+        // Mark active rows that are actually archived
+        for (const row of allRows) {
+          const archived = archivedMap.get(row.url);
+          if (archived) {
+            row.archiveStatus = 'archived';
+            row.archivedAt = archived.archived_at;
+            row.archivedPageId = archived.id;
+            row.redirectTarget = archived.redirect_target;
+            const cooldownDate = new Date(archived.cooldown_expires_at);
+            row.canHardDelete = cooldownDate <= new Date();
+            row.daysUntilHardDelete = Math.max(
+              0,
+              Math.ceil((cooldownDate.getTime() - Date.now()) / (24 * 60 * 60 * 1000))
+            );
+          } else {
+            row.archiveStatus = 'active';
+          }
+        }
+
+        // Also create synthetic rows for archived pages not in the active scan
+        // (because their MDX was moved to content/_archived/)
+        for (const [pageUrl, archived] of archivedMap) {
+          const alreadyInRows = allRows.some((r) => r.url === pageUrl);
+          if (!alreadyInRows) {
+            // Create a minimal row for the archived page
+            const marketMatch = pageUrl.match(/^\/(uk|ca|au)\//);
+            const market = marketMatch ? marketMatch[1].toUpperCase() : 'US';
+            const parts = pageUrl.replace(/^\//, '').split('/');
+            const category = market === 'US' ? (parts[0] || 'unknown') : (parts[1] || 'unknown');
+            const cooldownDate = new Date(archived.cooldown_expires_at);
+
+            allRows.push({
+              url: pageUrl,
+              filePath: '',
+              market,
+              category,
+              title: `[Archived] ${archived.slug}`,
+              seoTitle: '',
+              description: '',
+              wordCount: 0,
+              sizeKB: 0,
+              httpStatus: null,
+              httpHealth: 'yellow' as HealthStatus,
+              seoHealth: { titleStatus: 'red', titleLength: 0, descStatus: 'red', descLength: 0, overall: 'red' },
+              contentQuality: { score: 0, wordScore: 0, structureScore: 0, linkScore: 0, componentScore: 0, breakdown: '—' },
+              cpsScore: null,
+              backlinkCount: null,
+              backlinkNew30d: null,
+              indexStatus: 'Archived',
+              type: 'mdx' as const,
+              archiveStatus: 'archived',
+              archivedAt: archived.archived_at,
+              archivedPageId: archived.id,
+              canHardDelete: cooldownDate <= new Date(),
+              daysUntilHardDelete: Math.max(
+                0,
+                Math.ceil((cooldownDate.getTime() - Date.now()) / (24 * 60 * 60 * 1000))
+              ),
+              redirectTarget: archived.redirect_target,
+            });
+          }
+        }
+      }
+    } catch {
+      // Archive loading is optional — don't break the hub if table doesn't exist yet
     }
 
     return { rows: allRows, stats: computeStats(allRows) };

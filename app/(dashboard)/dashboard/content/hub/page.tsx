@@ -12,6 +12,8 @@ import {
   Zap,
   X,
   Link2,
+  Star,
+  Archive,
 } from 'lucide-react';
 import { getContentHubData } from '@/lib/actions/content-hub';
 import { getCtaPartnersForPages } from '@/lib/actions/page-cta-partners';
@@ -27,8 +29,10 @@ export const revalidate = 0;
 // ── Filter types ───────────────────────────────────────────────
 
 type SeoFilter = 'all' | 'optimal' | 'issues' | 'yellow' | 'red';
+type QualityFilter = 'all' | '90plus' | 'good' | 'below80';
+type StatusFilter = 'all' | 'active' | 'archived';
 
-const FILTER_LABELS: Record<SeoFilter, string> = {
+const SEO_FILTER_LABELS: Record<SeoFilter, string> = {
   all: 'All Pages',
   optimal: 'SEO Optimal',
   issues: 'SEO Issues (Yellow + Red)',
@@ -36,7 +40,20 @@ const FILTER_LABELS: Record<SeoFilter, string> = {
   red: 'SEO Critical',
 };
 
-function filterRows(rows: ContentHubRow[], filter: SeoFilter): ContentHubRow[] {
+const QUALITY_FILTER_LABELS: Record<QualityFilter, string> = {
+  all: 'All Quality',
+  '90plus': 'Quality ≥ 90 (Excellent)',
+  good: 'Quality 80–89 (Good)',
+  below80: 'Quality < 80 (Needs Work)',
+};
+
+const STATUS_FILTER_LABELS: Record<StatusFilter, string> = {
+  all: 'All Status',
+  active: 'Active Pages',
+  archived: 'Archived Pages',
+};
+
+function filterBySeo(rows: ContentHubRow[], filter: SeoFilter): ContentHubRow[] {
   switch (filter) {
     case 'optimal':
       return rows.filter((r) => r.seoHealth.overall === 'green');
@@ -49,6 +66,41 @@ function filterRows(rows: ContentHubRow[], filter: SeoFilter): ContentHubRow[] {
     default:
       return rows;
   }
+}
+
+function filterByQuality(rows: ContentHubRow[], filter: QualityFilter): ContentHubRow[] {
+  switch (filter) {
+    case '90plus':
+      return rows.filter((r) => r.contentQuality.score >= 90);
+    case 'good':
+      return rows.filter((r) => r.contentQuality.score >= 80 && r.contentQuality.score < 90);
+    case 'below80':
+      return rows.filter((r) => r.contentQuality.score < 80);
+    default:
+      return rows;
+  }
+}
+
+function filterByStatus(rows: ContentHubRow[], filter: StatusFilter): ContentHubRow[] {
+  switch (filter) {
+    case 'active':
+      return rows.filter((r) => r.archiveStatus !== 'archived');
+    case 'archived':
+      return rows.filter((r) => r.archiveStatus === 'archived');
+    default:
+      return rows;
+  }
+}
+
+// ── URL builder (preserves all filter params) ────────────────────
+
+function buildHubUrl(params: { seo?: string; quality?: string; status?: string }): string {
+  const sp = new URLSearchParams();
+  if (params.seo && params.seo !== 'all') sp.set('seo', params.seo);
+  if (params.quality && params.quality !== 'all') sp.set('quality', params.quality);
+  if (params.status && params.status !== 'all') sp.set('status', params.status);
+  const qs = sp.toString();
+  return `/dashboard/content/hub${qs ? `?${qs}` : ''}`;
 }
 
 // ── Clickable Stat Card ────────────────────────────────────────
@@ -99,7 +151,7 @@ function StatCard({
 // ── Page ───────────────────────────────────────────────────────
 
 interface ContentHubPageProps {
-  searchParams: Promise<{ seo?: string }>;
+  searchParams: Promise<{ seo?: string; quality?: string; status?: string }>;
 }
 
 export default async function ContentHubPage({ searchParams }: ContentHubPageProps) {
@@ -107,6 +159,14 @@ export default async function ContentHubPage({ searchParams }: ContentHubPagePro
   const seoFilter = (['optimal', 'issues', 'yellow', 'red'].includes(params.seo || '')
     ? params.seo
     : 'all') as SeoFilter;
+  const qualityFilter = (['90plus', 'good', 'below80'].includes(params.quality || '')
+    ? params.quality
+    : 'all') as QualityFilter;
+  const statusFilter = (['active', 'archived'].includes(params.status || '')
+    ? params.status
+    : 'all') as StatusFilter;
+
+  const hasAnyFilter = seoFilter !== 'all' || qualityFilter !== 'all' || statusFilter !== 'all';
 
   // Parallel data loading
   const [{ rows: allRows, stats }, affiliateResult] = await Promise.all([
@@ -114,7 +174,15 @@ export default async function ContentHubPage({ searchParams }: ContentHubPagePro
     getAffiliateLinksService(),
   ]);
 
-  const rows = filterRows(allRows, seoFilter);
+  // Apply all filters (AND logic)
+  let rows = filterBySeo(allRows, seoFilter);
+  rows = filterByQuality(rows, qualityFilter);
+  rows = filterByStatus(rows, statusFilter);
+
+  // Quality distribution (computed from ALL rows, not filtered)
+  const q90Plus = allRows.filter((r) => r.contentQuality.score >= 90).length;
+  const q80to89 = allRows.filter((r) => r.contentQuality.score >= 80 && r.contentQuality.score < 90).length;
+  const qBelow80 = allRows.filter((r) => r.contentQuality.score < 80).length;
 
   // Batch load CTA partner assignments for all visible rows
   const pageUrls = rows.map((r) => r.url);
@@ -151,6 +219,16 @@ export default async function ContentHubPage({ searchParams }: ContentHubPagePro
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://smartfinpro.com';
 
+  // Status distribution
+  const activeCount = allRows.filter((r) => r.archiveStatus !== 'archived').length;
+  const archivedCount = stats.archivedCount;
+
+  // Build combined filter label for banner
+  const filterParts: string[] = [];
+  if (statusFilter !== 'all') filterParts.push(STATUS_FILTER_LABELS[statusFilter]);
+  if (seoFilter !== 'all') filterParts.push(SEO_FILTER_LABELS[seoFilter]);
+  if (qualityFilter !== 'all') filterParts.push(QUALITY_FILTER_LABELS[qualityFilter]);
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -173,14 +251,14 @@ export default async function ContentHubPage({ searchParams }: ContentHubPagePro
       </div>
 
       {/* Stat Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-8">
         <StatCard
           label="Total Pages"
           value={stats.totalPages}
           icon={FileText}
           iconBg="bg-violet-50 text-violet-500"
           href="/dashboard/content/hub"
-          active={seoFilter === 'all'}
+          active={!hasAnyFilter}
         />
         <StatCard
           label="Avg CPS"
@@ -211,7 +289,7 @@ export default async function ContentHubPage({ searchParams }: ContentHubPagePro
           value={stats.seoGreen}
           icon={CheckCircle2}
           iconBg="bg-emerald-50 text-emerald-500"
-          href="/dashboard/content/hub?seo=optimal"
+          href={buildHubUrl({ seo: 'optimal', quality: qualityFilter, status: statusFilter })}
           active={seoFilter === 'optimal'}
         />
         <StatCard
@@ -219,8 +297,16 @@ export default async function ContentHubPage({ searchParams }: ContentHubPagePro
           value={stats.seoYellow + stats.seoRed}
           icon={AlertTriangle}
           iconBg="bg-amber-50 text-amber-500"
-          href="/dashboard/content/hub?seo=issues"
+          href={buildHubUrl({ seo: 'issues', quality: qualityFilter, status: statusFilter })}
           active={seoFilter === 'issues'}
+        />
+        <StatCard
+          label="Archived"
+          value={archivedCount}
+          icon={Archive}
+          iconBg="bg-orange-50 text-orange-500"
+          href={buildHubUrl({ seo: seoFilter, quality: qualityFilter, status: 'archived' })}
+          active={statusFilter === 'archived'}
         />
       </div>
 
@@ -228,7 +314,7 @@ export default async function ContentHubPage({ searchParams }: ContentHubPagePro
       <div className="flex items-center gap-6 px-4 py-3 bg-white border border-slate-200 rounded-xl">
         <span className="text-sm font-medium text-slate-600">SEO Health:</span>
         <Link
-          href="/dashboard/content/hub?seo=optimal"
+          href={buildHubUrl({ seo: 'optimal', quality: qualityFilter, status: statusFilter })}
           className={`inline-flex items-center gap-1.5 text-sm rounded-md px-2 py-1 transition-colors ${
             seoFilter === 'optimal' ? 'bg-emerald-50 ring-1 ring-emerald-200' : 'hover:bg-slate-50'
           }`}
@@ -238,7 +324,7 @@ export default async function ContentHubPage({ searchParams }: ContentHubPagePro
           <span className="text-slate-400">optimal</span>
         </Link>
         <Link
-          href="/dashboard/content/hub?seo=yellow"
+          href={buildHubUrl({ seo: 'yellow', quality: qualityFilter, status: statusFilter })}
           className={`inline-flex items-center gap-1.5 text-sm rounded-md px-2 py-1 transition-colors ${
             seoFilter === 'yellow' ? 'bg-amber-50 ring-1 ring-amber-200' : 'hover:bg-slate-50'
           }`}
@@ -248,7 +334,7 @@ export default async function ContentHubPage({ searchParams }: ContentHubPagePro
           <span className="text-slate-400">needs work</span>
         </Link>
         <Link
-          href="/dashboard/content/hub?seo=red"
+          href={buildHubUrl({ seo: 'red', quality: qualityFilter, status: statusFilter })}
           className={`inline-flex items-center gap-1.5 text-sm rounded-md px-2 py-1 transition-colors ${
             seoFilter === 'red' ? 'bg-red-50 ring-1 ring-red-200' : 'hover:bg-slate-50'
           }`}
@@ -265,11 +351,76 @@ export default async function ContentHubPage({ searchParams }: ContentHubPagePro
         </span>
       </div>
 
+      {/* Quality Breakdown */}
+      <div className="flex items-center gap-6 px-4 py-3 bg-white border border-slate-200 rounded-xl">
+        <span className="text-sm font-medium text-slate-600">Quality:</span>
+        <Link
+          href={buildHubUrl({ seo: seoFilter, quality: '90plus', status: statusFilter })}
+          className={`inline-flex items-center gap-1.5 text-sm rounded-md px-2 py-1 transition-colors ${
+            qualityFilter === '90plus' ? 'bg-emerald-50 ring-1 ring-emerald-200' : 'hover:bg-slate-50'
+          }`}
+        >
+          <span className="w-3 h-3 rounded-full bg-emerald-500" />
+          <span className="text-slate-700 font-medium">{q90Plus}</span>
+          <span className="text-slate-400">≥ 90</span>
+        </Link>
+        <Link
+          href={buildHubUrl({ seo: seoFilter, quality: 'good', status: statusFilter })}
+          className={`inline-flex items-center gap-1.5 text-sm rounded-md px-2 py-1 transition-colors ${
+            qualityFilter === 'good' ? 'bg-blue-50 ring-1 ring-blue-200' : 'hover:bg-slate-50'
+          }`}
+        >
+          <span className="w-3 h-3 rounded-full bg-blue-400" />
+          <span className="text-slate-700 font-medium">{q80to89}</span>
+          <span className="text-slate-400">80–89</span>
+        </Link>
+        <Link
+          href={buildHubUrl({ seo: seoFilter, quality: 'below80', status: statusFilter })}
+          className={`inline-flex items-center gap-1.5 text-sm rounded-md px-2 py-1 transition-colors ${
+            qualityFilter === 'below80' ? 'bg-amber-50 ring-1 ring-amber-200' : 'hover:bg-slate-50'
+          }`}
+        >
+          <span className="w-3 h-3 rounded-full bg-amber-400" />
+          <span className="text-slate-700 font-medium">{qBelow80}</span>
+          <span className="text-slate-400">&lt; 80</span>
+        </Link>
+        <span className="ml-auto text-xs text-slate-400">
+          Avg: {stats.avgQuality}/100 · Target: ≥ 90
+        </span>
+      </div>
+
+      {/* Status Breakdown (only visible when archived pages exist) */}
+      {archivedCount > 0 && (
+        <div className="flex items-center gap-6 px-4 py-3 bg-white border border-slate-200 rounded-xl">
+          <span className="text-sm font-medium text-slate-600">Status:</span>
+          <Link
+            href={buildHubUrl({ seo: seoFilter, quality: qualityFilter, status: 'active' })}
+            className={`inline-flex items-center gap-1.5 text-sm rounded-md px-2 py-1 transition-colors ${
+              statusFilter === 'active' ? 'bg-emerald-50 ring-1 ring-emerald-200' : 'hover:bg-slate-50'
+            }`}
+          >
+            <span className="w-3 h-3 rounded-full bg-emerald-500" />
+            <span className="text-slate-700 font-medium">{activeCount}</span>
+            <span className="text-slate-400">active</span>
+          </Link>
+          <Link
+            href={buildHubUrl({ seo: seoFilter, quality: qualityFilter, status: 'archived' })}
+            className={`inline-flex items-center gap-1.5 text-sm rounded-md px-2 py-1 transition-colors ${
+              statusFilter === 'archived' ? 'bg-orange-50 ring-1 ring-orange-200' : 'hover:bg-slate-50'
+            }`}
+          >
+            <span className="w-3 h-3 rounded-full bg-orange-400" />
+            <span className="text-slate-700 font-medium">{archivedCount}</span>
+            <span className="text-slate-400">archived</span>
+          </Link>
+        </div>
+      )}
+
       {/* Active Filter Banner */}
-      {seoFilter !== 'all' && (
+      {hasAnyFilter && (
         <div className="flex items-center gap-3 px-4 py-2.5 bg-violet-50 border border-violet-200 rounded-lg">
           <span className="text-sm text-violet-700 font-medium">
-            Filtered: {FILTER_LABELS[seoFilter]}
+            Filtered: {filterParts.join(' + ')}
           </span>
           <span className="text-sm text-violet-500">
             — showing {rows.length} of {allRows.length} pages
@@ -287,50 +438,8 @@ export default async function ContentHubPage({ searchParams }: ContentHubPagePro
       {/* Table */}
       <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[1400px]">
-            <thead>
-              <tr className="bg-slate-50 border-b border-slate-200">
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                  URL
-                </th>
-                <th className="px-3 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                  Market
-                </th>
-                <th className="px-3 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                  Category
-                </th>
-                <th className="px-3 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                  SEO Title
-                </th>
-                <th className="px-3 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                  CTA Partner
-                </th>
-                <th className="px-3 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                  Words
-                </th>
-                <th className="px-3 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                  Size
-                </th>
-                <th className="px-3 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                  Quality
-                </th>
-                <th className="px-3 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                  CPS
-                </th>
-                <th className="px-3 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                  BL
-                </th>
-                <th className="px-3 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                  SEO
-                </th>
-                <th className="px-3 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                  Index
-                </th>
-                <th className="px-3 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                  Action
-                </th>
-              </tr>
-            </thead>
+          <table className="w-full min-w-[1440px]">
+            {/* thead + tbody rendered by client component (owns select-all checkbox state) */}
             <ContentHubTableBody
               rows={rows}
               siteUrl={siteUrl}
@@ -343,7 +452,7 @@ export default async function ContentHubPage({ searchParams }: ContentHubPagePro
         {/* Table Footer */}
         <div className="px-4 py-3 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
           <span className="text-xs text-slate-500">
-            {rows.length} pages{seoFilter !== 'all' ? ` (of ${allRows.length} total)` : ''} ·{' '}
+            {rows.length} pages{hasAnyFilter ? ` (of ${allRows.length} total)` : ''} ·{' '}
             {stats.totalWords.toLocaleString('en-US')} total words
           </span>
           <span className="text-xs text-slate-400">
