@@ -45,3 +45,24 @@ next-env.d.ts
 
 # Local backups (never commit)
 backups/
+
+# Local working files / AI generation drafts (never commit)
+seo texte/
+*.auto-runner.sh
+AUDIT.md
+DESIGN_PROMPT.md
+GITHUB-OPSEC-SOP.md
+IMPLEMENTATION-PLAN-5DAYS.md
+INCIDENT-PLAYBOOK.md
+LAUNCH-REPORT*.md
+START.md
+TASKS.md
+claude-*.log
+claude-autorun.log
+claude-autonomous.log
+cleanup.sh
+seo-needs-work.md
+55038.jpg
+experts-collage.jpg
+*.claude-prompt-*.txt
+supabase/.temp/
