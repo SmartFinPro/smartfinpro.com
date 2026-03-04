@@ -55,19 +55,79 @@ export interface ContentHubRow {
 const CONTENT_DIR = path.join(process.cwd(), 'content');
 const MARKETS = ['us', 'uk', 'ca', 'au'] as const;
 
-const CORE_ROUTES: { url: string; title: string }[] = [
-  { url: '/', title: 'Homepage (US)' },
-  { url: '/uk', title: 'Homepage (UK)' },
-  { url: '/ca', title: 'Homepage (CA)' },
-  { url: '/au', title: 'Homepage (AU)' },
-  { url: '/tools', title: 'Tools Hub' },
-  { url: '/tools/broker-finder', title: 'Broker Finder Quiz' },
-  { url: '/tools/credit-score-simulator', title: 'Credit Score Simulator' },
-  { url: '/tools/debt-payoff-calculator', title: 'Debt Payoff Calculator' },
-  { url: '/tools/gold-roi-calculator', title: 'Gold ROI Calculator' },
-  { url: '/uk/tools/remortgage-calculator', title: 'UK Remortgage Calculator' },
-  { url: '/au/tools/superannuation-calculator', title: 'AU Super Calculator' },
-  { url: '/ca/tools/tfsa-rrsp-calculator', title: 'CA TFSA/RRSP Calculator' },
+const CORE_ROUTES: { url: string; title: string; seoTitle: string; description: string }[] = [
+  {
+    url: '/',
+    title: 'Homepage (US)',
+    seoTitle: 'SmartFinPro — Financial Intelligence Hub 2026',
+    description: 'Expert reviews of AI tools, cybersecurity, forex and personal finance across 4 global markets. Trusted analysis for modern finance professionals.',
+  },
+  {
+    url: '/uk',
+    title: 'Homepage (UK)',
+    seoTitle: 'SmartFinPro UK — Financial Intelligence Hub 2026',
+    description: 'Discover AI-powered tools, cybersecurity solutions, and financial products for United Kingdom professionals. 6 market sectors with expert reviews.',
+  },
+  {
+    url: '/ca',
+    title: 'Homepage (CA)',
+    seoTitle: 'SmartFinPro Canada — Financial Intelligence Hub',
+    description: 'SmartFinPro Canada: Expert reviews of AI tools, cybersecurity, trading and personal finance for Canadian professionals. 6 financial sectors.',
+  },
+  {
+    url: '/au',
+    title: 'Homepage (AU)',
+    seoTitle: 'SmartFinPro Australia — Financial Intelligence Hub',
+    description: 'Discover AI-powered tools, cybersecurity solutions, and financial products for Australia professionals. 6 market sectors with expert reviews.',
+  },
+  {
+    url: '/tools',
+    title: 'Tools Hub',
+    seoTitle: 'Free Financial Tools & Calculators | SmartFinPro',
+    description: 'Use our free financial calculators and comparison tools. Calculate AI ROI, loan payments, compare brokers, and make smarter financial decisions.',
+  },
+  {
+    url: '/tools/broker-finder',
+    title: 'Broker Finder Quiz',
+    seoTitle: 'Broker Finder Quiz: Find Your Best Trading Platform',
+    description: 'Answer 4 questions for personalized broker recommendations with match scores. Compare eToro, Capital.com, IBKR, and more top trading platforms.',
+  },
+  {
+    url: '/tools/credit-score-simulator',
+    title: 'Credit Score Simulator',
+    seoTitle: 'Credit Score Simulator 2026: See Your Score Impact',
+    description: 'Simulate how financial actions affect your credit score. See the impact of paying down debt, on-time payments, and credit inquiries on your FICO score.',
+  },
+  {
+    url: '/tools/debt-payoff-calculator',
+    title: 'Debt Payoff Calculator',
+    seoTitle: 'Debt Payoff Calculator 2026: Free Paydown Timeline',
+    description: 'Calculate how long it takes to pay off your debt. Our free calculator shows payment schedules, total interest, and the fastest debt-free strategies.',
+  },
+  {
+    url: '/tools/gold-roi-calculator',
+    title: 'Gold ROI Calculator',
+    seoTitle: 'Gold ROI Calculator 2026: Investment Returns Analysis',
+    description: 'Calculate your gold investment returns. Project growth, compare against inflation and other assets, and analyse gold as a market volatility hedge.',
+  },
+  {
+    url: '/uk/tools/remortgage-calculator',
+    title: 'UK Remortgage Calculator',
+    seoTitle: 'Remortgage Calculator UK 2026: Interest Savings Tool',
+    description: 'Free UK remortgage calculator: see if remortgaging will save you money. Compare rates, calculate savings, and find the best remortgage deal.',
+  },
+  {
+    url: '/au/tools/superannuation-calculator',
+    title: 'AU Super Calculator',
+    seoTitle: 'Superannuation Calculator 2026: Retirement Savings',
+    description: 'Free AU superannuation calculator to project your retirement savings. See how contributions, investment returns, and time affect your super balance.',
+  },
+  {
+    url: '/ca/tools/tfsa-rrsp-calculator',
+    title: 'CA TFSA/RRSP Calculator',
+    seoTitle: 'TFSA vs RRSP Calculator Canada 2026: Tax Savings',
+    description: 'Compare TFSA and RRSP savings strategies with our free calculator. Determine which account structure maximises your after-tax wealth in Canada.',
+  },
 ];
 
 // ── SEO Health Logic ───────────────────────────────────────────
@@ -178,6 +238,33 @@ function computeContentQuality(content: string, wordCount: number): ContentQuali
 const EMPTY_QUALITY: ContentQuality = {
   score: 0, wordScore: 0, structureScore: 0, linkScore: 0, componentScore: 0, breakdown: '—',
 };
+
+// ── Core Page Quality (SEO-only, no body content) ───────────────
+function computeCoreQuality(seoTitle: string, description: string): ContentQuality {
+  // Title score: 100 if 45-60 chars, proportional otherwise
+  const tLen = seoTitle.trim().length;
+  let titleScore = 0;
+  if (tLen >= 45 && tLen <= 60) titleScore = 100;
+  else if (tLen > 60) titleScore = Math.max(0, 100 - (tLen - 60) * 5);
+  else if (tLen >= 20) titleScore = Math.round((tLen / 45) * 80);
+
+  // Description score: 100 if 140-160 chars, proportional otherwise
+  const dLen = description.trim().length;
+  let descScore = 0;
+  if (dLen >= 140 && dLen <= 160) descScore = 100;
+  else if (dLen > 160) descScore = Math.max(0, 100 - (dLen - 160) * 3);
+  else if (dLen >= 80) descScore = Math.round((dLen / 140) * 80);
+
+  const score = Math.round(titleScore * 0.5 + descScore * 0.5);
+  return {
+    score,
+    wordScore: 0,
+    structureScore: 0,
+    linkScore: 0,
+    componentScore: 0,
+    breakdown: `T:${titleScore} D:${descScore}`,
+  };
+}
 
 // ── CPS Score Loader (from Serper.dev competitor snapshots) ──────
 
@@ -319,6 +406,8 @@ function scanMdxFiles(): ContentHubRow[] {
             seoHealth: computeSeoHealth(undefined, undefined),
             contentQuality: EMPTY_QUALITY,
             cpsScore: null,
+            backlinkCount: null,
+            backlinkNew30d: null,
             indexStatus: 'Parse Error',
             type: 'mdx',
           });
@@ -361,6 +450,8 @@ function scanMdxFiles(): ContentHubRow[] {
           seoHealth: computeSeoHealth(seoTitle, description),
           contentQuality: computeContentQuality(content, wordCount),
           cpsScore: null,
+          backlinkCount: null,
+          backlinkNew30d: null,
           indexStatus: 'Pending GSC Check',
           type: 'mdx',
         });
@@ -376,32 +467,35 @@ function scanMdxFiles(): ContentHubRow[] {
 // ── Core Routes ────────────────────────────────────────────────
 
 function getCoreRouteRows(): ContentHubRow[] {
-  return CORE_ROUTES.map((route) => ({
-    url: route.url,
-    filePath: '',
-    market: route.url.startsWith('/uk')
+  return CORE_ROUTES.map((route) => {
+    const market = route.url.startsWith('/uk')
       ? 'UK'
       : route.url.startsWith('/ca')
         ? 'CA'
         : route.url.startsWith('/au')
           ? 'AU'
-          : 'US',
-    category: 'core',
-    title: route.title,
-    seoTitle: route.title,
-    description: '',
-    wordCount: 0,
-    sizeKB: 0,
-    httpStatus: null,
-    httpHealth: 'yellow',
-    seoHealth: { titleStatus: 'yellow', titleLength: 0, descStatus: 'yellow', descLength: 0, overall: 'yellow' },
-    contentQuality: EMPTY_QUALITY,
-    cpsScore: null,
-    backlinkCount: null,
-    backlinkNew30d: null,
-    indexStatus: 'Pending GSC Check',
-    type: 'core',
-  }));
+          : 'US';
+    return {
+      url: route.url,
+      filePath: '',
+      market,
+      category: 'core',
+      title: route.title,
+      seoTitle: route.seoTitle,
+      description: route.description,
+      wordCount: 0,
+      sizeKB: 0,
+      httpStatus: null,
+      httpHealth: 'yellow' as HealthStatus,
+      seoHealth: computeSeoHealth(route.seoTitle, route.description),
+      contentQuality: computeCoreQuality(route.seoTitle, route.description),
+      cpsScore: null,
+      backlinkCount: null,
+      backlinkNew30d: null,
+      indexStatus: 'Pending GSC Check',
+      type: 'core' as const,
+    };
+  });
 }
 
 // ── HTTP Health Check (batch, internal) ────────────────────────
