@@ -1,11 +1,18 @@
 // components/dashboard/content-hub-table-body.tsx — Client table body for Content Hub
 'use client';
 
-import { ExternalLink, RefreshCw, Clock } from 'lucide-react';
+import { useState } from 'react';
+import dynamic from 'next/dynamic';
+import { ExternalLink, RefreshCw, Clock, Link2 } from 'lucide-react';
 import { CtaPartnerSelect } from './cta-partner-select';
 import type { ContentHubRow, HealthStatus, ContentQuality } from '@/lib/actions/content-hub';
 import type { PartnerOption } from './cta-partner-select';
 import type { PartnerAssignmentConfig } from '@/lib/types/page-cta';
+
+const BacklinkDetailDialog = dynamic(
+  () => import('./backlink-detail-dialog'),
+  { ssr: false }
+);
 
 // ── Helper Components (duplicated from page to keep in client boundary) ──
 
@@ -113,6 +120,43 @@ function CpsBadge({ cps }: { cps: number | null }) {
   );
 }
 
+// ── Backlink Badge ──────────────────────────────────────────────
+
+function BacklinkBadge({
+  count,
+  new30d,
+  onClick,
+}: {
+  count: number | null;
+  new30d: number | null;
+  onClick: () => void;
+}) {
+  if (count === null) {
+    return <span className="text-xs text-slate-300">—</span>;
+  }
+
+  const color =
+    count >= 20
+      ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+      : count >= 5
+        ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100'
+        : 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100';
+
+  return (
+    <button
+      onClick={onClick}
+      className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-bold rounded-md border tabular-nums cursor-pointer transition-colors ${color}`}
+      title={`${count} active backlinks — click for details`}
+    >
+      <Link2 className="h-3 w-3" />
+      {count}
+      {new30d && new30d > 0 ? (
+        <span className="text-[10px] font-normal text-emerald-600">+{new30d}</span>
+      ) : null}
+    </button>
+  );
+}
+
 // ── Main Table Body ──────────────────────────────────────────────
 
 interface ContentHubTableBodyProps {
@@ -128,7 +172,10 @@ export function ContentHubTableBody({
   partnerAssignments,
   partnersByMarket,
 }: ContentHubTableBodyProps) {
+  const [selectedUrl, setSelectedUrl] = useState<string | null>(null);
+
   return (
+    <>
     <tbody>
       {rows.map((row) => {
         const assignedPartners = partnerAssignments[row.url] || [];
@@ -208,6 +255,15 @@ export function ContentHubTableBody({
               <CpsBadge cps={row.cpsScore} />
             </td>
 
+            {/* BL (Backlinks) */}
+            <td className="px-3 py-3 text-center">
+              <BacklinkBadge
+                count={row.backlinkCount}
+                new30d={row.backlinkNew30d}
+                onClick={() => setSelectedUrl(row.url)}
+              />
+            </td>
+
             {/* SEO Status */}
             <td className="px-3 py-3">
               <SeoDetail seoHealth={row.seoHealth} />
@@ -237,11 +293,19 @@ export function ContentHubTableBody({
       })}
       {rows.length === 0 && (
         <tr>
-          <td colSpan={12} className="px-4 py-12 text-center text-sm text-slate-400">
+          <td colSpan={13} className="px-4 py-12 text-center text-sm text-slate-400">
             No pages match this filter.
           </td>
         </tr>
       )}
     </tbody>
+    {selectedUrl && (
+      <BacklinkDetailDialog
+        url={selectedUrl}
+        open={!!selectedUrl}
+        onOpenChange={(open: boolean) => { if (!open) setSelectedUrl(null); }}
+      />
+    )}
+    </>
   );
 }

@@ -5,6 +5,7 @@ import { Toaster } from '@/components/ui/sonner';
 import { AnalyticsProvider } from '@/components/providers/analytics-provider';
 import SiloClassProvider from '@/components/providers/silo-class-provider';
 import { DevCacheBuster } from '@/components/providers/dev-cache-buster';
+import { ChunkRecoveryProvider } from '@/components/providers/chunk-recovery-provider';
 import { generateOrganizationSchema, generateWebsiteSchema } from '@/lib/seo/schema';
 
 const inter = Inter({
@@ -98,6 +99,7 @@ export default function RootLayout({
       </head>
       <body className={`${inter.variable} font-sans antialiased`}>
         <DevCacheBuster />
+        <ChunkRecoveryProvider />
         <SiloClassProvider />
         <AnalyticsProvider>
           {children}

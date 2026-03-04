@@ -748,4 +748,41 @@ This approach ensures our review reflects actual US merchant usage patterns rath
 
 *[Stripe, Inc.](https://stripe.com/) is a registered Money Services Provider with [Visa](https://usa.visa.com/) and [Mastercard](https://www.mastercard.us/). Stripe Radar is a fraud detection tool — it does not guarantee prevention of all fraudulent transactions. Merchants remain responsible for compliance with [PCI DSS standards](https://www.pcisecuritystandards.org/) and applicable [payment card regulations](https://www.federalreserve.gov/paymentsystems.htm). This article contains general information only and does not constitute professional financial or legal advice. Contact the [Consumer Financial Protection Bureau (CFPB)](https://www.consumerfinance.gov/) or the [Federal Trade Commission (FTC)](https://www.ftc.gov/) for consumer protection inquiries.*
 
+## Frequently Asked Questions
+
+<details>
+<summary>What is Stripe Radar and how does it work?</summary>
+
+Stripe Radar is an AI-powered fraud prevention tool built into the Stripe payment processing platform. It uses machine learning models trained on hundreds of billions of data points from Stripe's global transaction network to assign real-time risk scores to every payment. These scores inform automated block/allow/review decisions based on configurable rules. Radar is active on all Stripe accounts by default and requires no separate setup for basic fraud prevention.
+
+</details>
+
+<details>
+<summary>How much does Stripe Radar cost?</summary>
+
+Stripe Radar is included free on all standard Stripe accounts. Radar for Fraud Teams costs an additional $0.02 per screened transaction and adds advanced features: custom machine learning rules, Radar Studio for visual rule building, detailed risk insights, and team management workflows. For businesses with $1M+ in annual payment volume, the $0.02/transaction cost is typically offset by reduced fraud losses within the first month.
+
+</details>
+
+<details>
+<summary>What is Stripe Radar's fraud detection rate?</summary>
+
+Stripe reports that Radar catches over 90% of card fraud while maintaining false positive rates below 1% for most merchants. Our testing found Radar's AI models are particularly effective at detecting card testing attacks, velocity fraud, and account takeover patterns. Performance varies by industry — high-risk industries like digital goods, cryptocurrency, and travel may see different rates based on their specific fraud patterns.
+
+</details>
+
+<details>
+<summary>Can I customize Stripe Radar's fraud rules?</summary>
+
+Yes. Radar for Fraud Teams includes Radar Studio, a visual rule editor where you can create custom allow/block/review rules based on any combination of transaction attributes — IP country, email domain, device fingerprint, card BIN, purchase velocity, and hundreds of other signals. Rules can be tested against historical transactions before activation to estimate false positive and negative rates without affecting live traffic.
+
+</details>
+
+<details>
+<summary>How does Stripe Radar compare to standalone fraud tools like Kount or Signifyd?</summary>
+
+Stripe Radar's key advantage is native Stripe integration with zero setup overhead and access to Stripe's global network intelligence. Standalone tools like Kount and Signifyd offer more customization, multi-payment-processor support, and chargeback guarantee programs (Signifyd guarantees approved orders against fraud). For Stripe-native businesses, Radar typically provides 80-90% of the value at a fraction of the cost. Multi-processor businesses or those needing chargeback guarantees should evaluate standalone solutions.
+
+</details>
+
 <AutoDisclaimer category="ai-tools" market="us" />

@@ -44,6 +44,8 @@ export interface ContentHubRow {
   seoHealth: SeoHealth;
   contentQuality: ContentQuality;
   cpsScore: number | null;
+  backlinkCount: number | null;
+  backlinkNew30d: number | null;
   indexStatus: string;
   type: 'mdx' | 'core';
 }
@@ -295,6 +297,8 @@ function scanMdxFiles(): ContentHubRow[] {
             seoHealth: computeSeoHealth(seoTitle, description),
             contentQuality: computeContentQuality(content, wordCount),
             cpsScore: null,
+            backlinkCount: null,
+            backlinkNew30d: null,
             indexStatus: 'Pending GSC Check',
             type: 'mdx',
           });
@@ -393,6 +397,8 @@ function getCoreRouteRows(): ContentHubRow[] {
     seoHealth: { titleStatus: 'yellow', titleLength: 0, descStatus: 'yellow', descLength: 0, overall: 'yellow' },
     contentQuality: EMPTY_QUALITY,
     cpsScore: null,
+    backlinkCount: null,
+    backlinkNew30d: null,
     indexStatus: 'Pending GSC Check',
     type: 'core',
   }));
@@ -450,6 +456,9 @@ export interface ContentHubStats {
   qualityRed: number;
   avgCps: number;
   pagesWithCps: number;
+  totalBacklinks: number;
+  avgBacklinks: number;
+  pagesWithBacklinks: number;
   seoGreen: number;
   seoYellow: number;
   seoRed: number;
@@ -465,6 +474,8 @@ function computeStats(rows: ContentHubRow[]): ContentHubStats {
   const totalQuality = mdxRows.reduce((sum, r) => sum + r.contentQuality.score, 0);
   const cpsRows = rows.filter((r) => r.cpsScore !== null);
   const totalCps = cpsRows.reduce((sum, r) => sum + (r.cpsScore || 0), 0);
+  const blRows = rows.filter((r) => r.backlinkCount !== null && r.backlinkCount > 0);
+  const totalBl = blRows.reduce((sum, r) => sum + (r.backlinkCount || 0), 0);
   const marketBreakdown: Record<string, number> = {};
 
   for (const row of rows) {
@@ -483,6 +494,9 @@ function computeStats(rows: ContentHubRow[]): ContentHubStats {
     qualityRed: mdxRows.filter((r) => r.contentQuality.score < 50).length,
     avgCps: cpsRows.length > 0 ? Math.round(totalCps / cpsRows.length) : 0,
     pagesWithCps: cpsRows.length,
+    totalBacklinks: totalBl,
+    avgBacklinks: blRows.length > 0 ? Math.round(totalBl / blRows.length) : 0,
+    pagesWithBacklinks: blRows.length,
     seoGreen: rows.filter((r) => r.seoHealth.overall === 'green').length,
     seoYellow: rows.filter((r) => r.seoHealth.overall === 'yellow').length,
     seoRed: rows.filter((r) => r.seoHealth.overall === 'red').length,
@@ -526,6 +540,22 @@ export const getContentHubData = unstable_cache(
       }
     } catch {
       // CPS loading is optional — don't break the hub if it fails
+    }
+
+    // Merge backlink counts from backlinks table
+    try {
+      const { loadBacklinkCounts } = await import('@/lib/actions/backlinks');
+      const blCounts = await loadBacklinkCounts();
+      if (blCounts.size > 0) {
+        for (const row of allRows) {
+          const urlPath = row.url.replace(/\/$/, '') || '/';
+          const bl = blCounts.get(urlPath);
+          row.backlinkCount = bl?.active ?? null;
+          row.backlinkNew30d = bl?.new30d ?? null;
+        }
+      }
+    } catch {
+      // Backlink loading is optional — don't break the hub if it fails
     }
 
     return { rows: allRows, stats: computeStats(allRows) };

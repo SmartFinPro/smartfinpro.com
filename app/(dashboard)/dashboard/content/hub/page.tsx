@@ -11,12 +11,14 @@ import {
   BarChart3,
   Zap,
   X,
+  Link2,
 } from 'lucide-react';
 import { getContentHubData } from '@/lib/actions/content-hub';
 import { getCtaPartnersForPages } from '@/lib/actions/page-cta-partners';
 import { getAffiliateLinksService } from '@/lib/actions/affiliate-links';
 import { ContentHubTableBody } from '@/components/dashboard/content-hub-table-body';
 import { ContentHubRefreshButton } from '@/components/dashboard/content-hub-refresh-button';
+import { BacklinkImportButton } from '@/components/dashboard/backlink-import-button';
 import type { ContentHubRow, HealthStatus } from '@/lib/actions/content-hub';
 
 export const dynamic = 'force-dynamic';
@@ -164,11 +166,14 @@ export default async function ContentHubPage({ searchParams }: ContentHubPagePro
             </p>
           </div>
         </div>
-        <ContentHubRefreshButton />
+        <div className="flex items-center gap-2">
+          <BacklinkImportButton />
+          <ContentHubRefreshButton />
+        </div>
       </div>
 
       {/* Stat Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
         <StatCard
           label="Total Pages"
           value={stats.totalPages}
@@ -182,6 +187,12 @@ export default async function ContentHubPage({ searchParams }: ContentHubPagePro
           value={stats.pagesWithCps > 0 ? `${stats.avgCps}/100` : '—'}
           icon={Zap}
           iconBg="bg-cyan-50 text-cyan-500"
+        />
+        <StatCard
+          label="Backlinks"
+          value={stats.totalBacklinks > 0 ? stats.totalBacklinks.toLocaleString('en-US') : '—'}
+          icon={Link2}
+          iconBg="bg-indigo-50 text-indigo-500"
         />
         <StatCard
           label="Avg Word Count"
@@ -276,7 +287,7 @@ export default async function ContentHubPage({ searchParams }: ContentHubPagePro
       {/* Table */}
       <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[1300px]">
+          <table className="w-full min-w-[1400px]">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200">
                 <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
@@ -305,6 +316,9 @@ export default async function ContentHubPage({ searchParams }: ContentHubPagePro
                 </th>
                 <th className="px-3 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">
                   CPS
+                </th>
+                <th className="px-3 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                  BL
                 </th>
                 <th className="px-3 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
                   SEO
