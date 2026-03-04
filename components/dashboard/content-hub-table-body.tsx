@@ -212,6 +212,7 @@ export function ContentHubTableBody({
   const [hardDeleteTarget, setHardDeleteTarget] = useState<ContentHubRow | null>(null);
   const [confirmRestoreId, setConfirmRestoreId] = useState<string | null>(null);
   const [restoringId, setRestoringId] = useState<string | null>(null);
+  const [copiedBatch, setCopiedBatch] = useState(false);
 
   // ── Selectable rows (only active MDX pages) ──────────────────
   const selectableUrls = useMemo(
@@ -267,14 +268,41 @@ export function ContentHubTableBody({
     }
   }, [router]);
 
-  // ── Copy URL ─────────────────────────────────────────────────
+  // ── Copy to clipboard (with fallback) ────────────────────────
+  const copyToClipboard = useCallback(async (text: string): Promise<boolean> => {
+    // Try modern Clipboard API first
+    if (navigator.clipboard?.writeText) {
+      try {
+        await navigator.clipboard.writeText(text);
+        return true;
+      } catch {
+        // Falls through to fallback
+      }
+    }
+    // Fallback: textarea + execCommand
+    try {
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.style.position = 'fixed';
+      textarea.style.left = '-9999px';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      const ok = document.execCommand('copy');
+      document.body.removeChild(textarea);
+      return ok;
+    } catch {
+      return false;
+    }
+  }, []);
+
   const copyUrl = useCallback((url: string) => {
-    navigator.clipboard.writeText(`${siteUrl}${url}`).catch(() => {});
-  }, [siteUrl]);
+    copyToClipboard(`${siteUrl}${url}`);
+  }, [siteUrl, copyToClipboard]);
 
   return (
     <>
-    {/* ── Batch Action Bar ──────────────────────────────────────── */}
+    {/* ── Batch Action Bar (OUTSIDE <table> to avoid hydration error) ── */}
     {selectedUrls.size > 0 && (
       <div className="sticky top-0 z-20 flex items-center gap-3 px-4 py-2.5 bg-amber-50 border-b border-amber-200">
         <span className="text-sm font-semibold text-amber-800 tabular-nums">
@@ -288,6 +316,20 @@ export function ContentHubTableBody({
           Archive Selected
         </button>
         <button
+          onClick={async () => {
+            const urls = Array.from(selectedUrls).map(u => `${siteUrl}${u}`).join('\n');
+            const ok = await copyToClipboard(urls);
+            if (ok) {
+              setCopiedBatch(true);
+              setTimeout(() => setCopiedBatch(false), 2000);
+            }
+          }}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 transition-colors"
+        >
+          <Copy className="h-3.5 w-3.5" />
+          {copiedBatch ? 'Copied!' : 'Copy URLs'}
+        </button>
+        <button
           onClick={() => setSelectedUrls(new Set())}
           className="px-3 py-1.5 text-xs font-medium rounded-lg text-slate-500 bg-white border border-slate-200 hover:bg-slate-50 transition-colors"
         >
@@ -296,6 +338,8 @@ export function ContentHubTableBody({
       </div>
     )}
 
+    <div className="overflow-x-auto">
+    <table className="w-full min-w-[1440px]">
     {/* ── Table Head (owned by client for select-all checkbox) ── */}
     <thead>
       <tr className="bg-slate-50 border-b border-slate-200">
@@ -577,9 +621,20 @@ export function ContentHubTableBody({
                 </>
               )}
               {(isMdx || isArchived) && <ContextMenuSeparator />}
-              <ContextMenuItem onClick={() => copyUrl(row.url)}>
+              <ContextMenuItem onClick={() => {
+                if (selectedUrls.size > 0 && selectedUrls.has(row.url)) {
+                  // Batch: copy all selected URLs
+                  const urls = Array.from(selectedUrls).map(u => `${siteUrl}${u}`).join('\n');
+                  copyToClipboard(urls);
+                } else {
+                  // Single: copy this row's URL
+                  copyUrl(row.url);
+                }
+              }}>
                 <Copy className="h-4 w-4" />
-                Copy URL
+                {selectedUrls.size > 0 && selectedUrls.has(row.url)
+                  ? `Copy ${selectedUrls.size} URLs`
+                  : 'Copy URL'}
               </ContextMenuItem>
               <ContextMenuItem onClick={() => window.open(`${siteUrl}${row.url}`, '_blank')}>
                 <SquareArrowOutUpRight className="h-4 w-4" />
@@ -597,6 +652,8 @@ export function ContentHubTableBody({
         </tr>
       )}
     </tbody>
+    </table>
+    </div>
 
     {/* ── Dialogs ───────────────────────────────────────────────── */}
     {selectedUrl && (

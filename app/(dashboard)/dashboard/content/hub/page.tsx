@@ -435,19 +435,14 @@ export default async function ContentHubPage({ searchParams }: ContentHubPagePro
         </div>
       )}
 
-      {/* Table */}
+      {/* Table (batch bar + table rendered by client component to avoid <div> inside <table> hydration error) */}
       <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[1440px]">
-            {/* thead + tbody rendered by client component (owns select-all checkbox state) */}
-            <ContentHubTableBody
-              rows={rows}
-              siteUrl={siteUrl}
-              partnerAssignments={partnerAssignments}
-              partnersByMarket={partnersByMarket}
-            />
-          </table>
-        </div>
+        <ContentHubTableBody
+          rows={rows}
+          siteUrl={siteUrl}
+          partnerAssignments={partnerAssignments}
+          partnersByMarket={partnersByMarket}
+        />
 
         {/* Table Footer */}
         <div className="px-4 py-3 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
