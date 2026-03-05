@@ -244,6 +244,39 @@ Document your strategy parameters, risk limits, and rebalancing schedule before 
 
 <AffiliateButton href="/go/interactive-brokers" productName="Interactive Brokers">Start Trading with Interactive Brokers</AffiliateButton>
 
+## Pros and Cons of AI Crypto Investing
+
+<ProsCons
+  pros={[
+    "Algorithmic execution eliminates emotional bias — AI bots execute trades based on defined rules without fear, greed, or panic that causes most retail investors to buy high and sell low",
+    "DCA automation removes timing risk for long-term Bitcoin and Ethereum accumulation strategies — systematic weekly purchases produce better average cost basis than lump-sum timing attempts",
+    "Backtesting capabilities allow strategy validation against historical data before committing real capital — no other investing approach provides this iterative improvement mechanism",
+    "24/7 market monitoring is impossible for human traders but trivial for AI systems — weekend flash crashes and off-hours opportunities are captured automatically",
+    "Grid bots profit from sideways volatility that frustrates buy-and-hold investors — in range-bound markets, grid strategies can generate 5–15% monthly returns from price oscillation alone",
+    "Risk management rules (stop-loss, max drawdown limits) are enforced automatically without requiring emotional discipline — protecting capital during adverse market conditions"
+  ]}
+  cons={[
+    "No AI system can predict future crypto prices — past performance in backtests does not guarantee future results, and historical patterns frequently break during novel market regimes",
+    "Bot malfunction risk is real — API disconnections, exchange outages, and software bugs can cause bots to execute unintended trades or fail to execute critical stop-losses during crashes",
+    "Complexity barrier for sophisticated strategies — multi-leg arbitrage, cross-exchange execution, and options integration require significant technical competence beyond most retail investors",
+    "Tax reporting complexity increases substantially — each automated bot trade is a taxable event, and active bots can generate thousands of transactions per year requiring dedicated crypto tax software",
+    "Over-optimisation risk in backtesting — strategies that perform brilliantly on historical data often fail on live data due to curve-fitting to specific past market conditions",
+    "Platform fees compound with frequency — multiple small trades add up to meaningful costs that erode returns, particularly on platforms charging per-trade rather than spread-based fees"
+  ]}
+/>
+
+## Risk Management for AI Crypto Trading
+
+Successful AI crypto investing requires systematic risk management beyond setting a bot and forgetting it. The most common causes of material losses in automated crypto trading are predictable and preventable with proper configuration.
+
+**Position sizing discipline** is the foundation of AI trading risk management. No single position or bot strategy should represent more than 5–15% of your total crypto portfolio. Overconcentration in a single strategy — even one with an excellent backtest record — creates catastrophic loss potential when that strategy encounters a market regime it was not designed for. Diversifying across multiple uncorrelated strategies (a DCA bot, a grid bot on a different asset, and a trend-following bot) reduces the impact of any single strategy failure.
+
+**Maximum drawdown limits** should be configured as hard stops for every automated strategy. Most platforms allow you to set a percentage drawdown threshold at which the bot pauses or stops trading entirely. A 15–20% maximum drawdown limit for individual strategies prevents a bad market environment from compounding losses beyond a tolerable threshold. Without this safeguard, a bot configured to buy every dip during a sustained bear market can systematically deploy capital into a declining asset over months.
+
+**API security protocols** require strict adherence. Only grant trading permissions (never withdrawal permissions) to bot platforms. Enable IP whitelisting to restrict API access to the bot platform's IP ranges, and enable all available two-factor authentication on both the exchange and bot platform accounts. Rotate API keys every 60–90 days. A compromised API key with trading permissions can cause financial damage through unauthorized trades; one with withdrawal permissions can drain your entire account. The cost of implementing these protections — approximately 30 minutes of setup — is minimal compared to the alternative.
+
+**Regular strategy review** — at minimum monthly, ideally weekly — ensures your automated strategies remain appropriately configured for current market conditions. Parameters calibrated for a bull market (aggressive grid spacing, high allocation per DCA purchase) may be dangerously misconfigured during a bear market. Review bot performance against benchmarks regularly: if your DCA bot's accumulated position is substantially underwater relative to a simple monthly lump-sum purchase at the same frequency, investigate whether the strategy parameters need adjustment.
+
 ## Frequently Asked Questions
 
 <details>
