@@ -132,21 +132,29 @@ export async function POST(request: NextRequest) {
 
       case 'scroll':
       case 'time_on_page': {
-        // Update existing page view
-        const { error } = await supabase
+        // Supabase JS does NOT support .order().limit() on .update() — use SELECT first, then UPDATE by id
+        const { data: existing } = await supabase
           .from('page_views')
-          .update({
-            time_on_page:
-              body.type === 'time_on_page' ? (body.data.timeOnPage as number) : undefined,
-            scroll_depth: body.type === 'scroll' ? (body.data.scrollDepth as number) : undefined,
-          })
+          .select('id')
           .eq('session_id', body.sessionId)
           .eq('page_path', body.data.pagePath as string)
           .order('viewed_at', { ascending: false })
-          .limit(1);
+          .limit(1)
+          .maybeSingle();
 
-        if (error) {
-          if (process.env.NODE_ENV === 'development') console.warn('Analytics: page view update failed');
+        if (existing?.id) {
+          const updatePayload: Record<string, unknown> = {};
+          if (body.type === 'time_on_page') updatePayload.time_on_page = body.data.timeOnPage;
+          if (body.type === 'scroll') updatePayload.scroll_depth = body.data.scrollDepth;
+
+          const { error } = await supabase
+            .from('page_views')
+            .update(updatePayload)
+            .eq('id', existing.id);
+
+          if (error) {
+            if (process.env.NODE_ENV === 'development') console.warn('Analytics: page view update failed');
+          }
         }
 
         return NextResponse.json({ success: true });
