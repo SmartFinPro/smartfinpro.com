@@ -46,6 +46,76 @@ const PROTECTED_EXACT = new Set([
   '/robots.txt',
 ]) as ReadonlySet<string>;
 
+// ============================================================
+// SESSION CONFIG (AP-06 Phase 4)
+// Sliding 30-minute idle timeout — cookie refreshed on every request.
+// If the user is inactive for >30 min, the cookie expires → auto-logout.
+// ============================================================
+const SESSION_MAX_AGE = 60 * 30; // 30 minutes in seconds
+
+// ============================================================
+// TOTP / 2FA — RFC 4226 (HOTP) + RFC 6238 (TOTP)
+// Pure WebCrypto, zero npm deps, works in Edge Runtime.
+//
+// How to enable 2FA:
+//   1. Generate a base32 secret:  openssl rand -base32 20
+//   2. Add to .env.local:         DASHBOARD_TOTP_SECRET=<secret>
+//   3. Scan QR at /api/dashboard/totp-qr, or import the raw
+//      base32 secret into Google Authenticator / Authy / 1Password.
+//
+// Leave DASHBOARD_TOTP_SECRET unset to keep single-factor (password only).
+// ============================================================
+
+const BASE32 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+
+function base32Decode(input: string): Uint8Array {
+  const str = input.toUpperCase().replace(/[=\s]/g, '');
+  const bytes: number[] = [];
+  let buf = 0, bits = 0;
+  for (const ch of str) {
+    const v = BASE32.indexOf(ch);
+    if (v < 0) continue;
+    buf = (buf << 5) | v;
+    bits += 5;
+    if (bits >= 8) { bits -= 8; bytes.push((buf >> bits) & 0xff); }
+  }
+  return new Uint8Array(bytes);
+}
+
+async function generateTOTP(secretBase32: string, window?: number): Promise<string> {
+  const t = window ?? Math.floor(Date.now() / 30_000);
+  const key = await crypto.subtle.importKey(
+    'raw', base32Decode(secretBase32),
+    { name: 'HMAC', hash: 'SHA-1' }, false, ['sign'],
+  );
+  // 8-byte big-endian counter (high 4 bytes = 0, low 4 bytes = t)
+  const counter = new DataView(new ArrayBuffer(8));
+  counter.setUint32(0, 0, false);
+  counter.setUint32(4, t, false);
+  const hmac = new Uint8Array(await crypto.subtle.sign('HMAC', key, counter.buffer));
+  const off = hmac[19] & 0x0f;
+  const code =
+    ((hmac[off] & 0x7f) << 24) |
+    ((hmac[off + 1] & 0xff) << 16) |
+    ((hmac[off + 2] & 0xff) << 8) |
+    (hmac[off + 3] & 0xff);
+  return (code % 1_000_000).toString().padStart(6, '0');
+}
+
+/** Accepts ±1 time window to tolerate clock drift up to 30 s. */
+async function verifyTOTP(secret: string, code: string): Promise<boolean> {
+  if (!/^\d{6}$/.test(code)) return false;
+  const t = Math.floor(Date.now() / 30_000);
+  for (const w of [t - 1, t, t + 1]) {
+    if (await generateTOTP(secret, w) === code) return true;
+  }
+  return false;
+}
+
+// ============================================================
+// MAIN MIDDLEWARE
+// ============================================================
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -54,57 +124,114 @@ export async function middleware(request: NextRequest) {
     // Protects /dashboard/* with DASHBOARD_SECRET cookie check.
     // Login via POST form — secret never appears in URL or browser history.
     //
+    // Optional: DASHBOARD_TOTP_SECRET → enables TOTP 2FA on login form.
+    // Optional: DASHBOARD_IP_WHITELIST → comma-separated allowed IPs.
+    //
     // Dev-Bypass: DASHBOARD_AUTH_DISABLED=true in .env.local
     // → Dashboard ohne Login erreichbar (für lokale Entwicklung).
-    // Zum Scharfschalten: Variable entfernen oder auf "false" setzen.
     if (pathname.startsWith('/dashboard')) {
-      const dashSecret = process.env.DASHBOARD_SECRET;
+      const dashSecret  = process.env.DASHBOARD_SECRET;
+      const totpSecret  = process.env.DASHBOARD_TOTP_SECRET;   // optional 2FA
+      const ipWhitelist = (process.env.DASHBOARD_IP_WHITELIST ?? '')
+        .split(',').map((s) => s.trim()).filter(Boolean);
+
       const authDisabled =
         process.env.NODE_ENV !== 'production' &&
         process.env.DASHBOARD_AUTH_DISABLED === 'true';
 
-      // Dev-Bypass: Auth deaktiviert (nur in Dev — ignoriert in Production)
-      if (authDisabled) {
-        return NextResponse.next();
-      }
+      // Dev-Bypass
+      if (authDisabled) return NextResponse.next();
 
-      // If no DASHBOARD_SECRET configured, block all dashboard access in production
+      // Block if secret not configured in production
       if (!dashSecret && process.env.NODE_ENV === 'production') {
-        return new NextResponse('Dashboard disabled — DASHBOARD_SECRET not configured', { status: 503 });
+        return new NextResponse(
+          'Dashboard disabled — DASHBOARD_SECRET not configured',
+          { status: 503 },
+        );
       }
 
-      // Handle POST login submission
+      // ── IP Whitelist ────────────────────────────────────────────
+      // Set DASHBOARD_IP_WHITELIST="1.2.3.4,5.6.7.8" to limit access.
+      // Works behind Cloudflare / reverse-proxy (reads x-forwarded-for).
+      if (ipWhitelist.length > 0) {
+        const clientIp =
+          request.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
+          request.headers.get('x-real-ip') ||
+          'unknown';
+        if (!ipWhitelist.includes(clientIp)) {
+          console.warn(`[dashboard] IP ${clientIp} blocked by whitelist`);
+          return new NextResponse(
+            `403 Forbidden — Your IP (${clientIp}) is not authorised.`,
+            { status: 403, headers: { 'Content-Type': 'text/plain' } },
+          );
+        }
+      }
+
+      // ── Handle POST login submission ──────────────────────────
       if (dashSecret && request.method === 'POST') {
         try {
-          const formData = await request.formData();
-          const submitted = formData.get('secret')?.toString() || '';
-          if (submitted === dashSecret) {
-            const target = formData.get('redirect')?.toString() || '/dashboard';
-            // Prevent open redirect — only allow /dashboard/* paths
-            const safePath = target.startsWith('/dashboard') ? target : '/dashboard';
-            const response = NextResponse.redirect(new URL(safePath, request.url));
-            response.cookies.set('sfp-dash-auth', dashSecret, {
-              httpOnly: true,
-              secure: process.env.NODE_ENV === 'production',
-              sameSite: 'strict',
-              maxAge: 60 * 60 * 24 * 7, // 7 days
-              path: '/dashboard',
-            });
-            return response;
+          const fd       = await request.formData();
+          const submitted = fd.get('secret')?.toString() ?? '';
+          const totpCode  = fd.get('totp')?.toString() ?? '';
+          const target    = fd.get('redirect')?.toString() ?? '/dashboard';
+          const safePath  = target.startsWith('/dashboard') ? target : '/dashboard';
+
+          // Step 1: Password check
+          if (submitted !== dashSecret) {
+            return dashboardLoginPage(pathname, 'Invalid secret. Please try again.', !!totpSecret);
           }
+
+          // Step 2: TOTP check (only if 2FA is configured)
+          if (totpSecret) {
+            const ok = await verifyTOTP(totpSecret, totpCode);
+            if (!ok) {
+              return dashboardLoginPage(
+                pathname,
+                'Invalid 2FA code — codes rotate every 30 seconds.',
+                true,
+              );
+            }
+          }
+
+          // ✅ Both checks passed — issue sliding session cookie
+          const response = NextResponse.redirect(new URL(safePath, request.url));
+          response.cookies.set('sfp-dash-auth', dashSecret, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: SESSION_MAX_AGE, // 30 min
+            path: '/dashboard',
+          });
+          return response;
         } catch {
-          // Malformed form data — fall through to login page with error
+          // Malformed form data
         }
-        // Wrong secret — show login again (POST with bad credentials)
-        return dashboardLoginPage(pathname, true);
+        return dashboardLoginPage(pathname, 'Login failed. Please try again.', !!totpSecret);
       }
 
-      // In production, require valid auth cookie for GET requests
+      // ── Validate auth cookie + renew sliding session ─────────
       if (dashSecret) {
         const authCookie = request.cookies.get('sfp-dash-auth')?.value;
         if (authCookie !== dashSecret) {
-          return dashboardLoginPage(pathname, false);
+          const clientIp =
+            request.headers.get('x-forwarded-for')?.split(',')[0] ?? 'unknown';
+          console.warn(
+            `[dashboard] Unauthorized attempt from ${clientIp} → ${pathname}`,
+          );
+          return dashboardLoginPage(pathname, false, !!totpSecret);
         }
+
+        // ✅ Authenticated — refresh cookie to reset idle timer (sliding session)
+        // User inactive for >30 min → cookie expires → next request shows login page.
+        const response = NextResponse.next();
+        response.cookies.set('sfp-dash-auth', dashSecret, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'strict',
+          maxAge: SESSION_MAX_AGE, // sliding: resets on every page load
+          path: '/dashboard',
+        });
+        return response;
       }
 
       return NextResponse.next();
@@ -112,15 +239,11 @@ export async function middleware(request: NextRequest) {
 
     // ── Step 1: Skip system paths & protected route prefixes ──
     for (const prefix of PROTECTED_PREFIXES) {
-      if (pathname.startsWith(prefix)) {
-        return NextResponse.next();
-      }
+      if (pathname.startsWith(prefix)) return NextResponse.next();
     }
 
     // ── Step 2: Skip static files (images, fonts, etc.) ──
-    if (pathname.includes('.')) {
-      return NextResponse.next();
-    }
+    if (pathname.includes('.')) return NextResponse.next();
 
     // ── Step 3: Homepage → redirect to /us ──
     const segments = pathname.split('/').filter(Boolean);
@@ -136,12 +259,9 @@ export async function middleware(request: NextRequest) {
     }
 
     // ── Step 5: Valid market prefix → allow through ──
-    if (MARKETS.has(firstSegment)) {
-      return NextResponse.next();
-    }
+    if (MARKETS.has(firstSegment)) return NextResponse.next();
 
     // ── Step 6: Legacy US clean URLs → 301 redirect to /us/... ──
-    // Old: /credit-score → New: /us/credit-score (SEO-safe permanent redirect)
     if (CATEGORIES.has(firstSegment) || firstSegment === 'reviews') {
       return NextResponse.redirect(new URL(`/us${pathname}`, request.url), 301);
     }
@@ -150,40 +270,73 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   } catch (error) {
     const msg = error instanceof Error ? error.message : 'Unknown middleware error';
-    console.error(`[middleware] fallback to NextResponse.next for pathname="${pathname}":`, msg);
+    console.error(`[middleware] fallback for pathname="${pathname}":`, msg);
     return NextResponse.next();
   }
 }
 
-// ── Dashboard Login Page (inline HTML) ──────────────────────────
-function dashboardLoginPage(redirectPath: string, showError: boolean): NextResponse {
-  const errorBanner = showError
-    ? '<p style="color:#D64045;font-size:13px;margin:0 0 16px;padding:8px 12px;background:rgba(214,64,69,0.08);border-radius:8px">Invalid secret. Please try again.</p>'
+// ── Dashboard Login Page (inline HTML, zero deps) ─────────────
+function dashboardLoginPage(
+  redirectPath: string,
+  errorMsg: string | false,
+  totpEnabled: boolean,
+): NextResponse {
+  const errorBanner = errorMsg
+    ? `<p style="color:#D64045;font-size:13px;margin:0 0 16px;padding:8px 12px;background:rgba(214,64,69,0.08);border-radius:8px;text-align:left">${errorMsg}</p>`
     : '';
+
+  const totpField = totpEnabled
+    ? `<input type="text" name="totp" placeholder="6-digit 2FA code" required inputmode="numeric"
+         autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6"
+         style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:10px;font-size:16px;
+                outline:none;margin-bottom:12px;letter-spacing:0.2em;text-align:center">`
+    : '';
+
+  const totpHint = totpEnabled
+    ? `<p style="font-size:11px;color:#888;margin-top:14px">Use Google Authenticator, Authy, or any TOTP app.</p>`
+    : '';
+
   const html = `<!DOCTYPE html>
 <html lang="en">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Dashboard Login — SmartFinPro</title>
-<style>*{box-sizing:border-box}body{font-family:system-ui,-apple-system,sans-serif;display:flex;justify-content:center;align-items:center;height:100vh;margin:0;background:#F2F4F8;color:#1A1A2E}
-input:focus{border-color:#1B4F8C;box-shadow:0 0 0 3px rgba(27,79,140,0.12)}button:hover{opacity:0.9}</style>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Dashboard Login — SmartFinPro</title>
+  <style>
+    *{box-sizing:border-box}
+    body{font-family:system-ui,-apple-system,sans-serif;display:flex;justify-content:center;
+         align-items:center;height:100vh;margin:0;background:#F2F4F8;color:#1A1A2E}
+    input:focus{border-color:#1B4F8C!important;box-shadow:0 0 0 3px rgba(27,79,140,.12);outline:none}
+    input,button{transition:all .15s}
+    button:hover{opacity:.9}
+  </style>
 </head>
 <body>
 <div style="text-align:center;width:100%;max-width:360px;padding:0 24px">
   <div style="font-size:40px;margin-bottom:16px">&#128274;</div>
   <h1 style="font-size:20px;font-weight:600;margin:0 0 8px">Dashboard Access</h1>
-  <p style="color:#555;font-size:14px;margin:0 0 24px">Enter your dashboard secret to continue.</p>
+  <p style="color:#555;font-size:14px;margin:0 0 24px">
+    ${totpEnabled ? 'Enter your secret and 2FA code to continue.' : 'Enter your dashboard secret to continue.'}
+  </p>
   ${errorBanner}
   <form method="POST" action="${redirectPath}">
     <input type="hidden" name="redirect" value="${redirectPath}">
-    <input type="password" name="secret" placeholder="Dashboard Secret" required autocomplete="current-password"
-      style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:10px;font-size:14px;outline:none;margin-bottom:12px">
+    <input type="password" name="secret" placeholder="Dashboard Secret" required
+      autocomplete="current-password"
+      style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:10px;
+             font-size:14px;outline:none;margin-bottom:12px">
+    ${totpField}
     <button type="submit"
-      style="width:100%;padding:10px 14px;border:none;border-radius:10px;font-size:14px;font-weight:600;color:#fff;background:#F5A623;cursor:pointer">
+      style="width:100%;padding:10px 14px;border:none;border-radius:10px;
+             font-size:14px;font-weight:600;color:#fff;background:#F5A623;cursor:pointer">
       Sign In
     </button>
   </form>
+  ${totpHint}
 </div>
 </body>
 </html>`;
+
   return new NextResponse(html, {
     status: 401,
     headers: { 'Content-Type': 'text/html' },
@@ -191,13 +344,5 @@ input:focus{border-color:#1B4F8C;box-shadow:0 0 0 3px rgba(27,79,140,0.12)}butto
 }
 
 export const config = {
-  matcher: [
-    /*
-     * Match all paths except:
-     * - _next/static (static files)
-     * - _next/image (image optimization)
-     * - favicon.ico
-     */
-    '/((?!_next/static|_next/image|favicon.ico).*)',
-  ],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
 };

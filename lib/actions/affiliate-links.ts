@@ -2,7 +2,7 @@
 
 import 'server-only';
 
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
 import type { AffiliateLink } from '@/types';
 
@@ -98,21 +98,32 @@ export async function getAffiliateLinks() {
   }
 }
 
-/** Cookie-free fetch for Server Components & SSR */
-export async function getAffiliateLinksService() {
-  try {
+// ── 30s Cached Query (AP-06 Phase 2) ────────────────────────
+// Wraps the raw Supabase fetch with a 30-second TTL cache.
+// Invalidated immediately by revalidateTag('affiliate-links')
+// whenever a link is created, updated, or deleted.
+const _fetchLinksService = unstable_cache(
+  async () => {
     const supabase = createServiceClient();
-
     const { data, error } = await supabase
       .from('affiliate_links')
       .select('*')
       .order('created_at', { ascending: false });
-
     if (error) {
-      console.error('Error fetching affiliate links (service):', error);
-      return { error: error.message };
+      console.error('[affiliate-links] cache fetch error:', error.message);
+      return null;
     }
+    return data;
+  },
+  ['affiliate-links-all'],
+  { revalidate: 30, tags: ['affiliate-links'] },
+);
 
+/** Cookie-free fetch for Server Components & SSR — cached 30s */
+export async function getAffiliateLinksService() {
+  try {
+    const data = await _fetchLinksService();
+    if (data === null) return { error: 'Failed to fetch affiliate links' };
     return { data };
   } catch (err) {
     console.error('Error fetching affiliate links (service):', err);
@@ -166,6 +177,7 @@ export async function createAffiliateLink(
 
   revalidatePath('/dashboard/links');
   revalidatePath('/dashboard/content/genesis');
+  revalidateTag('affiliate-links'); // Invalidate 30s cache
   return { data };
 }
 
@@ -201,6 +213,7 @@ export async function updateAffiliateLink(
 
   revalidatePath('/dashboard/links');
   revalidatePath('/dashboard/content/genesis');
+  revalidateTag('affiliate-links'); // Invalidate 30s cache
   return { data };
 }
 
@@ -231,6 +244,7 @@ export async function deleteAffiliateLink(id: string) {
 
   revalidatePath('/dashboard/links');
   revalidatePath('/dashboard/content/genesis');
+  revalidateTag('affiliate-links'); // Invalidate 30s cache
   return { success: true };
 }
 
