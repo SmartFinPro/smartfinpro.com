@@ -283,10 +283,10 @@ async function loadCpsScores(): Promise<Map<string, number>> {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
+    // Load snapshots — prefer target_url (page-specific) over own_url / category fallback
     const { data, error } = await supabase
       .from('competitor_serp_snapshots')
-      .select('own_url, cps_score')
-      .not('own_url', 'is', null)
+      .select('target_url, own_url, cps_score, market, category')
       .not('cps_score', 'is', null)
       .gte('scanned_at', thirtyDaysAgo.toISOString())
       .order('scanned_at', { ascending: false });
@@ -296,26 +296,34 @@ async function loadCpsScores(): Promise<Map<string, number>> {
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://smartfinpro.com';
 
     for (const row of data) {
-      const url = row.own_url as string;
       const cps = Number(row.cps_score);
       if (isNaN(cps)) continue;
 
-      // Extract path from full URL
-      let urlPath = url;
-      if (url.startsWith(siteUrl)) {
-        urlPath = url.slice(siteUrl.length);
-      } else if (url.startsWith('http')) {
-        try {
-          urlPath = new URL(url).pathname;
-        } catch {
-          continue;
+      let urlPath: string | null = null;
+
+      if (row.target_url) {
+        // Page-specific scan — direct 1:1 mapping to our page
+        urlPath = (row.target_url as string).replace(/\/$/, '') || '/';
+      } else if (row.own_url) {
+        // Ranking result — derive from own_url
+        const url = row.own_url as string;
+        if (url.startsWith(siteUrl)) {
+          urlPath = url.slice(siteUrl.length);
+        } else if (url.startsWith('http')) {
+          try { urlPath = new URL(url).pathname; } catch { continue; }
+        } else {
+          urlPath = url;
         }
+        urlPath = urlPath.replace(/\/$/, '') || '/';
+      } else if (row.market && row.category) {
+        // Category-level fallback (old scans without target_url)
+        const prefix = row.market === 'us' ? '' : `/${row.market}`;
+        urlPath = `${prefix}/${row.category}`;
       }
 
-      // Normalize: remove trailing slash
-      urlPath = urlPath.replace(/\/$/, '') || '/';
+      if (!urlPath) continue;
 
-      // Keep the highest CPS score per URL (best opportunity)
+      // target_url entries are authoritative — keep highest CPS per URL
       const existing = cpsMap.get(urlPath);
       if (!existing || cps > existing) {
         cpsMap.set(urlPath, cps);
@@ -638,6 +646,7 @@ export const getContentHubData = unstable_cache(
       if (cpsScores.size > 0) {
         for (const row of allRows) {
           const urlPath = row.url.replace(/\/$/, '') || '/';
+          // Direct 1:1 match via target_url (page-specific Serper scan)
           row.cpsScore = cpsScores.get(urlPath) ?? null;
         }
       }
