@@ -31,6 +31,7 @@ export const revalidate = 0;
 type SeoFilter = 'all' | 'optimal' | 'issues' | 'yellow' | 'red';
 type QualityFilter = 'all' | '90plus' | 'good' | 'below80';
 type StatusFilter = 'all' | 'active' | 'archived';
+type CpsFilter = 'all' | 'easy' | 'medium' | 'hard' | 'missing';
 
 const SEO_FILTER_LABELS: Record<SeoFilter, string> = {
   all: 'All Pages',
@@ -51,6 +52,14 @@ const STATUS_FILTER_LABELS: Record<StatusFilter, string> = {
   all: 'All Status',
   active: 'Active Pages',
   archived: 'Archived Pages',
+};
+
+const CPS_FILTER_LABELS: Record<CpsFilter, string> = {
+  all: 'All CPS',
+  easy: 'CPS ≤ 20 (Easy)',
+  medium: 'CPS 21–40 (Medium)',
+  hard: 'CPS > 40 (Hard)',
+  missing: 'CPS Missing',
 };
 
 function filterBySeo(rows: ContentHubRow[], filter: SeoFilter): ContentHubRow[] {
@@ -92,13 +101,29 @@ function filterByStatus(rows: ContentHubRow[], filter: StatusFilter): ContentHub
   }
 }
 
+function filterByCps(rows: ContentHubRow[], filter: CpsFilter): ContentHubRow[] {
+  switch (filter) {
+    case 'easy':
+      return rows.filter((r) => r.cpsScore !== null && r.cpsScore <= 20);
+    case 'medium':
+      return rows.filter((r) => r.cpsScore !== null && r.cpsScore > 20 && r.cpsScore <= 40);
+    case 'hard':
+      return rows.filter((r) => r.cpsScore !== null && r.cpsScore > 40);
+    case 'missing':
+      return rows.filter((r) => r.cpsScore === null);
+    default:
+      return rows;
+  }
+}
+
 // ── URL builder (preserves all filter params) ────────────────────
 
-function buildHubUrl(params: { seo?: string; quality?: string; status?: string }): string {
+function buildHubUrl(params: { seo?: string; quality?: string; status?: string; cps?: string }): string {
   const sp = new URLSearchParams();
   if (params.seo && params.seo !== 'all') sp.set('seo', params.seo);
   if (params.quality && params.quality !== 'all') sp.set('quality', params.quality);
   if (params.status && params.status !== 'all') sp.set('status', params.status);
+  if (params.cps && params.cps !== 'all') sp.set('cps', params.cps);
   const qs = sp.toString();
   return `/dashboard/content/hub${qs ? `?${qs}` : ''}`;
 }
@@ -151,7 +176,7 @@ function StatCard({
 // ── Page ───────────────────────────────────────────────────────
 
 interface ContentHubPageProps {
-  searchParams: Promise<{ seo?: string; quality?: string; status?: string }>;
+  searchParams: Promise<{ seo?: string; quality?: string; status?: string; cps?: string }>;
 }
 
 export default async function ContentHubPage({ searchParams }: ContentHubPageProps) {
@@ -165,8 +190,11 @@ export default async function ContentHubPage({ searchParams }: ContentHubPagePro
   const statusFilter = (['active', 'archived'].includes(params.status || '')
     ? params.status
     : 'all') as StatusFilter;
+  const cpsFilter = (['easy', 'medium', 'hard', 'missing'].includes(params.cps || '')
+    ? params.cps
+    : 'all') as CpsFilter;
 
-  const hasAnyFilter = seoFilter !== 'all' || qualityFilter !== 'all' || statusFilter !== 'all';
+  const hasAnyFilter = seoFilter !== 'all' || qualityFilter !== 'all' || statusFilter !== 'all' || cpsFilter !== 'all';
 
   // Parallel data loading
   const [{ rows: allRows, stats }, affiliateResult] = await Promise.all([
@@ -178,11 +206,18 @@ export default async function ContentHubPage({ searchParams }: ContentHubPagePro
   let rows = filterBySeo(allRows, seoFilter);
   rows = filterByQuality(rows, qualityFilter);
   rows = filterByStatus(rows, statusFilter);
+  rows = filterByCps(rows, cpsFilter);
 
   // Quality distribution (computed from ALL rows, not filtered)
   const q90Plus = allRows.filter((r) => r.contentQuality.score >= 90).length;
   const q80to89 = allRows.filter((r) => r.contentQuality.score >= 80 && r.contentQuality.score < 90).length;
   const qBelow80 = allRows.filter((r) => r.contentQuality.score < 80).length;
+
+  // CPS distribution (computed from ALL rows, not filtered)
+  const cpsEasy   = allRows.filter((r) => r.cpsScore !== null && r.cpsScore <= 20).length;
+  const cpsMedium = allRows.filter((r) => r.cpsScore !== null && r.cpsScore > 20 && r.cpsScore <= 40).length;
+  const cpsHard   = allRows.filter((r) => r.cpsScore !== null && r.cpsScore > 40).length;
+  const cpsMissing = allRows.filter((r) => r.cpsScore === null).length;
 
   // Batch load CTA partner assignments for all visible rows
   const pageUrls = rows.map((r) => r.url);
@@ -228,6 +263,7 @@ export default async function ContentHubPage({ searchParams }: ContentHubPagePro
   if (statusFilter !== 'all') filterParts.push(STATUS_FILTER_LABELS[statusFilter]);
   if (seoFilter !== 'all') filterParts.push(SEO_FILTER_LABELS[seoFilter]);
   if (qualityFilter !== 'all') filterParts.push(QUALITY_FILTER_LABELS[qualityFilter]);
+  if (cpsFilter !== 'all') filterParts.push(CPS_FILTER_LABELS[cpsFilter]);
 
   return (
     <div className="space-y-6">
@@ -289,7 +325,7 @@ export default async function ContentHubPage({ searchParams }: ContentHubPagePro
           value={stats.seoGreen}
           icon={CheckCircle2}
           iconBg="bg-emerald-50 text-emerald-500"
-          href={buildHubUrl({ seo: 'optimal', quality: qualityFilter, status: statusFilter })}
+          href={buildHubUrl({ seo: 'optimal', quality: qualityFilter, status: statusFilter, cps: cpsFilter })}
           active={seoFilter === 'optimal'}
         />
         <StatCard
@@ -297,7 +333,7 @@ export default async function ContentHubPage({ searchParams }: ContentHubPagePro
           value={stats.seoYellow + stats.seoRed}
           icon={AlertTriangle}
           iconBg="bg-amber-50 text-amber-500"
-          href={buildHubUrl({ seo: 'issues', quality: qualityFilter, status: statusFilter })}
+          href={buildHubUrl({ seo: 'issues', quality: qualityFilter, status: statusFilter, cps: cpsFilter })}
           active={seoFilter === 'issues'}
         />
         <StatCard
@@ -305,7 +341,7 @@ export default async function ContentHubPage({ searchParams }: ContentHubPagePro
           value={archivedCount}
           icon={Archive}
           iconBg="bg-orange-50 text-orange-500"
-          href={buildHubUrl({ seo: seoFilter, quality: qualityFilter, status: 'archived' })}
+          href={buildHubUrl({ seo: seoFilter, quality: qualityFilter, status: 'archived', cps: cpsFilter })}
           active={statusFilter === 'archived'}
         />
       </div>
@@ -314,7 +350,7 @@ export default async function ContentHubPage({ searchParams }: ContentHubPagePro
       <div className="flex items-center gap-6 px-4 py-3 bg-white border border-slate-200 rounded-xl">
         <span className="text-sm font-medium text-slate-600">SEO Health:</span>
         <Link
-          href={buildHubUrl({ seo: 'optimal', quality: qualityFilter, status: statusFilter })}
+          href={buildHubUrl({ seo: 'optimal', quality: qualityFilter, status: statusFilter, cps: cpsFilter })}
           className={`inline-flex items-center gap-1.5 text-sm rounded-md px-2 py-1 transition-colors ${
             seoFilter === 'optimal' ? 'bg-emerald-50 ring-1 ring-emerald-200' : 'hover:bg-slate-50'
           }`}
@@ -324,7 +360,7 @@ export default async function ContentHubPage({ searchParams }: ContentHubPagePro
           <span className="text-slate-400">optimal</span>
         </Link>
         <Link
-          href={buildHubUrl({ seo: 'yellow', quality: qualityFilter, status: statusFilter })}
+          href={buildHubUrl({ seo: 'yellow', quality: qualityFilter, status: statusFilter, cps: cpsFilter })}
           className={`inline-flex items-center gap-1.5 text-sm rounded-md px-2 py-1 transition-colors ${
             seoFilter === 'yellow' ? 'bg-amber-50 ring-1 ring-amber-200' : 'hover:bg-slate-50'
           }`}
@@ -334,7 +370,7 @@ export default async function ContentHubPage({ searchParams }: ContentHubPagePro
           <span className="text-slate-400">needs work</span>
         </Link>
         <Link
-          href={buildHubUrl({ seo: 'red', quality: qualityFilter, status: statusFilter })}
+          href={buildHubUrl({ seo: 'red', quality: qualityFilter, status: statusFilter, cps: cpsFilter })}
           className={`inline-flex items-center gap-1.5 text-sm rounded-md px-2 py-1 transition-colors ${
             seoFilter === 'red' ? 'bg-red-50 ring-1 ring-red-200' : 'hover:bg-slate-50'
           }`}
@@ -355,7 +391,7 @@ export default async function ContentHubPage({ searchParams }: ContentHubPagePro
       <div className="flex items-center gap-6 px-4 py-3 bg-white border border-slate-200 rounded-xl">
         <span className="text-sm font-medium text-slate-600">Quality:</span>
         <Link
-          href={buildHubUrl({ seo: seoFilter, quality: '90plus', status: statusFilter })}
+          href={buildHubUrl({ seo: seoFilter, quality: '90plus', status: statusFilter, cps: cpsFilter })}
           className={`inline-flex items-center gap-1.5 text-sm rounded-md px-2 py-1 transition-colors ${
             qualityFilter === '90plus' ? 'bg-emerald-50 ring-1 ring-emerald-200' : 'hover:bg-slate-50'
           }`}
@@ -365,7 +401,7 @@ export default async function ContentHubPage({ searchParams }: ContentHubPagePro
           <span className="text-slate-400">≥ 90</span>
         </Link>
         <Link
-          href={buildHubUrl({ seo: seoFilter, quality: 'good', status: statusFilter })}
+          href={buildHubUrl({ seo: seoFilter, quality: 'good', status: statusFilter, cps: cpsFilter })}
           className={`inline-flex items-center gap-1.5 text-sm rounded-md px-2 py-1 transition-colors ${
             qualityFilter === 'good' ? 'bg-blue-50 ring-1 ring-blue-200' : 'hover:bg-slate-50'
           }`}
@@ -375,7 +411,7 @@ export default async function ContentHubPage({ searchParams }: ContentHubPagePro
           <span className="text-slate-400">80–89</span>
         </Link>
         <Link
-          href={buildHubUrl({ seo: seoFilter, quality: 'below80', status: statusFilter })}
+          href={buildHubUrl({ seo: seoFilter, quality: 'below80', status: statusFilter, cps: cpsFilter })}
           className={`inline-flex items-center gap-1.5 text-sm rounded-md px-2 py-1 transition-colors ${
             qualityFilter === 'below80' ? 'bg-amber-50 ring-1 ring-amber-200' : 'hover:bg-slate-50'
           }`}
@@ -389,12 +425,66 @@ export default async function ContentHubPage({ searchParams }: ContentHubPagePro
         </span>
       </div>
 
+      {/* CPS Breakdown */}
+      <div className="flex items-center gap-6 px-4 py-3 bg-white border border-slate-200 rounded-xl">
+        <span className="text-sm font-medium text-slate-600 whitespace-nowrap">CPS Score:</span>
+        <Link
+          href={buildHubUrl({ seo: seoFilter, quality: qualityFilter, status: statusFilter, cps: 'easy' })}
+          className={`inline-flex items-center gap-1.5 text-sm rounded-md px-2 py-1 transition-colors ${
+            cpsFilter === 'easy' ? 'bg-emerald-50 ring-1 ring-emerald-200' : 'hover:bg-slate-50'
+          }`}
+          title="CPS 0–20: Low competition — easiest keywords to rank for"
+        >
+          <span className="w-3 h-3 rounded-full bg-emerald-400" />
+          <span className="text-slate-700 font-medium tabular-nums">{cpsEasy}</span>
+          <span className="text-slate-400">easy (≤ 20)</span>
+        </Link>
+        <Link
+          href={buildHubUrl({ seo: seoFilter, quality: qualityFilter, status: statusFilter, cps: 'medium' })}
+          className={`inline-flex items-center gap-1.5 text-sm rounded-md px-2 py-1 transition-colors ${
+            cpsFilter === 'medium' ? 'bg-amber-50 ring-1 ring-amber-200' : 'hover:bg-slate-50'
+          }`}
+          title="CPS 21–40: Medium competition"
+        >
+          <span className="w-3 h-3 rounded-full bg-amber-400" />
+          <span className="text-slate-700 font-medium tabular-nums">{cpsMedium}</span>
+          <span className="text-slate-400">medium (21–40)</span>
+        </Link>
+        <Link
+          href={buildHubUrl({ seo: seoFilter, quality: qualityFilter, status: statusFilter, cps: 'hard' })}
+          className={`inline-flex items-center gap-1.5 text-sm rounded-md px-2 py-1 transition-colors ${
+            cpsFilter === 'hard' ? 'bg-red-50 ring-1 ring-red-200' : 'hover:bg-slate-50'
+          }`}
+          title="CPS > 40: High competition — authority sites dominate SERPs"
+        >
+          <span className="w-3 h-3 rounded-full bg-red-400" />
+          <span className="text-slate-700 font-medium tabular-nums">{cpsHard}</span>
+          <span className="text-slate-400">hard (&gt; 40)</span>
+        </Link>
+        {cpsMissing > 0 && (
+          <Link
+            href={buildHubUrl({ seo: seoFilter, quality: qualityFilter, status: statusFilter, cps: 'missing' })}
+            className={`inline-flex items-center gap-1.5 text-sm rounded-md px-2 py-1 transition-colors ${
+              cpsFilter === 'missing' ? 'bg-slate-100 ring-1 ring-slate-300' : 'hover:bg-slate-50'
+            }`}
+            title="No CPS data available (core pages, tools)"
+          >
+            <span className="w-3 h-3 rounded-full bg-slate-300" />
+            <span className="text-slate-700 font-medium tabular-nums">{cpsMissing}</span>
+            <span className="text-slate-400">no data</span>
+          </Link>
+        )}
+        <span className="ml-auto text-xs text-slate-400">
+          Avg CPS: {stats.pagesWithCps > 0 ? `${stats.avgCps}/100` : '—'} · Low score = low competition
+        </span>
+      </div>
+
       {/* Status Breakdown (only visible when archived pages exist) */}
       {archivedCount > 0 && (
         <div className="flex items-center gap-6 px-4 py-3 bg-white border border-slate-200 rounded-xl">
           <span className="text-sm font-medium text-slate-600">Status:</span>
           <Link
-            href={buildHubUrl({ seo: seoFilter, quality: qualityFilter, status: 'active' })}
+            href={buildHubUrl({ seo: seoFilter, quality: qualityFilter, status: 'active', cps: cpsFilter })}
             className={`inline-flex items-center gap-1.5 text-sm rounded-md px-2 py-1 transition-colors ${
               statusFilter === 'active' ? 'bg-emerald-50 ring-1 ring-emerald-200' : 'hover:bg-slate-50'
             }`}
@@ -404,7 +494,7 @@ export default async function ContentHubPage({ searchParams }: ContentHubPagePro
             <span className="text-slate-400">active</span>
           </Link>
           <Link
-            href={buildHubUrl({ seo: seoFilter, quality: qualityFilter, status: 'archived' })}
+            href={buildHubUrl({ seo: seoFilter, quality: qualityFilter, status: 'archived', cps: cpsFilter })}
             className={`inline-flex items-center gap-1.5 text-sm rounded-md px-2 py-1 transition-colors ${
               statusFilter === 'archived' ? 'bg-orange-50 ring-1 ring-orange-200' : 'hover:bg-slate-50'
             }`}
