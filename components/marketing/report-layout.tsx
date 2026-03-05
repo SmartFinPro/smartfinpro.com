@@ -264,8 +264,8 @@ export function ReportLayout({
           {/* Title */}
           <div className="max-w-7xl mx-auto">
             <h1
-              className="text-2xl md:text-3xl lg:text-4xl font-bold leading-tight mb-6"
-              style={{ color: 'var(--sfp-ink)' }}
+              className="font-bold leading-tight mb-6"
+              style={{ color: 'var(--sfp-ink)', fontSize: 'clamp(1.5rem, 4vw, 2.25rem)' }}
             >
               {review.title}{isGuide ? '' : ` — Expert Review & Analysis Report ${year}`}
             </h1>

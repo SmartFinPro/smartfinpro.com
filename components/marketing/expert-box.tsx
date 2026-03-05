@@ -118,7 +118,7 @@ export function ExpertBox({
           {(quote || children) && (
             <div className="mt-4 pl-4 border-l-2" style={{ borderColor: 'var(--sfp-navy)' }}>
               {quote ? (
-                <p className="italic" style={{ color: 'var(--sfp-ink)', fontSize: '13px', lineHeight: '1.5' }}>&ldquo;{quote}&rdquo;</p>
+                <p className="italic" style={{ color: 'var(--sfp-ink)', fontSize: '13px', lineHeight: '1.65', fontFamily: 'var(--font-secondary)' }}>&ldquo;{quote}&rdquo;</p>
               ) : (
                 <div style={{ color: 'var(--sfp-ink)', fontSize: '13px', lineHeight: '1.5' }}>{children}</div>
               )}

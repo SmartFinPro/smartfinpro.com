@@ -66,6 +66,15 @@
     --sfp-footer-text:#AAAAAA;
     --sfp-warning-bg: #FFF8E1;  /* Warning-Box Hintergrund — amber-50 */
 
+    /* === Typography System (AP-04) === */
+    /* Inter ist via next/font/google geladen → --font-inter auf <body> */
+    --font-primary:      var(--font-inter), system-ui, Arial, sans-serif;
+    --font-secondary:    Georgia, Lora, 'Times New Roman', serif;
+    /* Fluid Text-Scale */
+    --text-main-size:    clamp(1rem, 1.2vw, 1.125rem);  /* 16–18px */
+    --text-main-leading: 1.75;
+    --text-meta-size:    0.875rem;                       /* 14px */
+
     /* === Default Silo Tint === */
     --sfp-silo-tint: #D5E8F0;
   }
@@ -740,6 +749,14 @@ article a:not([href^="/go/"]):not([href^="http"]):not([data-slot="button"]):not(
   --sfp-slate:      #555555;
   --sfp-footer-text:#AAAAAA;
   --sfp-warning-bg: #FFF8E1;
+
+  /* Typography System (AP-04) */
+  --font-primary:      var(--font-inter), system-ui, Arial, sans-serif;
+  --font-secondary:    Georgia, Lora, 'Times New Roman', serif;
+  --text-main-size:    clamp(1rem, 1.2vw, 1.125rem);
+  --text-main-leading: 1.75;
+  --text-meta-size:    0.875rem;
+
   --sfp-silo-tint:  #D5E8F0;
 
   /* Shadcn/UI Theme Overrides (SmartFinPro brand) */
