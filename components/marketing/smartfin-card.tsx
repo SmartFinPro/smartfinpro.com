@@ -125,8 +125,8 @@ export function SmartFinCard({
                       key={s}
                       className="h-4 w-4"
                       style={{
-                        color: s <= fullStars ? '#F5A623' : (s === fullStars + 1 && hasHalf) ? '#F5A623' : '#D1D5DB',
-                        fill: s <= fullStars ? '#F5A623' : (s === fullStars + 1 && hasHalf) ? 'url(#half)' : 'none',
+                        color: s <= fullStars ? 'var(--sfp-gold)' : (s === fullStars + 1 && hasHalf) ? 'var(--sfp-gold)' : '#D1D5DB',
+                        fill: s <= fullStars ? 'var(--sfp-gold)' : (s === fullStars + 1 && hasHalf) ? 'url(#half)' : 'none',
                       }}
                     />
                   ))}

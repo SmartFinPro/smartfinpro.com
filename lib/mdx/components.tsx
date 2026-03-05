@@ -172,7 +172,7 @@ function InfoBox({ children }: { children: React.ReactNode }) {
 // Warning Component — Gelb-Tint + Gold left border (per Konzept 7.3 Warning-Box)
 function Warning({ children }: { children: React.ReactNode }) {
   return (
-    <div className="my-4 rounded-lg border-l-4 p-4" style={{ borderColor: 'var(--sfp-gold)', background: '#FFF8E1' }}>
+    <div className="my-4 rounded-lg border-l-4 p-4" style={{ borderColor: 'var(--sfp-gold)', background: 'var(--sfp-warning-bg)' }}>
       <div className="flex gap-3">
         <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" style={{ color: 'var(--sfp-gold)' }} />
         <div className="text-sm leading-relaxed" style={{ color: 'var(--sfp-ink)' }}>

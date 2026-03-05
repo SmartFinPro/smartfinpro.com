@@ -64,6 +64,7 @@
     --sfp-ink:        #1A1A2E;
     --sfp-slate:      #555555;
     --sfp-footer-text:#AAAAAA;
+    --sfp-warning-bg: #FFF8E1;  /* Warning-Box Hintergrund — amber-50 */
 
     /* === Default Silo Tint === */
     --sfp-silo-tint: #D5E8F0;
@@ -738,6 +739,7 @@ article a:not([href^="/go/"]):not([href^="http"]):not([data-slot="button"]):not(
   --sfp-ink:        #1A1A2E;
   --sfp-slate:      #555555;
   --sfp-footer-text:#AAAAAA;
+  --sfp-warning-bg: #FFF8E1;
   --sfp-silo-tint:  #D5E8F0;
 
   /* Shadcn/UI Theme Overrides (SmartFinPro brand) */

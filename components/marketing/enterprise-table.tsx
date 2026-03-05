@@ -382,8 +382,8 @@ export function RankingTable({
                               key={star}
                               className="h-3.5 w-3.5"
                               style={{
-                                color: star <= Math.round(item.rating) ? '#F5A623' : '#D1D5DB',
-                                fill: star <= Math.round(item.rating) ? '#F5A623' : 'none',
+                                color: star <= Math.round(item.rating) ? 'var(--sfp-gold)' : '#D1D5DB',
+                                fill: star <= Math.round(item.rating) ? 'var(--sfp-gold)' : 'none',
                               }}
                             />
                           ))}
