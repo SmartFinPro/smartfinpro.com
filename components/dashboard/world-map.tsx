@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react';
 import type { GeoStat } from '@/lib/actions/dashboard';
+import { MAP_COLORS } from '@/lib/constants/brand-colors';
 
 interface WorldMapProps {
   data: GeoStat[];
@@ -35,23 +36,25 @@ const countryPaths: Record<string, { path: string; cx: number; cy: number }> = {
   // Add more countries as needed
 };
 
-// Light theme color palette - blue/emerald for data visualization
+// AP-03 Phase 3 — Farben aus brand-colors.ts (Single Source of Truth)
+// MAP_COLORS: sky → navy Heatmap-Skala (statt emerald)
 const COLORS = {
-  muted: '#e2e8f0', // slate-200
-  land: '#f1f5f9', // slate-100
-  border: '#cbd5e1', // slate-300
-  primary: '#10b981', // emerald-500
-  text: '#64748b', // slate-500
+  muted:   MAP_COLORS.muted,
+  land:    MAP_COLORS.land,
+  border:  MAP_COLORS.border,
+  primary: MAP_COLORS.activeDot,  // --sfp-gold — Klick-Indikator
+  text:    MAP_COLORS.text,
 };
 
-// Color scale based on intensity - emerald shades
+// Heatmap-Skala: sky-blau (wenig) → navy (viel) — konsistent mit Brand-Palette
 function getColor(percentage: number): string {
   if (percentage === 0) return COLORS.muted;
-  if (percentage < 5) return '#d1fae5'; // emerald-100
-  if (percentage < 15) return '#a7f3d0'; // emerald-200
-  if (percentage < 30) return '#6ee7b7'; // emerald-300
-  if (percentage < 50) return '#34d399'; // emerald-400
-  return '#10b981'; // emerald-500
+  return MAP_COLORS.scale[
+    percentage < 5 ? 0 :
+    percentage < 15 ? 1 :
+    percentage < 30 ? 2 :
+    percentage < 50 ? 3 : 4
+  ];
 }
 
 export function WorldMap({ data }: WorldMapProps) {
@@ -85,7 +88,7 @@ export function WorldMap({ data }: WorldMapProps) {
         style={{ maxHeight: '220px' }}
       >
         {/* Background - light blue for ocean */}
-        <rect width="600" height="300" fill="#f0f9ff" rx="8" />
+        <rect width="600" height="300" fill={MAP_COLORS.ocean} rx="8" />
 
         {/* Continents outline (simplified) - light gray land */}
         <g fill={COLORS.land} stroke={COLORS.border} strokeWidth="0.5">
@@ -133,7 +136,7 @@ export function WorldMap({ data }: WorldMapProps) {
                     cx={cx}
                     cy={cy}
                     r={3}
-                    fill="#ffffff"
+                    fill={MAP_COLORS.dotCenter}
                   />
                 </g>
               )}
@@ -146,11 +149,11 @@ export function WorldMap({ data }: WorldMapProps) {
           <text x="0" y="0" fill={COLORS.text} fontSize="10">
             Click intensity:
           </text>
-          <rect x="80" y="-10" width="20" height="12" fill="#d1fae5" rx="2" />
-          <rect x="105" y="-10" width="20" height="12" fill="#a7f3d0" rx="2" />
-          <rect x="130" y="-10" width="20" height="12" fill="#6ee7b7" rx="2" />
-          <rect x="155" y="-10" width="20" height="12" fill="#34d399" rx="2" />
-          <rect x="180" y="-10" width="20" height="12" fill="#10b981" rx="2" />
+          <rect x="80"  y="-10" width="20" height="12" fill={MAP_COLORS.scale[0]} rx="2" />
+          <rect x="105" y="-10" width="20" height="12" fill={MAP_COLORS.scale[1]} rx="2" />
+          <rect x="130" y="-10" width="20" height="12" fill={MAP_COLORS.scale[2]} rx="2" />
+          <rect x="155" y="-10" width="20" height="12" fill={MAP_COLORS.scale[3]} rx="2" />
+          <rect x="180" y="-10" width="20" height="12" fill={MAP_COLORS.scale[4]} rx="2" />
           <text x="85" y="15" fill={COLORS.text} fontSize="8">Low</text>
           <text x="175" y="15" fill={COLORS.text} fontSize="8">High</text>
         </g>
