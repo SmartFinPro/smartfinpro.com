@@ -203,6 +203,11 @@ export function ReportLayout({
               modifiedDate: review.modifiedDate,
               author: review.author || 'SmartFinPro Editorial Team',
               url: `https://smartfinpro.com/${market === 'us' ? '' : `${market}/`}${category}/${review.productName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}`,
+              // Phase 1 GEO — Fact-Checker Integration
+              ...(showExpertCards && reviewerName && {
+                reviewedBy: reviewerName,
+                reviewedByUrl: reviewerLinkedIn || 'https://smartfinpro.com/about',
+              }),
             })),
           }}
         />
@@ -215,10 +220,25 @@ export function ReportLayout({
           dangerouslySetInnerHTML={{
             __html: JSON.stringify(generatePersonSchema({
               name: reviewerName,
+              // url = canonical SFP profile; LinkedIn goes into sameAs
+              url: 'https://smartfinpro.com/about',
               jobTitle: reviewerTitle !== 'Expert Reviewer' ? reviewerTitle : undefined,
               image: expertImage ? `https://smartfinpro.com${expertImage}` : undefined,
               description: reviewerBio,
-              url: reviewerLinkedIn || 'https://smartfinpro.com/about',
+              // Phase 2 GEO — LinkedIn sameAs (external social proof signal)
+              ...(reviewerLinkedIn && {
+                sameAs: [reviewerLinkedIn],
+              }),
+              // Phase 2 GEO — Credentials as EducationalOccupationalCredential nodes
+              ...(reviewerCredentials.length > 0 && {
+                credentials: reviewerCredentials,
+              }),
+              // Phase 2 GEO — Expert knowledge scope for AI crawlers
+              knowsAbout: [
+                categoryConfig[category]?.name || categoryName,
+                'Financial Product Reviews',
+                'Investment Analysis',
+              ],
             })),
           }}
         />

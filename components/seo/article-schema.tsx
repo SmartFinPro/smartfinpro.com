@@ -8,6 +8,10 @@ interface ArticleSchemaProps {
   author: string;
   image?: string;
   url: string;
+  /** Fact-checker / reviewer — shown as reviewedBy Person in JSON-LD */
+  reviewedBy?: string;
+  /** Canonical profile URL for the reviewer (e.g. LinkedIn or /about) */
+  reviewedByUrl?: string;
 }
 
 /**
@@ -49,6 +53,8 @@ export function ArticleSchema({
   author,
   image,
   url,
+  reviewedBy,
+  reviewedByUrl,
 }: ArticleSchemaProps) {
   const schema = generateArticleSchema({
     title,
@@ -58,6 +64,8 @@ export function ArticleSchema({
     author,
     image,
     url,
+    reviewedBy,
+    reviewedByUrl,
   });
 
   return (
