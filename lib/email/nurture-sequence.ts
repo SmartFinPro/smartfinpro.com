@@ -14,14 +14,18 @@ import { createServiceClient } from '@/lib/supabase/server';
 import { sendEmail } from './resend';
 import { RegionalToolsEmail } from './templates/regional-tools-email';
 import { CaseStudyEmail } from './templates/case-study-email';
+import { BrokerPicksEmail } from './templates/broker-picks-email';
+import { ReEngagementEmail } from './templates/reengagement-email';
 
-// Sequence configuration
+// Sequence configuration — 5-step welcome funnel
 export const SEQUENCE_CONFIG = {
   name: 'welcome',
   steps: [
-    { step: 0, name: 'welcome', daysAfterSignup: 0, subject: 'Your Download: The 5-Minute AI Finance Workflow' },
-    { step: 1, name: 'regional-tools', daysAfterSignup: 2, subject: 'The Top 3 Tools for Your Region' },
-    { step: 2, name: 'case-study', daysAfterSignup: 5, subject: 'Case Study: How AI Saves 10h/Week in Finance' },
+    { step: 0, name: 'welcome',       daysAfterSignup: 0,  subject: 'Your Download: The 5-Minute AI Finance Workflow' },
+    { step: 1, name: 'regional-tools', daysAfterSignup: 2,  subject: 'The Top 3 Tools for Your Region' },
+    { step: 2, name: 'case-study',     daysAfterSignup: 5,  subject: 'Case Study: How AI Saves 10h/Week in Finance' },
+    { step: 3, name: 'broker-picks',   daysAfterSignup: 10, subject: 'Our Top 3 Regulated Brokers for You' },
+    { step: 4, name: 'reengagement',   daysAfterSignup: 21, subject: 'What your peers are reading this month' },
   ],
 } as const;
 
@@ -246,6 +250,40 @@ async function sendSequenceEmail(
       return sendEmail({
         to: email,
         subject: 'Case Study: How AI Automates 10h of Finance Work Weekly',
+        html,
+      });
+    }
+
+    case 3: {
+      // Day 10: Top Broker Picks (market-specific)
+      const html = await render(
+        BrokerPicksEmail({
+          unsubscribeUrl,
+          baseUrl,
+          country,
+        })
+      );
+
+      return sendEmail({
+        to: email,
+        subject: `Our Top 3 Regulated Brokers for You`,
+        html,
+      });
+    }
+
+    case 4: {
+      // Day 21: Re-engagement — curated content digest
+      const html = await render(
+        ReEngagementEmail({
+          unsubscribeUrl,
+          baseUrl,
+          country,
+        })
+      );
+
+      return sendEmail({
+        to: email,
+        subject: 'What your peers are reading this month',
         html,
       });
     }

@@ -26,6 +26,7 @@ import { MarketOpportunities } from '@/components/dashboard/market-opportunities
 import { WorldMap } from '@/components/dashboard/world-map';
 import { ClickDetailsTable } from '@/components/dashboard/click-details-table';
 import { SystemIntegrityWidget } from '@/components/dashboard/system-integrity-widget';
+import { WebVitalsWidget } from '@/components/dashboard/web-vitals-widget';
 import Link from 'next/link';
 
 export const dynamic = 'force-dynamic';
@@ -250,11 +251,18 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           </div>
         )}
 
-        {/* System Integrity */}
-        <div className="mb-8">
-          <Suspense fallback={<Skeleton className="h-64" />}>
-            <SystemIntegrityWidget />
-          </Suspense>
+        {/* System Integrity + CWV Widget — side by side */}
+        <div className="grid gap-6 lg:grid-cols-3 mb-8">
+          <div className="lg:col-span-2">
+            <Suspense fallback={<Skeleton className="h-64" />}>
+              <SystemIntegrityWidget />
+            </Suspense>
+          </div>
+          <div>
+            <Suspense fallback={<Skeleton className="h-64" />}>
+              <WebVitalsWidget />
+            </Suspense>
+          </div>
         </div>
 
         {/* Charts Row */}

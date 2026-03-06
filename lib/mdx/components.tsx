@@ -42,6 +42,11 @@ import {
   Plane,
   ChevronDown,
   Layers,
+  // AP-11 + GEO-Snippet new imports
+  PlayCircle,
+  BookOpen,
+  ChevronRight,
+  Quote,
 } from 'lucide-react';
 
 // Marketing Components
@@ -947,6 +952,423 @@ function StyledP({ children, ...props }: React.HTMLAttributes<HTMLParagraphEleme
   );
 }
 
+// ─────────────────────────────────────────────────────────────
+// AP-11: Missing Content Templates
+// ─────────────────────────────────────────────────────────────
+
+// ── 1. StepByStepGuide ───────────────────────────────────────
+// Tutorial component for how-to / problem-solution pages (SEO impact)
+// Usage in MDX:
+//   <StepByStepGuide title="How to Open a Trading Account">
+//     <Step n={1} title="Choose a regulated broker">...content...</Step>
+//     <Step n={2} title="Verify your identity">...content...</Step>
+//   </StepByStepGuide>
+
+function Step({
+  n,
+  title,
+  children,
+}: {
+  n: number;
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex gap-4 group">
+      {/* Step number circle */}
+      <div className="shrink-0 flex flex-col items-center">
+        <div
+          className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-sm"
+          style={{ background: 'linear-gradient(135deg, var(--sfp-navy) 0%, #2563EB 100%)' }}
+        >
+          {n}
+        </div>
+        {/* Connector line */}
+        <div className="w-px flex-1 mt-2 mb-0" style={{ background: 'linear-gradient(180deg, var(--sfp-navy) 0%, transparent 100%)', minHeight: '20px', opacity: 0.2 }} />
+      </div>
+      {/* Content */}
+      <div className="flex-1 pb-6">
+        <h4 className="font-semibold mb-2 text-[15px]" style={{ color: 'var(--sfp-navy)' }}>
+          {title}
+        </h4>
+        <div className="text-[14px] leading-relaxed [&>p]:mb-2 [&>p:last-child]:mb-0 [&_strong]:font-semibold [&_a]:underline" style={{ color: 'var(--sfp-ink)' }}>
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StepByStepGuide({
+  title,
+  subtitle,
+  children,
+  timeEstimate,
+}: {
+  title: string;
+  subtitle?: string;
+  children: React.ReactNode;
+  timeEstimate?: string;
+}) {
+  return (
+    <div className="relative my-10 not-prose">
+      <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+        {/* Gradient accent bar */}
+        <div className="h-1" style={{ background: 'linear-gradient(90deg, var(--sfp-navy) 0%, var(--sfp-gold) 100%)' }} />
+
+        {/* Header — split-panel */}
+        <div className="flex flex-col lg:flex-row border-b border-gray-100">
+          {/* Left panel */}
+          <div
+            className="shrink-0 px-6 py-5 lg:px-8 lg:py-6 flex flex-col justify-center lg:w-[260px] border-b lg:border-b-0 lg:border-r border-gray-100"
+            style={{ background: 'var(--sfp-sky)' }}
+          >
+            <div className="flex items-center gap-2.5 mb-1.5">
+              <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: 'rgba(27,79,140,0.1)' }}>
+                <ChevronRight className="h-3.5 w-3.5" style={{ color: 'var(--sfp-navy)' }} />
+              </div>
+              <span className="text-sm font-bold uppercase tracking-wider" style={{ color: 'var(--sfp-navy)' }}>
+                Step-by-Step
+              </span>
+            </div>
+            {timeEstimate && (
+              <div className="flex items-center gap-1.5 mt-1 lg:pl-[38px]">
+                <Clock className="h-3 w-3" style={{ color: 'var(--sfp-slate)' }} />
+                <span style={{ color: 'var(--sfp-slate)', fontSize: '11px' }}>{timeEstimate}</span>
+              </div>
+            )}
+          </div>
+          {/* Right panel: Title */}
+          <div className="flex-1 px-6 py-5 lg:px-8 lg:py-6">
+            <h3 className="font-bold text-[17px] leading-tight mb-1" style={{ color: 'var(--sfp-ink)' }}>
+              {title}
+            </h3>
+            {subtitle && (
+              <p className="text-[13px]" style={{ color: 'var(--sfp-slate)' }}>{subtitle}</p>
+            )}
+          </div>
+        </div>
+
+        {/* Steps */}
+        <div className="px-6 py-6 lg:px-10 lg:py-8">
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── 2. VideoContainer ─────────────────────────────────────────
+// Responsive video embed + VideoObject JSON-LD for SEO
+// Usage in MDX:
+//   <VideoContainer
+//     src="https://www.youtube.com/embed/xyz"
+//     title="Best Brokers 2026 Comparison"
+//     description="We compare the top 5 regulated brokers..."
+//     uploadDate="2026-03-06"
+//     thumbnail="https://img.youtube.com/vi/xyz/maxresdefault.jpg"
+//   />
+
+function VideoContainer({
+  src,
+  title,
+  description,
+  uploadDate,
+  thumbnail,
+  label,
+}: {
+  src: string;
+  title: string;
+  description?: string;
+  uploadDate?: string;
+  thumbnail?: string;
+  label?: string;
+}) {
+  // Build VideoObject JSON-LD for Google/AI Overviews
+  const schema = {
+    '@context': 'https://schema.org',
+    '@type': 'VideoObject',
+    name: title,
+    description: description || title,
+    uploadDate: uploadDate || new Date().toISOString().split('T')[0],
+    ...(thumbnail ? { thumbnailUrl: thumbnail } : {}),
+    embedUrl: src,
+  };
+
+  return (
+    <div className="relative my-10 not-prose">
+      {/* JSON-LD */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+      />
+
+      <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+        {/* Gradient accent bar */}
+        <div className="h-1" style={{ background: 'linear-gradient(90deg, var(--sfp-navy) 0%, var(--sfp-gold) 100%)' }} />
+
+        {/* Header label */}
+        {(label || title) && (
+          <div className="px-5 py-3 border-b border-gray-100 flex items-center gap-2.5" style={{ background: 'var(--sfp-sky)' }}>
+            <PlayCircle className="h-4 w-4 shrink-0" style={{ color: 'var(--sfp-navy)' }} />
+            <span className="text-sm font-semibold" style={{ color: 'var(--sfp-navy)' }}>
+              {label || title}
+            </span>
+          </div>
+        )}
+
+        {/* 16:9 responsive iframe */}
+        <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+          <iframe
+            src={src}
+            title={title}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+            loading="lazy"
+            className="absolute inset-0 w-full h-full"
+            style={{ border: 'none' }}
+          />
+        </div>
+
+        {/* Caption */}
+        {description && (
+          <div className="px-5 py-3 border-t border-gray-100">
+            <p className="text-[12px]" style={{ color: 'var(--sfp-slate)' }}>{description}</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── 3. CaseStudyCard ─────────────────────────────────────────
+// Social proof / case study block — deep trust signal
+// Usage in MDX:
+//   <CaseStudyCard
+//     company="FinanceFirm Ltd."
+//     industry="Wealth Management"
+//     challenge="Spending 15h/week on manual research"
+//     solution="Deployed AI tools from our top picks list"
+//     result="+62% efficiency, €18,400 saved per year"
+//     quote="Game-changer for our advisory team."
+//     author="CFO, FinanceFirm Ltd."
+//   />
+
+function CaseStudyCard({
+  company,
+  industry,
+  challenge,
+  solution,
+  result,
+  quote,
+  author,
+  logo,
+}: {
+  company: string;
+  industry?: string;
+  challenge: string;
+  solution: string;
+  result: string;
+  quote?: string;
+  author?: string;
+  logo?: string;
+}) {
+  return (
+    <div className="relative my-10 not-prose">
+      <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+        {/* Gradient accent bar */}
+        <div className="h-1" style={{ background: 'linear-gradient(90deg, var(--sfp-navy) 0%, var(--sfp-gold) 100%)' }} />
+
+        <div className="flex flex-col lg:flex-row">
+          {/* Left panel: Company + Result */}
+          <div
+            className="shrink-0 px-6 py-6 lg:px-8 lg:py-8 flex flex-col justify-between lg:w-[260px] border-b lg:border-b-0 lg:border-r border-gray-100"
+            style={{ background: 'var(--sfp-sky)' }}
+          >
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: 'rgba(26,107,58,0.1)' }}>
+                  <Award className="h-3.5 w-3.5" style={{ color: 'var(--sfp-green)' }} />
+                </div>
+                <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--sfp-green)' }}>
+                  Case Study
+                </span>
+              </div>
+              <p className="font-bold text-[15px] leading-tight mb-0.5" style={{ color: 'var(--sfp-ink)' }}>{company}</p>
+              {industry && <p className="text-[11px]" style={{ color: 'var(--sfp-slate)' }}>{industry}</p>}
+            </div>
+
+            {/* Result highlight */}
+            <div className="mt-5 rounded-xl p-4" style={{ background: 'rgba(26,107,58,0.08)', border: '1px solid rgba(26,107,58,0.2)' }}>
+              <div className="flex items-center gap-1.5 mb-1">
+                <TrendingUp className="h-3.5 w-3.5" style={{ color: 'var(--sfp-green)' }} />
+                <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--sfp-green)' }}>Result</span>
+              </div>
+              <p className="font-bold text-[14px] leading-snug" style={{ color: 'var(--sfp-green)' }}>{result}</p>
+            </div>
+          </div>
+
+          {/* Right panel: Challenge + Solution + Quote */}
+          <div className="flex-1 px-6 py-6 lg:px-8 lg:py-8 space-y-5">
+            {/* Challenge */}
+            <div>
+              <div className="flex items-center gap-1.5 mb-2">
+                <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{ background: 'rgba(214,64,69,0.1)' }}>
+                  <XCircle className="h-3 w-3" style={{ color: 'var(--sfp-red)' }} />
+                </div>
+                <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: 'var(--sfp-red)' }}>Challenge</span>
+              </div>
+              <p className="text-[14px] leading-relaxed" style={{ color: 'var(--sfp-ink)' }}>{challenge}</p>
+            </div>
+
+            {/* Solution */}
+            <div>
+              <div className="flex items-center gap-1.5 mb-2">
+                <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{ background: 'rgba(26,107,58,0.1)' }}>
+                  <CheckCircle className="h-3 w-3" style={{ color: 'var(--sfp-green)' }} />
+                </div>
+                <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: 'var(--sfp-green)' }}>Solution</span>
+              </div>
+              <p className="text-[14px] leading-relaxed" style={{ color: 'var(--sfp-ink)' }}>{solution}</p>
+            </div>
+
+            {/* Quote */}
+            {quote && (
+              <div className="rounded-xl p-4 mt-2" style={{ background: 'var(--sfp-gray)', borderLeft: '3px solid var(--sfp-gold)' }}>
+                <div className="flex gap-2.5">
+                  <Quote className="h-4 w-4 shrink-0 mt-0.5" style={{ color: 'var(--sfp-gold)' }} />
+                  <div>
+                    <p className="text-[14px] italic leading-relaxed mb-1" style={{ color: 'var(--sfp-ink)' }}>&ldquo;{quote}&rdquo;</p>
+                    {author && <p className="text-[11px] font-medium" style={{ color: 'var(--sfp-slate)' }}>— {author}</p>}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// GEO-Snippet Optimierung (AI Overviews / Featured Snippets)
+// ─────────────────────────────────────────────────────────────
+
+// ── 4. QuickAnswer ───────────────────────────────────────────
+// Direct answer box — targets AI Overviews + featured snippets
+// Wrap the single most important answer sentence in this component.
+// Usage in MDX:
+//   <QuickAnswer question="What is the best broker for beginners?">
+//     eToro is the best broker for beginners in 2026 due to its
+//     regulated copy-trading, zero-commission stocks, and $50 minimum deposit.
+//   </QuickAnswer>
+
+function QuickAnswer({
+  question,
+  children,
+}: {
+  question?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="relative my-8 not-prose">
+      <div
+        className="rounded-xl p-5 border-l-4"
+        style={{
+          background: 'var(--sfp-sky)',
+          borderLeftColor: 'var(--sfp-navy)',
+          borderTop: '1px solid rgba(27,79,140,0.15)',
+          borderRight: '1px solid rgba(27,79,140,0.15)',
+          borderBottom: '1px solid rgba(27,79,140,0.15)',
+        }}
+      >
+        {/* Badge */}
+        <div className="flex items-center gap-2 mb-3">
+          <Lightbulb className="h-4 w-4" style={{ color: 'var(--sfp-gold)' }} />
+          <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--sfp-navy)' }}>
+            Quick Answer
+          </span>
+        </div>
+
+        {/* Question (optional, for SEO context) */}
+        {question && (
+          <p className="font-semibold text-[13px] mb-2" style={{ color: 'var(--sfp-navy)' }}>
+            {question}
+          </p>
+        )}
+
+        {/* Answer — the key sentence for AI Overview extraction */}
+        <div
+          className="text-[15px] leading-relaxed font-medium [&>p]:mb-0 [&_strong]:font-bold"
+          style={{ color: 'var(--sfp-ink)' }}
+        >
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── 5. DefinitionBox ─────────────────────────────────────────
+// Term definition — structured for rich results + AI Overviews
+// Usage in MDX:
+//   <DefinitionBox term="Spread" category="Forex">
+//     The spread is the difference between the bid and ask price of a currency
+//     pair. It is measured in pips and represents the broker's fee for the trade.
+//   </DefinitionBox>
+
+function DefinitionBox({
+  term,
+  category,
+  children,
+}: {
+  term: string;
+  category?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="relative my-8 not-prose">
+      <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+        {/* Top accent */}
+        <div className="h-0.5" style={{ background: 'linear-gradient(90deg, var(--sfp-navy) 0%, var(--sfp-sky) 100%)' }} />
+
+        <div className="flex items-start gap-4 px-5 py-4">
+          {/* Icon */}
+          <div
+            className="shrink-0 w-9 h-9 rounded-lg flex items-center justify-center mt-0.5"
+            style={{ background: 'rgba(27,79,140,0.08)' }}
+          >
+            <BookOpen className="h-4 w-4" style={{ color: 'var(--sfp-navy)' }} />
+          </div>
+
+          <div className="flex-1 min-w-0">
+            {/* Term header */}
+            <div className="flex flex-wrap items-baseline gap-2 mb-2">
+              <span className="font-bold text-[16px]" style={{ color: 'var(--sfp-ink)' }}>
+                {term}
+              </span>
+              {category && (
+                <span
+                  className="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded"
+                  style={{ background: 'var(--sfp-sky)', color: 'var(--sfp-navy)' }}
+                >
+                  {category}
+                </span>
+              )}
+            </div>
+
+            {/* Definition */}
+            <div className="text-[14px] leading-relaxed [&>p]:mb-0 [&_strong]:font-semibold" style={{ color: 'var(--sfp-slate)' }}>
+              {children}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Export all MDX components
 export const mdxComponents = {
   // Base elements
@@ -1130,4 +1552,14 @@ export const mdxComponents = {
   WinnerTh,
   WinnerTd,
   WinnerCta,
+
+  // AP-11: New Content Templates
+  StepByStepGuide,
+  Step,
+  VideoContainer,
+  CaseStudyCard,
+
+  // GEO-Snippet Optimierung (AI Overviews / Featured Snippets)
+  QuickAnswer,
+  DefinitionBox,
 };
