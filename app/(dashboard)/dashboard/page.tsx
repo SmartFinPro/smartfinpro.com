@@ -27,6 +27,7 @@ import { WorldMap } from '@/components/dashboard/world-map';
 import { ClickDetailsTable } from '@/components/dashboard/click-details-table';
 import { SystemIntegrityWidget } from '@/components/dashboard/system-integrity-widget';
 import { WebVitalsWidget } from '@/components/dashboard/web-vitals-widget';
+import { RevenueAttributionWidget } from '@/components/dashboard/revenue-attribution-widget';
 import Link from 'next/link';
 
 export const dynamic = 'force-dynamic';
@@ -251,16 +252,19 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           </div>
         )}
 
-        {/* System Integrity + CWV Widget — side by side */}
+        {/* System Integrity + CWV + Revenue Attribution — 3-column grid */}
         <div className="grid gap-6 lg:grid-cols-3 mb-8">
           <div className="lg:col-span-2">
             <Suspense fallback={<Skeleton className="h-64" />}>
               <SystemIntegrityWidget />
             </Suspense>
           </div>
-          <div>
-            <Suspense fallback={<Skeleton className="h-64" />}>
+          <div className="flex flex-col gap-6">
+            <Suspense fallback={<Skeleton className="h-48" />}>
               <WebVitalsWidget />
+            </Suspense>
+            <Suspense fallback={<Skeleton className="h-48" />}>
+              <RevenueAttributionWidget />
             </Suspense>
           </div>
         </div>

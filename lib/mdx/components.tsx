@@ -47,6 +47,10 @@ import {
   BookOpen,
   ChevronRight,
   Quote,
+  // Tag 4 Quick-Win components
+  Newspaper,
+  BadgeCheck,
+  Hash,
 } from 'lucide-react';
 
 // Marketing Components
@@ -1369,6 +1373,208 @@ function DefinitionBox({
   );
 }
 
+// ── 6. StatBox ────────────────────────────────────────────────
+// Single prominent stat — for EEAT trust-building and data pull-outs
+// Usage:
+//   <StatBox value="£2.3B" label="Assets Under Management" source="FCA 2025" accent="navy" />
+//   <StatBox value="4.9/5" label="Trustpilot Rating" accent="gold" />
+
+function StatBox({
+  value,
+  label,
+  description,
+  source,
+  accent = 'navy',
+}: {
+  value: string;
+  label: string;
+  description?: string;
+  source?: string;
+  accent?: 'navy' | 'gold' | 'green';
+}) {
+  const accentMap: Record<string, { border: string; bg: string; text: string }> = {
+    navy:  { border: 'var(--sfp-navy)',     bg: 'rgba(27,79,140,0.05)',  text: 'var(--sfp-navy)'     },
+    gold:  { border: 'var(--sfp-gold)',     bg: 'rgba(245,166,35,0.07)', text: 'var(--sfp-gold-dark)' },
+    green: { border: 'var(--sfp-green)',    bg: 'rgba(26,107,58,0.05)',  text: 'var(--sfp-green)'    },
+  };
+  const c = accentMap[accent] ?? accentMap.navy;
+  return (
+    <div className="relative my-4 not-prose inline-block min-w-[180px]">
+      <div
+        className="rounded-xl border-l-4 border border-gray-100 px-5 py-4"
+        style={{ borderLeftColor: c.border, background: c.bg }}
+      >
+        <div className="flex items-start gap-2.5">
+          <Hash className="h-4 w-4 mt-1 shrink-0" style={{ color: c.border, opacity: 0.6 }} />
+          <div>
+            <p className="text-[36px] font-extrabold tabular-nums leading-none mb-1" style={{ color: c.text }}>
+              {value}
+            </p>
+            <p className="text-[13px] font-semibold leading-tight" style={{ color: 'var(--sfp-ink)' }}>
+              {label}
+            </p>
+            {description && (
+              <p className="text-[12px] mt-1 leading-snug" style={{ color: 'var(--sfp-slate)' }}>
+                {description}
+              </p>
+            )}
+            {source && (
+              <p className="text-[10px] mt-1.5 uppercase tracking-wider" style={{ color: 'var(--sfp-slate)', opacity: 0.7 }}>
+                Source: {source}
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── 7. RegulatorAlert ─────────────────────────────────────────
+// Regulatory badge + risk warning — FCA/ASIC/CIRO/SEC compliance
+// Required on UK (FCA), AU (ASIC), CA (CIRO) pages per CLAUDE.md rules
+// Usage:
+//   <RegulatorAlert regulator="FCA" number="195355" name="IG Markets Ltd" type="CFD">
+//     Capital at risk. 70% of retail accounts lose money trading CFDs.
+//   </RegulatorAlert>
+
+function RegulatorAlert({
+  regulator,
+  number,
+  name,
+  type,
+  children,
+}: {
+  regulator: 'FCA' | 'ASIC' | 'CIRO' | 'SEC' | 'FINRA' | 'BaFin';
+  number?: string;
+  name?: string;
+  type?: string;
+  children?: React.ReactNode;
+}) {
+  const regulatorMap: Record<string, { bg: string; border: string; badge: string }> = {
+    FCA:   { bg: 'rgba(27,79,140,0.05)',  border: 'rgba(27,79,140,0.25)',  badge: 'var(--sfp-navy)'  },
+    ASIC:  { bg: 'rgba(26,107,58,0.05)',  border: 'rgba(26,107,58,0.25)',  badge: 'var(--sfp-green)' },
+    CIRO:  { bg: 'rgba(245,166,35,0.06)', border: 'rgba(245,166,35,0.35)', badge: '#8B6914'          },
+    SEC:   { bg: 'rgba(27,79,140,0.05)',  border: 'rgba(27,79,140,0.25)',  badge: 'var(--sfp-navy)'  },
+    FINRA: { bg: 'rgba(27,79,140,0.05)',  border: 'rgba(27,79,140,0.25)',  badge: 'var(--sfp-navy)'  },
+    BaFin: { bg: 'rgba(27,79,140,0.05)',  border: 'rgba(27,79,140,0.25)',  badge: 'var(--sfp-navy)'  },
+  };
+  const c = regulatorMap[regulator] ?? regulatorMap.FCA;
+  return (
+    <div className="relative my-6 not-prose">
+      <div className="rounded-xl border overflow-hidden" style={{ background: c.bg, borderColor: c.border }}>
+        {/* Header row */}
+        <div className="flex items-center gap-3 px-4 py-2.5 border-b" style={{ borderColor: c.border }}>
+          <BadgeCheck className="h-4 w-4 shrink-0" style={{ color: c.badge }} />
+          <div className="flex items-center gap-2 flex-wrap min-w-0">
+            <span
+              className="text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded text-white shrink-0"
+              style={{ background: c.badge }}
+            >
+              {regulator} Regulated
+            </span>
+            {name && (
+              <span className="text-[12px] font-semibold truncate" style={{ color: 'var(--sfp-ink)' }}>
+                {name}
+              </span>
+            )}
+            {number && (
+              <span className="text-[11px] tabular-nums" style={{ color: 'var(--sfp-slate)' }}>
+                #{number}
+              </span>
+            )}
+            {type && (
+              <span
+                className="text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded-sm"
+                style={{ background: 'rgba(0,0,0,0.06)', color: 'var(--sfp-slate)' }}
+              >
+                {type}
+              </span>
+            )}
+          </div>
+        </div>
+        {/* Risk warning */}
+        {children && (
+          <div className="px-4 py-3 text-[12px] leading-relaxed" style={{ color: 'var(--sfp-slate)' }}>
+            {children}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── 8. NewsAlert ──────────────────────────────────────────────
+// Breaking news / update alert — highlights time-sensitive information
+// Useful for review pages needing freshness signals for EEAT
+// Usage:
+//   <NewsAlert date="2026-03-06" title="New FCA Leverage Rules (Q2 2026)" type="update">
+//     The FCA has announced new limits for retail CFD traders...
+//   </NewsAlert>
+
+function NewsAlert({
+  date,
+  title,
+  children,
+  type = 'update',
+}: {
+  date?: string;
+  title: string;
+  children?: React.ReactNode;
+  type?: 'update' | 'breaking' | 'warning';
+}) {
+  const typeMap: Record<string, { bg: string; accent: string; label: string }> = {
+    update:   { bg: 'rgba(27,79,140,0.04)',  accent: 'var(--sfp-navy)', label: 'Update'   },
+    breaking: { bg: 'rgba(214,64,69,0.05)',  accent: 'var(--sfp-red)',  label: 'Breaking' },
+    warning:  { bg: 'rgba(245,166,35,0.07)', accent: 'var(--sfp-gold)', label: 'Warning'  },
+  };
+  const c = typeMap[type] ?? typeMap.update;
+  const formattedDate = date
+    ? new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+    : null;
+  return (
+    <div className="relative my-6 not-prose">
+      <div
+        className="rounded-xl border-l-4 border border-gray-100 p-4"
+        style={{ borderLeftColor: c.accent, background: c.bg }}
+      >
+        <div className="flex items-start gap-3">
+          <Newspaper className="h-4 w-4 shrink-0 mt-0.5" style={{ color: c.accent }} />
+          <div className="flex-1 min-w-0">
+            {/* Badge + date */}
+            <div className="flex items-center gap-2 flex-wrap mb-1.5">
+              <span
+                className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full text-white"
+                style={{ background: c.accent }}
+              >
+                {c.label}
+              </span>
+              {formattedDate && (
+                <span className="text-[11px]" style={{ color: 'var(--sfp-slate)' }}>
+                  {formattedDate}
+                </span>
+              )}
+            </div>
+            {/* Title */}
+            <p className="font-semibold text-[14px] mb-1.5 leading-snug" style={{ color: 'var(--sfp-ink)' }}>
+              {title}
+            </p>
+            {/* Body */}
+            {children && (
+              <div
+                className="text-[13px] leading-relaxed [&>p]:mb-0 [&_strong]:font-semibold"
+                style={{ color: 'var(--sfp-slate)' }}
+              >
+                {children}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Export all MDX components
 export const mdxComponents = {
   // Base elements
@@ -1562,4 +1768,9 @@ export const mdxComponents = {
   // GEO-Snippet Optimierung (AI Overviews / Featured Snippets)
   QuickAnswer,
   DefinitionBox,
+
+  // Tag 4 Quick-Win Components
+  StatBox,
+  RegulatorAlert,
+  NewsAlert,
 };

@@ -384,6 +384,67 @@ export default async function AbTestingPage() {
         </div>
       )}
 
+      {/* Concluded Tests — Historical Archive */}
+      {concludedCount > 0 && (
+        <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+          <div className="px-5 py-3.5 border-b border-slate-100 flex items-center gap-2.5">
+            <Trophy className="h-4 w-4 text-emerald-600" />
+            <h2 className="text-sm font-semibold text-slate-800">Concluded Tests — Results Archive</h2>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-slate-100 bg-slate-50">
+                  <th className="px-5 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Hub</th>
+                  <th className="px-5 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Market</th>
+                  <th className="px-5 py-3 text-center text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Winner</th>
+                  <th className="px-5 py-3 text-right text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Lift</th>
+                  <th className="px-5 py-3 text-right text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Confidence</th>
+                  <th className="px-5 py-3 text-right text-[11px] font-semibold text-slate-500 uppercase tracking-wider">A CTR</th>
+                  <th className="px-5 py-3 text-right text-[11px] font-semibold text-slate-500 uppercase tracking-wider">B CTR</th>
+                  <th className="px-5 py-3 text-right text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Impressions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {tests
+                  .filter((t) => t.status === 'concluded')
+                  .map((test) => (
+                    <tr key={test.hubId} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
+                      <td className="px-5 py-3 font-medium text-slate-800 capitalize">{test.category}</td>
+                      <td className="px-5 py-3">
+                        <MarketBadge market={test.market} />
+                      </td>
+                      <td className="px-5 py-3 text-center">
+                        {test.winner ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 border border-emerald-200 text-[11px] font-bold text-emerald-700">
+                            <Trophy className="h-3 w-3" />
+                            Variant {test.winner} — {test.winner === 'A' ? 'Profit-First' : 'Trust-First'}
+                          </span>
+                        ) : '—'}
+                      </td>
+                      <td className="px-5 py-3 text-right font-semibold text-emerald-700 tabular-nums">
+                        {test.winnerLift !== null ? `+${test.winnerLift.toFixed(1)}%` : '—'}
+                      </td>
+                      <td className="px-5 py-3 text-right tabular-nums text-slate-600">
+                        {test.confidence !== null ? `${test.confidence.toFixed(0)}%` : '—'}
+                      </td>
+                      <td className="px-5 py-3 text-right tabular-nums text-slate-500">
+                        {test.variantA.cr.toFixed(2)}%
+                      </td>
+                      <td className="px-5 py-3 text-right tabular-nums text-slate-500">
+                        {test.variantB.cr.toFixed(2)}%
+                      </td>
+                      <td className="px-5 py-3 text-right tabular-nums text-slate-400 text-xs">
+                        {test.totalImpressions.toLocaleString()}
+                      </td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
       {/* Info Footer */}
       <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2">
         <div className="flex items-center gap-2 mb-2">

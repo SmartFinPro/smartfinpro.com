@@ -287,7 +287,15 @@ const nextConfig: NextConfig = {
           // Preconnect hints for critical external resources
           {
             key: 'Link',
-            value: '<https://fonts.googleapis.com>; rel=preconnect, <https://fonts.gstatic.com>; rel=preconnect; crossorigin',
+            value: [
+              '<https://fonts.googleapis.com>; rel=preconnect',
+              '<https://fonts.gstatic.com>; rel=preconnect; crossorigin',
+              // YouTube — for VideoContainer iframe embeds (faster LCP for video pages)
+              '<https://www.youtube.com>; rel=preconnect',
+              '<https://i.ytimg.com>; rel=preconnect',
+              // Plausible analytics — already dns-prefetched in HTML head
+              '<https://plausible.io>; rel=preconnect',
+            ].join(', '),
           },
         ],
       },
