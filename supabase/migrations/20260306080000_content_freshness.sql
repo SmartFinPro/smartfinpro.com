@@ -12,11 +12,8 @@ CREATE TABLE IF NOT EXISTS content_freshness (
   file_path       TEXT        NOT NULL UNIQUE,        -- relative path: content/us/ai-tools/jasper-review.mdx
   publish_date    DATE,                               -- frontmatter publishDate
   modified_date   DATE,                               -- frontmatter modifiedDate (if present)
-  age_days        INTEGER     GENERATED ALWAYS AS (
-    CASE WHEN publish_date IS NOT NULL
-    THEN (CURRENT_DATE - publish_date)
-    ELSE NULL END
-  ) STORED,
+  -- age_days computed at query time: (CURRENT_DATE - publish_date)
+  -- Note: CURRENT_DATE is not immutable so cannot be used in GENERATED ALWAYS AS
   needs_review    BOOLEAN     NOT NULL DEFAULT false,
   flagged_at      TIMESTAMPTZ,                        -- when needs_review was first set true
   reviewed_at     TIMESTAMPTZ,                        -- when editor marked as reviewed
