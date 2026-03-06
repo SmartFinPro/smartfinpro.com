@@ -8,6 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
 import { analyzeOpportunity } from '@/lib/claude/opportunity-analyzer';
+import { logger, logCron } from '@/lib/logging';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -26,6 +27,7 @@ interface Competitor {
   domain: string;
   market: string;
   category?: string;
+  keywords?: unknown; // stored as jsonb/text[] in Supabase; narrowed at use-site
 }
 
 interface ProgramCandidate {
@@ -71,7 +73,7 @@ const AFFILIATE_SIGNALS = [
 async function serperSearch(query: string, gl = 'us'): Promise<SerperOrganicResult[]> {
   const key = process.env.SERPER_API_KEY;
   if (!key) {
-    console.warn('[affiliate-scout] SERPER_API_KEY not set, skipping search');
+    logger.warn('[affiliate-scout] SERPER_API_KEY not set, skipping search');
     return [];
   }
 
@@ -86,7 +88,7 @@ async function serperSearch(query: string, gl = 'us'): Promise<SerperOrganicResu
     const data: SerperResponse = await res.json();
     return data.organic ?? [];
   } catch (err) {
-    console.warn('[affiliate-scout] serperSearch error:', (err as Error).message);
+    logger.warn('[affiliate-scout] serperSearch error', { error: (err as Error).message, query });
     return [];
   }
 }
@@ -316,11 +318,10 @@ export async function GET(request: NextRequest) {
         // Small delay between Claude calls
         await sleep(200);
       } catch (err) {
-        console.warn(
-          '[affiliate-scout] Analysis failed for:',
-          candidate.programName,
-          (err as Error).message,
-        );
+        logger.warn('[affiliate-scout] Analysis failed', {
+          program: candidate.programName,
+          error: (err as Error).message,
+        });
       }
     }
 
@@ -356,15 +357,17 @@ export async function GET(request: NextRequest) {
     const msg = err instanceof Error ? err.message : 'Unknown error';
     const duration = Date.now() - startTime;
 
-    console.error('[affiliate-scout] Cron failed:', msg);
+    logCron({ job: 'affiliate-scout', status: 'error', duration_ms: Date.now() - startTime, error: msg });
 
-    await supabase.from('cron_logs').insert({
-      job_name:    'affiliate-scout',
-      status:      'error',
-      duration_ms: duration,
-      error:       msg,
-      executed_at: new Date().toISOString(),
-    }).catch(() => null);
+    try {
+      await supabase.from('cron_logs').insert({
+        job_name:    'affiliate-scout',
+        status:      'error',
+        duration_ms: duration,
+        error:       msg,
+        executed_at: new Date().toISOString(),
+      });
+    } catch { /* non-critical — don't shadow main error */ }
 
     await sendTelegramAlert(`❌ <b>Smart-Scan 2026 FEHLER</b>\n${msg}`);
 

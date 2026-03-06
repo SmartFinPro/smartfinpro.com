@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
 import { syncConnector } from '@/lib/api/sync-service';
+import { logger, logCron } from '@/lib/logging';
 
 /**
  * Scheduled sync endpoint for daily conversion synchronization.
@@ -22,7 +23,7 @@ export async function GET(request: NextRequest) {
   }
 
   if (authHeader !== `Bearer ${cronSecret}`) {
-    console.warn('[sync-conversions] Unauthorized cron attempt');
+    logger.warn('[sync-conversions] Unauthorized cron attempt');
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -51,7 +52,7 @@ export async function GET(request: NextRequest) {
 
     // Sync each connector
     for (const connector of connectors) {
-      console.log(`[sync-conversions] Starting scheduled sync for: ${connector.name}`);
+      logger.info('[sync-conversions] Starting sync', { connector: connector.name });
 
       const result = await syncConnector(connector.name, 'scheduled');
 
@@ -63,10 +64,9 @@ export async function GET(request: NextRequest) {
         errors: result.errors,
       });
 
-      console.log(`[sync-conversions] Completed sync for ${connector.name}:`, {
-        success: result.success,
-        synced: result.records_synced,
-        skipped: result.records_skipped,
+      logger.info('[sync-conversions] Connector complete', {
+        connector: connector.name, success: result.success,
+        synced: result.records_synced, skipped: result.records_skipped,
       });
     }
 
@@ -79,7 +79,7 @@ export async function GET(request: NextRequest) {
       results,
     });
   } catch (error) {
-    console.error('[sync-conversions] Cron sync error:', error);
+    logCron({ job: 'sync-conversions', status: 'error', error: error instanceof Error ? error.message : String(error) });
     return NextResponse.json(
       { error: 'Sync failed', message: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }

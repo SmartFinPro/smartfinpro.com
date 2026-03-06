@@ -18,6 +18,7 @@ import path from 'path';
 import matter from 'gray-matter';
 import { createServiceClient } from '@/lib/supabase/server';
 import { sendTelegramAlert } from '@/lib/alerts/telegram';
+import { logger, logCron } from '@/lib/logging';
 
 const CONTENT_DIR = path.join(process.cwd(), 'content');
 const STALE_THRESHOLD_DAYS = 180; // 6 months
@@ -87,9 +88,7 @@ export async function GET(request: NextRequest) {
   const isAuthenticated = authHeader === `Bearer ${cronSecret}`;
 
   if (!isAuthenticated && !isDev) {
-    console.warn(
-      `[freshness-check] Unauthorized attempt from ${request.headers.get('x-forwarded-for') || 'unknown'}`,
-    );
+    logger.warn('[freshness-check] Unauthorized attempt', { ip: request.headers.get('x-forwarded-for') ?? 'unknown' });
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -137,7 +136,7 @@ export async function GET(request: NextRequest) {
               needsReview,
             });
           } catch (parseErr) {
-            console.warn(`[freshness-check] Could not parse ${filePath}:`, parseErr);
+            logger.warn('[freshness-check] Could not parse MDX', { file: filePath, error: parseErr instanceof Error ? parseErr.message : String(parseErr) });
           }
         }
       }
@@ -190,9 +189,9 @@ export async function GET(request: NextRequest) {
     const staleCount = scanned.filter((f) => f.needsReview).length;
     const durationMs = Date.now() - startTime;
 
-    console.log(
-      `[freshness-check] Scanned ${scanned.length} files: ${staleCount} stale (${newlyFlagged} newly flagged) — ${(durationMs / 1000).toFixed(1)}s`,
-    );
+    logger.info('[freshness-check] Scan complete', {
+      scanned: scanned.length, stale: staleCount, newly_flagged: newlyFlagged, duration_s: (durationMs / 1000).toFixed(1),
+    });
 
     // ── Telegram alert for newly flagged articles ──────────────────────
     let alertSent = false;
@@ -227,7 +226,7 @@ export async function GET(request: NextRequest) {
       const tg = await sendTelegramAlert(message);
       alertSent = tg.success;
       if (!tg.success) {
-        console.warn(`[freshness-check] Telegram alert failed: ${tg.error}`);
+        logger.warn('[freshness-check] Telegram alert failed', { error: tg.error });
       }
     }
 
@@ -246,8 +245,10 @@ export async function GET(request: NextRequest) {
         },
       });
     } catch (logErr) {
-      console.warn('[freshness-check] cron_logs insert failed:', logErr);
+      logger.warn('[freshness-check] cron_logs insert failed', { error: logErr instanceof Error ? logErr.message : String(logErr) });
     }
+
+    logCron({ job: 'freshness-check', status: errors.length === 0 ? 'success' : 'error', duration_ms: durationMs, scanned: scanned.length, stale: staleCount, newly_flagged: newlyFlagged });
 
     return NextResponse.json({
       success: true,
@@ -262,7 +263,7 @@ export async function GET(request: NextRequest) {
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Unknown error';
     const durationMs = Date.now() - startTime;
-    console.error('[freshness-check] Cron failed:', msg);
+    logCron({ job: 'freshness-check', status: 'error', duration_ms: durationMs, error: msg });
 
     try {
       await supabase.from('cron_logs').insert({

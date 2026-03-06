@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { runSeoDriftCheck } from '@/lib/actions/seo-drift';
+import { logger, logCron } from '@/lib/logging';
 
 /**
  * SEO Drift Monitor — Cron Job
@@ -33,9 +34,7 @@ export async function GET(request: NextRequest) {
   }
 
   if (authHeader !== `Bearer ${cronSecret}` && !isDev) {
-    console.warn(
-      `[seo-drift] Unauthorized attempt from ${request.headers.get('x-forwarded-for') ?? 'unknown'}`,
-    );
+    logger.warn('[seo-drift] Unauthorized attempt', { ip: request.headers.get('x-forwarded-for') ?? 'unknown' });
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -51,11 +50,13 @@ export async function GET(request: NextRequest) {
       ? 'clean'
       : 'drift_detected';
 
-    console.log(
-      `[seo-drift] ${status}: scanned=${result.scanned} avg=${result.avgScore} ` +
-      `violations=${result.violations.length} regressions=${result.regressions.length} ` +
-      `new_bad=${result.newNonCompliant.length} alert=${result.alertSent} (${duration}s)`,
-    );
+    logCron({
+      job: 'seo-drift', status: status === 'clean' ? 'success' : 'error',
+      duration_ms: Math.round(parseFloat(duration) * 1000),
+      scanned: result.scanned, avg_score: result.avgScore,
+      violations: result.violations.length, regressions: result.regressions.length,
+      new_non_compliant: result.newNonCompliant.length, alert_sent: result.alertSent,
+    });
 
     return NextResponse.json({
       status,
@@ -76,7 +77,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    console.error('[seo-drift] Fatal error:', message);
+    logCron({ job: 'seo-drift', status: 'error', error: message });
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

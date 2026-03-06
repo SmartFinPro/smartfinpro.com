@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { syncAllNetworks } from '@/lib/api/affiliate-networks';
+import { logger, logCron } from '@/lib/logging';
 
 /**
  * Revenue Sync Cron Job
@@ -24,11 +25,11 @@ export async function GET(request: NextRequest) {
   }
 
   if (authHeader !== `Bearer ${cronSecret}`) {
-    console.warn('[sync-revenue] Unauthorized cron attempt');
+    logger.warn('[sync-revenue] Unauthorized cron attempt');
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  console.log('[sync-revenue] Starting revenue sync...');
+  logger.info('[sync-revenue] Starting revenue sync');
   const startTime = Date.now();
 
   try {
@@ -36,11 +37,9 @@ export async function GET(request: NextRequest) {
 
     const duration = Date.now() - startTime;
 
-    console.log('[sync-revenue] Sync completed:', {
-      success: result.success,
-      totalCreated: result.totalCreated,
-      totalUpdated: result.totalUpdated,
-      duration: `${duration}ms`,
+    logCron({
+      job: 'sync-revenue', status: 'success', duration_ms: duration,
+      created: result.totalCreated, updated: result.totalUpdated,
     });
 
     return NextResponse.json({
@@ -59,7 +58,7 @@ export async function GET(request: NextRequest) {
       })),
     });
   } catch (error) {
-    console.error('[sync-revenue] Sync failed:', error);
+    logCron({ job: 'sync-revenue', status: 'error', duration_ms: Date.now() - startTime, error: error instanceof Error ? error.message : String(error) });
 
     return NextResponse.json(
       {

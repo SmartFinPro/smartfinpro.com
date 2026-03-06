@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { runHealthChecks } from '@/lib/actions/link-health';
 import { sendTelegramAlert } from '@/lib/alerts/telegram';
 import { createServiceClient } from '@/lib/supabase/server';
+import { logger, logCron } from '@/lib/logging';
 
 /**
  * Link Health Monitor (Dead-Link Monitor) — Cron Job
@@ -32,9 +33,7 @@ export async function GET(request: NextRequest) {
   const isAuthenticated = authHeader === `Bearer ${cronSecret}`;
 
   if (!isAuthenticated && !isDev) {
-    console.warn(
-      `[check-links] Unauthorized attempt from ${request.headers.get('x-forwarded-for') || 'unknown'}`,
-    );
+    logger.warn('[check-links] Unauthorized attempt', { ip: request.headers.get('x-forwarded-for') ?? 'unknown' });
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -47,9 +46,9 @@ export async function GET(request: NextRequest) {
     const durationMs = Date.now() - startTime;
     const duration = (durationMs / 1000).toFixed(1);
 
-    console.log(
-      `[check-links] Complete: ${result.healthy} healthy, ${result.degraded} degraded, ${result.dead} dead / ${result.results.length} total (${duration}s)`,
-    );
+    logger.info('[check-links] Health check complete', {
+      healthy: result.healthy, degraded: result.degraded, dead: result.dead, total: result.results.length, duration_s: duration,
+    });
 
     // ── Telegram alert on issues ─────────────────────────────────────────
     const hasIssues = result.dead > 0 || result.degraded > 0;
@@ -84,7 +83,7 @@ export async function GET(request: NextRequest) {
       alertSent = telegramResult.success;
 
       if (!telegramResult.success) {
-        console.warn(`[check-links] Telegram alert failed: ${telegramResult.error}`);
+        logger.warn('[check-links] Telegram alert failed', { error: telegramResult.error });
       }
     }
 
@@ -104,7 +103,7 @@ export async function GET(request: NextRequest) {
         },
       });
     } catch (logErr) {
-      console.warn('[check-links] cron_logs insert failed:', logErr);
+      logger.warn('[check-links] cron_logs insert failed', { error: logErr instanceof Error ? logErr.message : String(logErr) });
     }
 
     return NextResponse.json({
@@ -120,7 +119,7 @@ export async function GET(request: NextRequest) {
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Unknown error';
     const durationMs = Date.now() - startTime;
-    console.error('[check-links] Cron failed:', msg);
+    logCron({ job: 'check-links', status: 'error', duration_ms: durationMs, error: msg });
 
     // Log failure to cron_logs
     try {

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
 import { sendTelegramAlert } from '@/lib/alerts/telegram';
+import { logger, logCron } from '@/lib/logging';
 
 /**
  * Ranking Health Check — Cron Job
@@ -32,9 +33,7 @@ export async function GET(request: NextRequest) {
 
   const isAuthenticated = authHeader === `Bearer ${cronSecret}`;
   if (!isAuthenticated) {
-    console.warn(
-      `[check-rankings] Unauthorized attempt from ${request.headers.get('x-forwarded-for') || 'unknown'}`,
-    );
+    logger.warn('[check-rankings] Unauthorized attempt', { ip: request.headers.get('x-forwarded-for') ?? 'unknown' });
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -55,7 +54,7 @@ export async function GET(request: NextRequest) {
     }
 
     const poorKeywords = poorRankings || [];
-    console.log(`[check-rankings] Found ${poorKeywords.length} keywords outside top 20`);
+    logger.info('[check-rankings] Keywords scanned', { outside_top20: poorKeywords.length });
 
     // 2. Group by slug and market to identify affected articles
     const affectedArticles = new Map<string, {
@@ -89,9 +88,7 @@ export async function GET(request: NextRequest) {
       affectedArticles.set(key, existing);
     }
 
-    console.log(
-      `[check-rankings] Mapped to ${affectedArticles.size} affected articles`,
-    );
+    logger.info('[check-rankings] Articles mapped', { affected: affectedArticles.size });
 
     // 3. Insert/update planning_queue entries for affected articles
     const queueUpdates: Array<{
@@ -133,7 +130,7 @@ export async function GET(request: NextRequest) {
       for (const update of queueUpdates) {
         const key = `${update.slug}:needs-update`;
         if (existingMap.has(key)) {
-          console.log(`[check-rankings] Skipping duplicate: ${update.slug}`);
+          logger.debug('[check-rankings] Skipping duplicate', { slug: update.slug });
           continue;
         }
 
@@ -150,9 +147,7 @@ export async function GET(request: NextRequest) {
           });
 
         if (insertError) {
-          console.warn(
-            `[check-rankings] Insert error for ${update.keyword}: ${insertError.message}`,
-          );
+          logger.warn('[check-rankings] Insert error', { keyword: update.keyword, error: insertError.message });
         } else {
           insertedCount++;
         }
@@ -179,9 +174,10 @@ export async function GET(request: NextRequest) {
 
     await sendTelegramAlert(message);
 
-    console.log(
-      `[check-rankings] Complete: ${poorKeywords.length} keywords, ${affectedArticles.size} articles, ${insertedCount} queued (${duration}ms)`,
-    );
+    logCron({
+      job: 'check-rankings', status: 'success', duration_ms: duration,
+      keywords: poorKeywords.length, articles: affectedArticles.size, queued: insertedCount,
+    });
 
     return NextResponse.json({
       success: true,
@@ -193,7 +189,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Unknown error';
-    console.error('[check-rankings] Job failed:', msg);
+    logCron({ job: 'check-rankings', status: 'error', duration_ms: Date.now() - startTime, error: msg });
 
     const duration = Date.now() - startTime;
 
