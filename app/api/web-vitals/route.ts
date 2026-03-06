@@ -4,6 +4,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
+import { validate, WebVitalsSchema } from '@/lib/validation';
 
 // Google's 2026 CWV thresholds
 const THRESHOLDS: Record<string, [number, number]> = {
@@ -33,21 +34,15 @@ function inferMarket(pathname: string): string {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json() as Record<string, unknown>;
+    const raw = await request.json();
+    const parsed = validate(WebVitalsSchema, raw);
+    if (!parsed.ok) return parsed.error;
 
-    const name  = String(body.name ?? '').toUpperCase();
-    const value = Number(body.value ?? 0);
-
-    // Only store known metrics
-    if (!Object.keys(THRESHOLDS).includes(name)) {
-      return NextResponse.json({ ok: false, reason: 'unknown_metric' }, { status: 400 });
-    }
-
-    const pageUrl = String(body.id ?? body.page_url ?? '').slice(0, 500);
-    const rating  = (body.rating as string) || getRating(name, value);
-    const market  = body.market
-      ? String(body.market)
-      : inferMarket(pageUrl);
+    const name  = parsed.data.name.toUpperCase();
+    const value = parsed.data.value;
+    const pageUrl = String(parsed.data.id ?? parsed.data.page_url ?? '').slice(0, 500);
+    const rating  = parsed.data.rating || getRating(name, value);
+    const market  = parsed.data.market ?? inferMarket(pageUrl);
 
     const supabase = createServiceClient();
 
@@ -57,9 +52,9 @@ export async function POST(request: NextRequest) {
       rating,
       page_url:        pageUrl,
       market,
-      delta:           body.delta != null ? Number(body.delta) : null,
-      metric_id:       body.metric_id ? String(body.metric_id).slice(0, 64) : null,
-      navigation_type: body.navigationType ? String(body.navigationType) : null,
+      delta:           parsed.data.delta ?? null,
+      metric_id:       parsed.data.metric_id ?? null,
+      navigation_type: parsed.data.navigationType ?? null,
     });
 
     // Silently ignore dedup conflicts (unique constraint on metric_id)

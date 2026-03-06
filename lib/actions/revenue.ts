@@ -160,14 +160,14 @@ export async function getRevenueStats(): Promise<RevenueStats> {
     affiliate_links: c.affiliate_links?.[0] ?? null,
   }));
 
-  // Calculate totals
+  // Calculate totals (normalised to USD via toUSD())
   const totalRevenue = allConversions
     .filter((c) => c.status === 'approved')
-    .reduce((sum, c) => sum + (c.commission_earned || 0), 0);
+    .reduce((sum, c) => sum + toUSD(c.commission_earned || 0, c.currency), 0);
 
   const pendingRevenue = allConversions
     .filter((c) => c.status === 'pending')
-    .reduce((sum, c) => sum + (c.commission_earned || 0), 0);
+    .reduce((sum, c) => sum + toUSD(c.commission_earned || 0, c.currency), 0);
 
   const approvedRevenue = totalRevenue;
 
@@ -179,7 +179,7 @@ export async function getRevenueStats(): Promise<RevenueStats> {
       const month = c.converted_at.slice(0, 7); // YYYY-MM
       const existing = monthlyMap.get(month) || { revenue: 0, count: 0 };
       monthlyMap.set(month, {
-        revenue: existing.revenue + (c.commission_earned || 0),
+        revenue: existing.revenue + toUSD(c.commission_earned || 0, c.currency),
         count: existing.count + 1,
       });
     });
@@ -493,6 +493,18 @@ const marketConfig: Record<'US' | 'GB' | 'CA' | 'AU', {
   AU: { name: 'Australia', flag: '🇦🇺', currency: 'AUD', exchangeRate: 0.65 },
 };
 
+// ── Currency normalisation ─────────────────────────────────────────────────
+// Converts any supported currency amount to USD for unified dashboard totals.
+// Rates are indicative mid-market values — update monthly via system_settings
+// if precision billing is required.
+const FX_TO_USD: Record<string, number> = {
+  USD: 1, GBP: 1.27, CAD: 0.74, AUD: 0.65, EUR: 1.09,
+};
+
+function toUSD(amount: number, currency?: string | null): number {
+  return amount * (FX_TO_USD[(currency ?? 'USD').toUpperCase()] ?? 1);
+}
+
 function getMarketFromCountry(countryCode: string): 'US' | 'GB' | 'CA' | 'AU' | null {
   const mapping: Record<string, 'US' | 'GB' | 'CA' | 'AU'> = {
     US: 'US',
@@ -577,7 +589,7 @@ export async function getAutoRevenueStats(): Promise<AutoRevenueStats> {
   // ============================================================
   // Calculate totals
   // ============================================================
-  const totalRevenue = conversions.reduce((sum, c) => sum + (c.commission_earned || 0), 0);
+  const totalRevenue = conversions.reduce((sum, c) => sum + toUSD(c.commission_earned || 0, c.currency), 0);
   const totalClicks = clicks.filter(c => new Date(c.clicked_at) >= thirtyDaysAgo).length;
   const totalConversions = conversions.length;
   const globalEPC = totalClicks > 0 ? totalRevenue / totalClicks : 0;
@@ -592,8 +604,8 @@ export async function getAutoRevenueStats(): Promise<AutoRevenueStats> {
     return date >= sixtyDaysAgo && date < thirtyDaysAgo;
   });
 
-  const currentRevenue = currentPeriodConversions.reduce((sum, c) => sum + (c.commission_earned || 0), 0);
-  const previousRevenue = previousPeriodConversions.reduce((sum, c) => sum + (c.commission_earned || 0), 0);
+  const currentRevenue = currentPeriodConversions.reduce((sum, c) => sum + toUSD(c.commission_earned || 0, c.currency), 0);
+  const previousRevenue = previousPeriodConversions.reduce((sum, c) => sum + toUSD(c.commission_earned || 0, c.currency), 0);
 
   const currentClicks = clicks.filter(c => new Date(c.clicked_at) >= thirtyDaysAgo).length;
   const previousClicks = clicks.filter(c => {
@@ -637,12 +649,12 @@ export async function getAutoRevenueStats(): Promise<AutoRevenueStats> {
   conversions.forEach(conv => {
     if (conv.link_id && productStats.has(conv.link_id)) {
       const stats = productStats.get(conv.link_id)!;
-      stats.revenue += conv.commission_earned || 0;
+      stats.revenue += toUSD(conv.commission_earned || 0, conv.currency);
       stats.conversions += 1;
 
       // Track previous period
       if (new Date(conv.converted_at) < thirtyDaysAgo) {
-        stats.previousRevenue += conv.commission_earned || 0;
+        stats.previousRevenue += toUSD(conv.commission_earned || 0, conv.currency);
       }
     }
   });
@@ -716,7 +728,7 @@ export async function getAutoRevenueStats(): Promise<AutoRevenueStats> {
         for (const country of countries) {
           const market = getMarketFromCountry(country);
           if (market) {
-            marketStats[market].revenue += conv.commission_earned || 0;
+            marketStats[market].revenue += toUSD(conv.commission_earned || 0, conv.currency);
             marketStats[market].conversions += 1;
             break;
           }
@@ -756,7 +768,7 @@ export async function getAutoRevenueStats(): Promise<AutoRevenueStats> {
     const dayClicks = clicks.filter(c => c.clicked_at.slice(0, 10) === dayKey).length;
     const dayRevenue = conversions
       .filter(c => c.converted_at.slice(0, 10) === dayKey)
-      .reduce((sum, c) => sum + (c.commission_earned || 0), 0);
+      .reduce((sum, c) => sum + toUSD(c.commission_earned || 0, c.currency), 0);
     const dayEPC = dayClicks > 0 ? dayRevenue / dayClicks : 0;
 
     epcTrendData.push({
@@ -775,7 +787,7 @@ export async function getAutoRevenueStats(): Promise<AutoRevenueStats> {
     const month = c.converted_at.slice(0, 7);
     const existing = monthlyMap.get(month) || { revenue: 0, count: 0 };
     monthlyMap.set(month, {
-      revenue: existing.revenue + (c.commission_earned || 0),
+      revenue: existing.revenue + toUSD(c.commission_earned || 0, c.currency),
       count: existing.count + 1,
     });
   });

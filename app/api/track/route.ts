@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
 import crypto from 'crypto';
+import { validate, TrackSchema } from '@/lib/validation';
 
 // Rate limiting: simple in-memory store (use Redis in production)
 const rateLimitMap = new Map<string, { count: number; timestamp: number }>();
@@ -51,14 +52,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 });
     }
 
-    const body = (await request.json()) as TrackPayload;
-
-    if (!body.type || !body.sessionId) {
-      return NextResponse.json(
-        { error: 'Missing required fields: type, sessionId' },
-        { status: 400 }
-      );
-    }
+    const raw = await request.json();
+    const parsed = validate(TrackSchema, raw);
+    if (!parsed.ok) return parsed.error;
+    const body = parsed.data;
 
     const supabase = createServiceClient();
     const userAgent = request.headers.get('user-agent') || '';

@@ -4,23 +4,15 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { subscribeWithEmail } from '@/lib/actions/newsletter';
+import { validate, SubscribeSchema } from '@/lib/validation';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { email, leadMagnet, source } = body as {
-      email?: string;
-      leadMagnet?: string;
-      source?: string;
-    };
+    const parsed = validate(SubscribeSchema, body);
+    if (!parsed.ok) return parsed.error;
 
-    if (!email) {
-      return NextResponse.json(
-        { success: false, message: 'Email is required' },
-        { status: 400 },
-      );
-    }
-
+    const { email, leadMagnet, source } = parsed.data;
     const result = await subscribeWithEmail(email, leadMagnet, source);
     return NextResponse.json(result);
   } catch (error) {

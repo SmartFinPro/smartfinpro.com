@@ -1,20 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
 import crypto from 'crypto';
+import { validate, TrackCtaSchema } from '@/lib/validation';
 
 // ============================================================
 // CTA Click Tracking API Route
 // Client-safe endpoint that replaces the direct server action
 // import in MDX components (fixes Turbopack module resolution).
 // ============================================================
-
-interface TrackCtaPayload {
-  slug: string;
-  provider: string;
-  variant: string;
-  market?: string;
-  sessionId?: string;
-}
 
 export async function POST(request: NextRequest) {
   try {
@@ -23,7 +16,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true, skipped: true });
     }
 
-    const body = (await request.json()) as TrackCtaPayload;
+    const raw = await request.json();
+    const parsed = validate(TrackCtaSchema, raw);
+    if (!parsed.ok) return parsed.error;
+    const body = parsed.data;
 
     if (!body.slug || !body.provider) {
       return NextResponse.json(
