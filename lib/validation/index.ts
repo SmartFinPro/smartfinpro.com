@@ -42,7 +42,7 @@ export function validate<T>(schema: ZodSchema<T>, body: unknown): ValidationResu
 export const TrackSchema = z.object({
   type: z.enum(['pageview', 'event', 'scroll', 'time_on_page']),
   sessionId: z.string().min(8).max(128),
-  data: z.record(z.unknown()).default({}),
+  data: z.record(z.string(), z.unknown()).default({}), // Zod v4: explicit key + value types
 });
 export type TrackPayload = z.infer<typeof TrackSchema>;
 
