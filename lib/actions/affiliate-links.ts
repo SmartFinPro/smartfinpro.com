@@ -177,7 +177,7 @@ export async function createAffiliateLink(
 
   revalidatePath('/dashboard/links');
   revalidatePath('/dashboard/content/genesis');
-  revalidateTag('affiliate-links'); // Invalidate 30s cache
+  revalidateTag('affiliate-links', {}); // Invalidate 30s cache
   return { data };
 }
 
@@ -213,7 +213,7 @@ export async function updateAffiliateLink(
 
   revalidatePath('/dashboard/links');
   revalidatePath('/dashboard/content/genesis');
-  revalidateTag('affiliate-links'); // Invalidate 30s cache
+  revalidateTag('affiliate-links', {}); // Invalidate 30s cache
   return { data };
 }
 
@@ -244,7 +244,7 @@ export async function deleteAffiliateLink(id: string) {
 
   revalidatePath('/dashboard/links');
   revalidatePath('/dashboard/content/genesis');
-  revalidateTag('affiliate-links'); // Invalidate 30s cache
+  revalidateTag('affiliate-links', {}); // Invalidate 30s cache
   return { success: true };
 }
 

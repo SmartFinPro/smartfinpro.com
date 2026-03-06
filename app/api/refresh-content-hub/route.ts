@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server';
 
 export async function POST() {
   try {
-    revalidateTag('content-hub');
+    revalidateTag('content-hub', {});
     return NextResponse.json({
       success: true,
       message: 'Content Hub cache invalidated — next load will scan fresh data.',

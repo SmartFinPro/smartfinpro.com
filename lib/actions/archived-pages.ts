@@ -182,7 +182,7 @@ export async function archivePage(
     ).catch(() => {});
 
     // 8. Revalidate
-    revalidateTag('content-hub');
+    revalidateTag('content-hub', {});
 
     return { success: true };
   } catch (err) {
@@ -265,7 +265,7 @@ export async function restorePage(
     ).catch(() => {});
 
     // 6. Revalidate
-    revalidateTag('content-hub');
+    revalidateTag('content-hub', {});
 
     return { success: true };
   } catch (err) {
@@ -372,7 +372,7 @@ export async function hardDeletePage(
     ).catch(() => {});
 
     // 9. Revalidate
-    revalidateTag('content-hub');
+    revalidateTag('content-hub', {});
 
     return { success: true };
   } catch (err) {

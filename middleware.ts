@@ -68,7 +68,7 @@ const SESSION_MAX_AGE = 60 * 30; // 30 minutes in seconds
 
 const BASE32 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
 
-function base32Decode(input: string): Uint8Array {
+function base32Decode(input: string): Uint8Array<ArrayBuffer> {
   const str = input.toUpperCase().replace(/[=\s]/g, '');
   const bytes: number[] = [];
   let buf = 0, bits = 0;
@@ -79,7 +79,7 @@ function base32Decode(input: string): Uint8Array {
     bits += 5;
     if (bits >= 8) { bits -= 8; bytes.push((buf >> bits) & 0xff); }
   }
-  return new Uint8Array(bytes);
+  return new Uint8Array(bytes) as Uint8Array<ArrayBuffer>;
 }
 
 async function generateTOTP(secretBase32: string, window?: number): Promise<string> {

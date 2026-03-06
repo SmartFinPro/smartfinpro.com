@@ -253,7 +253,7 @@ export async function importBacklinksFromCSV(
     result.success = true;
 
     // Invalidate content-hub cache
-    revalidateTag('content-hub');
+    revalidateTag('content-hub', {});
   } catch (err) {
     console.error('[backlinks] importBacklinksFromCSV error:', err);
     result.errors.push(String(err));
@@ -373,7 +373,7 @@ export async function scanInternalBacklinks(): Promise<{
     result.success = true;
 
     // Invalidate content-hub cache
-    revalidateTag('content-hub');
+    revalidateTag('content-hub', {});
   } catch (err) {
     console.error('[backlinks] scanInternalBacklinks error:', err);
     result.errors.push(String(err));
