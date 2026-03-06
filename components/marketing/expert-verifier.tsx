@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { Calendar, Shield, CheckCircle, ExternalLink } from 'lucide-react';
 
 interface ExpertVerifierProps {
@@ -61,7 +62,7 @@ export function ExpertVerifier({
           {/* Avatar */}
           <div className="shrink-0">
             {image ? (
-              <img
+              <Image
                 src={image}
                 alt={name}
                 width={40}
@@ -126,7 +127,7 @@ export function ExpertVerifier({
           {/* Avatar */}
           <div className="shrink-0">
             {image ? (
-              <img
+              <Image
                 src={image}
                 alt={name}
                 width={72}

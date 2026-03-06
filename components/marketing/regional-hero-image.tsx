@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { getPillarHeroImage, getReviewImage } from '@/lib/images/asset-registry';
 
 interface RegionalHeroImageProps {
@@ -94,11 +95,12 @@ export function RegionalHeroImage({ market, category, slug, className = '' }: Re
     return (
       <div className={`relative overflow-hidden rounded-2xl border border-gray-200 ${className}`}>
         <div className="relative aspect-[21/9]">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <Image
             src={resolvedSrc}
             alt={resolvedAlt}
-            className="object-cover w-full h-full"
+            fill
+            className="object-cover"
+            sizes="(max-width: 768px) 100vw, (max-width: 1280px) 90vw, 1200px"
             onError={() => setImgError(true)}
           />
           {/* No gradient overlay — clean image, label has its own white bg */}
