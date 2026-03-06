@@ -25,6 +25,7 @@ import {
   Brain,
   Telescope,
   Activity,
+  FlaskConical,
   Menu,
   X,
 } from 'lucide-react';
@@ -82,6 +83,7 @@ function getSidebarGroups(): NavGroup[] {
       links: [
         { name: 'Affiliate Links', href: '/dashboard/links', icon: Link2 },
         { name: 'Opportunities', href: '/dashboard/opportunities', icon: Telescope, badgeKey: 'opportunities' },
+        { name: 'A/B Testing', href: '/dashboard/ab-testing', icon: FlaskConical },
         { name: 'Quiz Analytics', href: '/dashboard/quiz', icon: Sparkles },
       ],
     },

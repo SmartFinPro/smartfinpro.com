@@ -74,10 +74,10 @@ export function ComparisonTable({
         <div className="rounded-2xl overflow-hidden border border-gray-200 bg-white shadow-sm">
           <div className="overflow-x-auto">
             <Table>
-              <TableHeader>
+              <TableHeader className="sticky top-0 z-10">
                 <TableRow className="border-b-0" style={{ background: 'var(--sfp-sky)' }}>
                   {items.map((item) => (
-                    <TableHead key={item.name} className="text-center min-w-[200px]">
+                    <TableHead key={item.name} className="text-center min-w-[200px]" style={{ background: 'var(--sfp-sky)' }}>
                       <div className="flex flex-col items-center gap-2 py-3">
                         <span className="font-bold" style={{ color: 'var(--sfp-navy)' }}>{item.name}</span>
                         <div className="flex items-center gap-1.5">
@@ -171,12 +171,12 @@ export function ComparisonTable({
       <div className="rounded-2xl overflow-hidden border border-gray-200 bg-white shadow-sm">
         <div className="overflow-x-auto">
           <Table>
-            <TableHeader>
+            <TableHeader className="sticky top-0 z-10">
               {/* Header row */}
               <TableRow className="border-b-0" style={{ background: 'var(--sfp-sky)' }}>
-                <TableHead className="w-[200px] font-semibold uppercase text-xs tracking-wider" style={{ color: 'var(--sfp-navy)' }}>Feature</TableHead>
+                <TableHead className="w-[200px] font-semibold uppercase text-xs tracking-wider" style={{ color: 'var(--sfp-navy)', background: 'var(--sfp-sky)' }}>Feature</TableHead>
                 {resolvedProducts.map((product) => (
-                  <TableHead key={product.slug} className="text-center min-w-[160px]">
+                  <TableHead key={product.slug} className="text-center min-w-[160px]" style={{ background: 'var(--sfp-sky)' }}>
                     <div className="flex flex-col items-center gap-2 py-3">
                       <span className="font-bold" style={{ color: 'var(--sfp-navy)' }}>{product.name}</span>
                       {product.winnerBadge && (
@@ -310,11 +310,11 @@ export function SimpleComparison({ items, headers }: SimpleComparisonProps) {
     <div className="rounded-xl overflow-hidden my-6 border border-gray-200 bg-white shadow-sm">
       <div className="overflow-x-auto">
         <Table>
-          <TableHeader>
+          <TableHeader className="sticky top-0 z-10">
             <TableRow className="border-b-0" style={{ background: 'var(--sfp-sky)' }}>
-              <TableHead className="w-[200px] font-semibold uppercase text-xs tracking-wider" style={{ color: 'var(--sfp-navy)' }}>Feature</TableHead>
+              <TableHead className="w-[200px] font-semibold uppercase text-xs tracking-wider" style={{ color: 'var(--sfp-navy)', background: 'var(--sfp-sky)' }}>Feature</TableHead>
               {headers.map((header) => (
-                <TableHead key={header} className="text-center font-bold" style={{ color: 'var(--sfp-navy)' }}>
+                <TableHead key={header} className="text-center font-bold" style={{ color: 'var(--sfp-navy)', background: 'var(--sfp-sky)' }}>
                   {header}
                 </TableHead>
               ))}
