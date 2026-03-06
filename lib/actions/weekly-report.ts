@@ -1,6 +1,7 @@
 'use server';
 
 import 'server-only';
+import * as Sentry from '@sentry/nextjs';
 import { logger } from '@/lib/logging';
 
 import { createServiceClient } from '@/lib/supabase/server';
@@ -284,6 +285,7 @@ Antworte NUR mit dem Tipp, ohne Einleitung.`,
         }
       }
     } catch (aiErr) {
+      Sentry.captureException(aiErr);
       logger.error('[weekly-report] AI tip generation failed (non-blocking):',
         aiErr instanceof Error ? aiErr.message : 'Unknown');
     }
@@ -328,6 +330,7 @@ Antworte NUR mit dem Tipp, ohne Einleitung.`,
       telegramSent: telegramResult.success,
     };
   } catch (err) {
+    Sentry.captureException(err);
     const msg = err instanceof Error ? err.message : 'Unknown error';
     logger.error('[weekly-report] generateWeeklyReport failed:', msg);
     return {

@@ -1,6 +1,7 @@
 'use server';
 
 import 'server-only';
+import * as Sentry from '@sentry/nextjs';
 import { logger } from '@/lib/logging';
 
 import { createClient } from '@/lib/supabase/server';
@@ -260,6 +261,7 @@ The outline should have 6-10 sections (mix of h2 and h3). Include:
       trustSignals: parsed.trustSignals || [],
     };
   } catch (err) {
+    Sentry.captureException(err);
     logger.error('[content-generator] AI brief generation failed:', err instanceof Error ? err.message : err);
     return generateFallbackBrief(keyword, market, category);
   }
@@ -651,6 +653,7 @@ export async function generateAIContentBrief(
 
     return { success: true, brief };
   } catch (err) {
+    Sentry.captureException(err);
     const msg = err instanceof Error ? err.message : 'Unknown error';
     logger.error('[content-generator] Brief generation failed:', msg);
     return { success: false, error: msg };
@@ -741,6 +744,7 @@ export async function generateAndPublishPage(
       imageHints: missingImages,
     };
   } catch (err) {
+    Sentry.captureException(err);
     const msg = err instanceof Error ? err.message : 'Unknown error';
     logger.error('[content-generator] Page generation failed:', msg);
     return {
@@ -857,6 +861,7 @@ The outline MUST have 18-28 sections (mix of h2 and h3). Include:
       trustSignals: parsed.trustSignals || [],
     };
   } catch (err) {
+    Sentry.captureException(err);
     logger.error('[content-generator] Long-form AI brief failed:', err instanceof Error ? err.message : err);
     return generateLongFormFallbackBrief(keyword, market, category);
   }

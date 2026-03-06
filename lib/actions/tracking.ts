@@ -1,6 +1,7 @@
 'use server';
 
 import 'server-only';
+import * as Sentry from '@sentry/nextjs';
 import { logger } from '@/lib/logging';
 
 import { createServiceClient } from '@/lib/supabase/server';
@@ -77,6 +78,7 @@ export async function trackClick(params: TrackClickParams) {
 
     return { success: true, clickId: data.id };
   } catch (error) {
+    Sentry.captureException(error);
     logger.error('Error tracking click:', error);
     return { success: false, error: 'Failed to track click' };
   }
@@ -143,6 +145,7 @@ export async function trackPageView(params: TrackPageViewParams) {
 
     return { success: true };
   } catch (error) {
+    Sentry.captureException(error);
     logger.error('Error tracking page view:', error);
     return { success: false, error: 'Failed to track page view' };
   }
@@ -196,6 +199,7 @@ export async function trackEvent(params: TrackEventParams) {
 
     return { success: true };
   } catch (error) {
+    Sentry.captureException(error);
     logger.error('Error tracking event:', error);
     return { success: false, error: 'Failed to track event' };
   }
@@ -234,6 +238,7 @@ export async function updatePageView(params: UpdatePageViewParams) {
 
     return { success: true };
   } catch (error) {
+    Sentry.captureException(error);
     logger.error('Error updating page view:', error);
     return { success: false, error: 'Failed to update page view' };
   }

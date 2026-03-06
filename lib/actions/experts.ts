@@ -1,6 +1,7 @@
 'use server';
 
 import 'server-only';
+import * as Sentry from '@sentry/nextjs';
 import { logger } from '@/lib/logging';
 
 import { createServiceClient } from '@/lib/supabase/server';
@@ -76,6 +77,7 @@ async function fetchExpert(market: string, category?: string): Promise<ExpertDat
     // 3. Ultimate fallback
     return FALLBACK_EXPERT;
   } catch (error) {
+    Sentry.captureException(error);
     logger.error('[experts] Failed to fetch expert:', error);
     return FALLBACK_EXPERT;
   }

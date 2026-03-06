@@ -14,6 +14,7 @@
 //   const label = await getComplianceLabelServer('uk', 'trading');
 
 import { createServiceClient } from '@/lib/supabase/server';
+import * as Sentry from '@sentry/nextjs';
 import { getComplianceLabel } from '@/lib/affiliate/compliance-labels';
 import { logger } from '@/lib/logging';
 import type { Market, Category } from '@/types';
@@ -57,6 +58,7 @@ async function loadOverrides(): Promise<Record<string, string>> {
     _cache = { data: map, expiresAt: Date.now() + CACHE_TTL_MS };
     return map;
   } catch (err) {
+    Sentry.captureException(err);
     logger.warn('[compliance-db] Unexpected error loading overrides', {
       error: err instanceof Error ? err.message : String(err),
     });

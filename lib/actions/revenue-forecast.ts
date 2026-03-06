@@ -1,6 +1,7 @@
 'use server';
 
 import 'server-only';
+import * as Sentry from '@sentry/nextjs';
 import { logger } from '@/lib/logging';
 
 import { createServiceClient } from '@/lib/supabase/server';
@@ -276,6 +277,7 @@ export async function getRevenueForecast(
       error: null,
     };
   } catch (error) {
+    Sentry.captureException(error);
     logger.error('[Revenue Forecast] Unexpected error:', error);
     return { success: false, data: null, error: 'Failed to calculate revenue forecast' };
   }

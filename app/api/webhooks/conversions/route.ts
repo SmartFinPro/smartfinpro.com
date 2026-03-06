@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import * as Sentry from '@sentry/nextjs';
 import { logger } from '@/lib/logging';
 import { processWebhook } from '@/lib/api/sync-service';
 
@@ -63,6 +64,7 @@ export async function POST(request: NextRequest) {
       records_skipped: result.records_skipped,
     });
   } catch (error) {
+    Sentry.captureException(error);
     logger.error('Webhook error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },

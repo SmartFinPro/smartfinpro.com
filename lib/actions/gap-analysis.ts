@@ -1,6 +1,7 @@
 'use server';
 
 import 'server-only';
+import * as Sentry from '@sentry/nextjs';
 import { logger } from '@/lib/logging';
 
 import { createClient } from '@/lib/supabase/server';
@@ -118,6 +119,7 @@ async function fetchSerp(keyword: string, market: Market): Promise<SerperRespons
 
     return (await res.json()) as SerperResponse;
   } catch (err) {
+    Sentry.captureException(err);
     logger.error('[gap-analysis] Serper fetch error:', err instanceof Error ? err.message : err);
     return null;
   }
@@ -338,6 +340,7 @@ async function analyzeGapKeyword(
       { onConflict: 'competitor_domain,keyword,market' },
     );
   } catch (err) {
+    Sentry.captureException(err);
     logger.error('[gap-analysis] Persist error:', err instanceof Error ? err.message : err);
   }
 

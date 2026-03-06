@@ -1,6 +1,7 @@
 'use server';
 
 import 'server-only';
+import * as Sentry from '@sentry/nextjs';
 import { logger } from '@/lib/logging';
 
 import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache';
@@ -45,6 +46,7 @@ async function syncToAffiliateRates(link: {
       logger.info(`[affiliate-sync] Synced "${link.partner_name}" (${link.market || 'global'}) → affiliate_rates`);
     }
   } catch (err) {
+    Sentry.captureException(err);
     // Non-blocking — log but don't fail the primary operation
     logger.warn('[affiliate-sync] Sync error:', err);
   }
@@ -73,6 +75,7 @@ async function deactivateInAffiliateRates(partnerName: string, market?: string |
       logger.info(`[affiliate-sync] Deactivated "${partnerName}" (${market || 'global'}) in affiliate_rates`);
     }
   } catch (err) {
+    Sentry.captureException(err);
     logger.warn('[affiliate-sync] Deactivate error:', err);
   }
 }
@@ -127,6 +130,7 @@ export async function getAffiliateLinksService() {
     if (data === null) return { error: 'Failed to fetch affiliate links' };
     return { data };
   } catch (err) {
+    Sentry.captureException(err);
     logger.error('Error fetching affiliate links (service):', err);
     return { data: [] };
   }

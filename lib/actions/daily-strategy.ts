@@ -1,6 +1,7 @@
 'use server';
 
 import 'server-only';
+import * as Sentry from '@sentry/nextjs';
 import { logger } from '@/lib/logging';
 
 import { createServiceClient } from '@/lib/supabase/server';
@@ -422,6 +423,7 @@ JSON format:
 
     return { success: true, digest };
   } catch (err) {
+    Sentry.captureException(err);
     const msg = err instanceof Error ? err.message : 'Unknown error';
     logger.error('[daily-strategy] generateDailyStrategy failed:', msg);
     return { success: false, digest: null, error: msg };
@@ -754,6 +756,7 @@ export async function analyzeAndPlanNextDay(): Promise<{
     logger.info(`[planning] analyzeAndPlanNextDay: ${plans.length} plans created`);
     return { success: true, plans };
   } catch (err) {
+    Sentry.captureException(err);
     const msg = err instanceof Error ? err.message : 'Unknown error';
     logger.error('[planning] analyzeAndPlanNextDay failed:', msg);
     return { success: false, plans: [], error: msg };
@@ -909,6 +912,7 @@ export async function approvePlanAndExecute(
     logger.info(`[planning] approvePlanAndExecute: ${results.filter((r) => r.status === 'completed').length}/${results.length} succeeded`);
     return { success: true, results };
   } catch (err) {
+    Sentry.captureException(err);
     const msg = err instanceof Error ? err.message : 'Unknown error';
     logger.error('[planning] approvePlanAndExecute failed:', msg);
     return { success: false, results: [], error: msg };
@@ -1011,6 +1015,7 @@ export async function approveAndExecuteSingle(
       wordCount: generation.wordCount,
     };
   } catch (err) {
+    Sentry.captureException(err);
     const msg = err instanceof Error ? err.message : 'Unknown error';
     logger.error('[planning] approveAndExecuteSingle failed:', msg);
     return { success: false, keyword: '', error: msg };
@@ -1360,6 +1365,7 @@ export async function analyzeAffiliateOpportunities(
     logger.info(`[affiliate-opportunities] Found ${missingAssets.length} gaps, created ${plans.length} opportunities`);
     return { success: true, plans };
   } catch (err) {
+    Sentry.captureException(err);
     const msg = err instanceof Error ? err.message : 'Unknown error';
     logger.error('[affiliate-opportunities] analyzeAffiliateOpportunities failed:', msg);
     return { success: false, plans: [], error: msg };

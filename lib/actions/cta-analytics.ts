@@ -10,6 +10,7 @@
 // ============================================================
 
 import type { CtaVariant, Market } from '@/lib/supabase/types';
+import * as Sentry from '@sentry/nextjs';
 import { logger } from '@/lib/logging';
 
 interface LogCtaClickParams {
@@ -61,6 +62,7 @@ export async function logCtaClick(params: LogCtaClickParams) {
 
     return { success: true };
   } catch (error) {
+    Sentry.captureException(error);
     // Fail silently — analytics should never break the user experience
     logger.error('[CTA Analytics] Unexpected error:', error);
     return { success: false, error: 'Failed to log CTA click' };
@@ -126,6 +128,7 @@ export async function getCtaPerformance(params: CtaPerformanceParams = {}) {
 
     return { success: true, data: results, error: null };
   } catch (error) {
+    Sentry.captureException(error);
     logger.error('[CTA Analytics] Unexpected error:', error);
     return { success: false, data: null, error: 'Failed to query CTA performance' };
   }
@@ -296,6 +299,7 @@ export async function getCtaHeatmapData(
       error: null,
     };
   } catch (error) {
+    Sentry.captureException(error);
     logger.error('[CTA Heatmap] Unexpected error:', error);
     return { success: false, data: null, error: 'Failed to load heatmap data' };
   }
@@ -491,6 +495,7 @@ export async function getEpcByPage(
 
     return { success: true, data: results, error: null };
   } catch (error) {
+    Sentry.captureException(error);
     logger.error('[CTA Analytics] EPC query error:', error);
     return { success: false, data: [], error: 'Failed to calculate EPC' };
   }
@@ -592,6 +597,7 @@ export async function getTopFlopPlacements(
       error: null,
     };
   } catch (error) {
+    Sentry.captureException(error);
     logger.error('[CTA Analytics] Top/Flop query error:', error);
     return { success: false, top: [], flop: [], error: 'Failed to query placements' };
   }

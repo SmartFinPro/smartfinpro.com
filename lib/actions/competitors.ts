@@ -1,6 +1,7 @@
 'use server';
 
 import 'server-only';
+import * as Sentry from '@sentry/nextjs';
 import { logger } from '@/lib/logging';
 
 import { createClient } from '@/lib/supabase/server';
@@ -148,6 +149,7 @@ async function fetchSerp(keyword: string, market: Market): Promise<SerperRespons
 
     return (await res.json()) as SerperResponse;
   } catch (err) {
+    Sentry.captureException(err);
     logger.error('[competitors] Serper fetch error:', err instanceof Error ? err.message : err);
     return null;
   }
@@ -265,6 +267,7 @@ export async function analyzeKeyword(
       }
     }
   } catch (err) {
+    Sentry.captureException(err);
     logger.error('[competitors] Persist error:', err instanceof Error ? err.message : err);
   }
 

@@ -1,6 +1,7 @@
 'use server';
 
 import 'server-only';
+import * as Sentry from '@sentry/nextjs';
 import { logger } from '@/lib/logging';
 
 import { createServiceClient } from '@/lib/supabase/server';
@@ -148,6 +149,7 @@ export async function getQuizAnalytics(range: TimeRange = '7d'): Promise<QuizSta
       answerDistribution,
     };
   } catch (error) {
+    Sentry.captureException(error);
     logger.error('Error in getQuizAnalytics:', error);
     return emptyStats;
   }

@@ -1,6 +1,7 @@
 'use server';
 
 import 'server-only';
+import * as Sentry from '@sentry/nextjs';
 import { logger } from '@/lib/logging';
 
 import { createServiceClient } from '@/lib/supabase/server';
@@ -254,6 +255,7 @@ export async function triggerFullSimulation(): Promise<SimulationResult> {
         alertsSent: spikeResult.alertsSent,
       };
     } catch (err) {
+      Sentry.captureException(err);
       logger.error('[simulator] runSpikeMonitor failed:', err);
     }
 
@@ -265,6 +267,7 @@ export async function triggerFullSimulation(): Promise<SimulationResult> {
         tasksCreated: optResult.tasksCreated,
       };
     } catch (err) {
+      Sentry.captureException(err);
       logger.error('[simulator] runOptimizationAnalysis failed:', err);
     }
 
@@ -300,6 +303,7 @@ export async function triggerFullSimulation(): Promise<SimulationResult> {
       optimizationResult,
     };
   } catch (err) {
+    Sentry.captureException(err);
     const msg = err instanceof Error ? err.message : 'Unknown error';
     logger.error('[simulator] triggerFullSimulation failed:', msg);
     return {
@@ -402,6 +406,7 @@ export async function clearSimulationData(): Promise<ClearResult> {
 
     return { success: true, deleted };
   } catch (err) {
+    Sentry.captureException(err);
     const msg = err instanceof Error ? err.message : 'Unknown error';
     logger.error('[simulator] clearSimulationData failed:', msg);
     return { success: false, deleted, error: msg };
@@ -441,6 +446,7 @@ export async function getSimulationStatus(): Promise<SimulationStatus> {
       optimizationCount,
     };
   } catch (err) {
+    Sentry.captureException(err);
     logger.error('[simulator] getSimulationStatus failed:', err);
     return {
       active: false,

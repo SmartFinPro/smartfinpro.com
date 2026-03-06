@@ -1,6 +1,7 @@
 // lib/actions/page-cta-partners.ts — CRUD for page ↔ affiliate partner assignments
 'use server';
 import 'server-only';
+import * as Sentry from '@sentry/nextjs';
 import { logger } from '@/lib/logging';
 
 import { createServiceClient } from '@/lib/supabase/server';
@@ -41,6 +42,7 @@ export async function getCtaPartnersForPages(
 
     return result;
   } catch (err) {
+    Sentry.captureException(err);
     logger.error('[page-cta-partners] Batch load error:', err);
     return {};
   }
@@ -72,6 +74,7 @@ export async function getCtaPartnersForPage(
       display_type: (r.display_type as DisplayType) ?? 'single',
     }));
   } catch (err) {
+    Sentry.captureException(err);
     logger.error('[page-cta-partners] Single load error:', err);
     return [];
   }
@@ -122,6 +125,7 @@ export async function getEnrichedCtaPartners(
         market: r.affiliate_links.market || '',
       }));
   } catch (err) {
+    Sentry.captureException(err);
     // Network errors, client init failures, etc. — non-blocking
     logger.warn('[page-cta-partners] Enriched load skipped:', err instanceof Error ? err.message : err);
     return [];
@@ -190,6 +194,7 @@ export async function setCtaPartnersForPage(
 
     return { success: true };
   } catch (err) {
+    Sentry.captureException(err);
     logger.error('[page-cta-partners] Set error:', err);
     return { success: false, error: 'Unexpected error' };
   }

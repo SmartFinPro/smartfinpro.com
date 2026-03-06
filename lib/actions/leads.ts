@@ -1,6 +1,7 @@
 'use server';
 
 import 'server-only';
+import * as Sentry from '@sentry/nextjs';
 import { logger } from '@/lib/logging';
 
 import { createServiceClient } from '@/lib/supabase/server';
@@ -134,6 +135,7 @@ export async function createLead(params: CreateLeadParams): Promise<LeadResult> 
       isNew: true,
     };
   } catch (error) {
+    Sentry.captureException(error);
     logger.error('Error in createLead:', error);
     return { success: false, message: 'An unexpected error occurred.' };
   }
@@ -162,6 +164,7 @@ export async function updateLeadStatus(leadId: string, status: LeadStatus) {
 
     return { success: true, message: 'Lead status updated' };
   } catch (error) {
+    Sentry.captureException(error);
     logger.error('Error in updateLeadStatus:', error);
     return { success: false, message: 'An unexpected error occurred' };
   }
@@ -207,6 +210,7 @@ export async function updateLeadScore(leadId: string, scoreChange: number, reaso
 
     return { success: true, newScore };
   } catch (error) {
+    Sentry.captureException(error);
     logger.error('Error in updateLeadScore:', error);
     return { success: false, message: 'An unexpected error occurred' };
   }
@@ -262,6 +266,7 @@ export async function getLeads(params: GetLeadsParams = {}) {
 
     return { data, count };
   } catch (error) {
+    Sentry.captureException(error);
     logger.error('Error in getLeads:', error);
     return { error: 'Failed to fetch leads' };
   }
@@ -284,6 +289,7 @@ export async function getLead(id: string) {
 
     return { data };
   } catch (error) {
+    Sentry.captureException(error);
     logger.error('Error in getLead:', error);
     return { error: 'Failed to fetch lead' };
   }
@@ -343,6 +349,7 @@ export async function getLeadStats() {
 
     return { data: stats };
   } catch (error) {
+    Sentry.captureException(error);
     logger.error('Error in getLeadStats:', error);
     return { error: 'Failed to fetch lead stats' };
   }

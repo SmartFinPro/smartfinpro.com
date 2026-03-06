@@ -1,6 +1,7 @@
 'use server';
 
 import 'server-only';
+import * as Sentry from '@sentry/nextjs';
 import { logger } from '@/lib/logging';
 
 import { createClient } from '@/lib/supabase/server';
@@ -404,6 +405,7 @@ async function fetchLiveSERPInternal(
       };
     });
   } catch (err) {
+    Sentry.captureException(err);
     logger.error('[ranking] SERP fetch failed:', err);
     return [];
   }

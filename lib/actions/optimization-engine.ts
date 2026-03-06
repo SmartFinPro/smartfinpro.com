@@ -1,6 +1,7 @@
 'use server';
 
 import 'server-only';
+import * as Sentry from '@sentry/nextjs';
 import { logger } from '@/lib/logging';
 
 import { createServiceClient } from '@/lib/supabase/server';
@@ -237,6 +238,7 @@ export async function runOptimizationAnalysis(
     logger.info(`[optimizer] runOptimizationAnalysis: ${tasks.length} tasks created`);
     return { success: true, tasksCreated: tasks.length, tasks };
   } catch (err) {
+    Sentry.captureException(err);
     const msg = err instanceof Error ? err.message : 'Unknown error';
     logger.error('[optimizer] runOptimizationAnalysis failed:', msg);
     return { success: false, tasksCreated: 0, tasks: [], error: msg };
@@ -344,6 +346,7 @@ Rules:
 
       return parsed;
     } catch (err) {
+      Sentry.captureException(err);
       logger.error('[optimizer] AI suggestion failed:', err);
     }
   }
@@ -567,6 +570,7 @@ export async function executePageOptimization(
 
     return { success: true, slug: task.slug };
   } catch (err) {
+    Sentry.captureException(err);
     const msg = err instanceof Error ? err.message : 'Unknown error';
     await supabase.from('optimization_tasks').update({ status: 'failed' }).eq('id', taskId);
     logger.error('[optimizer] executePageOptimization failed:', msg);

@@ -1,6 +1,7 @@
 'use server';
 
 import 'server-only';
+import * as Sentry from '@sentry/nextjs';
 import { logger } from '@/lib/logging';
 
 import { createServiceClient } from '@/lib/supabase/server';
@@ -240,6 +241,7 @@ export async function magicFind(
 
     return { success: true, data: result, error: null };
   } catch (err) {
+    Sentry.captureException(err);
     const msg = err instanceof Error ? err.message : 'Unknown error';
     logger.error('[genesis] magicFind failed:', msg);
     return { success: false, data: null, error: msg };
@@ -386,6 +388,7 @@ export async function generateLongFormAsset(
       wordCount,
     };
   } catch (err) {
+    Sentry.captureException(err);
     const msg = err instanceof Error ? err.message : 'Unknown error';
     logger.error('[genesis] generateLongFormAsset failed:', msg);
     await updateProgress({ step: 'error', progress: 0, message: `Error: ${msg}` });
@@ -482,6 +485,7 @@ export async function processAndInsertImages(
 
     return { success: true };
   } catch (err) {
+    Sentry.captureException(err);
     const msg = err instanceof Error ? err.message : 'Unknown error';
     logger.error('[genesis] processAndInsertImages failed:', msg);
     return { success: false, error: msg };
@@ -570,6 +574,7 @@ export async function requestInstantIndexing(
       responseTimeMs: elapsed,
     };
   } catch (err) {
+    Sentry.captureException(err);
     const msg = err instanceof Error ? err.message : 'Unknown error';
     logger.error('[indexing] requestInstantIndexing failed:', msg);
     return {
@@ -643,6 +648,7 @@ export async function distributeAndIndex(
       const boostResult = await boostAndDeploy(run.slug, `Genesis Hub: ${run.keyword}`);
       deployed = boostResult.boostSuccess;
     } catch (err) {
+      Sentry.captureException(err);
       logger.warn('[genesis] Boost failed:', err);
     }
 
@@ -674,6 +680,7 @@ export async function distributeAndIndex(
 
     return { success: true, deployed, indexed, indexingResult };
   } catch (err) {
+    Sentry.captureException(err);
     const msg = err instanceof Error ? err.message : 'Unknown error';
     logger.error('[genesis] distributeAndIndex failed:', msg);
     await supabase
@@ -1217,6 +1224,7 @@ export async function createReviewFromTemplate(
       partnerName,
     };
   } catch (err) {
+    Sentry.captureException(err);
     const msg = err instanceof Error ? err.message : 'Unknown error';
     logger.error('[genesis] createReviewFromTemplate failed:', msg);
     return { success: false, error: msg };
@@ -1272,6 +1280,7 @@ export async function getAutoTemplatePartnerPreview(
 
     return { success: false, error: `No CTA partner configured for ${market}/${category}` };
   } catch (err) {
+    Sentry.captureException(err);
     const msg = err instanceof Error ? err.message : 'Unknown error';
     logger.error('[genesis] getAutoTemplatePartnerPreview failed:', msg);
     return { success: false, error: msg };
@@ -1334,6 +1343,7 @@ export async function deleteGenesisRun(
 
     return { success: true };
   } catch (err) {
+    Sentry.captureException(err);
     logger.error('[Genesis] Delete error:', err);
     return { success: false, error: 'Failed to delete run' };
   }
@@ -1386,6 +1396,7 @@ export async function getRunDetail(
 
     return { success: true, run, mdxContent };
   } catch (err) {
+    Sentry.captureException(err);
     logger.error('[Genesis] Get run detail error:', err);
     return { success: false, error: 'Failed to load run' };
   }
@@ -1432,6 +1443,7 @@ export async function updateGenesisContent(
 
     return { success: true, wordCount };
   } catch (err) {
+    Sentry.captureException(err);
     logger.error('[Genesis] Update content error:', err);
     return { success: false, error: 'Failed to update content' };
   }

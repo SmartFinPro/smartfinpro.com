@@ -1,6 +1,7 @@
 'use server';
 
 import 'server-only';
+import * as Sentry from '@sentry/nextjs';
 import { logger } from '@/lib/logging';
 
 import { createServiceClient } from '@/lib/supabase/server';
@@ -199,6 +200,7 @@ export async function updateSettings(
 
     return { success: true };
   } catch (err) {
+    Sentry.captureException(err);
     const msg = err instanceof Error ? err.message : 'Unknown error';
     logger.error('[settings] updateSettings failed:', msg);
     return { success: false, error: msg };
@@ -467,6 +469,7 @@ export async function globalReset(): Promise<{
 
     return { success: true, deleted };
   } catch (err) {
+    Sentry.captureException(err);
     const msg = err instanceof Error ? err.message : 'Unknown error';
     logger.error('[settings] globalReset failed:', msg);
     return { success: false, deleted, error: msg };

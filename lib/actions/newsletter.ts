@@ -12,6 +12,7 @@
 // ============================================================
 
 import type { Market } from '@/lib/supabase/types';
+import * as Sentry from '@sentry/nextjs';
 import { logger } from '@/lib/logging';
 
 // Hash IP address for GDPR compliance — store pseudonymized, not raw PII.
@@ -131,6 +132,7 @@ export async function subscribeToNewsletter(params: SubscribeParams): Promise<Su
       isNew: true,
     };
   } catch (error) {
+    Sentry.captureException(error);
     logger.error('Error in subscribeToNewsletter:', error);
     return { success: false, message: 'An unexpected error occurred.' };
   }
@@ -170,6 +172,7 @@ export async function unsubscribe(params: { email?: string; subscriberId?: strin
 
     return { success: true, message: "You've been unsubscribed" };
   } catch (error) {
+    Sentry.captureException(error);
     logger.error('Error in unsubscribe:', error);
     return { success: false, message: 'An unexpected error occurred' };
   }

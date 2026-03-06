@@ -1,6 +1,7 @@
 // lib/actions/archived-pages.ts — Two-stage page delete (Archive → Hard-Delete)
 'use server';
 import 'server-only';
+import * as Sentry from '@sentry/nextjs';
 import { logger } from '@/lib/logging';
 
 import fs from 'fs';
@@ -187,6 +188,7 @@ export async function archivePage(
 
     return { success: true };
   } catch (err) {
+    Sentry.captureException(err);
     const msg = err instanceof Error ? err.message : 'Unknown error';
     logger.error('[archivePage] Failed:', msg);
     return { success: false, error: msg };
@@ -270,6 +272,7 @@ export async function restorePage(
 
     return { success: true };
   } catch (err) {
+    Sentry.captureException(err);
     const msg = err instanceof Error ? err.message : 'Unknown error';
     logger.error('[restorePage] Failed:', msg);
     return { success: false, error: msg };
@@ -377,6 +380,7 @@ export async function hardDeletePage(
 
     return { success: true };
   } catch (err) {
+    Sentry.captureException(err);
     const msg = err instanceof Error ? err.message : 'Unknown error';
     logger.error('[hardDeletePage] Failed:', msg);
     return { success: false, error: msg };

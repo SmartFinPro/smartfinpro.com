@@ -2,6 +2,7 @@
 'use server';
 
 import { createServiceClient } from '@/lib/supabase/server';
+import * as Sentry from '@sentry/nextjs';
 import { logger } from '@/lib/logging';
 import { revalidateTag } from 'next/cache';
 import type {
@@ -71,6 +72,7 @@ export async function loadBacklinkCounts(): Promise<Map<string, BacklinkCounts>>
       }
     }
   } catch (err) {
+    Sentry.captureException(err);
     logger.warn('[backlinks] Failed to load backlink counts:', err);
   }
 
@@ -98,6 +100,7 @@ export async function getBacklinksForPage(targetUrl: string): Promise<Backlink[]
 
     return (data || []) as Backlink[];
   } catch (err) {
+    Sentry.captureException(err);
     logger.error('[backlinks] getBacklinksForPage error:', err);
     return [];
   }
@@ -256,6 +259,7 @@ export async function importBacklinksFromCSV(
     // Invalidate content-hub cache
     revalidateTag('content-hub', {});
   } catch (err) {
+    Sentry.captureException(err);
     logger.error('[backlinks] importBacklinksFromCSV error:', err);
     result.errors.push(String(err));
   }
@@ -376,6 +380,7 @@ export async function scanInternalBacklinks(): Promise<{
     // Invalidate content-hub cache
     revalidateTag('content-hub', {});
   } catch (err) {
+    Sentry.captureException(err);
     logger.error('[backlinks] scanInternalBacklinks error:', err);
     result.errors.push(String(err));
   }

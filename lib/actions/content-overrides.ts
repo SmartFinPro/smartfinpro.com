@@ -1,6 +1,7 @@
 'use server';
 
 import 'server-only';
+import * as Sentry from '@sentry/nextjs';
 import { logger } from '@/lib/logging';
 
 import { createServiceClient } from '@/lib/supabase/server';
@@ -98,6 +99,7 @@ export async function triggerFreshnessBoost(
 
     return { success: true, slug, boost_date: boostDate };
   } catch (err) {
+    Sentry.captureException(err);
     const msg = err instanceof Error ? err.message : 'Unknown error';
     logger.error('[content-overrides] triggerFreshnessBoost error:', msg);
     return { success: false, slug, boost_date: boostDate, error: msg };
@@ -201,6 +203,7 @@ async function triggerRevalidation(slug: string): Promise<RevalidateResult> {
 
     return { success: true };
   } catch (err) {
+    Sentry.captureException(err);
     const msg = err instanceof Error ? err.message : 'Unknown error';
     logger.warn('[content-overrides] Revalidation error:', msg);
     return { success: false, error: msg };
@@ -242,6 +245,7 @@ export async function triggerDeployHook(): Promise<DeployHookResult> {
 
     return { success: true };
   } catch (err) {
+    Sentry.captureException(err);
     const msg = err instanceof Error ? err.message : 'Unknown error';
     logger.error('[content-overrides] Deploy hook error:', msg);
     return { success: false, error: msg };

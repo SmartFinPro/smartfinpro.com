@@ -10,6 +10,7 @@
  */
 
 import fs from 'fs';
+import * as Sentry from '@sentry/nextjs';
 import { logger } from '@/lib/logging';
 import path from 'path';
 import { createServiceClient } from '@/lib/supabase/server';
@@ -182,6 +183,7 @@ async function logCronRun(
       ...(meta ? { metadata: meta } : {}),  // JSONB column — no JSON.stringify needed
     });
   } catch (err) {
+    Sentry.captureException(err);
     logger.error('[seo-drift] Failed to write cron_log:', err);
   }
 }
@@ -197,6 +199,7 @@ export async function runSeoDriftCheck(): Promise<DriftResult> {
     try {
       baseline = JSON.parse(fs.readFileSync(BASELINE_FILE, 'utf-8')) as Baseline;
     } catch (err) {
+      Sentry.captureException(err);
       logger.warn('[seo-drift] Could not parse baseline:', err);
     }
   }
@@ -253,6 +256,7 @@ export async function runSeoDriftCheck(): Promise<DriftResult> {
       alertSent = telegramResult.success;
       logger.info(`[seo-drift] Telegram alert ${alertSent ? 'sent' : 'failed'}: ${telegramResult.error ?? 'ok'}`);
     } catch (err) {
+      Sentry.captureException(err);
       logger.error('[seo-drift] Alert send error:', err);
     }
   } else {
