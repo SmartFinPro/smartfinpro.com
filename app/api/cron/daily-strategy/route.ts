@@ -32,16 +32,37 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // Run strategy analysis and planning in parallel
-    const [strategyResult, planningResult] = await Promise.all([
+    // Run strategy analysis and planning in parallel.
+    // Promise.allSettled() ensures a planning failure never blocks the digest.
+    const [strategySettled, planningSettled] = await Promise.allSettled([
       generateDailyStrategy(),
       analyzeAndPlanNextDay(),
     ]);
 
+    // Strategy is mandatory — abort if it failed
+    if (strategySettled.status === 'rejected') {
+      const reason = strategySettled.reason instanceof Error
+        ? strategySettled.reason.message : String(strategySettled.reason);
+      console.error('[daily-strategy] generateDailyStrategy rejected:', reason);
+      return NextResponse.json({ error: reason }, { status: 500 });
+    }
+
+    const strategyResult = strategySettled.value;
     if (!strategyResult.success || !strategyResult.digest) {
       return NextResponse.json(
         { error: strategyResult.error || 'Strategy generation failed' },
         { status: 500 },
+      );
+    }
+
+    // Planning is optional — degrade gracefully if it failed
+    const planningResult = planningSettled.status === 'fulfilled'
+      ? planningSettled.value
+      : { plans: [] };
+    if (planningSettled.status === 'rejected') {
+      console.warn('[daily-strategy] analyzeAndPlanNextDay failed (non-critical):',
+        planningSettled.reason instanceof Error
+          ? planningSettled.reason.message : planningSettled.reason,
       );
     }
 

@@ -5,6 +5,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
 import { validate, WebVitalsSchema } from '@/lib/validation';
+import { webVitalsLimiter } from '@/lib/security/rate-limit';
 
 // Google's 2026 CWV thresholds
 const THRESHOLDS: Record<string, [number, number]> = {
@@ -33,6 +34,12 @@ function inferMarket(pathname: string): string {
 }
 
 export async function POST(request: NextRequest) {
+  // Rate-limit: 60 CWV metrics per IP per minute (DDoS prevention)
+  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+  if (!webVitalsLimiter.check(ip)) {
+    return NextResponse.json({ ok: false }, { status: 429 });
+  }
+
   try {
     const raw = await request.json();
     const parsed = validate(WebVitalsSchema, raw);
