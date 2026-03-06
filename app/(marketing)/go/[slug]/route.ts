@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { trackClick } from '@/lib/affiliate/tracker';
 import { resolveLink } from '@/lib/affiliate/link-registry';
 import { affiliateRedirectLimiter } from '@/lib/security/rate-limit';
+import { isIpBlocked, blockIp } from '@/lib/security/ip-blocklist';
 import { logger } from '@/lib/logging';
 
 // ── Bot / Scraper User-Agent Detection ───────────────────────
@@ -191,14 +192,35 @@ export async function GET(
     logger.warn('[affiliate] Bot UA blocked', {
       ip,
       ua: ua?.slice(0, 200) ?? '(empty)',
-      slug: 'pending', // params not yet resolved at this point
+    });
+    // Persist 24h block for confirmed bots (cluster-safe via Supabase)
+    void blockIp(ip, 'bot_ua_detected', {
+      durationMs: 24 * 60 * 60 * 1000,
+      path: request.url,
+      ua: ua ?? undefined,
     });
     return new NextResponse(null, { status: 403 });
   }
 
-  // ── Click-Fraud: Rate Limit (10 req/min per IP) ───────────────
+  // ── Click-Fraud: Persistent IP Blocklist ─────────────────────
+  // Shared across all PM2 cluster workers via Supabase (cluster-safe).
+  // Local 60s cache prevents DB hit on every request.
+  const blocked = await isIpBlocked(ip);
+  if (blocked) {
+    logger.warn('[affiliate] Blocked IP denied', { ip });
+    return new NextResponse(null, { status: 403 });
+  }
+
+  // ── Click-Fraud: Rate Limit (10 req/min per IP per worker) ───
+  // In-memory per-worker; complements the persistent blocklist.
   if (!affiliateRedirectLimiter.check(ip)) {
-    logger.warn('[affiliate] Rate limit exceeded', { ip, ua: ua?.slice(0, 100) });
+    logger.warn('[affiliate] Rate limit exceeded — auto-blocking IP', { ip, ua: ua?.slice(0, 100) });
+    // Auto-block for 1 hour and persist to Supabase
+    void blockIp(ip, 'rate_limit_exceeded', {
+      durationMs: 60 * 60 * 1000,
+      path: request.url,
+      ua: ua ?? undefined,
+    });
     return new NextResponse('Too many requests', { status: 429 });
   }
 

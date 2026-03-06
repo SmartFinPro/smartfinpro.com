@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { withSentryConfig } from '@sentry/nextjs';
 
 const nextConfig: NextConfig = {
   // ============================================================
@@ -93,7 +94,7 @@ const nextConfig: NextConfig = {
       style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
       img-src 'self' data: blob: https:;
       font-src 'self' https://fonts.gstatic.com data:;
-      connect-src 'self' https://*.supabase.co wss://*.supabase.co https://plausible.io https://www.google-analytics.com https://api.resend.com https://*.partnerstack.com https://*.awin.com https://*.financeads.net;
+      connect-src 'self' https://*.supabase.co wss://*.supabase.co https://plausible.io https://www.google-analytics.com https://api.resend.com https://*.partnerstack.com https://*.awin.com https://*.financeads.net https://o*.ingest.sentry.io;
       frame-src 'self';
       frame-ancestors 'self';
       form-action 'self';
@@ -368,4 +369,44 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+// ============================================================
+// Sentry — Error Monitoring & Performance Tracing
+// withSentryConfig wraps the config to inject source-map upload
+// and the /monitoring tunnel route (bypasses ad-blockers).
+//
+// ENVs required (add to .env.local + ecosystem.config.js):
+//   NEXT_PUBLIC_SENTRY_DSN       — from Sentry project → Client Keys (DSN)
+//   SENTRY_DSN                   — same value, but not public (server-side)
+//   SENTRY_AUTH_TOKEN            — from Sentry → Settings → Auth Tokens
+//   SENTRY_ORG                   — your Sentry org slug
+//   SENTRY_PROJECT               — your Sentry project slug
+//   NEXT_PUBLIC_SENTRY_RELEASE   — optional, set in CI (e.g. git commit hash)
+// ============================================================
+export default withSentryConfig(nextConfig, {
+  // Sentry org & project (for source map uploads)
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+
+  // Suppress Sentry CLI output (only show in CI)
+  silent: !process.env.CI,
+
+  // Hide source maps from client bundle (security) — Sentry v10 API
+  sourcemaps: {
+    disable: !process.env.SENTRY_AUTH_TOKEN, // only upload when token is set
+  },
+
+  // Disable Sentry logger calls (we use our own logger)
+  disableLogger: true,
+
+  // Tunnel all Sentry requests through our domain to avoid ad-blockers.
+  // Creates a /monitoring route that proxies to ingest.sentry.io.
+  tunnelRoute: '/monitoring',
+
+  // No automatic Vercel monitors (self-hosted on Cloudways)
+  automaticVercelMonitors: false,
+
+  // Only upload source maps when SENTRY_AUTH_TOKEN is set (CI/production builds)
+  // Without the token the plugin runs in no-upload mode automatically
+  widenClientFileUpload: false,
+});
