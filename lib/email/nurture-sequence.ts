@@ -239,7 +239,7 @@ async function sendSequenceEmail(
     }
 
     case 2: {
-      // Day 5: Case Study Email
+      // Day 5: Case Study Email — market-specific subject, generic body
       const html = await render(
         CaseStudyEmail({
           unsubscribeUrl,
@@ -247,15 +247,17 @@ async function sendSequenceEmail(
         })
       );
 
+      const subject = getLocalizedSubject(country, 'case-study');
+
       return sendEmail({
         to: email,
-        subject: 'Case Study: How AI Automates 10h of Finance Work Weekly',
+        subject,
         html,
       });
     }
 
     case 3: {
-      // Day 10: Top Broker Picks (market-specific)
+      // Day 10: Top Broker Picks — market-specific subject + regulator name
       const html = await render(
         BrokerPicksEmail({
           unsubscribeUrl,
@@ -264,15 +266,17 @@ async function sendSequenceEmail(
         })
       );
 
+      const subject = getLocalizedSubject(country, 'broker-picks');
+
       return sendEmail({
         to: email,
-        subject: `Our Top 3 Regulated Brokers for You`,
+        subject,
         html,
       });
     }
 
     case 4: {
-      // Day 21: Re-engagement — curated content digest
+      // Day 21: Re-engagement — market-specific curated content digest
       const html = await render(
         ReEngagementEmail({
           unsubscribeUrl,
@@ -281,9 +285,11 @@ async function sendSequenceEmail(
         })
       );
 
+      const subject = getLocalizedSubject(country, 'reengagement');
+
       return sendEmail({
         to: email,
-        subject: 'What your peers are reading this month',
+        subject,
         html,
       });
     }
@@ -314,7 +320,7 @@ function normalizeCountry(countryCode: string): 'us' | 'uk' | 'ca' | 'au' | 'de'
 }
 
 /**
- * Get localized subject line
+ * Get localized subject line for all sequence steps
  */
 function getLocalizedSubject(country: string, emailType: string): string {
   const subjects: Record<string, Record<string, string>> = {
@@ -323,11 +329,36 @@ function getLocalizedSubject(country: string, emailType: string): string {
       uk: 'The Top 3 Tools for UK Finance Professionals',
       ca: 'The Top 3 Tools for Canadian Finance Professionals',
       au: 'The Top 3 Tools for Australian Finance Professionals',
-      de: 'Die Top 3 Tools fur deutsche Finanzprofis',
+      de: 'Die Top 3 Tools für deutsche Finanzprofis',
+    },
+    'case-study': {
+      us: 'Case Study: How AI Automates 10h of Finance Work Weekly',
+      uk: 'Case Study: How UK Traders Save 10h Weekly with AI',
+      ca: 'Case Study: How Canadian Advisors Cut Admin Time by 10h/Week',
+      au: 'Case Study: How Australian Finance Pros Automate 10h Weekly',
+      de: 'Fallstudie: 10 Stunden Finanzarbeit pro Woche automatisieren',
+    },
+    'broker-picks': {
+      us: 'Our Top 3 SEC-Regulated Brokers Right Now',
+      uk: 'Our Top 3 FCA-Regulated Brokers for UK Traders',
+      ca: 'Our Top 3 CIRO-Regulated Brokers for Canadians',
+      au: 'Our Top 3 ASIC-Regulated Brokers for Australians',
+      de: 'Unsere Top 3 regulierten Broker für deutsche Anleger',
+    },
+    'reengagement': {
+      us: 'What US finance pros are reading this month',
+      uk: 'What UK traders are reading right now',
+      ca: 'What Canadian investors are reading this month',
+      au: 'What Australian traders are reading right now',
+      de: 'Was deutsche Finanzprofis gerade lesen',
     },
   };
 
-  return subjects[emailType]?.[country] || subjects[emailType]?.['us'] || 'Your Personalized Tool Recommendations';
+  return (
+    subjects[emailType]?.[country] ||
+    subjects[emailType]?.['us'] ||
+    'Your Personalized Finance Update'
+  );
 }
 
 /**

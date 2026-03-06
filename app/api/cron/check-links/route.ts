@@ -1,14 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { runHealthChecks } from '@/lib/actions/link-health';
 import { sendTelegramAlert } from '@/lib/alerts/telegram';
+import { createServiceClient } from '@/lib/supabase/server';
 
 /**
- * Link Health Monitor — Cron Job
+ * Link Health Monitor (Dead-Link Monitor) — Cron Job
  *
  * Sends HEAD requests (8s timeout, 5 concurrent) to all active affiliate
  * links. Classifies each as healthy / degraded (>5s) / dead. Persists
  * health_status + last_health_check to affiliate_links via Supabase.
  * Fires a Telegram alert if any dead or degraded links are found.
+ * Logs run results to cron_logs table.
  *
  * Requires DB migration: 20260305120000_affiliate_link_health.sql
  *
@@ -37,10 +39,13 @@ export async function GET(request: NextRequest) {
   }
 
   // ── Run checks ──────────────────────────────────────────────────────────
+  const startTime = Date.now();
+  let alertSent = false;
+
   try {
-    const startTime = Date.now();
     const result = await runHealthChecks();
-    const duration = ((Date.now() - startTime) / 1000).toFixed(1);
+    const durationMs = Date.now() - startTime;
+    const duration = (durationMs / 1000).toFixed(1);
 
     console.log(
       `[check-links] Complete: ${result.healthy} healthy, ${result.degraded} degraded, ${result.dead} dead / ${result.results.length} total (${duration}s)`,
@@ -48,7 +53,6 @@ export async function GET(request: NextRequest) {
 
     // ── Telegram alert on issues ─────────────────────────────────────────
     const hasIssues = result.dead > 0 || result.degraded > 0;
-    let alertSent = false;
 
     if (hasIssues) {
       const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://smartfinpro.com';
@@ -64,13 +68,13 @@ export async function GET(request: NextRequest) {
         result.dead > 10 ? `  … and ${result.dead - 10} more\n` : '';
 
       const message = [
-        `${severity} <b>LINK HEALTH ALERT</b>`,
+        `${severity} <b>DEAD LINK ALERT</b>`,
         ``,
         `✅ <b>Healthy:</b> ${result.healthy}/${result.results.length}`,
         result.dead > 0 ? `❌ <b>Dead:</b> ${result.dead}` : null,
         result.degraded > 0 ? `⚠️ <b>Degraded (slow >5s):</b> ${result.degraded}` : null,
         result.dead > 0 ? `\n<b>Dead Links:</b>\n${deadSlugs}${overflowNote}` : null,
-        `🔗 <a href="${siteUrl}/dashboard">View Affiliate Dashboard</a>`,
+        `🔗 <a href="${siteUrl}/dashboard/links">View Affiliate Links</a>`,
         `<i>${new Date().toISOString().replace('T', ' ').slice(0, 19)} UTC</i>`,
       ]
         .filter(Boolean)
@@ -82,6 +86,25 @@ export async function GET(request: NextRequest) {
       if (!telegramResult.success) {
         console.warn(`[check-links] Telegram alert failed: ${telegramResult.error}`);
       }
+    }
+
+    // ── Log to cron_logs ─────────────────────────────────────────────────
+    try {
+      const supabase = createServiceClient();
+      await supabase.from('cron_logs').insert({
+        job_name: 'check-links',
+        status: 'success',
+        duration_ms: durationMs,
+        metadata: {
+          healthy: result.healthy,
+          degraded: result.degraded,
+          dead: result.dead,
+          total: result.results.length,
+          alertSent,
+        },
+      });
+    } catch (logErr) {
+      console.warn('[check-links] cron_logs insert failed:', logErr);
     }
 
     return NextResponse.json({
@@ -96,7 +119,20 @@ export async function GET(request: NextRequest) {
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Unknown error';
+    const durationMs = Date.now() - startTime;
     console.error('[check-links] Cron failed:', msg);
+
+    // Log failure to cron_logs
+    try {
+      const supabase = createServiceClient();
+      await supabase.from('cron_logs').insert({
+        job_name: 'check-links',
+        status: 'error',
+        duration_ms: durationMs,
+        error: msg,
+      });
+    } catch { /* non-critical */ }
+
     return NextResponse.json(
       { error: msg, timestamp: new Date().toISOString() },
       { status: 500 },
