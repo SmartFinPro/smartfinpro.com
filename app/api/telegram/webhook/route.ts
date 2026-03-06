@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { logger } from '@/lib/logging';
 import { answerCallbackQuery, editTelegramMessage } from '@/lib/alerts/telegram';
 import { executeStrategyOption, approvePlanAndExecute } from '@/lib/actions/daily-strategy';
 import type { StrategyOption } from '@/lib/actions/daily-strategy';
@@ -136,7 +137,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true });
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Unknown error';
-    console.error('[telegram-webhook] Error:', msg);
+    logger.error('[telegram-webhook] Error:', msg);
     return NextResponse.json({ ok: true }); // Always return 200 to Telegram
   }
 }

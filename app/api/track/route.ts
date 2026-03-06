@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { logger } from '@/lib/logging';
 import { createServiceClient } from '@/lib/supabase/server';
 import crypto from 'crypto';
 import { validate, TrackSchema } from '@/lib/validation';
@@ -97,7 +98,7 @@ export async function POST(request: NextRequest) {
 
         if (error) {
           // Log but never fail — analytics must not affect UX
-          if (process.env.NODE_ENV === 'development') console.warn('Analytics: pageview insert failed');
+          if (process.env.NODE_ENV === 'development') logger.warn('Analytics: pageview insert failed');
         }
 
         return NextResponse.json({ success: true });
@@ -121,7 +122,7 @@ export async function POST(request: NextRequest) {
         });
 
         if (error) {
-          if (process.env.NODE_ENV === 'development') console.warn('Analytics: event insert failed');
+          if (process.env.NODE_ENV === 'development') logger.warn('Analytics: event insert failed');
         }
 
         return NextResponse.json({ success: true });
@@ -150,7 +151,7 @@ export async function POST(request: NextRequest) {
             .eq('id', existing.id);
 
           if (error) {
-            if (process.env.NODE_ENV === 'development') console.warn('Analytics: page view update failed');
+            if (process.env.NODE_ENV === 'development') logger.warn('Analytics: page view update failed');
           }
         }
 

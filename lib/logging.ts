@@ -9,6 +9,8 @@
 //   import { logger } from '@/lib/logging';
 //   logger.info('Cron complete', { job: 'daily-strategy', duration_ms: 1200 });
 //   logger.error('Supabase down', { error: err.message, latency_ms: 3100 });
+//   logger.error('DB error:', err);          // Error objects auto-serialized
+//   logger.warn('Slow response:', latency);  // Primitives wrapped as { value }
 
 type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
@@ -18,6 +20,17 @@ interface LogEntry {
   msg:   string;
   env:   string;
   [key: string]: unknown;
+}
+
+/** Serialize arbitrary second argument into a structured context object */
+function normalizeCtx(ctx: unknown): Record<string, unknown> | undefined {
+  if (ctx === undefined || ctx === null) return undefined;
+  // Error objects: extract message + stack for JSON-friendly output
+  if (ctx instanceof Error) return { error: ctx.message, stack: ctx.stack };
+  // Plain objects (most common — { error: msg, key: val }): pass through
+  if (typeof ctx === 'object' && !Array.isArray(ctx)) return ctx as Record<string, unknown>;
+  // Primitives (string, number, boolean): wrap as { value }
+  return { value: String(ctx) };
 }
 
 function emit(level: LogLevel, msg: string, context?: Record<string, unknown>) {
@@ -43,23 +56,23 @@ function emit(level: LogLevel, msg: string, context?: Record<string, unknown>) {
 
 export const logger = {
   /** Verbose output — suppressed in production */
-  debug(msg: string, ctx?: Record<string, unknown>) {
-    if (process.env.NODE_ENV !== 'production') emit('debug', msg, ctx);
+  debug(msg: string, ctx?: unknown) {
+    if (process.env.NODE_ENV !== 'production') emit('debug', msg, normalizeCtx(ctx));
   },
 
   /** Operational events (cron success, user action, etc.) */
-  info(msg: string, ctx?: Record<string, unknown>) {
-    emit('info', msg, ctx);
+  info(msg: string, ctx?: unknown) {
+    emit('info', msg, normalizeCtx(ctx));
   },
 
   /** Non-critical issues that need attention */
-  warn(msg: string, ctx?: Record<string, unknown>) {
-    emit('warn', msg, ctx);
+  warn(msg: string, ctx?: unknown) {
+    emit('warn', msg, normalizeCtx(ctx));
   },
 
   /** Errors that impact functionality */
-  error(msg: string, ctx?: Record<string, unknown>) {
-    emit('error', msg, ctx);
+  error(msg: string, ctx?: unknown) {
+    emit('error', msg, normalizeCtx(ctx));
   },
 };
 

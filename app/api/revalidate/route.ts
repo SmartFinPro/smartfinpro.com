@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { logger } from '@/lib/logging';
 import { revalidatePath } from 'next/cache';
 
 /**
@@ -64,7 +65,7 @@ export async function POST(request: NextRequest) {
     // Also revalidate the sitemap so lastmod picks up the new date
     revalidatePath('/sitemap.xml');
 
-    console.log(`[revalidate] Successfully revalidated: ${slug}`);
+    logger.info(`[revalidate] Successfully revalidated: ${slug}`);
 
     return NextResponse.json({
       revalidated: true,
@@ -73,7 +74,7 @@ export async function POST(request: NextRequest) {
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Unknown error';
-    console.error('[revalidate] Error:', msg);
+    logger.error('[revalidate] Error:', msg);
     return NextResponse.json(
       { error: msg },
       { status: 500 },
@@ -104,7 +105,7 @@ export async function GET(request: NextRequest) {
     revalidatePath(slug);
     revalidatePath('/sitemap.xml');
 
-    console.log(`[revalidate] Successfully revalidated (GET): ${slug}`);
+    logger.info(`[revalidate] Successfully revalidated (GET): ${slug}`);
 
     return NextResponse.json({
       revalidated: true,
@@ -113,7 +114,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Unknown error';
-    console.error('[revalidate] Error:', msg);
+    logger.error('[revalidate] Error:', msg);
     return NextResponse.json(
       { error: msg },
       { status: 500 },

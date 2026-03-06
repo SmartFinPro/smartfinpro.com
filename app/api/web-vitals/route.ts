@@ -3,6 +3,7 @@
 // Called client-side via useReportWebVitals (next/web-vitals)
 
 import { NextRequest, NextResponse } from 'next/server';
+import { logger } from '@/lib/logging';
 import { createServiceClient } from '@/lib/supabase/server';
 import { validate, WebVitalsSchema } from '@/lib/validation';
 import { webVitalsLimiter } from '@/lib/security/rate-limit';
@@ -66,14 +67,14 @@ export async function POST(request: NextRequest) {
 
     // Silently ignore dedup conflicts (unique constraint on metric_id)
     if (error && !error.message.includes('unique')) {
-      console.error('[web-vitals] insert error:', error.message);
+      logger.error('[web-vitals] insert error:', error.message);
     }
 
     return NextResponse.json({ ok: true }, {
       headers: { 'Cache-Control': 'no-store' },
     });
   } catch (err) {
-    console.error('[web-vitals] handler error:', (err as Error).message);
+    logger.error('[web-vitals] handler error:', (err as Error).message);
     return NextResponse.json({ ok: false }, { status: 500 });
   }
 }

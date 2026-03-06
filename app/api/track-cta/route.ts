@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { logger } from '@/lib/logging';
 import { createServiceClient } from '@/lib/supabase/server';
 import crypto from 'crypto';
 import { validate, TrackCtaSchema } from '@/lib/validation';
@@ -53,7 +54,7 @@ export async function POST(request: NextRequest) {
     if (error) {
       // Log but never fail — analytics must not affect UX
       if (process.env.NODE_ENV === 'development') {
-        console.warn('[CTA Track] Insert error:', error.message);
+        logger.warn('[CTA Track] Insert error:', error.message);
       }
     }
 

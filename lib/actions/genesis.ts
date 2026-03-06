@@ -1,6 +1,7 @@
 'use server';
 
 import 'server-only';
+import { logger } from '@/lib/logging';
 
 import { createServiceClient } from '@/lib/supabase/server';
 import {
@@ -225,7 +226,7 @@ export async function magicFind(
       .single();
 
     if (runError) {
-      console.error('[genesis] Pipeline run creation failed:', runError.message);
+      logger.error('[genesis] Pipeline run creation failed:', runError.message);
     }
 
     const result: ResearchResult = {
@@ -240,7 +241,7 @@ export async function magicFind(
     return { success: true, data: result, error: null };
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Unknown error';
-    console.error('[genesis] magicFind failed:', msg);
+    logger.error('[genesis] magicFind failed:', msg);
     return { success: false, data: null, error: msg };
   }
 }
@@ -376,7 +377,7 @@ export async function generateLongFormAsset(
       })
       .eq('id', runId);
 
-    console.log(`[genesis] Long-form MDX created: ${filePath} (${wordCount} words)`);
+    logger.info(`[genesis] Long-form MDX created: ${filePath} (${wordCount} words)`);
 
     return {
       success: true,
@@ -386,7 +387,7 @@ export async function generateLongFormAsset(
     };
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Unknown error';
-    console.error('[genesis] generateLongFormAsset failed:', msg);
+    logger.error('[genesis] generateLongFormAsset failed:', msg);
     await updateProgress({ step: 'error', progress: 0, message: `Error: ${msg}` });
     await supabase
       .from('genesis_pipeline_runs')
@@ -482,7 +483,7 @@ export async function processAndInsertImages(
     return { success: true };
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Unknown error';
-    console.error('[genesis] processAndInsertImages failed:', msg);
+    logger.error('[genesis] processAndInsertImages failed:', msg);
     return { success: false, error: msg };
   }
 }
@@ -560,7 +561,7 @@ export async function requestInstantIndexing(
     const notifyTime = response.data?.urlNotificationMetadata?.latestUpdate?.notifyTime || null;
     const elapsed = Date.now() - startTime;
 
-    console.log(`[indexing] Successfully submitted: ${url} (${elapsed}ms)`, response.data);
+    logger.info(`[indexing] Successfully submitted: ${url} (${elapsed}ms)`, response.data);
 
     return {
       success: true,
@@ -570,7 +571,7 @@ export async function requestInstantIndexing(
     };
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Unknown error';
-    console.error('[indexing] requestInstantIndexing failed:', msg);
+    logger.error('[indexing] requestInstantIndexing failed:', msg);
     return {
       success: false,
       url,
@@ -642,7 +643,7 @@ export async function distributeAndIndex(
       const boostResult = await boostAndDeploy(run.slug, `Genesis Hub: ${run.keyword}`);
       deployed = boostResult.boostSuccess;
     } catch (err) {
-      console.warn('[genesis] Boost failed:', err);
+      logger.warn('[genesis] Boost failed:', err);
     }
 
     // 4. Google Indexing API via googleapis — only after deploy completes
@@ -655,7 +656,7 @@ export async function distributeAndIndex(
       indexingResult = await requestInstantIndexing(fullUrl);
       indexed = indexingResult.success;
     } catch {
-      console.warn('[genesis] Google Indexing API call failed — skipping');
+      logger.warn('[genesis] Google Indexing API call failed — skipping');
     }
 
     // 5. Update pipeline run as completed
@@ -674,7 +675,7 @@ export async function distributeAndIndex(
     return { success: true, deployed, indexed, indexingResult };
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Unknown error';
-    console.error('[genesis] distributeAndIndex failed:', msg);
+    logger.error('[genesis] distributeAndIndex failed:', msg);
     await supabase
       .from('genesis_pipeline_runs')
       .update({ status: 'failed' })
@@ -1217,7 +1218,7 @@ export async function createReviewFromTemplate(
     };
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Unknown error';
-    console.error('[genesis] createReviewFromTemplate failed:', msg);
+    logger.error('[genesis] createReviewFromTemplate failed:', msg);
     return { success: false, error: msg };
   }
 }
@@ -1272,7 +1273,7 @@ export async function getAutoTemplatePartnerPreview(
     return { success: false, error: `No CTA partner configured for ${market}/${category}` };
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Unknown error';
-    console.error('[genesis] getAutoTemplatePartnerPreview failed:', msg);
+    logger.error('[genesis] getAutoTemplatePartnerPreview failed:', msg);
     return { success: false, error: msg };
   }
 }
@@ -1333,7 +1334,7 @@ export async function deleteGenesisRun(
 
     return { success: true };
   } catch (err) {
-    console.error('[Genesis] Delete error:', err);
+    logger.error('[Genesis] Delete error:', err);
     return { success: false, error: 'Failed to delete run' };
   }
 }
@@ -1385,7 +1386,7 @@ export async function getRunDetail(
 
     return { success: true, run, mdxContent };
   } catch (err) {
-    console.error('[Genesis] Get run detail error:', err);
+    logger.error('[Genesis] Get run detail error:', err);
     return { success: false, error: 'Failed to load run' };
   }
 }
@@ -1431,7 +1432,7 @@ export async function updateGenesisContent(
 
     return { success: true, wordCount };
   } catch (err) {
-    console.error('[Genesis] Update content error:', err);
+    logger.error('[Genesis] Update content error:', err);
     return { success: false, error: 'Failed to update content' };
   }
 }

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { logger } from '@/lib/logging';
 import { genesisApiLimiter } from '@/lib/security/rate-limit';
 import { createClaudeMessage } from '@/lib/claude/client';
 
@@ -81,7 +82,7 @@ Please rewrite ONLY this section according to the user's instructions. Keep the 
     return NextResponse.json({ success: true, editedContent });
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Unknown error';
-    console.error('[edit-section] Error:', msg);
+    logger.error('[edit-section] Error:', msg);
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }

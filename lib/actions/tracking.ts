@@ -1,6 +1,7 @@
 'use server';
 
 import 'server-only';
+import { logger } from '@/lib/logging';
 
 import { createServiceClient } from '@/lib/supabase/server';
 import { headers } from 'next/headers';
@@ -70,13 +71,13 @@ export async function trackClick(params: TrackClickParams) {
       .single();
 
     if (error) {
-      console.error('Error tracking click:', error);
+      logger.error('Error tracking click:', error);
       return { success: false, error: error.message };
     }
 
     return { success: true, clickId: data.id };
   } catch (error) {
-    console.error('Error tracking click:', error);
+    logger.error('Error tracking click:', error);
     return { success: false, error: 'Failed to track click' };
   }
 }
@@ -136,13 +137,13 @@ export async function trackPageView(params: TrackPageViewParams) {
     });
 
     if (error) {
-      console.error('Error tracking page view:', error);
+      logger.error('Error tracking page view:', error);
       return { success: false, error: error.message };
     }
 
     return { success: true };
   } catch (error) {
-    console.error('Error tracking page view:', error);
+    logger.error('Error tracking page view:', error);
     return { success: false, error: 'Failed to track page view' };
   }
 }
@@ -189,13 +190,13 @@ export async function trackEvent(params: TrackEventParams) {
     });
 
     if (error) {
-      console.error('Error tracking event:', error);
+      logger.error('Error tracking event:', error);
       return { success: false, error: error.message };
     }
 
     return { success: true };
   } catch (error) {
-    console.error('Error tracking event:', error);
+    logger.error('Error tracking event:', error);
     return { success: false, error: 'Failed to track event' };
   }
 }
@@ -227,13 +228,13 @@ export async function updatePageView(params: UpdatePageViewParams) {
       .limit(1);
 
     if (error) {
-      console.error('Error updating page view:', error);
+      logger.error('Error updating page view:', error);
       return { success: false, error: error.message };
     }
 
     return { success: true };
   } catch (error) {
-    console.error('Error updating page view:', error);
+    logger.error('Error updating page view:', error);
     return { success: false, error: 'Failed to update page view' };
   }
 }

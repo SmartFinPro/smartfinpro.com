@@ -10,6 +10,7 @@
 // ============================================================
 
 import type { CtaVariant, Market } from '@/lib/supabase/types';
+import { logger } from '@/lib/logging';
 
 interface LogCtaClickParams {
   /** Page slug, e.g. '/personal-finance/best-robo-advisors' */
@@ -54,14 +55,14 @@ export async function logCtaClick(params: LogCtaClickParams) {
     });
 
     if (error) {
-      console.error('[CTA Analytics] Insert error:', error.message);
+      logger.error('[CTA Analytics] Insert error:', error.message);
       return { success: false, error: error.message };
     }
 
     return { success: true };
   } catch (error) {
     // Fail silently — analytics should never break the user experience
-    console.error('[CTA Analytics] Unexpected error:', error);
+    logger.error('[CTA Analytics] Unexpected error:', error);
     return { success: false, error: 'Failed to log CTA click' };
   }
 }
@@ -101,7 +102,7 @@ export async function getCtaPerformance(params: CtaPerformanceParams = {}) {
     const { data, error } = await query;
 
     if (error) {
-      console.error('[CTA Analytics] Query error:', error.message);
+      logger.error('[CTA Analytics] Query error:', error.message);
       return { success: false, data: null, error: error.message };
     }
 
@@ -125,7 +126,7 @@ export async function getCtaPerformance(params: CtaPerformanceParams = {}) {
 
     return { success: true, data: results, error: null };
   } catch (error) {
-    console.error('[CTA Analytics] Unexpected error:', error);
+    logger.error('[CTA Analytics] Unexpected error:', error);
     return { success: false, data: null, error: 'Failed to query CTA performance' };
   }
 }
@@ -191,7 +192,7 @@ export async function getCtaHeatmapData(
       if (error.code === 'PGRST204' || error.code === '42P01') {
         return { success: true, data: emptyHeatmap(timeRange), error: null };
       }
-      console.error('[CTA Heatmap] Query error:', error.message);
+      logger.error('[CTA Heatmap] Query error:', error.message);
       return { success: false, data: null, error: error.message };
     }
 
@@ -295,7 +296,7 @@ export async function getCtaHeatmapData(
       error: null,
     };
   } catch (error) {
-    console.error('[CTA Heatmap] Unexpected error:', error);
+    logger.error('[CTA Heatmap] Unexpected error:', error);
     return { success: false, data: null, error: 'Failed to load heatmap data' };
   }
 }
@@ -490,7 +491,7 @@ export async function getEpcByPage(
 
     return { success: true, data: results, error: null };
   } catch (error) {
-    console.error('[CTA Analytics] EPC query error:', error);
+    logger.error('[CTA Analytics] EPC query error:', error);
     return { success: false, data: [], error: 'Failed to calculate EPC' };
   }
 }
@@ -591,7 +592,7 @@ export async function getTopFlopPlacements(
       error: null,
     };
   } catch (error) {
-    console.error('[CTA Analytics] Top/Flop query error:', error);
+    logger.error('[CTA Analytics] Top/Flop query error:', error);
     return { success: false, top: [], flop: [], error: 'Failed to query placements' };
   }
 }

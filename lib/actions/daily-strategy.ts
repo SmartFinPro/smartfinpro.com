@@ -1,6 +1,7 @@
 'use server';
 
 import 'server-only';
+import { logger } from '@/lib/logging';
 
 import { createServiceClient } from '@/lib/supabase/server';
 import { getRevenueForecast } from '@/lib/actions/revenue-forecast';
@@ -422,7 +423,7 @@ JSON format:
     return { success: true, digest };
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Unknown error';
-    console.error('[daily-strategy] generateDailyStrategy failed:', msg);
+    logger.error('[daily-strategy] generateDailyStrategy failed:', msg);
     return { success: false, digest: null, error: msg };
   }
 }
@@ -750,11 +751,11 @@ export async function analyzeAndPlanNextDay(): Promise<{
       }
     }
 
-    console.log(`[planning] analyzeAndPlanNextDay: ${plans.length} plans created`);
+    logger.info(`[planning] analyzeAndPlanNextDay: ${plans.length} plans created`);
     return { success: true, plans };
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Unknown error';
-    console.error('[planning] analyzeAndPlanNextDay failed:', msg);
+    logger.error('[planning] analyzeAndPlanNextDay failed:', msg);
     return { success: false, plans: [], error: msg };
   }
 }
@@ -905,11 +906,11 @@ export async function approvePlanAndExecute(
       await new Promise((r) => setTimeout(r, 1000));
     }
 
-    console.log(`[planning] approvePlanAndExecute: ${results.filter((r) => r.status === 'completed').length}/${results.length} succeeded`);
+    logger.info(`[planning] approvePlanAndExecute: ${results.filter((r) => r.status === 'completed').length}/${results.length} succeeded`);
     return { success: true, results };
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Unknown error';
-    console.error('[planning] approvePlanAndExecute failed:', msg);
+    logger.error('[planning] approvePlanAndExecute failed:', msg);
     return { success: false, results: [], error: msg };
   }
 }
@@ -1011,7 +1012,7 @@ export async function approveAndExecuteSingle(
     };
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Unknown error';
-    console.error('[planning] approveAndExecuteSingle failed:', msg);
+    logger.error('[planning] approveAndExecuteSingle failed:', msg);
     return { success: false, keyword: '', error: msg };
   }
 }
@@ -1352,15 +1353,15 @@ export async function analyzeAffiliateOpportunities(
         plans.push(mapPlanRow(inserted));
       } else if (error) {
         // Likely duplicate — skip silently
-        console.warn(`[affiliate-opportunities] Skipped "${keyword}": ${error.message}`);
+        logger.warn(`[affiliate-opportunities] Skipped "${keyword}": ${error.message}`);
       }
     }
 
-    console.log(`[affiliate-opportunities] Found ${missingAssets.length} gaps, created ${plans.length} opportunities`);
+    logger.info(`[affiliate-opportunities] Found ${missingAssets.length} gaps, created ${plans.length} opportunities`);
     return { success: true, plans };
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Unknown error';
-    console.error('[affiliate-opportunities] analyzeAffiliateOpportunities failed:', msg);
+    logger.error('[affiliate-opportunities] analyzeAffiliateOpportunities failed:', msg);
     return { success: false, plans: [], error: msg };
   }
 }

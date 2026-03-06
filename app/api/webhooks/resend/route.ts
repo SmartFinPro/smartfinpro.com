@@ -11,6 +11,7 @@
 // Env required: RESEND_WEBHOOK_SECRET (from Resend dashboard → Webhooks → Signing Secret)
 
 import { NextRequest, NextResponse } from 'next/server';
+import { logger } from '@/lib/logging';
 import { createServiceClient } from '@/lib/supabase/server';
 import crypto from 'crypto';
 
@@ -53,13 +54,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const signature = request.headers.get('svix-signature') ??
                       request.headers.get('resend-signature');
     if (!verifySignature(rawBody, signature, secret)) {
-      console.warn('[resend-webhook] Invalid signature — rejecting');
+      logger.warn('[resend-webhook] Invalid signature — rejecting');
       return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
     }
   } else {
     // Log warning in dev — in production always set RESEND_WEBHOOK_SECRET
     if (process.env.NODE_ENV === 'production') {
-      console.warn('[resend-webhook] RESEND_WEBHOOK_SECRET not set — skipping signature check');
+      logger.warn('[resend-webhook] RESEND_WEBHOOK_SECRET not set — skipping signature check');
     }
   }
 
@@ -74,7 +75,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const eventType = event.type;
   const emailAddresses = event.data?.to ?? [];
 
-  console.log(`[resend-webhook] Event: ${eventType} → ${emailAddresses.join(', ')}`);
+  logger.info(`[resend-webhook] Event: ${eventType} → ${emailAddresses.join(', ')}`);
 
   for (const email of emailAddresses) {
     const normalizedEmail = email.toLowerCase().trim();
@@ -91,9 +92,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           .eq('email', normalizedEmail);
 
         if (error) {
-          console.error(`[resend-webhook] Failed to mark bounced: ${normalizedEmail}`, error.message);
+          logger.error(`[resend-webhook] Failed to mark bounced: ${normalizedEmail}`, error.message);
         } else {
-          console.log(`[resend-webhook] Marked bounced: ${normalizedEmail}`);
+          logger.info(`[resend-webhook] Marked bounced: ${normalizedEmail}`);
         }
         break;
       }
@@ -109,9 +110,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           .eq('email', normalizedEmail);
 
         if (error) {
-          console.error(`[resend-webhook] Failed to mark complained: ${normalizedEmail}`, error.message);
+          logger.error(`[resend-webhook] Failed to mark complained: ${normalizedEmail}`, error.message);
         } else {
-          console.log(`[resend-webhook] Marked complained: ${normalizedEmail}`);
+          logger.info(`[resend-webhook] Marked complained: ${normalizedEmail}`);
         }
         break;
       }
@@ -126,9 +127,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           .eq('email', normalizedEmail);
 
         if (error) {
-          console.error(`[resend-webhook] Failed to mark unsubscribed: ${normalizedEmail}`, error.message);
+          logger.error(`[resend-webhook] Failed to mark unsubscribed: ${normalizedEmail}`, error.message);
         } else {
-          console.log(`[resend-webhook] Marked unsubscribed: ${normalizedEmail}`);
+          logger.info(`[resend-webhook] Marked unsubscribed: ${normalizedEmail}`);
         }
         break;
       }

@@ -1,6 +1,7 @@
 'use server';
 
 import 'server-only';
+import { logger } from '@/lib/logging';
 
 import { createServiceClient } from '@/lib/supabase/server';
 import { getContentBySlug } from '@/lib/mdx/index';
@@ -233,11 +234,11 @@ export async function runOptimizationAnalysis(
       }
     }
 
-    console.log(`[optimizer] runOptimizationAnalysis: ${tasks.length} tasks created`);
+    logger.info(`[optimizer] runOptimizationAnalysis: ${tasks.length} tasks created`);
     return { success: true, tasksCreated: tasks.length, tasks };
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Unknown error';
-    console.error('[optimizer] runOptimizationAnalysis failed:', msg);
+    logger.error('[optimizer] runOptimizationAnalysis failed:', msg);
     return { success: false, tasksCreated: 0, tasks: [], error: msg };
   }
 }
@@ -343,7 +344,7 @@ Rules:
 
       return parsed;
     } catch (err) {
-      console.error('[optimizer] AI suggestion failed:', err);
+      logger.error('[optimizer] AI suggestion failed:', err);
     }
   }
 
@@ -568,7 +569,7 @@ export async function executePageOptimization(
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Unknown error';
     await supabase.from('optimization_tasks').update({ status: 'failed' }).eq('id', taskId);
-    console.error('[optimizer] executePageOptimization failed:', msg);
+    logger.error('[optimizer] executePageOptimization failed:', msg);
     return { success: false, error: msg };
   }
 }

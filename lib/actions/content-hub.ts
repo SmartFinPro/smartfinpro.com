@@ -1,6 +1,7 @@
 // lib/actions/content-hub.ts — Content Hub data aggregation + health checks
 'use server';
 import 'server-only';
+import { logger } from '@/lib/logging';
 
 import fs from 'fs';
 import path from 'path';
@@ -330,7 +331,7 @@ async function loadCpsScores(): Promise<Map<string, number>> {
       }
     }
   } catch (err) {
-    console.warn('[content-hub] Failed to load CPS scores:', err);
+    logger.warn('[content-hub] Failed to load CPS scores:', err);
   }
 
   return cpsMap;
@@ -426,7 +427,7 @@ function scanMdxFiles(): ContentHubRow[] {
             indexStatus: 'Parse Error',
             type: 'mdx',
           });
-          console.warn(`[content-hub] Failed to parse ${fullPath}:`, err);
+          logger.warn(`[content-hub] Failed to parse ${fullPath}:`, err);
         }
       }
     }

@@ -1,6 +1,7 @@
 'use server';
 
 import 'server-only';
+import { logger } from '@/lib/logging';
 
 import { createServiceClient } from '@/lib/supabase/server';
 import { createClaudeMessage } from '@/lib/claude/client';
@@ -191,7 +192,7 @@ export async function updateSettings(
         );
 
       if (error) {
-        console.error(`[settings] Failed to update ${key}:`, error.message);
+        logger.error(`[settings] Failed to update ${key}:`, error.message);
         return { success: false, error: `Fehler beim Speichern von "${key}": ${error.message}` };
       }
     }
@@ -199,7 +200,7 @@ export async function updateSettings(
     return { success: true };
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Unknown error';
-    console.error('[settings] updateSettings failed:', msg);
+    logger.error('[settings] updateSettings failed:', msg);
     return { success: false, error: msg };
   }
 }
@@ -467,7 +468,7 @@ export async function globalReset(): Promise<{
     return { success: true, deleted };
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Unknown error';
-    console.error('[settings] globalReset failed:', msg);
+    logger.error('[settings] globalReset failed:', msg);
     return { success: false, deleted, error: msg };
   }
 }

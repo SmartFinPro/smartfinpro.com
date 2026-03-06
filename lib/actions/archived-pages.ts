@@ -1,6 +1,7 @@
 // lib/actions/archived-pages.ts — Two-stage page delete (Archive → Hard-Delete)
 'use server';
 import 'server-only';
+import { logger } from '@/lib/logging';
 
 import fs from 'fs';
 import path from 'path';
@@ -187,7 +188,7 @@ export async function archivePage(
     return { success: true };
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Unknown error';
-    console.error('[archivePage] Failed:', msg);
+    logger.error('[archivePage] Failed:', msg);
     return { success: false, error: msg };
   }
 }
@@ -270,7 +271,7 @@ export async function restorePage(
     return { success: true };
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Unknown error';
-    console.error('[restorePage] Failed:', msg);
+    logger.error('[restorePage] Failed:', msg);
     return { success: false, error: msg };
   }
 }
@@ -349,7 +350,7 @@ export async function hardDeletePage(
       .eq('id', archivedPageId);
 
     if (updateError) {
-      console.error('[hardDeletePage] DB update failed:', updateError.message);
+      logger.error('[hardDeletePage] DB update failed:', updateError.message);
       // File is already deleted — log error but return success since the goal was deletion
     }
 
@@ -377,7 +378,7 @@ export async function hardDeletePage(
     return { success: true };
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Unknown error';
-    console.error('[hardDeletePage] Failed:', msg);
+    logger.error('[hardDeletePage] Failed:', msg);
     return { success: false, error: msg };
   }
 }
@@ -394,7 +395,7 @@ export async function getArchivedPages(): Promise<ArchivedPage[]> {
     .order('archived_at', { ascending: false });
 
   if (error) {
-    console.error('[getArchivedPages] Failed:', error.message);
+    logger.error('[getArchivedPages] Failed:', error.message);
     return [];
   }
 

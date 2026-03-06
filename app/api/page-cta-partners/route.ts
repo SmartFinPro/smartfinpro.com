@@ -1,5 +1,6 @@
 // app/api/page-cta-partners/route.ts — API route for client-side CTA partner mutations
 import { NextRequest, NextResponse } from 'next/server';
+import { logger } from '@/lib/logging';
 import {
   setCtaPartnersForPage,
   getCtaPartnersForPage,
@@ -51,7 +52,7 @@ export async function POST(request: NextRequest) {
     const updated = await getCtaPartnersForPage(pageUrl);
     return NextResponse.json({ partners: updated });
   } catch (err) {
-    console.error('[api/page-cta-partners] POST error:', err);
+    logger.error('[api/page-cta-partners] POST error:', err);
     return NextResponse.json({ error: 'Internal error' }, { status: 500 });
   }
 }

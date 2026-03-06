@@ -10,6 +10,7 @@
  */
 
 import fs from 'fs';
+import { logger } from '@/lib/logging';
 import path from 'path';
 import { createServiceClient } from '@/lib/supabase/server';
 import { sendTelegramAlert } from '@/lib/alerts/telegram';
@@ -181,7 +182,7 @@ async function logCronRun(
       ...(meta ? { metadata: meta } : {}),  // JSONB column — no JSON.stringify needed
     });
   } catch (err) {
-    console.error('[seo-drift] Failed to write cron_log:', err);
+    logger.error('[seo-drift] Failed to write cron_log:', err);
   }
 }
 
@@ -196,14 +197,14 @@ export async function runSeoDriftCheck(): Promise<DriftResult> {
     try {
       baseline = JSON.parse(fs.readFileSync(BASELINE_FILE, 'utf-8')) as Baseline;
     } catch (err) {
-      console.warn('[seo-drift] Could not parse baseline:', err);
+      logger.warn('[seo-drift] Could not parse baseline:', err);
     }
   }
 
   // Scan files
   if (!fs.existsSync(CONTENT_DIR)) {
     const err = `Content directory not found: ${CONTENT_DIR}`;
-    console.error('[seo-drift]', err);
+    logger.error('[seo-drift]', err);
     await logCronRun(supabase, 'error', Date.now() - startTime, err);
     return { scanned: 0, avgScore: 0, perfectFiles: 0, violations: [], regressions: [], newNonCompliant: [], alertSent: false, durationMs: Date.now() - startTime, error: err };
   }
@@ -250,12 +251,12 @@ export async function runSeoDriftCheck(): Promise<DriftResult> {
 
       const telegramResult = await sendTelegramAlert(message);
       alertSent = telegramResult.success;
-      console.log(`[seo-drift] Telegram alert ${alertSent ? 'sent' : 'failed'}: ${telegramResult.error ?? 'ok'}`);
+      logger.info(`[seo-drift] Telegram alert ${alertSent ? 'sent' : 'failed'}: ${telegramResult.error ?? 'ok'}`);
     } catch (err) {
-      console.error('[seo-drift] Alert send error:', err);
+      logger.error('[seo-drift] Alert send error:', err);
     }
   } else {
-    console.log(`[seo-drift] ✅ No drift detected — ${results.length} files, avg ${avgScore.toFixed(2)}/10`);
+    logger.info(`[seo-drift] ✅ No drift detected — ${results.length} files, avg ${avgScore.toFixed(2)}/10`);
   }
 
   const durationMs = Date.now() - startTime;

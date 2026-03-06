@@ -1,5 +1,6 @@
 // app/api/archive-page/batch-notify/route.ts — Send batch archive summary to Telegram
 import { NextResponse } from 'next/server';
+import { logger } from '@/lib/logging';
 import { sendTelegramAlert } from '@/lib/alerts/telegram';
 
 export async function POST(request: Request) {
@@ -27,7 +28,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true });
   } catch (error) {
     const msg = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[api/archive-page/batch-notify] Failed:', msg);
+    logger.error('[api/archive-page/batch-notify] Failed:', msg);
     return NextResponse.json({ success: false, error: msg }, { status: 500 });
   }
 }

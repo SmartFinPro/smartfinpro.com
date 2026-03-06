@@ -1,6 +1,7 @@
 // lib/actions/page-cta-partners.ts — CRUD for page ↔ affiliate partner assignments
 'use server';
 import 'server-only';
+import { logger } from '@/lib/logging';
 
 import { createServiceClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
@@ -24,7 +25,7 @@ export async function getCtaPartnersForPages(
       .order('position', { ascending: true });
 
     if (error) {
-      console.error('[page-cta-partners] Batch load error:', error);
+      logger.error('[page-cta-partners] Batch load error:', error);
       return {};
     }
 
@@ -40,7 +41,7 @@ export async function getCtaPartnersForPages(
 
     return result;
   } catch (err) {
-    console.error('[page-cta-partners] Batch load error:', err);
+    logger.error('[page-cta-partners] Batch load error:', err);
     return {};
   }
 }
@@ -61,7 +62,7 @@ export async function getCtaPartnersForPage(
       .order('position', { ascending: true });
 
     if (error) {
-      console.error('[page-cta-partners] Single load error:', error);
+      logger.error('[page-cta-partners] Single load error:', error);
       return [];
     }
 
@@ -71,7 +72,7 @@ export async function getCtaPartnersForPage(
       display_type: (r.display_type as DisplayType) ?? 'single',
     }));
   } catch (err) {
-    console.error('[page-cta-partners] Single load error:', err);
+    logger.error('[page-cta-partners] Single load error:', err);
     return [];
   }
 }
@@ -101,9 +102,9 @@ export async function getEnrichedCtaPartners(
       const msg = (error as any)?.message || JSON.stringify(error);
       if (code === '42P01' || msg.includes('does not exist') || msg.includes('relation')) {
         // Table not created yet — completely expected during dev bootstrap
-        console.debug('[page-cta-partners] Table not found, skipping CTA enrichment');
+        logger.debug('[page-cta-partners] Table not found, skipping CTA enrichment');
       } else {
-        console.warn('[page-cta-partners] Enriched load skipped:', msg);
+        logger.warn('[page-cta-partners] Enriched load skipped:', msg);
       }
       return [];
     }
@@ -122,7 +123,7 @@ export async function getEnrichedCtaPartners(
       }));
   } catch (err) {
     // Network errors, client init failures, etc. — non-blocking
-    console.warn('[page-cta-partners] Enriched load skipped:', err instanceof Error ? err.message : err);
+    logger.warn('[page-cta-partners] Enriched load skipped:', err instanceof Error ? err.message : err);
     return [];
   }
 }
@@ -144,7 +145,7 @@ export async function setCtaPartnersForPage(
       .eq('page_url', pageUrl);
 
     if (delError) {
-      console.error('[page-cta-partners] Delete error:', delError);
+      logger.error('[page-cta-partners] Delete error:', delError);
       return { success: false, error: delError.message };
     }
 
@@ -178,7 +179,7 @@ export async function setCtaPartnersForPage(
       }
 
       if (insError) {
-        console.error('[page-cta-partners] Insert error:', insError);
+        logger.error('[page-cta-partners] Insert error:', insError);
         return { success: false, error: insError.message };
       }
     }
@@ -189,7 +190,7 @@ export async function setCtaPartnersForPage(
 
     return { success: true };
   } catch (err) {
-    console.error('[page-cta-partners] Set error:', err);
+    logger.error('[page-cta-partners] Set error:', err);
     return { success: false, error: 'Unexpected error' };
   }
 }

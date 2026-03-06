@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { logger } from '@/lib/logging';
 
 export const runtime = 'nodejs';
 export const maxDuration = 15;
@@ -36,7 +37,7 @@ export async function POST(req: NextRequest) {
 
     const serviceAccountJson = process.env.GOOGLE_INDEXING_JSON;
     if (!serviceAccountJson) {
-      console.log('[index-url] GOOGLE_INDEXING_JSON not configured — skipping');
+      logger.info('[index-url] GOOGLE_INDEXING_JSON not configured — skipping');
       return NextResponse.json({
         success: false,
         message: 'Google Indexing API not configured. Set GOOGLE_INDEXING_JSON env var.',
@@ -83,7 +84,7 @@ export async function POST(req: NextRequest) {
     const notifyTime = response.data?.urlNotificationMetadata?.latestUpdate?.notifyTime || null;
     const elapsed = Date.now() - startTime;
 
-    console.log(`[index-url] Successfully submitted: ${url} (${elapsed}ms)`, response.data);
+    logger.info(`[index-url] Successfully submitted: ${url} (${elapsed}ms)`, response.data);
 
     return NextResponse.json({
       success: true,
@@ -93,7 +94,7 @@ export async function POST(req: NextRequest) {
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Unknown error';
-    console.error('[index-url] Error:', msg);
+    logger.error('[index-url] Error:', msg);
     return NextResponse.json({
       success: false,
       error: msg,

@@ -12,6 +12,7 @@
 // ============================================================
 
 import type { Market } from '@/lib/supabase/types';
+import { logger } from '@/lib/logging';
 
 // Hash IP address for GDPR compliance — store pseudonymized, not raw PII.
 async function hashIp(ip: string | null): Promise<string | null> {
@@ -78,7 +79,7 @@ export async function subscribeToNewsletter(params: SubscribeParams): Promise<Su
           .eq('id', existing.id);
 
         if (error) {
-          console.error('Error resubscribing:', error);
+          logger.error('Error resubscribing:', error);
           return { success: false, message: 'Failed to resubscribe. Please try again.' };
         }
 
@@ -116,7 +117,7 @@ export async function subscribeToNewsletter(params: SubscribeParams): Promise<Su
       .single();
 
     if (error) {
-      console.error('Error creating subscriber:', error);
+      logger.error('Error creating subscriber:', error);
       if (error.code === '23505') {
         return { success: false, message: "You're already subscribed!" };
       }
@@ -130,7 +131,7 @@ export async function subscribeToNewsletter(params: SubscribeParams): Promise<Su
       isNew: true,
     };
   } catch (error) {
-    console.error('Error in subscribeToNewsletter:', error);
+    logger.error('Error in subscribeToNewsletter:', error);
     return { success: false, message: 'An unexpected error occurred.' };
   }
 }
@@ -163,13 +164,13 @@ export async function unsubscribe(params: { email?: string; subscriberId?: strin
     const { error } = await query;
 
     if (error) {
-      console.error('Error unsubscribing:', error);
+      logger.error('Error unsubscribing:', error);
       return { success: false, message: 'Failed to unsubscribe' };
     }
 
     return { success: true, message: "You've been unsubscribed" };
   } catch (error) {
-    console.error('Error in unsubscribe:', error);
+    logger.error('Error in unsubscribe:', error);
     return { success: false, message: 'An unexpected error occurred' };
   }
 }

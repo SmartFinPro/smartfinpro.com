@@ -1,6 +1,7 @@
 'use server';
 
 import 'server-only';
+import { logger } from '@/lib/logging';
 
 import { createServiceClient } from '@/lib/supabase/server';
 import type { PageView, LinkClick } from '@/lib/supabase/types';
@@ -162,7 +163,7 @@ export async function getAnalyticsStats(range: TimeRange = '7d'): Promise<Analyt
 
   const { data: clicksData, error: clicksError } = await clicksQuery;
   if (clicksError) {
-    console.error('link_clicks query error:', clicksError.message);
+    logger.error('link_clicks query error:', clicksError.message);
   }
   type ClickRecord = { id: string; link_id: string | null; utm_source: string | null; utm_medium: string | null; utm_campaign: string | null; referrer: string | null };
   const clicks = (clicksData || []) as ClickRecord[];

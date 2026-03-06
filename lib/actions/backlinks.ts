@@ -2,6 +2,7 @@
 'use server';
 
 import { createServiceClient } from '@/lib/supabase/server';
+import { logger } from '@/lib/logging';
 import { revalidateTag } from 'next/cache';
 import type {
   Backlink,
@@ -70,7 +71,7 @@ export async function loadBacklinkCounts(): Promise<Map<string, BacklinkCounts>>
       }
     }
   } catch (err) {
-    console.warn('[backlinks] Failed to load backlink counts:', err);
+    logger.warn('[backlinks] Failed to load backlink counts:', err);
   }
 
   return countsMap;
@@ -91,13 +92,13 @@ export async function getBacklinksForPage(targetUrl: string): Promise<Backlink[]
       .order('last_seen_at', { ascending: false });
 
     if (error) {
-      console.error('[backlinks] getBacklinksForPage error:', error);
+      logger.error('[backlinks] getBacklinksForPage error:', error);
       return [];
     }
 
     return (data || []) as Backlink[];
   } catch (err) {
-    console.error('[backlinks] getBacklinksForPage error:', err);
+    logger.error('[backlinks] getBacklinksForPage error:', err);
     return [];
   }
 }
@@ -255,7 +256,7 @@ export async function importBacklinksFromCSV(
     // Invalidate content-hub cache
     revalidateTag('content-hub', {});
   } catch (err) {
-    console.error('[backlinks] importBacklinksFromCSV error:', err);
+    logger.error('[backlinks] importBacklinksFromCSV error:', err);
     result.errors.push(String(err));
   }
 
@@ -375,7 +376,7 @@ export async function scanInternalBacklinks(): Promise<{
     // Invalidate content-hub cache
     revalidateTag('content-hub', {});
   } catch (err) {
-    console.error('[backlinks] scanInternalBacklinks error:', err);
+    logger.error('[backlinks] scanInternalBacklinks error:', err);
     result.errors.push(String(err));
   }
 

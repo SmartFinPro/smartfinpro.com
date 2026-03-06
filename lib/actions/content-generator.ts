@@ -1,6 +1,7 @@
 'use server';
 
 import 'server-only';
+import { logger } from '@/lib/logging';
 
 import { createClient } from '@/lib/supabase/server';
 import { boostAndDeploy } from '@/lib/actions/content-overrides';
@@ -259,7 +260,7 @@ The outline should have 6-10 sections (mix of h2 and h3). Include:
       trustSignals: parsed.trustSignals || [],
     };
   } catch (err) {
-    console.error('[content-generator] AI brief generation failed:', err instanceof Error ? err.message : err);
+    logger.error('[content-generator] AI brief generation failed:', err instanceof Error ? err.message : err);
     return generateFallbackBrief(keyword, market, category);
   }
 }
@@ -651,7 +652,7 @@ export async function generateAIContentBrief(
     return { success: true, brief };
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Unknown error';
-    console.error('[content-generator] Brief generation failed:', msg);
+    logger.error('[content-generator] Brief generation failed:', msg);
     return { success: false, error: msg };
   }
 }
@@ -706,7 +707,7 @@ export async function generateAndPublishPage(
 
     // Step 6: Write the MDX file
     fs.writeFileSync(filePath, mdxContent, 'utf-8');
-    console.log(`[content-generator] MDX file created: ${filePath}`);
+    logger.info(`[content-generator] MDX file created: ${filePath}`);
 
     // Step 7: Create image directory (so user knows where to put images)
     const imageDir = path.join(process.cwd(), 'public', 'images', 'content', imageSlugPath);
@@ -729,7 +730,7 @@ export async function generateAndPublishPage(
     // Step 9: Trigger Freshness Boost + Rebuild
     const boostResult = await boostAndDeploy(slug, `AI-generated page: ${keyword}`);
     if (!boostResult.boostSuccess) {
-      console.warn('[content-generator] Boost failed but page was created:', boostResult.error);
+      logger.warn('[content-generator] Boost failed but page was created:', boostResult.error);
     }
 
     return {
@@ -741,7 +742,7 @@ export async function generateAndPublishPage(
     };
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Unknown error';
-    console.error('[content-generator] Page generation failed:', msg);
+    logger.error('[content-generator] Page generation failed:', msg);
     return {
       success: false,
       slug: '',
@@ -856,7 +857,7 @@ The outline MUST have 18-28 sections (mix of h2 and h3). Include:
       trustSignals: parsed.trustSignals || [],
     };
   } catch (err) {
-    console.error('[content-generator] Long-form AI brief failed:', err instanceof Error ? err.message : err);
+    logger.error('[content-generator] Long-form AI brief failed:', err instanceof Error ? err.message : err);
     return generateLongFormFallbackBrief(keyword, market, category);
   }
 }

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { logger } from '@/lib/logging';
 import sharp from 'sharp';
 import { createClaudeMessage } from '@/lib/claude/client';
 
@@ -107,7 +108,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true, altText });
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Unknown error';
-    console.error('[alt-text] Error:', msg);
+    logger.error('[alt-text] Error:', msg);
     // Fallback alt text
     return NextResponse.json({
       success: true,

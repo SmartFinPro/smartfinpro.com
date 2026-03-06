@@ -1,6 +1,7 @@
 'use server';
 
 import 'server-only';
+import { logger } from '@/lib/logging';
 
 import { createServiceClient } from '@/lib/supabase/server';
 import type { Market } from '@/lib/supabase/types';
@@ -90,7 +91,7 @@ export async function getRevenueForecast(
       .gte('clicked_at', since.toISOString());
 
     if (clickError) {
-      console.error('[Revenue Forecast] Click query error:', clickError.message);
+      logger.error('[Revenue Forecast] Click query error:', clickError.message);
       return { success: false, data: null, error: clickError.message };
     }
 
@@ -112,7 +113,7 @@ export async function getRevenueForecast(
       if (rateError.code === '42P01' || rateError.message?.includes('does not exist')) {
         return { success: true, data: emptyForecast(timeRange), error: null };
       }
-      console.error('[Revenue Forecast] Rate query error:', rateError.message);
+      logger.error('[Revenue Forecast] Rate query error:', rateError.message);
       return { success: false, data: null, error: rateError.message };
     }
 
@@ -275,7 +276,7 @@ export async function getRevenueForecast(
       error: null,
     };
   } catch (error) {
-    console.error('[Revenue Forecast] Unexpected error:', error);
+    logger.error('[Revenue Forecast] Unexpected error:', error);
     return { success: false, data: null, error: 'Failed to calculate revenue forecast' };
   }
 }

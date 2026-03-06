@@ -1,5 +1,6 @@
 // app/api/refresh-content-hub/route.ts — Invalidates Content Hub cache
 import { revalidateTag } from 'next/cache';
+import { logger } from '@/lib/logging';
 import { NextResponse } from 'next/server';
 
 export async function POST() {
@@ -12,7 +13,7 @@ export async function POST() {
     });
   } catch (error) {
     const msg = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[refresh-content-hub] Failed to revalidate:', msg);
+    logger.error('[refresh-content-hub] Failed to revalidate:', msg);
     return NextResponse.json(
       { success: false, message: msg },
       { status: 500 }

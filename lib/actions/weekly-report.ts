@@ -1,6 +1,7 @@
 'use server';
 
 import 'server-only';
+import { logger } from '@/lib/logging';
 
 import { createServiceClient } from '@/lib/supabase/server';
 import { sendTelegramAlert } from '@/lib/alerts/telegram';
@@ -283,7 +284,7 @@ Antworte NUR mit dem Tipp, ohne Einleitung.`,
         }
       }
     } catch (aiErr) {
-      console.error('[weekly-report] AI tip generation failed (non-blocking):',
+      logger.error('[weekly-report] AI tip generation failed (non-blocking):',
         aiErr instanceof Error ? aiErr.message : 'Unknown');
     }
 
@@ -313,10 +314,10 @@ Antworte NUR mit dem Tipp, ohne Einleitung.`,
     const telegramResult = await sendTelegramAlert(message);
 
     if (!telegramResult.success) {
-      console.error('[weekly-report] Telegram failed:', telegramResult.error);
+      logger.error('[weekly-report] Telegram failed:', telegramResult.error);
     }
 
-    console.log(
+    logger.info(
       `[weekly-report] Report generated: $${data.totalRevenue} revenue, ${data.totalClicks} clicks, ` +
       `${data.freshnessBoosts} boosts, ${data.genesisAssets} genesis, ${data.optimizationsApplied} optimizations`,
     );
@@ -328,7 +329,7 @@ Antworte NUR mit dem Tipp, ohne Einleitung.`,
     };
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Unknown error';
-    console.error('[weekly-report] generateWeeklyReport failed:', msg);
+    logger.error('[weekly-report] generateWeeklyReport failed:', msg);
     return {
       success: false,
       data: null,

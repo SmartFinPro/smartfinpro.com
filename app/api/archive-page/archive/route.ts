@@ -1,5 +1,6 @@
 // app/api/archive-page/archive/route.ts — Soft-delete (archive) a page
 import { NextResponse } from 'next/server';
+import { logger } from '@/lib/logging';
 import { archivePage } from '@/lib/actions/archived-pages';
 
 export async function POST(request: Request) {
@@ -31,7 +32,7 @@ export async function POST(request: Request) {
     return NextResponse.json(result);
   } catch (error) {
     const msg = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[api/archive-page/archive] Failed:', msg);
+    logger.error('[api/archive-page/archive] Failed:', msg);
     return NextResponse.json({ success: false, error: msg }, { status: 500 });
   }
 }

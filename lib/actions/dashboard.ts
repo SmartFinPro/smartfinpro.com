@@ -1,6 +1,7 @@
 'use server';
 
 import 'server-only';
+import { logger } from '@/lib/logging';
 
 import { createServiceClient } from '@/lib/supabase/server';
 import type { LinkClick, Conversion, AffiliateLink, PageView } from '@/lib/supabase/types';
@@ -20,7 +21,7 @@ function safeData<T>(result: SupabaseResult<T>): T[] {
       return [];
     }
     // Log unexpected errors but don't crash
-    console.warn('[dashboard] Query warning:', result.error.message);
+    logger.warn('[dashboard] Query warning:', result.error.message);
   }
   return result.data || [];
 }

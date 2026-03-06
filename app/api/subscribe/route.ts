@@ -3,6 +3,7 @@
 // out of the client bundle (prevents Turbopack/Webpack hydration crash).
 
 import { NextRequest, NextResponse } from 'next/server';
+import { logger } from '@/lib/logging';
 import { subscribeWithEmail } from '@/lib/actions/newsletter';
 import { validate, SubscribeSchema } from '@/lib/validation';
 import { subscribeLimiter } from '@/lib/security/rate-limit';
@@ -26,7 +27,7 @@ export async function POST(request: NextRequest) {
     const result = await subscribeWithEmail(email, leadMagnet, source);
     return NextResponse.json(result);
   } catch (error) {
-    console.error('[api/subscribe] Error:', error);
+    logger.error('[api/subscribe] Error:', error);
     return NextResponse.json(
       { success: false, message: 'An unexpected error occurred.' },
       { status: 500 },

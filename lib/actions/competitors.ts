@@ -1,6 +1,7 @@
 'use server';
 
 import 'server-only';
+import { logger } from '@/lib/logging';
 
 import { createClient } from '@/lib/supabase/server';
 import {
@@ -111,7 +112,7 @@ function safeRows<T>(result: {
     if (code === 'PGRST204' || code === '42P01' || msg.includes('does not exist') || msg.includes('schema cache')) {
       return [];
     }
-    console.warn('[competitors] Query warning:', msg);
+    logger.warn('[competitors] Query warning:', msg);
   }
   return result.data || [];
 }
@@ -141,13 +142,13 @@ async function fetchSerp(keyword: string, market: Market): Promise<SerperRespons
     });
 
     if (!res.ok) {
-      console.error('[competitors] Serper API error:', res.status);
+      logger.error('[competitors] Serper API error:', res.status);
       return null;
     }
 
     return (await res.json()) as SerperResponse;
   } catch (err) {
-    console.error('[competitors] Serper fetch error:', err instanceof Error ? err.message : err);
+    logger.error('[competitors] Serper fetch error:', err instanceof Error ? err.message : err);
     return null;
   }
 }
@@ -264,7 +265,7 @@ export async function analyzeKeyword(
       }
     }
   } catch (err) {
-    console.error('[competitors] Persist error:', err instanceof Error ? err.message : err);
+    logger.error('[competitors] Persist error:', err instanceof Error ? err.message : err);
   }
 
   return {

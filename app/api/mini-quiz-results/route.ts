@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { logger } from '@/lib/logging';
 import { getLinksForMarketCategory, loadRegistry, getComplianceLabel } from '@/lib/affiliate/link-registry';
 import type { Market, Category } from '@/types';
 
@@ -336,7 +337,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ bestMatch: fmt(topMatch), bestPrice: fmt(topPrice) });
   } catch (error) {
-    console.error('[mini-quiz-results] Error:', error);
+    logger.error('[mini-quiz-results] Error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
