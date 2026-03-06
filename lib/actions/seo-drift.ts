@@ -178,7 +178,7 @@ async function logCronRun(
       duration_ms: durationMs,
       error: error ?? null,
       executed_at: new Date().toISOString(),
-      ...(meta ? { meta: JSON.stringify(meta) } : {}),
+      ...(meta ? { metadata: meta } : {}),  // JSONB column — no JSON.stringify needed
     });
   } catch (err) {
     console.error('[seo-drift] Failed to write cron_log:', err);
