@@ -12,6 +12,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
+import { sendTelegramAlert } from '@/lib/alerts/telegram';
+import { logger } from '@/lib/logging';
 
 interface HealthStatus {
   status: 'ok' | 'degraded' | 'down';
@@ -29,6 +31,11 @@ interface CheckResult {
 }
 
 const START_TIME = Date.now();
+
+// ── Outage Alert Cooldown ─────────────────────────────────────────────────────
+// Prevent alert spam — only fire once per 30 minutes even if health stays down.
+const ALERT_COOLDOWN_MS = 30 * 60 * 1000; // 30 minutes
+let lastOutageAlertAt = 0;
 
 export async function GET(request: NextRequest): Promise<NextResponse<HealthStatus>> {
   const quick = request.nextUrl.searchParams.get('quick') === '1';
@@ -127,6 +134,46 @@ export async function GET(request: NextRequest): Promise<NextResponse<HealthStat
     message: `Heap: ${heapMB}MB / ${heapTotalMB}MB`,
   };
   if (heapMB > 800 && overallStatus === 'ok') overallStatus = 'degraded';
+
+  // ── 5. Supabase Outage Alert (Telegram) ──────────────────────────────────
+  // Fire once per 30 minutes to avoid alert spam during sustained outages.
+  if (overallStatus === 'down') {
+    logger.error('[health] Platform status DOWN', {
+      checks: Object.fromEntries(
+        Object.entries(checks).map(([k, v]) => [k, v.status + (v.message ? `: ${v.message}` : '')]),
+      ),
+    });
+
+    const now = Date.now();
+    if (now - lastOutageAlertAt > ALERT_COOLDOWN_MS) {
+      lastOutageAlertAt = now;
+
+      const failedChecks = Object.entries(checks)
+        .filter(([, v]) => v.status === 'error')
+        .map(([k, v]) => `  ❌ <b>${k}</b>: ${v.message ?? 'error'}`)
+        .join('\n');
+
+      const alertMsg = [
+        `🔴 <b>SMARTFIN OUTAGE DETECTED</b>`,
+        ``,
+        `Status: <b>DOWN</b> — platform may be unreachable`,
+        ``,
+        failedChecks || `  ❌ Unknown failure`,
+        ``,
+        `⏱️ Uptime: ${Math.floor(uptime / 60)}min | Heap: ${heapMB}MB`,
+        `<i>${timestamp}</i>`,
+        ``,
+        `<i>Next alert in 30 min if issue persists.</i>`,
+      ].join('\n');
+
+      // Fire-and-forget — don't block the health response
+      sendTelegramAlert(alertMsg).catch((err) => {
+        logger.error('[health] Telegram outage alert failed', {
+          error: err instanceof Error ? err.message : String(err),
+        });
+      });
+    }
+  }
 
   const httpStatus = overallStatus === 'down' ? 503 : 200;
 

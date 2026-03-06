@@ -75,9 +75,9 @@ export function createRateLimiter(options: RateLimiterOptions): RateLimiter {
 
 // ── Pre-configured limiters for common routes ──
 
-/** Affiliate redirect: 30 req/min per IP */
+/** Affiliate redirect: 10 req/min per IP — tighter to prevent click fraud */
 export const affiliateRedirectLimiter = createRateLimiter({
-  maxRequests: 30,
+  maxRequests: 10,
   windowMs: 60_000,
 });
 

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateDailyStrategy, analyzeAndPlanNextDay } from '@/lib/actions/daily-strategy';
 import { sendTelegramWithKeyboard } from '@/lib/alerts/telegram';
+import { logCron } from '@/lib/logging';
 import type { DailyStrategyDigest, PlanningQueueItem } from '@/lib/actions/daily-strategy';
 
 /**
@@ -43,7 +44,7 @@ export async function GET(request: NextRequest) {
     if (strategySettled.status === 'rejected') {
       const reason = strategySettled.reason instanceof Error
         ? strategySettled.reason.message : String(strategySettled.reason);
-      console.error('[daily-strategy] generateDailyStrategy rejected:', reason);
+      logCron({ job: 'daily-strategy', status: 'error', error: reason });
       return NextResponse.json({ error: reason }, { status: 500 });
     }
 
@@ -60,10 +61,9 @@ export async function GET(request: NextRequest) {
       ? planningSettled.value
       : { plans: [] };
     if (planningSettled.status === 'rejected') {
-      console.warn('[daily-strategy] analyzeAndPlanNextDay failed (non-critical):',
-        planningSettled.reason instanceof Error
-          ? planningSettled.reason.message : planningSettled.reason,
-      );
+      const planErr = planningSettled.reason instanceof Error
+        ? planningSettled.reason.message : String(planningSettled.reason);
+      logCron({ job: 'daily-strategy:planning', status: 'error', error: planErr });
     }
 
     const digest = strategyResult.digest;
@@ -92,7 +92,16 @@ export async function GET(request: NextRequest) {
     }
 
     // Send via Telegram with inline keyboard
+    const startMs = Date.now();
     const telegramResult = await sendTelegramWithKeyboard(message, buttons);
+
+    logCron({
+      job: 'daily-strategy',
+      status: 'success',
+      duration_ms: Date.now() - startMs,
+      plans_count: plans.length,
+      telegram_ok: telegramResult.success,
+    });
 
     return NextResponse.json({
       success: true,
@@ -115,7 +124,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Unknown error';
-    console.error('[daily-strategy] Cron failed:', msg);
+    logCron({ job: 'daily-strategy', status: 'error', error: msg });
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }

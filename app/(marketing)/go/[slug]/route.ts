@@ -2,6 +2,42 @@ import { NextResponse } from 'next/server';
 import { trackClick } from '@/lib/affiliate/tracker';
 import { resolveLink } from '@/lib/affiliate/link-registry';
 import { affiliateRedirectLimiter } from '@/lib/security/rate-limit';
+import { logger } from '@/lib/logging';
+
+// ── Bot / Scraper User-Agent Detection ───────────────────────
+// Common headless browsers, scrapers, and click-fraud bots.
+// Legitimate browsers (Chrome, Firefox, Safari, Edge) never match these.
+const BOT_UA_PATTERNS: RegExp[] = [
+  /bot/i,
+  /crawler/i,
+  /spider/i,
+  /scraper/i,
+  /headless/i,
+  /phantomjs/i,
+  /puppeteer/i,
+  /playwright/i,
+  /selenium/i,
+  /wget/i,
+  /curl\//i,
+  /python-requests/i,
+  /go-http-client/i,
+  /java\//i,
+  /httpclient/i,
+  /axios/i,
+  /node-fetch/i,
+  /libwww/i,
+  /mechanize/i,
+  /scrapy/i,
+];
+
+/**
+ * Returns true if the User-Agent string matches a known bot pattern.
+ * Empty / missing UA is also treated as suspicious (real browsers always send one).
+ */
+function isBotUserAgent(ua: string | null): boolean {
+  if (!ua || ua.trim().length === 0) return true;
+  return BOT_UA_PATTERNS.some((pattern) => pattern.test(ua));
+}
 
 // ── Affiliate Hostname Whitelist (defense-in-depth) ──────────
 // Only redirect to known partner domains. Prevents open-redirect
@@ -146,9 +182,23 @@ export async function GET(
   request: Request,
   { params }: { params: Promise<{ slug: string }> }
 ) {
-  // Rate limit: 30 req/min per IP to prevent click fraud
-  const ip = request.headers.get('x-forwarded-for')?.split(',')[0] || 'unknown';
+  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+  const ua = request.headers.get('user-agent');
+
+  // ── Click-Fraud: Bot UA Detection ────────────────────────────
+  // Return 403 silently — bots should not get a helpful redirect
+  if (isBotUserAgent(ua)) {
+    logger.warn('[affiliate] Bot UA blocked', {
+      ip,
+      ua: ua?.slice(0, 200) ?? '(empty)',
+      slug: 'pending', // params not yet resolved at this point
+    });
+    return new NextResponse(null, { status: 403 });
+  }
+
+  // ── Click-Fraud: Rate Limit (10 req/min per IP) ───────────────
   if (!affiliateRedirectLimiter.check(ip)) {
+    logger.warn('[affiliate] Rate limit exceeded', { ip, ua: ua?.slice(0, 100) });
     return new NextResponse('Too many requests', { status: 429 });
   }
 
@@ -171,7 +221,11 @@ export async function GET(
 
   // Validate destination against whitelist
   if (!isAllowedRedirect(destinationUrl)) {
-    console.warn(`[affiliate] Blocked redirect to non-whitelisted domain: ${destinationUrl} (slug: ${slug})`);
+    logger.warn('[affiliate] Blocked redirect to non-whitelisted domain', {
+      destination: destinationUrl,
+      slug,
+      ip,
+    });
     return NextResponse.redirect(new URL('/', request.url));
   }
 
