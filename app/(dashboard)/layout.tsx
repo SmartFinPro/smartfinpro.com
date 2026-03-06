@@ -25,6 +25,8 @@ import {
   Brain,
   Telescope,
   Activity,
+  Menu,
+  X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 // Server action imports removed — loaded dynamically in useEffect to prevent
@@ -108,6 +110,7 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const sidebarGroups = getSidebarGroups();
   const [badges, setBadges] = useState<Record<string, number>>({});
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   // Fetch queue counts for badge display (dynamic import to avoid client bundling)
   useEffect(() => {
@@ -133,86 +136,132 @@ export default function DashboardLayout({
     return () => { cancelled = true; };
   }, [pathname]); // Refetch when navigating
 
+  // Close mobile drawer when route changes
+  useEffect(() => { setMobileOpen(false); }, [pathname]);
+
+  // Shared sidebar content (used in desktop sidebar + mobile drawer)
+  const SidebarContent = () => (
+    <>
+      {/* Logo */}
+      <div className="flex items-center gap-2 px-6 pt-6 pb-4">
+        <div className="w-8 h-8 rounded-lg bg-violet-600 flex items-center justify-center">
+          <span className="text-white font-bold text-sm">SF</span>
+        </div>
+        <Link href="/dashboard" className="text-xl font-bold text-slate-800" onClick={() => setMobileOpen(false)}>
+          SmartFinPro
+        </Link>
+      </div>
+
+      {/* Grouped Navigation */}
+      <nav className="flex-1 overflow-y-auto px-4 pb-4 space-y-5">
+        {sidebarGroups.map((group) => (
+          <div key={group.label}>
+            <p className="px-3 mb-1.5 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+              {group.label}
+            </p>
+            <div className="space-y-0.5">
+              {group.links.map((link) => {
+                const active = isLinkActive(pathname, link);
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    onClick={() => setMobileOpen(false)}
+                    className={cn(
+                      'nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] transition-all',
+                      active
+                        ? 'bg-violet-50 text-violet-700 font-semibold'
+                        : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700 font-medium',
+                    )}
+                  >
+                    <link.icon
+                      className={cn(
+                        'h-4 w-4 shrink-0',
+                        active ? 'text-violet-500' : 'text-slate-400',
+                      )}
+                    />
+                    <span className="truncate flex-1">{link.name}</span>
+                    {link.badgeKey && badges[link.badgeKey] > 0 && (
+                      <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold bg-emerald-500 text-white">
+                        {badges[link.badgeKey]}
+                      </span>
+                    )}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </nav>
+
+      {/* Bottom Links */}
+      <div className="px-4 py-4 border-t border-slate-200">
+        <Link
+          href="/"
+          className="nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] text-slate-500 hover:bg-slate-50 hover:text-slate-700 font-medium transition-all"
+          onClick={() => setMobileOpen(false)}
+        >
+          <LogOut className="h-4 w-4 text-slate-400" />
+          <span>Back to Site</span>
+        </Link>
+        {process.env.NODE_ENV === 'development' && (
+          <div className="px-3 pt-3 text-[10px] text-slate-400">
+            Build: <span className="font-mono text-slate-500">{DEV_BUILD_MARKER}</span>
+          </div>
+        )}
+      </div>
+    </>
+  );
+
   return (
     <div className="dashboard flex min-h-screen dashboard-layout">
-      {/* Sidebar */}
+      {/* Mobile Backdrop */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/40 md:hidden"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
+      {/* Mobile Drawer */}
+      <aside
+        className={cn(
+          'fixed inset-y-0 left-0 z-50 w-72 dashboard-sidebar flex flex-col transition-transform duration-300 md:hidden',
+          mobileOpen ? 'translate-x-0' : '-translate-x-full',
+        )}
+      >
+        {/* Close button */}
+        <button
+          onClick={() => setMobileOpen(false)}
+          className="absolute top-4 right-4 p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
+          aria-label="Close menu"
+        >
+          <X className="h-5 w-5" />
+        </button>
+        <SidebarContent />
+      </aside>
+
+      {/* Desktop Sidebar */}
       <aside className="w-64 dashboard-sidebar hidden md:flex md:flex-col">
-        {/* Logo */}
-        <div className="flex items-center gap-2 px-6 pt-6 pb-4">
-          <div className="w-8 h-8 rounded-lg bg-violet-600 flex items-center justify-center">
-            <span className="text-white font-bold text-sm">SF</span>
-          </div>
-          <Link href="/dashboard" className="text-xl font-bold text-slate-800">
-            SmartFinPro
-          </Link>
-        </div>
-
-        {/* Grouped Navigation */}
-        <nav className="flex-1 overflow-y-auto px-4 pb-4 space-y-5">
-          {sidebarGroups.map((group) => (
-            <div key={group.label}>
-              <p className="px-3 mb-1.5 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
-                {group.label}
-              </p>
-              <div className="space-y-0.5">
-                {group.links.map((link) => {
-                  const active = isLinkActive(pathname, link);
-                  return (
-                    <Link
-                      key={link.href}
-                      href={link.href}
-                      className={cn(
-                        'nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] transition-all',
-                        active
-                          ? 'bg-violet-50 text-violet-700 font-semibold'
-                          : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700 font-medium',
-                      )}
-                    >
-                      <link.icon
-                        className={cn(
-                          'h-4 w-4 shrink-0',
-                          active ? 'text-violet-500' : 'text-slate-400',
-                        )}
-                      />
-                      <span className="truncate flex-1">{link.name}</span>
-                      {link.badgeKey && badges[link.badgeKey] > 0 && (
-                        <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold bg-emerald-500 text-white">
-                          {badges[link.badgeKey]}
-                        </span>
-                      )}
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
-        </nav>
-
-        {/* Bottom Links */}
-        <div className="px-4 py-4 border-t border-slate-200">
-          <Link
-            href="/"
-            className="nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] text-slate-500 hover:bg-slate-50 hover:text-slate-700 font-medium transition-all"
-          >
-            <LogOut className="h-4 w-4 text-slate-400" />
-            <span>Back to Site</span>
-          </Link>
-          {process.env.NODE_ENV === 'development' && (
-            <div className="px-3 pt-3 text-[10px] text-slate-400">
-              Build: <span className="font-mono text-slate-500">{DEV_BUILD_MARKER}</span>
-            </div>
-          )}
-        </div>
+        <SidebarContent />
       </aside>
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top Bar */}
-        <header className="h-14 dashboard-header px-6 flex items-center justify-between shrink-0">
-          <div className="md:hidden">
-            <div className="w-8 h-8 rounded-lg bg-violet-600 flex items-center justify-center">
-              <span className="text-white font-bold text-sm">SF</span>
-            </div>
+        <header className="h-14 dashboard-header px-4 md:px-6 flex items-center justify-between shrink-0">
+          {/* Mobile: Hamburger + Logo */}
+          <div className="flex items-center gap-3 md:hidden">
+            <button
+              onClick={() => setMobileOpen(true)}
+              className="p-2 rounded-lg hover:bg-slate-100 text-slate-500 transition-colors"
+              aria-label="Open menu"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+            <Link href="/dashboard" className="text-base font-bold text-slate-800">
+              Smart<span className="text-violet-600">Fin</span>Pro
+            </Link>
           </div>
 
           <div className="flex-1" />

@@ -25,6 +25,7 @@ import {
   Home,
   PiggyBank,
   Landmark,
+  LayoutDashboard,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -226,6 +227,15 @@ export function Header({ market: marketProp }: HeaderProps) {
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>
+            {/* Dashboard Quick-Access */}
+            <Link
+              href="/dashboard"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-white/70 hover:text-white hover:bg-white/15 transition-colors"
+              title="Admin Dashboard"
+            >
+              <LayoutDashboard className="h-4 w-4" />
+              <span>Dashboard</span>
+            </Link>
             <Button asChild className="text-white border-0 font-semibold" style={{ background: 'var(--sfp-gold)', color: '#ffffff' }} onMouseOver={(e) => (e.currentTarget.style.background = 'var(--sfp-gold-dark)')} onMouseOut={(e) => (e.currentTarget.style.background = 'var(--sfp-gold)')}>
               <Link href="/tools">Get Started</Link>
             </Button>
@@ -301,6 +311,16 @@ export function Header({ market: marketProp }: HeaderProps) {
                 <Button asChild className="w-full text-white border-0 mt-2 font-semibold" style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}>
                   <Link href="/tools" onClick={() => setMobileMenuOpen(false)}>Get Started</Link>
                 </Button>
+                {/* Dashboard Quick-Access */}
+                <Link
+                  href="/dashboard"
+                  className="flex items-center justify-center gap-2 w-full mt-3 px-4 py-2.5 rounded-lg text-sm font-medium border border-gray-200 hover:bg-gray-50 transition-colors"
+                  style={{ color: 'var(--sfp-navy)' }}
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <LayoutDashboard className="h-4 w-4" />
+                  Admin Dashboard
+                </Link>
               </nav>
             </SheetContent>
           </Sheet>
