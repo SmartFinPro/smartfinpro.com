@@ -6,7 +6,7 @@
 //   http://localhost:3000/api/cron/affiliate-scout >> /home/master/applications/smartfinpro/logs/cron.log 2>&1
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createServiceClient } from '@/lib/supabase/service';
+import { createServiceClient } from '@/lib/supabase/server';
 import { analyzeOpportunity } from '@/lib/claude/opportunity-analyzer';
 
 // ── Types ────────────────────────────────────────────────────────────────────

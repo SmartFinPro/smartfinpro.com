@@ -3,7 +3,7 @@
 // Called client-side via useReportWebVitals (next/web-vitals)
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createServiceClient } from '@/lib/supabase/service';
+import { createServiceClient } from '@/lib/supabase/server';
 
 // Google's 2026 CWV thresholds
 const THRESHOLDS: Record<string, [number, number]> = {

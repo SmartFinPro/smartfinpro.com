@@ -2,7 +2,7 @@
 // Smart-Scan 2026 — Opportunity status update endpoint
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createServiceClient } from '@/lib/supabase/service';
+import { createServiceClient } from '@/lib/supabase/server';
 import { cookies } from 'next/headers';
 
 const VALID_STATUSES = ['new', 'reviewing', 'approved', 'rejected', 'published'] as const;

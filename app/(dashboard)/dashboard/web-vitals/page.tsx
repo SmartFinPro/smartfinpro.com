@@ -1,7 +1,7 @@
 // app/(dashboard)/dashboard/web-vitals/page.tsx
 // AP-13 Phase 4 — Core Web Vitals Dashboard
 
-import { createServiceClient } from '@/lib/supabase/service';
+import { createServiceClient } from '@/lib/supabase/server';
 import { WebVitalsClient } from './web-vitals-client';
 
 export const dynamic    = 'force-dynamic';

@@ -1,7 +1,7 @@
 // app/(dashboard)/dashboard/opportunities/page.tsx
 // Smart-Scan 2026 — Affiliate Opportunity Dashboard
 
-import { createServiceClient } from '@/lib/supabase/service';
+import { createServiceClient } from '@/lib/supabase/server';
 import { OpportunitiesClient } from './opportunities-client';
 
 export const dynamic = 'force-dynamic';
