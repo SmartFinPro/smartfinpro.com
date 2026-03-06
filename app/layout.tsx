@@ -7,6 +7,7 @@ import SiloClassProvider from '@/components/providers/silo-class-provider';
 import { DevCacheBuster } from '@/components/providers/dev-cache-buster';
 import { ChunkRecoveryProvider } from '@/components/providers/chunk-recovery-provider';
 import { generateOrganizationSchema, generateWebsiteSchema } from '@/lib/seo/schema';
+import { WebVitalsReporter } from '@/components/providers/web-vitals-reporter';
 
 const inter = Inter({
   variable: '--font-inter',
@@ -101,6 +102,7 @@ export default function RootLayout({
         <DevCacheBuster />
         <ChunkRecoveryProvider />
         <SiloClassProvider />
+        <WebVitalsReporter />
         <AnalyticsProvider>
           {children}
         </AnalyticsProvider>

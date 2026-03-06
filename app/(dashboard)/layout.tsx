@@ -23,6 +23,8 @@ import {
   Flame,
   ClipboardCheck,
   Brain,
+  Telescope,
+  Activity,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 // Server action imports removed — loaded dynamically in useEffect to prevent
@@ -77,6 +79,7 @@ function getSidebarGroups(): NavGroup[] {
       label: 'Monetization',
       links: [
         { name: 'Affiliate Links', href: '/dashboard/links', icon: Link2 },
+        { name: 'Opportunities', href: '/dashboard/opportunities', icon: Telescope, badgeKey: 'opportunities' },
         { name: 'Quiz Analytics', href: '/dashboard/quiz', icon: Sparkles },
       ],
     },
@@ -84,6 +87,7 @@ function getSidebarGroups(): NavGroup[] {
       label: 'Operations',
       links: [
         { name: 'Compliance Audit', href: '/dashboard/compliance', icon: Shield },
+        { name: 'Web Vitals', href: '/dashboard/web-vitals', icon: Activity },
         { name: 'Settings', href: '/dashboard/settings', icon: Settings },
       ],
     },
