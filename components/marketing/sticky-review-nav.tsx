@@ -10,9 +10,16 @@
 //   2. Best partners from ANY placement (sorted by position)
 //   3. Primary review.affiliateUrl (hardcoded in MDX)
 //
+// ── A/B Testing ──────────────────────────────────────────────────
+//   Variant A = "Multi-CTA"   → up to 3 buttons, labels, social proof
+//   Variant B = "Focused"     → single prominent CTA, urgency text
+//   Hub ID: sticky_nav__{category}__{market}
+//   Evaluated at 500+ impressions per variant, 95% confidence (Z-test)
+//
 // ── Analytics ──────────────────────────────────────────────────
 //   • Impression beacon fires once when bar first becomes visible
 //   • Click tracking on every CTA button via /api/track-cta
+//   • A/B impressions + clicks via /api/hub-ab
 //
 // ── Accessibility ────────────────────────────────────────────────
 //   • Native <nav> landmark element
@@ -25,19 +32,23 @@
 //
 // ── Responsive (3 tiers) ───────────────────────────────────────
 //   • Mobile:  Title + 1 Gold button
-//   • Desktop: Title + Subtitle + 2 buttons (Gold + Ghost)
-//   • XL:      Title + Subtitle + up to 3 buttons
+//   • Desktop: Title + Subtitle + 2 buttons (Gold + Ghost) [Variant A]
+//   • XL:      Title + Subtitle + up to 3 buttons [Variant A]
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { ArrowRight, ShieldCheck, ExternalLink, Users } from 'lucide-react';
+import { ArrowRight, ShieldCheck, ExternalLink, Users, Zap } from 'lucide-react';
 import type { EnrichedCtaPartner } from '@/lib/types/page-cta';
 
 // ── Types ────────────────────────────────────────────────────────
 
+type AbVariant = 'A' | 'B';
+
 interface StickyReviewNavProps {
   productName: string;
   categoryLabel: string;
+  category?: string;
+  market?: string;
   rating?: number;
   reviewCount?: number;
   affiliateUrl?: string;
@@ -58,9 +69,8 @@ interface ButtonColorScheme {
 
 // ── Module-level constants (avoid re-creation per render) ────────
 
-/** Color palette for up to 3 CTA buttons: Gold → Teal → Lavender */
+/** Variant A: Color palette for up to 3 CTA buttons: Gold → Teal → Lavender */
 const BUTTON_COLORS: readonly ButtonColorScheme[] = [
-  // Gold primary — prominent & bold
   {
     bg: 'rgba(255, 215, 100, 0.40)', text: '#FFE070',
     shadow: '0 2px 10px rgba(255, 215, 100, 0.35)',
@@ -68,7 +78,6 @@ const BUTTON_COLORS: readonly ButtonColorScheme[] = [
     hoverShadow: '0 4px 20px rgba(255, 215, 100, 0.6)',
     badge: '★★★ Best Value',
   },
-  // Teal secondary
   {
     bg: 'rgba(125, 211, 216, 0.15)', text: '#7DD3D8',
     shadow: '0 2px 8px rgba(125, 211, 216, 0.2)',
@@ -76,7 +85,6 @@ const BUTTON_COLORS: readonly ButtonColorScheme[] = [
     hoverShadow: '0 4px 16px rgba(125, 211, 216, 0.4)',
     badge: '★★ Best Overall',
   },
-  // Lavender tertiary
   {
     bg: 'rgba(167, 139, 250, 0.15)', text: '#A78BFA',
     shadow: '0 2px 8px rgba(167, 139, 250, 0.2)',
@@ -86,7 +94,17 @@ const BUTTON_COLORS: readonly ButtonColorScheme[] = [
   },
 ] as const;
 
+/** Variant B: Single focused gold button — larger, more prominent */
+const FOCUSED_BUTTON: ButtonColorScheme = {
+  bg: 'rgba(255, 215, 100, 0.50)', text: '#FFE070',
+  shadow: '0 2px 12px rgba(255, 215, 100, 0.4)',
+  hoverBg: 'rgba(255, 215, 100, 0.70)', hoverText: '#FFF5C0',
+  hoverShadow: '0 4px 24px rgba(255, 215, 100, 0.65)',
+  badge: '',
+};
+
 const PULSE_ANIMATION = 'stickyPulseGlow 3s ease-in-out infinite';
+const AB_STORAGE_KEY = 'sfp_ab_sticky';
 
 // ── Helpers ──────────────────────────────────────────────────────
 
@@ -97,14 +115,19 @@ function getMarketFromPath(path: string): 'us' | 'uk' | 'ca' | 'au' {
   return 'us';
 }
 
-/** Sanitise any URL into a schema-safe slug ([a-z0-9/_-]+, max 200 chars) */
+function getCategoryFromPath(path: string): string {
+  // /us/trading/xxx → trading, /uk/forex/xxx → forex
+  const parts = path.replace(/^\//, '').split('/');
+  const market = getMarketFromPath(path);
+  const startIdx = market === 'us' ? 0 : 1;
+  return parts[startIdx] || 'unknown';
+}
+
 function toSafeSlug(raw: string): string {
   let slug: string;
   if (raw.startsWith('/go/')) {
-    // /go/wealthsimple/ → wealthsimple
     slug = raw.replace('/go/', '').replace(/\/$/, '');
   } else if (raw.startsWith('http')) {
-    // External URL → extract hostname as slug fallback
     try {
       slug = new URL(raw).hostname.replace(/[^a-z0-9-]/g, '-').replace(/^-+|-+$/g, '');
     } catch {
@@ -116,7 +139,6 @@ function toSafeSlug(raw: string): string {
   return slug.toLowerCase().slice(0, 200) || 'unknown';
 }
 
-/** Fire a tracking event to /api/track-cta (non-blocking, non-critical) */
 function trackClick(url: string, label: string, position: number): void {
   try {
     const pagePath = window.location.pathname;
@@ -131,7 +153,55 @@ function trackClick(url: string, label: string, position: number): void {
       }),
       keepalive: true,
     }).catch(() => null);
-  } catch { /* non-critical — never block UI */ }
+  } catch { /* non-critical */ }
+}
+
+// ── A/B Testing Helpers ──────────────────────────────────────────
+
+/** Get or assign a sticky variant — localStorage-based, per category×market */
+function getOrAssignVariant(hubId: string): AbVariant {
+  try {
+    const stored = localStorage.getItem(AB_STORAGE_KEY);
+    const map: Record<string, AbVariant> = stored ? JSON.parse(stored) : {};
+    if (map[hubId]) return map[hubId];
+
+    // 50/50 random split
+    const variant: AbVariant = Math.random() < 0.5 ? 'A' : 'B';
+    map[hubId] = variant;
+    localStorage.setItem(AB_STORAGE_KEY, JSON.stringify(map));
+    return variant;
+  } catch {
+    // localStorage blocked → deterministic fallback based on hubId hash
+    let hash = 0;
+    for (let i = 0; i < hubId.length; i++) {
+      hash = ((hash << 5) - hash + hubId.charCodeAt(i)) | 0;
+    }
+    return (hash & 1) === 0 ? 'A' : 'B';
+  }
+}
+
+/** Fire A/B event to /api/hub-ab (non-blocking) */
+function trackAbEvent(
+  action: 'impression' | 'click',
+  category: string,
+  market: string,
+  variant: AbVariant,
+  providerName?: string,
+): void {
+  try {
+    fetch('/api/hub-ab', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action,
+        category: `sticky_nav__${category}`,
+        market,
+        variant,
+        ...(providerName ? { providerName } : {}),
+      }),
+      keepalive: true,
+    }).catch(() => null);
+  } catch { /* non-critical */ }
 }
 
 // ── Component ────────────────────────────────────────────────────
@@ -139,6 +209,8 @@ function trackClick(url: string, label: string, position: number): void {
 export function StickyReviewNav({
   productName,
   categoryLabel,
+  category: categoryProp,
+  market: marketProp,
   rating,
   reviewCount,
   affiliateUrl,
@@ -147,18 +219,51 @@ export function StickyReviewNav({
   sentinelId = 'review-sticky-sentinel',
 }: StickyReviewNavProps) {
   const [visible, setVisible] = useState(false);
+  const [abVariant, setAbVariant] = useState<AbVariant | null>(null);
   const impressionSent = useRef(false);
+  const abImpressionSent = useRef(false);
   const navRef = useRef<HTMLElement>(null);
 
-  // ── Stable values (never change during session) ──────────────
+  // ── Stable values ─────────────────────────────────────────────
   const year = useMemo(() => new Date().getFullYear(), []);
 
-  // ── Social proof: stable "comparing now" number per session ────
   const socialProofCount = useMemo(() => {
     const base = productName.length * 7 + (rating || 4) * 31;
     const hour = new Date().getHours();
-    return Math.floor(80 + (base % 120) + hour * 3); // 80–320 range, shifts by hour
+    return Math.floor(80 + (base % 120) + hour * 3);
   }, [productName, rating]);
+
+  // ── Derive category + market from URL or props ─────────────────
+  const { resolvedCategory, resolvedMarket } = useMemo(() => {
+    if (categoryProp && marketProp) {
+      return { resolvedCategory: categoryProp, resolvedMarket: marketProp };
+    }
+    const path = typeof window !== 'undefined' ? window.location.pathname : '/';
+    return {
+      resolvedCategory: categoryProp || getCategoryFromPath(path),
+      resolvedMarket: marketProp || getMarketFromPath(path),
+    };
+  }, [categoryProp, marketProp]);
+
+  const hubId = `sticky_nav__${resolvedCategory}__${resolvedMarket}`;
+
+  // ── A/B variant assignment (client-only, after hydration) ──────
+  useEffect(() => {
+    // Check for concluded winner first
+    fetch(`/api/hub-ab?category=sticky_nav__${resolvedCategory}&market=${resolvedMarket}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.winner) {
+          setAbVariant(data.winner as AbVariant);
+        } else {
+          setAbVariant(getOrAssignVariant(hubId));
+        }
+      })
+      .catch(() => {
+        // API failed → use local assignment
+        setAbVariant(getOrAssignVariant(hubId));
+      });
+  }, [hubId, resolvedCategory, resolvedMarket]);
 
   // ── Visibility observer ──────────────────────────────────────
   useEffect(() => {
@@ -178,18 +283,15 @@ export function StickyReviewNav({
     }
   }, [sentinelId]);
 
-  // ── Inert toggle (native DOM — prevents focus + SR access) ────
+  // ── Inert toggle ──────────────────────────────────────────────
   useEffect(() => {
     const el = navRef.current;
     if (!el) return;
-    if (visible) {
-      el.removeAttribute('inert');
-    } else {
-      el.setAttribute('inert', '');
-    }
+    if (visible) { el.removeAttribute('inert'); }
+    else { el.setAttribute('inert', ''); }
   }, [visible]);
 
-  // ── Impression tracking (fires once per page view) ───────────
+  // ── CTA impression tracking (fires once per page view) ────────
   useEffect(() => {
     if (visible && !impressionSent.current) {
       impressionSent.current = true;
@@ -219,14 +321,20 @@ export function StickyReviewNav({
     }
   }, [visible]);
 
+  // ── A/B impression tracking (fires once when visible + variant assigned) ──
+  useEffect(() => {
+    if (visible && abVariant && !abImpressionSent.current) {
+      abImpressionSent.current = true;
+      trackAbEvent('impression', resolvedCategory, resolvedMarket, abVariant);
+    }
+  }, [visible, abVariant, resolvedCategory, resolvedMarket]);
+
   // ── Smart CTA resolution chain (memoized) ───────────────────
   const resolvedPartners = useMemo(() => {
-    // Priority 1: Dedicated Placement 1 partners (dashboard "O" button)
     const placement1 = ctaPartners
       .filter((p) => p.placements.includes(1))
       .sort((a, b) => a.position - b.position);
 
-    // Priority 2: Best partners from ANY placement (fallback pool)
     const anyPlacement = ctaPartners
       .filter((p) => !p.placements.includes(1))
       .sort((a, b) => a.position - b.position);
@@ -254,7 +362,7 @@ export function StickyReviewNav({
     return [];
   }, [ctaPartners, affiliateUrl, primaryCtaLabel, productName]);
 
-  // ── Hover handlers (stable references via useCallback) ────────
+  // ── Hover handlers ────────────────────────────────────────────
   const handleMouseEnter = useCallback(
     (e: React.MouseEvent<HTMLAnchorElement>, colors: ButtonColorScheme, isPrimary: boolean) => {
       const el = e.currentTarget;
@@ -290,6 +398,143 @@ export function StickyReviewNav({
   subtitleParts.push(categoryLabel);
   const subtitle = subtitleParts.join(' · ');
 
+  // ── Use Variant A as default until variant is resolved ─────────
+  const currentVariant = abVariant || 'A';
+
+  // ── Render helpers per variant ─────────────────────────────────
+
+  /** Variant A: Multi-CTA — up to 3 buttons with labels + social proof */
+  const renderVariantA = () => (
+    <>
+      {/* CENTER: Social proof */}
+      <div className="hidden lg:block shrink-0" aria-hidden="true">
+        <div
+          className="flex items-center gap-1.5 text-xs sm:text-sm whitespace-nowrap"
+          style={{ color: 'rgba(255, 255, 255, 0.5)' }}
+        >
+          <Users className="w-3.5 h-3.5" />
+          <span>{socialProofCount.toLocaleString()} comparing now</span>
+        </div>
+      </div>
+
+      {/* RIGHT: Up to 3 CTA Buttons */}
+      <div className="flex items-center gap-2.5 shrink-0" role="group" aria-label="Partner offers">
+        {resolvedPartners.map((cta, i) => {
+          const colors = BUTTON_COLORS[i] || BUTTON_COLORS[1];
+          const isPrimary = i === 0;
+
+          const buttonGroup = (
+            <div className="flex flex-col items-center gap-1.5">
+              <Link
+                href={cta.url}
+                target="_blank"
+                rel="noopener noreferrer nofollow"
+                tabIndex={visible ? 0 : -1}
+                aria-label={`${cta.label} (opens in new tab)`}
+                className="
+                  sticky-pulse-glow
+                  inline-flex items-center gap-2 rounded-xl
+                  px-5 py-2 text-sm font-bold
+                  whitespace-nowrap no-underline hover:no-underline
+                  transition-all duration-200 hover:scale-[1.02]
+                  focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2
+                  [text-decoration:none]
+                "
+                style={{
+                  background: colors.bg,
+                  color: colors.text,
+                  boxShadow: colors.shadow,
+                  textDecoration: 'none',
+                  '--tw-ring-offset-color': 'var(--sfp-navy)',
+                  ...(isPrimary ? { animation: PULSE_ANIMATION } : {}),
+                } as React.CSSProperties}
+                onMouseEnter={(e) => handleMouseEnter(e, colors, isPrimary)}
+                onMouseLeave={(e) => handleMouseLeave(e, colors, isPrimary)}
+                onClick={() => {
+                  trackClick(cta.url, cta.label, i + 1);
+                  if (abVariant) trackAbEvent('click', resolvedCategory, resolvedMarket, abVariant, cta.label);
+                }}
+              >
+                {isPrimary && <ExternalLink className="w-4 h-4 shrink-0" aria-hidden="true" />}
+                <span>{cta.label}</span>
+                {isPrimary && <ArrowRight className="w-4 h-4 shrink-0" aria-hidden="true" />}
+              </Link>
+              <span
+                className="hidden sm:block text-xs sm:text-sm leading-tight whitespace-nowrap"
+                style={{ color: 'rgba(255, 255, 255, 0.6)', fontWeight: 400 }}
+                aria-hidden="true"
+              >
+                {colors.badge}
+              </span>
+            </div>
+          );
+
+          if (isPrimary) return <div key={`cta-${i}-${cta.url}`}>{buttonGroup}</div>;
+          return <div key={`cta-${i}-${cta.url}`} className="hidden lg:block">{buttonGroup}</div>;
+        })}
+      </div>
+    </>
+  );
+
+  /** Variant B: Focused — single CTA, urgency text, no labels */
+  const renderVariantB = () => {
+    const cta = resolvedPartners[0];
+    const colors = FOCUSED_BUTTON;
+
+    return (
+      <>
+        {/* CENTER: Urgency text instead of social proof */}
+        <div className="hidden lg:block shrink-0" aria-hidden="true">
+          <div
+            className="flex items-center gap-1.5 text-xs sm:text-sm whitespace-nowrap"
+            style={{ color: 'rgba(255, 215, 100, 0.7)' }}
+          >
+            <Zap className="w-3.5 h-3.5" />
+            <span>Limited offer — compare now</span>
+          </div>
+        </div>
+
+        {/* RIGHT: Single prominent CTA */}
+        <div className="shrink-0">
+          <Link
+            href={cta.url}
+            target="_blank"
+            rel="noopener noreferrer nofollow"
+            tabIndex={visible ? 0 : -1}
+            aria-label={`${cta.label} (opens in new tab)`}
+            className="
+              sticky-pulse-glow
+              inline-flex items-center gap-2.5 rounded-xl
+              px-6 py-2.5 text-sm sm:text-base font-bold
+              whitespace-nowrap no-underline hover:no-underline
+              transition-all duration-200 hover:scale-[1.03]
+              focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2
+              [text-decoration:none]
+            "
+            style={{
+              background: colors.bg,
+              color: colors.text,
+              boxShadow: colors.shadow,
+              textDecoration: 'none',
+              animation: PULSE_ANIMATION,
+              '--tw-ring-offset-color': 'var(--sfp-navy)',
+            } as React.CSSProperties}
+            onMouseEnter={(e) => handleMouseEnter(e, colors, true)}
+            onMouseLeave={(e) => handleMouseLeave(e, colors, true)}
+            onClick={() => {
+              trackClick(cta.url, cta.label, 1);
+              if (abVariant) trackAbEvent('click', resolvedCategory, resolvedMarket, abVariant, cta.label);
+            }}
+          >
+            <ExternalLink className="w-4 h-4 shrink-0" aria-hidden="true" />
+            <span>Try {cta.label} Free</span>
+            <ArrowRight className="w-4 h-4 shrink-0" aria-hidden="true" />
+          </Link>
+        </div>
+      </>
+    );
+  };
+
   return (
     <nav
       ref={navRef}
@@ -317,8 +562,6 @@ export function StickyReviewNav({
 
           {/* ── LEFT: Icon + Two-line headline ──────────────────────── */}
           <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
-
-            {/* Shield icon — trust signal (decorative) */}
             <div
               className="hidden sm:flex items-center justify-center w-10 h-10 rounded-xl shrink-0"
               style={{ background: 'rgba(255, 255, 255, 0.1)' }}
@@ -328,12 +571,9 @@ export function StickyReviewNav({
             </div>
 
             <div className="min-w-0">
-              {/* Line 1 — bold headline */}
               <h2 className="text-sm sm:text-base font-bold text-white leading-tight truncate">
                 {headline}
               </h2>
-
-              {/* Line 2 — plain text subtitle (market.us style) */}
               <p
                 className="hidden sm:block text-xs sm:text-sm leading-tight truncate mt-0.5"
                 style={{ color: 'rgba(255, 255, 255, 0.6)' }}
@@ -343,80 +583,8 @@ export function StickyReviewNav({
             </div>
           </div>
 
-          {/* ── CENTER: Social proof (lg+ only, decorative trust signal) ── */}
-          <div className="hidden lg:block shrink-0" aria-hidden="true">
-            <div
-              className="flex items-center gap-1.5 text-xs sm:text-sm whitespace-nowrap"
-              style={{ color: 'rgba(255, 255, 255, 0.5)' }}
-            >
-              <Users className="w-3.5 h-3.5" />
-              <span>{socialProofCount.toLocaleString()} comparing now</span>
-            </div>
-          </div>
-
-          {/* ── RIGHT: CTA Buttons ───────────────────────────────────
-               Wrapper-divs handle responsive visibility (avoids Tailwind v4
-               specificity conflicts between hidden + inline-flex).
-               • Button 1: always visible
-               • Button 2: wrapper hidden → lg:block (≥1024px)
-               • Button 3: wrapper hidden → lg:block (≥1024px)
-               ─────────────────────────────────────────────────────────── */}
-          <div className="flex items-center gap-2.5 shrink-0" role="group" aria-label="Partner offers">
-            {resolvedPartners.map((cta, i) => {
-              const colors = BUTTON_COLORS[i] || BUTTON_COLORS[1];
-              const isPrimary = i === 0;
-
-              const buttonGroup = (
-                <div className="flex flex-col items-center gap-1.5">
-                  <Link
-                    href={cta.url}
-                    target="_blank"
-                    rel="noopener noreferrer nofollow"
-                    tabIndex={visible ? 0 : -1}
-                    aria-label={`${cta.label} (opens in new tab)`}
-                    className="
-                      sticky-pulse-glow
-                      inline-flex items-center gap-2 rounded-xl
-                      px-5 py-2 text-sm font-bold
-                      whitespace-nowrap no-underline hover:no-underline
-                      transition-all duration-200 hover:scale-[1.02]
-                      focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2
-                      [text-decoration:none]
-                    "
-                    style={{
-                      background: colors.bg,
-                      color: colors.text,
-                      boxShadow: colors.shadow,
-                      textDecoration: 'none',
-                      // Navy offset so focus ring doesn't clash with dark background
-                      '--tw-ring-offset-color': 'var(--sfp-navy)',
-                      ...(isPrimary ? { animation: PULSE_ANIMATION } : {}),
-                    } as React.CSSProperties}
-                    onMouseEnter={(e) => handleMouseEnter(e, colors, isPrimary)}
-                    onMouseLeave={(e) => handleMouseLeave(e, colors, isPrimary)}
-                    onClick={() => trackClick(cta.url, cta.label, i + 1)}
-                  >
-                    {isPrimary && <ExternalLink className="w-4 h-4 shrink-0" aria-hidden="true" />}
-                    <span>{cta.label}</span>
-                    {isPrimary && <ArrowRight className="w-4 h-4 shrink-0" aria-hidden="true" />}
-                  </Link>
-                  {/* Recommendation badge — decorative marketing label */}
-                  <span
-                    className="hidden sm:block text-xs sm:text-sm leading-tight whitespace-nowrap"
-                    style={{ color: 'rgba(255, 255, 255, 0.6)', fontWeight: 400 }}
-                    aria-hidden="true"
-                  >
-                    {colors.badge}
-                  </span>
-                </div>
-              );
-
-              // Button 1: always visible
-              if (isPrimary) return <div key={`cta-${i}-${cta.url}`}>{buttonGroup}</div>;
-              // Buttons 2+3: visible on lg+ (≥1024px)
-              return <div key={`cta-${i}-${cta.url}`} className="hidden lg:block">{buttonGroup}</div>;
-            })}
-          </div>
+          {/* ── CENTER + RIGHT: Varies by A/B variant ──────────────── */}
+          {currentVariant === 'A' ? renderVariantA() : renderVariantB()}
 
         </div>
       </div>

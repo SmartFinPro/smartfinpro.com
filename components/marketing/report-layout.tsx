@@ -188,6 +188,8 @@ export function ReportLayout({
         <StickyReviewNav
           productName={review.productName}
           categoryLabel={categoryName}
+          category={category}
+          market={market}
           rating={hasRating ? review.rating : undefined}
           reviewCount={hasRating ? review.reviewCount : undefined}
           affiliateUrl={hasAffiliate ? review.affiliateUrl : undefined}
