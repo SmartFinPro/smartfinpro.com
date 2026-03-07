@@ -40,17 +40,15 @@ export async function getConnectorsWithStatus(): Promise<ConnectorInfo[]> {
   const supabase = createServiceClient();
   const availableConnectors = getAvailableConnectors();
 
-  // Get configured connectors from database
-  const { data: dbConnectors } = await supabase
-    .from('api_connectors')
-    .select('*');
-
-  // Get recent sync logs for error messages
-  const { data: recentLogs } = await supabase
-    .from('sync_logs')
-    .select('connector_name, status, error_message, records_synced')
-    .order('started_at', { ascending: false })
-    .limit(50);
+  // Fetch both in parallel (independent queries)
+  const [{ data: dbConnectors }, { data: recentLogs }] = await Promise.all([
+    supabase.from('api_connectors').select('*'),
+    supabase
+      .from('sync_logs')
+      .select('connector_name, status, error_message, records_synced')
+      .order('started_at', { ascending: false })
+      .limit(50),
+  ]);
 
   // Create map of latest log per connector
   interface SyncLog {

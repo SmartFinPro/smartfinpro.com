@@ -293,12 +293,29 @@ export async function getCompetitorData(): Promise<CompetitorDashboardData> {
   const supabase = await createClient();
   const serperConfigured = !!process.env.SERPER_API_KEY;
 
-  // Fetch latest snapshot per keyword (most recent per keyword+market)
-  const snapshotsResult = await supabase
-    .from('competitor_serp_snapshots')
-    .select('*')
-    .order('scanned_at', { ascending: false })
-    .limit(500);
+  // Pre-compute date range (needed by the trend query below)
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+  // Fetch all three in parallel (fully independent queries)
+  const [snapshotsResult, alertsResult, trendResult] = await Promise.all([
+    supabase
+      .from('competitor_serp_snapshots')
+      .select('*')
+      .order('scanned_at', { ascending: false })
+      .limit(500),
+    supabase
+      .from('competitor_alerts')
+      .select('*')
+      .eq('dismissed', false)
+      .order('detected_at', { ascending: false })
+      .limit(50),
+    supabase
+      .from('competitor_serp_snapshots')
+      .select('cps_score, scanned_at')
+      .gte('scanned_at', thirtyDaysAgo.toISOString())
+      .order('scanned_at', { ascending: true }),
+  ]);
 
   const allSnapshots = safeRows(snapshotsResult);
 
@@ -359,14 +376,7 @@ export async function getCompetitorData(): Promise<CompetitorDashboardData> {
     };
   });
 
-  // Alerts (undismissed)
-  const alertsResult = await supabase
-    .from('competitor_alerts')
-    .select('*')
-    .eq('dismissed', false)
-    .order('detected_at', { ascending: false })
-    .limit(50);
-
+  // Alerts (already fetched in parallel above)
   const rawAlerts = safeRows(alertsResult);
   const alerts: CompetitorAlert[] = rawAlerts.map((a) => ({
     id: a.id,
@@ -386,16 +396,7 @@ export async function getCompetitorData(): Promise<CompetitorDashboardData> {
     detectedAt: a.detected_at,
   }));
 
-  // CPS Trend: daily averages for the last 30 days
-  const thirtyDaysAgo = new Date();
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-  const trendResult = await supabase
-    .from('competitor_serp_snapshots')
-    .select('cps_score, scanned_at')
-    .gte('scanned_at', thirtyDaysAgo.toISOString())
-    .order('scanned_at', { ascending: true });
-
+  // CPS Trend: daily averages for the last 30 days (already fetched in parallel above)
   const trendRows = safeRows(trendResult);
 
   const trendByDay = new Map<string, { total: number; count: number }>();

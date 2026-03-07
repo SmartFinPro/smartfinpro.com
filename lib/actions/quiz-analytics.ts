@@ -46,7 +46,9 @@ export async function getQuizAnalytics(range: TimeRange = '7d'): Promise<QuizSta
     let eventsQuery = supabase
       .from('analytics_events')
       .select('event_name, event_label, properties, occurred_at')
-      .in('event_name', ['quiz_started', 'quiz_completed', 'quiz_cta_click', 'quiz_answer']);
+      .in('event_name', ['quiz_started', 'quiz_completed', 'quiz_cta_click', 'quiz_answer'])
+      .order('occurred_at', { ascending: false })
+      .limit(10000); // Cap to prevent full-table scans on large datasets
 
     if (rangeStart) {
       eventsQuery = eventsQuery.gte('occurred_at', rangeStart.toISOString());

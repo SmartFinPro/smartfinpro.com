@@ -522,27 +522,6 @@ export async function getAutoRevenueStats(): Promise<AutoRevenueStats> {
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
   const sixtyDaysAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
 
-  // Fetch all conversions
-  const { data: conversionsData } = await supabase
-    .from('conversions')
-    .select(`
-      id,
-      link_id,
-      converted_at,
-      commission_earned,
-      currency,
-      network_reference,
-      status,
-      created_at,
-      affiliate_links (
-        id,
-        slug,
-        partner_name
-      )
-    `)
-    .eq('status', 'approved')
-    .order('converted_at', { ascending: false });
-
   interface ConversionWithLink {
     id: string;
     link_id: string | null;
@@ -555,14 +534,6 @@ export async function getAutoRevenueStats(): Promise<AutoRevenueStats> {
     affiliate_links: { id: string; slug: string; partner_name: string }[] | null;
   }
 
-  const conversions = (conversionsData || []) as unknown as ConversionWithLink[];
-
-  // Fetch all clicks with country info
-  const { data: clicksData } = await supabase
-    .from('link_clicks')
-    .select('id, link_id, country_code, clicked_at')
-    .gte('clicked_at', sixtyDaysAgo.toISOString());
-
   interface ClickRecord {
     id: string;
     link_id: string;
@@ -570,19 +541,43 @@ export async function getAutoRevenueStats(): Promise<AutoRevenueStats> {
     clicked_at: string;
   }
 
-  const clicks = (clicksData || []) as ClickRecord[];
-
-  // Fetch all affiliate links
-  const { data: linksData } = await supabase
-    .from('affiliate_links')
-    .select('id, slug, partner_name');
-
   interface LinkRecord {
     id: string;
     slug: string;
     partner_name: string;
   }
 
+  // Fetch all three in parallel (independent queries)
+  const [{ data: conversionsData }, { data: clicksData }, { data: linksData }] =
+    await Promise.all([
+      supabase
+        .from('conversions')
+        .select(`
+          id,
+          link_id,
+          converted_at,
+          commission_earned,
+          currency,
+          network_reference,
+          status,
+          created_at,
+          affiliate_links (
+            id,
+            slug,
+            partner_name
+          )
+        `)
+        .eq('status', 'approved')
+        .order('converted_at', { ascending: false }),
+      supabase
+        .from('link_clicks')
+        .select('id, link_id, country_code, clicked_at')
+        .gte('clicked_at', sixtyDaysAgo.toISOString()),
+      supabase.from('affiliate_links').select('id, slug, partner_name'),
+    ]);
+
+  const conversions = (conversionsData || []) as unknown as ConversionWithLink[];
+  const clicks = (clicksData || []) as ClickRecord[];
   const links = (linksData || []) as LinkRecord[];
   const linksMap = new Map(links.map(l => [l.id, l]));
 

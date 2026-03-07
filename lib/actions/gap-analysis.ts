@@ -444,7 +444,21 @@ export async function getGapDashboardData(
   }
   if (market) query = query.eq('market', market);
 
-  const gapRows = safeRows(await query);
+  // Build drafts query in advance (independent of gap results)
+  const draftsQuery = supabase
+    .from('keyword_gap_drafts')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(50);
+
+  // Fetch all three in parallel
+  const [gapQueryResult, draftResult, scanLimit] = await Promise.all([
+    query,
+    draftsQuery,
+    getScanLimit(),
+  ]);
+
+  const gapRows = safeRows(gapQueryResult);
 
   const results: GapResult[] = gapRows.map((r) => ({
     keyword: r.keyword,
@@ -481,14 +495,7 @@ export async function getGapDashboardData(
     }))
     .sort((a, b) => b.avgOpportunity - a.avgOpportunity);
 
-  // Drafts
-  const draftsQuery = supabase
-    .from('keyword_gap_drafts')
-    .select('*')
-    .order('created_at', { ascending: false })
-    .limit(50);
-
-  const draftRows = safeRows(await draftsQuery);
+  const draftRows = safeRows(draftResult);
   const drafts: GapDraft[] = draftRows.map((d) => ({
     id: d.id,
     keyword: d.keyword,
@@ -502,9 +509,6 @@ export async function getGapDashboardData(
     mdxSkeleton: d.mdx_skeleton,
     createdAt: d.created_at,
   }));
-
-  // Scan limits
-  const scanLimit = await getScanLimit();
 
   // Stats
   const totalGaps = results.filter((r) => r.gapType === 'missing' || r.gapType === 'behind').length;
