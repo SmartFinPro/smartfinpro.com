@@ -109,7 +109,8 @@ export default async function ContentPage({ params }: ContentPageProps) {
       getRelatedContent(market as Market, category as Category, slug, 3),
       getMarketExpert(market, category),
       getContentByMarketAndCategory(market as Market, category as Category),
-      getEnrichedCtaPartners(`/${market}/${category}/${slug}`),
+      // URL format must match dashboard: US = no prefix, others = /market prefix
+      getEnrichedCtaPartners(`${market === 'us' ? '' : `/${market}`}/${category}/${slug}`),
     ]);
 
     // Filter sibling reviews (exclude current + index pages)
@@ -166,7 +167,8 @@ export default async function ContentPage({ params }: ContentPageProps) {
     getRelatedContent(market as Market, category as Category, slug, 3),
     getMarketExpert(market, category),
     getContentByMarketAndCategory(market as Market, category as Category),
-    getEnrichedCtaPartners(`/${market}/${category}/${slug}`),
+    // URL format must match dashboard: US = no prefix, others = /market prefix
+    getEnrichedCtaPartners(`${market === 'us' ? '' : `/${market}`}/${category}/${slug}`),
   ]);
 
   // Filter sibling reviews (exclude current + index pages)

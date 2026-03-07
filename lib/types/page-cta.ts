@@ -6,9 +6,9 @@
 export type Placement = 1 | 2 | 3;
 
 export const PLACEMENT_OPTIONS = [
-  { value: 1 as Placement, label: 'O', fullLabel: 'Oben (Top)' },
-  { value: 2 as Placement, label: 'M', fullLabel: 'Mitte (Middle)' },
-  { value: 3 as Placement, label: 'U', fullLabel: 'Unten (Bottom)' },
+  { value: 1 as Placement, label: 'O', fullLabel: 'Oben → Sticky Nav Bar (beim Scrollen sichtbar)' },
+  { value: 2 as Placement, label: 'M', fullLabel: 'Mitte (nach MDX Content)' },
+  { value: 3 as Placement, label: 'U', fullLabel: 'Unten (nach FAQ Section)' },
 ] as const;
 
 // ── Display Type (HOW it renders) ───────────────────────────────

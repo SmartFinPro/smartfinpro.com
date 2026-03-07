@@ -21,7 +21,6 @@ import { NewsletterBox } from './newsletter-box';
 import { RelatedArticles } from './related-articles';
 import { Breadcrumb } from './breadcrumb';
 import { TrustBar } from '@/components/marketing/trust-bar';
-import { RegionalHeroImage } from '@/components/marketing/regional-hero-image';
 import { StickyTableOfContents } from '@/components/marketing/sticky-toc';
 import { ExpertVerifier } from '@/components/marketing/expert-verifier';
 import { FrictionlessCTA } from '@/components/marketing/frictionless-cta';
@@ -278,15 +277,6 @@ export function ReviewTemplate({ review, mdxSource, relatedArticles, expert }: R
           </div>
         </div>
       </section>
-
-      {/* Regional Hero Image — visual break after verdict */}
-      <div className="container mx-auto px-4 mb-16">
-        <div className="max-w-4xl mx-auto">
-          <div className="my-8">
-            <RegionalHeroImage market={review.market || 'us'} category={review.category || 'trading'} className="max-w-2xl mx-auto" />
-          </div>
-        </div>
-      </div>
 
       {/* Sticky Table of Contents */}
       {review.sections && review.sections.length > 0 && (

@@ -45,7 +45,7 @@ import type { MDXRemoteSerializeResult } from '@/lib/mdx/types';
 import { getFirstMondayOfMonth } from '@/lib/utils/date-helpers';
 import { CTASlot } from '@/components/marketing/cta-slot';
 import type { EnrichedCtaPartner } from '@/lib/types/page-cta';
-import { RegionalHeroImage } from '@/components/marketing/regional-hero-image';
+import { StickyReviewNav } from '@/components/marketing/sticky-review-nav';
 
 // ── Auto-Quiz: derive topic from page category ──────────────────
 type QuizTopic = 'trading' | 'personal-finance' | 'forex' | 'business-banking' | 'ai-tools' | 'broker' | 'banking';
@@ -181,6 +181,21 @@ export function ReportLayout({
 
   return (
     <article className="min-h-screen" style={{ background: 'var(--sfp-gray)' }}>
+
+      {/* ── Sticky top navigation bar (appears when hero scrolls out of view) ── */}
+      {!isGuide && (
+        <StickyReviewNav
+          productName={review.productName}
+          categoryLabel={categoryName}
+          rating={hasRating ? review.rating : undefined}
+          reviewCount={hasRating ? review.reviewCount : undefined}
+          affiliateUrl={hasAffiliate ? review.affiliateUrl : undefined}
+          primaryCtaLabel={primaryCtaLabel}
+          ctaPartners={ctaPartners}
+          sentinelId="review-sticky-sentinel"
+        />
+      )}
+
       {/* Schema.org JSON-LD — Review schema for actual reviews */}
       {!isGuide && (
         <script
@@ -366,23 +381,9 @@ export function ReportLayout({
             </div>
           </div>
         </div>
+        {/* Sentinel: sticky nav becomes visible when THIS element leaves the viewport */}
+        <div id="review-sticky-sentinel" aria-hidden="true" />
       </section>
-
-      {/* ═══════════════════════════════════════════════════════════════
-          1b. HERO IMAGE (review-specific or category pillar fallback)
-          ═══════════════════════════════════════════════════════════════ */}
-      <div className="bg-white border-b border-gray-100">
-        <div className="container mx-auto px-4 py-4">
-          <div className="max-w-7xl mx-auto">
-            <RegionalHeroImage
-              market={market}
-              category={category}
-              slug={slug}
-              className="w-full"
-            />
-          </div>
-        </div>
-      </div>
 
       {/* ═══════════════════════════════════════════════════════════════
           2. TWO-COLUMN LAYOUT
