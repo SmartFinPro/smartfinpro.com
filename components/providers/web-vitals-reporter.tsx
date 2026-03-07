@@ -60,7 +60,7 @@ function getRating(name: string, value: number): string {
   }
 }
 
-export function WebVitalsReporter() {
+export default function WebVitalsReporter() {
   useEffect(() => {
     if (typeof window === 'undefined' || typeof PerformanceObserver === 'undefined') return;
 

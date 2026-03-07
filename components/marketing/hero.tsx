@@ -6,10 +6,7 @@ import dynamic from 'next/dynamic';
 import { ArrowRight, Shield, Users, DollarSign, Sparkles } from 'lucide-react';
 
 const NetworkAnimation = dynamic(
-  () =>
-    import('@/components/marketing/network-animation').then((m) => ({
-      default: m.default,
-    })),
+  () => import('@/components/marketing/network-animation'),
   { ssr: false, loading: () => null }
 );
 
