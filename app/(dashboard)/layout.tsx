@@ -113,6 +113,10 @@ export default function DashboardLayout({
   const sidebarGroups = getSidebarGroups();
   const [badges, setBadges] = useState<Record<string, number>>({});
   const [mobileOpen, setMobileOpen] = useState(false);
+  // Hydration guard: render mobile drawer only on client to avoid SSR mismatch.
+  // The server never renders the mobile drawer (it's hidden on desktop anyway).
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   // Fetch queue counts for badge display (dynamic import to avoid client bundling)
   useEffect(() => {
@@ -225,23 +229,25 @@ export default function DashboardLayout({
         />
       )}
 
-      {/* Mobile Drawer */}
-      <aside
-        className={cn(
-          'fixed inset-y-0 left-0 z-50 w-72 dashboard-sidebar flex flex-col transition-transform duration-300 md:hidden',
-          mobileOpen ? 'translate-x-0' : '-translate-x-full',
-        )}
-      >
-        {/* Close button */}
-        <button
-          onClick={() => setMobileOpen(false)}
-          className="absolute top-4 right-4 p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
-          aria-label="Close menu"
+      {/* Mobile Drawer — client-only to prevent SSR/hydration mismatch */}
+      {mounted && (
+        <aside
+          className={cn(
+            'fixed inset-y-0 left-0 z-50 w-72 dashboard-sidebar flex flex-col transition-transform duration-300 md:hidden',
+            mobileOpen ? 'translate-x-0' : '-translate-x-full',
+          )}
         >
-          <X className="h-5 w-5" />
-        </button>
-        <SidebarContent />
-      </aside>
+          {/* Close button */}
+          <button
+            onClick={() => setMobileOpen(false)}
+            className="absolute top-4 right-4 p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
+            aria-label="Close menu"
+          >
+            <X className="h-5 w-5" />
+          </button>
+          <SidebarContent />
+        </aside>
+      )}
 
       {/* Desktop Sidebar */}
       <aside className="w-64 dashboard-sidebar hidden md:flex md:flex-col">

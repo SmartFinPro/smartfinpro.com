@@ -152,10 +152,16 @@ async function sendTelegramAlert(message: string): Promise<void> {
 // ── Main handler ─────────────────────────────────────────────────────────────
 
 export async function GET(request: NextRequest) {
-  const authHeader = request.headers.get('authorization');
-  const cronSecret = process.env.CRON_SECRET;
+  const authHeader  = request.headers.get('authorization');
+  const cronSecret  = process.env.CRON_SECRET;
+  const dashSecret  = process.env.DASHBOARD_SECRET;
+  const dashCookie  = request.cookies.get('sfp-dash-auth')?.value;
 
-  if (!cronSecret || cronSecret.startsWith('your-') || authHeader !== `Bearer ${cronSecret}`) {
+  const validCron  = !!cronSecret && !cronSecret.startsWith('your-') && authHeader === `Bearer ${cronSecret}`;
+  const authBypass = process.env.DASHBOARD_AUTH_DISABLED === 'true';
+  const validDash  = !!dashSecret && dashCookie === dashSecret;
+
+  if (!validCron && !authBypass && !validDash) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

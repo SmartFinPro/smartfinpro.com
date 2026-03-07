@@ -43,9 +43,9 @@ export function OpportunitiesClient({ opportunities: initial }: Props) {
     setScanning(true);
     setScanMsg('');
     try {
-      const res = await fetch('/api/cron/affiliate-scout', {
-        headers: { Authorization: `Bearer ${document.cookie.match(/sfp-dash-auth=([^;]+)/)?.[1] ?? ''}` },
-      });
+      // Cookies (sfp-dash-auth) are sent automatically by the browser.
+      // The cron route accepts CRON_SECRET Bearer OR dashboard cookie OR DASHBOARD_AUTH_DISABLED.
+      const res = await fetch('/api/cron/affiliate-scout');
       const data = await res.json() as { saved?: number; discovered?: number; error?: string };
       if (data.error) {
         setScanMsg(`❌ ${data.error}`);

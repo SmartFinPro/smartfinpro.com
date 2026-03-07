@@ -3,6 +3,7 @@
 
 import { createServiceClient } from '@/lib/supabase/server';
 import { WebVitalsClient } from './web-vitals-client';
+import { RefreshButton } from './refresh-button';
 
 export const dynamic    = 'force-dynamic';
 export const revalidate = 0;
@@ -158,13 +159,16 @@ export default async function WebVitalsPage() {
 
   return (
     <div className="p-6 space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold" style={{ color: 'var(--sfp-ink)' }}>
-          Core Web Vitals
-        </h1>
-        <p className="text-sm text-slate-500 mt-1">
-          Real User Monitoring (RUM) — letzte 7 Tage · Google-Zielwerte 2026
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold" style={{ color: 'var(--sfp-ink)' }}>
+            Core Web Vitals
+          </h1>
+          <p className="text-sm text-slate-500 mt-1">
+            Real User Monitoring (RUM) — letzte 7 Tage · Google-Zielwerte 2026
+          </p>
+        </div>
+        <RefreshButton />
       </div>
 
       {!hasData ? (
