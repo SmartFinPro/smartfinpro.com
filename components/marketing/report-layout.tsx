@@ -46,6 +46,7 @@ import { getFirstMondayOfMonth } from '@/lib/utils/date-helpers';
 import { CTASlot } from '@/components/marketing/cta-slot';
 import type { EnrichedCtaPartner } from '@/lib/types/page-cta';
 import { StickyReviewNav } from '@/components/marketing/sticky-review-nav';
+import { ReviewExitIntent } from '@/components/marketing/review-exit-intent';
 
 // ── Auto-Quiz: derive topic from page category ──────────────────
 type QuizTopic = 'trading' | 'personal-finance' | 'forex' | 'business-banking' | 'ai-tools' | 'broker' | 'banking';
@@ -193,6 +194,18 @@ export function ReportLayout({
           primaryCtaLabel={primaryCtaLabel}
           ctaPartners={ctaPartners}
           sentinelId="review-sticky-sentinel"
+        />
+      )}
+
+      {/* ── Exit-intent popup — personalized partner CTA for abandoning readers ── */}
+      {!isGuide && (
+        <ReviewExitIntent
+          productName={review.productName}
+          rating={hasRating ? review.rating : undefined}
+          reviewCount={hasRating ? review.reviewCount : undefined}
+          affiliateUrl={hasAffiliate ? review.affiliateUrl : undefined}
+          primaryCtaLabel={primaryCtaLabel}
+          ctaPartners={ctaPartners}
         />
       )}
 

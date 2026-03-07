@@ -61,6 +61,9 @@ export function ExitIntentPopup() {
     if (hasTriggered || !shouldShowPopup()) return;
 
     const handleMouseLeave = (e: MouseEvent) => {
+      // Yield to review-specific exit intent popup on review pages
+      if (window.__sfpReviewExitActive) return;
+
       // Only trigger when leaving through the top of the viewport
       if (e.clientY <= 0 && !hasTriggered) {
         setHasTriggered(true);
