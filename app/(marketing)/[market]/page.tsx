@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import { unstable_cache } from 'next/cache';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { Calendar, FileText, Globe, BarChart3 } from 'lucide-react';
@@ -11,6 +12,31 @@ import {
 } from '@/lib/i18n/config';
 import { generateAlternates } from '@/lib/seo/hreflang';
 import { getContentByMarketAndCategory } from '@/lib/mdx';
+
+// Cache the MDX filesystem scan per market — avoids re-reading 74+ files on every request.
+// Static pages are pre-rendered at build time anyway; this helps ISR and dev mode warm reqs.
+// NOTE: content field is intentionally excluded — it can be 30KB+ per file (3.5MB total for US),
+//       which exceeds Next.js unstable_cache's 2MB hard limit. The homepage only needs meta+slug.
+const getMarketReviews = unstable_cache(
+  async (market: Market) => {
+    const categories = marketCategories[market];
+    const allCategoryContent = await Promise.all(
+      categories.map((cat) => getContentByMarketAndCategory(market, cat))
+    );
+    return allCategoryContent
+      .flat()
+      .filter((item) => item.slug !== 'index' && item.meta.rating)
+      .sort(
+        (a, b) =>
+          new Date(b.meta.modifiedDate || b.meta.publishDate).getTime() -
+          new Date(a.meta.modifiedDate || a.meta.publishDate).getTime()
+      )
+      // Strip full MDX body before caching — meta+slug is all the homepage needs.
+      .map(({ slug, meta, readingTime }) => ({ slug, meta, readingTime }));
+  },
+  ['market-homepage-reviews'],
+  { revalidate: 300, tags: ['market-reviews'] } // 5 min cache, bust via revalidateTag
+);
 import { Hero } from '@/components/marketing/hero';
 import { PortalSidebar } from '@/components/marketing/portal-sidebar';
 import { ReportCard } from '@/components/marketing/report-card';
@@ -98,20 +124,8 @@ export default async function MarketHomePage({ params }: MarketPageProps) {
   const categories = marketCategories[marketData];
   const marketPrefix = `/${marketData}`;
 
-  // Fetch all reviews across all categories for this market
-  const allCategoryContent = await Promise.all(
-    categories.map((cat) => getContentByMarketAndCategory(marketData, cat))
-  );
-
-  // Flatten, filter reviews (rated content), sort by date
-  const allReviews = allCategoryContent
-    .flat()
-    .filter((item) => item.slug !== 'index' && item.meta.rating)
-    .sort(
-      (a, b) =>
-        new Date(b.meta.modifiedDate || b.meta.publishDate).getTime() -
-        new Date(a.meta.modifiedDate || a.meta.publishDate).getTime()
-    );
+  // Fetch all reviews via cached MDX scan (fast in dev + ISR; pre-rendered at build in prod)
+  const allReviews = await getMarketReviews(marketData);
 
   const heroContent = marketHeroContent[marketData] || marketHeroContent['uk'];
 
