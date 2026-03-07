@@ -14,15 +14,26 @@
 //   • Impression beacon fires once when bar first becomes visible
 //   • Click tracking on every CTA button via /api/track-cta
 //
+// ── Accessibility ────────────────────────────────────────────────
+//   • Native <nav> landmark element
+//   • `inert` attribute when hidden (prevents focus + screen reader access)
+//   • tabIndex guard as fallback for older browsers
+//   • focus-visible ring with navy-matching offset color
+//   • Decorative elements marked aria-hidden
+//   • External links labelled "(opens in new tab)" for screen readers
+//   • prefers-reduced-motion respected via CSS class
+//
 // ── Responsive (3 tiers) ───────────────────────────────────────
 //   • Mobile:  Title + 1 Gold button
 //   • Desktop: Title + Subtitle + 2 buttons (Gold + Ghost)
 //   • XL:      Title + Subtitle + up to 3 buttons
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { ArrowRight, ShieldCheck, ExternalLink, Users } from 'lucide-react';
 import type { EnrichedCtaPartner } from '@/lib/types/page-cta';
+
+// ── Types ────────────────────────────────────────────────────────
 
 interface StickyReviewNavProps {
   productName: string;
@@ -35,7 +46,50 @@ interface StickyReviewNavProps {
   sentinelId?: string;
 }
 
+interface ButtonColorScheme {
+  bg: string;
+  text: string;
+  shadow: string;
+  hoverBg: string;
+  hoverText: string;
+  hoverShadow: string;
+  badge: string;
+}
+
+// ── Module-level constants (avoid re-creation per render) ────────
+
+/** Color palette for up to 3 CTA buttons: Gold → Teal → Lavender */
+const BUTTON_COLORS: readonly ButtonColorScheme[] = [
+  // Gold primary — prominent & bold
+  {
+    bg: 'rgba(255, 215, 100, 0.40)', text: '#FFE070',
+    shadow: '0 2px 10px rgba(255, 215, 100, 0.35)',
+    hoverBg: 'rgba(255, 215, 100, 0.60)', hoverText: '#FFF0A0',
+    hoverShadow: '0 4px 20px rgba(255, 215, 100, 0.6)',
+    badge: '★★★ Best Value',
+  },
+  // Teal secondary
+  {
+    bg: 'rgba(125, 211, 216, 0.15)', text: '#7DD3D8',
+    shadow: '0 2px 8px rgba(125, 211, 216, 0.2)',
+    hoverBg: 'rgba(125, 211, 216, 0.30)', hoverText: '#A5E8EC',
+    hoverShadow: '0 4px 16px rgba(125, 211, 216, 0.4)',
+    badge: '★★ Best Overall',
+  },
+  // Lavender tertiary
+  {
+    bg: 'rgba(167, 139, 250, 0.15)', text: '#A78BFA',
+    shadow: '0 2px 8px rgba(167, 139, 250, 0.2)',
+    hoverBg: 'rgba(167, 139, 250, 0.30)', hoverText: '#C4B5FD',
+    hoverShadow: '0 4px 16px rgba(167, 139, 250, 0.4)',
+    badge: '★ Best Features',
+  },
+] as const;
+
+const PULSE_ANIMATION = 'stickyPulseGlow 3s ease-in-out infinite';
+
 // ── Helpers ──────────────────────────────────────────────────────
+
 function getMarketFromPath(path: string): 'us' | 'uk' | 'ca' | 'au' {
   if (path.startsWith('/uk')) return 'uk';
   if (path.startsWith('/ca')) return 'ca';
@@ -62,6 +116,26 @@ function toSafeSlug(raw: string): string {
   return slug.toLowerCase().slice(0, 200) || 'unknown';
 }
 
+/** Fire a tracking event to /api/track-cta (non-blocking, non-critical) */
+function trackClick(url: string, label: string, position: number): void {
+  try {
+    const pagePath = window.location.pathname;
+    fetch('/api/track-cta', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        slug: toSafeSlug(url),
+        provider: label,
+        variant: `sticky_nav_pos${position}`,
+        market: getMarketFromPath(pagePath),
+      }),
+      keepalive: true,
+    }).catch(() => null);
+  } catch { /* non-critical — never block UI */ }
+}
+
+// ── Component ────────────────────────────────────────────────────
+
 export function StickyReviewNav({
   productName,
   categoryLabel,
@@ -74,8 +148,10 @@ export function StickyReviewNav({
 }: StickyReviewNavProps) {
   const [visible, setVisible] = useState(false);
   const impressionSent = useRef(false);
-  const navRef = useRef<HTMLDivElement>(null);
-  const year = new Date().getFullYear();
+  const navRef = useRef<HTMLElement>(null);
+
+  // ── Stable values (never change during session) ──────────────
+  const year = useMemo(() => new Date().getFullYear(), []);
 
   // ── Social proof: stable "comparing now" number per session ────
   const socialProofCount = useMemo(() => {
@@ -102,7 +178,7 @@ export function StickyReviewNav({
     }
   }, [sentinelId]);
 
-  // ── Inert toggle (native DOM — works in all supporting browsers) ─
+  // ── Inert toggle (native DOM — prevents focus + SR access) ────
   useEffect(() => {
     const el = navRef.current;
     if (!el) return;
@@ -118,7 +194,7 @@ export function StickyReviewNav({
     if (visible && !impressionSent.current) {
       impressionSent.current = true;
       try {
-        const pagePath = typeof window !== 'undefined' ? window.location.pathname : '/';
+        const pagePath = window.location.pathname;
         const pageSlug = pagePath.replace(/^\//, '').replace(/\/$/, '').toLowerCase();
         const payload = JSON.stringify({
           slug: pageSlug.replace(/[^a-z0-9/_-]/g, '').slice(0, 200) || 'home',
@@ -178,6 +254,31 @@ export function StickyReviewNav({
     return [];
   }, [ctaPartners, affiliateUrl, primaryCtaLabel, productName]);
 
+  // ── Hover handlers (stable references via useCallback) ────────
+  const handleMouseEnter = useCallback(
+    (e: React.MouseEvent<HTMLAnchorElement>, colors: ButtonColorScheme, isPrimary: boolean) => {
+      const el = e.currentTarget;
+      el.style.background = colors.hoverBg;
+      el.style.color = colors.hoverText;
+      el.style.boxShadow = colors.hoverShadow;
+      el.style.textDecoration = 'none';
+      if (isPrimary) el.style.animation = 'none';
+    },
+    [],
+  );
+
+  const handleMouseLeave = useCallback(
+    (e: React.MouseEvent<HTMLAnchorElement>, colors: ButtonColorScheme, isPrimary: boolean) => {
+      const el = e.currentTarget;
+      el.style.background = colors.bg;
+      el.style.color = colors.text;
+      el.style.boxShadow = colors.shadow;
+      el.style.textDecoration = 'none';
+      if (isPrimary) el.style.animation = PULSE_ANIMATION;
+    },
+    [],
+  );
+
   if (resolvedPartners.length === 0) return null;
 
   // ── Text ──────────────────────────────────────────────────────
@@ -190,10 +291,9 @@ export function StickyReviewNav({
   const subtitle = subtitleParts.join(' · ');
 
   return (
-    <div
+    <nav
       ref={navRef}
-      role="navigation"
-      aria-label="Quick access navigation"
+      aria-label={`${productName} review — quick access`}
       aria-hidden={!visible}
       className={`
         fixed top-0 left-0 right-0 z-50
@@ -205,7 +305,7 @@ export function StickyReviewNav({
         boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
       }}
     >
-      {/* Gold accent line at top — keyframes in globals.css (stickyPulseGlow) */}
+      {/* Gold accent line at top */}
       <div
         className="h-[3px] w-full"
         style={{ background: 'linear-gradient(90deg, var(--sfp-gold) 0%, var(--sfp-gold-dark) 50%, var(--sfp-gold) 100%)' }}
@@ -218,7 +318,7 @@ export function StickyReviewNav({
           {/* ── LEFT: Icon + Two-line headline ──────────────────────── */}
           <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
 
-            {/* Shield icon — trust signal */}
+            {/* Shield icon — trust signal (decorative) */}
             <div
               className="hidden sm:flex items-center justify-center w-10 h-10 rounded-xl shrink-0"
               style={{ background: 'rgba(255, 255, 255, 0.1)' }}
@@ -243,8 +343,8 @@ export function StickyReviewNav({
             </div>
           </div>
 
-          {/* ── CENTER: Social proof (lg+ only, wrapper-div pattern) ── */}
-          <div className="hidden lg:block shrink-0">
+          {/* ── CENTER: Social proof (lg+ only, decorative trust signal) ── */}
+          <div className="hidden lg:block shrink-0" aria-hidden="true">
             <div
               className="flex items-center gap-1.5 text-xs sm:text-sm whitespace-nowrap"
               style={{ color: 'rgba(255, 255, 255, 0.5)' }}
@@ -261,36 +361,10 @@ export function StickyReviewNav({
                • Button 2: wrapper hidden → lg:block (≥1024px)
                • Button 3: wrapper hidden → lg:block (≥1024px)
                ─────────────────────────────────────────────────────────── */}
-          <div className="flex items-center gap-2.5 shrink-0">
+          <div className="flex items-center gap-2.5 shrink-0" role="group" aria-label="Partner offers">
             {resolvedPartners.map((cta, i) => {
-              // ── Color palette + recommendation labels ─────────────
-              const buttonColors = [
-                // Gold primary — prominent & bold
-                {
-                  bg: 'rgba(255, 215, 100, 0.40)', text: '#FFE070',
-                  shadow: '0 2px 10px rgba(255, 215, 100, 0.35)',
-                  hoverBg: 'rgba(255, 215, 100, 0.60)', hoverText: '#FFF0A0',
-                  hoverShadow: '0 4px 20px rgba(255, 215, 100, 0.6)',
-                  badge: '★★★ Best Value',
-                },
-                // Teal
-                {
-                  bg: 'rgba(125, 211, 216, 0.15)', text: '#7DD3D8',
-                  shadow: '0 2px 8px rgba(125, 211, 216, 0.2)',
-                  hoverBg: 'rgba(125, 211, 216, 0.30)', hoverText: '#A5E8EC',
-                  hoverShadow: '0 4px 16px rgba(125, 211, 216, 0.4)',
-                  badge: '★★ Best Overall',
-                },
-                // Lavender
-                {
-                  bg: 'rgba(167, 139, 250, 0.15)', text: '#A78BFA',
-                  shadow: '0 2px 8px rgba(167, 139, 250, 0.2)',
-                  hoverBg: 'rgba(167, 139, 250, 0.30)', hoverText: '#C4B5FD',
-                  hoverShadow: '0 4px 16px rgba(167, 139, 250, 0.4)',
-                  badge: '★ Best Features',
-                },
-              ];
-              const colors = buttonColors[i] || buttonColors[1];
+              const colors = BUTTON_COLORS[i] || BUTTON_COLORS[1];
+              const isPrimary = i === 0;
 
               const buttonGroup = (
                 <div className="flex flex-col items-center gap-1.5">
@@ -299,12 +373,14 @@ export function StickyReviewNav({
                     target="_blank"
                     rel="noopener noreferrer nofollow"
                     tabIndex={visible ? 0 : -1}
+                    aria-label={`${cta.label} (opens in new tab)`}
                     className="
+                      sticky-pulse-glow
                       inline-flex items-center gap-2 rounded-xl
                       px-5 py-2 text-sm font-bold
                       whitespace-nowrap no-underline hover:no-underline
                       transition-all duration-200 hover:scale-[1.02]
-                      focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-1
+                      focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2
                       [text-decoration:none]
                     "
                     style={{
@@ -312,46 +388,23 @@ export function StickyReviewNav({
                       color: colors.text,
                       boxShadow: colors.shadow,
                       textDecoration: 'none',
-                      ...(i === 0 ? { animation: 'stickyPulseGlow 3s ease-in-out infinite' } : {}),
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = colors.hoverBg;
-                      e.currentTarget.style.color = colors.hoverText;
-                      e.currentTarget.style.boxShadow = colors.hoverShadow;
-                      e.currentTarget.style.textDecoration = 'none';
-                      if (i === 0) e.currentTarget.style.animation = 'none';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = colors.bg;
-                      e.currentTarget.style.color = colors.text;
-                      e.currentTarget.style.boxShadow = colors.shadow;
-                      e.currentTarget.style.textDecoration = 'none';
-                      if (i === 0) e.currentTarget.style.animation = 'stickyPulseGlow 3s ease-in-out infinite';
-                    }}
-                    onClick={() => {
-                      try {
-                        const pagePath = typeof window !== 'undefined' ? window.location.pathname : '/';
-                        fetch('/api/track-cta', {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({
-                            slug: toSafeSlug(cta.url),
-                            provider: cta.label,
-                            variant: `sticky_nav_pos${i + 1}`,
-                            market: getMarketFromPath(pagePath),
-                          }),
-                          keepalive: true,
-                        }).catch(() => null);
-                      } catch { /* non-critical */ }
-                    }}
+                      // Navy offset so focus ring doesn't clash with dark background
+                      '--tw-ring-offset-color': 'var(--sfp-navy)',
+                      ...(isPrimary ? { animation: PULSE_ANIMATION } : {}),
+                    } as React.CSSProperties}
+                    onMouseEnter={(e) => handleMouseEnter(e, colors, isPrimary)}
+                    onMouseLeave={(e) => handleMouseLeave(e, colors, isPrimary)}
+                    onClick={() => trackClick(cta.url, cta.label, i + 1)}
                   >
-                    {i === 0 && <ExternalLink className="w-4 h-4 shrink-0" />}
-                    {cta.label}
-                    {i === 0 && <ArrowRight className="w-4 h-4 shrink-0" />}
+                    {isPrimary && <ExternalLink className="w-4 h-4 shrink-0" aria-hidden="true" />}
+                    <span>{cta.label}</span>
+                    {isPrimary && <ArrowRight className="w-4 h-4 shrink-0" aria-hidden="true" />}
                   </Link>
+                  {/* Recommendation badge — decorative marketing label */}
                   <span
                     className="hidden sm:block text-xs sm:text-sm leading-tight whitespace-nowrap"
                     style={{ color: 'rgba(255, 255, 255, 0.6)', fontWeight: 400 }}
+                    aria-hidden="true"
                   >
                     {colors.badge}
                   </span>
@@ -359,14 +412,14 @@ export function StickyReviewNav({
               );
 
               // Button 1: always visible
-              if (i === 0) return <div key={cta.url}>{buttonGroup}</div>;
+              if (isPrimary) return <div key={`cta-${i}-${cta.url}`}>{buttonGroup}</div>;
               // Buttons 2+3: visible on lg+ (≥1024px)
-              return <div key={`w-${cta.url}`} className="hidden lg:block">{buttonGroup}</div>;
+              return <div key={`cta-${i}-${cta.url}`} className="hidden lg:block">{buttonGroup}</div>;
             })}
           </div>
 
         </div>
       </div>
-    </div>
+    </nav>
   );
 }
