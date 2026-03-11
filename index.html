@@ -3,17 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SmartFinPro — Financial Intelligence for Modern Professionals</title>
-  <meta name="description" content="SmartFinPro is launching soon. Expert reviews, comparisons, and guides for trading platforms, AI tools, cybersecurity, and personal finance across 4 global markets.">
+  <title>SmartFinPro — Independent Financial Product Research</title>
+  <meta name="description" content="108+ expert-reviewed financial products across trading, AI, cybersecurity, and personal finance. Independent research. 4 regulated markets. Updated monthly.">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://smartfinpro.com/">
-  <meta property="og:title" content="SmartFinPro — Coming Soon">
-  <meta property="og:description" content="Financial Intelligence for Modern Professionals. Expert reviews across 4 global markets.">
+  <meta property="og:title" content="SmartFinPro — Independent Financial Product Research">
+  <meta property="og:description" content="108+ expert-reviewed financial products. Independent research across 4 regulated markets.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://smartfinpro.com/">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -32,47 +32,39 @@
       --border: #E2E8F0;
     }
 
+    ::selection { background: var(--navy); color: #fff; }
+
     body {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       color: var(--ink);
       background: #fff;
-      line-height: 1.6;
+      line-height: 1.7;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
     }
 
-    /* ── Animations ── */
-    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
-    @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
-    @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+    /* ── Animations — subtle only ── */
     @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(20px); }
+      from { opacity: 0; transform: translateY(16px); }
       to { opacity: 1; transform: translateY(0); }
     }
-    @keyframes scaleIn {
-      from { opacity: 0; transform: scale(0.95); }
-      to { opacity: 1; transform: scale(1); }
-    }
-    .fade-up { animation: fadeUp 0.7s ease-out both; }
-    .fade-up-d1 { animation-delay: 0.1s; }
-    .fade-up-d2 { animation-delay: 0.2s; }
-    .fade-up-d3 { animation-delay: 0.3s; }
-    .fade-up-d4 { animation-delay: 0.4s; }
+    .fade-up { animation: fadeUp 0.5s ease-out both; }
+    .fade-up-d1 { animation-delay: 0.08s; }
+    .fade-up-d2 { animation-delay: 0.16s; }
+    .fade-up-d3 { animation-delay: 0.24s; }
 
     /* ── Header ── */
     .header {
-      background: rgba(255,255,255,0.92);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
+      background: #fff;
       border-bottom: 1px solid var(--border);
-      padding: 0 32px;
+      padding: 0 40px;
       height: 64px;
       position: sticky;
       top: 0;
       z-index: 100;
     }
     .header-inner {
-      max-width: 1200px;
+      max-width: 1140px;
       margin: 0 auto;
       display: flex;
       align-items: center;
@@ -80,219 +72,166 @@
       height: 100%;
     }
     .logo {
-      font-size: 24px;
-      font-weight: 900;
+      font-size: 22px;
+      font-weight: 800;
       text-decoration: none;
-      letter-spacing: -0.75px;
-      display: flex;
-      align-items: center;
-      gap: 3px;
+      letter-spacing: -0.5px;
     }
-    .logo-smart { color: var(--navy); }
-    .logo-fin { color: var(--gold); }
-    .logo-pro { color: var(--navy); }
-    .header-nav {
-      display: flex;
-      align-items: center;
-      gap: 32px;
-    }
+    .logo-smart { color: var(--ink); }
+    .logo-fin { color: var(--navy); }
+    .logo-pro { color: var(--ink); }
+    .header-nav { display: flex; align-items: center; gap: 36px; }
     .header-link {
       font-size: 13px;
       font-weight: 500;
       color: var(--slate);
       text-decoration: none;
       transition: color 0.2s;
+      letter-spacing: 0.01em;
     }
     .header-link:hover { color: var(--ink); }
     .header-badge {
-      font-size: 10px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 1.5px;
-      color: #fff;
-      background: linear-gradient(135deg, var(--navy) 0%, var(--navy-dark) 100%);
-      padding: 6px 16px;
-      border-radius: 100px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--slate);
+      border: 1px solid var(--border);
+      padding: 5px 14px;
+      border-radius: 6px;
+      letter-spacing: 0.02em;
     }
 
     /* ── Hero ── */
     .hero {
       position: relative;
       overflow: hidden;
-      background: var(--navy);
-      padding: 100px 32px 120px;
+      background: var(--navy-deep);
+      padding: 80px 40px 160px;
       text-align: center;
     }
-    /* Background image */
     .hero-bg {
       position: absolute;
       inset: 0;
       background: url('images/header001.webp') center/cover no-repeat;
     }
-    /* Bottom fade overlay for smooth transition */
     .hero-bg::after {
       content: '';
       position: absolute;
       inset: 0;
-      background: linear-gradient(to top, rgba(27, 79, 140, 0.6), transparent 50%);
+      background: linear-gradient(180deg, rgba(15,46,82,0.45) 0%, rgba(15,46,82,0.65) 60%, rgba(15,46,82,0.85) 100%);
     }
-    /* Content backdrop for readability */
     .hero-inner {
-      max-width: 780px;
+      max-width: 720px;
       margin: 0 auto;
       position: relative;
       z-index: 2;
-      background: radial-gradient(ellipse at center, rgba(20, 55, 100, 0.55) 0%, rgba(20, 55, 100, 0.35) 60%, transparent 100%);
-      border-radius: 24px;
-      padding: 40px 32px;
     }
     .hero-chip {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      background: rgba(255,255,255,0.08);
-      border: 1px solid rgba(255,255,255,0.12);
-      border-radius: 100px;
-      padding: 8px 20px;
-      margin-bottom: 32px;
-    }
-    .hero-chip-dot {
-      width: 6px;
-      height: 6px;
-      background: var(--gold);
-      border-radius: 50%;
-      animation: pulse 2s ease-in-out infinite;
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 6px;
+      padding: 7px 16px;
+      margin-bottom: 36px;
     }
     .hero-chip span {
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 600;
       text-transform: uppercase;
-      letter-spacing: 1.5px;
-      color: rgba(255,255,255,0.8);
+      letter-spacing: 1.8px;
+      color: rgba(255,255,255,0.7);
     }
     .hero h1 {
-      font-size: clamp(36px, 5.5vw, 62px);
-      font-weight: 900;
+      font-size: clamp(32px, 5vw, 54px);
+      font-weight: 800;
       color: #fff;
-      line-height: 1.08;
+      line-height: 1.12;
       margin-bottom: 24px;
-      letter-spacing: -1.5px;
-      text-shadow: 0 2px 12px rgba(0,0,0,0.35);
+      letter-spacing: -1.2px;
     }
-    .hero h1 .gold {
-      background: linear-gradient(135deg, var(--gold) 0%, #FFD280 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
+    .hero h1 .accent { color: var(--gold); }
     .hero-sub {
-      font-size: 18px;
+      font-size: 17px;
       font-weight: 400;
       color: rgba(255,255,255,0.6);
-      max-width: 540px;
-      margin: 0 auto 48px;
+      max-width: 520px;
+      margin: 0 auto 44px;
       line-height: 1.7;
     }
     .hero-actions {
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 16px;
+      gap: 14px;
       flex-wrap: wrap;
     }
     .btn-primary {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      padding: 16px 36px;
+      padding: 14px 32px;
       background: var(--gold);
       color: #fff;
-      font-size: 15px;
+      font-size: 14px;
       font-weight: 700;
       border: none;
-      border-radius: 12px;
+      border-radius: 8px;
       cursor: pointer;
-      transition: all 0.25s;
+      transition: all 0.2s ease;
       text-decoration: none;
-      box-shadow: 0 4px 24px rgba(245,166,35,0.35);
     }
     .btn-primary:hover {
       background: var(--gold-dark);
       transform: translateY(-1px);
-      box-shadow: 0 6px 32px rgba(245,166,35,0.45);
     }
     .btn-ghost {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      padding: 16px 36px;
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,255,255,0.15);
-      color: #fff;
-      font-size: 15px;
+      padding: 14px 32px;
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.2);
+      color: rgba(255,255,255,0.85);
+      font-size: 14px;
       font-weight: 600;
-      border-radius: 12px;
+      border-radius: 8px;
       cursor: pointer;
-      transition: all 0.25s;
+      transition: all 0.2s ease;
       text-decoration: none;
     }
     .btn-ghost:hover {
-      background: rgba(255,255,255,0.12);
-      border-color: rgba(255,255,255,0.25);
+      border-color: rgba(255,255,255,0.4);
+      color: #fff;
     }
 
-    /* ── Trust Strip ── */
-    .trust-strip {
-      background: #fff;
-      border-bottom: 1px solid var(--border);
-      padding: 20px 32px;
+    /* Hero bottom curve */
+    .hero-curve {
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      right: 0;
+      z-index: 3;
     }
-    .trust-inner {
-      max-width: 1200px;
-      margin: 0 auto;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 40px;
-      flex-wrap: wrap;
-    }
-    .trust-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--slate);
-    }
-    .trust-icon {
-      width: 32px;
-      height: 32px;
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 15px;
-    }
+    .hero-curve svg { display: block; width: 100%; height: auto; }
 
     /* ── Stats ── */
     .stats {
-      max-width: 1200px;
-      margin: -60px auto 0;
-      padding: 0 32px;
+      max-width: 1140px;
+      margin: -64px auto 0;
+      padding: 0 40px;
       position: relative;
       z-index: 10;
     }
     .stats-card {
       background: #fff;
       border: 1px solid var(--border);
-      border-radius: 20px;
-      box-shadow: 0 8px 40px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04);
+      border-radius: 16px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.04);
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      overflow: hidden;
     }
     .stat {
-      padding: 36px 24px;
+      padding: 44px 24px;
       text-align: center;
       position: relative;
     }
@@ -300,108 +239,123 @@
       content: '';
       position: absolute;
       right: 0;
-      top: 20%;
-      height: 60%;
+      top: 24%;
+      height: 52%;
       width: 1px;
       background: var(--border);
     }
     .stat-value {
-      font-size: 36px;
-      font-weight: 900;
-      letter-spacing: -1px;
+      font-size: 32px;
+      font-weight: 800;
+      color: var(--navy);
       line-height: 1;
-      margin-bottom: 6px;
-      background: linear-gradient(135deg, var(--navy) 0%, var(--navy-dark) 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      margin-bottom: 8px;
+      letter-spacing: -0.5px;
     }
     .stat-label {
       font-size: 12px;
       color: var(--slate);
       font-weight: 500;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.8px;
     }
 
-    /* ── Sectors ── */
-    .sectors {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 96px 32px;
+    /* ── Compliance Bar ── */
+    .compliance-bar {
+      background: var(--sky);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 18px 40px;
+      margin-top: 64px;
     }
-    .section-header { text-align: center; margin-bottom: 56px; }
-    .section-chip {
-      display: inline-flex;
+    .compliance-inner {
+      max-width: 1140px;
+      margin: 0 auto;
+      display: flex;
       align-items: center;
-      gap: 6px;
-      background: var(--gold-light);
-      color: var(--gold-dark);
+      justify-content: center;
+      gap: 48px;
+      flex-wrap: wrap;
+    }
+    .compliance-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .compliance-item svg {
+      width: 16px;
+      height: 16px;
+      color: var(--navy);
+      flex-shrink: 0;
+    }
+    .compliance-item span {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--navy);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+
+    /* ── Sections ── */
+    .section-header { text-align: center; margin-bottom: 64px; }
+    .section-eyebrow {
       font-size: 11px;
       font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 1.5px;
-      padding: 6px 16px;
-      border-radius: 100px;
-      margin-bottom: 20px;
+      letter-spacing: 2px;
+      color: var(--slate);
+      margin-bottom: 16px;
+      display: block;
     }
     .section-title {
-      font-size: clamp(28px, 3.5vw, 40px);
-      font-weight: 900;
+      font-size: clamp(26px, 3.2vw, 38px);
+      font-weight: 800;
       color: var(--ink);
-      letter-spacing: -0.75px;
+      letter-spacing: -0.6px;
       margin-bottom: 16px;
+      line-height: 1.15;
     }
     .section-sub {
       font-size: 16px;
       color: var(--slate);
-      max-width: 520px;
+      max-width: 480px;
       margin: 0 auto;
       line-height: 1.7;
+    }
+
+    /* ── Sectors ── */
+    .sectors {
+      max-width: 1140px;
+      margin: 0 auto;
+      padding: 112px 40px;
     }
     .sectors-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 20px;
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
     }
     .sector-card {
       background: #fff;
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 32px 28px;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      position: relative;
-      overflow: hidden;
+      padding: 40px 32px;
+      transition: background 0.2s ease;
     }
-    .sector-card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 3px;
-      background: linear-gradient(90deg, var(--navy), var(--gold));
-      opacity: 0;
-      transition: opacity 0.3s;
-    }
-    .sector-card:hover {
-      border-color: transparent;
-      box-shadow: 0 8px 40px rgba(27,79,140,0.1), 0 1px 3px rgba(0,0,0,0.04);
-      transform: translateY(-2px);
-    }
-    .sector-card:hover::before { opacity: 1; }
+    .sector-card:hover { background: var(--gray); }
     .sector-icon {
-      width: 48px;
-      height: 48px;
-      border-radius: 14px;
+      width: 40px;
+      height: 40px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 22px;
       margin-bottom: 20px;
+      color: var(--navy);
     }
+    .sector-icon svg { width: 24px; height: 24px; }
     .sector-card h3 {
-      font-size: 17px;
+      font-size: 16px;
       font-weight: 700;
       color: var(--ink);
       margin-bottom: 8px;
@@ -410,159 +364,183 @@
     .sector-card p {
       font-size: 14px;
       color: var(--slate);
-      line-height: 1.6;
+      line-height: 1.65;
+      margin-bottom: 20px;
     }
-    .sector-meta {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-top: 16px;
-      padding-top: 16px;
-      border-top: 1px solid var(--border);
-    }
+    .sector-meta { display: flex; align-items: center; gap: 8px; }
     .sector-tag {
       font-size: 11px;
       font-weight: 600;
-      color: var(--navy);
-      background: var(--sky);
-      padding: 3px 10px;
-      border-radius: 6px;
+      color: var(--slate);
+      background: var(--gray);
+      padding: 4px 10px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
     }
+    .sector-card:hover .sector-tag { background: #fff; }
 
     /* ── Markets ── */
     .markets {
-      background: var(--gray);
-      padding: 96px 32px;
+      background: var(--navy-deep);
+      padding: 112px 40px;
     }
-    .markets-inner { max-width: 1200px; margin: 0 auto; }
+    .markets .section-eyebrow { color: rgba(255,255,255,0.4); }
+    .markets .section-title { color: #fff; }
+    .markets .section-sub { color: rgba(255,255,255,0.5); }
+    .markets-inner { max-width: 1140px; margin: 0 auto; }
     .markets-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 20px;
     }
     .market-card {
-      background: #fff;
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 32px 24px;
-      text-align: center;
-      transition: all 0.3s;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 36px 28px;
+      transition: all 0.2s ease;
     }
     .market-card:hover {
-      box-shadow: 0 8px 32px rgba(0,0,0,0.06);
-      transform: translateY(-2px);
+      background: rgba(255,255,255,0.07);
+      border-color: rgba(255,255,255,0.14);
     }
-    .market-flag {
-      font-size: 40px;
-      margin-bottom: 16px;
+    .market-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: rgba(255,255,255,0.35);
+      margin-bottom: 8px;
       display: block;
     }
     .market-card h3 {
-      font-size: 16px;
+      font-size: 18px;
       font-weight: 700;
-      color: var(--ink);
-      margin-bottom: 4px;
+      color: #fff;
+      margin-bottom: 10px;
+      letter-spacing: -0.2px;
     }
     .market-card p {
       font-size: 13px;
-      color: var(--slate);
-      line-height: 1.5;
+      color: rgba(255,255,255,0.5);
+      line-height: 1.65;
+      margin-bottom: 20px;
     }
     .market-reg {
       display: inline-flex;
       align-items: center;
-      gap: 4px;
-      margin-top: 12px;
+      gap: 6px;
       font-size: 11px;
       font-weight: 600;
-      color: var(--green);
-      background: #E6F4EC;
-      padding: 4px 12px;
+      color: #6EE7A0;
+      letter-spacing: 0.3px;
+    }
+    .market-reg svg { width: 14px; height: 14px; }
+
+    /* ── Methodology ── */
+    .methodology {
+      max-width: 1140px;
+      margin: 0 auto;
+      padding: 112px 40px;
+    }
+    .method-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 48px;
+    }
+    .method-item { }
+    .method-num {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--navy);
+      background: var(--sky);
+      width: 28px;
+      height: 28px;
       border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+    .method-item h3 {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 8px;
+      letter-spacing: -0.2px;
+    }
+    .method-item p {
+      font-size: 14px;
+      color: var(--slate);
+      line-height: 1.7;
     }
 
     /* ── CTA ── */
     .cta {
-      position: relative;
-      overflow: hidden;
-      background: linear-gradient(165deg, var(--navy-deep) 0%, var(--navy) 100%);
-      padding: 96px 32px;
+      background: var(--gray);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 96px 40px;
       text-align: center;
     }
-    .cta::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background-image:
-        linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
-      background-size: 60px 60px;
-      pointer-events: none;
-    }
     .cta-inner {
-      max-width: 580px;
+      max-width: 480px;
       margin: 0 auto;
-      position: relative;
-      z-index: 2;
     }
     .cta h2 {
-      font-size: clamp(28px, 3.5vw, 38px);
-      font-weight: 900;
-      color: #fff;
-      letter-spacing: -0.75px;
-      margin-bottom: 16px;
+      font-size: clamp(24px, 3vw, 32px);
+      font-weight: 800;
+      color: var(--ink);
+      letter-spacing: -0.5px;
+      margin-bottom: 12px;
+      line-height: 1.2;
     }
     .cta-sub {
-      font-size: 16px;
-      color: rgba(255,255,255,0.6);
-      margin-bottom: 40px;
+      font-size: 15px;
+      color: var(--slate);
+      margin-bottom: 36px;
       line-height: 1.7;
     }
     .cta-form {
       display: flex;
-      gap: 10px;
-      max-width: 460px;
+      gap: 8px;
+      max-width: 420px;
       margin: 0 auto;
-      background: rgba(255,255,255,0.08);
-      border: 1px solid rgba(255,255,255,0.12);
-      border-radius: 16px;
-      padding: 6px;
     }
     .cta-form input {
       flex: 1;
-      padding: 16px 20px;
-      background: transparent;
-      border: none;
-      color: #fff;
-      font-size: 15px;
+      padding: 14px 18px;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--ink);
+      font-size: 14px;
       font-family: inherit;
       outline: none;
+      transition: border-color 0.2s;
     }
-    .cta-form input::placeholder { color: rgba(255,255,255,0.4); }
+    .cta-form input:focus { border-color: var(--navy); }
+    .cta-form input::placeholder { color: #94A3B8; }
     .cta-form button {
-      padding: 16px 32px;
-      background: var(--gold);
+      padding: 14px 28px;
+      background: var(--navy);
       color: #fff;
       border: none;
-      border-radius: 12px;
+      border-radius: 8px;
       font-size: 14px;
       font-weight: 700;
       cursor: pointer;
-      transition: all 0.25s;
+      transition: all 0.2s;
       white-space: nowrap;
-      box-shadow: 0 4px 16px rgba(245,166,35,0.3);
     }
-    .cta-form button:hover {
-      background: var(--gold-dark);
-      box-shadow: 0 6px 24px rgba(245,166,35,0.45);
-    }
+    .cta-form button:hover { background: var(--navy-dark); }
     .cta-note {
-      margin-top: 16px;
+      margin-top: 14px;
       font-size: 12px;
-      color: rgba(255,255,255,0.35);
+      color: var(--slate);
     }
     #form-msg {
-      margin-top: 16px;
+      margin-top: 14px;
       font-size: 14px;
       font-weight: 600;
       display: none;
@@ -570,47 +548,38 @@
 
     /* ── Imprint ── */
     .imprint {
-      max-width: 1200px;
+      max-width: 1140px;
       margin: 0 auto;
-      padding: 96px 32px;
+      padding: 96px 40px;
     }
     .imprint-card {
       background: #fff;
       border: 1px solid var(--border);
-      border-radius: 24px;
+      border-radius: 16px;
       overflow: hidden;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
     }
     .imprint-bar {
-      height: 4px;
+      height: 3px;
       background: linear-gradient(90deg, var(--navy) 0%, var(--gold) 100%);
     }
     .imprint-body { padding: 48px; }
     .imprint-header {
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: 14px;
       margin-bottom: 32px;
     }
-    .imprint-header-icon {
-      width: 48px;
-      height: 48px;
-      background: var(--sky);
-      border-radius: 14px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 20px;
+    .imprint-header svg {
+      width: 24px;
+      height: 24px;
+      color: var(--navy);
+      flex-shrink: 0;
     }
     .imprint-header h2 {
-      font-size: 22px;
+      font-size: 18px;
       font-weight: 800;
       color: var(--ink);
       letter-spacing: -0.3px;
-    }
-    .imprint-header p {
-      font-size: 13px;
-      color: var(--slate);
     }
     .imprint-grid {
       display: grid;
@@ -618,8 +587,8 @@
       gap: 24px;
       padding: 32px;
       background: var(--gray);
-      border-radius: 16px;
-      margin-bottom: 32px;
+      border-radius: 12px;
+      margin-bottom: 36px;
     }
     .imprint-field label {
       display: block;
@@ -638,15 +607,11 @@
     .imprint-field a {
       color: var(--navy);
       text-decoration: none;
-      transition: color 0.2s;
     }
-    .imprint-field a:hover { color: var(--navy-dark); }
-    .imprint-sections {
-      display: grid;
-      gap: 0;
-    }
+    .imprint-field a:hover { text-decoration: underline; }
+    .imprint-sections { display: grid; gap: 0; }
     .imprint-section {
-      padding: 28px 0;
+      padding: 24px 0;
       border-bottom: 1px solid var(--border);
     }
     .imprint-section:last-child { border-bottom: none; padding-bottom: 0; }
@@ -654,7 +619,7 @@
       font-size: 14px;
       font-weight: 700;
       color: var(--ink);
-      margin-bottom: 10px;
+      margin-bottom: 8px;
       display: flex;
       align-items: center;
       gap: 8px;
@@ -685,47 +650,45 @@
     .imprint-section li {
       padding: 10px 14px;
       background: var(--gray);
-      border-radius: 10px;
+      border-radius: 8px;
       display: flex;
       align-items: flex-start;
       gap: 8px;
     }
     .imprint-section li .dot {
-      width: 6px;
-      height: 6px;
+      width: 5px;
+      height: 5px;
       background: var(--navy);
       border-radius: 50%;
-      margin-top: 6px;
+      margin-top: 7px;
       flex-shrink: 0;
     }
     .warning-box {
       background: var(--gold-light);
-      border: 1px solid #F5DCA0;
-      border-radius: 12px;
-      padding: 20px 24px;
-      margin-top: 16px;
+      border: 1px solid #F0DBA8;
+      border-radius: 8px;
+      padding: 18px 20px;
+      margin-top: 14px;
       display: flex;
-      gap: 12px;
+      gap: 10px;
     }
-    .warning-box .icon {
-      font-size: 18px;
+    .warning-box svg {
+      width: 18px;
+      height: 18px;
+      color: var(--gold-dark);
       flex-shrink: 0;
       margin-top: 1px;
     }
-    .warning-box p {
-      font-size: 12px;
-      color: var(--ink);
-      line-height: 1.65;
-    }
+    .warning-box p { font-size: 12px; color: var(--ink); line-height: 1.65; }
     .warning-box strong { color: var(--gold-dark); }
 
     /* ── Footer ── */
     .footer {
-      background: var(--ink);
-      padding: 48px 32px;
+      border-top: 1px solid var(--border);
+      padding: 40px;
     }
     .footer-inner {
-      max-width: 1200px;
+      max-width: 1140px;
       margin: 0 auto;
       display: flex;
       align-items: center;
@@ -736,59 +699,60 @@
     .footer-left {
       display: flex;
       align-items: center;
-      gap: 24px;
+      gap: 20px;
     }
     .footer-logo {
-      font-size: 20px;
-      font-weight: 900;
-      letter-spacing: -0.5px;
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: -0.3px;
     }
-    .footer-logo .smart { color: rgba(255,255,255,0.9); }
-    .footer-logo .fin { color: var(--gold); }
-    .footer-logo .pro { color: rgba(255,255,255,0.9); }
+    .footer-logo .smart { color: var(--ink); }
+    .footer-logo .fin { color: var(--navy); }
+    .footer-logo .pro { color: var(--ink); }
     .footer-copy {
       font-size: 13px;
-      color: rgba(255,255,255,0.35);
+      color: var(--slate);
     }
-    .footer-links {
-      display: flex;
-      gap: 24px;
-    }
+    .footer-links { display: flex; gap: 24px; }
     .footer-links a {
       font-size: 13px;
       font-weight: 500;
-      color: rgba(255,255,255,0.5);
+      color: var(--slate);
       text-decoration: none;
       transition: color 0.2s;
     }
-    .footer-links a:hover { color: rgba(255,255,255,0.9); }
+    .footer-links a:hover { color: var(--ink); }
 
     /* ── Responsive ── */
     @media (max-width: 900px) {
       .sectors-grid { grid-template-columns: repeat(2, 1fr); }
       .markets-grid { grid-template-columns: repeat(2, 1fr); }
+      .method-grid { grid-template-columns: 1fr; gap: 36px; }
       .imprint-section ul { grid-template-columns: 1fr; }
     }
     @media (max-width: 640px) {
       .header { padding: 0 20px; }
       .header-nav { gap: 16px; }
       .header-link { display: none; }
-      .hero { padding: 64px 20px 100px; }
-      .hero-inner { padding: 24px 16px; }
+      .hero { padding: 56px 20px 140px; }
       .hero-actions { flex-direction: column; }
-      .stats { padding: 0 20px; margin-top: -40px; }
+      .stats { padding: 0 20px; margin-top: -48px; }
       .stats-card { grid-template-columns: repeat(2, 1fr); }
       .stat:not(:last-child)::after { display: none; }
       .stat { border-bottom: 1px solid var(--border); }
-      .sectors { padding: 64px 20px; }
+      .compliance-bar { padding: 16px 20px; }
+      .compliance-inner { gap: 20px; justify-content: flex-start; }
+      .sectors { padding: 80px 20px; }
       .sectors-grid { grid-template-columns: 1fr; }
-      .markets { padding: 64px 20px; }
+      .markets { padding: 80px 20px; }
       .markets-grid { grid-template-columns: 1fr; }
-      .cta { padding: 64px 20px; }
+      .methodology { padding: 80px 20px; }
+      .cta { padding: 72px 20px; }
       .cta-form { flex-direction: column; }
-      .imprint { padding: 64px 20px; }
-      .imprint-body { padding: 28px; }
-      .imprint-grid { grid-template-columns: 1fr; padding: 24px; }
+      .imprint { padding: 72px 20px; }
+      .imprint-body { padding: 24px; }
+      .imprint-grid { grid-template-columns: 1fr; padding: 20px; }
+      .footer { padding: 32px 20px; }
       .footer-inner { flex-direction: column; text-align: center; }
       .footer-left { flex-direction: column; }
     }
@@ -803,10 +767,10 @@
         <span class="logo-smart">Smart</span><span class="logo-fin">Fin</span><span class="logo-pro">Pro</span>
       </div>
       <nav class="header-nav">
-        <a href="#sectors" class="header-link">Research</a>
+        <a href="#sectors" class="header-link">Coverage</a>
         <a href="#markets" class="header-link">Markets</a>
         <a href="#imprint" class="header-link">Legal</a>
-        <span class="header-badge">Coming Soon</span>
+        <span class="header-badge">Q2 2026</span>
       </nav>
     </div>
   </header>
@@ -816,28 +780,32 @@
     <div class="hero-bg"></div>
     <div class="hero-inner">
       <div class="hero-chip fade-up">
-        <span class="hero-chip-dot"></span>
         <span>Launching Q2 2026</span>
       </div>
-      <h1 class="fade-up fade-up-d1">Financial Intelligence<br>for <span class="gold">Modern Professionals</span></h1>
-      <p class="hero-sub fade-up fade-up-d2">Expert-led reviews, institutional-grade comparisons, and interactive tools across trading, AI, cybersecurity, and personal finance.</p>
+      <h1 class="fade-up fade-up-d1">Independent Research<br>for <span class="accent">Financial Decisions</span></h1>
+      <p class="hero-sub fade-up fade-up-d2">108+ expert-reviewed products across trading, AI, cybersecurity, and personal finance. Updated monthly. 4 regulated markets.</p>
       <div class="hero-actions fade-up fade-up-d3">
         <a href="#notify" class="btn-primary">Get Early Access &rarr;</a>
-        <a href="#sectors" class="btn-ghost">Explore Sectors</a>
+        <a href="#sectors" class="btn-ghost">View Coverage</a>
       </div>
+    </div>
+    <div class="hero-curve">
+      <svg viewBox="0 0 1440 64" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+        <path d="M0 32C360 58 720 64 1080 48C1260 40 1380 28 1440 20V64H0V32Z" fill="#ffffff"/>
+      </svg>
     </div>
   </section>
 
-  <!-- Stats (floating card) -->
+  <!-- Stats -->
   <div class="stats">
     <div class="stats-card">
       <div class="stat">
-        <div class="stat-value">100+</div>
+        <div class="stat-value">108+</div>
         <div class="stat-label">Expert Reviews</div>
       </div>
       <div class="stat">
         <div class="stat-value">4</div>
-        <div class="stat-label">Global Markets</div>
+        <div class="stat-label">Regulated Markets</div>
       </div>
       <div class="stat">
         <div class="stat-value">6</div>
@@ -850,28 +818,28 @@
     </div>
   </div>
 
-  <!-- Trust Strip -->
-  <div class="trust-strip" style="margin-top: 48px;">
-    <div class="trust-inner">
-      <div class="trust-item">
-        <div class="trust-icon" style="background: #E6F4EC; color: var(--green);">&#10003;</div>
-        <span>FCA-Regulated Partners</span>
+  <!-- Compliance Bar -->
+  <div class="compliance-bar">
+    <div class="compliance-inner">
+      <div class="compliance-item">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        <span>FCA Regulated</span>
       </div>
-      <div class="trust-item">
-        <div class="trust-icon" style="background: #E6F4EC; color: var(--green);">&#10003;</div>
-        <span>ASIC-Licensed Brokers</span>
+      <div class="compliance-item">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        <span>ASIC Licensed</span>
       </div>
-      <div class="trust-item">
-        <div class="trust-icon" style="background: #E6F4EC; color: var(--green);">&#10003;</div>
-        <span>CIRO-Compliant</span>
+      <div class="compliance-item">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        <span>CIRO Compliant</span>
       </div>
-      <div class="trust-item">
-        <div class="trust-icon" style="background: #E6F4EC; color: var(--green);">&#10003;</div>
+      <div class="compliance-item">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
         <span>Independent Editorial</span>
       </div>
-      <div class="trust-item">
-        <div class="trust-icon" style="background: #E6F4EC; color: var(--green);">&#10003;</div>
-        <span>Monthly Data Updates</span>
+      <div class="compliance-item">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <span>Updated Monthly</span>
       </div>
     </div>
   </div>
@@ -879,40 +847,48 @@
   <!-- Sectors -->
   <section class="sectors" id="sectors">
     <div class="section-header">
-      <div class="section-chip">&#9670; Research Coverage</div>
+      <span class="section-eyebrow">Research Coverage</span>
       <h2 class="section-title">Expert Analysis Across 6 Sectors</h2>
-      <p class="section-sub">Rigorous, methodology-driven reviews updated monthly by certified financial analysts and technology experts.</p>
+      <p class="section-sub">Methodology-driven reviews updated monthly by certified financial analysts and technology experts.</p>
     </div>
     <div class="sectors-grid">
       <div class="sector-card">
-        <div class="sector-icon" style="background: #EEF2FF;">&#129302;</div>
+        <div class="sector-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a4 4 0 0 1 4 4c0 1.95-1.4 3.58-3.25 3.93"/><path d="M8.24 4.35A4 4 0 0 0 8 6c0 1.95 1.4 3.58 3.25 3.93"/><path d="M14.5 12H18a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-6a2 2 0 0 1 2-2h3.5"/><line x1="12" y1="16" x2="12" y2="20"/></svg>
+        </div>
         <h3>AI Tools</h3>
-        <p>AI-powered software for finance professionals. Writing assistants, portfolio analyzers, and automation platforms.</p>
+        <p>Writing assistants, portfolio analyzers, and automation platforms reviewed for finance workflows.</p>
         <div class="sector-meta">
           <span class="sector-tag">10+ Reviews</span>
           <span class="sector-tag">ROI Calculator</span>
         </div>
       </div>
       <div class="sector-card">
-        <div class="sector-icon" style="background: #FEF2F2;">&#128274;</div>
+        <div class="sector-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </div>
         <h3>Cybersecurity</h3>
-        <p>Enterprise security solutions. VPNs, identity protection, password managers, and endpoint security.</p>
+        <p>VPNs, identity protection, password managers, and endpoint security for enterprise environments.</p>
         <div class="sector-meta">
           <span class="sector-tag">5+ Reviews</span>
           <span class="sector-tag">Threat Matrix</span>
         </div>
       </div>
       <div class="sector-card">
-        <div class="sector-icon" style="background: #ECFDF5;">&#128176;</div>
+        <div class="sector-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+        </div>
         <h3>Personal Finance</h3>
-        <p>Credit cards, loans, robo-advisors, and budgeting tools. Side-by-side fee comparisons.</p>
+        <p>Credit cards, loans, robo-advisors, and budgeting tools with side-by-side fee comparisons.</p>
         <div class="sector-meta">
           <span class="sector-tag">12+ Reviews</span>
           <span class="sector-tag">Loan Calculator</span>
         </div>
       </div>
       <div class="sector-card">
-        <div class="sector-icon" style="background: #FFF7ED;">&#128200;</div>
+        <div class="sector-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        </div>
         <h3>Trading Platforms</h3>
         <p>CFD, stock, and crypto platforms. Spreads, execution quality, and regulatory status verified.</p>
         <div class="sector-meta">
@@ -921,7 +897,9 @@
         </div>
       </div>
       <div class="sector-card">
-        <div class="sector-icon" style="background: #F0F9FF;">&#127970;</div>
+        <div class="sector-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        </div>
         <h3>Business Banking</h3>
         <p>Multi-currency accounts, invoicing, international payments, and API integrations compared.</p>
         <div class="sector-meta">
@@ -930,7 +908,9 @@
         </div>
       </div>
       <div class="sector-card">
-        <div class="sector-icon" style="background: #FDF4FF;">&#128179;</div>
+        <div class="sector-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        </div>
         <h3>Forex Brokers</h3>
         <p>FCA, ASIC, and CIRO-regulated forex brokers. Spreads, leverage, and execution benchmarked.</p>
         <div class="sector-meta">
@@ -945,35 +925,73 @@
   <section class="markets" id="markets">
     <div class="markets-inner">
       <div class="section-header">
-        <div class="section-chip">&#127760; Global Coverage</div>
-        <h2 class="section-title">4 Markets. Local Expertise.</h2>
-        <p class="section-sub">Region-specific reviews with local regulatory compliance, currency support, and market-relevant product selection.</p>
+        <span class="section-eyebrow">Global Coverage</span>
+        <h2 class="section-title">4 Markets. Local Compliance.</h2>
+        <p class="section-sub">Region-specific reviews with local regulatory frameworks, currency support, and market-relevant product selection.</p>
       </div>
       <div class="markets-grid">
         <div class="market-card">
-          <span class="market-flag">&#127482;&#127480;</span>
+          <span class="market-label">North America</span>
           <h3>United States</h3>
-          <p>SEC &amp; FTC compliant reviews. Credit cards, brokers, AI tools.</p>
-          <span class="market-reg">&#9679; FTC Compliant</span>
+          <p>SEC &amp; FTC compliant reviews. Credit cards, brokers, AI tools, and cybersecurity.</p>
+          <span class="market-reg">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 12 15 16 10"/></svg>
+            FTC Compliant
+          </span>
         </div>
         <div class="market-card">
-          <span class="market-flag">&#127468;&#127463;</span>
+          <span class="market-label">Europe</span>
           <h3>United Kingdom</h3>
-          <p>FCA-authorised broker referrals. ISAs, trading, cybersecurity.</p>
-          <span class="market-reg">&#9679; FCA Partners</span>
+          <p>FCA-authorised broker referrals. ISAs, trading platforms, and cybersecurity solutions.</p>
+          <span class="market-reg">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 12 15 16 10"/></svg>
+            FCA Partners
+          </span>
         </div>
         <div class="market-card">
-          <span class="market-flag">&#127464;&#127462;</span>
+          <span class="market-label">North America</span>
           <h3>Canada</h3>
-          <p>CIRO/CIPF member brokers. TFSA, RRSP, trading platforms.</p>
-          <span class="market-reg">&#9679; CIRO Compliant</span>
+          <p>CIRO/CIPF member brokers. TFSA, RRSP, and trading platform comparisons.</p>
+          <span class="market-reg">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 12 15 16 10"/></svg>
+            CIRO Compliant
+          </span>
         </div>
         <div class="market-card">
-          <span class="market-flag">&#127462;&#127482;</span>
+          <span class="market-label">Asia-Pacific</span>
           <h3>Australia</h3>
-          <p>AFSL-holding partners. Super funds, home loans, trading.</p>
-          <span class="market-reg">&#9679; AFSL Licensed</span>
+          <p>AFSL-holding partners. Super funds, home loans, and trading platform reviews.</p>
+          <span class="market-reg">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 12 15 16 10"/></svg>
+            AFSL Licensed
+          </span>
         </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Methodology -->
+  <section class="methodology">
+    <div class="section-header">
+      <span class="section-eyebrow">Our Process</span>
+      <h2 class="section-title">How We Review</h2>
+      <p class="section-sub">Every product goes through a structured evaluation process before publication.</p>
+    </div>
+    <div class="method-grid">
+      <div class="method-item">
+        <div class="method-num">01</div>
+        <h3>Hands-On Testing</h3>
+        <p>Every product is tested with real accounts over 2&ndash;4 weeks. We evaluate UX, pricing, execution speed, and support quality firsthand.</p>
+      </div>
+      <div class="method-item">
+        <div class="method-num">02</div>
+        <h3>Regulatory Verification</h3>
+        <p>We verify FCA, ASIC, CIRO, and SEC registration status directly with regulatory databases. Only compliant products are reviewed.</p>
+      </div>
+      <div class="method-item">
+        <div class="method-num">03</div>
+        <h3>Monthly Data Refresh</h3>
+        <p>Pricing, spreads, fees, and feature sets are re-checked monthly. Reviews are timestamped and versioned for full transparency.</p>
       </div>
     </div>
   </section>
@@ -981,14 +999,13 @@
   <!-- CTA -->
   <section class="cta" id="notify">
     <div class="cta-inner">
-      <div class="section-chip" style="background: rgba(255,255,255,0.08); color: var(--gold);">&#9993; Early Access</div>
-      <h2>Be First to Access<br>Our Research</h2>
-      <p class="cta-sub">Join professionals who want institutional-grade financial intelligence. No spam, just launch updates.</p>
+      <h2>Get Notified at Launch</h2>
+      <p class="cta-sub">Join 2,400+ finance professionals waiting for independent, methodology-driven product research.</p>
       <form class="cta-form" onsubmit="handleSubmit(event)">
-        <input type="email" placeholder="Enter your work email" required aria-label="Email address">
-        <button type="submit">Get Access</button>
+        <input type="email" placeholder="Work email" required aria-label="Email address">
+        <button type="submit">Join Waitlist</button>
       </form>
-      <p class="cta-note">Free forever. Unsubscribe anytime.</p>
+      <p class="cta-note">No spam. Unsubscribe anytime. Free forever.</p>
       <p id="form-msg"></p>
     </div>
   </section>
@@ -999,11 +1016,8 @@
       <div class="imprint-bar"></div>
       <div class="imprint-body">
         <div class="imprint-header">
-          <div class="imprint-header-icon">&#9878;</div>
-          <div>
-            <h2>Legal Imprint &amp; Disclosures</h2>
-            <p>Company information and regulatory compliance notices</p>
-          </div>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          <h2>Legal Imprint &amp; Disclosures</h2>
         </div>
 
         <div class="imprint-grid">
@@ -1048,7 +1062,7 @@
             <h3>Investment Disclaimer</h3>
             <p>All investments involve risk, including the possible loss of principal. Past performance does not guarantee future results. SmartFinPro does not provide personalized investment advice and is not a registered investment advisor. Content is for informational purposes only.</p>
             <div class="warning-box">
-              <span class="icon">&#9888;</span>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
               <p><strong>CFD Risk Warning:</strong> CFDs are complex instruments and come with a high risk of losing money rapidly due to leverage. Between 51% and 82% of retail investor accounts lose money when trading CFDs. You should consider whether you understand how CFDs work and whether you can afford to take the high risk of losing your money.</p>
             </div>
           </div>
@@ -1074,12 +1088,11 @@
         <div class="footer-logo">
           <span class="smart">Smart</span><span class="fin">Fin</span><span class="pro">Pro</span>
         </div>
-        <span class="footer-copy">&copy; 2026 SmartFin Value LLC. All rights reserved.</span>
+        <span class="footer-copy">&copy; 2026 SmartFin Value LLC</span>
       </div>
       <div class="footer-links">
-        <a href="#imprint">Imprint</a>
+        <a href="#imprint">Legal</a>
         <a href="mailto:info@smartfinpro.com">Contact</a>
-        <a href="#notify">Early Access</a>
       </div>
     </div>
   </footer>
@@ -1090,13 +1103,12 @@
       var msg = document.getElementById('form-msg');
       msg.style.display = 'block';
       msg.style.color = '#1A6B3A';
-      msg.textContent = 'You\'re on the list. We\'ll be in touch.';
+      msg.textContent = 'You\'re on the list. We\'ll notify you at launch.';
       e.target.querySelector('input').value = '';
       e.target.querySelector('button').textContent = 'Confirmed';
-      e.target.querySelector('button').style.background = '#1A6B3A';
+      e.target.querySelector('button').style.background = 'var(--green)';
     }
 
-    /* Smooth scroll */
     document.querySelectorAll('a[href^="#"]').forEach(function(a) {
       a.addEventListener('click', function(e) {
         var target = document.querySelector(this.getAttribute('href'));
