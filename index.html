@@ -87,7 +87,12 @@
       justify-content: center;
       flex-shrink: 0;
     }
-    .logo-mark svg { width: 16px; height: 16px; }
+    .logo-mark span {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--gold);
+      line-height: 1;
+    }
     .logo-text {
       font-size: 19px;
       font-weight: 700;
@@ -108,8 +113,9 @@
     .header-badge {
       font-size: 11px;
       font-weight: 600;
-      color: var(--slate);
-      border: 1px solid var(--border);
+      color: var(--navy);
+      background: var(--sky);
+      border: 1px solid #D6E4F5;
       padding: 5px 14px;
       border-radius: 6px;
       letter-spacing: 0.02em;
@@ -371,22 +377,12 @@
     }
     .sector-card {
       background: #fff;
-      padding: 40px 32px;
+      padding: 36px 32px;
       transition: all 0.25s ease;
     }
     .sector-card:hover {
       background: var(--gray);
     }
-    .sector-icon {
-      width: 40px;
-      height: 40px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 20px;
-      color: var(--navy);
-    }
-    .sector-icon svg { width: 24px; height: 24px; }
     .sector-card h3 {
       font-size: 16px;
       font-weight: 700;
@@ -752,7 +748,6 @@
       justify-content: center;
       flex-shrink: 0;
     }
-    .footer-logo .footer-mark svg { width: 13px; height: 13px; }
     .footer-logo .footer-text {
       font-size: 16px;
       font-weight: 700;
@@ -816,10 +811,7 @@
     <div class="header-inner">
       <div class="logo">
         <div class="logo-mark">
-          <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M2 12L6 6L10 9L14 3" stroke="#F5A623" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M10 3H14V7" stroke="#F5A623" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
+          <span>+</span>
         </div>
         <span class="logo-text">Smart<span class="fin">Fin</span>Pro</span>
       </div>
@@ -910,9 +902,6 @@
     </div>
     <div class="sectors-grid">
       <div class="sector-card">
-        <div class="sector-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a4 4 0 0 1 4 4c0 1.95-1.4 3.58-3.25 3.93"/><path d="M8.24 4.35A4 4 0 0 0 8 6c0 1.95 1.4 3.58 3.25 3.93"/><path d="M14.5 12H18a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-6a2 2 0 0 1 2-2h3.5"/><line x1="12" y1="16" x2="12" y2="20"/></svg>
-        </div>
         <h3>AI Tools</h3>
         <p>Writing assistants, portfolio analyzers, and automation platforms reviewed for finance workflows.</p>
         <div class="sector-meta">
@@ -921,9 +910,6 @@
         </div>
       </div>
       <div class="sector-card">
-        <div class="sector-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-        </div>
         <h3>Cybersecurity</h3>
         <p>VPNs, identity protection, password managers, and endpoint security for enterprise environments.</p>
         <div class="sector-meta">
@@ -932,9 +918,6 @@
         </div>
       </div>
       <div class="sector-card">
-        <div class="sector-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
-        </div>
         <h3>Personal Finance</h3>
         <p>Credit cards, loans, robo-advisors, and budgeting tools with side-by-side fee comparisons.</p>
         <div class="sector-meta">
@@ -943,9 +926,6 @@
         </div>
       </div>
       <div class="sector-card">
-        <div class="sector-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-        </div>
         <h3>Trading Platforms</h3>
         <p>CFD, stock, and crypto platforms. Spreads, execution quality, and regulatory status verified.</p>
         <div class="sector-meta">
@@ -954,9 +934,6 @@
         </div>
       </div>
       <div class="sector-card">
-        <div class="sector-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-        </div>
         <h3>Business Banking</h3>
         <p>Multi-currency accounts, invoicing, international payments, and API integrations compared.</p>
         <div class="sector-meta">
@@ -965,9 +942,6 @@
         </div>
       </div>
       <div class="sector-card">
-        <div class="sector-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-        </div>
         <h3>Forex Brokers</h3>
         <p>FCA, ASIC, and CIRO-regulated forex brokers. Spreads, leverage, and execution benchmarked.</p>
         <div class="sector-meta">
@@ -1144,10 +1118,7 @@
       <div class="footer-left">
         <div class="footer-logo">
           <div class="footer-mark">
-            <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M2 12L6 6L10 9L14 3" stroke="#F5A623" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M10 3H14V7" stroke="#F5A623" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
+            <span style="font-size:14px;font-weight:800;color:var(--gold);line-height:1;">+</span>
           </div>
           <span class="footer-text">Smart<span class="fin">Fin</span>Pro</span>
         </div>
