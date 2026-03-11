@@ -383,6 +383,16 @@
       border-radius: 16px;
       overflow: hidden;
     }
+    .sector-icon {
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+      color: var(--navy);
+    }
+    .sector-icon svg { width: 24px; height: 24px; }
     .sector-card {
       background: #fff;
       padding: 36px 32px;
@@ -420,6 +430,7 @@
     .markets {
       background: var(--navy-deep);
       padding: 112px 40px;
+      box-shadow: inset 0 8px 24px rgba(15, 46, 82, 0.15);
     }
     .markets .section-eyebrow { color: rgba(255,255,255,0.4); }
     .markets .section-title { color: #fff; }
@@ -498,13 +509,13 @@
     }
     .method-item { }
     .method-num {
-      font-size: 11px;
+      font-size: 13px;
       font-weight: 800;
-      color: var(--navy);
-      background: var(--sky);
-      width: 28px;
-      height: 28px;
-      border-radius: 8px;
+      color: #fff;
+      background: var(--navy);
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -571,7 +582,7 @@
     .cta-form input::placeholder { color: #94A3B8; }
     .cta-form button {
       padding: 14px 28px;
-      background: var(--navy);
+      background: var(--gold);
       color: #fff;
       border: none;
       border-radius: 8px;
@@ -582,7 +593,7 @@
       white-space: nowrap;
     }
     .cta-form button:hover {
-      background: var(--navy-dark);
+      background: var(--gold-dark);
     }
     .cta-note {
       margin-top: 14px;
@@ -924,6 +935,7 @@
     </div>
     <div class="sectors-grid">
       <div class="sector-card">
+        <div class="sector-icon"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z"/></svg></div>
         <h3>AI Tools</h3>
         <p>Writing assistants, portfolio analyzers, and automation platforms reviewed for finance workflows.</p>
         <div class="sector-meta">
@@ -932,6 +944,7 @@
         </div>
       </div>
       <div class="sector-card">
+        <div class="sector-icon"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/></svg></div>
         <h3>Cybersecurity</h3>
         <p>VPNs, identity protection, password managers, and endpoint security for enterprise environments.</p>
         <div class="sector-meta">
@@ -940,6 +953,7 @@
         </div>
       </div>
       <div class="sector-card">
+        <div class="sector-icon"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z"/></svg></div>
         <h3>Personal Finance</h3>
         <p>Credit cards, loans, robo-advisors, and budgeting tools with side-by-side fee comparisons.</p>
         <div class="sector-meta">
@@ -948,6 +962,7 @@
         </div>
       </div>
       <div class="sector-card">
+        <div class="sector-icon"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"/></svg></div>
         <h3>Trading Platforms</h3>
         <p>CFD, stock, and crypto platforms. Spreads, execution quality, and regulatory status verified.</p>
         <div class="sector-meta">
@@ -956,6 +971,7 @@
         </div>
       </div>
       <div class="sector-card">
+        <div class="sector-icon"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0012 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75z"/></svg></div>
         <h3>Business Banking</h3>
         <p>Multi-currency accounts, invoicing, international payments, and API integrations compared.</p>
         <div class="sector-meta">
@@ -964,6 +980,7 @@
         </div>
       </div>
       <div class="sector-card">
+        <div class="sector-icon"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div>
         <h3>Forex Brokers</h3>
         <p>FCA, ASIC, and CIRO-regulated forex brokers. Spreads, leverage, and execution benchmarked.</p>
         <div class="sector-meta">
