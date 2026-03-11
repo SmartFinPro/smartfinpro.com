@@ -1019,11 +1019,12 @@
         </div>
         <div class="market-card">
           <div class="market-flag">
-            <svg viewBox="0 0 36 26" xmlns="http://www.w3.org/2000/svg">
-              <rect width="36" height="26" fill="#fff"/>
-              <rect width="9" height="26" fill="#D52B1E"/>
-              <rect x="27" width="9" height="26" fill="#D52B1E"/>
-              <path d="M18 5l-1.5 4.5H13l3.5 2.5-1.3 4L18 13.5 20.8 16l-1.3-4L23 9.5h-3.5z" fill="#D52B1E"/>
+            <svg viewBox="0 0 1200 600" xmlns="http://www.w3.org/2000/svg">
+              <rect width="1200" height="600" fill="#fff"/>
+              <rect width="300" height="600" fill="#D52B1E"/>
+              <rect x="900" width="300" height="600" fill="#D52B1E"/>
+              <path d="M600,80 L570,220 L480,172 L500,220 L420,210 L460,260 L400,280 L470,310 L450,360 L520,340 L510,420 L540,390 L560,440 L600,380 L640,440 L660,390 L690,420 L680,340 L750,360 L730,310 L800,280 L740,260 L780,210 L700,220 L720,172 L630,220z" fill="#D52B1E"/>
+              <rect x="580" y="420" width="40" height="100" fill="#D52B1E"/>
             </svg>
           </div>
           <span class="market-label">North America</span>
@@ -1036,10 +1037,34 @@
         </div>
         <div class="market-card">
           <div class="market-flag">
-            <svg viewBox="0 0 36 26" xmlns="http://www.w3.org/2000/svg">
-              <rect width="36" height="26" fill="#00008B"/>
-              <g fill="#fff"><path d="M0 0v2l7.5 5H9l-9-6v-1h2.5L12 6V4.5L3 0H0zm18 0h-2.5L6 6V7l9.5-6H18V0zM9 7L0 1.5V3l6.5 4H9zm-3 0L0 3.5V5l3.5 2H6z"/><path d="M0 0v1l9 6h1.5L0 0zM18 7V6L9 1H7.5l10 6z" fill="#C8102E"/><rect x="7.5" width="3" height="7" fill="#fff"/><rect y="2.5" width="18" height="2" fill="#fff"/><rect x="8" y="0" width="2" height="7" fill="#C8102E"/><rect y="3" width="18" height="1" fill="#C8102E"/></g>
-              <g fill="#fff"><polygon points="26,8 26.5,9.5 28,9.5 26.8,10.4 27.2,12 26,11 24.8,12 25.2,10.4 24,9.5 25.5,9.5"/><polygon points="30,14 30.4,15.2 31.5,15.2 30.6,15.9 30.9,17 30,16.3 29.1,17 29.4,15.9 28.5,15.2 29.6,15.2"/><polygon points="32,8 32.4,9.2 33.5,9.2 32.6,9.9 32.9,11 32,10.3 31.1,11 31.4,9.9 30.5,9.2 31.6,9.2"/><polygon points="28,18 28.4,19.2 29.5,19.2 28.6,19.9 28.9,21 28,20.3 27.1,21 27.4,19.9 26.5,19.2 27.6,19.2"/><polygon points="24,14 24.4,15.2 25.5,15.2 24.6,15.9 24.9,17 24,16.3 23.1,17 23.4,15.9 22.5,15.2 23.6,15.2"/></g>
+            <svg viewBox="0 0 1280 640" xmlns="http://www.w3.org/2000/svg">
+              <rect width="1280" height="640" fill="#00008B"/>
+              <!-- Union Jack canton -->
+              <clipPath id="uj"><rect width="640" height="320"/></clipPath>
+              <g clip-path="url(#uj)">
+                <rect width="640" height="320" fill="#00008B"/>
+                <path d="M0,0 L640,320 M640,0 L0,320" stroke="#fff" stroke-width="64"/>
+                <path d="M0,0 L640,320 M640,0 L0,320" stroke="#C8102E" stroke-width="36"/>
+                <path d="M320,0 V320 M0,160 H640" stroke="#fff" stroke-width="106"/>
+                <path d="M320,0 V320 M0,160 H640" stroke="#C8102E" stroke-width="64"/>
+              </g>
+              <!-- Commonwealth Star (7-pointed) below Union Jack -->
+              <g fill="#fff" transform="translate(320,480)">
+                <polygon points="0,-56 13,-18 52,-18 20,7 33,44 0,22 -33,44 -20,7 -52,-18 -13,-18"/>
+              </g>
+              <!-- Southern Cross -->
+              <g fill="#fff">
+                <!-- Alpha Crucis (bottom) -->
+                <g transform="translate(935,530)"><polygon points="0,-36 8,-12 34,-12 14,5 21,30 0,16 -21,30 -14,5 -34,-12 -8,-12"/></g>
+                <!-- Beta Crucis (left) -->
+                <g transform="translate(795,370)"><polygon points="0,-36 8,-12 34,-12 14,5 21,30 0,16 -21,30 -14,5 -34,-12 -8,-12"/></g>
+                <!-- Gamma Crucis (top) -->
+                <g transform="translate(935,180)"><polygon points="0,-36 8,-12 34,-12 14,5 21,30 0,16 -21,30 -14,5 -34,-12 -8,-12"/></g>
+                <!-- Delta Crucis (right) -->
+                <g transform="translate(1075,310)"><polygon points="0,-36 8,-12 34,-12 14,5 21,30 0,16 -21,30 -14,5 -34,-12 -8,-12"/></g>
+                <!-- Epsilon Crucis (small, 5-pointed) -->
+                <g transform="translate(990,410)"><polygon points="0,-24 5,-8 22,-8 9,3 14,20 0,11 -14,20 -9,3 -22,-8 -5,-8"/></g>
+              </g>
             </svg>
           </div>
           <span class="market-label">Asia-Pacific</span>
