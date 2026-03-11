@@ -254,7 +254,7 @@
     /* ── Stats ── */
     .stats {
       max-width: 1140px;
-      margin: -64px auto 0;
+      margin: -32px auto 0;
       padding: 0 40px;
       position: relative;
       z-index: 10;
@@ -262,39 +262,44 @@
     .stats-card {
       background: #fff;
       border: 1px solid var(--border);
-      border-radius: 16px;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.04);
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      border-radius: 10px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+      max-width: 720px;
+      margin: 0 auto;
     }
     .stat {
-      padding: 44px 24px;
+      padding: 20px 32px;
       text-align: center;
       position: relative;
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
     }
     .stat:not(:last-child)::after {
       content: '';
       position: absolute;
       right: 0;
-      top: 24%;
-      height: 52%;
+      top: 25%;
+      height: 50%;
       width: 1px;
       background: var(--border);
     }
     .stat-value {
-      font-size: 32px;
+      font-size: 18px;
       font-weight: 800;
       color: var(--navy);
       line-height: 1;
-      margin-bottom: 8px;
-      letter-spacing: -0.5px;
+      letter-spacing: -0.3px;
     }
     .stat-label {
-      font-size: 12px;
+      font-size: 11px;
       color: var(--slate);
       font-weight: 500;
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
+      letter-spacing: 0.02em;
     }
 
     /* ── Compliance Bar ── */
@@ -782,10 +787,10 @@
       .header-link { display: none; }
       .hero { padding: 56px 20px 140px; }
       .hero-actions { flex-direction: column; }
-      .stats { padding: 0 20px; margin-top: -48px; }
-      .stats-card { grid-template-columns: repeat(2, 1fr); }
+      .stats { padding: 0 20px; margin-top: -24px; }
+      .stats-card { flex-wrap: wrap; max-width: 100%; }
       .stat:not(:last-child)::after { display: none; }
-      .stat { border-bottom: 1px solid var(--border); }
+      .stat { padding: 14px 20px; }
       .compliance-bar { padding: 16px 20px; }
       .compliance-inner { gap: 20px; justify-content: flex-start; }
       .sectors { padding: 80px 20px; }
