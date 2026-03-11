@@ -72,14 +72,14 @@
       height: 100%;
     }
     .logo {
-      font-size: 24px;
-      font-weight: 900;
+      font-size: 22px;
+      font-weight: 800;
       text-decoration: none;
       letter-spacing: -0.75px;
     }
-    .logo-smart { color: var(--navy); }
-    .logo-fin { color: var(--gold); }
-    .logo-pro { color: var(--navy); }
+    .logo-smart { color: var(--ink); }
+    .logo-fin { color: var(--navy); }
+    .logo-pro { color: var(--ink); }
     .header-nav { display: flex; align-items: center; gap: 36px; }
     .header-link {
       font-size: 13px;
@@ -89,12 +89,11 @@
       transition: color 0.2s;
       letter-spacing: 0.01em;
     }
-    .header-link:hover { color: var(--navy); }
+    .header-link:hover { color: var(--ink); }
     .header-badge {
       font-size: 11px;
-      font-weight: 700;
-      color: var(--navy);
-      background: var(--sky);
+      font-weight: 600;
+      color: var(--slate);
       border: 1px solid var(--border);
       padding: 5px 14px;
       border-radius: 6px;
@@ -180,12 +179,10 @@
       cursor: pointer;
       transition: all 0.25s ease;
       text-decoration: none;
-      box-shadow: 0 2px 12px rgba(245,166,35,0.25);
     }
     .btn-primary:hover {
       background: var(--gold-dark);
       transform: translateY(-2px);
-      box-shadow: 0 6px 24px rgba(245,166,35,0.35);
     }
     .btn-ghost {
       display: inline-flex;
@@ -237,9 +234,7 @@
       padding: 44px 24px;
       text-align: center;
       position: relative;
-      transition: background 0.2s;
     }
-    .stat:hover { background: var(--sky); }
     .stat:not(:last-child)::after {
       content: '';
       position: absolute;
@@ -308,7 +303,7 @@
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 2px;
-      color: var(--navy);
+      color: var(--slate);
       margin-bottom: 16px;
       display: block;
     }
@@ -347,11 +342,9 @@
       background: #fff;
       padding: 40px 32px;
       transition: all 0.25s ease;
-      border-left: 3px solid transparent;
     }
     .sector-card:hover {
-      background: var(--sky);
-      border-left-color: var(--navy);
+      background: var(--gray);
     }
     .sector-icon {
       width: 40px;
@@ -387,8 +380,6 @@
       border: 1px solid var(--border);
     }
     .sector-card:hover .sector-tag { background: #fff; border-color: transparent; }
-    .sector-card:hover h3 { color: var(--navy); }
-    .sector-card:hover .sector-icon { color: var(--gold); }
 
     /* ── Markets ── */
     .markets {
@@ -462,12 +453,12 @@
     }
     .method-item { }
     .method-num {
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 800;
-      color: #fff;
-      background: var(--navy);
-      width: 32px;
-      height: 32px;
+      color: var(--navy);
+      background: var(--sky);
+      width: 28px;
+      height: 28px;
       border-radius: 8px;
       display: flex;
       align-items: center;
@@ -535,7 +526,7 @@
     .cta-form input::placeholder { color: #94A3B8; }
     .cta-form button {
       padding: 14px 28px;
-      background: var(--gold);
+      background: var(--navy);
       color: #fff;
       border: none;
       border-radius: 8px;
@@ -544,11 +535,9 @@
       cursor: pointer;
       transition: all 0.25s;
       white-space: nowrap;
-      box-shadow: 0 2px 8px rgba(245,166,35,0.2);
     }
     .cta-form button:hover {
-      background: var(--gold-dark);
-      box-shadow: 0 4px 16px rgba(245,166,35,0.3);
+      background: var(--navy-dark);
     }
     .cta-note {
       margin-top: 14px;
@@ -700,7 +689,7 @@
 
     /* ── Footer ── */
     .footer {
-      background: var(--ink);
+      border-top: 1px solid var(--border);
       padding: 48px 40px;
     }
     .footer-inner {
@@ -722,22 +711,22 @@
       font-weight: 900;
       letter-spacing: -0.5px;
     }
-    .footer-logo .smart { color: rgba(255,255,255,0.9); }
-    .footer-logo .fin { color: var(--gold); }
-    .footer-logo .pro { color: rgba(255,255,255,0.9); }
+    .footer-logo .smart { color: var(--ink); }
+    .footer-logo .fin { color: var(--navy); }
+    .footer-logo .pro { color: var(--ink); }
     .footer-copy {
       font-size: 13px;
-      color: rgba(255,255,255,0.35);
+      color: var(--slate);
     }
     .footer-links { display: flex; gap: 24px; }
     .footer-links a {
       font-size: 13px;
       font-weight: 500;
-      color: rgba(255,255,255,0.5);
+      color: var(--slate);
       text-decoration: none;
       transition: color 0.2s;
     }
-    .footer-links a:hover { color: rgba(255,255,255,0.9); }
+    .footer-links a:hover { color: var(--ink); }
 
     /* ── Responsive ── */
     @media (max-width: 900px) {
