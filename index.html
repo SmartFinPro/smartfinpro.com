@@ -1,0 +1,1115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SmartFinPro — Financial Intelligence for Modern Professionals</title>
+  <meta name="description" content="SmartFinPro is launching soon. Expert reviews, comparisons, and guides for trading platforms, AI tools, cybersecurity, and personal finance across 4 global markets.">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://smartfinpro.com/">
+  <meta property="og:title" content="SmartFinPro — Coming Soon">
+  <meta property="og:description" content="Financial Intelligence for Modern Professionals. Expert reviews across 4 global markets.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://smartfinpro.com/">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy: #1B4F8C;
+      --navy-deep: #0F2E52;
+      --navy-dark: #163D6E;
+      --gold: #F5A623;
+      --gold-dark: #D48B1A;
+      --gold-light: #FFF8EB;
+      --green: #1A6B3A;
+      --sky: #E8F0FB;
+      --gray: #F7F8FA;
+      --ink: #1A1A2E;
+      --slate: #64748B;
+      --border: #E2E8F0;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      color: var(--ink);
+      background: #fff;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* ── Animations ── */
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+    @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+    @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes scaleIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    .fade-up { animation: fadeUp 0.7s ease-out both; }
+    .fade-up-d1 { animation-delay: 0.1s; }
+    .fade-up-d2 { animation-delay: 0.2s; }
+    .fade-up-d3 { animation-delay: 0.3s; }
+    .fade-up-d4 { animation-delay: 0.4s; }
+
+    /* ── Header ── */
+    .header {
+      background: rgba(255,255,255,0.92);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 32px;
+      height: 64px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .header-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 100%;
+    }
+    .logo {
+      font-size: 24px;
+      font-weight: 900;
+      text-decoration: none;
+      letter-spacing: -0.75px;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+    .logo-smart { color: var(--navy); }
+    .logo-fin { color: var(--gold); }
+    .logo-pro { color: var(--navy); }
+    .header-nav {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+    }
+    .header-link {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--slate);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .header-link:hover { color: var(--ink); }
+    .header-badge {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: #fff;
+      background: linear-gradient(135deg, var(--navy) 0%, var(--navy-dark) 100%);
+      padding: 6px 16px;
+      border-radius: 100px;
+    }
+
+    /* ── Hero ── */
+    .hero {
+      position: relative;
+      overflow: hidden;
+      background: linear-gradient(165deg, var(--navy-deep) 0%, var(--navy) 40%, var(--navy-dark) 100%);
+      padding: 100px 32px 120px;
+      text-align: center;
+    }
+    /* Grid pattern overlay */
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none;
+    }
+    /* Radial glow */
+    .hero::after {
+      content: '';
+      position: absolute;
+      top: -30%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 800px;
+      height: 800px;
+      background: radial-gradient(circle, rgba(245,166,35,0.12) 0%, transparent 65%);
+      pointer-events: none;
+    }
+    .hero-inner {
+      max-width: 780px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 2;
+    }
+    .hero-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 100px;
+      padding: 8px 20px;
+      margin-bottom: 32px;
+    }
+    .hero-chip-dot {
+      width: 6px;
+      height: 6px;
+      background: var(--gold);
+      border-radius: 50%;
+      animation: pulse 2s ease-in-out infinite;
+    }
+    .hero-chip span {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: rgba(255,255,255,0.8);
+    }
+    .hero h1 {
+      font-size: clamp(36px, 5.5vw, 62px);
+      font-weight: 900;
+      color: #fff;
+      line-height: 1.08;
+      margin-bottom: 24px;
+      letter-spacing: -1.5px;
+    }
+    .hero h1 .gold {
+      background: linear-gradient(135deg, var(--gold) 0%, #FFD280 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero-sub {
+      font-size: 18px;
+      font-weight: 400;
+      color: rgba(255,255,255,0.6);
+      max-width: 540px;
+      margin: 0 auto 48px;
+      line-height: 1.7;
+    }
+    .hero-actions {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 16px 36px;
+      background: var(--gold);
+      color: #fff;
+      font-size: 15px;
+      font-weight: 700;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.25s;
+      text-decoration: none;
+      box-shadow: 0 4px 24px rgba(245,166,35,0.35);
+    }
+    .btn-primary:hover {
+      background: var(--gold-dark);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 32px rgba(245,166,35,0.45);
+    }
+    .btn-ghost {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 16px 36px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.15);
+      color: #fff;
+      font-size: 15px;
+      font-weight: 600;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.25s;
+      text-decoration: none;
+    }
+    .btn-ghost:hover {
+      background: rgba(255,255,255,0.12);
+      border-color: rgba(255,255,255,0.25);
+    }
+
+    /* ── Trust Strip ── */
+    .trust-strip {
+      background: #fff;
+      border-bottom: 1px solid var(--border);
+      padding: 20px 32px;
+    }
+    .trust-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 40px;
+      flex-wrap: wrap;
+    }
+    .trust-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--slate);
+    }
+    .trust-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+    }
+
+    /* ── Stats ── */
+    .stats {
+      max-width: 1200px;
+      margin: -60px auto 0;
+      padding: 0 32px;
+      position: relative;
+      z-index: 10;
+    }
+    .stats-card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04);
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      overflow: hidden;
+    }
+    .stat {
+      padding: 36px 24px;
+      text-align: center;
+      position: relative;
+    }
+    .stat:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      right: 0;
+      top: 20%;
+      height: 60%;
+      width: 1px;
+      background: var(--border);
+    }
+    .stat-value {
+      font-size: 36px;
+      font-weight: 900;
+      letter-spacing: -1px;
+      line-height: 1;
+      margin-bottom: 6px;
+      background: linear-gradient(135deg, var(--navy) 0%, var(--navy-dark) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .stat-label {
+      font-size: 12px;
+      color: var(--slate);
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* ── Sectors ── */
+    .sectors {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 96px 32px;
+    }
+    .section-header { text-align: center; margin-bottom: 56px; }
+    .section-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--gold-light);
+      color: var(--gold-dark);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      padding: 6px 16px;
+      border-radius: 100px;
+      margin-bottom: 20px;
+    }
+    .section-title {
+      font-size: clamp(28px, 3.5vw, 40px);
+      font-weight: 900;
+      color: var(--ink);
+      letter-spacing: -0.75px;
+      margin-bottom: 16px;
+    }
+    .section-sub {
+      font-size: 16px;
+      color: var(--slate);
+      max-width: 520px;
+      margin: 0 auto;
+      line-height: 1.7;
+    }
+    .sectors-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+    .sector-card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 32px 28px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+    .sector-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--navy), var(--gold));
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .sector-card:hover {
+      border-color: transparent;
+      box-shadow: 0 8px 40px rgba(27,79,140,0.1), 0 1px 3px rgba(0,0,0,0.04);
+      transform: translateY(-2px);
+    }
+    .sector-card:hover::before { opacity: 1; }
+    .sector-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      margin-bottom: 20px;
+    }
+    .sector-card h3 {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 8px;
+      letter-spacing: -0.2px;
+    }
+    .sector-card p {
+      font-size: 14px;
+      color: var(--slate);
+      line-height: 1.6;
+    }
+    .sector-meta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
+    .sector-tag {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--navy);
+      background: var(--sky);
+      padding: 3px 10px;
+      border-radius: 6px;
+    }
+
+    /* ── Markets ── */
+    .markets {
+      background: var(--gray);
+      padding: 96px 32px;
+    }
+    .markets-inner { max-width: 1200px; margin: 0 auto; }
+    .markets-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+    }
+    .market-card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 32px 24px;
+      text-align: center;
+      transition: all 0.3s;
+    }
+    .market-card:hover {
+      box-shadow: 0 8px 32px rgba(0,0,0,0.06);
+      transform: translateY(-2px);
+    }
+    .market-flag {
+      font-size: 40px;
+      margin-bottom: 16px;
+      display: block;
+    }
+    .market-card h3 {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 4px;
+    }
+    .market-card p {
+      font-size: 13px;
+      color: var(--slate);
+      line-height: 1.5;
+    }
+    .market-reg {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: 12px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--green);
+      background: #E6F4EC;
+      padding: 4px 12px;
+      border-radius: 6px;
+    }
+
+    /* ── CTA ── */
+    .cta {
+      position: relative;
+      overflow: hidden;
+      background: linear-gradient(165deg, var(--navy-deep) 0%, var(--navy) 100%);
+      padding: 96px 32px;
+      text-align: center;
+    }
+    .cta::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none;
+    }
+    .cta-inner {
+      max-width: 580px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 2;
+    }
+    .cta h2 {
+      font-size: clamp(28px, 3.5vw, 38px);
+      font-weight: 900;
+      color: #fff;
+      letter-spacing: -0.75px;
+      margin-bottom: 16px;
+    }
+    .cta-sub {
+      font-size: 16px;
+      color: rgba(255,255,255,0.6);
+      margin-bottom: 40px;
+      line-height: 1.7;
+    }
+    .cta-form {
+      display: flex;
+      gap: 10px;
+      max-width: 460px;
+      margin: 0 auto;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 16px;
+      padding: 6px;
+    }
+    .cta-form input {
+      flex: 1;
+      padding: 16px 20px;
+      background: transparent;
+      border: none;
+      color: #fff;
+      font-size: 15px;
+      font-family: inherit;
+      outline: none;
+    }
+    .cta-form input::placeholder { color: rgba(255,255,255,0.4); }
+    .cta-form button {
+      padding: 16px 32px;
+      background: var(--gold);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.25s;
+      white-space: nowrap;
+      box-shadow: 0 4px 16px rgba(245,166,35,0.3);
+    }
+    .cta-form button:hover {
+      background: var(--gold-dark);
+      box-shadow: 0 6px 24px rgba(245,166,35,0.45);
+    }
+    .cta-note {
+      margin-top: 16px;
+      font-size: 12px;
+      color: rgba(255,255,255,0.35);
+    }
+    #form-msg {
+      margin-top: 16px;
+      font-size: 14px;
+      font-weight: 600;
+      display: none;
+    }
+
+    /* ── Imprint ── */
+    .imprint {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 96px 32px;
+    }
+    .imprint-card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .imprint-bar {
+      height: 4px;
+      background: linear-gradient(90deg, var(--navy) 0%, var(--gold) 100%);
+    }
+    .imprint-body { padding: 48px; }
+    .imprint-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+    .imprint-header-icon {
+      width: 48px;
+      height: 48px;
+      background: var(--sky);
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+    .imprint-header h2 {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--ink);
+      letter-spacing: -0.3px;
+    }
+    .imprint-header p {
+      font-size: 13px;
+      color: var(--slate);
+    }
+    .imprint-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      padding: 32px;
+      background: var(--gray);
+      border-radius: 16px;
+      margin-bottom: 32px;
+    }
+    .imprint-field label {
+      display: block;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--slate);
+      margin-bottom: 6px;
+    }
+    .imprint-field p {
+      font-size: 14px;
+      color: var(--ink);
+      font-weight: 600;
+    }
+    .imprint-field a {
+      color: var(--navy);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .imprint-field a:hover { color: var(--navy-dark); }
+    .imprint-sections {
+      display: grid;
+      gap: 0;
+    }
+    .imprint-section {
+      padding: 28px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .imprint-section:last-child { border-bottom: none; padding-bottom: 0; }
+    .imprint-section h3 {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .imprint-section h3 .badge {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      background: var(--sky);
+      color: var(--navy);
+    }
+    .imprint-section p, .imprint-section li {
+      font-size: 13px;
+      color: var(--slate);
+      line-height: 1.75;
+    }
+    .imprint-section ul {
+      list-style: none;
+      padding: 0;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .imprint-section li {
+      padding: 10px 14px;
+      background: var(--gray);
+      border-radius: 10px;
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+    .imprint-section li .dot {
+      width: 6px;
+      height: 6px;
+      background: var(--navy);
+      border-radius: 50%;
+      margin-top: 6px;
+      flex-shrink: 0;
+    }
+    .warning-box {
+      background: var(--gold-light);
+      border: 1px solid #F5DCA0;
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin-top: 16px;
+      display: flex;
+      gap: 12px;
+    }
+    .warning-box .icon {
+      font-size: 18px;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .warning-box p {
+      font-size: 12px;
+      color: var(--ink);
+      line-height: 1.65;
+    }
+    .warning-box strong { color: var(--gold-dark); }
+
+    /* ── Footer ── */
+    .footer {
+      background: var(--ink);
+      padding: 48px 32px;
+    }
+    .footer-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .footer-left {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+    .footer-logo {
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+    }
+    .footer-logo .smart { color: rgba(255,255,255,0.9); }
+    .footer-logo .fin { color: var(--gold); }
+    .footer-logo .pro { color: rgba(255,255,255,0.9); }
+    .footer-copy {
+      font-size: 13px;
+      color: rgba(255,255,255,0.35);
+    }
+    .footer-links {
+      display: flex;
+      gap: 24px;
+    }
+    .footer-links a {
+      font-size: 13px;
+      font-weight: 500;
+      color: rgba(255,255,255,0.5);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .footer-links a:hover { color: rgba(255,255,255,0.9); }
+
+    /* ── Responsive ── */
+    @media (max-width: 900px) {
+      .sectors-grid { grid-template-columns: repeat(2, 1fr); }
+      .markets-grid { grid-template-columns: repeat(2, 1fr); }
+      .imprint-section ul { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 640px) {
+      .header { padding: 0 20px; }
+      .header-nav { gap: 16px; }
+      .header-link { display: none; }
+      .hero { padding: 64px 20px 100px; }
+      .hero-actions { flex-direction: column; }
+      .stats { padding: 0 20px; margin-top: -40px; }
+      .stats-card { grid-template-columns: repeat(2, 1fr); }
+      .stat:not(:last-child)::after { display: none; }
+      .stat { border-bottom: 1px solid var(--border); }
+      .sectors { padding: 64px 20px; }
+      .sectors-grid { grid-template-columns: 1fr; }
+      .markets { padding: 64px 20px; }
+      .markets-grid { grid-template-columns: 1fr; }
+      .cta { padding: 64px 20px; }
+      .cta-form { flex-direction: column; }
+      .imprint { padding: 64px 20px; }
+      .imprint-body { padding: 28px; }
+      .imprint-grid { grid-template-columns: 1fr; padding: 24px; }
+      .footer-inner { flex-direction: column; text-align: center; }
+      .footer-left { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-inner">
+      <div class="logo">
+        <span class="logo-smart">Smart</span><span class="logo-fin">Fin</span><span class="logo-pro">Pro</span>
+      </div>
+      <nav class="header-nav">
+        <a href="#sectors" class="header-link">Research</a>
+        <a href="#markets" class="header-link">Markets</a>
+        <a href="#imprint" class="header-link">Legal</a>
+        <span class="header-badge">Coming Soon</span>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-inner">
+      <div class="hero-chip fade-up">
+        <span class="hero-chip-dot"></span>
+        <span>Launching Q2 2026</span>
+      </div>
+      <h1 class="fade-up fade-up-d1">Financial Intelligence<br>for <span class="gold">Modern Professionals</span></h1>
+      <p class="hero-sub fade-up fade-up-d2">Expert-led reviews, institutional-grade comparisons, and interactive tools across trading, AI, cybersecurity, and personal finance.</p>
+      <div class="hero-actions fade-up fade-up-d3">
+        <a href="#notify" class="btn-primary">Get Early Access &rarr;</a>
+        <a href="#sectors" class="btn-ghost">Explore Sectors</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Stats (floating card) -->
+  <div class="stats">
+    <div class="stats-card">
+      <div class="stat">
+        <div class="stat-value">100+</div>
+        <div class="stat-label">Expert Reviews</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">4</div>
+        <div class="stat-label">Global Markets</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">6</div>
+        <div class="stat-label">Sectors Covered</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">9</div>
+        <div class="stat-label">Interactive Tools</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Trust Strip -->
+  <div class="trust-strip" style="margin-top: 48px;">
+    <div class="trust-inner">
+      <div class="trust-item">
+        <div class="trust-icon" style="background: #E6F4EC; color: var(--green);">&#10003;</div>
+        <span>FCA-Regulated Partners</span>
+      </div>
+      <div class="trust-item">
+        <div class="trust-icon" style="background: #E6F4EC; color: var(--green);">&#10003;</div>
+        <span>ASIC-Licensed Brokers</span>
+      </div>
+      <div class="trust-item">
+        <div class="trust-icon" style="background: #E6F4EC; color: var(--green);">&#10003;</div>
+        <span>CIRO-Compliant</span>
+      </div>
+      <div class="trust-item">
+        <div class="trust-icon" style="background: #E6F4EC; color: var(--green);">&#10003;</div>
+        <span>Independent Editorial</span>
+      </div>
+      <div class="trust-item">
+        <div class="trust-icon" style="background: #E6F4EC; color: var(--green);">&#10003;</div>
+        <span>Monthly Data Updates</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sectors -->
+  <section class="sectors" id="sectors">
+    <div class="section-header">
+      <div class="section-chip">&#9670; Research Coverage</div>
+      <h2 class="section-title">Expert Analysis Across 6 Sectors</h2>
+      <p class="section-sub">Rigorous, methodology-driven reviews updated monthly by certified financial analysts and technology experts.</p>
+    </div>
+    <div class="sectors-grid">
+      <div class="sector-card">
+        <div class="sector-icon" style="background: #EEF2FF;">&#129302;</div>
+        <h3>AI Tools</h3>
+        <p>AI-powered software for finance professionals. Writing assistants, portfolio analyzers, and automation platforms.</p>
+        <div class="sector-meta">
+          <span class="sector-tag">10+ Reviews</span>
+          <span class="sector-tag">ROI Calculator</span>
+        </div>
+      </div>
+      <div class="sector-card">
+        <div class="sector-icon" style="background: #FEF2F2;">&#128274;</div>
+        <h3>Cybersecurity</h3>
+        <p>Enterprise security solutions. VPNs, identity protection, password managers, and endpoint security.</p>
+        <div class="sector-meta">
+          <span class="sector-tag">5+ Reviews</span>
+          <span class="sector-tag">Threat Matrix</span>
+        </div>
+      </div>
+      <div class="sector-card">
+        <div class="sector-icon" style="background: #ECFDF5;">&#128176;</div>
+        <h3>Personal Finance</h3>
+        <p>Credit cards, loans, robo-advisors, and budgeting tools. Side-by-side fee comparisons.</p>
+        <div class="sector-meta">
+          <span class="sector-tag">12+ Reviews</span>
+          <span class="sector-tag">Loan Calculator</span>
+        </div>
+      </div>
+      <div class="sector-card">
+        <div class="sector-icon" style="background: #FFF7ED;">&#128200;</div>
+        <h3>Trading Platforms</h3>
+        <p>CFD, stock, and crypto platforms. Spreads, execution quality, and regulatory status verified.</p>
+        <div class="sector-meta">
+          <span class="sector-tag">12+ Reviews</span>
+          <span class="sector-tag">Cost Calculator</span>
+        </div>
+      </div>
+      <div class="sector-card">
+        <div class="sector-icon" style="background: #F0F9FF;">&#127970;</div>
+        <h3>Business Banking</h3>
+        <p>Multi-currency accounts, invoicing, international payments, and API integrations compared.</p>
+        <div class="sector-meta">
+          <span class="sector-tag">7+ Reviews</span>
+          <span class="sector-tag">FX Comparison</span>
+        </div>
+      </div>
+      <div class="sector-card">
+        <div class="sector-icon" style="background: #FDF4FF;">&#128179;</div>
+        <h3>Forex Brokers</h3>
+        <p>FCA, ASIC, and CIRO-regulated forex brokers. Spreads, leverage, and execution benchmarked.</p>
+        <div class="sector-meta">
+          <span class="sector-tag">8+ Reviews</span>
+          <span class="sector-tag">Broker Finder</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Markets -->
+  <section class="markets" id="markets">
+    <div class="markets-inner">
+      <div class="section-header">
+        <div class="section-chip">&#127760; Global Coverage</div>
+        <h2 class="section-title">4 Markets. Local Expertise.</h2>
+        <p class="section-sub">Region-specific reviews with local regulatory compliance, currency support, and market-relevant product selection.</p>
+      </div>
+      <div class="markets-grid">
+        <div class="market-card">
+          <span class="market-flag">&#127482;&#127480;</span>
+          <h3>United States</h3>
+          <p>SEC &amp; FTC compliant reviews. Credit cards, brokers, AI tools.</p>
+          <span class="market-reg">&#9679; FTC Compliant</span>
+        </div>
+        <div class="market-card">
+          <span class="market-flag">&#127468;&#127463;</span>
+          <h3>United Kingdom</h3>
+          <p>FCA-authorised broker referrals. ISAs, trading, cybersecurity.</p>
+          <span class="market-reg">&#9679; FCA Partners</span>
+        </div>
+        <div class="market-card">
+          <span class="market-flag">&#127464;&#127462;</span>
+          <h3>Canada</h3>
+          <p>CIRO/CIPF member brokers. TFSA, RRSP, trading platforms.</p>
+          <span class="market-reg">&#9679; CIRO Compliant</span>
+        </div>
+        <div class="market-card">
+          <span class="market-flag">&#127462;&#127482;</span>
+          <h3>Australia</h3>
+          <p>AFSL-holding partners. Super funds, home loans, trading.</p>
+          <span class="market-reg">&#9679; AFSL Licensed</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta" id="notify">
+    <div class="cta-inner">
+      <div class="section-chip" style="background: rgba(255,255,255,0.08); color: var(--gold);">&#9993; Early Access</div>
+      <h2>Be First to Access<br>Our Research</h2>
+      <p class="cta-sub">Join professionals who want institutional-grade financial intelligence. No spam, just launch updates.</p>
+      <form class="cta-form" onsubmit="handleSubmit(event)">
+        <input type="email" placeholder="Enter your work email" required aria-label="Email address">
+        <button type="submit">Get Access</button>
+      </form>
+      <p class="cta-note">Free forever. Unsubscribe anytime.</p>
+      <p id="form-msg"></p>
+    </div>
+  </section>
+
+  <!-- Imprint -->
+  <section class="imprint" id="imprint">
+    <div class="imprint-card">
+      <div class="imprint-bar"></div>
+      <div class="imprint-body">
+        <div class="imprint-header">
+          <div class="imprint-header-icon">&#9878;</div>
+          <div>
+            <h2>Legal Imprint &amp; Disclosures</h2>
+            <p>Company information and regulatory compliance notices</p>
+          </div>
+        </div>
+
+        <div class="imprint-grid">
+          <div class="imprint-field">
+            <label>Legal Entity</label>
+            <p>SmartFin Value LLC</p>
+          </div>
+          <div class="imprint-field">
+            <label>Registered Address</label>
+            <p>30 N Gould St Ste N<br>Sheridan, WY 82801, USA</p>
+          </div>
+          <div class="imprint-field">
+            <label>Contact</label>
+            <p><a href="mailto:info@smartfinpro.com">info@smartfinpro.com</a></p>
+          </div>
+          <div class="imprint-field">
+            <label>Website</label>
+            <p><a href="https://smartfinpro.com">smartfinpro.com</a></p>
+          </div>
+          <div class="imprint-field">
+            <label>State of Formation</label>
+            <p>Wyoming, United States</p>
+          </div>
+          <div class="imprint-field">
+            <label>Business Type</label>
+            <p>Affiliate Publisher</p>
+          </div>
+        </div>
+
+        <div class="imprint-sections">
+          <div class="imprint-section">
+            <h3>Affiliate Disclosure <span class="badge">Required</span></h3>
+            <p>SmartFinPro earns affiliate commissions when visitors click our links and sign up for or purchase financial products. This includes trading platforms, credit cards, banking products, insurance, and software subscriptions. Affiliate relationships never influence our ratings, rankings, or editorial conclusions.</p>
+          </div>
+
+          <div class="imprint-section">
+            <h3>FTC Disclosure <span class="badge">United States</span></h3>
+            <p>In compliance with the Federal Trade Commission (FTC) guidelines on endorsements and testimonials (16 CFR Part 255): We have a material financial relationship with the companies whose products we review. Compensation may impact how and where products appear, but does not influence editorial evaluations.</p>
+          </div>
+
+          <div class="imprint-section">
+            <h3>Investment Disclaimer</h3>
+            <p>All investments involve risk, including the possible loss of principal. Past performance does not guarantee future results. SmartFinPro does not provide personalized investment advice and is not a registered investment advisor. Content is for informational purposes only.</p>
+            <div class="warning-box">
+              <span class="icon">&#9888;</span>
+              <p><strong>CFD Risk Warning:</strong> CFDs are complex instruments and come with a high risk of losing money rapidly due to leverage. Between 51% and 82% of retail investor accounts lose money when trading CFDs. You should consider whether you understand how CFDs work and whether you can afford to take the high risk of losing your money.</p>
+            </div>
+          </div>
+
+          <div class="imprint-section">
+            <h3>Regulatory Coverage</h3>
+            <ul>
+              <li><span class="dot"></span><span><strong>United States</strong> &mdash; FTC compliance, SEC-registered broker referrals</span></li>
+              <li><span class="dot"></span><span><strong>United Kingdom</strong> &mdash; FCA-authorised brokers (IG, eToro, Capital.com, Plus500)</span></li>
+              <li><span class="dot"></span><span><strong>Canada</strong> &mdash; CIRO/CIPF member brokers (Wealthsimple, Questrade)</span></li>
+              <li><span class="dot"></span><span><strong>Australia</strong> &mdash; AFSL-holding brokers (eToro, IG, Interactive Brokers)</span></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-left">
+        <div class="footer-logo">
+          <span class="smart">Smart</span><span class="fin">Fin</span><span class="pro">Pro</span>
+        </div>
+        <span class="footer-copy">&copy; 2026 SmartFin Value LLC. All rights reserved.</span>
+      </div>
+      <div class="footer-links">
+        <a href="#imprint">Imprint</a>
+        <a href="mailto:info@smartfinpro.com">Contact</a>
+        <a href="#notify">Early Access</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    function handleSubmit(e) {
+      e.preventDefault();
+      var msg = document.getElementById('form-msg');
+      msg.style.display = 'block';
+      msg.style.color = '#1A6B3A';
+      msg.textContent = 'You\'re on the list. We\'ll be in touch.';
+      e.target.querySelector('input').value = '';
+      e.target.querySelector('button').textContent = 'Confirmed';
+      e.target.querySelector('button').style.background = '#1A6B3A';
+    }
+
+    /* Smooth scroll */
+    document.querySelectorAll('a[href^="#"]').forEach(function(a) {
+      a.addEventListener('click', function(e) {
+        var target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+          e.preventDefault();
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      });
+    });
+  </script>
+
+</body>
+</html>
