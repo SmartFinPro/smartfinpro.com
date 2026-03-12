@@ -475,7 +475,7 @@ export function ReportLayout({
                 {/* Rating — Split-Panel Proof Design */}
                 {review.rating && (
                   <div className="mt-4 rounded-2xl border border-[#E2E8F0] bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)] overflow-hidden">
-                    <div className="h-[3px]" style={{ background: 'var(--sfp-navy)' }} />
+                    <div className="h-px" style={{ background: 'var(--sfp-navy)' }} />
                     <div className="flex flex-col sm:flex-row">
                       <div
                         className="shrink-0 px-6 py-4 sm:py-0 flex flex-col justify-center sm:w-[200px] border-b sm:border-b-0 sm:border-r border-gray-100"
