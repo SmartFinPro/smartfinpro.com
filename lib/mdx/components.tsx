@@ -320,67 +320,65 @@ function AffiliateButton({
   };
 
   return (
-    <div className="my-10 not-prose">
-      <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
-        {/* Gradient accent bar */}
-        <div className="h-1" style={{ background: 'linear-gradient(90deg, var(--sfp-navy) 0%, var(--sfp-gold) 100%)' }} />
-
-        <div className="flex flex-col lg:flex-row">
-          {/* Left panel: Label */}
+    <div className="my-10 not-prose" data-component="affiliate-button-v2">
+      <div
+        className="flex flex-wrap sm:flex-nowrap items-center justify-between gap-4 rounded-2xl border bg-white px-5 py-4"
+        style={{
+          borderColor: 'rgba(245,166,35,0.22)',
+          boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
+        }}
+      >
+        {/* Left: icon + label */}
+        <div className="flex items-center gap-3 min-w-0">
           <div
-            className="shrink-0 px-6 py-5 lg:px-8 lg:py-0 flex flex-col justify-center lg:w-[260px] border-b lg:border-b-0 lg:border-r border-gray-100"
+            className="shrink-0 w-8 h-8 rounded-xl flex items-center justify-center"
             style={{ background: 'var(--sfp-sky)' }}
           >
-            <div className="flex items-center gap-2.5 mb-1.5">
-              <div
-                className="w-7 h-7 rounded-lg flex items-center justify-center"
-                style={{ background: 'rgba(26,107,58,0.1)' }}
-              >
-                <ArrowRight className="h-3.5 w-3.5" style={{ color: 'var(--sfp-gold)' }} />
-              </div>
-              <span
-                className="text-sm font-bold uppercase tracking-wider leading-tight"
-                style={{ color: 'var(--sfp-navy)' }}
-              >
-                Get Started
-              </span>
-            </div>
-            <p style={{ color: 'var(--sfp-slate)', fontSize: '11px' }} className="lg:pl-[38px]">
-              Official Partner Link
-            </p>
+            <ArrowRight className="h-4 w-4" style={{ color: 'var(--sfp-navy)' }} />
           </div>
-
-          {/* Right panel: CTA */}
-          <div className="flex-1 flex items-center justify-center px-6 py-4 lg:px-8">
-            <Link
-              href={href}
-              target="_blank"
-              rel="nofollow noopener sponsored"
-              onClick={handleClick}
-              className="inline-flex items-center justify-center gap-2 rounded-2xl font-bold text-white whitespace-nowrap transition-all duration-200"
-              style={{
-                background: 'var(--sfp-gold)',
-                color: '#ffffff',
-                fontSize: '15px',
-                padding: '14px 36px',
-                boxShadow: '0 4px 24px rgba(245,166,35,0.35)',
-              }}
-              onMouseEnter={e => {
-                (e.currentTarget as HTMLElement).style.background = 'var(--sfp-gold-dark)';
-                (e.currentTarget as HTMLElement).style.boxShadow = '0 6px 32px rgba(245,166,35,0.5)';
-                (e.currentTarget as HTMLElement).style.transform = 'translateY(-1px)';
-              }}
-              onMouseLeave={e => {
-                (e.currentTarget as HTMLElement).style.background = 'var(--sfp-gold)';
-                (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 24px rgba(245,166,35,0.35)';
-                (e.currentTarget as HTMLElement).style.transform = 'translateY(0)';
-              }}
+          <div className="min-w-0">
+            <div
+              className="text-[11px] font-semibold uppercase tracking-wider"
+              style={{ color: 'var(--sfp-slate)' }}
             >
-              {children || `Try ${productName || 'Now'} Free`}
-              <ArrowRight className="h-4 w-4" />
-            </Link>
+              Official Partner
+            </div>
+            {productName && (
+              <div className="text-sm font-bold truncate" style={{ color: 'var(--sfp-ink)' }}>
+                {productName}
+              </div>
+            )}
           </div>
         </div>
+
+        {/* Right: compact CTA — matches sticky-nav button style */}
+        <Link
+          href={href}
+          target="_blank"
+          rel="nofollow noopener sponsored"
+          onClick={handleClick}
+          className="shrink-0 inline-flex items-center gap-2 rounded-2xl font-bold text-white whitespace-nowrap transition-all duration-200"
+          style={{
+            background: 'var(--sfp-gold)',
+            color: '#ffffff',
+            fontSize: '14px',
+            padding: '10px 22px',
+            boxShadow: '0 3px 16px rgba(245,166,35,0.35)',
+          }}
+          onMouseEnter={e => {
+            (e.currentTarget as HTMLElement).style.background = 'var(--sfp-gold-dark)';
+            (e.currentTarget as HTMLElement).style.boxShadow = '0 5px 24px rgba(245,166,35,0.5)';
+            (e.currentTarget as HTMLElement).style.transform = 'translateY(-1px)';
+          }}
+          onMouseLeave={e => {
+            (e.currentTarget as HTMLElement).style.background = 'var(--sfp-gold)';
+            (e.currentTarget as HTMLElement).style.boxShadow = '0 3px 16px rgba(245,166,35,0.35)';
+            (e.currentTarget as HTMLElement).style.transform = 'translateY(0)';
+          }}
+        >
+          {children || `Visit ${productName || 'Now'}`}
+          <ArrowRight className="h-4 w-4" />
+        </Link>
       </div>
     </div>
   );

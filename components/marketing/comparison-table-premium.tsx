@@ -422,7 +422,7 @@ export function ComparisonTablePremium({
                 <Button
                   asChild
                   className="w-full gap-2 font-bold"
-                  style={{ background: item.isEditorsChoice ? 'var(--sfp-gold)' : 'var(--sfp-navy)', color: item.isEditorsChoice ? 'var(--sfp-ink)' : '#ffffff' }}
+                  style={{ background: item.isEditorsChoice ? 'var(--sfp-gold)' : 'var(--sfp-navy)', color: '#ffffff', borderRadius: '1rem' }}
                 >
                   <Link href={item.affiliateUrl} target="_blank" rel="noopener sponsored">
                     {ctaLabel} {item.name}
