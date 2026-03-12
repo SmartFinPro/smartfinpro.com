@@ -131,7 +131,7 @@ export function ComparisonTable({
                           <Button
                             asChild
                             size="sm"
-                            className="rounded-lg border-0 text-white hover:opacity-90 font-bold"
+                            className="rounded-lg border-0 text-white hover:opacity-90 font-medium"
                             style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}
                           >
                             <Link href={item.ctaLink} target="_blank" rel="noopener sponsored">
