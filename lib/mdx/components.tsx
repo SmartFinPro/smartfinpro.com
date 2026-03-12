@@ -360,7 +360,7 @@ function AffiliateButton({
           target="_blank"
           rel="nofollow noopener sponsored"
           onClick={handleClick}
-          className="shrink-0 inline-flex items-center gap-1.5 rounded-2xl font-bold whitespace-nowrap transition-all duration-200"
+          className="shrink-0 inline-flex items-center gap-1.5 rounded-2xl font-normal whitespace-nowrap transition-all duration-200"
           style={{
             background: 'var(--sfp-gold)',
             color: '#ffffff',

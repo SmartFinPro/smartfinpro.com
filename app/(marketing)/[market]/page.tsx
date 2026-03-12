@@ -168,7 +168,7 @@ export default async function MarketHomePage({ params }: MarketPageProps) {
           2. META-BAR (transition between Hero and Report Feed)
       ═══════════════════════════════════════════════════════════════ */}
       <div className="bg-white border-b border-gray-200">
-        <div className="container mx-auto px-4 py-4">
+        <div className="max-w-[1200px] mx-auto px-6 py-4">
           <div
             className="flex flex-wrap items-center gap-4 px-5 py-3 rounded-xl text-sm"
             style={{ background: 'var(--sfp-gray)' }}
@@ -198,8 +198,8 @@ export default async function MarketHomePage({ params }: MarketPageProps) {
 
       {/* UK Broker Hero Slider — Exclusive to UK Market */}
       {marketData === 'uk' && (
-        <section className="py-10" style={{ background: 'var(--sfp-gray)' }}>
-          <div className="container mx-auto px-4">
+        <section className="py-12" style={{ background: 'var(--sfp-gray)' }}>
+          <div className="max-w-[1200px] mx-auto px-6">
             <UKBrokerHeroSlider />
           </div>
         </section>
@@ -209,8 +209,8 @@ export default async function MarketHomePage({ params }: MarketPageProps) {
           3. TWO-COLUMN LAYOUT (Sidebar LEFT + Report Feed RIGHT)
       ═══════════════════════════════════════════════════════════════ */}
       <section style={{ background: 'var(--sfp-gray)' }}>
-        <div className="container mx-auto px-4 py-8">
-          <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-8">
+        <div className="max-w-[1200px] mx-auto px-6 py-24">
+          <div className="flex flex-col lg:flex-row gap-8">
 
             {/* LEFT: Sidebar (~25%) — Sticky Category Navigation */}
             <PortalSidebar market={marketData} />
@@ -219,8 +219,8 @@ export default async function MarketHomePage({ params }: MarketPageProps) {
             <div className="flex-1 min-w-0">
 
               {/* Section Title */}
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold" style={{ color: 'var(--sfp-ink)' }}>
+              <div className="flex items-center justify-between mb-8">
+                <h2 className="text-2xl font-black tracking-tight" style={{ color: 'var(--sfp-ink)' }}>
                   Latest Reports
                 </h2>
                 <span className="text-sm" style={{ color: 'var(--sfp-slate)' }}>
@@ -248,20 +248,35 @@ export default async function MarketHomePage({ params }: MarketPageProps) {
 
               {/* Empty State */}
               {allReviews.length === 0 && (
-                <div className="rounded-2xl border border-gray-200 bg-white p-12 text-center shadow-sm">
+                <div
+                  className="rounded-2xl border bg-white p-12 text-center"
+                  style={{
+                    borderColor: '#E2E8F0',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                  }}
+                >
                   <BarChart3 className="h-12 w-12 mx-auto mb-4" style={{ color: 'var(--sfp-slate)' }} />
                   <h3 className="text-lg font-semibold mb-2" style={{ color: 'var(--sfp-ink)' }}>
                     Reports Coming Soon
                   </h3>
-                  <p className="text-sm" style={{ color: 'var(--sfp-slate)' }}>
+                  <p className="text-sm leading-relaxed" style={{ color: 'var(--sfp-slate)' }}>
                     Our expert team is preparing research reports for {config.name}. Check back soon.
                   </p>
                 </div>
               )}
 
+              {/* Section divider */}
+              <div className="mt-10 mb-8" style={{ borderTop: '1px solid rgba(27,79,140,0.15)' }} />
+
               {/* Global Markets Links */}
-              <div className="mt-8 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-                <h3 className="text-base font-bold mb-4" style={{ color: 'var(--sfp-ink)' }}>
+              <div
+                className="markets-card rounded-2xl border bg-white p-6 transition-all duration-200 hover:-translate-y-0.5"
+                style={{
+                  borderColor: '#E2E8F0',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                }}
+              >
+                <h3 className="text-base font-black tracking-tight mb-5" style={{ color: 'var(--sfp-ink)' }}>
                   Explore All Markets
                 </h3>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -274,8 +289,8 @@ export default async function MarketHomePage({ params }: MarketPageProps) {
                     <Link
                       key={m.name}
                       href={m.href}
-                      className="flex items-center gap-2 rounded-xl border border-gray-200 px-4 py-3 text-sm hover:shadow-md transition-shadow"
-                      style={{ color: 'var(--sfp-ink)' }}
+                      className="flex items-center gap-2 rounded-xl border px-4 py-3 text-sm transition-all duration-200 hover:shadow-md hover:-translate-y-0.5"
+                      style={{ borderColor: '#E2E8F0', color: 'var(--sfp-ink)' }}
                     >
                       <span className="text-lg">{m.flag}</span>
                       <span className="font-medium">{m.name}</span>
@@ -285,8 +300,14 @@ export default async function MarketHomePage({ params }: MarketPageProps) {
               </div>
 
               {/* Trust Section (compact) */}
-              <div className="mt-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm text-center">
-                <p className="text-sm font-semibold mb-3" style={{ color: 'var(--sfp-ink)' }}>
+              <div
+                className="mt-4 rounded-2xl border bg-white p-6 text-center"
+                style={{
+                  borderColor: '#E2E8F0',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                }}
+              >
+                <p className="text-sm font-black tracking-tight mb-4" style={{ color: 'var(--sfp-ink)' }}>
                   Trusted by {config.name} Professionals
                 </p>
                 <div className="flex flex-wrap justify-center gap-3">

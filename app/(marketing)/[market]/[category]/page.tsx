@@ -160,7 +160,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
           1. REPORT-STYLE HERO (compact, white bg, border-b)
       ═══════════════════════════════════════════════════════════════ */}
       <section className="bg-white border-b border-gray-200">
-        <div className="container mx-auto px-4 pt-6 pb-8">
+        <div className="mx-auto px-6 pt-8 pb-10" style={{ maxWidth: '1200px' }}>
           {/* Breadcrumb */}
           <Breadcrumb
             items={[
@@ -172,19 +172,19 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
 
           {/* Title */}
           <h1
-            className="text-2xl md:text-3xl lg:text-4xl font-bold mt-4"
+            className="text-3xl md:text-4xl lg:text-5xl font-black tracking-tight mt-5"
             style={{ color: 'var(--sfp-ink)' }}
           >
             {pillarContent?.meta.title || `${categoryInfo.name}: Expert Research Reports`}
           </h1>
-          <p className="text-base mt-2 max-w-3xl" style={{ color: 'var(--sfp-slate)' }}>
+          <p className="text-base mt-3 max-w-3xl leading-relaxed" style={{ color: 'var(--sfp-slate)' }}>
             {pillarContent?.meta.description || categoryInfo.description}
           </p>
 
           {/* Meta-Bar */}
           <div
-            className="flex flex-wrap items-center gap-4 mt-6 px-5 py-3 rounded-xl text-sm"
-            style={{ background: 'var(--sfp-gray)' }}
+            className="flex flex-wrap items-center gap-4 mt-6 px-5 py-3 rounded-2xl text-sm border border-[#E2E8F0]"
+            style={{ background: 'var(--sfp-gray)', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}
           >
             <span className="inline-flex items-center gap-1.5" style={{ color: 'var(--sfp-slate)' }}>
               <FileText className="h-3.5 w-3.5" />
@@ -217,22 +217,20 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
           1b. HERO IMAGE (category pillar)
       ═══════════════════════════════════════════════════════════════ */}
       <div className="bg-white border-b border-gray-100">
-        <div className="container mx-auto px-4 py-4">
-          <div className="max-w-7xl mx-auto">
-            <RegionalHeroImage
-              market={market}
-              category={category}
-              className="w-full"
-            />
-          </div>
+        <div className="mx-auto px-6 py-4" style={{ maxWidth: '1200px' }}>
+          <RegionalHeroImage
+            market={market}
+            category={category}
+            className="w-full"
+          />
         </div>
       </div>
 
       {/* ═══════════════════════════════════════════════════════════════
           2. TWO-COLUMN LAYOUT (Sidebar LEFT + Report Feed RIGHT)
       ═══════════════════════════════════════════════════════════════ */}
-      <section className="container mx-auto px-4 py-8">
-        <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-8">
+      <section className="mx-auto px-6 py-24" style={{ maxWidth: '1200px' }}>
+        <div className="flex flex-col lg:flex-row gap-8">
 
           {/* LEFT: Sidebar (~25%) — Sticky Category Navigation */}
           <PortalSidebar market={market as Market} activeCategory={category as Category} />
@@ -242,7 +240,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
 
             {/* Section Title */}
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold" style={{ color: 'var(--sfp-ink)' }}>
+              <h2 className="text-2xl font-black tracking-tight" style={{ color: 'var(--sfp-ink)' }}>
                 {ratedReviews.length > 0 ? 'Latest Reports' : 'All Reports'}
               </h2>
               <span className="text-sm" style={{ color: 'var(--sfp-slate)' }}>
@@ -251,7 +249,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
             </div>
 
             {/* Report Cards */}
-            <div className="space-y-4">
+            <div className="flex flex-col gap-5">
               {reviews.map((item) => (
                 <ReportCard
                   key={item.slug}
@@ -270,9 +268,12 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
 
             {/* Empty State */}
             {reviews.length === 0 && (
-              <div className="rounded-2xl border border-gray-200 bg-white p-12 text-center shadow-sm">
+              <div
+                className="rounded-2xl border border-[#E2E8F0] bg-white p-12 text-center"
+                style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}
+              >
                 <BarChart3 className="h-12 w-12 mx-auto mb-4" style={{ color: 'var(--sfp-slate)' }} />
-                <h3 className="text-lg font-semibold mb-2" style={{ color: 'var(--sfp-ink)' }}>
+                <h3 className="text-lg font-black tracking-tight mb-2" style={{ color: 'var(--sfp-ink)' }}>
                   Reports Coming Soon
                 </h3>
                 <p className="text-sm" style={{ color: 'var(--sfp-slate)' }}>
@@ -283,7 +284,10 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
 
             {/* Pillar MDX Content (wenn index.mdx existiert) */}
             {mdxSource && (
-              <div className="mt-8 rounded-2xl border border-gray-200 bg-white p-6 md:p-8 shadow-sm">
+              <div
+                className="mt-8 rounded-2xl border border-[#E2E8F0] bg-white p-6 md:p-8"
+                style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}
+              >
                 <article className="prose prose-lg max-w-none">
                   <SafeMDX source={mdxSource} />
                 </article>
@@ -291,7 +295,10 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
             )}
 
             {/* ─── Editorial Transparency Block ─── */}
-            <div className="mt-8 rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+            <div
+              className="mt-8 rounded-2xl border border-[#E2E8F0] bg-white overflow-hidden"
+              style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}
+            >
               {/* Gradient accent bar */}
               <div style={{ height: 4, background: 'linear-gradient(90deg, var(--sfp-navy) 0%, var(--sfp-gold) 100%)' }} />
               <div className="flex flex-col sm:flex-row">
@@ -346,19 +353,19 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
             {/* Useful Tools */}
             {categoryTools[category] && categoryTools[category].length > 0 && (
               <div className="mt-8">
-                <h3 className="text-lg font-bold mb-4 flex items-center gap-2" style={{ color: 'var(--sfp-ink)' }}>
+                <h3 className="text-lg font-black tracking-tight mb-4 flex items-center gap-2" style={{ color: 'var(--sfp-ink)' }}>
                   <Wrench className="h-5 w-5" style={{ color: 'var(--sfp-navy)' }} />
                   Useful Tools
                 </h3>
-                <div className="grid sm:grid-cols-2 gap-3">
+                <div className="grid sm:grid-cols-2 gap-5">
                   {categoryTools[category].map((tool) => (
                     <Link
                       key={tool.href}
                       href={tool.href}
-                      className="rounded-xl border border-gray-200 bg-white p-4 transition-shadow hover:shadow-md group flex items-center gap-3 shadow-sm"
+                      className="card-hover-lift rounded-2xl border border-[#E2E8F0] bg-white p-4 group flex items-center gap-3 transition-all duration-200"
                     >
                       <div>
-                        <p className="text-sm font-medium" style={{ color: 'var(--sfp-ink)' }}>{tool.name}</p>
+                        <p className="text-sm font-semibold" style={{ color: 'var(--sfp-ink)' }}>{tool.name}</p>
                         <p className="text-xs" style={{ color: 'var(--sfp-slate)' }}>{tool.description}</p>
                       </div>
                       <ArrowRight className="h-4 w-4 ml-auto shrink-0 group-hover:translate-x-1 transition-transform" style={{ color: 'var(--sfp-gold)' }} />
@@ -374,7 +381,10 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
             </div>
 
             {/* Disclaimer */}
-            <aside className="mt-6 rounded-xl border border-gray-200 bg-white p-5 text-sm shadow-sm" style={{ color: 'var(--sfp-slate)' }}>
+            <aside
+              className="mt-6 rounded-2xl border border-[#E2E8F0] bg-white p-5 text-sm"
+              style={{ color: 'var(--sfp-slate)', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}
+            >
               <div className="flex items-start gap-3">
                 <Shield className="h-4 w-4 mt-0.5 shrink-0" style={{ color: 'var(--sfp-navy)' }} />
                 <div>

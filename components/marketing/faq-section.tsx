@@ -35,13 +35,14 @@ export function FAQSection({
         />
       )}
 
-      <h2 className="text-2xl font-bold mb-6" style={{ color: 'var(--sfp-ink)' }}>{title}</h2>
+      <h2 className="text-2xl font-black tracking-tight mb-6" style={{ color: 'var(--sfp-ink)' }}>{title}</h2>
 
       <div className="space-y-3">
         {faqs.map((faq, index) => (
           <div
             key={index}
-            className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden"
+            className="rounded-2xl bg-white overflow-hidden"
+            style={{ border: '1px solid #E2E8F0', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}
           >
             <button
               onClick={() => setOpenIndex(openIndex === index ? null : index)}
@@ -84,7 +85,7 @@ export function InlineFAQ({ faqs }: InlineFAQProps) {
   return (
     <div className="space-y-6 my-8">
       {faqs.map((faq, index) => (
-        <div key={index} className="rounded-xl border border-gray-200 bg-white shadow-sm p-5">
+        <div key={index} className="rounded-2xl bg-white p-5" style={{ border: '1px solid #E2E8F0', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
           <h4 className="font-semibold mb-2" style={{ color: 'var(--sfp-ink)' }}>{faq.question}</h4>
           <p className="leading-relaxed" style={{ color: 'var(--sfp-slate)' }}>{faq.answer}</p>
         </div>

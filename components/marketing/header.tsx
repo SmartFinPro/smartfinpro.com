@@ -244,7 +244,7 @@ export function Header({ market: marketProp }: HeaderProps) {
               <LayoutDashboard className="h-4 w-4" />
               <span>Dashboard</span>
             </Link>
-            <Button asChild className="text-white border-0 font-semibold" style={{ background: 'var(--sfp-gold)', color: '#ffffff', borderRadius: '1rem' }} onMouseOver={(e) => (e.currentTarget.style.background = 'var(--sfp-gold-dark)')} onMouseOut={(e) => (e.currentTarget.style.background = 'var(--sfp-gold)')}>
+            <Button asChild className="text-white border-0 font-normal" style={{ background: 'var(--sfp-gold)', color: '#ffffff', borderRadius: '1rem' }} onMouseOver={(e) => (e.currentTarget.style.background = 'var(--sfp-gold-dark)')} onMouseOut={(e) => (e.currentTarget.style.background = 'var(--sfp-gold)')}>
               <Link href="/tools">Get Started</Link>
             </Button>
           </div>

@@ -259,7 +259,8 @@ export function ComparisonHub({
     <div className="my-12 not-prose">
       {/* ── Card Container ── */}
       <div
-        className="rounded-2xl border border-gray-200 overflow-hidden bg-white"
+        className="rounded-2xl overflow-hidden bg-white"
+        style={{ border: '1px solid #E2E8F0', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}
       >
         {/* ── Header ── */}
         <div
@@ -277,7 +278,7 @@ export function ComparisonHub({
               <Sparkles className="h-5 w-5" style={{ color: 'var(--sfp-navy)' }} />
             </div>
             <div>
-              <h3 className="text-lg font-bold" style={{ color: 'var(--sfp-ink)' }}>{displayTitle}</h3>
+              <h3 className="text-lg font-black tracking-tight" style={{ color: 'var(--sfp-ink)' }}>{displayTitle}</h3>
               <p className="text-xs" style={{ color: 'var(--sfp-slate)' }}>
                 {variant === 'B'
                   ? 'Ranked by user rating & trust'
@@ -492,13 +493,13 @@ function PartnerRow({ partner, index, isWinner, onCtaClick }: PartnerRowProps) {
             target="_blank"
             rel="noopener sponsored"
             onClick={handleClick}
-            className={`inline-flex items-center gap-1.5 px-5 py-2.5 rounded-lg text-sm font-semibold text-white transition-all whitespace-nowrap ${
+            className={`inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all whitespace-nowrap ${
               isWinner
-                ? 'btn-shimmer hover:opacity-90 shadow-md'
+                ? 'btn-shimmer hover:opacity-90'
                 : 'border border-gray-200 hover:bg-gray-50'
             }`}
             style={isWinner
-              ? { background: 'var(--sfp-gold)', color: '#ffffff' }
+              ? { background: 'var(--sfp-gold)', color: '#ffffff', boxShadow: '0 4px 14px rgba(245,166,35,0.35)' }
               : { background: 'white', color: 'var(--sfp-navy)' }
             }
           >
@@ -602,13 +603,13 @@ function PartnerRow({ partner, index, isWinner, onCtaClick }: PartnerRowProps) {
             target="_blank"
             rel="noopener sponsored"
             onClick={handleClick}
-            className={`ml-auto inline-flex items-center gap-1.5 px-5 py-2.5 rounded-lg text-sm font-semibold text-white transition-all ${
+            className={`ml-auto inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all ${
               isWinner
-                ? 'btn-shimmer hover:opacity-90 shadow-md'
+                ? 'btn-shimmer hover:opacity-90'
                 : 'border border-gray-200 hover:bg-gray-50'
             }`}
             style={isWinner
-              ? { background: 'var(--sfp-gold)', color: '#ffffff' }
+              ? { background: 'var(--sfp-gold)', color: '#ffffff', boxShadow: '0 4px 14px rgba(245,166,35,0.35)' }
               : { background: 'white', color: 'var(--sfp-navy)' }
             }
           >

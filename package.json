@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "predev": "rm -rf .next/dev/lock && (lsof -ti:${PORT:-3000} 2>/dev/null | xargs kill -9 2>/dev/null || true)",
+    "predev": "rm -rf .next/cache/webpack .next/dev/lock && (lsof -ti:${PORT:-3000} 2>/dev/null | xargs kill -9 2>/dev/null || true)",
     "dev": "next dev --turbopack",
     "dev:webpack": "next dev --webpack",
     "dev:clean": "bash bin/fix-cache.sh --restart",

@@ -381,7 +381,7 @@ export function ReportLayout({
               {hasAffiliate && (
                 <TrackedAffiliateLink
                   href={review.affiliateUrl}
-                  className="ml-auto px-5 py-3 text-sm font-semibold rounded-t-2xl transition-colors flex items-center gap-2 no-underline hover:no-underline"
+                  className="ml-auto px-5 py-3 text-sm font-normal rounded-t-2xl transition-colors flex items-center gap-2 no-underline hover:no-underline"
                   style={{ background: 'var(--sfp-gold)', color: '#ffffff', textDecoration: 'none' }}
                   eventLabel={primaryCtaLabel}
                   market={market}
@@ -1072,7 +1072,7 @@ export function ReportLayout({
                     <div className="pt-3 border-t border-gray-100">
                       <TrackedAffiliateLink
                         href={review.affiliateUrl}
-                        className="w-full h-12 text-base font-semibold border-0 shadow-md hover:shadow-lg transition-all rounded-2xl inline-flex items-center justify-center no-underline hover:no-underline hover:brightness-110"
+                        className="w-full h-12 text-base font-normal border-0 shadow-md hover:shadow-lg transition-all rounded-2xl inline-flex items-center justify-center no-underline hover:no-underline hover:brightness-110"
                         style={{ background: 'var(--sfp-gold)', color: '#ffffff', textDecoration: 'none' }}
                         eventLabel={primaryCtaLabel}
                         market={market}
@@ -1170,7 +1170,7 @@ export function ReportLayout({
               </div>
               <TrackedAffiliateLink
                 href={review.affiliateUrl}
-                className="h-10 px-5 text-sm font-semibold border-0 rounded-2xl shrink-0 inline-flex items-center justify-center no-underline hover:no-underline hover:brightness-110 transition-all"
+                className="h-10 px-5 text-sm font-normal border-0 rounded-2xl shrink-0 inline-flex items-center justify-center no-underline hover:no-underline hover:brightness-110 transition-all"
                 style={{ background: 'var(--sfp-gold)', color: '#ffffff', textDecoration: 'none' }}
                 eventLabel={category === 'debt-relief' ? 'Get Analysis' : 'Visit Site'}
                 market={market}
