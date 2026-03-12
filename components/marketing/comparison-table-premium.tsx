@@ -146,8 +146,11 @@ export function ComparisonTablePremium({
     : items;
 
   // Grid: Name(2fr) + Rating(1fr) + dynamic columns + CTA(1fr)
+  // minWidth ensures the table scrolls horizontally instead of being squeezed
+  const colCount = columns.length + 3; // name + rating + dynamic + cta
   const gridCols: React.CSSProperties = {
     gridTemplateColumns: `2fr 1fr ${columns.map((c) => c.width || '1fr').join(' ')} 1fr`,
+    minWidth: `${Math.max(colCount * 140, 800)}px`,
   };
 
   return (
@@ -160,7 +163,7 @@ export function ComparisonTablePremium({
       )}
 
       {/* ── Desktop Table ──────────────────────────────────────── */}
-      <div className="hidden lg:block">
+      <div className="hidden lg:block overflow-x-auto">
         {/* Header Row */}
         <div
           className="grid gap-0 border-b border-gray-200 relative z-10"
