@@ -101,7 +101,7 @@ export function Hero({
             <Link
               href={secondaryCta.href}
               className="no-underline hero-secondary-btn inline-flex items-center justify-center h-11 px-6 text-sm font-semibold rounded-md border border-white/50 transition-all duration-300 hover:border-white hover:shadow-[0_0_20px_rgba(255,255,255,0.25)] hover:scale-[1.03] hover:no-underline"
-              style={{ color: '#ffffff', background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(4px)', textDecoration: 'none' }}
+              style={{ color: '#ffffff', background: 'rgba(255,255,255,0.12)', textDecoration: 'none' }}
             >
               {secondaryCta.text}
             </Link>

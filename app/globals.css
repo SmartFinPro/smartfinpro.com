@@ -14,7 +14,7 @@
 @layer base {
   :root {
     /* === Shadcn/UI Theme Tokens === */
-    --radius: 0.625rem;
+    --radius: 1rem;              /* 16px — matches landing page card radius */
     --background: #F2F4F8;
     --foreground: #1A1A2E;
     --card: #ffffff;
@@ -26,13 +26,13 @@
     --secondary: #E8F0FB;
     --secondary-foreground: #1B4F8C;
     --muted: #F2F4F8;
-    --muted-foreground: #555555;
+    --muted-foreground: #64748B;
     --accent: #F5A623;
     --accent-foreground: #ffffff;
     --destructive: #D64045;
     --destructive-foreground: #ffffff;
-    --border: #e5e5e5;
-    --input: #e5e5e5;
+    --border: #E2E8F0;           /* Landing page border color */
+    --input: #E2E8F0;
     --ring: #1B4F8C;
 
     /* === Chart Colors (SmartFinPro Palette) === */
@@ -62,8 +62,8 @@
     --sfp-sky:        #E8F0FB;
     --sfp-gray:       #F2F4F8;
     --sfp-ink:        #1A1A2E;
-    --sfp-slate:      #555555;
-    --sfp-footer-text:#AAAAAA;
+    --sfp-slate:      #64748B;   /* Tailwind slate-500 — matches landing page reference */
+    --sfp-footer-text:rgba(255,255,255,0.5);
     --sfp-warning-bg: #FFF8E1;  /* Warning-Box Hintergrund — amber-50 */
 
     /* === Typography System (AP-04) === */
@@ -341,18 +341,25 @@ body {
 /* Solid Light Cards (NO Glassmorphism) */
 .card-light {
   background: #ffffff;
-  border: 1px solid #e5e5e5;
-  box-shadow:
-    0 2px 8px rgba(0, 0, 0, 0.04),
-    0 1px 3px rgba(0, 0, 0, 0.06);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .card-light:hover {
-  border-color: var(--sfp-navy);
-  box-shadow:
-    0 4px 16px rgba(27, 79, 140, 0.08),
-    0 2px 8px rgba(0, 0, 0, 0.06);
+  border-color: transparent;
+  box-shadow: 0 8px 40px rgba(27, 79, 140, 0.1), 0 1px 3px rgba(0, 0, 0, 0.04);
+  transform: translateY(-2px);
+}
+
+/* Hover lift for Server Component cards (CSS-only, no JS event handlers) */
+.card-hover-lift {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: all 0.2s ease;
+}
+.card-hover-lift:hover {
+  box-shadow: 0 8px 40px rgba(27, 79, 140, 0.1), 0 1px 3px rgba(0, 0, 0, 0.04);
   transform: translateY(-2px);
 }
 
@@ -464,6 +471,13 @@ body {
 }
 
 /* ============================================================
+   MARKET PAGE CARDS — Landing-style hover elevation
+   ============================================================ */
+.markets-card:hover {
+  box-shadow: 0 8px 40px rgba(27,79,140,0.1);
+}
+
+/* ============================================================
    ENTERPRISE TABLE — Uniform alternating row backgrounds
    ============================================================ */
 .enterprise-table tbody tr:nth-child(even) {
@@ -561,16 +575,17 @@ html {
 .btn-primary {
   background: var(--sfp-gold);
   color: #ffffff;
-  font-weight: 600;
-  padding: 0.75rem 1.5rem;
-  border-radius: var(--radius);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 2px 8px rgba(245, 166, 35, 0.2);
+  font-weight: 700;
+  padding: 1rem 2.25rem;
+  border-radius: 0.75rem;
+  font-size: 0.9375rem;
+  transition: all 0.25s;
+  box-shadow: 0 4px 24px rgba(245, 166, 35, 0.35);
 }
 
 .btn-primary:hover {
   background: var(--sfp-gold-dark);
-  box-shadow: 0 4px 16px rgba(245, 166, 35, 0.3);
+  box-shadow: 0 6px 32px rgba(245, 166, 35, 0.45);
   transform: translateY(-1px);
 }
 
@@ -578,10 +593,11 @@ html {
 .btn-secondary {
   background: var(--sfp-navy);
   color: #ffffff;
-  font-weight: 600;
-  padding: 0.75rem 1.5rem;
-  border-radius: var(--radius);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-weight: 700;
+  padding: 1rem 2.25rem;
+  border-radius: 0.75rem;
+  font-size: 0.9375rem;
+  transition: all 0.25s;
   box-shadow: 0 2px 8px rgba(27, 79, 140, 0.2);
 }
 
@@ -755,7 +771,7 @@ article a:not([href^="/go/"]):not([href^="http"]):not([data-slot="button"]):not(
   --sfp-sky:        #E8F0FB;
   --sfp-gray:       #F2F4F8;
   --sfp-ink:        #1A1A2E;
-  --sfp-slate:      #555555;
+  --sfp-slate:      #64748B;   /* Tailwind slate-500 — matches landing page reference */
   --sfp-footer-text:#AAAAAA;
   --sfp-warning-bg: #FFF8E1;
 
@@ -781,7 +797,7 @@ article a:not([href^="/go/"]):not([href^="http"]):not([data-slot="button"]):not(
   --secondary: #E8F0FB;
   --secondary-foreground: #1B4F8C;
   --muted: #F2F4F8;
-  --muted-foreground: #555555;
+  --muted-foreground: #64748B;
   --accent: #F5A623;
   --accent-foreground: #ffffff;
   --destructive: #D64045;
