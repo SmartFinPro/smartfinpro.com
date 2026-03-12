@@ -189,19 +189,26 @@ export function Header({ market: marketProp }: HeaderProps) {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full">
-      <div className="border-b border-white/10" style={{ background: 'var(--sfp-navy)' }}>
+    <header className="sticky top-0 z-50 w-full border-b border-[#E2E8F0]" style={{ background: 'var(--sfp-gray)' }}>
+      <div>
         <nav className="container mx-auto flex h-16 items-center justify-between px-4">
           {/* Logo */}
-          <Link href={prefix || '/'} className="flex items-center space-x-2 flex-shrink-0">
-            <span className="text-xl font-bold text-white">Smart<span style={{ color: 'var(--sfp-gold)' }}>Fin</span>Pro</span>
+          <Link href={prefix || '/'} className="flex items-center gap-2.5 flex-shrink-0">
+            {/* Logo mark — navy square with gold "+" */}
+            <span className="flex items-center justify-center w-[30px] h-[30px] rounded-[7px] flex-shrink-0" style={{ background: 'var(--sfp-navy)' }}>
+              <svg viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" width="18" height="18">
+                <rect x="6.5" y="1" width="5" height="16" rx="1.5" fill="#FFC942"/>
+                <rect x="1" y="6.5" width="16" height="5" rx="1.5" fill="#FFC942"/>
+              </svg>
+            </span>
+            <span className="text-[19px] font-bold tracking-[-0.6px]" style={{ color: 'var(--sfp-ink)' }}>Smart<span style={{ color: 'var(--sfp-navy)' }}>Fin</span>Pro</span>
           </Link>
 
           {/* Desktop Navigation — Investing | Banking | Trading | Tools */}
           <div className="hidden lg:flex lg:items-center lg:space-x-1 ml-8">
             {navGroups.map(({ group }) => (
               <div key={group} onMouseEnter={() => openMenu(group.toLowerCase())} onMouseLeave={closeMenu}>
-                <button className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium transition-colors rounded-lg ${activeMenu === group.toLowerCase() ? 'text-white bg-white/15' : 'text-white/70 hover:text-white'}`}>
+                <button className={`flex items-center gap-1.5 px-4 py-2 text-[13px] font-medium transition-colors rounded-lg ${activeMenu === group.toLowerCase() ? 'bg-gray-100' : 'hover:bg-gray-50'}`} style={{ color: activeMenu === group.toLowerCase() ? 'var(--sfp-ink)' : '#555555' }}>
                   {group}
                   <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${activeMenu === group.toLowerCase() ? 'rotate-180' : ''}`} />
                 </button>
@@ -213,7 +220,7 @@ export function Header({ market: marketProp }: HeaderProps) {
           <div className="hidden lg:flex lg:items-center lg:space-x-4">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="gap-2 text-white/70 hover:text-white hover:bg-white/15">
+                <Button variant="ghost" size="sm" className="gap-2 hover:bg-gray-100" style={{ color: '#555555' }}>
                   <span>{currentMarket.flag}</span>
                   <span>{currentMarket.name}</span>
                   <ChevronDown className="h-4 w-4" />
@@ -230,7 +237,8 @@ export function Header({ market: marketProp }: HeaderProps) {
             {/* Dashboard Quick-Access */}
             <Link
               href="/dashboard"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-white/70 hover:text-white hover:bg-white/15 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-medium hover:bg-gray-100 transition-colors"
+              style={{ color: '#555555' }}
               title="Admin Dashboard"
             >
               <LayoutDashboard className="h-4 w-4" />
@@ -244,7 +252,7 @@ export function Header({ market: marketProp }: HeaderProps) {
           {/* Mobile Menu */}
           <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
             <SheetTrigger asChild className="lg:hidden">
-              <Button variant="ghost" size="icon" className="text-white/70 hover:text-white hover:bg-white/15">
+              <Button variant="ghost" size="icon" className="hover:bg-gray-100" style={{ color: '#555555' }}>
                 {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
               </Button>
             </SheetTrigger>
