@@ -79,7 +79,7 @@ export function AffiliateLink({
           href={href}
           target="_blank"
           rel={AFFILIATE_REL}
-          className={`inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-all text-sm px-6 py-3 text-white shadow-md hover:shadow-lg ${className}`}
+          className={`inline-flex items-center justify-center gap-2 rounded-2xl font-medium transition-all text-sm px-6 py-3 text-white shadow-md hover:shadow-lg ${className}`}
           style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}
         >
           {children || 'Get Started'}

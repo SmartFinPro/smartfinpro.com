@@ -88,7 +88,7 @@ export function NewsletterBox({
   // Success State
   if (status === 'success') {
     return (
-      <div className={`rounded-2xl border border-gray-200 bg-white shadow-sm ${className}`}>
+      <div className={`rounded-2xl bg-white overflow-hidden ${className}`} style={{ border: '1px solid #E2E8F0', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
         <div className="p-8 text-center">
           <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: 'var(--sfp-sky)' }}>
             <CheckCircle className="h-8 w-8" style={{ color: 'var(--sfp-green)' }} />
@@ -110,7 +110,7 @@ export function NewsletterBox({
   // Compact Variant (for sidebars)
   if (variant === 'compact') {
     return (
-      <div className={`rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden ${className}`}>
+      <div className={`rounded-2xl bg-white overflow-hidden ${className}`} style={{ border: '1px solid #E2E8F0', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
         <div className="p-4">
           <div className="flex items-center gap-2 mb-3">
             <FileText className="h-5 w-5" style={{ color: 'var(--sfp-navy)' }} />
@@ -127,8 +127,8 @@ export function NewsletterBox({
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               onFocus={handleFocus}
-              className="text-sm bg-white border-gray-300 placeholder:text-gray-400"
-              style={{ color: 'var(--sfp-ink)' }}
+              className="text-sm bg-white placeholder:text-gray-400 rounded-xl"
+              style={{ color: 'var(--sfp-ink)', border: '1px solid #E2E8F0' }}
               disabled={status === 'loading'}
             />
             <label className="flex items-start gap-2 text-xs cursor-pointer" style={{ color: 'var(--sfp-slate)' }}>
@@ -144,7 +144,7 @@ export function NewsletterBox({
                 <a href="/privacy" className="underline hover:no-underline" style={{ color: 'var(--sfp-navy)' }}>Privacy Policy</a>.
               </span>
             </label>
-            <Button type="submit" className="w-full text-white" size="sm" disabled={status === 'loading'} style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}>
+            <Button type="submit" className="w-full text-white rounded-2xl" size="sm" disabled={status === 'loading'} style={{ background: 'var(--sfp-gold)', color: '#ffffff', boxShadow: '0 4px 14px rgba(245,166,35,0.35)' }}>
               {status === 'loading' ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
@@ -163,7 +163,7 @@ export function NewsletterBox({
   // Inline Variant (for between content blocks)
   if (variant === 'inline') {
     return (
-      <div ref={visibilityRef} className={`rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden my-8 ${className}`}>
+      <div ref={visibilityRef} className={`rounded-2xl bg-white overflow-hidden my-8 ${className}`} style={{ border: '1px solid #E2E8F0', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
         <div className="p-5 md:p-6">
           <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-6">
             {/* Icon & Text */}
@@ -186,16 +186,16 @@ export function NewsletterBox({
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   onFocus={handleFocus}
-                  className="w-48 h-9 text-sm bg-white border-gray-300 placeholder:text-gray-400"
-                  style={{ color: 'var(--sfp-ink)' }}
+                  className="w-48 h-9 text-sm bg-white placeholder:text-gray-400 rounded-xl"
+                  style={{ color: 'var(--sfp-ink)', border: '1px solid #E2E8F0' }}
                   disabled={status === 'loading'}
                 />
                 <Button
                   type="submit"
                   size="sm"
-                  className="h-9 px-4 text-white gap-1.5"
+                  className="h-9 px-4 text-white gap-1.5 rounded-2xl"
                   disabled={status === 'loading'}
-                  style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}
+                  style={{ background: 'var(--sfp-gold)', color: '#ffffff', boxShadow: '0 4px 14px rgba(245,166,35,0.35)' }}
                 >
                   {status === 'loading' ? (
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -232,7 +232,7 @@ export function NewsletterBox({
 
   // Default & Hero Variant
   return (
-    <div ref={visibilityRef} className={`rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden ${className}`}>
+    <div ref={visibilityRef} className={`rounded-2xl bg-white overflow-hidden ${className}`} style={{ border: '1px solid #E2E8F0', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
       {/* Header Banner */}
       <div className="px-6 py-4 text-white" style={{ background: 'linear-gradient(to right, var(--sfp-navy), var(--sfp-navy-dark))' }}>
         <div className="flex items-center justify-between">
@@ -279,7 +279,7 @@ export function NewsletterBox({
           {/* Right: Content & Form */}
           <div className="flex-1">
             {/* Headline */}
-            <h3 className="text-2xl md:text-3xl font-bold mb-2" style={{ color: 'var(--sfp-ink)' }}>
+            <h3 className="text-2xl md:text-3xl font-black tracking-tight mb-2" style={{ color: 'var(--sfp-ink)' }}>
               Stop Wasting 10+ Hours Every Week.
             </h3>
             <p className="text-lg mb-4" style={{ color: 'var(--sfp-slate)' }}>
@@ -312,16 +312,16 @@ export function NewsletterBox({
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   onFocus={handleFocus}
-                  className="flex-1 h-12 bg-white border-gray-300 placeholder:text-gray-400"
-                  style={{ color: 'var(--sfp-ink)' }}
+                  className="flex-1 h-12 bg-white placeholder:text-gray-400 rounded-xl"
+                  style={{ color: 'var(--sfp-ink)', border: '1px solid #E2E8F0', padding: '0 20px' }}
                   disabled={status === 'loading'}
                 />
                 <Button
                   type="submit"
                   size="lg"
-                  className="h-12 px-6 gap-2 border-0 shadow-lg text-white"
+                  className="h-12 gap-2 border-0 text-white rounded-2xl"
                   disabled={status === 'loading'}
-                  style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}
+                  style={{ background: 'var(--sfp-gold)', color: '#ffffff', padding: '0 36px', boxShadow: '0 4px 14px rgba(245,166,35,0.35)' }}
                 >
                   {status === 'loading' ? (
                     <>
@@ -427,7 +427,7 @@ export function NewsletterInline({ className = '' }: { className?: string }) {
             className="flex-1"
             disabled={status === 'loading'}
           />
-          <Button type="submit" disabled={status === 'loading'} style={{ background: 'var(--sfp-gold)', color: 'white' }}>
+          <Button type="submit" disabled={status === 'loading'} style={{ background: 'var(--sfp-gold)', color: 'white', borderRadius: '1rem' }}>
             {status === 'loading' ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Send'}
           </Button>
         </form>

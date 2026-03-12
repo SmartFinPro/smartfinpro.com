@@ -92,7 +92,7 @@ export function Hero({
           <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link
               href={primaryCta.href}
-              className="no-underline inline-flex items-center justify-center h-11 px-6 text-sm font-semibold rounded-md border-0 shadow-md transition-all duration-200 hover:shadow-lg hover:scale-[1.03] hover:brightness-110 hover:no-underline"
+              className="no-underline inline-flex items-center justify-center h-11 px-6 text-sm font-semibold rounded-2xl border-0 shadow-md transition-all duration-200 hover:shadow-lg hover:scale-[1.03] hover:brightness-110 hover:no-underline"
               style={{ color: '#ffffff', background: 'var(--sfp-gold)', textDecoration: 'none' }}
             >
               {primaryCta.text}

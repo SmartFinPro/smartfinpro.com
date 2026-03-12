@@ -201,7 +201,7 @@ export function BrokerComparisonTablePremium({
                   asChild
                   size="sm"
                   className={`w-full gap-1.5 text-xs transition-all duration-200 group-hover/row:scale-105 group-hover/row:shadow-md text-white`}
-                  style={{ background: broker.isEditorsChoice ? 'var(--sfp-gold)' : 'var(--sfp-navy)' }}
+                  style={{ background: broker.isEditorsChoice ? 'var(--sfp-gold)' : 'var(--sfp-navy)', borderRadius: '1rem' }}
                 >
                   <Link href={broker.affiliateUrl} target="_blank" rel="noopener sponsored">
                     Visit Site
@@ -350,7 +350,7 @@ export function BrokerComparisonTablePremium({
               <Button
                 asChild
                 className="w-full gap-2 text-white"
-                style={{ background: broker.isEditorsChoice ? 'var(--sfp-gold)' : 'var(--sfp-navy)' }}
+                style={{ background: broker.isEditorsChoice ? 'var(--sfp-gold)' : 'var(--sfp-navy)', borderRadius: '1rem' }}
               >
                 <Link href={broker.affiliateUrl} target="_blank" rel="noopener sponsored">
                   Visit {broker.name}

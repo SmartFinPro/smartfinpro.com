@@ -577,7 +577,7 @@ html {
   color: #ffffff;
   font-weight: 700;
   padding: 1rem 2.25rem;
-  border-radius: 0.75rem;
+  border-radius: 1rem;
   font-size: 0.9375rem;
   transition: all 0.25s;
   box-shadow: 0 4px 24px rgba(245, 166, 35, 0.35);

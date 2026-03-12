@@ -448,7 +448,7 @@ export function StickyReviewNav({
                 aria-label={`${cta.label} (opens in new tab)`}
                 className="
                   sticky-pulse-glow
-                  inline-flex items-center gap-2 rounded-xl
+                  inline-flex items-center gap-2 rounded-2xl
                   px-5 py-2 text-sm font-bold
                   whitespace-nowrap no-underline hover:no-underline
                   transition-all duration-200 hover:scale-[1.02]
@@ -519,7 +519,7 @@ export function StickyReviewNav({
             aria-label={`${cta.label} (opens in new tab)`}
             className="
               sticky-pulse-glow
-              inline-flex items-center gap-2.5 rounded-xl
+              inline-flex items-center gap-2.5 rounded-2xl
               px-6 py-2.5 text-sm sm:text-base font-bold
               whitespace-nowrap no-underline hover:no-underline
               transition-all duration-200 hover:scale-[1.03]

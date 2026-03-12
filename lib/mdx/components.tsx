@@ -357,7 +357,7 @@ function AffiliateButton({
               target="_blank"
               rel="nofollow noopener sponsored"
               onClick={handleClick}
-              className="inline-flex items-center justify-center gap-2 rounded-xl font-bold text-white whitespace-nowrap transition-all duration-200"
+              className="inline-flex items-center justify-center gap-2 rounded-2xl font-bold text-white whitespace-nowrap transition-all duration-200"
               style={{
                 background: 'var(--sfp-gold)',
                 color: '#ffffff',
@@ -547,7 +547,7 @@ function CallToAction({
           href={href}
           target="_blank"
           rel="nofollow noopener sponsored"
-          className="inline-flex items-center gap-2 px-9 py-4 rounded-xl text-sm font-bold text-white transition-all"
+          className="inline-flex items-center gap-2 px-9 py-4 rounded-2xl text-sm font-bold text-white transition-all"
           style={{
             background: isPrimary ? 'var(--sfp-gold)' : 'var(--sfp-navy)',
           }}
@@ -930,7 +930,7 @@ function WinnerCta({ href, children }: { href: string; children: React.ReactNode
         href={href}
         target="_blank"
         rel="nofollow noopener sponsored"
-        className="btn-shimmer inline-flex items-center justify-center h-10 px-6 rounded-xl text-xs font-bold whitespace-nowrap no-underline transition-all duration-200"
+        className="btn-shimmer inline-flex items-center justify-center h-10 px-6 rounded-2xl text-xs font-bold whitespace-nowrap no-underline transition-all duration-200"
         style={{
           background: 'var(--sfp-gold)',
           color: 'white',

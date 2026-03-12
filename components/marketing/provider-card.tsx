@@ -151,7 +151,7 @@ export function ProviderCard({
                 href={resolvedCtaUrl}
                 target="_blank"
                 rel="nofollow noopener sponsored"
-                className="btn-shimmer inline-flex items-center justify-center gap-2 h-11 px-6 rounded-lg text-sm font-semibold whitespace-nowrap no-underline transition-all duration-300 hover:scale-[1.03]"
+                className="btn-shimmer inline-flex items-center justify-center gap-2 h-11 px-6 rounded-2xl text-sm font-semibold whitespace-nowrap no-underline transition-all duration-300 hover:scale-[1.03]"
                 style={{
                   background: 'var(--sfp-gold)',
                   boxShadow: '0 4px 20px rgba(245,166,35,0.3)',

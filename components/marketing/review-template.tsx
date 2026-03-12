@@ -138,7 +138,7 @@ export function ReviewTemplate({ review, mdxSource, relatedArticles, expert }: R
               <Button
                 asChild
                 size="lg"
-                className="h-14 px-10 text-lg rounded-xl text-white border-0 shadow-md hover:shadow-lg transition-all"
+                className="h-14 px-10 text-lg rounded-2xl text-white border-0 shadow-md hover:shadow-lg transition-all"
                 style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}
               >
                 <Link href={review.affiliateUrl} target="_blank" rel="noopener sponsored">
@@ -455,7 +455,7 @@ export function ReviewTemplate({ review, mdxSource, relatedArticles, expert }: R
                 <Button
                   asChild
                   size="lg"
-                  className="h-14 px-10 text-lg rounded-xl text-white border-0 shadow-md hover:shadow-lg transition-all"
+                  className="h-14 px-10 text-lg rounded-2xl text-white border-0 shadow-md hover:shadow-lg transition-all"
                   style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}
                 >
                   <Link href={review.affiliateUrl} target="_blank" rel="noopener sponsored">

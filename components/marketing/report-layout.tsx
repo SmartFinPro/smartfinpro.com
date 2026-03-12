@@ -277,10 +277,10 @@ export function ReportLayout({
       {/* ═══════════════════════════════════════════════════════════════
           1. REPORT HERO SECTION
           ═══════════════════════════════════════════════════════════════ */}
-      <section className="bg-white border-b border-gray-200">
-        <div className="container mx-auto px-4 pt-8 pb-6">
+      <section className="bg-white border-b border-[rgba(27,79,140,0.25)]">
+        <div className="container mx-auto px-4 pt-10 pb-8 lg:pt-16 lg:pb-10">
           {/* Breadcrumb */}
-          <div className="max-w-7xl mx-auto mb-6">
+          <div className="max-w-[1200px] mx-auto mb-6">
             <Breadcrumb
               items={buildBreadcrumbs(
                 market,
@@ -292,9 +292,9 @@ export function ReportLayout({
           </div>
 
           {/* Title */}
-          <div className="max-w-7xl mx-auto">
+          <div className="max-w-[1200px] mx-auto">
             <h1
-              className="font-bold leading-tight mb-6"
+              className="font-black leading-tight tracking-tight mb-6"
               style={{ color: 'var(--sfp-ink)', fontSize: 'clamp(1.5rem, 4vw, 2.25rem)' }}
             >
               {review.title}{isGuide ? '' : ` — Expert Review & Analysis Report ${year}`}
@@ -345,7 +345,7 @@ export function ReportLayout({
             </div>
 
             {/* Tab Navigation */}
-            <div className="flex flex-wrap gap-0 border-b border-gray-200 -mb-px">
+            <div className="flex flex-wrap gap-0 border-b border-[rgba(27,79,140,0.25)] -mb-px">
               <a
                 href="#overview"
                 className="px-5 py-3 text-sm font-semibold border-b-2 transition-colors"
@@ -381,7 +381,7 @@ export function ReportLayout({
               {hasAffiliate && (
                 <TrackedAffiliateLink
                   href={review.affiliateUrl}
-                  className="ml-auto px-5 py-3 text-sm font-semibold rounded-t-lg transition-colors flex items-center gap-2 no-underline hover:no-underline"
+                  className="ml-auto px-5 py-3 text-sm font-semibold rounded-t-2xl transition-colors flex items-center gap-2 no-underline hover:no-underline"
                   style={{ background: 'var(--sfp-gold)', color: '#ffffff', textDecoration: 'none' }}
                   eventLabel={primaryCtaLabel}
                   market={market}
@@ -403,15 +403,15 @@ export function ReportLayout({
       {/* ═══════════════════════════════════════════════════════════════
           2. TWO-COLUMN LAYOUT
           ═══════════════════════════════════════════════════════════════ */}
-      <section className="container mx-auto px-4 pt-5 pb-8">
-        <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-8">
+      <section className="container mx-auto px-4 pt-8 pb-16 lg:pt-10 lg:pb-24">
+        <div className="max-w-[1200px] mx-auto flex flex-col lg:flex-row gap-8">
 
           {/* ── LEFT: Main Content (~70%) ────────────────────────────── */}
           <div className="flex-1 min-w-0">
 
             {/* Quick Verdict Card (reviews only) */}
             {hasProscons && (
-              <div id="overview" className="rounded-2xl border border-gray-200 bg-white p-6 md:p-8 shadow-sm mb-8">
+              <div id="overview" className="rounded-2xl border border-[#E2E8F0] bg-white p-6 md:p-8 shadow-[0_1px_3px_rgba(0,0,0,0.04)] mb-8">
                 <div className="flex items-center gap-3 mb-6">
                   <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: 'var(--sfp-sky)' }}>
                     <Zap className="h-5 w-5" style={{ color: 'var(--sfp-gold)' }} />
@@ -474,7 +474,7 @@ export function ReportLayout({
 
                 {/* Rating — Split-Panel Proof Design */}
                 {review.rating && (
-                  <div className="mt-4 rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+                  <div className="mt-4 rounded-2xl border border-[#E2E8F0] bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)] overflow-hidden">
                     <div className="h-1" style={{ background: 'linear-gradient(90deg, var(--sfp-navy) 0%, var(--sfp-gold) 100%)' }} />
                     <div className="flex flex-col sm:flex-row">
                       <div
@@ -510,7 +510,7 @@ export function ReportLayout({
 
             {/* Guide Description Card (guides only — replaces Quick Verdict) */}
             {isGuide && (
-              <div id="overview" className="rounded-2xl border border-gray-200 bg-white p-6 md:p-8 shadow-sm mb-8">
+              <div id="overview" className="rounded-2xl border border-[#E2E8F0] bg-white p-6 md:p-8 shadow-[0_1px_3px_rgba(0,0,0,0.04)] mb-8">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: 'var(--sfp-sky)' }}>
                     <FileText className="h-5 w-5" style={{ color: 'var(--sfp-navy)' }} />
@@ -523,7 +523,7 @@ export function ReportLayout({
 
             {/* Quick Navigation (Collapsible TOC) */}
             {review.sections && review.sections.length > 0 && (
-              <details id="quick-navigation" className="rounded-2xl border border-gray-200 bg-white p-5 mb-8 shadow-sm group" open>
+              <details id="quick-navigation" className="rounded-2xl border border-[#E2E8F0] bg-white p-5 mb-8 shadow-[0_1px_3px_rgba(0,0,0,0.04)] group" open>
                 <summary className="font-bold text-lg cursor-pointer flex items-center justify-between" style={{ color: 'var(--sfp-ink)' }}>
                   <span className="flex items-center gap-3">
                     <FileText className="h-5 w-5" style={{ color: 'var(--sfp-navy)' }} />
@@ -548,7 +548,7 @@ export function ReportLayout({
             )}
 
             {/* MDX Content */}
-            <div className="rounded-2xl border border-gray-200 bg-white p-6 md:p-8 shadow-sm mb-8">
+            <div className="rounded-2xl border border-[#E2E8F0] bg-white p-6 md:p-8 shadow-[0_1px_3px_rgba(0,0,0,0.04)] mb-8">
               <div className="prose prose-lg max-w-none">
                 {mdxSource ? (
                   <SafeMDX source={mdxSource} />
@@ -582,7 +582,7 @@ export function ReportLayout({
             )}
 
             {/* Last Updated / Editorial Transparency Block */}
-            <div className="mb-8 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+            <div className="mb-8 rounded-2xl border border-[#E2E8F0] bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
               <TrustBlockTracker block="editorial-transparency" slug={`${marketPrefix}/${category}`} market={market} />
               <h3 className="text-sm font-semibold uppercase tracking-wider mb-3 flex items-center gap-2" style={{ color: 'var(--sfp-navy)' }}>
                 <Clock className="h-4 w-4" />
@@ -684,7 +684,7 @@ export function ReportLayout({
 
             {/* Trust Methodology Block */}
             {hasAffiliate && (
-              <div className="mb-8 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+              <div className="mb-8 rounded-2xl border border-[#E2E8F0] bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
                 <TrustBlockTracker block="methodology-disclosure" slug={`${marketPrefix}/${category}`} market={market} />
                 <h3 className="text-sm font-semibold uppercase tracking-wider mb-3" style={{ color: 'var(--sfp-navy)' }}>
                   Research Methodology & Disclosure
@@ -771,7 +771,7 @@ export function ReportLayout({
                 : '';
 
               return (
-                <div className="my-12">
+                <div className="my-12 pt-12 border-t border-[rgba(27,79,140,0.25)]">
                   <ComparisonTablePremium
                     title={`Ready to try ${review.productName}?`}
                     market={market}
@@ -804,8 +804,8 @@ export function ReportLayout({
 
             {/* Sibling Reviews — "More Reports in {Category}" */}
             {siblingReviews && siblingReviews.length > 0 && (
-              <div className="mt-12">
-                <h3 className="text-xl font-bold mb-6" style={{ color: 'var(--sfp-ink)' }}>
+              <div className="mt-12 pt-10 border-t border-[rgba(27,79,140,0.25)]">
+                <h3 className="text-xl font-black tracking-tight mb-6" style={{ color: 'var(--sfp-ink)' }}>
                   More {categoryName} Reviews
                 </h3>
                 <div className="space-y-4">
@@ -813,7 +813,7 @@ export function ReportLayout({
                     <Link
                       key={item.slug}
                       href={`${marketPrefix}/${category}/${item.slug}`}
-                      className="block rounded-xl border border-gray-200 bg-white p-5 shadow-sm hover:shadow-md hover:border-gray-300 transition-all"
+                      className="block rounded-2xl border border-[#E2E8F0] bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.04)] hover:shadow-md hover:border-gray-300 transition-all"
                     >
                       <h4 className="font-semibold mb-1.5 line-clamp-2" style={{ color: 'var(--sfp-navy)' }}>
                         {item.meta.title}
@@ -866,7 +866,7 @@ export function ReportLayout({
 
               {/* Expert Photo Card */}
               {showExpertCards && (
-                <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+                <div className="rounded-2xl border border-[#E2E8F0] bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)] overflow-hidden">
                   {expertImage && (
                     <div className="relative w-full aspect-[4/3] overflow-hidden" style={{ background: 'var(--sfp-sky)' }}>
                       <Image
@@ -926,7 +926,7 @@ export function ReportLayout({
 
               {/* Expert Bio Card — below photo, compact authority signal */}
               {showExpertCards && (
-                <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden p-4">
+                <div className="rounded-2xl border border-[#E2E8F0] bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)] overflow-hidden p-4">
                   <h4 className="text-[10px] font-semibold uppercase tracking-widest mb-3" style={{ color: 'var(--sfp-navy)' }}>
                     About the Reviewer
                   </h4>
@@ -1015,7 +1015,7 @@ export function ReportLayout({
               )}
 
               {/* Report Info Card */}
-              <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+              <div className="rounded-2xl border border-[#E2E8F0] bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)] overflow-hidden">
                 {/* Report Details */}
                 <div className="p-5">
                   <div className="rounded-xl p-4 mb-4" style={{ background: 'var(--sfp-sky)' }}>
@@ -1072,7 +1072,7 @@ export function ReportLayout({
                     <div className="pt-3 border-t border-gray-100">
                       <TrackedAffiliateLink
                         href={review.affiliateUrl}
-                        className="w-full h-12 text-base font-semibold border-0 shadow-md hover:shadow-lg transition-all rounded-xl inline-flex items-center justify-center no-underline hover:no-underline hover:brightness-110"
+                        className="w-full h-12 text-base font-semibold border-0 shadow-md hover:shadow-lg transition-all rounded-2xl inline-flex items-center justify-center no-underline hover:no-underline hover:brightness-110"
                         style={{ background: 'var(--sfp-gold)', color: '#ffffff', textDecoration: 'none' }}
                         eventLabel={primaryCtaLabel}
                         market={market}
@@ -1092,7 +1092,7 @@ export function ReportLayout({
               </div>
 
               {/* Trust Badge Card */}
-              <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm text-center">
+              <div className="rounded-2xl border border-[#E2E8F0] bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.04)] text-center">
                 <div className="text-sm font-semibold mb-2" style={{ color: 'var(--sfp-ink)' }}>
                   Trusted by <strong style={{ color: 'var(--sfp-navy)' }}>50,000+</strong> professionals
                 </div>
@@ -1114,7 +1114,7 @@ export function ReportLayout({
               </div>
 
               {/* Author Info */}
-              <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+              <div className="rounded-2xl border border-[#E2E8F0] bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
                 <div className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: 'var(--sfp-slate)' }}>
                   Review Author
                 </div>
@@ -1170,7 +1170,7 @@ export function ReportLayout({
               </div>
               <TrackedAffiliateLink
                 href={review.affiliateUrl}
-                className="h-10 px-5 text-sm font-semibold border-0 rounded-lg shrink-0 inline-flex items-center justify-center no-underline hover:no-underline hover:brightness-110 transition-all"
+                className="h-10 px-5 text-sm font-semibold border-0 rounded-2xl shrink-0 inline-flex items-center justify-center no-underline hover:no-underline hover:brightness-110 transition-all"
                 style={{ background: 'var(--sfp-gold)', color: '#ffffff', textDecoration: 'none' }}
                 eventLabel={category === 'debt-relief' ? 'Get Analysis' : 'Visit Site'}
                 market={market}
@@ -1188,10 +1188,13 @@ export function ReportLayout({
         </>
       )}
 
+      {/* Section divider */}
+      <div className="border-t border-[rgba(27,79,140,0.25)]" />
+
       {/* Disclaimer */}
-      <section className="container mx-auto px-4 py-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="rounded-xl p-5 text-xs" style={{ background: 'var(--sfp-sky)', color: 'var(--sfp-slate)' }}>
+      <section className="container mx-auto px-4 py-10 lg:py-16">
+        <div className="max-w-[1200px] mx-auto">
+          <div className="rounded-2xl p-5 text-xs" style={{ background: 'var(--sfp-sky)', color: 'var(--sfp-slate)' }}>
             <p className="mb-2">
               <strong>Affiliate Disclosure:</strong> SmartFinPro may earn a commission when you click links and make a purchase.
               This does not affect our editorial independence.{' '}

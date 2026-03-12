@@ -249,7 +249,7 @@ export function ExitIntentPopup() {
                 <Button
                   type="submit"
                   className="w-full h-12 gap-2 border-0 shadow-lg text-white"
-                  style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}
+                  style={{ background: 'var(--sfp-gold)', color: '#ffffff', borderRadius: '1rem' }}
                   disabled={status === 'loading'}
                 >
                   {status === 'loading' ? (
