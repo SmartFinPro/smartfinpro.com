@@ -320,9 +320,9 @@ function AffiliateButton({
   };
 
   return (
-    <div className="my-10 not-prose" data-component="affiliate-button-v2">
+    <div className="my-10 not-prose" data-component="affiliate-button-v3">
       <div
-        className="flex flex-wrap sm:flex-nowrap items-center justify-between gap-4 rounded-2xl border bg-white px-5 py-4"
+        className="flex flex-wrap sm:flex-nowrap items-center justify-between gap-3 rounded-2xl border bg-white px-4 py-2.5"
         style={{
           borderColor: 'rgba(245,166,35,0.22)',
           boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
@@ -331,7 +331,7 @@ function AffiliateButton({
         {/* Left: icon + label */}
         <div className="flex items-center gap-3 min-w-0">
           <div
-            className="shrink-0 w-8 h-8 rounded-xl flex items-center justify-center"
+            className="shrink-0 w-7 h-7 rounded-lg flex items-center justify-center"
             style={{ background: 'var(--sfp-sky)' }}
           >
             <ArrowRight className="h-4 w-4" style={{ color: 'var(--sfp-navy)' }} />
@@ -352,17 +352,21 @@ function AffiliateButton({
         </div>
 
         {/* Right: compact CTA — matches sticky-nav button style */}
+        {/* NOTE: children from MDX are intentionally NOT rendered here —
+            MDX wraps text children in <p> tags which override color/height.
+            Button label is always derived from productName prop. */}
         <Link
           href={href}
           target="_blank"
           rel="nofollow noopener sponsored"
           onClick={handleClick}
-          className="shrink-0 inline-flex items-center gap-2 rounded-2xl font-bold text-white whitespace-nowrap transition-all duration-200"
+          className="shrink-0 inline-flex items-center gap-1.5 rounded-2xl font-bold whitespace-nowrap transition-all duration-200"
           style={{
             background: 'var(--sfp-gold)',
             color: '#ffffff',
-            fontSize: '14px',
-            padding: '10px 22px',
+            fontSize: '13px',
+            lineHeight: '1',
+            padding: '8px 16px',
             boxShadow: '0 3px 16px rgba(245,166,35,0.35)',
           }}
           onMouseEnter={e => {
@@ -376,8 +380,8 @@ function AffiliateButton({
             (e.currentTarget as HTMLElement).style.transform = 'translateY(0)';
           }}
         >
-          {children || `Visit ${productName || 'Now'}`}
-          <ArrowRight className="h-4 w-4" />
+          {`Visit ${productName || 'Now'}`}
+          <ArrowRight className="h-3.5 w-3.5" />
         </Link>
       </div>
     </div>
