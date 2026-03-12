@@ -153,7 +153,7 @@ function MiniQuiz() { return null; }
 // Tip Component — Sky background + Navy left border (per Konzept 7.3 Info-Box)
 function Tip({ children }: { children: React.ReactNode }) {
   return (
-    <div className="my-4 rounded-lg border-l-4 p-4" style={{ borderColor: 'var(--sfp-navy)', background: 'var(--sfp-sky)' }}>
+    <div className="my-4 rounded-2xl border-l-4 p-4" style={{ borderColor: 'var(--sfp-navy)', background: 'var(--sfp-sky)' }}>
       <div className="flex gap-3">
         <Lightbulb className="h-4 w-4 shrink-0 mt-0.5" style={{ color: 'var(--sfp-navy)' }} />
         <div className="text-sm leading-relaxed" style={{ color: 'var(--sfp-ink)' }}>
@@ -167,7 +167,7 @@ function Tip({ children }: { children: React.ReactNode }) {
 // Info Component — Sky background + Navy left border (per Konzept 7.3 Info-Box)
 function InfoBox({ children }: { children: React.ReactNode }) {
   return (
-    <div className="my-4 rounded-lg border-l-4 p-4" style={{ borderColor: 'var(--sfp-navy)', background: 'var(--sfp-sky)' }}>
+    <div className="my-4 rounded-2xl border-l-4 p-4" style={{ borderColor: 'var(--sfp-navy)', background: 'var(--sfp-sky)' }}>
       <div className="flex gap-3">
         <Info className="h-4 w-4 shrink-0 mt-0.5" style={{ color: 'var(--sfp-navy)' }} />
         <div className="text-sm leading-relaxed" style={{ color: 'var(--sfp-ink)' }}>
@@ -181,7 +181,7 @@ function InfoBox({ children }: { children: React.ReactNode }) {
 // Warning Component — Gelb-Tint + Gold left border (per Konzept 7.3 Warning-Box)
 function Warning({ children }: { children: React.ReactNode }) {
   return (
-    <div className="my-4 rounded-lg border-l-4 p-4" style={{ borderColor: 'var(--sfp-gold)', background: 'var(--sfp-warning-bg)' }}>
+    <div className="my-4 rounded-2xl border-l-4 p-4" style={{ borderColor: 'var(--sfp-gold)', background: 'var(--sfp-warning-bg)' }}>
       <div className="flex gap-3">
         <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" style={{ color: 'var(--sfp-gold)' }} />
         <div className="text-sm leading-relaxed" style={{ color: 'var(--sfp-ink)' }}>
@@ -202,8 +202,8 @@ function ProsCons({
 }) {
   return (
     <div className="grid md:grid-cols-2 gap-4 my-6">
-      <Card className="border-green-200 bg-white">
-        <CardContent className="p-4">
+      <Card className="border-green-200 bg-white rounded-2xl">
+        <CardContent className="p-5">
           <h4 className="font-bold text-green-600 mb-3 flex items-center gap-2">
             <CheckCircle className="h-5 w-5" />
             Pros
@@ -218,8 +218,8 @@ function ProsCons({
           </ul>
         </CardContent>
       </Card>
-      <Card className="border-red-200 bg-white">
-        <CardContent className="p-4">
+      <Card className="border-red-200 bg-white rounded-2xl">
+        <CardContent className="p-5">
           <h4 className="font-bold text-red-600 mb-3 flex items-center gap-2">
             <XCircle className="h-5 w-5" />
             Cons
@@ -357,8 +357,24 @@ function AffiliateButton({
               target="_blank"
               rel="nofollow noopener sponsored"
               onClick={handleClick}
-              className="inline-flex items-center justify-center gap-2 rounded-lg font-semibold text-white transition-all px-5 py-2.5 shadow-sm hover:shadow-md whitespace-nowrap"
-              style={{ background: 'var(--sfp-gold)', color: '#ffffff', fontSize: '13px' }}
+              className="inline-flex items-center justify-center gap-2 rounded-xl font-bold text-white whitespace-nowrap transition-all duration-200"
+              style={{
+                background: 'var(--sfp-gold)',
+                color: '#ffffff',
+                fontSize: '15px',
+                padding: '14px 36px',
+                boxShadow: '0 4px 24px rgba(245,166,35,0.35)',
+              }}
+              onMouseEnter={e => {
+                (e.currentTarget as HTMLElement).style.background = 'var(--sfp-gold-dark)';
+                (e.currentTarget as HTMLElement).style.boxShadow = '0 6px 32px rgba(245,166,35,0.5)';
+                (e.currentTarget as HTMLElement).style.transform = 'translateY(-1px)';
+              }}
+              onMouseLeave={e => {
+                (e.currentTarget as HTMLElement).style.background = 'var(--sfp-gold)';
+                (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 24px rgba(245,166,35,0.35)';
+                (e.currentTarget as HTMLElement).style.transform = 'translateY(0)';
+              }}
             >
               {children || `Try ${productName || 'Now'} Free`}
               <ArrowRight className="h-4 w-4" />
@@ -521,7 +537,7 @@ function CallToAction({
     <div className="my-8 not-prose">
       <div
         className="rounded-2xl p-6 border border-gray-200 bg-white"
-        style={{ boxShadow: '0 2px 12px rgba(27, 79, 140, 0.06)' }}
+        style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}
       >
         <h4 className="text-lg font-bold mb-1" style={{ color: 'var(--sfp-ink)' }}>{title}</h4>
         {description && (
@@ -531,7 +547,7 @@ function CallToAction({
           href={href}
           target="_blank"
           rel="nofollow noopener sponsored"
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold text-white transition-all"
+          className="inline-flex items-center gap-2 px-9 py-4 rounded-xl text-sm font-bold text-white transition-all"
           style={{
             background: isPrimary ? 'var(--sfp-gold)' : 'var(--sfp-navy)',
           }}
@@ -666,7 +682,7 @@ function AutoDisclaimer({ category, market }: { category: string; market?: strin
   const relevant = disclaimers[category] || disclaimers['ai-tools'];
 
   return (
-    <aside className="my-8 p-4 bg-muted/50 rounded-lg text-sm text-muted-foreground border">
+    <aside className="my-8 p-4 rounded-2xl text-sm border-l-4" style={{ background: 'var(--sfp-sky)', borderLeftColor: 'var(--sfp-navy)', borderTop: '1px solid rgba(27,79,140,0.12)', borderRight: '1px solid rgba(27,79,140,0.12)', borderBottom: '1px solid rgba(27,79,140,0.12)', color: 'var(--sfp-slate)' }}>
       {relevant.map((text, i) => (
         <p key={i} className="mb-2 last:mb-0">
           {text}
@@ -741,7 +757,7 @@ function StyledH4({ children, ...props }: React.HTMLAttributes<HTMLHeadingElemen
 function StyledUl({ children }: { children: React.ReactNode }) {
   return (
     <div className="relative my-6 not-prose">
-      <div className="rounded-xl px-6 py-5 border border-gray-200 bg-white shadow-sm">
+      <div className="rounded-2xl px-6 py-5 border border-gray-200 bg-white shadow-sm">
         <ul className="space-y-2.5" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
           {children}
         </ul>
@@ -753,7 +769,7 @@ function StyledUl({ children }: { children: React.ReactNode }) {
 function StyledOl({ children }: { children: React.ReactNode }) {
   return (
     <div className="relative my-6 not-prose">
-      <div className="rounded-xl px-6 py-5 border border-gray-200 bg-white shadow-sm">
+      <div className="rounded-2xl px-6 py-5 border border-gray-200 bg-white shadow-sm">
         <ol className="space-y-2.5 list-none counter-reset-[item]" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
           {children}
         </ol>
@@ -797,7 +813,7 @@ function StyledHr() {
 function StyledTable({ children }: { children: React.ReactNode }) {
   return (
     <div className="my-8 not-prose overflow-x-auto enterprise-table">
-      <div className="rounded-xl overflow-hidden border border-gray-200 bg-white shadow-sm">
+      <div className="rounded-2xl overflow-hidden border border-gray-200 bg-white shadow-sm">
         <table className="w-full text-sm">
           {children}
         </table>
@@ -914,7 +930,7 @@ function WinnerCta({ href, children }: { href: string; children: React.ReactNode
         href={href}
         target="_blank"
         rel="nofollow noopener sponsored"
-        className="btn-shimmer inline-flex items-center justify-center h-10 px-6 rounded-lg text-xs font-bold whitespace-nowrap no-underline transition-all duration-200"
+        className="btn-shimmer inline-flex items-center justify-center h-10 px-6 rounded-xl text-xs font-bold whitespace-nowrap no-underline transition-all duration-200"
         style={{
           background: 'var(--sfp-gold)',
           color: 'white',
@@ -933,7 +949,7 @@ function StyledBlockquote({ children }: { children: React.ReactNode }) {
   return (
     <div className="my-6 not-prose">
       <div
-        className="relative rounded-xl p-5 border border-gray-200"
+        className="relative rounded-2xl p-5 border border-gray-200"
         style={{ background: 'var(--sfp-sky)' }}
       >
         <div
@@ -1278,7 +1294,7 @@ function QuickAnswer({
   return (
     <div className="relative my-8 not-prose">
       <div
-        className="rounded-xl p-5 border-l-4"
+        className="rounded-2xl p-5 border-l-4"
         style={{
           background: 'var(--sfp-sky)',
           borderLeftColor: 'var(--sfp-navy)',
@@ -1333,7 +1349,7 @@ function DefinitionBox({
 }) {
   return (
     <div className="relative my-8 not-prose">
-      <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+      <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
         {/* Top accent */}
         <div className="h-0.5" style={{ background: 'linear-gradient(90deg, var(--sfp-navy) 0%, var(--sfp-sky) 100%)' }} />
 
@@ -1354,8 +1370,8 @@ function DefinitionBox({
               </span>
               {category && (
                 <span
-                  className="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded"
-                  style={{ background: 'var(--sfp-sky)', color: 'var(--sfp-navy)' }}
+                  className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full"
+                  style={{ background: 'var(--sfp-sky)', color: 'var(--sfp-navy)', letterSpacing: '1.5px' }}
                 >
                   {category}
                 </span>
@@ -1401,7 +1417,7 @@ function StatBox({
   return (
     <div className="relative my-4 not-prose inline-block min-w-[180px]">
       <div
-        className="rounded-xl border-l-4 border border-gray-100 px-5 py-4"
+        className="rounded-2xl border-l-4 border border-gray-100 px-5 py-4"
         style={{ borderLeftColor: c.border, background: c.bg }}
       >
         <div className="flex items-start gap-2.5">
@@ -1462,14 +1478,14 @@ function RegulatorAlert({
   const c = regulatorMap[regulator] ?? regulatorMap.FCA;
   return (
     <div className="relative my-6 not-prose">
-      <div className="rounded-xl border overflow-hidden" style={{ background: c.bg, borderColor: c.border }}>
+      <div className="rounded-2xl border overflow-hidden" style={{ background: c.bg, borderColor: c.border }}>
         {/* Header row */}
         <div className="flex items-center gap-3 px-4 py-2.5 border-b" style={{ borderColor: c.border }}>
           <BadgeCheck className="h-4 w-4 shrink-0" style={{ color: c.badge }} />
           <div className="flex items-center gap-2 flex-wrap min-w-0">
             <span
-              className="text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded text-white shrink-0"
-              style={{ background: c.badge }}
+              className="text-[11px] font-bold uppercase px-2 py-0.5 rounded-full text-white shrink-0"
+              style={{ background: c.badge, letterSpacing: '1.5px' }}
             >
               {regulator} Regulated
             </span>
@@ -1485,8 +1501,8 @@ function RegulatorAlert({
             )}
             {type && (
               <span
-                className="text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded-sm"
-                style={{ background: 'rgba(0,0,0,0.06)', color: 'var(--sfp-slate)' }}
+                className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full"
+                style={{ background: 'rgba(0,0,0,0.06)', color: 'var(--sfp-slate)', letterSpacing: '1.5px' }}
               >
                 {type}
               </span>
@@ -1535,7 +1551,7 @@ function NewsAlert({
   return (
     <div className="relative my-6 not-prose">
       <div
-        className="rounded-xl border-l-4 border border-gray-100 p-4"
+        className="rounded-2xl border-l-4 border border-gray-100 p-4"
         style={{ borderLeftColor: c.accent, background: c.bg }}
       >
         <div className="flex items-start gap-3">
@@ -1544,8 +1560,8 @@ function NewsAlert({
             {/* Badge + date */}
             <div className="flex items-center gap-2 flex-wrap mb-1.5">
               <span
-                className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full text-white"
-                style={{ background: c.accent }}
+                className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full text-white"
+                style={{ background: c.accent, letterSpacing: '1.5px' }}
               >
                 {c.label}
               </span>
@@ -1637,7 +1653,7 @@ export const mdxComponents = {
         alt={alt || ''}
         width={imgWidth}
         height={imgHeight}
-        className="rounded-lg my-4"
+        className="rounded-2xl my-4"
       />
     );
   },
