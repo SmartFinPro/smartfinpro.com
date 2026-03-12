@@ -254,7 +254,7 @@ export function ReviewExitIntent({
           <div className="space-y-3 mb-5">
             {[
               { icon: ShieldCheck, color: 'var(--sfp-green)', text: 'Verified & regulated platform' },
-              { icon: Star, color: 'var(--sfp-gold)', text: rating ? `Rated ${rating.toFixed(1)}/5 by ${reviewCount?.toLocaleString() || 'industry'} experts` : 'Top-rated by industry experts' },
+              { icon: Star, color: 'var(--sfp-gold)', text: rating ? `Rated ${rating.toFixed(1)}/5 by ${reviewCount?.toLocaleString('en-US') || 'industry'} experts` : 'Top-rated by industry experts' },
               { icon: TrendingUp, color: 'var(--sfp-navy)', text: 'Exclusive sign-up bonus for SmartFinPro readers' },
               { icon: Zap, color: '#8B5CF6', text: 'Account setup in under 5 minutes' },
             ].map((item, i) => (
@@ -305,7 +305,7 @@ export function ReviewExitIntent({
           >
             <span className="flex items-center gap-1.5">
               <Users className="w-3.5 h-3.5" style={{ color: 'var(--sfp-green)' }} />
-              {socialCount.toLocaleString()} signed up this week
+              {socialCount.toLocaleString('en-US')} signed up this week
             </span>
             <span className="flex items-center gap-1.5">
               <ShieldCheck className="w-3.5 h-3.5" style={{ color: 'var(--sfp-navy)' }} />

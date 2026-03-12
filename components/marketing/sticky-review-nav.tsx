@@ -409,7 +409,7 @@ export function StickyReviewNav({
 
   const subtitleParts: string[] = ['Expert Analysis'];
   if (rating && rating > 0) subtitleParts.push(`★ ${rating.toFixed(1)}/5`);
-  if (reviewCount && reviewCount > 0) subtitleParts.push(`${reviewCount.toLocaleString()} Ratings`);
+  if (reviewCount && reviewCount > 0) subtitleParts.push(`${reviewCount.toLocaleString('en-US')} Ratings`);
   subtitleParts.push(categoryLabel);
   const subtitle = subtitleParts.join(' · ');
 
