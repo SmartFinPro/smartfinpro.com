@@ -52,8 +52,8 @@ export function Hero({
           sizes="100vw"
           quality={85}
         />
-        {/* Minimal bottom fade only for smooth transition */}
-        <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(27, 79, 140, 0.6), transparent 50%)' }} />
+        {/* Bottom overlay: solid navy edge for clean transition */}
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(27, 79, 140, 1.0) 0%, rgba(27, 79, 140, 0.5) 18%, transparent 55%)' }} />
       </div>
 
       {/* Network Animation Background */}
@@ -125,22 +125,6 @@ export function Hero({
         </div>
       </div>
 
-      {/* Bottom transition: gradient fade + SVG curve */}
-      <div className="absolute bottom-0 left-0 right-0 h-16 pointer-events-none" style={{ background: 'linear-gradient(to top, var(--sfp-sky), rgba(232, 240, 251, 0.8), transparent)' }} />
-      <div className="absolute -bottom-px left-0 right-0 pointer-events-none">
-        <svg
-          viewBox="0 0 1440 56"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          className="w-full h-auto block"
-          preserveAspectRatio="none"
-        >
-          <path
-            d="M0 24C240 46 480 56 720 50C960 44 1200 22 1440 8V56H0V24Z"
-            fill="var(--sfp-sky)"
-          />
-        </svg>
-      </div>
     </section>
   );
 }
