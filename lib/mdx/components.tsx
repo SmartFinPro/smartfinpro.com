@@ -708,7 +708,7 @@ function AutoDisclaimer({ category, market }: { category: string; market?: strin
 
 function StyledH1({ children, ...props }: React.HTMLAttributes<HTMLHeadingElement>) {
   return (
-    <h1 className="text-4xl md:text-5xl lg:text-[56px] font-bold tracking-tight mt-10 mb-8 leading-[1.1]" style={{ color: 'var(--sfp-navy)' }} {...props}>
+    <h1 className="font-bold tracking-tight mt-10 mb-6 leading-[1.15]" style={{ color: 'var(--sfp-navy)', fontSize: 'clamp(26px, 3.5vw, 36px)' }} {...props}>
       {children}
     </h1>
   );
