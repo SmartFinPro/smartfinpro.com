@@ -496,43 +496,51 @@ export function MiniQuiz({ topic, market: marketProp, title }: MiniQuizProps) {
     return (
       <button
         onClick={handleExpand}
-        className="btn-shimmer w-full flex items-center justify-between gap-3 rounded-2xl px-5 py-4 transition-all duration-300 text-left group hover:scale-[1.01]"
+        className="w-full flex items-center justify-between gap-4 rounded-2xl px-4 py-2.5 text-left group transition-all duration-200 hover:shadow-md"
         style={{
-          background: 'linear-gradient(135deg, var(--sfp-gold) 0%, var(--sfp-gold-dark) 100%)',
-          boxShadow: '0 4px 16px rgba(245,166,35,0.3)',
+          background: '#ffffff',
+          border: '1px solid rgba(245,166,35,0.28)',
+          boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
         }}
         onMouseEnter={(e) => {
-          e.currentTarget.style.boxShadow = '0 8px 28px rgba(245,166,35,0.4)';
+          e.currentTarget.style.borderColor = 'rgba(245,166,35,0.55)';
+          e.currentTarget.style.boxShadow = '0 4px 16px rgba(245,166,35,0.15)';
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.boxShadow = '0 4px 16px rgba(245,166,35,0.3)';
+          e.currentTarget.style.borderColor = 'rgba(245,166,35,0.28)';
+          e.currentTarget.style.boxShadow = '0 1px 4px rgba(0,0,0,0.06)';
         }}
       >
-        <div className="flex items-center gap-3.5 min-w-0">
-          {/* Animated icon cluster */}
-          <div className="relative w-11 h-11 shrink-0">
-            <div
-              className="absolute inset-0 rounded-xl flex items-center justify-center"
-              style={{ background: 'rgba(255,255,255,0.25)' }}
-            >
-              <Crosshair className="w-5 h-5 text-white" />
-            </div>
-            <Sparkles
-              className="absolute -top-1 -right-1 w-3.5 h-3.5 text-white animate-pulse"
-            />
+        {/* Left: icon + text */}
+        <div className="flex items-center gap-3 min-w-0">
+          <div
+            className="shrink-0 w-8 h-8 rounded-xl flex items-center justify-center"
+            style={{ background: 'var(--sfp-sky)' }}
+          >
+            <Crosshair className="w-4 h-4" style={{ color: 'var(--sfp-navy)' }} />
           </div>
           <div className="min-w-0">
-            <p className="font-bold text-sm md:text-base text-white truncate">
-              {teaserTitle}
+            <p className="text-[11px] font-semibold uppercase tracking-wider truncate" style={{ color: 'var(--sfp-slate)' }}>
+              Platform Finder
             </p>
-            <p className="text-xs font-medium" style={{ color: 'rgba(255,255,255,0.8)' }}>
-              {totalSteps} steps · 30 seconds
+            <p className="text-sm font-medium truncate" style={{ color: 'var(--sfp-ink)' }}>
+              {teaserTitle}
             </p>
           </div>
         </div>
-        <ArrowRight
-          className="w-5 h-5 shrink-0 text-white transition-transform group-hover:translate-x-1"
-        />
+        {/* Right: pill CTA */}
+        <div
+          className="shrink-0 inline-flex items-center gap-1.5 rounded-2xl font-medium whitespace-nowrap transition-colors"
+          style={{
+            background: 'var(--sfp-gold)',
+            color: '#ffffff',
+            fontSize: '12px',
+            padding: '6px 14px',
+          }}
+        >
+          Start
+          <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
+        </div>
       </button>
     );
   }
