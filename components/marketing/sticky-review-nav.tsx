@@ -37,7 +37,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { ArrowRight, ShieldCheck, ExternalLink, Users, Zap } from 'lucide-react';
+import { ArrowRight, ExternalLink, Users, Zap } from 'lucide-react';
 import type { EnrichedCtaPartner } from '@/lib/types/page-cta';
 
 // ── Types ────────────────────────────────────────────────────────
@@ -65,42 +65,55 @@ interface ButtonColorScheme {
   hoverText: string;
   hoverShadow: string;
   badge: string;
+  border?: string;
+  hoverBorder?: string;
 }
 
 // ── Module-level constants (avoid re-creation per render) ────────
 
-/** Variant A: Color palette for up to 3 CTA buttons: Gold → Teal → Lavender */
+/** Variant A: Color palette for up to 3 CTA buttons — light background design */
 const BUTTON_COLORS: readonly ButtonColorScheme[] = [
   {
-    bg: 'rgba(255, 215, 100, 0.40)', text: '#FFE070',
-    shadow: '0 2px 10px rgba(255, 215, 100, 0.35)',
-    hoverBg: 'rgba(255, 215, 100, 0.60)', hoverText: '#FFF0A0',
-    hoverShadow: '0 4px 20px rgba(255, 215, 100, 0.6)',
+    // Primary — solid gold with glow (matches landing page + AffiliateButton)
+    bg: 'var(--sfp-gold)', text: '#ffffff',
+    shadow: '0 4px 20px rgba(245,166,35,0.35)',
+    hoverBg: 'var(--sfp-gold-dark)', hoverText: '#ffffff',
+    hoverShadow: '0 6px 28px rgba(245,166,35,0.5)',
     badge: '★★★ Best Value',
+    border: 'none',
+    hoverBorder: 'none',
   },
   {
-    bg: 'rgba(125, 211, 216, 0.15)', text: '#7DD3D8',
-    shadow: '0 2px 8px rgba(125, 211, 216, 0.2)',
-    hoverBg: 'rgba(125, 211, 216, 0.30)', hoverText: '#A5E8EC',
-    hoverShadow: '0 4px 16px rgba(125, 211, 216, 0.4)',
+    // Secondary — navy ghost button
+    bg: 'transparent', text: 'var(--sfp-navy)',
+    shadow: 'none',
+    hoverBg: 'rgba(27,79,140,0.06)', hoverText: 'var(--sfp-navy)',
+    hoverShadow: 'none',
     badge: '★★ Best Overall',
+    border: '1.5px solid rgba(27,79,140,0.25)',
+    hoverBorder: '1.5px solid rgba(27,79,140,0.5)',
   },
   {
-    bg: 'rgba(167, 139, 250, 0.15)', text: '#A78BFA',
-    shadow: '0 2px 8px rgba(167, 139, 250, 0.2)',
-    hoverBg: 'rgba(167, 139, 250, 0.30)', hoverText: '#C4B5FD',
-    hoverShadow: '0 4px 16px rgba(167, 139, 250, 0.4)',
+    // Tertiary — subtle gray ghost
+    bg: 'transparent', text: 'var(--sfp-ink)',
+    shadow: 'none',
+    hoverBg: 'rgba(0,0,0,0.04)', hoverText: 'var(--sfp-ink)',
+    hoverShadow: 'none',
     badge: '★ Best Features',
+    border: '1.5px solid #E2E8F0',
+    hoverBorder: '1.5px solid #cbd5e1',
   },
 ] as const;
 
 /** Variant B: Single focused gold button — larger, more prominent */
 const FOCUSED_BUTTON: ButtonColorScheme = {
-  bg: 'rgba(255, 215, 100, 0.50)', text: '#FFE070',
-  shadow: '0 2px 12px rgba(255, 215, 100, 0.4)',
-  hoverBg: 'rgba(255, 215, 100, 0.70)', hoverText: '#FFF5C0',
-  hoverShadow: '0 4px 24px rgba(255, 215, 100, 0.65)',
+  bg: 'var(--sfp-gold)', text: '#ffffff',
+  shadow: '0 4px 24px rgba(245,166,35,0.35)',
+  hoverBg: 'var(--sfp-gold-dark)', hoverText: '#ffffff',
+  hoverShadow: '0 6px 32px rgba(245,166,35,0.5)',
   badge: '',
+  border: 'none',
+  hoverBorder: 'none',
 };
 
 const PULSE_ANIMATION = 'stickyPulseGlow 3s ease-in-out infinite';
@@ -364,25 +377,27 @@ export function StickyReviewNav({
 
   // ── Hover handlers ────────────────────────────────────────────
   const handleMouseEnter = useCallback(
-    (e: React.MouseEvent<HTMLAnchorElement>, colors: ButtonColorScheme, isPrimary: boolean) => {
+    (e: React.MouseEvent<HTMLAnchorElement>, colors: ButtonColorScheme, _isPrimary: boolean) => {
       const el = e.currentTarget;
       el.style.background = colors.hoverBg;
       el.style.color = colors.hoverText;
       el.style.boxShadow = colors.hoverShadow;
       el.style.textDecoration = 'none';
-      if (isPrimary) el.style.animation = 'none';
+      if (colors.hoverBorder) el.style.border = colors.hoverBorder;
+      el.style.transform = 'translateY(-1px)';
     },
     [],
   );
 
   const handleMouseLeave = useCallback(
-    (e: React.MouseEvent<HTMLAnchorElement>, colors: ButtonColorScheme, isPrimary: boolean) => {
+    (e: React.MouseEvent<HTMLAnchorElement>, colors: ButtonColorScheme, _isPrimary: boolean) => {
       const el = e.currentTarget;
       el.style.background = colors.bg;
       el.style.color = colors.text;
       el.style.boxShadow = colors.shadow;
       el.style.textDecoration = 'none';
-      if (isPrimary) el.style.animation = PULSE_ANIMATION;
+      if (colors.border) el.style.border = colors.border;
+      el.style.transform = 'translateY(0)';
     },
     [],
   );
@@ -410,7 +425,7 @@ export function StickyReviewNav({
       <div className="hidden lg:block shrink-0" aria-hidden="true">
         <div
           className="flex items-center gap-1.5 text-xs sm:text-sm whitespace-nowrap"
-          style={{ color: 'rgba(255, 255, 255, 0.5)' }}
+          style={{ color: 'var(--sfp-slate)' }}
         >
           <Users className="w-3.5 h-3.5" />
           <span>{socialProofCount.toLocaleString()} comparing now</span>
@@ -444,9 +459,9 @@ export function StickyReviewNav({
                   background: colors.bg,
                   color: colors.text,
                   boxShadow: colors.shadow,
+                  border: colors.border || 'none',
                   textDecoration: 'none',
-                  '--tw-ring-offset-color': 'var(--sfp-navy)',
-                  ...(isPrimary ? { animation: PULSE_ANIMATION } : {}),
+                  '--tw-ring-offset-color': 'var(--sfp-gray)',
                 } as React.CSSProperties}
                 onMouseEnter={(e) => handleMouseEnter(e, colors, isPrimary)}
                 onMouseLeave={(e) => handleMouseLeave(e, colors, isPrimary)}
@@ -460,8 +475,8 @@ export function StickyReviewNav({
                 {isPrimary && <ArrowRight className="w-4 h-4 shrink-0" aria-hidden="true" />}
               </Link>
               <span
-                className="hidden sm:block text-xs sm:text-sm leading-tight whitespace-nowrap"
-                style={{ color: 'rgba(255, 255, 255, 0.6)', fontWeight: 400 }}
+                className="hidden sm:block text-xs leading-tight whitespace-nowrap"
+                style={{ color: 'var(--sfp-slate)', fontWeight: 500 }}
                 aria-hidden="true"
               >
                 {colors.badge}
@@ -487,7 +502,7 @@ export function StickyReviewNav({
         <div className="hidden lg:block shrink-0" aria-hidden="true">
           <div
             className="flex items-center gap-1.5 text-xs sm:text-sm whitespace-nowrap"
-            style={{ color: 'rgba(255, 215, 100, 0.7)' }}
+            style={{ color: 'var(--sfp-gold-dark)', fontWeight: 600 }}
           >
             <Zap className="w-3.5 h-3.5" />
             <span>Limited offer — compare now</span>
@@ -515,9 +530,9 @@ export function StickyReviewNav({
               background: colors.bg,
               color: colors.text,
               boxShadow: colors.shadow,
+              border: colors.border || 'none',
               textDecoration: 'none',
-              animation: PULSE_ANIMATION,
-              '--tw-ring-offset-color': 'var(--sfp-navy)',
+              '--tw-ring-offset-color': 'var(--sfp-gray)',
             } as React.CSSProperties}
             onMouseEnter={(e) => handleMouseEnter(e, colors, true)}
             onMouseLeave={(e) => handleMouseLeave(e, colors, true)}
@@ -541,42 +556,46 @@ export function StickyReviewNav({
       aria-label={`${productName} review — quick access`}
       aria-hidden={!visible}
       className={`
-        fixed top-0 left-0 right-0 z-50
+        fixed top-0 left-0 right-0 z-50 border-b border-[#E2E8F0]
         transition-transform duration-300 ease-in-out
         ${visible ? 'translate-y-0' : '-translate-y-full'}
       `}
       style={{
-        background: 'linear-gradient(135deg, var(--sfp-navy) 0%, var(--sfp-navy-dark) 100%)',
-        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
+        background: 'var(--sfp-gray)',
+        boxShadow: '0 2px 12px rgba(0,0,0,0.07)',
       }}
     >
-      {/* Gold accent line at top */}
-      <div
-        className="h-[3px] w-full"
-        style={{ background: 'linear-gradient(90deg, var(--sfp-gold) 0%, var(--sfp-gold-dark) 50%, var(--sfp-gold) 100%)' }}
-        aria-hidden="true"
-      />
-
       <div className="container mx-auto px-4 sm:px-6">
-        <div className="flex items-center justify-between py-3 gap-4 sm:gap-8">
+        <div className="flex items-center justify-between h-16 gap-4 sm:gap-8">
 
-          {/* ── LEFT: Icon + Two-line headline ──────────────────────── */}
+          {/* ── LEFT: Logo + Two-line headline ──────────────────────── */}
           <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
-            <div
-              className="hidden sm:flex items-center justify-center w-10 h-10 rounded-xl shrink-0"
-              style={{ background: 'rgba(255, 255, 255, 0.1)' }}
-              aria-hidden="true"
-            >
-              <ShieldCheck className="w-5 h-5 text-emerald-400" />
+            {/* SmartFinPro logo — matches header exactly */}
+            <div className="hidden sm:flex items-center gap-2 shrink-0" aria-hidden="true">
+              <span
+                className="flex items-center justify-center w-[30px] h-[30px] rounded-[7px]"
+                style={{ background: 'var(--sfp-navy)' }}
+              >
+                <svg viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" width="16" height="16">
+                  <rect x="6.5" y="1" width="5" height="16" rx="1.5" fill="#FFC942"/>
+                  <rect x="1" y="6.5" width="16" height="5" rx="1.5" fill="#FFC942"/>
+                </svg>
+              </span>
             </div>
 
+            {/* Divider */}
+            <div className="hidden sm:block w-px h-8 bg-[#E2E8F0] shrink-0" aria-hidden="true" />
+
             <div className="min-w-0">
-              <h2 className="text-sm sm:text-base font-bold text-white leading-tight truncate">
+              <h2
+                className="text-sm sm:text-base font-bold leading-tight truncate"
+                style={{ color: 'var(--sfp-ink)' }}
+              >
                 {headline}
               </h2>
               <p
-                className="hidden sm:block text-xs sm:text-sm leading-tight truncate mt-0.5"
-                style={{ color: 'rgba(255, 255, 255, 0.6)' }}
+                className="hidden sm:block text-xs leading-tight truncate mt-0.5"
+                style={{ color: 'var(--sfp-slate)' }}
               >
                 {subtitle}
               </p>
