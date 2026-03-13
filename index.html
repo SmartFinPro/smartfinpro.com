@@ -611,8 +611,8 @@
     .imprint {
       max-width: 1140px;
       margin: 0 auto;
-      padding: 96px 40px;
-      border-top: none;
+      padding: 96px 32px;
+      border-top: 1px solid rgba(27, 79, 140, 0.15);
     }
     .imprint-card {
       background: #fff;
@@ -1169,7 +1169,7 @@
           </div>
           <div class="imprint-field">
             <label>Contact</label>
-            <p><a href="mailto:info@smartfinpro.com">info@smartfinpro.com</a></p>
+            <p><button onclick="openContactModal()" style="background:none;border:none;padding:0;color:var(--navy);font-size:inherit;font-family:inherit;cursor:pointer;text-decoration:underline;text-underline-offset:3px;">Get in Touch</button></p>
           </div>
           <div class="imprint-field">
             <label>Website</label>
@@ -1235,11 +1235,109 @@
         <span class="footer-copy">&copy; 2026 SmartFin Value LLC</span>
       </div>
       <div class="footer-links">
-        <a href="#imprint">Legal</a>
-        <a href="mailto:info@smartfinpro.com">Contact</a>
+        <a href="#imprint">Imprint</a>
+        <a href="#" onclick="openContactModal();return false;">Contact</a>
+        <a href="#notify">Early Access</a>
       </div>
     </div>
   </footer>
+
+  <!-- Contact Modal -->
+  <div id="contact-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(15,46,82,0.55);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:16px;">
+    <div style="background:#fff;border-radius:20px;width:100%;max-width:480px;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,0.18);">
+      <div style="height:4px;background:linear-gradient(90deg,#1B4F8C 0%,#F5A623 100%);"></div>
+      <div style="padding:32px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
+          <h2 style="font-size:20px;font-weight:700;color:var(--ink);margin:0;">Get in Touch</h2>
+          <button onclick="closeContactModal()" style="background:none;border:none;cursor:pointer;color:var(--slate);font-size:22px;line-height:1;padding:4px 8px;">&#x2715;</button>
+        </div>
+        <form id="contact-form" onsubmit="submitContact(event)">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+            <div>
+              <label style="display:block;font-size:12px;font-weight:600;color:var(--slate);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;">Name *</label>
+              <input id="cf-name" type="text" required placeholder="Jane Smith" style="width:100%;border:1.5px solid #E2E8F0;border-radius:10px;padding:10px 14px;font-size:14px;color:var(--ink);outline:none;font-family:inherit;box-sizing:border-box;" onfocus="this.style.borderColor='#1B4F8C'" onblur="this.style.borderColor='#E2E8F0'">
+            </div>
+            <div>
+              <label style="display:block;font-size:12px;font-weight:600;color:var(--slate);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;">Email *</label>
+              <input id="cf-email" type="email" required placeholder="jane@company.com" style="width:100%;border:1.5px solid #E2E8F0;border-radius:10px;padding:10px 14px;font-size:14px;color:var(--ink);outline:none;font-family:inherit;box-sizing:border-box;" onfocus="this.style.borderColor='#1B4F8C'" onblur="this.style.borderColor='#E2E8F0'">
+            </div>
+          </div>
+          <div style="margin-bottom:12px;">
+            <label style="display:block;font-size:12px;font-weight:600;color:var(--slate);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;">Topic</label>
+            <select id="cf-dept" style="width:100%;border:1.5px solid #E2E8F0;border-radius:10px;padding:10px 14px;font-size:14px;color:var(--ink);outline:none;font-family:inherit;background:#fff;box-sizing:border-box;">
+              <option value="general">General Inquiry</option>
+              <option value="partnerships">Partnerships & Advertising</option>
+              <option value="editorial">Editorial / Content</option>
+            </select>
+          </div>
+          <div style="margin-bottom:20px;">
+            <label style="display:block;font-size:12px;font-weight:600;color:var(--slate);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;">Message *</label>
+            <textarea id="cf-msg" required rows="4" placeholder="How can we help?" style="width:100%;border:1.5px solid #E2E8F0;border-radius:10px;padding:10px 14px;font-size:14px;color:var(--ink);outline:none;font-family:inherit;resize:none;box-sizing:border-box;" onfocus="this.style.borderColor='#1B4F8C'" onblur="this.style.borderColor='#E2E8F0'"></textarea>
+          </div>
+          <div id="cf-error" style="display:none;background:rgba(214,64,69,0.06);border:1px solid rgba(214,64,69,0.25);border-radius:8px;padding:10px 14px;font-size:13px;color:#D64045;margin-bottom:14px;"></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+            <span style="font-size:12px;color:var(--slate);">We respond within 1–2 business days.</span>
+            <button id="cf-submit" type="submit" style="flex-shrink:0;background:#1B4F8C;color:#fff;border:none;border-radius:10px;padding:10px 22px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:8px;">Send &#x2192;</button>
+          </div>
+        </form>
+        <div id="cf-success" style="display:none;text-align:center;padding:16px 0;">
+          <div style="width:56px;height:56px;border-radius:50%;background:rgba(26,107,58,0.08);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:26px;">&#x2713;</div>
+          <h3 style="font-size:18px;font-weight:700;color:var(--ink);margin:0 0 8px;">Message Sent!</h3>
+          <p style="font-size:14px;color:var(--slate);margin:0 0 20px;">We'll get back to you within 1–2 business days.</p>
+          <button onclick="closeContactModal()" style="background:#1B4F8C;color:#fff;border:none;border-radius:10px;padding:10px 24px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function openContactModal() {
+      var m = document.getElementById('contact-modal');
+      m.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+    }
+    function closeContactModal() {
+      var m = document.getElementById('contact-modal');
+      m.style.display = 'none';
+      document.body.style.overflow = '';
+      document.getElementById('contact-form').style.display = 'block';
+      document.getElementById('cf-success').style.display = 'none';
+      document.getElementById('cf-error').style.display = 'none';
+      document.getElementById('contact-form').reset();
+    }
+    document.getElementById('contact-modal').addEventListener('click', function(e) {
+      if (e.target === this) closeContactModal();
+    });
+    async function submitContact(e) {
+      e.preventDefault();
+      var btn = document.getElementById('cf-submit');
+      var errEl = document.getElementById('cf-error');
+      btn.textContent = 'Sending…';
+      btn.disabled = true;
+      errEl.style.display = 'none';
+      try {
+        var res = await fetch('/api/contact', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name:       document.getElementById('cf-name').value,
+            email:      document.getElementById('cf-email').value,
+            department: document.getElementById('cf-dept').value,
+            message:    document.getElementById('cf-msg').value
+          })
+        });
+        var data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Something went wrong.');
+        document.getElementById('contact-form').style.display = 'none';
+        document.getElementById('cf-success').style.display = 'block';
+      } catch(err) {
+        errEl.textContent = err.message || 'Failed to send. Please try again.';
+        errEl.style.display = 'block';
+        btn.textContent = 'Send →';
+        btn.disabled = false;
+      }
+    }
+  </script>
 
   <script>
     function handleSubmit(e) {
