@@ -59,6 +59,10 @@ export const metadata: Metadata = {
       'max-snippet': -1,
     },
   },
+  icons: {
+    icon: [{ url: '/favicon.ico?v=20260313c' }],
+    shortcut: [{ url: '/favicon.ico?v=20260313c' }],
+  },
   // Add Google verification code when available:
   // verification: { google: 'ACTUAL-CODE-HERE' },
 };
