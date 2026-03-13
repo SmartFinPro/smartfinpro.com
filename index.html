@@ -1316,7 +1316,7 @@
       btn.disabled = true;
       errEl.style.display = 'none';
       try {
-        var res = await fetch('/api/contact', {
+        var res = await fetch('https://smartfinpro.com/api/contact', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
