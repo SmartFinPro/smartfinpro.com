@@ -45,6 +45,7 @@ export function FrictionlessCTA({
 }: FrictionlessCTAProps) {
   const [count, setCount] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
+  const [todayStr, setTodayStr] = useState('');
   const ref = useRef<HTMLDivElement>(null);
   const { trackImpression, trackClick } = useCTATracking('frictionless');
   const impressionFired = useRef(false);
@@ -114,11 +115,14 @@ export function FrictionlessCTA({
       )
     : null;
 
-  const todayStr = new Date().toLocaleDateString('en-US', {
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric',
-  });
+  // Hydration-safe: compute today's date client-side only
+  useEffect(() => {
+    setTodayStr(new Date().toLocaleDateString('en-US', { // safe — useEffect
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric',
+    }));
+  }, []);
 
   return (
     <div ref={ref} className="my-12">

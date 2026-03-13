@@ -17,6 +17,8 @@ interface MetricSummary {
   total: number;
   unit: string;
   target: number;
+  budgetStatus: 'ok' | 'warning' | 'over' | null;
+  budget: number;
 }
 
 interface TimeSeriesPoint {
@@ -149,9 +151,22 @@ export function WebVitalsClient({ metrics, timeSeries, slowPages }: Props) {
                 <p className="text-2xl font-bold mb-0.5" style={{ color: 'var(--sfp-ink)' }}>
                   {formatValue(m.p75, m.unit, m.name)}
                 </p>
-                <p className="text-xs text-slate-400 mb-3">
-                  p75 · Ziel: {m.name === 'CLS' ? `<${m.target}` : `<${m.target}ms`}
-                </p>
+                <div className="flex items-center gap-2 mb-3">
+                  <p className="text-xs text-slate-400">
+                    p75 · Ziel: {m.name === 'CLS' ? `<${m.target}` : `<${m.target}ms`}
+                  </p>
+                  {m.budgetStatus && (
+                    <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
+                      m.budgetStatus === 'ok'      ? 'bg-green-50 text-green-700' :
+                      m.budgetStatus === 'warning'  ? 'bg-amber-50 text-amber-700' :
+                                                      'bg-red-50 text-red-700'
+                    }`}>
+                      {m.budgetStatus === 'ok' ? '● Budget OK' :
+                       m.budgetStatus === 'warning' ? '● Near Budget' :
+                       '● Over Budget'}
+                    </span>
+                  )}
+                </div>
 
                 {/* Good/Improve/Poor bar */}
                 <div className="h-1.5 rounded-full bg-gray-100 overflow-hidden flex mb-2">

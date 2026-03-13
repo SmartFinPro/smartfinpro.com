@@ -24,6 +24,7 @@ export default function robots(): MetadataRoute.Robots {
           disallow: [
             '/dashboard/',
             '/api/',
+            '/go/',
             '/_next/',
           ],
         },
@@ -34,6 +35,7 @@ export default function robots(): MetadataRoute.Robots {
           disallow: [
             '/dashboard/',
             '/api/',
+            '/go/',
             '/_next/',
           ],
         },

@@ -16,13 +16,15 @@ import { StarRating } from './trust-badges';
 
 interface ComparisonProduct {
   name: string;
-  slug: string;
+  slug?: string;
   rating: number;
-  reviewCount: number;
-  price: string;
-  affiliateUrl: string;
+  reviewCount?: number;
+  price?: string;
+  affiliateUrl?: string;
   isRecommended?: boolean;
+  recommended?: boolean; // MDX alias for isRecommended
   winnerBadge?: string; // "Best Overall", "Best Value", "Most Popular"
+  ctaText?: string; // Custom CTA button text
   features: Record<string, boolean | string>;
 }
 
@@ -176,7 +178,7 @@ export function ComparisonTable({
               <TableRow className="border-b-0" style={{ background: 'var(--sfp-sky)' }}>
                 <TableHead className="w-[200px] font-semibold uppercase text-xs tracking-wider" style={{ color: 'var(--sfp-navy)', background: 'var(--sfp-sky)' }}>Feature</TableHead>
                 {resolvedProducts.map((product) => (
-                  <TableHead key={product.slug} className="text-center min-w-[160px]" style={{ background: 'var(--sfp-sky)' }}>
+                  <TableHead key={product.slug || product.name} className="text-center min-w-[160px]" style={{ background: 'var(--sfp-sky)' }}>
                     <div className="flex flex-col items-center gap-2 py-3">
                       <span className="font-bold" style={{ color: 'var(--sfp-navy)' }}>{product.name}</span>
                       {product.winnerBadge && (
@@ -188,7 +190,7 @@ export function ComparisonTable({
                           {product.winnerBadge}
                         </Badge>
                       )}
-                      {!product.winnerBadge && product.isRecommended && (
+                      {!product.winnerBadge && (product.isRecommended || product.recommended) && (
                         <Badge
                           className="text-xs font-semibold"
                           style={{ background: 'var(--sfp-green)', color: '#ffffff' }}
@@ -197,38 +199,44 @@ export function ComparisonTable({
                           Recommended
                         </Badge>
                       )}
-                      <div className="flex items-center gap-1.5 mt-1">
-                        <div className="flex items-center gap-0.5">
-                          {[...Array(5)].map((_, i) => (
-                            <Star
-                              key={i}
-                              className={`h-3 w-3 ${
-                                i < Math.floor(product.rating)
-                                  ? 'fill-amber-400 text-amber-400'
-                                  : 'text-gray-300'
-                              }`}
-                            />
-                          ))}
+                      {typeof product.rating === 'number' && (
+                        <div className="flex items-center gap-1.5 mt-1">
+                          <div className="flex items-center gap-0.5">
+                            {[...Array(5)].map((_, i) => (
+                              <Star
+                                key={i}
+                                className={`h-3 w-3 ${
+                                  i < Math.floor(product.rating)
+                                    ? 'fill-amber-400 text-amber-400'
+                                    : 'text-gray-300'
+                                }`}
+                              />
+                            ))}
+                          </div>
+                          {product.reviewCount != null && (
+                            <span className="text-xs" style={{ color: 'var(--sfp-slate)' }}>
+                              ({String(product.reviewCount)})
+                            </span>
+                          )}
                         </div>
-                        <span className="text-xs" style={{ color: 'var(--sfp-slate)' }}>
-                          ({product.reviewCount.toLocaleString('en-US')})
-                        </span>
-                      </div>
+                      )}
                     </div>
                   </TableHead>
                 ))}
               </TableRow>
             </TableHeader>
             <TableBody>
-              {/* Pricing Row */}
-              <TableRow className="border-b border-gray-100">
-                <TableCell className="font-medium" style={{ color: 'var(--sfp-ink)' }}>Pricing</TableCell>
-                {resolvedProducts.map((product) => (
-                  <TableCell key={product.slug} className="text-center">
-                    <span className="font-bold text-lg" style={{ color: 'var(--sfp-ink)' }}>{product.price}</span>
-                  </TableCell>
-                ))}
-              </TableRow>
+              {/* Pricing Row — only if any product has a price */}
+              {resolvedProducts.some((p) => p.price) && (
+                <TableRow className="border-b border-gray-100">
+                  <TableCell className="font-medium" style={{ color: 'var(--sfp-ink)' }}>Pricing</TableCell>
+                  {resolvedProducts.map((product) => (
+                    <TableCell key={product.slug || product.name} className="text-center">
+                      <span className="font-bold text-lg" style={{ color: 'var(--sfp-ink)' }}>{product.price || '—'}</span>
+                    </TableCell>
+                  ))}
+                </TableRow>
+              )}
 
               {/* Feature Rows */}
               {features.map((feature) => (
@@ -237,32 +245,38 @@ export function ComparisonTable({
                     {resolvedLabels[feature]}
                   </TableCell>
                   {resolvedProducts.map((product) => (
-                    <TableCell key={product.slug} className="text-center">
+                    <TableCell key={product.slug || product.name} className="text-center">
                       {renderFeatureValue(product.features[feature])}
                     </TableCell>
                   ))}
                 </TableRow>
               ))}
 
-              {/* CTA Row */}
-              <TableRow className="border-0" style={{ background: 'var(--sfp-sky)' }}>
-                <TableCell></TableCell>
-                {resolvedProducts.map((product) => (
-                  <TableCell key={product.slug} className="text-center py-5">
-                    <Button
-                      asChild
-                      size="sm"
-                      className="rounded-lg border-0 text-white hover:opacity-90"
-                      style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}
-                    >
-                      <Link href={product.affiliateUrl} target="_blank" rel="noopener sponsored">
-                        Visit Site
-                        <ArrowRight className="h-3 w-3 ml-1" />
-                      </Link>
-                    </Button>
-                  </TableCell>
-                ))}
-              </TableRow>
+              {/* CTA Row — only if any product has an affiliateUrl */}
+              {resolvedProducts.some((p) => p.affiliateUrl) && (
+                <TableRow className="border-0" style={{ background: 'var(--sfp-sky)' }}>
+                  <TableCell></TableCell>
+                  {resolvedProducts.map((product) => (
+                    <TableCell key={product.slug || product.name} className="text-center py-5">
+                      {product.affiliateUrl ? (
+                        <Button
+                          asChild
+                          size="sm"
+                          className="rounded-lg border-0 text-white hover:opacity-90"
+                          style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}
+                        >
+                          <Link href={product.affiliateUrl} target="_blank" rel="noopener sponsored">
+                            {product.ctaText || 'Visit Site'}
+                            <ArrowRight className="h-3 w-3 ml-1" />
+                          </Link>
+                        </Button>
+                      ) : (
+                        <span style={{ color: 'var(--sfp-slate)' }}>—</span>
+                      )}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </div>

@@ -88,8 +88,8 @@ export function SystemSettingsPanel({ initialSettings, credentialStatus }: Syste
   useEffect(() => {
     (async () => {
       try {
-        const { getGuardianStatus } = await import('@/lib/actions/guardian');
-        const status = await getGuardianStatus();
+        const res = await fetch('/api/dashboard/guardian');
+        const status = await res.json();
         setGuardianStatus({
           lastCheck: status.lastCheck,
           results: status.results,
@@ -113,8 +113,12 @@ export function SystemSettingsPanel({ initialSettings, credentialStatus }: Syste
     setTestEmailResult(null);
 
     try {
-      const { sendTestNotification } = await import('@/lib/actions/guardian');
-      const result = await sendTestNotification(email);
+      const res = await fetch('/api/dashboard/guardian', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'send-test', email }),
+      });
+      const result = await res.json();
 
       if (result.success) {
         setTestEmailResult({ success: true, message: `Test-E-Mail an ${email} gesendet.` });
@@ -146,18 +150,18 @@ export function SystemSettingsPanel({ initialSettings, credentialStatus }: Syste
       // Determine the value to test: current input (if changed) or stored value
       const currentValue = dirty.has(key) ? settings[key] : undefined;
 
-      let result: ConnectionTestResult;
+      const actionMap: Record<string, string> = {
+        anthropic_api_key: 'test-anthropic',
+        serper_api_key: 'test-serper',
+        google_indexing_json: 'test-indexing',
+      };
 
-      if (key === 'anthropic_api_key') {
-        const { testAnthropicConnection } = await import('@/lib/actions/settings');
-        result = await testAnthropicConnection(currentValue);
-      } else if (key === 'serper_api_key') {
-        const { testSerperConnection } = await import('@/lib/actions/settings');
-        result = await testSerperConnection(currentValue);
-      } else {
-        const { testGoogleIndexing } = await import('@/lib/actions/settings');
-        result = await testGoogleIndexing(currentValue);
-      }
+      const res = await fetch('/api/dashboard/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: actionMap[key], currentValue }),
+      });
+      const result: ConnectionTestResult = await res.json();
 
       setTestResults((prev) => ({ ...prev, [key]: result }));
 
@@ -188,8 +192,12 @@ export function SystemSettingsPanel({ initialSettings, credentialStatus }: Syste
         updates[key as keyof SystemSettings] = settings[key as keyof SystemSettings];
       }
 
-      const { updateSettings } = await import('@/lib/actions/settings');
-      const result = await updateSettings(updates);
+      const res = await fetch('/api/dashboard/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'update', settings: updates }),
+      });
+      const result = await res.json();
 
       if (result.success) {
         toast.success('Einstellungen gespeichert', { duration: 3000 });
@@ -210,8 +218,12 @@ export function SystemSettingsPanel({ initialSettings, credentialStatus }: Syste
   async function handleGlobalReset() {
     setIsResetting(true);
     try {
-      const { globalReset } = await import('@/lib/actions/settings');
-      const result = await globalReset();
+      const res = await fetch('/api/dashboard/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'reset' }),
+      });
+      const result = await res.json();
 
       if (result.success) {
         const total = Object.values(result.deleted).reduce((a, b) => a + b, 0);

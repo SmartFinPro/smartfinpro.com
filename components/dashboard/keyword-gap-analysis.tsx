@@ -48,15 +48,6 @@ import type {
   GapDraft,
   GapCategorySummary,
 } from '@/lib/actions/gap-analysis';
-import {
-  analyzeKeywordGap,
-  createShadowDraft,
-  bridgeTheGap,
-  discardDraft,
-} from '@/lib/actions/gap-analysis';
-import {
-  generateAndPublishPage,
-} from '@/lib/actions/content-generator';
 import type {
   ImageRequirement,
   GeneratePageResult,
@@ -258,7 +249,12 @@ export function KeywordGapAnalysis({ initialData }: KeywordGapAnalysisProps) {
     if (!domainInput.trim()) return;
     setScanLoading(true);
     try {
-      const result = await analyzeKeywordGap(domainInput.trim(), selectedMarket);
+      const res = await fetch('/api/dashboard/gap-analysis', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'analyze', competitorDomain: domainInput.trim(), market: selectedMarket }),
+      });
+      const result = await res.json();
       if (result.error) {
         toast.error(result.error);
         return;
@@ -302,7 +298,12 @@ export function KeywordGapAnalysis({ initialData }: KeywordGapAnalysisProps) {
   const handleCreateDraft = useCallback(async (gap: GapResult) => {
     setCreatingDraft(gap.keyword);
     try {
-      const result = await createShadowDraft(gap.keyword, gap.market, gap.category, gap.competitorDomain);
+      const res = await fetch('/api/dashboard/gap-analysis', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'create-draft', keyword: gap.keyword, market: gap.market, category: gap.category, competitorDomain: gap.competitorDomain }),
+      });
+      const result = await res.json();
       if (result.success && result.draft) {
         setDrafts((prev) => [result.draft!, ...prev]);
         setShowDrafts(true);
@@ -320,7 +321,12 @@ export function KeywordGapAnalysis({ initialData }: KeywordGapAnalysisProps) {
   const handleBridge = useCallback(async (gap: GapResult) => {
     setBridging(gap.keyword);
     try {
-      const result = await bridgeTheGap(gap.keyword, gap.market, gap.category);
+      const res = await fetch('/api/dashboard/gap-analysis', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'bridge', keyword: gap.keyword, market: gap.market, category: gap.category }),
+      });
+      const result = await res.json();
       if (result.success) {
         toast.success(`Freshness Boost für "${gap.keyword}" eingeleitet.`);
       } else {
@@ -334,7 +340,12 @@ export function KeywordGapAnalysis({ initialData }: KeywordGapAnalysisProps) {
   }, []);
 
   const handleDiscardDraft = useCallback(async (draftId: string) => {
-    const result = await discardDraft(draftId);
+    const res = await fetch('/api/dashboard/gap-analysis', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'discard-draft', draftId }),
+    });
+    const result = await res.json();
     if (result.success) {
       setDrafts((prev) => prev.filter((d) => d.id !== draftId));
       toast.success('Draft verworfen.');
@@ -352,7 +363,12 @@ export function KeywordGapAnalysis({ initialData }: KeywordGapAnalysisProps) {
     setGeneratingPage(gap.keyword);
     setPublishResult(null);
     try {
-      const result = await generateAndPublishPage(gap.keyword, gap.market as Market, gap.category);
+      const res = await fetch('/api/dashboard/content-generator', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'generate-and-publish', keyword: gap.keyword, market: gap.market, category: gap.category }),
+      });
+      const result = await res.json();
       setPublishResult(result);
       if (result.success) {
         toast.success(`Seite erstellt: ${result.slug}`, { duration: 8000 });

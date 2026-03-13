@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { Search, Loader2, DollarSign } from 'lucide-react';
 import { toast } from 'sonner';
-import { analyzeAffiliateOpportunities } from '@/lib/actions/daily-strategy';
 
 export function AffiliateScanButton() {
   const [scanning, setScanning] = useState(false);
@@ -11,7 +10,8 @@ export function AffiliateScanButton() {
   const handleScan = async () => {
     setScanning(true);
     try {
-      const result = await analyzeAffiliateOpportunities();
+      const res = await fetch('/api/dashboard/affiliate-scan', { method: 'POST' });
+      const result = await res.json();
 
       if (result.plans.length > 0) {
         toast.success(

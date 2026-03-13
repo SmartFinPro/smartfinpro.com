@@ -38,6 +38,29 @@ const ALERT_COOLDOWN_MS = 30 * 60 * 1000; // 30 minutes
 let lastOutageAlertAt = 0;
 
 export async function GET(request: NextRequest): Promise<NextResponse<HealthStatus>> {
+  // ── Optional token guard — prevents env-name leakage to unauthenticated callers
+  // Set HEALTH_TOKEN=<secret> in .env.local to enable.
+  // Call: GET /api/health  Authorization: Bearer <token>
+  // Without token: returns minimal ok response (no internal detail).
+  const healthToken = process.env.HEALTH_TOKEN;
+  if (healthToken) {
+    const provided = request.headers.get('authorization')?.replace(/^Bearer\s+/i, '');
+    if (provided !== healthToken) {
+      // Return minimal liveness response — no env names, no DB status, no heap
+      return NextResponse.json(
+        {
+          status: 'ok' as const,
+          version: '1.0.0',
+          environment: 'production',
+          uptime: 0,
+          timestamp: new Date().toISOString(),
+          checks: {},
+        },
+        { status: 200 },
+      );
+    }
+  }
+
   const quick = request.nextUrl.searchParams.get('quick') === '1';
   const timestamp = new Date().toISOString();
   const uptime = Math.floor((Date.now() - START_TIME) / 1000);

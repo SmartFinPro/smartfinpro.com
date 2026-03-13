@@ -41,6 +41,14 @@ import { Hero } from '@/components/marketing/hero';
 import { PortalSidebar } from '@/components/marketing/portal-sidebar';
 import { ReportCard } from '@/components/marketing/report-card';
 import { UKBrokerHeroSlider } from '@/components/home/uk-broker-hero-slider';
+import {
+  CategoryShowcase,
+  EditorsPicks,
+  MethodologySection,
+  PlatformStats,
+  HomeNewsletterCTA,
+  GlobalTrustSection,
+} from '@/components/marketing/homepage-sections';
 import type { Category } from '@/lib/i18n/config';
 
 /* Per-market Hero content */
@@ -129,10 +137,40 @@ export default async function MarketHomePage({ params }: MarketPageProps) {
 
   const heroContent = marketHeroContent[marketData] || marketHeroContent['uk'];
 
+  // ── Compute data for new landing page sections ──
+
+  // Category counts (reviews per category)
+  const categoryCounts: Record<string, number> = {};
+  for (const item of allReviews) {
+    const cat = item.meta.category;
+    if (cat) categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
+  }
+
+  // Editor's Picks — top 3 rated reviews (different categories preferred)
+  const seenCategories = new Set<string>();
+  const editorsPicks = allReviews
+    .filter((item) => item.meta.rating && item.meta.rating >= 4.0)
+    .sort((a, b) => (b.meta.rating || 0) - (a.meta.rating || 0))
+    .filter((item) => {
+      // Prefer diversity — one per category
+      if (seenCategories.has(item.meta.category)) return false;
+      seenCategories.add(item.meta.category);
+      return true;
+    })
+    .slice(0, 3)
+    .map((item) => ({
+      title: item.meta.seoTitle || item.meta.title,
+      description: item.meta.description,
+      slug: item.slug,
+      category: item.meta.category as Category,
+      rating: item.meta.rating,
+      reviewCount: item.meta.reviewCount,
+    }));
+
   return (
     <>
       {/* ═══════════════════════════════════════════════════════════════
-          1. HERO SECTION (same premium style as US homepage)
+          1. HERO SECTION
       ═══════════════════════════════════════════════════════════════ */}
       <Hero
         title={heroContent.title}
@@ -165,52 +203,40 @@ export default async function MarketHomePage({ params }: MarketPageProps) {
       </div>
 
       {/* ═══════════════════════════════════════════════════════════════
-          2. META-BAR (transition between Hero and Report Feed)
+          2. PLATFORM STATS — Key numbers bar
       ═══════════════════════════════════════════════════════════════ */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-[1200px] mx-auto px-6 py-4">
-          <div
-            className="flex flex-wrap items-center gap-4 px-5 py-3 rounded-xl text-sm"
-            style={{ background: 'var(--sfp-gray)' }}
-          >
-            <span className="inline-flex items-center gap-1.5" style={{ color: 'var(--sfp-slate)' }}>
-              <Globe className="h-3.5 w-3.5" />
-              {config.flag} {config.name}
-            </span>
-            <span className="text-gray-300">|</span>
-            <span className="inline-flex items-center gap-1.5" style={{ color: 'var(--sfp-slate)' }}>
-              <BarChart3 className="h-3.5 w-3.5" />
-              {categories.length} Market Sectors
-            </span>
-            <span className="text-gray-300">|</span>
-            <span className="inline-flex items-center gap-1.5" style={{ color: 'var(--sfp-slate)' }}>
-              <FileText className="h-3.5 w-3.5" />
-              {allReviews.length}+ Expert Reports
-            </span>
-            <span className="text-gray-300">|</span>
-            <span className="inline-flex items-center gap-1.5" style={{ color: 'var(--sfp-slate)' }}>
-              <Calendar className="h-3.5 w-3.5" />
-              Updated {new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
-            </span>
-          </div>
-        </div>
-      </div>
+      <PlatformStats totalReviews={allReviews.length} />
+
+      {/* ═══════════════════════════════════════════════════════════════
+          3. CATEGORY SHOWCASE — 6 sectors with icons + counts
+      ═══════════════════════════════════════════════════════════════ */}
+      <CategoryShowcase market={marketData} categoryCounts={categoryCounts} />
+
+      {/* ═══════════════════════════════════════════════════════════════
+          4. EDITOR'S PICKS — Top-rated this month
+      ═══════════════════════════════════════════════════════════════ */}
+      <EditorsPicks market={marketData} picks={editorsPicks} />
+
+      {/* ═══════════════════════════════════════════════════════════════
+          5. METHODOLOGY — How We Review
+      ═══════════════════════════════════════════════════════════════ */}
+      <MethodologySection />
 
       {/* UK Broker Hero Slider — Exclusive to UK Market */}
       {marketData === 'uk' && (
-        <section className="py-12" style={{ background: 'var(--sfp-gray)' }}>
-          <div className="max-w-[1200px] mx-auto px-6">
+        <section className="py-10" style={{ background: 'var(--sfp-gray)' }}>
+          <div className="container mx-auto px-4">
             <UKBrokerHeroSlider />
           </div>
         </section>
       )}
 
       {/* ═══════════════════════════════════════════════════════════════
-          3. TWO-COLUMN LAYOUT (Sidebar LEFT + Report Feed RIGHT)
+          6. REPORT FEED — Two-Column Layout (Sidebar + Reports)
       ═══════════════════════════════════════════════════════════════ */}
       <section style={{ background: 'var(--sfp-gray)' }}>
-        <div className="max-w-[1200px] mx-auto px-6 py-24">
-          <div className="flex flex-col lg:flex-row gap-8">
+        <div className="container mx-auto px-4 py-8">
+          <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-8">
 
             {/* LEFT: Sidebar (~25%) — Sticky Category Navigation */}
             <PortalSidebar market={marketData} />
@@ -219,8 +245,8 @@ export default async function MarketHomePage({ params }: MarketPageProps) {
             <div className="flex-1 min-w-0">
 
               {/* Section Title */}
-              <div className="flex items-center justify-between mb-8">
-                <h2 className="text-2xl font-black tracking-tight" style={{ color: 'var(--sfp-ink)' }}>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-bold" style={{ color: 'var(--sfp-ink)' }}>
                   Latest Reports
                 </h2>
                 <span className="text-sm" style={{ color: 'var(--sfp-slate)' }}>
@@ -248,85 +274,31 @@ export default async function MarketHomePage({ params }: MarketPageProps) {
 
               {/* Empty State */}
               {allReviews.length === 0 && (
-                <div
-                  className="rounded-2xl border bg-white p-12 text-center"
-                  style={{
-                    borderColor: '#E2E8F0',
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-                  }}
-                >
+                <div className="rounded-2xl border border-gray-200 bg-white p-12 text-center shadow-sm">
                   <BarChart3 className="h-12 w-12 mx-auto mb-4" style={{ color: 'var(--sfp-slate)' }} />
                   <h3 className="text-lg font-semibold mb-2" style={{ color: 'var(--sfp-ink)' }}>
                     Reports Coming Soon
                   </h3>
-                  <p className="text-sm leading-relaxed" style={{ color: 'var(--sfp-slate)' }}>
+                  <p className="text-sm" style={{ color: 'var(--sfp-slate)' }}>
                     Our expert team is preparing research reports for {config.name}. Check back soon.
                   </p>
                 </div>
               )}
 
-              {/* Section divider */}
-              <div className="mt-10 mb-8" style={{ borderTop: '1px solid rgba(27,79,140,0.15)' }} />
-
-              {/* Global Markets Links */}
-              <div
-                className="markets-card rounded-2xl border bg-white p-6 transition-all duration-200 hover:-translate-y-0.5"
-                style={{
-                  borderColor: '#E2E8F0',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-                }}
-              >
-                <h3 className="text-base font-black tracking-tight mb-5" style={{ color: 'var(--sfp-ink)' }}>
-                  Explore All Markets
-                </h3>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  {[
-                    { flag: '🇺🇸', name: 'United States', href: '/us' },
-                    { flag: '🇬🇧', name: 'United Kingdom', href: '/uk' },
-                    { flag: '🇨🇦', name: 'Canada', href: '/ca' },
-                    { flag: '🇦🇺', name: 'Australia', href: '/au' },
-                  ].map((m) => (
-                    <Link
-                      key={m.name}
-                      href={m.href}
-                      className="flex items-center gap-2 rounded-xl border px-4 py-3 text-sm transition-all duration-200 hover:shadow-md hover:-translate-y-0.5"
-                      style={{ borderColor: '#E2E8F0', color: 'var(--sfp-ink)' }}
-                    >
-                      <span className="text-lg">{m.flag}</span>
-                      <span className="font-medium">{m.name}</span>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-
-              {/* Trust Section (compact) */}
-              <div
-                className="mt-4 rounded-2xl border bg-white p-6 text-center"
-                style={{
-                  borderColor: '#E2E8F0',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-                }}
-              >
-                <p className="text-sm font-black tracking-tight mb-4" style={{ color: 'var(--sfp-ink)' }}>
-                  Trusted by {config.name} Professionals
-                </p>
-                <div className="flex flex-wrap justify-center gap-3">
-                  {[`${config.currency} Pricing`, 'Expert-Reviewed', 'Compliant Reviews', 'Local Support'].map((badge) => (
-                    <span
-                      key={badge}
-                      className="text-xs py-1.5 px-4 rounded-full font-medium text-white"
-                      style={{ background: 'var(--sfp-navy)' }}
-                    >
-                      {badge}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
             </div>
           </div>
         </div>
       </section>
+
+      {/* ═══════════════════════════════════════════════════════════════
+          7. GLOBAL TRUST — Markets + Regulators
+      ═══════════════════════════════════════════════════════════════ */}
+      <GlobalTrustSection />
+
+      {/* ═══════════════════════════════════════════════════════════════
+          8. NEWSLETTER CTA — Before footer
+      ═══════════════════════════════════════════════════════════════ */}
+      <HomeNewsletterCTA />
     </>
   );
 }

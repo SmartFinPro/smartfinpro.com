@@ -13,7 +13,6 @@ import {
   ArrowDownRight,
   Minus,
 } from 'lucide-react';
-import { getRevenueForecast } from '@/lib/actions/revenue-forecast';
 import type { RevenueForecastSummary } from '@/lib/actions/revenue-forecast';
 
 // ============================================================
@@ -41,7 +40,8 @@ export function RevenueForecast({ initialData }: RevenueForecastProps) {
     setLoading(true);
     try {
       const range = newRange ?? timeRange;
-      const result = await getRevenueForecast(range);
+      const res = await fetch('/api/dashboard/revenue-forecast?range=' + range);
+      const result = await res.json();
       if (result.success && result.data) {
         setData(result.data);
       }

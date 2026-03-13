@@ -309,6 +309,18 @@ export const pillarHeroImages: Record<string, Record<string, ImageAsset>> = {
       freepikQuery: 'business banking app on tablet white background professional editorial clean fintech',
       status: 'optimized',
     },
+    'gold-investing': {
+      src: '/images/content/us/gold-investing/hero.webp',
+      alt: 'Physical gold bars, gold IRAs and precious metals investing in the United States',
+      freepikQuery: 'gold bars precious metals investment white background professional editorial clean',
+      status: 'optimized',
+    },
+    'debt-relief': {
+      src: '/images/content/us/debt-relief/hero.webp',
+      alt: 'Financial calculator and debt analysis documents for US debt relief programs',
+      freepikQuery: 'financial calculator debt documents white background professional editorial clean',
+      status: 'optimized',
+    },
   },
   uk: {
     trading: {
@@ -343,6 +355,12 @@ export const pillarHeroImages: Record<string, Record<string, ImageAsset>> = {
     },
   },
   ca: {
+    housing: {
+      src: '/images/content/ca/housing/hero.webp',
+      alt: 'Canadian residential home with stone facade, garage and garden — housing market',
+      freepikQuery: 'yellow scandinavian house vibrant autumn leaves orange maple trees blue sky residential',
+      status: 'optimized',
+    },
     forex: {
       src: '/images/content/ca/forex/hero.webp',
       alt: 'Canadian forex trading platform and currency exchange',
@@ -371,6 +389,12 @@ export const pillarHeroImages: Record<string, Record<string, ImageAsset>> = {
       src: '/images/content/ca/business-banking/hero.webp',
       alt: 'Canadian business banking and fintech platforms',
       freepikQuery: 'business banking app tablet white background professional clean editorial',
+      status: 'optimized',
+    },
+    'tax-efficient-investing': {
+      src: '/images/content/ca/tax-efficient-investing/hero.webp',
+      alt: 'Tax-efficient investing in Canada — TFSA, RRSP and portfolio strategy',
+      freepikQuery: 'canada tax investing portfolio rrsp tfsa professional clean editorial',
       status: 'optimized',
     },
   },

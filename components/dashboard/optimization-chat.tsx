@@ -321,8 +321,12 @@ export function OptimizationChat({ initialTasks, historyTasks }: OptimizationCha
     setExecutingId(taskId);
 
     try {
-      const { executePageOptimization } = await import('@/lib/actions/optimization-engine');
-      const result = await executePageOptimization(taskId);
+      const res = await fetch('/api/dashboard/optimization-engine', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'execute', taskId }),
+      });
+      const result = await res.json();
 
       if (result.success) {
         toast.success(`Optimierung angewendet: ${result.slug}`);
@@ -344,8 +348,13 @@ export function OptimizationChat({ initialTasks, historyTasks }: OptimizationCha
 
   const handleDismiss = useCallback(async (taskId: string) => {
     try {
-      const { dismissOptimizationTask } = await import('@/lib/actions/optimization-engine');
-      await dismissOptimizationTask(taskId);
+      const res = await fetch('/api/dashboard/optimization-engine', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'dismiss', taskId }),
+      });
+      const result = await res.json();
+      if (result.success === false) throw new Error(result.error);
       setTasks((prev) =>
         prev.map((t) => t.id === taskId ? { ...t, status: 'dismissed' as const } : t)
       );
@@ -360,12 +369,16 @@ export function OptimizationChat({ initialTasks, historyTasks }: OptimizationCha
     setIsAnalyzing(true);
 
     try {
-      const { runOptimizationAnalysis } = await import('@/lib/actions/optimization-engine');
-      const result = await runOptimizationAnalysis(interval);
+      const res = await fetch('/api/dashboard/optimization-engine', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'analyze', intervalType: interval }),
+      });
+      const result = await res.json();
 
       if (result.success && result.tasks.length > 0) {
         // Map the server types to our UI format
-        const newTasks: OptTask[] = result.tasks.map((t) => ({
+        const newTasks: OptTask[] = result.tasks.map((t: OptTask) => ({
           ...t,
           category: t.category,
         }));

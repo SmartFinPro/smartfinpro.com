@@ -76,8 +76,8 @@ function getOrAssignVariant(hubId: string): AbVariant {
       return map[hubId];
     }
 
-    // 50/50 random assignment
-    const variant: AbVariant = Math.random() < 0.5 ? 'A' : 'B';
+    // 50/50 random assignment (localStorage-guarded — client-only)
+    const variant: AbVariant = Math.random() < 0.5 ? 'A' : 'B'; // safe — localStorage branch
     map[hubId] = variant;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(map));
     return variant;
@@ -96,12 +96,12 @@ function getSessionId(): string {
   try {
     let sid = sessionStorage.getItem('sfp_session');
     if (!sid) {
-      sid = `s_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+      sid = `s_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`; // safe — sessionStorage branch
       sessionStorage.setItem('sfp_session', sid);
     }
     return sid;
   } catch {
-    return `s_${Date.now()}`;
+    return `s_${Date.now()}`; // safe — catch fallback, never during SSR
   }
 }
 

@@ -20,7 +20,6 @@ import {
 import { MARKET_RULES, getComplianceLabel, type MarketRule } from '@/lib/affiliate/compliance-labels';
 import type { Market, Category } from '@/types';
 import type { AuditResult, AuditDetail } from '@/lib/actions/compliance-audit';
-import { runComplianceAudit } from '@/lib/actions/compliance-audit';
 
 // ── Constants ───────────────────────────────────────────────
 
@@ -255,7 +254,8 @@ export function ComplianceAudit({ linkDistribution }: ComplianceAuditProps) {
   const handleRunAudit = useCallback(async () => {
     setIsRunning(true);
     try {
-      const result = await runComplianceAudit();
+      const res = await fetch('/api/dashboard/compliance-audit', { method: 'POST' });
+      const result = await res.json();
       setAuditResult(result);
     } catch (err) {
       console.error('Audit failed:', err);

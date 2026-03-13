@@ -67,6 +67,12 @@ const nextConfig: NextConfig = {
   // ============================================================
   reactStrictMode: true,
 
+  // ============================================================
+  // Disable the on-screen Next.js development indicator badge.
+  // Keeps local previews clean; actual runtime/build errors still appear.
+  // ============================================================
+  devIndicators: false,
+
 
   // ============================================================
   // FINANCIAL-GRADE SECURITY HEADERS
@@ -260,7 +266,7 @@ const nextConfig: NextConfig = {
       // (ältere Corporate Proxies, IE11).
       // ============================================================
       {
-        source: '/api/:path*',
+        source: '/api/((?!widget/).*)',
         headers: [
           {
             key: 'Cache-Control',
@@ -279,10 +285,48 @@ const nextConfig: NextConfig = {
       },
 
       // ============================================================
-      // All Other Routes - Full Security Headers
+      // Widget Routes — Permissive headers for iFrame embedding
+      // These routes serve self-contained HTML widgets that external
+      // publishers embed via <iframe>. They need relaxed CSP
+      // (frame-ancestors *) and CORS (Access-Control-Allow-Origin *)
+      // to function on third-party domains.
+      // Separated from /api/:path* to avoid inheriting restrictive
+      // frame-ancestors 'self' and X-Frame-Options: SAMEORIGIN.
       // ============================================================
       {
-        source: '/:path*',
+        source: '/api/widget/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=300, s-maxage=600, stale-while-revalidate=3600',
+          },
+          {
+            key: 'Access-Control-Allow-Origin',
+            value: '*',
+          },
+          {
+            key: 'Content-Security-Policy',
+            value: "frame-ancestors *; default-src 'none'; style-src 'unsafe-inline'; img-src data:;",
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
+          },
+          {
+            key: 'X-Robots-Tag',
+            value: 'noindex, nofollow',
+          },
+          // Intentionally NO X-Frame-Options (CSP frame-ancestors takes precedence)
+          // Intentionally NO restrictive securityHeaders spread
+        ],
+      },
+
+      // ============================================================
+      // All Other Routes - Full Security Headers
+      // Excludes /api/widget/ which has its own permissive headers above.
+      // ============================================================
+      {
+        source: '/:path((?!api/widget/).*)',
         headers: [
           ...securityHeaders,
           // Preconnect hints for critical external resources

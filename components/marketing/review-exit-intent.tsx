@@ -33,10 +33,14 @@ import {
   Users,
   Clock,
   Zap,
+  Globe,
 } from 'lucide-react';
 import type { EnrichedCtaPartner } from '@/lib/types/page-cta';
+import { getVisitorMarketFromCookie } from '@/lib/geo/geo-cookie';
 
 // ── Types ────────────────────────────────────────────────────────
+
+type MarketCode = 'us' | 'uk' | 'ca' | 'au';
 
 interface ReviewExitIntentProps {
   productName: string;
@@ -45,11 +49,17 @@ interface ReviewExitIntentProps {
   affiliateUrl?: string;
   primaryCtaLabel?: string;
   ctaPartners?: EnrichedCtaPartner[];
-  /** Whether the sticky nav is currently visible (user scrolled past hero) */
-  stickyNavVisible?: boolean;
 }
 
 // ── Constants ────────────────────────────────────────────────────
+
+/** Display labels for geo-redirect */
+const MARKET_LABELS: Record<MarketCode, string> = {
+  us: 'US',
+  uk: 'UK',
+  ca: 'Canadian',
+  au: 'Australian',
+};
 
 const STORAGE_KEY = 'sfp_review_exit_shown';
 const COOLDOWN_DAYS = 3; // shorter than generic popup (7d) — higher intent
@@ -115,7 +125,6 @@ export function ReviewExitIntent({
   affiliateUrl,
   primaryCtaLabel,
   ctaPartners = [],
-  stickyNavVisible = false,
 }: ReviewExitIntentProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [hasTriggered, setHasTriggered] = useState(false);
@@ -152,11 +161,35 @@ export function ReviewExitIntent({
     return Math.floor(40 + (base % 80)); // 40–120 range
   }, [productName, rating]);
 
+  // ── Geo-mismatch redirect (read from middleware cookie) ─────────
+  const [geoRedirect, setGeoRedirect] = useState<{ label: string; url: string } | null>(null);
+
+  useEffect(() => {
+    const visitorMkt = getVisitorMarketFromCookie();
+    if (!visitorMkt) return;
+
+    const path = window.location.pathname;
+    const pageMkt = getMarketFromPath(path);
+    if (visitorMkt === pageMkt) return;
+
+    // Derive category from current URL
+    const parts = path.replace(/^\//, '').split('/');
+    const startIdx = pageMkt === 'us' ? 0 : 1;
+    const category = parts[startIdx] || '';
+    if (!category) return;
+
+    const prefix = visitorMkt === 'us' ? '' : `/${visitorMkt}`;
+    setGeoRedirect({
+      label: MARKET_LABELS[visitorMkt],
+      url: `${prefix}/${category}/`,
+    });
+  }, []);
+
   // ── Cooldown check ──────────────────────────────────────────────
   const shouldShow = useCallback(() => {
     const lastShown = localStorage.getItem(STORAGE_KEY);
     if (!lastShown) return true;
-    const daysSince = (Date.now() - new Date(lastShown).getTime()) / (1000 * 60 * 60 * 24);
+    const daysSince = (Date.now() - new Date(lastShown).getTime()) / (1000 * 60 * 60 * 24); // safe — useCallback, never SSR
     return daysSince >= COOLDOWN_DAYS;
   }, []);
 
@@ -177,8 +210,7 @@ export function ReviewExitIntent({
     const handleMouseLeave = (e: MouseEvent) => {
       // Only trigger when:
       // 1. Mouse leaves through the top of the viewport
-      // 2. Sticky nav is visible (user has scrolled past hero)
-      // 3. User has scrolled at least 25% of the page
+      // 2. User has scrolled at least 25% of the page (proxy for "past hero")
       if (e.clientY > 0) return;
 
       const scrollDepth = window.scrollY / (document.documentElement.scrollHeight - window.innerHeight);
@@ -198,7 +230,7 @@ export function ReviewExitIntent({
       clearTimeout(timer);
       document.removeEventListener('mouseleave', handleMouseLeave);
     };
-  }, [hasTriggered, topPartner, shouldShow, stickyNavVisible]);
+  }, [hasTriggered, topPartner, shouldShow]);
 
   // ── Impression tracking ─────────────────────────────────────────
   useEffect(() => {
@@ -296,6 +328,32 @@ export function ReviewExitIntent({
             <span>Visit {topPartner.label}</span>
             <ArrowRight className="w-4 h-4 shrink-0" aria-hidden="true" />
           </Link>
+
+          {/* Geo-redirect — shows when visitor is from a different market */}
+          {geoRedirect && (
+            <Link
+              href={geoRedirect.url}
+              className="
+                flex items-center justify-center gap-2 w-full
+                mt-3 py-2.5 px-4 rounded-lg
+                text-sm font-medium
+                no-underline hover:no-underline
+                transition-all duration-200
+                focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2
+                [text-decoration:none]
+              "
+              style={{
+                background: 'var(--sfp-sky)',
+                color: 'var(--sfp-navy)',
+                textDecoration: 'none',
+              }}
+              aria-label={`View ${geoRedirect.label} options`}
+            >
+              <Globe className="w-4 h-4 shrink-0" aria-hidden="true" />
+              <span>View {geoRedirect.label} Options Instead</span>
+              <ArrowRight className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+            </Link>
+          )}
 
           {/* Trust line */}
           <div

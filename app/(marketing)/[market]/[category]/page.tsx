@@ -130,9 +130,12 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
     ? (ratedReviews.reduce((sum, r) => sum + (r.meta.rating || 0), 0) / ratedReviews.length).toFixed(1)
     : null;
 
-  // Serialize pillar MDX if available
+  // Serialize pillar MDX if available.
+  // Pass frontmatter as scope so MDX can reference frontmatter.faqs, etc.
+  // gray-matter already stripped the YAML block from pillarContent.content,
+  // so parseFrontmatter: true would find nothing — we inject it manually here.
   const mdxSource = pillarContent
-    ? await serializeMDX(pillarContent.content)
+    ? await serializeMDX(pillarContent.content, { frontmatter: pillarContent.meta })
     : null;
 
   const canonicalUrl = getCanonicalUrl(market as Market, `/${category}`);

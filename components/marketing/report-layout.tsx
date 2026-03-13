@@ -47,6 +47,7 @@ import { CTASlot } from '@/components/marketing/cta-slot';
 import type { EnrichedCtaPartner } from '@/lib/types/page-cta';
 import { StickyReviewNav } from '@/components/marketing/sticky-review-nav';
 import { ReviewExitIntent } from '@/components/marketing/review-exit-intent';
+import { XRayScore } from '@/components/marketing/xray-score';
 
 // ── Auto-Quiz: derive topic from page category ──────────────────
 type QuizTopic = 'trading' | 'personal-finance' | 'forex' | 'business-banking' | 'ai-tools' | 'broker' | 'banking';
@@ -188,6 +189,7 @@ export function ReportLayout({
         <StickyReviewNav
           productName={review.productName}
           categoryLabel={categoryName}
+          reviewYear={year}
           category={category}
           market={market}
           rating={hasRating ? review.rating : undefined}
@@ -196,6 +198,7 @@ export function ReportLayout({
           primaryCtaLabel={primaryCtaLabel}
           ctaPartners={ctaPartners}
           sentinelId="review-sticky-sentinel"
+          enablePreQual
         />
       )}
 
@@ -472,6 +475,22 @@ export function ReportLayout({
                   );
                 })()}
 
+                {/* X-Ray Score™ — Personalized product scoring widget */}
+                {!isGuide && (
+                  <div className="pt-4 border-t border-gray-100">
+                    <XRayScore
+                      slug={slug || ''}
+                      market={market}
+                      category={category}
+                      productName={review.productName}
+                      pricing={review.pricing}
+                      rating={review.rating}
+                      affiliateUrl={review.affiliateUrl}
+                      ctaPartners={ctaPartners?.map((p) => ({ slug: p.slug, partner_name: p.partner_name }))}
+                    />
+                  </div>
+                )}
+
                 {/* Rating — Split-Panel Proof Design */}
                 {review.rating && (
                   <div className="mt-4 rounded-2xl border border-[#E2E8F0] bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)] overflow-hidden">
@@ -694,7 +713,7 @@ export function ReportLayout({
                     <strong>Last fact-check:</strong> {factCheckedLabel}
                   </p>
                   <p>
-                    <strong>Data points reviewed:</strong> {review.reviewCount.toLocaleString('en-US')} consumer records, lender pricing pages, and public regulator guidance.
+                    <strong>Data points reviewed:</strong> {(review.reviewCount ?? 0).toLocaleString('en-US')} consumer records, lender pricing pages, and public regulator guidance.
                   </p>
                   <p>
                     <strong>Primary sources:</strong> {
@@ -841,10 +860,12 @@ export function ReportLayout({
                         )}
                         <div className="w-px h-3 bg-gray-300" />
                         <span>
-                          {new Date(item.meta.modifiedDate || item.meta.publishDate).toLocaleDateString('en-US', {
-                            month: 'short',
-                            year: 'numeric',
-                          })}
+                          {(item.meta.modifiedDate || item.meta.publishDate)
+                            ? new Date(item.meta.modifiedDate || item.meta.publishDate).toLocaleDateString('en-US', {
+                                month: 'short',
+                                year: 'numeric',
+                              })
+                            : 'Recent'}
                         </span>
                         {item.meta.pricing && (
                           <>

@@ -23,6 +23,9 @@ export function FAQSection({
 }: FAQSectionProps) {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
+  // Defensive guard: faqs may be undefined if frontmatter scope wasn't injected
+  if (!faqs || !Array.isArray(faqs) || faqs.length === 0) return null;
+
   return (
     <section>
       {/* Schema markup */}

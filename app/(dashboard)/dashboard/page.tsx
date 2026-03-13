@@ -28,6 +28,7 @@ import { ClickDetailsTable } from '@/components/dashboard/click-details-table';
 import { SystemIntegrityWidget } from '@/components/dashboard/system-integrity-widget';
 import { WebVitalsWidget } from '@/components/dashboard/web-vitals-widget';
 import { RevenueAttributionWidget } from '@/components/dashboard/revenue-attribution-widget';
+import { AuditStatusWidget } from '@/components/dashboard/audit-status-widget';
 import Link from 'next/link';
 
 export const dynamic = 'force-dynamic';
@@ -252,7 +253,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           </div>
         )}
 
-        {/* System Integrity + CWV + Revenue Attribution — 3-column grid */}
+        {/* System Integrity + CWV + Revenue Attribution + Audit — 3-column grid */}
         <div className="grid gap-6 lg:grid-cols-3 mb-8">
           <div className="lg:col-span-2">
             <Suspense fallback={<Skeleton className="h-64" />}>
@@ -266,6 +267,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             <Suspense fallback={<Skeleton className="h-48" />}>
               <RevenueAttributionWidget />
             </Suspense>
+            {/* S2S Postback Dedup Audit Status */}
+            <AuditStatusWidget />
           </div>
         </div>
 
@@ -291,10 +294,11 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             <div className="p-6">
               <Suspense fallback={<Skeleton className="h-52" />}>
                 <ConversionFunnel
-                  clicks={stats.funnelData.clicks}
-                  conversions={stats.funnelData.conversions}
-                  approvedConversions={stats.funnelData.approvedConversions}
-                  approvedRevenue={stats.funnelData.approvedRevenue}
+                  totalClicks={stats.funnelData.clicks}
+                  stages={[
+                    { event_type: 'qualified', unique_clicks: stats.funnelData.conversions, conversion_rate: stats.funnelData.clicks > 0 ? (stats.funnelData.conversions / stats.funnelData.clicks) * 100 : 0, total_value: 0 },
+                    { event_type: 'approved', unique_clicks: stats.funnelData.approvedConversions, conversion_rate: stats.funnelData.conversions > 0 ? (stats.funnelData.approvedConversions / stats.funnelData.conversions) * 100 : 0, total_value: stats.funnelData.approvedRevenue },
+                  ]}
                 />
               </Suspense>
             </div>

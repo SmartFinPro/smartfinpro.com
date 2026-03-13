@@ -12,21 +12,22 @@ type Gender = 'male' | 'female';
 
 /** Gender des PORTRÄT-BILDES (nicht des Namens!) */
 const EXPERT_IMAGE_GENDER: Record<string, Gender> = {
-  '/images/experts/james-miller.jpg': 'male',
-  '/images/experts/michael-torres.jpg': 'male',
+  '/images/experts/james-miller.jpg': 'female',     // Bild zeigt eine Frau! (visuell verifiziert)
+  '/images/experts/michael-torres.jpg': 'female',   // Bild zeigt eine Frau! (visuell verifiziert)
   '/images/experts/robert-hayes.jpg': 'male',
   '/images/experts/james-mitchell.jpg': 'male',
-  '/images/experts/michael-chen.jpg': 'male',
+  '/images/experts/michael-chen.jpg': 'female',     // Bild zeigt eine Frau! (visuell verifiziert)
   '/images/experts/sarah-chen.jpg': 'female',
   '/images/experts/sarah-thompson.jpg': 'female',
   '/images/experts/james-blackwood.jpg': 'male',
-  '/images/experts/marc-fontaine.jpg': 'male',
-  '/images/experts/philippe-leblanc.jpg': 'male',
-  '/images/experts/daniel-whitfield.jpg': 'female',   // Bild zeigt eine Frau!
+  '/images/experts/marc-fontaine.jpg': 'female',    // Bild zeigt eine Frau! (visuell verifiziert)
+  '/images/experts/philippe-leblanc.jpg': 'female', // Bild zeigt eine Frau! (visuell verifiziert)
+  '/images/experts/daniel-whitfield.jpg': 'female',
   '/images/experts/james-liu.jpg': 'male',
   '/images/experts/expert-extra-13.jpg': 'male',
   '/images/experts/expert-extra-14.jpg': 'male',
-  '/images/experts/expert-extra-15.jpg': 'female',
+  '/images/experts/daniel-brooks.jpg': 'male',
+  '/images/experts/expert-extra-16.jpg': 'male',
 };
 
 /** Lookup: image gender by path */
@@ -35,37 +36,46 @@ export function getExpertImageGender(imagePath: string): Gender | undefined {
 }
 
 const EXPERT_IMAGE_BY_NAME: Record<string, string> = {
-  'james miller': '/images/experts/james-miller.jpg',
-  'michael torres': '/images/experts/michael-torres.jpg',
-  'robert hayes': '/images/experts/robert-hayes.jpg',
-  'james mitchell': '/images/experts/james-mitchell.jpg',
-  'michael chen': '/images/experts/michael-chen.jpg',
+  // ── Female names → female portraits (visuell verifiziert) ─────────────────
+  'jessica miller': '/images/experts/james-miller.jpg',         // US (james-miller.jpg = female)
+  'michelle torres': '/images/experts/michael-torres.jpg',      // US (michael-torres.jpg = female)
+  'michelle chen': '/images/experts/michael-chen.jpg',          // US (michael-chen.jpg = female)
+  'marie fontaine': '/images/experts/marc-fontaine.jpg',        // CA (marc-fontaine.jpg = female)
+  'claire leblanc': '/images/experts/philippe-leblanc.jpg',     // CA (philippe-leblanc.jpg = female)
   'sarah chen': '/images/experts/sarah-chen.jpg',
   'sarah thompson': '/images/experts/sarah-thompson.jpg',
-  'james blackwood': '/images/experts/james-blackwood.jpg',
-  'marc fontaine': '/images/experts/marc-fontaine.jpg',
-  'philippe leblanc': '/images/experts/philippe-leblanc.jpg',
-  'james liu': '/images/experts/james-liu.jpg',
-  'david martinez': '/images/experts/expert-extra-13.jpg',
-  // AU-Expertinnen (daniel-whitfield.jpg = weibliches Porträt):
   'emma whitfield': '/images/experts/daniel-whitfield.jpg',     // AU-Hauptexpertin
   'jessica liu': '/images/experts/daniel-whitfield.jpg',        // AU-Fallback weiblich
+  // ── Male names → male portraits ───────────────────────────────────────────
+  'robert hayes': '/images/experts/robert-hayes.jpg',
+  'james mitchell': '/images/experts/james-mitchell.jpg',
+  'james blackwood': '/images/experts/james-blackwood.jpg',
+  'james liu': '/images/experts/james-liu.jpg',
+  'david martinez': '/images/experts/expert-extra-13.jpg',
+  // ── Legacy male names → redirected to correct MALE portraits ─────────────
+  // (old MDX reviews may still use these names; gender-consistent fallback)
+  'james miller': '/images/experts/robert-hayes.jpg',
+  'michael torres': '/images/experts/robert-hayes.jpg',
+  'michael chen': '/images/experts/james-mitchell.jpg',
+  'marc fontaine': '/images/experts/james-blackwood.jpg',
+  'philippe leblanc': '/images/experts/james-liu.jpg',
 };
 
 const EXPERT_IMAGE_ALIASES: Record<string, string> = {
   'dr sarah chen': 'sarah chen',
-  'marc andre fontaine': 'marc fontaine',
   'robert harrison': 'james mitchell',        // male → male ✓
   'patricia chen': 'sarah chen',              // female → female ✓
-  'sarah williams': 'sarah thompson',         // female → female ✓ (was: james mitchell)
-  'amanda rodriguez': 'sarah chen',           // female → female ✓ (was: james mitchell)
+  'sarah williams': 'sarah thompson',         // female → female ✓
+  'amanda rodriguez': 'sarah chen',           // female → female ✓
   'charlotte davies': 'sarah thompson',       // female → female ✓
-  'sophie tremblay': 'emma whitfield',        // female → female ✓ (was: marc fontaine)
+  'sophie tremblay': 'emma whitfield',        // female → female ✓
   'emma richardson': 'emma whitfield',        // female → female ✓
   'jessica park': 'emma whitfield',           // female → female ✓
-  'michael thornton': 'michael torres',       // male → male ✓
-  'daniel chen': 'michael chen',              // male → male ✓ (was: daniel whitfield = female!)
-  'david thompson': 'marc fontaine',          // male → male ✓
+  // Legacy male aliases → redirected to male portraits
+  'marc andre fontaine': 'marc fontaine',     // → james-blackwood.jpg (male) via legacy redirect
+  'michael thornton': 'michael torres',       // → robert-hayes.jpg (male) via legacy redirect
+  'daniel chen': 'michael chen',              // → james-mitchell.jpg (male) via legacy redirect
+  'david thompson': 'marc fontaine',          // → james-blackwood.jpg (male) via legacy redirect
 };
 
 const ALLOWED_EXPERT_IMAGES = new Set<string>([
@@ -83,14 +93,15 @@ const ALLOWED_EXPERT_IMAGES = new Set<string>([
   '/images/experts/james-liu.jpg',
   '/images/experts/expert-extra-13.jpg',
   '/images/experts/expert-extra-14.jpg',
-  '/images/experts/expert-extra-15.jpg',
+  '/images/experts/daniel-brooks.jpg',
+  '/images/experts/expert-extra-16.jpg',
 ]);
 
 const MARKET_FALLBACK_IMAGE: Record<Market, string> = {
-  us: '/images/experts/james-miller.jpg',
-  uk: '/images/experts/sarah-thompson.jpg',
-  ca: '/images/experts/marc-fontaine.jpg',
-  au: '/images/experts/daniel-whitfield.jpg',
+  us: '/images/experts/robert-hayes.jpg',       // male ✓ (james-miller.jpg = female)
+  uk: '/images/experts/sarah-thompson.jpg',     // female ✓
+  ca: '/images/experts/james-blackwood.jpg',    // male ✓ (marc-fontaine.jpg = female)
+  au: '/images/experts/daniel-whitfield.jpg',   // female ✓
 };
 
 const CATEGORY_FALLBACK_IMAGE: Partial<Record<Market, Partial<Record<Category, string>>>> = {
@@ -100,15 +111,15 @@ const CATEGORY_FALLBACK_IMAGE: Partial<Record<Market, Partial<Record<Category, s
     'credit-score': '/images/experts/james-mitchell.jpg',
     trading: '/images/experts/robert-hayes.jpg',
     forex: '/images/experts/robert-hayes.jpg',
-    'personal-finance': '/images/experts/michael-torres.jpg',
-    'business-banking': '/images/experts/michael-chen.jpg',
+    'personal-finance': '/images/experts/robert-hayes.jpg',    // male ✓ (michael-torres.jpg = female)
+    'business-banking': '/images/experts/james-mitchell.jpg',  // male ✓ (michael-chen.jpg = female)
     'ai-tools': '/images/experts/sarah-chen.jpg',
   },
   uk: {
     trading: '/images/experts/james-blackwood.jpg',
   },
   ca: {
-    forex: '/images/experts/philippe-leblanc.jpg',
+    forex: '/images/experts/james-liu.jpg',                    // male ✓ (philippe-leblanc.jpg = female)
   },
   au: {
     forex: '/images/experts/james-liu.jpg',

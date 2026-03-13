@@ -388,8 +388,12 @@ export function PlanningApproval({ initialPlans }: PlanningApprovalProps) {
     setExecutingId(planId);
 
     try {
-      const { approveAndExecuteSingle } = await import('@/lib/actions/daily-strategy');
-      const result = await approveAndExecuteSingle(planId);
+      const res = await fetch('/api/dashboard/daily-strategy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'approve', planId }),
+      });
+      const result = await res.json();
 
       setResults((prev) => [
         ...prev,
@@ -425,8 +429,13 @@ export function PlanningApproval({ initialPlans }: PlanningApprovalProps) {
     if (!plan || executingId) return;
 
     try {
-      const { rejectPlanItem } = await import('@/lib/actions/daily-strategy');
-      await rejectPlanItem(planId);
+      const res = await fetch('/api/dashboard/daily-strategy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'reject', planId }),
+      });
+      const result = await res.json();
+      if (result.success === false) throw new Error(result.error);
       toast('Abgelehnt', { description: `"${plan.keyword}" archiviert` });
     } catch {
       toast.error('Reject fehlgeschlagen');

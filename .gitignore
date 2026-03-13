@@ -67,3 +67,7 @@ experts-collage.jpg
 *.claude-prompt-*.txt
 supabase/.temp/
 test-results/
+
+# Audit verify run logs
+audits/reports/verify-*.log
+audits/reports/verify-status.json

@@ -50,7 +50,6 @@ export function Hero({
           priority
           className="object-cover object-center"
           sizes="100vw"
-          quality={85}
         />
         {/* Bottom overlay: solid navy edge for clean transition */}
         <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(27, 79, 140, 1.0) 0%, rgba(27, 79, 140, 0.5) 18%, transparent 55%)' }} />

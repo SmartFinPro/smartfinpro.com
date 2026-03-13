@@ -258,6 +258,51 @@ export async function triggerManualSync(
 }
 
 /**
+ * Generate the S2S postback URL template for a connector.
+ * Networks replace {MACROS} with actual values at fire time.
+ */
+export async function getPostbackUrl(
+  connectorName: string,
+): Promise<{ url: string; token: string }> {
+  const supabase = createServiceClient();
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://smartfinpro.com';
+
+  // Lookup or generate postback token
+  const { data } = await supabase
+    .from('api_connectors')
+    .select('config')
+    .eq('name', connectorName)
+    .single();
+
+  let token: string;
+  const config = (data?.config as Record<string, unknown>) || {};
+
+  if (config.postback_token) {
+    token = config.postback_token as string;
+  } else {
+    // Generate and persist a new token
+    token = crypto.randomUUID();
+    await supabase
+      .from('api_connectors')
+      .update({ config: { ...config, postback_token: token } })
+      .eq('name', connectorName);
+  }
+
+  // Build template URL with network macros in {CAPS}
+  const url =
+    `${baseUrl}/api/postback` +
+    `?connector=${encodeURIComponent(connectorName)}` +
+    `&token=${token}` +
+    `&click_id={SUBID}` +
+    `&event={EVENT}` +
+    `&payout={PAYOUT}` +
+    `&currency={CURRENCY}` +
+    `&txn_id={TXN_ID}`;
+
+  return { url, token };
+}
+
+/**
  * Delete a connector configuration
  */
 export async function deleteConnectorConfig(

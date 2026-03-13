@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { mapCountryToMarket, GEO_COOKIE_NAME } from '@/lib/geo/detect-market';
 
 // ============================================================
 // ROUTE SAFETY: Single source of truth for all routing
@@ -113,6 +114,50 @@ async function verifyTOTP(secret: string, code: string): Promise<boolean> {
 }
 
 // ============================================================
+// BRUTE-FORCE PROTECTION (production-only)
+// In-memory per-Edge-worker rate limiter.
+// Local dev: no lockout — simple access as designed.
+// Production: after MAX_ATTEMPTS failures from same IP → 15-min lockout.
+// ============================================================
+
+const MAX_LOGIN_ATTEMPTS = 5;
+const LOCKOUT_MS = 15 * 60 * 1000; // 15 minutes
+
+interface AttemptRecord { count: number; lockedUntil: number }
+const loginAttempts = new Map<string, AttemptRecord>();
+
+function getClientIp(req: NextRequest): string {
+  return (
+    req.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
+    req.headers.get('x-real-ip') ||
+    'unknown'
+  );
+}
+
+function isLockedOut(ip: string): boolean {
+  const rec = loginAttempts.get(ip);
+  if (!rec) return false;
+  if (rec.lockedUntil > Date.now()) return true;
+  // Lockout expired — reset
+  loginAttempts.delete(ip);
+  return false;
+}
+
+function recordFailedAttempt(ip: string): boolean /* true = now locked */ {
+  const rec = loginAttempts.get(ip) ?? { count: 0, lockedUntil: 0 };
+  rec.count += 1;
+  if (rec.count >= MAX_LOGIN_ATTEMPTS) {
+    rec.lockedUntil = Date.now() + LOCKOUT_MS;
+  }
+  loginAttempts.set(ip, rec);
+  return rec.lockedUntil > 0;
+}
+
+function clearAttempts(ip: string): void {
+  loginAttempts.delete(ip);
+}
+
+// ============================================================
 // MAIN MIDDLEWARE
 // ============================================================
 
@@ -154,10 +199,7 @@ export async function middleware(request: NextRequest) {
       // Set DASHBOARD_IP_WHITELIST="1.2.3.4,5.6.7.8" to limit access.
       // Works behind Cloudflare / reverse-proxy (reads x-forwarded-for).
       if (ipWhitelist.length > 0) {
-        const clientIp =
-          request.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
-          request.headers.get('x-real-ip') ||
-          'unknown';
+        const clientIp = getClientIp(request);
         if (!ipWhitelist.includes(clientIp)) {
           console.warn(`[dashboard] IP ${clientIp} blocked by whitelist`);
           return new NextResponse(
@@ -169,6 +211,17 @@ export async function middleware(request: NextRequest) {
 
       // ── Handle POST login submission ──────────────────────────
       if (dashSecret && request.method === 'POST') {
+        const clientIp = getClientIp(request);
+
+        // ── Brute-force check (production only) ──────────────────
+        if (process.env.NODE_ENV === 'production' && isLockedOut(clientIp)) {
+          return dashboardLoginPage(
+            pathname,
+            'Too many failed attempts. Please try again in 15 minutes.',
+            !!totpSecret,
+          );
+        }
+
         try {
           const fd       = await request.formData();
           const submitted = fd.get('secret')?.toString() ?? '';
@@ -178,6 +231,18 @@ export async function middleware(request: NextRequest) {
 
           // Step 1: Password check
           if (submitted !== dashSecret) {
+            // Record failed attempt (production only)
+            if (process.env.NODE_ENV === 'production') {
+              const nowLocked = recordFailedAttempt(clientIp);
+              if (nowLocked) {
+                console.warn(`[dashboard] Brute-force lockout triggered for IP ${clientIp}`);
+                return dashboardLoginPage(
+                  pathname,
+                  'Too many failed attempts. Account locked for 15 minutes.',
+                  !!totpSecret,
+                );
+              }
+            }
             return dashboardLoginPage(pathname, 'Invalid secret. Please try again.', !!totpSecret);
           }
 
@@ -193,7 +258,8 @@ export async function middleware(request: NextRequest) {
             }
           }
 
-          // ✅ Both checks passed — issue sliding session cookie
+          // ✅ Both checks passed — clear failed attempts + issue sliding session cookie
+          if (process.env.NODE_ENV === 'production') clearAttempts(clientIp);
           const response = NextResponse.redirect(new URL(safePath, request.url));
           response.cookies.set('sfp-dash-auth', dashSecret, {
             httpOnly: true,
@@ -258,16 +324,18 @@ export async function middleware(request: NextRequest) {
       return NextResponse.next();
     }
 
-    // ── Step 5: Valid market prefix → allow through ──
-    if (MARKETS.has(firstSegment)) return NextResponse.next();
+    // ── Step 5: Valid market prefix → allow through + set geo cookie ──
+    if (MARKETS.has(firstSegment)) {
+      return withGeoCookie(request, NextResponse.next());
+    }
 
     // ── Step 6: Legacy US clean URLs → 301 redirect to /us/... ──
     if (CATEGORIES.has(firstSegment) || firstSegment === 'reviews') {
       return NextResponse.redirect(new URL(`/us${pathname}`, request.url), 301);
     }
 
-    // ── Step 7: Everything else → allow through to exact match ──
-    return NextResponse.next();
+    // ── Step 7: Everything else → allow through + set geo cookie ──
+    return withGeoCookie(request, NextResponse.next());
   } catch (error) {
     const msg = error instanceof Error ? error.message : 'Unknown middleware error';
     console.error(`[middleware] fallback for pathname="${pathname}":`, msg);
@@ -341,6 +409,35 @@ function dashboardLoginPage(
     status: 401,
     headers: { 'Content-Type': 'text/html' },
   });
+}
+
+// ── Geo-IP Cookie ────────────────────────────────────────────────
+// Sets `sfp-geo` cookie from Cloudflare/Vercel geo-IP headers.
+// Client components read this cookie to show geo-personalized CTAs
+// without breaking SSG (no server-side headers() call in page components).
+function withGeoCookie(request: NextRequest, response: NextResponse): NextResponse {
+  // Skip if cookie is already set (avoids re-setting on every request)
+  if (request.cookies.get(GEO_COOKIE_NAME)?.value) return response;
+
+  const countryCode =
+    request.headers.get('cf-ipcountry') ||
+    request.headers.get('x-vercel-ip-country') ||
+    null;
+
+  if (!countryCode) return response;
+
+  const market = mapCountryToMarket(countryCode);
+  if (!market) return response;
+
+  response.cookies.set(GEO_COOKIE_NAME, market, {
+    httpOnly: false, // Must be readable by client JS
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 60 * 60 * 24, // 24 hours
+    path: '/',
+  });
+
+  return response;
 }
 
 export const config = {

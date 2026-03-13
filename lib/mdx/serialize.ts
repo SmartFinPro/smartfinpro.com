@@ -25,8 +25,18 @@ import type { MDXRemoteSerializeResult } from '@/lib/mdx/types';
  * Compile MDX source to a serialized result compatible with SafeMDX.
  * Uses next-mdx-remote/serialize with post-processing to remove
  * _missingMdxReference checks that break our Direct Pass architecture.
+ *
+ * @param source  Raw MDX string (frontmatter already stripped by gray-matter)
+ * @param scope   Extra variables injected into the MDX scope at render time.
+ *                Use this to pass `frontmatter` data back in when the caller
+ *                has already parsed it (e.g. category hub pages passing
+ *                { frontmatter: pillarContent.meta } so MDX can reference
+ *                frontmatter.faqs, frontmatter.sections, etc.)
  */
-export async function serializeMDX(source: string): Promise<MDXRemoteSerializeResult> {
+export async function serializeMDX(
+  source: string,
+  scope?: Record<string, unknown>,
+): Promise<MDXRemoteSerializeResult> {
   // Strip HTML comments before compilation — MDX uses JSX syntax ({/* */}),
   // and <!-- --> causes "Unexpected character '!' (U+0021)" compilation errors.
   const cleanSource = source.replace(/<!--[\s\S]*?-->/g, '');
@@ -36,6 +46,10 @@ export async function serializeMDX(source: string): Promise<MDXRemoteSerializeRe
     // v6: Allow JSX expressions in MDX (team-authored content, not user input).
     // blockDangerousJS stays true (default) — no eval/Function in MDX source needed.
     blockJS: false,
+    // Inject caller-provided scope (e.g. frontmatter data) into the compiled MDX.
+    // SafeMDX spreads scope into the execution context, making these variables
+    // available as MDX expressions like {frontmatter.faqs}.
+    ...(scope ? { scope } : {}),
   });
 
   // Strip _missingMdxReference checks from the compiled output.

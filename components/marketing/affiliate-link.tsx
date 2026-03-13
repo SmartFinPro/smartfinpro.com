@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { ArrowRight, ExternalLink } from 'lucide-react';
 import { getComplianceLabel } from '@/lib/affiliate/compliance-labels';
+import { RegulatorBadge } from '@/components/marketing/regulator-badge';
 import type { Market, Category } from '@/types';
 
 // ============================================================
@@ -85,7 +86,10 @@ export function AffiliateLink({
           {children || 'Get Started'}
           <ArrowRight className="h-4 w-4" />
         </Link>
-        {showCompliance && <ComplianceHint text={complianceText} />}
+        <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+          <RegulatorBadge market={market} category={category} size="sm" />
+          {showCompliance && <ComplianceHint text={complianceText} layout="inline" />}
+        </div>
       </div>
     );
   }

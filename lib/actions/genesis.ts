@@ -255,6 +255,7 @@ export async function generateLongFormAsset(
   keyword: string,
   market: Market,
   category: string,
+  researchBrief?: string,
 ): Promise<{ success: boolean; slug: string; filePath: string; wordCount: number; error?: string }> {
   const supabase = createServiceClient();
 
@@ -271,6 +272,26 @@ export async function generateLongFormAsset(
       .from('genesis_pipeline_runs')
       .update({ status: 'generating', selected_keyword: keyword })
       .eq('id', runId);
+
+    // Auto-detect research brief from disk if none provided via UI
+    let finalResearchBrief = researchBrief;
+    if (!finalResearchBrief) {
+      const slugBase = keyword
+        .toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-')
+        .slice(0, 60);
+      const researchDir = path.join(process.cwd(), 'content', 'research', market, category);
+      for (const ext of ['.md', '.txt']) {
+        const candidate = path.join(researchDir, `${slugBase}${ext}`);
+        if (fs.existsSync(candidate)) {
+          finalResearchBrief = fs.readFileSync(candidate, 'utf-8');
+          logger.info(`[genesis] Auto-loaded research brief: ${candidate}`);
+          break;
+        }
+      }
+    }
 
     // Step 2a: Competitor research
     await updateProgress({ step: 'research', progress: 10, message: 'Analyzing competitor landscape...' });
@@ -290,7 +311,7 @@ export async function generateLongFormAsset(
 
     // Step 2b: Generate AI brief
     await updateProgress({ step: 'outline', progress: 30, message: 'Building content outline with AI...' });
-    const aiResult = await generateLongFormBriefWithAI(keyword, market, category, competitorOutlines);
+    const aiResult = await generateLongFormBriefWithAI(keyword, market, category, competitorOutlines, finalResearchBrief);
 
     // Step 2c: Build the brief
     await updateProgress({ step: 'content', progress: 55, message: 'Generating 4,000-7,000 word article...' });
@@ -333,8 +354,11 @@ export async function generateLongFormAsset(
     };
 
     // Step 2d: Generate MDX
-    await updateProgress({ step: 'schema', progress: 70, message: 'Generating MDX with Schema.org markup...' });
-    const mdxContent = await generateLongFormMdxContent(brief, []);
+    const mdxProgressMsg = finalResearchBrief
+      ? 'Generating AI-enriched MDX with research data...'
+      : 'Generating MDX with Schema.org markup...';
+    await updateProgress({ step: 'schema', progress: 70, message: mdxProgressMsg });
+    const mdxContent = await generateLongFormMdxContent(brief, [], finalResearchBrief);
 
     // Step 2e: Write file
     await updateProgress({ step: 'writing', progress: 85, message: 'Writing MDX file to disk...' });

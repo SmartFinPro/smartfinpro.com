@@ -76,7 +76,7 @@ function getSessionId(): string {
   if (typeof window === 'undefined') return 'ssr';
   let id = sessionStorage.getItem('sfp_sid');
   if (!id) {
-    id = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+    id = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`; // safe — sessionStorage branch, client-only
     sessionStorage.setItem('sfp_sid', id);
   }
   return id;

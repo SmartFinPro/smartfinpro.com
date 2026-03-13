@@ -44,7 +44,7 @@ export function ExitIntentPopup() {
     if (!lastShown) return true;
 
     const lastShownDate = new Date(lastShown);
-    const daysSinceShown = (Date.now() - lastShownDate.getTime()) / (1000 * 60 * 60 * 24);
+    const daysSinceShown = (Date.now() - lastShownDate.getTime()) / (1000 * 60 * 60 * 24); // safe — useCallback, never SSR
 
     return daysSinceShown >= COOLDOWN_DAYS;
   }, []);
@@ -225,11 +225,16 @@ export function ExitIntentPopup() {
 
               {/* Form */}
               <form onSubmit={handleSubmit} className="space-y-3">
+                {/* Visually-hidden label — WCAG 1.3.1 / 4.1.2 */}
+                <label htmlFor="exit-popup-email" className="sr-only">Email address</label>
                 <Input
+                  id="exit-popup-email"
                   type="email"
                   placeholder="Enter your work email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  autoComplete="email"
+                  aria-required="true"
                   className="h-12 bg-white border-gray-300 placeholder-gray-400 focus:border-blue-400"
                   style={{ color: 'var(--sfp-ink)' }}
                   disabled={status === 'loading'}
@@ -248,8 +253,8 @@ export function ExitIntentPopup() {
                 </label>
                 <Button
                   type="submit"
-                  className="w-full h-12 gap-2 border-0 shadow-lg text-white"
-                  style={{ background: 'var(--sfp-gold)', color: '#ffffff', borderRadius: '1rem' }}
+                  className="w-full h-12 gap-2 border-0 shadow-lg"
+                  style={{ background: 'var(--sfp-gold)', color: 'var(--sfp-ink)' }}
                   disabled={status === 'loading'}
                 >
                   {status === 'loading' ? (

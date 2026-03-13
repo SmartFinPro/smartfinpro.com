@@ -85,6 +85,20 @@ export const WebVitalsSchema = z.object({
 });
 export type WebVitalsPayload = z.infer<typeof WebVitalsSchema>;
 
+/** POST /api/xray/score */
+export const XRayScoreSchema = z.object({
+  slug: z.string().min(1).max(200).regex(/^[a-z0-9/_-]+$/, 'Invalid slug format'),
+  market: z.enum(VALID_MARKETS),
+  category: z.string().min(1).max(50).regex(/^[a-z0-9-]+$/, 'Invalid category format'),
+  experience: z.enum(['beginner', 'intermediate', 'advanced']),
+  teamSize: z.number().int().min(1).max(500),
+  monthlyBudget: z.number().min(0).max(100000),
+  priority: z.enum(['low-cost', 'features', 'ease-of-use', 'compliance']),
+  hourlyValue: z.number().min(0).max(10000),
+  sessionId: z.string().max(128).optional(),
+});
+export type XRayScorePayload = z.infer<typeof XRayScoreSchema>;
+
 /** Market code guard for cron params */
 export function assertValidMarket(market: string): market is Market {
   return (VALID_MARKETS as readonly string[]).includes(market);

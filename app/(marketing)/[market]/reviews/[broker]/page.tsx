@@ -264,7 +264,7 @@ export default async function BrokerReviewPage({ params }: PageProps) {
                   />
                 ))}
                 <span className="ml-2 text-sm tabular-nums" style={{ color: 'var(--sfp-slate)' }}>
-                  {review.rating}/5 ({review.reviewCount.toLocaleString('en-US')} reviews)
+                  {review.rating}/5 ({(review.reviewCount ?? 0).toLocaleString('en-US')} reviews)
                 </span>
               </div>
               <span className="text-gray-300">|</span>
@@ -562,7 +562,7 @@ export default async function BrokerReviewPage({ params }: PageProps) {
             </h2>
             <p className="text-lg mb-8 max-w-xl mx-auto leading-relaxed" style={{ color: 'var(--sfp-slate)' }}>
               Open your free account today and experience why{' '}
-              {review.reviewCount.toLocaleString('en-US')}+ traders trust {review.name}.
+              {(review.reviewCount ?? 0).toLocaleString('en-US')}+ traders trust {review.name}.
               No commitment, cancel anytime.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">

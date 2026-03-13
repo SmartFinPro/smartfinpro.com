@@ -4,6 +4,7 @@ import Link from 'next/link';
 import {
   CheckCircle2,
   Shield,
+  ShieldCheck,
   Award,
   Mail,
 } from 'lucide-react';
@@ -572,6 +573,51 @@ export default function AboutPage() {
                 </p>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Data Integrity & Verification */}
+      <section className="py-16 sm:py-20 lg:py-24">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-3xl mx-auto">
+            <div className="flex items-center gap-3 mb-6">
+              <div
+                className="flex items-center justify-center h-10 w-10 rounded-full flex-shrink-0"
+                style={{ background: 'rgba(26,107,58,0.10)' }}
+              >
+                <ShieldCheck style={{ color: 'var(--sfp-green)', width: '20px', height: '20px' }} />
+              </div>
+              <h2 className="text-3xl sm:text-4xl font-bold" style={{ color: 'var(--sfp-navy)' }}>
+                Data Integrity & Verification
+              </h2>
+            </div>
+
+            <p className="text-lg mb-6" style={{ color: 'var(--sfp-ink)' }}>
+              Every affiliate conversion event on SmartFinPro is verified through our proprietary S2S Postback Dedup system — a dual-bucket deduplication engine that ensures no double-counted conversions or inflated metrics. The system is independently audited with integration and unit test suites, and the results are published transparently.
+            </p>
+
+            <div
+              className="p-6 rounded-lg border mb-8"
+              style={{ background: 'var(--sfp-sky)', borderColor: 'var(--sfp-navy)' }}
+            >
+              <p className="text-sm font-medium" style={{ color: 'var(--sfp-navy)' }}>
+                Our Integrity Engine runs automated audit gates on every deployment. When all tests pass, the system earns a &quot;Certified&quot; seal — visible on our dashboard and public integrity page.
+              </p>
+            </div>
+
+            <Link href="/integrity">
+              <Button
+                size="lg"
+                style={{
+                  background: 'var(--sfp-navy)',
+                  color: 'white',
+                }}
+                className="hover:opacity-90"
+              >
+                View Integrity Report
+              </Button>
+            </Link>
           </div>
         </div>
       </section>

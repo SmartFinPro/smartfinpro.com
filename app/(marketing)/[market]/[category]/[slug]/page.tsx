@@ -7,6 +7,7 @@ import { generateAlternates, getCanonicalUrl } from '@/lib/seo/hreflang';
 import { ReportLayout } from '@/components/marketing/report-layout';
 import { getMarketExpert } from '@/lib/actions/experts';
 import { getEnrichedCtaPartners } from '@/lib/actions/page-cta-partners';
+import { rankOffersByEV } from '@/lib/actions/offer-ev';
 
 interface ContentPageProps {
   params: Promise<{
@@ -14,12 +15,15 @@ interface ContentPageProps {
     category: string;
     slug: string;
   }>;
+  searchParams: Promise<{ xray?: string; [key: string]: string | undefined }>;
 }
 
 export async function generateMetadata({
   params,
+  searchParams,
 }: ContentPageProps): Promise<Metadata> {
   const { market, category, slug } = await params;
+  const sp = await searchParams;
 
   if (!isValidMarket(market) || !isValidCategory(category)) {
     return {};
@@ -38,6 +42,32 @@ export async function generateMetadata({
   const canonicalUrl = getCanonicalUrl(market as Market, `/${category}/${slug}`);
   const alternates = generateAlternates(`/${category}/${slug}`);
 
+  // X-Ray Score™ share override — enrich OG tags when ?xray= is present
+  let ogTitle = content.meta.seoTitle || content.meta.title;
+  let ogDescription = content.meta.description;
+
+  if (sp.xray && /^r_[a-f0-9]{8,16}$/.test(sp.xray)) {
+    try {
+      const { createServiceClient } = await import('@/lib/supabase/server');
+      const supabase = createServiceClient();
+      const { data } = await supabase
+        .from('xray_results')
+        .select('xray_score, decision_label')
+        .eq('result_id', sp.xray)
+        .single();
+
+      if (data) {
+        const score = Number(data.xray_score);
+        const label = data.decision_label || 'Analyzed';
+        const productName = content.meta.title.split(' ')[0];
+        ogTitle = `${productName} X-Ray Score: ${score}/100 — ${label}`;
+        ogDescription = `Personalized analysis of ${productName}: scored ${score}/100 (${label}). See fit, cost, risk & value breakdown.`;
+      }
+    } catch {
+      // X-Ray metadata non-critical — fall through to default
+    }
+  }
+
   return {
     title: content.meta.seoTitle || content.meta.title,
     description: content.meta.description,
@@ -46,8 +76,8 @@ export async function generateMetadata({
       languages: alternates,
     },
     openGraph: {
-      title: content.meta.seoTitle || content.meta.title,
-      description: content.meta.description,
+      title: ogTitle,
+      description: ogDescription,
       type: 'article',
       url: canonicalUrl,
       siteName: 'SmartFinPro',
@@ -60,14 +90,14 @@ export async function generateMetadata({
           url: '/og-image.png',
           width: 1200,
           height: 630,
-          alt: content.meta.title,
+          alt: ogTitle,
         },
       ],
     },
     twitter: {
       card: 'summary_large_image',
-      title: content.meta.title,
-      description: content.meta.description,
+      title: ogTitle,
+      description: ogDescription,
       images: ['/og-image.png'],
     },
   };
@@ -117,10 +147,24 @@ export default async function ContentPage({ params }: ContentPageProps) {
     const siblingReviews = allCategoryContent
       .filter(item => item.slug !== slug && item.slug !== 'index' && item.meta.rating);
 
+    // P4: Re-sort ctaPartners by Expected Value if sufficient data exists
+    let rankedPartners = ctaPartners;
+    try {
+      const evRanked = await rankOffersByEV(market, category);
+      if (evRanked && evRanked.length > 0 && ctaPartners.length > 0) {
+        const evOrder = new Map(evRanked.map((e, i) => [e.slug, i]));
+        rankedPartners = [...ctaPartners].sort((a, b) => {
+          const aIdx = evOrder.get(a.slug) ?? 999;
+          const bIdx = evOrder.get(b.slug) ?? 999;
+          return aIdx - bIdx;
+        });
+      }
+    } catch { /* EV ranking non-critical — fall through to CPA sort */ }
+
     return (
       <>
         <ReportLayout
-          ctaPartners={ctaPartners}
+          ctaPartners={rankedPartners}
           expert={expert}
           mdxSource={mdxSource}
           relatedArticles={relatedArticles}
@@ -175,10 +219,24 @@ export default async function ContentPage({ params }: ContentPageProps) {
   const siblingReviews = allCategoryContent
     .filter(item => item.slug !== slug && item.slug !== 'index');
 
+  // P4: Re-sort ctaPartners by Expected Value
+  let rankedPartners = ctaPartners;
+  try {
+    const evRanked = await rankOffersByEV(market, category);
+    if (evRanked && evRanked.length > 0 && ctaPartners.length > 0) {
+      const evOrder = new Map(evRanked.map((e, i) => [e.slug, i]));
+      rankedPartners = [...ctaPartners].sort((a, b) => {
+        const aIdx = evOrder.get(a.slug) ?? 999;
+        const bIdx = evOrder.get(b.slug) ?? 999;
+        return aIdx - bIdx;
+      });
+    }
+  } catch { /* EV ranking non-critical */ }
+
   return (
     <>
       <ReportLayout
-        ctaPartners={ctaPartners}
+        ctaPartners={rankedPartners}
         expert={expert}
         mdxSource={mdxSource}
         relatedArticles={relatedArticles}

@@ -20,6 +20,10 @@ const heroConfig: Record<string, Record<string, { gradient: string; label: strin
     cybersecurity: { gradient: 'from-red-50 via-white to-orange-50', label: 'Cybersecurity', icon: '🔒' },
     'business-banking': { gradient: 'from-amber-50 via-white to-yellow-50', label: 'Business Banking', icon: '🏦' },
     forex: { gradient: 'from-sky-50 via-white to-blue-50', label: 'Forex Trading', icon: '💱' },
+    'gold-investing': { gradient: 'from-amber-50 via-white to-yellow-50', label: 'Gold Investing', icon: '🥇' },
+    'credit-score': { gradient: 'from-green-50 via-white to-emerald-50', label: 'Credit Score', icon: '📊' },
+    'credit-repair': { gradient: 'from-orange-50 via-white to-amber-50', label: 'Credit Repair', icon: '🔧' },
+    'debt-relief': { gradient: 'from-teal-50 via-white to-green-50', label: 'Debt Relief', icon: '💚' },
   },
   uk: {
     trading: { gradient: 'from-blue-50 via-white to-blue-50', label: 'London Markets', icon: '📊' },
@@ -27,6 +31,10 @@ const heroConfig: Record<string, Record<string, { gradient: string; label: strin
     'ai-tools': { gradient: 'from-blue-50 via-white to-sky-50', label: 'AI Tools', icon: '🤖' },
     cybersecurity: { gradient: 'from-red-50 via-white to-orange-50', label: 'Cybersecurity', icon: '🔒' },
     'business-banking': { gradient: 'from-amber-50 via-white to-yellow-50', label: 'UK Business Banking', icon: '🏦' },
+    forex: { gradient: 'from-sky-50 via-white to-blue-50', label: 'UK Forex Trading', icon: '💱' },
+    savings: { gradient: 'from-green-50 via-white to-teal-50', label: 'UK Savings Accounts', icon: '🏦' },
+    remortgaging: { gradient: 'from-sky-50 via-white to-blue-50', label: 'UK Remortgaging', icon: '🏠' },
+    'cost-of-living': { gradient: 'from-orange-50 via-white to-amber-50', label: 'UK Cost of Living', icon: '🛒' },
   },
   ca: {
     forex: { gradient: 'from-sky-50 via-white to-blue-50', label: 'Canadian Forex', icon: '🍁' },
@@ -34,14 +42,20 @@ const heroConfig: Record<string, Record<string, { gradient: string; label: strin
     'ai-tools': { gradient: 'from-blue-50 via-white to-sky-50', label: 'AI Tools', icon: '🤖' },
     cybersecurity: { gradient: 'from-red-50 via-white to-orange-50', label: 'Cybersecurity', icon: '🔒' },
     'business-banking': { gradient: 'from-amber-50 via-white to-yellow-50', label: 'CA Business Banking', icon: '🏦' },
+    housing: { gradient: 'from-sky-50 via-white to-teal-50', label: 'Canadian Housing & Mortgage', icon: '🏠' },
+    trading: { gradient: 'from-blue-50 via-white to-blue-50', label: 'Canadian Trading', icon: '📊' },
+    'tax-efficient-investing': { gradient: 'from-green-50 via-white to-emerald-50', label: 'Tax-Efficient Investing', icon: '🍁' },
   },
   au: {
     trading: { gradient: 'from-blue-50 via-white to-blue-50', label: 'ASX Trading', icon: '📈' },
     forex: { gradient: 'from-sky-50 via-white to-blue-50', label: 'Australian Forex', icon: '💱' },
-    'personal-finance': { gradient: 'from-green-50 via-white to-teal-50', label: 'AU Home Loans', icon: '🏠' },
+    'personal-finance': { gradient: 'from-green-50 via-white to-teal-50', label: 'AU Personal Finance', icon: '🦘' },
     'ai-tools': { gradient: 'from-blue-50 via-white to-sky-50', label: 'AI Tools', icon: '🤖' },
     cybersecurity: { gradient: 'from-red-50 via-white to-orange-50', label: 'Cybersecurity', icon: '🔒' },
     'business-banking': { gradient: 'from-amber-50 via-white to-yellow-50', label: 'AU Business Banking', icon: '🏦' },
+    'gold-investing': { gradient: 'from-amber-50 via-white to-yellow-50', label: 'AU Gold Investing', icon: '🥇' },
+    savings: { gradient: 'from-green-50 via-white to-teal-50', label: 'AU Savings Accounts', icon: '🏦' },
+    superannuation: { gradient: 'from-sky-50 via-white to-blue-50', label: 'Australian Superannuation', icon: '🦘' },
   },
 };
 
@@ -68,7 +82,8 @@ function GradientFallback({ config, className }: { config: { gradient: string; l
 
 export function RegionalHeroImage({ market, category, slug, className = '' }: RegionalHeroImageProps) {
   const [imgError, setImgError] = useState(false);
-  const config = heroConfig[market]?.[category] || heroConfig.us.trading;
+  const genericFallback = { gradient: 'from-slate-50 via-white to-blue-50', label: 'SmartFinPro', icon: '📋' };
+  const config = heroConfig[market]?.[category] || heroConfig.us?.[category] || genericFallback;
 
   // Try to resolve a real image from the asset registry
   const reviewAsset = slug ? getReviewImage(market, category, slug) : null;
@@ -99,7 +114,7 @@ export function RegionalHeroImage({ market, category, slug, className = '' }: Re
             src={resolvedSrc}
             alt={resolvedAlt}
             fill
-            className="object-cover"
+            className="object-cover object-center"
             sizes="(max-width: 768px) 100vw, (max-width: 1280px) 90vw, 1200px"
             onError={() => setImgError(true)}
           />

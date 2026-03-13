@@ -28,10 +28,10 @@ export function AbLiveView() {
 
   const fetchData = useCallback(() => {
     setLoading(true);
-    import('@/lib/actions/ab-testing')
-      .then(({ getAbTestLiveData }) => getAbTestLiveData())
+    fetch('/api/dashboard/ab-testing')
+      .then((res) => res.json())
       .then((data) => {
-        setTests(data);
+        setTests(Array.isArray(data) ? data : data.data || []);
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -46,8 +46,11 @@ export function AbLiveView() {
 
   const handleReset = async (hubId: string) => {
     setResetting(hubId);
-    const { resetAbTest } = await import('@/lib/actions/ab-testing');
-    await resetAbTest(hubId);
+    await fetch('/api/dashboard/ab-testing', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'reset', hubId }),
+    });
     fetchData();
     setResetting(null);
   };

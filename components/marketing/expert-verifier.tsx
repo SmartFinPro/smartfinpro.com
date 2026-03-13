@@ -35,7 +35,7 @@ export function ExpertVerifier({
   credentials: credentialsProp,
   image,
   bio,
-  lastFactChecked = new Date().toISOString(),
+  lastFactChecked = '2026-03-01T00:00:00.000Z', // safe — static default avoids SSR/client mismatch
   factCheckNote = 'All data points verified against primary sources',
   linkedInUrl,
   variant = 'default',

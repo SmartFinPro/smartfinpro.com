@@ -1,6 +1,6 @@
 'use client';
 
-import { ScrollDepthStat } from '@/lib/actions/dashboard';
+import type { ScrollDepthStat } from '@/lib/actions/dashboard';
 import { Progress } from '@/components/ui/progress';
 
 interface ScrollDepthStatsProps {

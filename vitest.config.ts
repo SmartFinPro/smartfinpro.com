@@ -15,7 +15,11 @@ export default defineConfig({
     globals: true,
     setupFiles: ['./vitest.setup.ts'],
     include: ['__tests__/**/*.test.ts'],
-    exclude: ['node_modules', '.next', 'e2e'],
+    exclude: ['node_modules', '.next', 'e2e', '__tests__/integration/**'],
+    reporters: [
+      'default',
+      ['json', { outputFile: './audits/reports/unit-latest.json' }],
+    ],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json'],

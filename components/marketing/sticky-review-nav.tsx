@@ -35,18 +35,25 @@
 //   • Desktop: Title + Subtitle + 2 buttons (Gold + Ghost) [Variant A]
 //   • XL:      Title + Subtitle + up to 3 buttons [Variant A]
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import Link from 'next/link';
-import { ArrowRight, ExternalLink, Users, Zap } from 'lucide-react';
+import { ArrowRight, ShieldCheck, ExternalLink, Users, Zap, Globe } from 'lucide-react';
+import { RegulatorBadge } from '@/components/marketing/regulator-badge';
+import { PreQualQuiz } from '@/components/marketing/pre-qual-quiz';
 import type { EnrichedCtaPartner } from '@/lib/types/page-cta';
+import { getVisitorMarketFromCookie } from '@/lib/geo/geo-cookie';
 
 // ── Types ────────────────────────────────────────────────────────
 
 type AbVariant = 'A' | 'B';
 
+type MarketCode = 'us' | 'uk' | 'ca' | 'au';
+
 interface StickyReviewNavProps {
   productName: string;
   categoryLabel: string;
+  /** Server-provided year for hydration-safe headline text */
+  reviewYear?: number;
   category?: string;
   market?: string;
   rating?: number;
@@ -55,6 +62,8 @@ interface StickyReviewNavProps {
   primaryCtaLabel?: string;
   ctaPartners?: EnrichedCtaPartner[];
   sentinelId?: string;
+  /** P3: Open Pre-Qual Quiz modal before outbound click (default: false) */
+  enablePreQual?: boolean;
 }
 
 interface ButtonColorScheme {
@@ -65,59 +74,58 @@ interface ButtonColorScheme {
   hoverText: string;
   hoverShadow: string;
   badge: string;
-  border?: string;
-  hoverBorder?: string;
 }
 
 // ── Module-level constants (avoid re-creation per render) ────────
 
-/** Variant A: Color palette for up to 3 CTA buttons — light background design */
+/** Variant A: Color palette for up to 3 CTA buttons: Gold → Teal → Lavender */
 const BUTTON_COLORS: readonly ButtonColorScheme[] = [
   {
-    // Primary — solid gold with glow (matches landing page + AffiliateButton)
-    bg: 'var(--sfp-gold)', text: '#ffffff',
-    shadow: '0 4px 20px rgba(245,166,35,0.35)',
-    hoverBg: 'var(--sfp-gold-dark)', hoverText: '#ffffff',
-    hoverShadow: '0 6px 28px rgba(245,166,35,0.5)',
+    bg: 'rgba(255, 215, 100, 0.40)', text: '#FFE070',
+    shadow: '0 2px 10px rgba(255, 215, 100, 0.35)',
+    hoverBg: 'rgba(255, 215, 100, 0.60)', hoverText: '#FFF0A0',
+    hoverShadow: '0 4px 20px rgba(255, 215, 100, 0.6)',
     badge: '★★★ Best Value',
-    border: 'none',
-    hoverBorder: 'none',
   },
   {
-    // Secondary — navy ghost button
-    bg: 'transparent', text: 'var(--sfp-navy)',
-    shadow: 'none',
-    hoverBg: 'rgba(27,79,140,0.06)', hoverText: 'var(--sfp-navy)',
-    hoverShadow: 'none',
+    bg: 'rgba(125, 211, 216, 0.15)', text: '#7DD3D8',
+    shadow: '0 2px 8px rgba(125, 211, 216, 0.2)',
+    hoverBg: 'rgba(125, 211, 216, 0.30)', hoverText: '#A5E8EC',
+    hoverShadow: '0 4px 16px rgba(125, 211, 216, 0.4)',
     badge: '★★ Best Overall',
-    border: '1.5px solid rgba(27,79,140,0.25)',
-    hoverBorder: '1.5px solid rgba(27,79,140,0.5)',
   },
   {
-    // Tertiary — subtle gray ghost
-    bg: 'transparent', text: 'var(--sfp-ink)',
-    shadow: 'none',
-    hoverBg: 'rgba(0,0,0,0.04)', hoverText: 'var(--sfp-ink)',
-    hoverShadow: 'none',
+    bg: 'rgba(167, 139, 250, 0.15)', text: '#A78BFA',
+    shadow: '0 2px 8px rgba(167, 139, 250, 0.2)',
+    hoverBg: 'rgba(167, 139, 250, 0.30)', hoverText: '#C4B5FD',
+    hoverShadow: '0 4px 16px rgba(167, 139, 250, 0.4)',
     badge: '★ Best Features',
-    border: '1.5px solid #E2E8F0',
-    hoverBorder: '1.5px solid #cbd5e1',
   },
 ] as const;
 
 /** Variant B: Single focused gold button — larger, more prominent */
 const FOCUSED_BUTTON: ButtonColorScheme = {
-  bg: 'var(--sfp-gold)', text: '#ffffff',
-  shadow: '0 4px 24px rgba(245,166,35,0.35)',
-  hoverBg: 'var(--sfp-gold-dark)', hoverText: '#ffffff',
-  hoverShadow: '0 6px 32px rgba(245,166,35,0.5)',
+  bg: 'rgba(255, 215, 100, 0.50)', text: '#FFE070',
+  shadow: '0 2px 12px rgba(255, 215, 100, 0.4)',
+  hoverBg: 'rgba(255, 215, 100, 0.70)', hoverText: '#FFF5C0',
+  hoverShadow: '0 4px 24px rgba(255, 215, 100, 0.65)',
   badge: '',
-  border: 'none',
-  hoverBorder: 'none',
 };
 
 const PULSE_ANIMATION = 'stickyPulseGlow 3s ease-in-out infinite';
 const AB_STORAGE_KEY = 'sfp_ab_sticky';
+
+/** No-op subscribe for useSyncExternalStore (cookie doesn't emit change events) */
+const subscribeCookieNoop = () => () => {};
+const serverSnapshotNull = () => null;
+
+/** Display labels for geo-redirect badge */
+const MARKET_LABELS: Record<MarketCode, string> = {
+  us: 'US',
+  uk: 'UK',
+  ca: 'Canadian',
+  au: 'Australian',
+};
 
 // ── Helpers ──────────────────────────────────────────────────────
 
@@ -178,8 +186,8 @@ function getOrAssignVariant(hubId: string): AbVariant {
     const map: Record<string, AbVariant> = stored ? JSON.parse(stored) : {};
     if (map[hubId]) return map[hubId];
 
-    // 50/50 random split
-    const variant: AbVariant = Math.random() < 0.5 ? 'A' : 'B';
+    // 50/50 random split (localStorage-guarded — client-only)
+    const variant: AbVariant = Math.random() < 0.5 ? 'A' : 'B'; // safe — localStorage branch
     map[hubId] = variant;
     localStorage.setItem(AB_STORAGE_KEY, JSON.stringify(map));
     return variant;
@@ -222,6 +230,7 @@ function trackAbEvent(
 export function StickyReviewNav({
   productName,
   categoryLabel,
+  reviewYear,
   category: categoryProp,
   market: marketProp,
   rating,
@@ -230,20 +239,23 @@ export function StickyReviewNav({
   primaryCtaLabel,
   ctaPartners = [],
   sentinelId = 'review-sticky-sentinel',
+  enablePreQual = false,
 }: StickyReviewNavProps) {
   const [visible, setVisible] = useState(false);
   const [abVariant, setAbVariant] = useState<AbVariant | null>(null);
+  const [quizSlug, setQuizSlug] = useState<string | null>(null);
+  const [banditSlug, setBanditSlug] = useState<string | null>(null);
   const impressionSent = useRef(false);
   const abImpressionSent = useRef(false);
   const navRef = useRef<HTMLElement>(null);
 
   // ── Stable values ─────────────────────────────────────────────
-  const year = useMemo(() => new Date().getFullYear(), []);
+  const year = reviewYear ?? new Date().getUTCFullYear();
 
   const socialProofCount = useMemo(() => {
+    // Deterministic across SSR + client hydration (no clock/timezone input).
     const base = productName.length * 7 + (rating || 4) * 31;
-    const hour = new Date().getHours();
-    return Math.floor(80 + (base % 120) + hour * 3);
+    return Math.floor(80 + (base % 120));
   }, [productName, rating]);
 
   // ── Derive category + market from URL or props ─────────────────
@@ -260,12 +272,30 @@ export function StickyReviewNav({
 
   const hubId = `sticky_nav__${resolvedCategory}__${resolvedMarket}`;
 
+  // ── Geo-mismatch: visitor is from a different market (read from middleware cookie) ──
+  // useSyncExternalStore avoids setState-in-effect lint error while remaining SSR-safe
+  const visitorMarket = useSyncExternalStore(
+    subscribeCookieNoop,
+    getVisitorMarketFromCookie,
+    serverSnapshotNull,
+  );
+
+  const geoRedirect = useMemo(() => {
+    if (!visitorMarket || visitorMarket === resolvedMarket) return null;
+    const prefix = visitorMarket === 'us' ? '' : `/${visitorMarket}`;
+    return {
+      label: MARKET_LABELS[visitorMarket],
+      url: `${prefix}/${resolvedCategory}/`,
+    };
+  }, [visitorMarket, resolvedMarket, resolvedCategory]);
+
   // ── A/B variant assignment (client-only, after hydration) ──────
   useEffect(() => {
-    // Check for concluded winner first
+    let cancelled = false;
     fetch(`/api/hub-ab?category=sticky_nav__${resolvedCategory}&market=${resolvedMarket}`)
       .then((r) => r.json())
       .then((data) => {
+        if (cancelled) return;
         if (data.winner) {
           setAbVariant(data.winner as AbVariant);
         } else {
@@ -273,10 +303,33 @@ export function StickyReviewNav({
         }
       })
       .catch(() => {
-        // API failed → use local assignment
+        if (cancelled) return;
         setAbVariant(getOrAssignVariant(hubId));
       });
+    return () => { cancelled = true; };
   }, [hubId, resolvedCategory, resolvedMarket]);
+
+  // ── P5: Bandit selection (non-blocking, client-side) ──────────
+  useEffect(() => {
+    let cancelled = false;
+    const deviceType = /mobile|android|iphone/i.test(navigator.userAgent)
+      ? 'mobile'
+      : /tablet|ipad/i.test(navigator.userAgent)
+        ? 'tablet'
+        : 'desktop';
+
+    fetch(`/api/bandit/select?market=${resolvedMarket}&category=${resolvedCategory}&device=${deviceType}`)
+      .then((r) => {
+        if (r.status === 204) return null;
+        return r.json();
+      })
+      .then((data) => {
+        if (cancelled) return;
+        if (data?.slug) setBanditSlug(data.slug);
+      })
+      .catch(() => null);
+    return () => { cancelled = true; };
+  }, [resolvedCategory, resolvedMarket]);
 
   // ── Visibility observer ──────────────────────────────────────
   useEffect(() => {
@@ -343,6 +396,7 @@ export function StickyReviewNav({
   }, [visible, abVariant, resolvedCategory, resolvedMarket]);
 
   // ── Smart CTA resolution chain (memoized) ───────────────────
+  // P5: Bandit-selected slug gets promoted to position 1
   const resolvedPartners = useMemo(() => {
     const placement1 = ctaPartners
       .filter((p) => p.placements.includes(1))
@@ -352,6 +406,8 @@ export function StickyReviewNav({
       .filter((p) => !p.placements.includes(1))
       .sort((a, b) => a.position - b.position);
 
+    let partners: { label: string; url: string }[];
+
     if (placement1.length > 0) {
       const merged = [...placement1, ...anyPlacement];
       const seen = new Set<string>();
@@ -360,44 +416,55 @@ export function StickyReviewNav({
         seen.add(p.slug);
         return true;
       });
-      return unique.slice(0, 3).map((p) => ({
+      partners = unique.slice(0, 3).map((p) => ({
         label: p.partner_name,
         url: `/go/${p.slug}/`,
       }));
     } else if (anyPlacement.length > 0) {
-      return anyPlacement.slice(0, 3).map((p) => ({
+      partners = anyPlacement.slice(0, 3).map((p) => ({
         label: p.partner_name,
         url: `/go/${p.slug}/`,
       }));
     } else if (affiliateUrl && affiliateUrl !== '#') {
-      return [{ label: primaryCtaLabel || `Visit ${productName}`, url: affiliateUrl }];
+      partners = [{ label: primaryCtaLabel || `Visit ${productName}`, url: affiliateUrl }];
+    } else {
+      partners = [];
     }
-    return [];
-  }, [ctaPartners, affiliateUrl, primaryCtaLabel, productName]);
+
+    // P5: If bandit selected a slug, promote that partner to position 1
+    if (banditSlug && partners.length > 1) {
+      const banditUrl = `/go/${banditSlug}/`;
+      const banditIdx = partners.findIndex((p) => p.url === banditUrl);
+      if (banditIdx > 0) {
+        const [promoted] = partners.splice(banditIdx, 1);
+        partners.unshift(promoted);
+      }
+    }
+
+    return partners;
+  }, [ctaPartners, affiliateUrl, primaryCtaLabel, productName, banditSlug]);
 
   // ── Hover handlers ────────────────────────────────────────────
   const handleMouseEnter = useCallback(
-    (e: React.MouseEvent<HTMLAnchorElement>, colors: ButtonColorScheme, _isPrimary: boolean) => {
+    (e: React.MouseEvent<HTMLAnchorElement>, colors: ButtonColorScheme, isPrimary: boolean) => {
       const el = e.currentTarget;
       el.style.background = colors.hoverBg;
       el.style.color = colors.hoverText;
       el.style.boxShadow = colors.hoverShadow;
       el.style.textDecoration = 'none';
-      if (colors.hoverBorder) el.style.border = colors.hoverBorder;
-      el.style.transform = 'translateY(-1px)';
+      if (isPrimary) el.style.animation = 'none';
     },
     [],
   );
 
   const handleMouseLeave = useCallback(
-    (e: React.MouseEvent<HTMLAnchorElement>, colors: ButtonColorScheme, _isPrimary: boolean) => {
+    (e: React.MouseEvent<HTMLAnchorElement>, colors: ButtonColorScheme, isPrimary: boolean) => {
       const el = e.currentTarget;
       el.style.background = colors.bg;
       el.style.color = colors.text;
       el.style.boxShadow = colors.shadow;
       el.style.textDecoration = 'none';
-      if (colors.border) el.style.border = colors.border;
-      el.style.transform = 'translateY(0)';
+      if (isPrimary) el.style.animation = PULSE_ANIMATION;
     },
     [],
   );
@@ -425,10 +492,10 @@ export function StickyReviewNav({
       <div className="hidden lg:block shrink-0" aria-hidden="true">
         <div
           className="flex items-center gap-1.5 text-xs sm:text-sm whitespace-nowrap"
-          style={{ color: 'var(--sfp-slate)' }}
+          style={{ color: 'rgba(255, 255, 255, 0.5)' }}
         >
           <Users className="w-3.5 h-3.5" />
-          <span>{socialProofCount.toLocaleString()} comparing now</span>
+          <span>{socialProofCount.toLocaleString('en-US')} comparing now</span>
         </div>
       </div>
 
@@ -441,14 +508,14 @@ export function StickyReviewNav({
           const buttonGroup = (
             <div className="flex flex-col items-center gap-1.5">
               <Link
-                href={cta.url}
-                target="_blank"
+                href={enablePreQual ? '#' : cta.url}
+                target={enablePreQual ? undefined : '_blank'}
                 rel="noopener noreferrer nofollow"
                 tabIndex={visible ? 0 : -1}
                 aria-label={`${cta.label} (opens in new tab)`}
                 className="
                   sticky-pulse-glow
-                  inline-flex items-center gap-2 rounded-2xl
+                  inline-flex items-center gap-2 rounded-xl
                   px-5 py-2 text-sm font-bold
                   whitespace-nowrap no-underline hover:no-underline
                   transition-all duration-200 hover:scale-[1.02]
@@ -459,13 +526,18 @@ export function StickyReviewNav({
                   background: colors.bg,
                   color: colors.text,
                   boxShadow: colors.shadow,
-                  border: colors.border || 'none',
                   textDecoration: 'none',
-                  '--tw-ring-offset-color': 'var(--sfp-gray)',
+                  '--tw-ring-offset-color': 'var(--sfp-navy)',
+                  ...(isPrimary ? { animation: PULSE_ANIMATION } : {}),
                 } as React.CSSProperties}
                 onMouseEnter={(e) => handleMouseEnter(e, colors, isPrimary)}
                 onMouseLeave={(e) => handleMouseLeave(e, colors, isPrimary)}
-                onClick={() => {
+                onClick={(e) => {
+                  if (enablePreQual) {
+                    e.preventDefault();
+                    const slug = cta.url.replace('/go/', '').replace(/\/$/, '');
+                    setQuizSlug(slug);
+                  }
                   trackClick(cta.url, cta.label, i + 1);
                   if (abVariant) trackAbEvent('click', resolvedCategory, resolvedMarket, abVariant, cta.label);
                 }}
@@ -474,13 +546,16 @@ export function StickyReviewNav({
                 <span>{cta.label}</span>
                 {isPrimary && <ArrowRight className="w-4 h-4 shrink-0" aria-hidden="true" />}
               </Link>
-              <span
-                className="hidden sm:block text-xs leading-tight whitespace-nowrap"
-                style={{ color: 'var(--sfp-slate)', fontWeight: 500 }}
-                aria-hidden="true"
-              >
-                {colors.badge}
-              </span>
+              <div className="hidden sm:flex items-center gap-1.5">
+                <RegulatorBadge market={resolvedMarket} category={resolvedCategory} size="sm" />
+                <span
+                  className="text-xs sm:text-sm leading-tight whitespace-nowrap"
+                  style={{ color: 'rgba(255, 255, 255, 0.6)', fontWeight: 400 }}
+                  aria-hidden="true"
+                >
+                  {colors.badge}
+                </span>
+              </div>
             </div>
           );
 
@@ -502,7 +577,7 @@ export function StickyReviewNav({
         <div className="hidden lg:block shrink-0" aria-hidden="true">
           <div
             className="flex items-center gap-1.5 text-xs sm:text-sm whitespace-nowrap"
-            style={{ color: 'var(--sfp-gold-dark)', fontWeight: 600 }}
+            style={{ color: 'rgba(255, 215, 100, 0.7)' }}
           >
             <Zap className="w-3.5 h-3.5" />
             <span>Limited offer — compare now</span>
@@ -510,16 +585,16 @@ export function StickyReviewNav({
         </div>
 
         {/* RIGHT: Single prominent CTA */}
-        <div className="shrink-0">
+        <div className="shrink-0 flex flex-col items-center gap-1.5">
           <Link
-            href={cta.url}
-            target="_blank"
+            href={enablePreQual ? '#' : cta.url}
+            target={enablePreQual ? undefined : '_blank'}
             rel="noopener noreferrer nofollow"
             tabIndex={visible ? 0 : -1}
             aria-label={`${cta.label} (opens in new tab)`}
             className="
               sticky-pulse-glow
-              inline-flex items-center gap-2.5 rounded-2xl
+              inline-flex items-center gap-2.5 rounded-xl
               px-6 py-2.5 text-sm sm:text-base font-bold
               whitespace-nowrap no-underline hover:no-underline
               transition-all duration-200 hover:scale-[1.03]
@@ -530,13 +605,18 @@ export function StickyReviewNav({
               background: colors.bg,
               color: colors.text,
               boxShadow: colors.shadow,
-              border: colors.border || 'none',
               textDecoration: 'none',
-              '--tw-ring-offset-color': 'var(--sfp-gray)',
+              animation: PULSE_ANIMATION,
+              '--tw-ring-offset-color': 'var(--sfp-navy)',
             } as React.CSSProperties}
             onMouseEnter={(e) => handleMouseEnter(e, colors, true)}
             onMouseLeave={(e) => handleMouseLeave(e, colors, true)}
-            onClick={() => {
+            onClick={(e) => {
+              if (enablePreQual) {
+                e.preventDefault();
+                const slug = cta.url.replace('/go/', '').replace(/\/$/, '');
+                setQuizSlug(slug);
+              }
               trackClick(cta.url, cta.label, 1);
               if (abVariant) trackAbEvent('click', resolvedCategory, resolvedMarket, abVariant, cta.label);
             }}
@@ -545,6 +625,9 @@ export function StickyReviewNav({
             <span>Try {cta.label} Free</span>
             <ArrowRight className="w-4 h-4 shrink-0" aria-hidden="true" />
           </Link>
+          <div className="hidden sm:block">
+            <RegulatorBadge market={resolvedMarket} category={resolvedCategory} size="sm" />
+          </div>
         </div>
       </>
     );
@@ -556,49 +639,72 @@ export function StickyReviewNav({
       aria-label={`${productName} review — quick access`}
       aria-hidden={!visible}
       className={`
-        fixed top-0 left-0 right-0 z-50 border-b border-[#E2E8F0]
+        fixed top-0 left-0 right-0 z-50
         transition-transform duration-300 ease-in-out
         ${visible ? 'translate-y-0' : '-translate-y-full'}
       `}
       style={{
-        background: 'var(--sfp-gray)',
-        boxShadow: '0 2px 12px rgba(0,0,0,0.07)',
+        background: 'linear-gradient(135deg, var(--sfp-navy) 0%, var(--sfp-navy-dark) 100%)',
+        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
       }}
     >
-      <div className="container mx-auto px-4 sm:px-6">
-        <div className="flex items-center justify-between h-16 gap-4 sm:gap-8">
+      {/* Gold accent line at top */}
+      <div
+        className="h-[3px] w-full"
+        style={{ background: 'linear-gradient(90deg, var(--sfp-gold) 0%, var(--sfp-gold-dark) 50%, var(--sfp-gold) 100%)' }}
+        aria-hidden="true"
+      />
 
-          {/* ── LEFT: Logo + Two-line headline ──────────────────────── */}
+      <div className="container mx-auto px-4 sm:px-6">
+        <div className="flex items-center justify-between py-3 gap-4 sm:gap-8">
+
+          {/* ── LEFT: Icon + Two-line headline ──────────────────────── */}
           <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
-            {/* SmartFinPro logo — matches header exactly */}
-            <div className="hidden sm:flex items-center gap-2 shrink-0" aria-hidden="true">
-              <span
-                className="flex items-center justify-center w-[30px] h-[30px] rounded-[7px]"
-                style={{ background: 'var(--sfp-navy)' }}
-              >
-                <svg viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" width="16" height="16">
-                  <rect x="6.5" y="1" width="5" height="16" rx="1.5" fill="#FFC942"/>
-                  <rect x="1" y="6.5" width="16" height="5" rx="1.5" fill="#FFC942"/>
-                </svg>
-              </span>
+            <div
+              className="hidden sm:flex items-center justify-center w-10 h-10 rounded-xl shrink-0"
+              style={{ background: 'rgba(255, 255, 255, 0.1)' }}
+              aria-hidden="true"
+            >
+              <ShieldCheck className="w-5 h-5 text-emerald-400" />
             </div>
 
-            {/* Divider */}
-            <div className="hidden sm:block w-px h-8 bg-[#E2E8F0] shrink-0" aria-hidden="true" />
-
             <div className="min-w-0">
-              <h2
-                className="text-sm sm:text-base font-bold leading-tight truncate"
-                style={{ color: 'var(--sfp-ink)' }}
-              >
+              <h2 className="text-sm sm:text-base font-bold text-white leading-tight truncate">
                 {headline}
               </h2>
-              <p
-                className="hidden sm:block text-xs leading-tight truncate mt-0.5"
-                style={{ color: 'var(--sfp-slate)' }}
-              >
-                {subtitle}
-              </p>
+              <div className="hidden sm:flex items-center gap-2 mt-0.5 min-w-0">
+                <p
+                  className="text-xs sm:text-sm leading-tight truncate"
+                  style={{ color: 'rgba(255, 255, 255, 0.6)' }}
+                >
+                  {subtitle}
+                </p>
+                {geoRedirect && (
+                  <Link
+                    href={geoRedirect.url}
+                    className="
+                      inline-flex items-center gap-1 shrink-0
+                      rounded-full px-2.5 py-0.5
+                      text-xs font-medium whitespace-nowrap
+                      no-underline hover:no-underline
+                      transition-all duration-200
+                      focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50
+                      [text-decoration:none]
+                    "
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.12)',
+                      color: 'rgba(255, 255, 255, 0.85)',
+                      textDecoration: 'none',
+                    }}
+                    aria-label={`View ${geoRedirect.label} options`}
+                    tabIndex={visible ? 0 : -1}
+                  >
+                    <Globe className="w-3 h-3" aria-hidden="true" />
+                    <span>{geoRedirect.label} options</span>
+                    <ArrowRight className="w-3 h-3" aria-hidden="true" />
+                  </Link>
+                )}
+              </div>
             </div>
           </div>
 
@@ -607,6 +713,16 @@ export function StickyReviewNav({
 
         </div>
       </div>
+
+      {/* P3: Pre-Qual Quiz Modal */}
+      {quizSlug && (
+        <PreQualQuiz
+          slug={quizSlug}
+          market={resolvedMarket}
+          category={resolvedCategory}
+          onClose={() => setQuizSlug(null)}
+        />
+      )}
     </nav>
   );
 }

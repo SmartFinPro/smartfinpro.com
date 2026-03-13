@@ -244,7 +244,6 @@ export function EvidenceCarousel({
                         fill
                         className="object-contain"
                         sizes="(max-width: 768px) 100vw, 800px"
-                        quality={85}
                       />
                       {/* Zoom overlay on hover */}
                       <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"

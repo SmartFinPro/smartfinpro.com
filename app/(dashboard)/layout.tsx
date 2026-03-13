@@ -26,6 +26,7 @@ import {
   Telescope,
   Activity,
   FlaskConical,
+  TrendingUp,
   Menu,
   X,
 } from 'lucide-react';
@@ -55,48 +56,49 @@ const DEV_BUILD_MARKER =
   process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA ||
   'local-dev';
 
-function getSidebarGroups(): NavGroup[] {
-  return [
-    {
-      label: 'Overview',
-      links: [
-        { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, exact: true },
-        { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart3, exact: true },
-        { name: 'CTA Heatmap', href: '/dashboard/analytics/heatmap', icon: Flame },
-        { name: 'AI-Optimizer', href: '/dashboard/analytics/optimize', icon: Brain, badgeKey: 'optimize' },
-        { name: 'Revenue', href: '/dashboard/revenue', icon: DollarSign },
-      ],
-    },
-    {
-      label: 'Content & SEO',
-      links: [
-        { name: 'Content Hub', href: '/dashboard/content/hub', icon: FileText },
-        { name: 'Auto-Genesis', href: '/dashboard/content/genesis', icon: Rocket },
-        { name: 'Approval Queue', href: '/dashboard/content/planning', icon: ClipboardCheck, badgeKey: 'planning' },
-        { name: 'Ranking Tracker', href: '/dashboard/ranking', icon: Search },
-        { name: 'Competitor Radar', href: '/dashboard/competitors', icon: Radar, exact: true },
-        { name: 'Keyword Gaps', href: '/dashboard/competitors/gaps', icon: Crosshair },
-      ],
-    },
-    {
-      label: 'Monetization',
-      links: [
-        { name: 'Affiliate Links', href: '/dashboard/links', icon: Link2 },
-        { name: 'Opportunities', href: '/dashboard/opportunities', icon: Telescope, badgeKey: 'opportunities' },
-        { name: 'A/B Testing', href: '/dashboard/ab-testing', icon: FlaskConical },
-        { name: 'Quiz Analytics', href: '/dashboard/quiz', icon: Sparkles },
-      ],
-    },
-    {
-      label: 'Operations',
-      links: [
-        { name: 'Compliance Audit', href: '/dashboard/compliance', icon: Shield },
-        { name: 'Web Vitals', href: '/dashboard/web-vitals', icon: Activity },
-        { name: 'Settings', href: '/dashboard/settings', icon: Settings },
-      ],
-    },
-  ];
-}
+// ── Static sidebar data (module scope — never changes) ──────
+
+const SIDEBAR_GROUPS: NavGroup[] = [
+  {
+    label: 'Overview',
+    links: [
+      { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, exact: true },
+      { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart3, exact: true },
+      { name: 'CTA Heatmap', href: '/dashboard/analytics/heatmap', icon: Flame },
+      { name: 'AI-Optimizer', href: '/dashboard/analytics/optimize', icon: Brain, badgeKey: 'optimize' },
+      { name: 'Revenue', href: '/dashboard/revenue', icon: DollarSign },
+    ],
+  },
+  {
+    label: 'Content & SEO',
+    links: [
+      { name: 'Content Hub', href: '/dashboard/content/hub', icon: FileText },
+      { name: 'Auto-Genesis', href: '/dashboard/content/genesis', icon: Rocket },
+      { name: 'Approval Queue', href: '/dashboard/content/planning', icon: ClipboardCheck, badgeKey: 'planning' },
+      { name: 'Ranking Tracker', href: '/dashboard/ranking', icon: Search },
+      { name: 'Competitor Radar', href: '/dashboard/competitors', icon: Radar, exact: true },
+      { name: 'Keyword Gaps', href: '/dashboard/competitors/gaps', icon: Crosshair },
+    ],
+  },
+  {
+    label: 'Monetization',
+    links: [
+      { name: 'Affiliate Links', href: '/dashboard/links', icon: Link2 },
+      { name: 'Funnel', href: '/dashboard/funnel', icon: TrendingUp },
+      { name: 'Opportunities', href: '/dashboard/opportunities', icon: Telescope, badgeKey: 'opportunities' },
+      { name: 'A/B Testing', href: '/dashboard/ab-testing', icon: FlaskConical },
+      { name: 'Quiz Analytics', href: '/dashboard/quiz', icon: Sparkles },
+    ],
+  },
+  {
+    label: 'Operations',
+    links: [
+      { name: 'Compliance Audit', href: '/dashboard/compliance', icon: Shield },
+      { name: 'Web Vitals', href: '/dashboard/web-vitals', icon: Activity },
+      { name: 'Settings', href: '/dashboard/settings', icon: Settings },
+    ],
+  },
+];
 
 function isLinkActive(pathname: string, link: NavLink): boolean {
   if (link.exact) return pathname === link.href;
@@ -104,63 +106,34 @@ function isLinkActive(pathname: string, link: NavLink): boolean {
   return pathname === link.href || pathname.startsWith(link.href + '/');
 }
 
-export default function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const pathname = usePathname();
-  const sidebarGroups = getSidebarGroups();
-  const [badges, setBadges] = useState<Record<string, number>>({});
-  const [mobileOpen, setMobileOpen] = useState(false);
-  // Hydration guard: render mobile drawer only on client to avoid SSR mismatch.
-  // The server never renders the mobile drawer (it's hidden on desktop anyway).
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+// ── SidebarContent — module-scope component ─────────────────
+// IMPORTANT: Must live outside DashboardLayout to keep a stable function
+// reference across renders. Inline component definitions create a new
+// reference on every render, causing React to unmount/remount and
+// producing SSR/client hydration mismatches (href diff in nav links).
 
-  // Fetch queue counts for badge display (dynamic import to avoid client bundling)
-  useEffect(() => {
-    let cancelled = false;
-    async function fetchBadges() {
-      try {
-        const [{ getPlanningQueueCount }, { getOptimizationCount }] = await Promise.all([
-          import('@/lib/actions/daily-strategy'),
-          import('@/lib/actions/optimization-engine'),
-        ]);
-        const [planCount, optCount] = await Promise.all([
-          getPlanningQueueCount(),
-          getOptimizationCount(),
-        ]);
-        if (!cancelled) {
-          setBadges({ planning: planCount, optimize: optCount });
-        }
-      } catch {
-        // Silently ignore — badge is non-critical
-      }
-    }
-    fetchBadges();
-    return () => { cancelled = true; };
-  }, [pathname]); // Refetch when navigating
+interface SidebarContentProps {
+  pathname: string;
+  badges: Record<string, number>;
+  onNavigate: () => void;
+}
 
-  // Close mobile drawer when route changes
-  useEffect(() => { setMobileOpen(false); }, [pathname]);
-
-  // Shared sidebar content (used in desktop sidebar + mobile drawer)
-  const SidebarContent = () => (
+function SidebarContent({ pathname, badges, onNavigate }: SidebarContentProps) {
+  return (
     <>
       {/* Logo */}
       <div className="flex items-center gap-2 px-6 pt-6 pb-4">
         <div className="w-8 h-8 rounded-lg bg-violet-600 flex items-center justify-center">
           <span className="text-white font-bold text-sm">SF</span>
         </div>
-        <Link href="/dashboard" className="text-xl font-bold text-slate-800" onClick={() => setMobileOpen(false)}>
+        <Link href="/dashboard" className="text-xl font-bold text-slate-800" onClick={onNavigate}>
           SmartFinPro
         </Link>
       </div>
 
       {/* Grouped Navigation */}
       <nav className="flex-1 overflow-y-auto px-4 pb-4 space-y-5">
-        {sidebarGroups.map((group) => (
+        {SIDEBAR_GROUPS.map((group) => (
           <div key={group.label}>
             <p className="px-3 mb-1.5 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
               {group.label}
@@ -172,7 +145,7 @@ export default function DashboardLayout({
                   <Link
                     key={link.href}
                     href={link.href}
-                    onClick={() => setMobileOpen(false)}
+                    onClick={onNavigate}
                     className={cn(
                       'nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] transition-all',
                       active
@@ -205,7 +178,7 @@ export default function DashboardLayout({
         <Link
           href="/"
           className="nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] text-slate-500 hover:bg-slate-50 hover:text-slate-700 font-medium transition-all"
-          onClick={() => setMobileOpen(false)}
+          onClick={onNavigate}
         >
           <LogOut className="h-4 w-4 text-slate-400" />
           <span>Back to Site</span>
@@ -218,6 +191,46 @@ export default function DashboardLayout({
       </div>
     </>
   );
+}
+
+// ── DashboardLayout ──────────────────────────────────────────
+
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const pathname = usePathname();
+  const [badges, setBadges] = useState<Record<string, number>>({});
+  const [mobileOpen, setMobileOpen] = useState(false);
+  // Hydration guard: render mobile drawer only on client to avoid SSR mismatch.
+  // The server never renders the mobile drawer (it's hidden on desktop anyway).
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  // Fetch queue counts for badge display via API route (avoids 'use server' dynamic imports)
+  useEffect(() => {
+    let cancelled = false;
+    async function fetchBadges() {
+      try {
+        const res = await fetch('/api/dashboard/badges');
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!cancelled) {
+          setBadges(data);
+        }
+      } catch {
+        // Silently ignore — badge is non-critical
+      }
+    }
+    fetchBadges();
+    return () => { cancelled = true; };
+  }, [pathname]); // Refetch when navigating
+
+  // Close mobile drawer when route changes
+  useEffect(() => { setMobileOpen(false); }, [pathname]);
+
+  const closeMobile = () => setMobileOpen(false);
 
   return (
     <div className="dashboard flex min-h-screen dashboard-layout">
@@ -225,7 +238,7 @@ export default function DashboardLayout({
       {mobileOpen && (
         <div
           className="fixed inset-0 z-40 bg-black/40 md:hidden"
-          onClick={() => setMobileOpen(false)}
+          onClick={closeMobile}
         />
       )}
 
@@ -239,19 +252,19 @@ export default function DashboardLayout({
         >
           {/* Close button */}
           <button
-            onClick={() => setMobileOpen(false)}
+            onClick={closeMobile}
             className="absolute top-4 right-4 p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
             aria-label="Close menu"
           >
             <X className="h-5 w-5" />
           </button>
-          <SidebarContent />
+          <SidebarContent pathname={pathname} badges={badges} onNavigate={closeMobile} />
         </aside>
       )}
 
       {/* Desktop Sidebar */}
       <aside className="w-64 dashboard-sidebar hidden md:flex md:flex-col">
-        <SidebarContent />
+        <SidebarContent pathname={pathname} badges={badges} onNavigate={closeMobile} />
       </aside>
 
       {/* Main Content */}

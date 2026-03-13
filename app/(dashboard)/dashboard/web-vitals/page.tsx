@@ -20,6 +20,10 @@ interface MetricSummary {
   total:       number;
   unit:        string;
   target:      number;
+  /** P2b: Budget status — 'ok' | 'warning' | 'over' | null (no data) */
+  budgetStatus: 'ok' | 'warning' | 'over' | null;
+  /** Budget threshold value */
+  budget:      number;
 }
 
 interface TimeSeriesPoint {
@@ -42,12 +46,32 @@ async function getMetricSummaries(): Promise<MetricSummary[]> {
   const supabase = createServiceClient();
   const since = new Date(Date.now() - 7 * 86400_000).toISOString();
 
-  const { data } = await supabase
-    .from('web_vitals')
-    .select('name, value, rating')
-    .gte('recorded_at', since);
+  // Fetch web_vitals + budget settings in parallel
+  const [vitalsRes, settingsRes] = await Promise.all([
+    supabase
+      .from('web_vitals')
+      .select('name, value, rating')
+      .gte('recorded_at', since),
+    supabase
+      .from('system_settings')
+      .select('key, value')
+      .eq('category', 'performance'),
+  ]);
 
+  const data = vitalsRes.data;
   if (!data?.length) return [];
+
+  // Parse budget values from system_settings
+  const settingsMap: Record<string, string> = {};
+  for (const s of settingsRes.data || []) settingsMap[s.key] = s.value;
+
+  const budgetValues: Record<string, number> = {
+    LCP: parseFloat(settingsMap.cwv_budget_lcp || '2500'),
+    INP: parseFloat(settingsMap.cwv_budget_inp || '200'),
+    CLS: parseFloat(settingsMap.cwv_budget_cls || '0.1'),
+    FCP: 1800, // Secondary — use Google default
+    TTFB: 800,
+  };
 
   const byMetric: Record<string, { values: number[]; ratings: Rating[] }> = {};
 
@@ -59,10 +83,12 @@ async function getMetricSummaries(): Promise<MetricSummary[]> {
 
   return Object.entries(TARGETS).map(([name, cfg]) => {
     const metric = byMetric[name];
+    const budget = budgetValues[name] ?? cfg.good;
+
     if (!metric) {
       return {
-        name, unit: cfg.unit, target: cfg.good,
-        p75: 0, rating: 'good' as Rating,
+        name, unit: cfg.unit, target: cfg.good, budget,
+        p75: 0, rating: 'good' as Rating, budgetStatus: null,
         good: 0, needsImprovement: 0, poor: 0, total: 0,
       };
     }
@@ -79,7 +105,14 @@ async function getMetricSummaries(): Promise<MetricSummary[]> {
     const poor             = metric.ratings.filter((r) => r === 'poor').length;
     const needsImprovement = metric.ratings.filter((r) => r === 'needs-improvement').length;
 
-    return { name, unit: cfg.unit, target: cfg.good, p75, rating, good, needsImprovement, poor, total: metric.values.length };
+    // Budget status: ok (< 80% budget), warning (80-100%), over (> budget)
+    let budgetStatus: 'ok' | 'warning' | 'over' | null = null;
+    if (p75 > 0 && budget > 0) {
+      const ratio = p75 / budget;
+      budgetStatus = ratio > 1 ? 'over' : ratio > 0.8 ? 'warning' : 'ok';
+    }
+
+    return { name, unit: cfg.unit, target: cfg.good, budget, p75, rating, budgetStatus, good, needsImprovement, poor, total: metric.values.length };
   });
 }
 

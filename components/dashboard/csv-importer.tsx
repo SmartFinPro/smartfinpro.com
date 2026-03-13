@@ -20,7 +20,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { importConversionsFromCSV } from '@/lib/actions/revenue';
 
 interface CSVImporterProps {
   affiliateLinks: { id: string; slug: string; partner_name: string }[];
@@ -112,19 +111,24 @@ export function CSVImporter({ affiliateLinks }: CSVImporterProps) {
 
     setIsLoading(true);
     try {
-      const importResult = await importConversionsFromCSV(
-        csvData,
-        {
-          dateColumn,
-          amountColumn,
-          referenceColumn: referenceColumn || undefined,
-          statusColumn: statusColumn || undefined,
-          linkColumn: linkColumn || undefined,
-        },
-        defaultLinkId || undefined,
-        defaultStatus
-      );
+      const res = await fetch('/api/dashboard/import-csv', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          csvData,
+          columnMapping: {
+            dateColumn,
+            amountColumn,
+            referenceColumn: referenceColumn || undefined,
+            statusColumn: statusColumn || undefined,
+            linkColumn: linkColumn || undefined,
+          },
+          defaultLinkId: defaultLinkId || undefined,
+          defaultStatus,
+        }),
+      });
 
+      const importResult = await res.json();
       setResult(importResult);
       setStep('result');
     } catch (error) {

@@ -50,6 +50,15 @@ export const metadata: Metadata = {
     images: ['/og-image.png'],
     creator: '@smartfinpro',
   },
+  icons: {
+    icon: [
+      { url: '/icon.svg', type: 'image/svg+xml' },
+      { url: '/icon.png', type: 'image/png', sizes: '32x32' },
+      { url: '/favicon.ico', type: 'image/x-icon', sizes: '16x16 32x32 48x48' },
+    ],
+    shortcut: ['/favicon.ico'],
+    apple: [{ url: '/apple-icon.png', sizes: '180x180', type: 'image/png' }],
+  },
   robots: {
     index: true,
     follow: true,

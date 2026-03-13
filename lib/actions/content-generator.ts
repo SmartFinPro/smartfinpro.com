@@ -773,6 +773,7 @@ export async function generateLongFormBriefWithAI(
   market: Market,
   category: string,
   competitorOutlines: CompetitorOutline[],
+  researchBrief?: string,
 ): Promise<{
   suggestedTitle: string;
   suggestedDescription: string;
@@ -795,7 +796,11 @@ export async function generateLongFormBriefWithAI(
   const mktConfig = marketConfig[market];
   const catConfig = categoryConfig[category as Category];
 
-  const prompt = `You are an elite SEO content strategist for SmartFinPro.com, a finance affiliate site.
+  const researchSection = researchBrief
+    ? `\nRESEARCH BRIEF (from Perplexity or similar — use these facts, data points, and insights to enrich the outline):\n${researchBrief.slice(0, 8000)}\n`
+    : '';
+
+  const prompt = `You are an elite SEO content strategist for SmartFinPro.com, a finance affiliate site.${researchSection}
 
 TARGET KEYWORD: "${keyword}"
 TARGET MARKET: ${mktConfig?.name || market.toUpperCase()} (${mktConfig?.currency || 'USD'})
@@ -931,9 +936,86 @@ function generateLongFormFallbackBrief(
  * - Detailed section content
  * - Schema declarations
  */
+/**
+ * Use Claude to generate body content for each outline section using research brief context.
+ * Returns a map of sectionTitle (lowercased) → markdown body.
+ */
+async function generateSectionBodiesWithAI(
+  sections: BriefSection[],
+  keyword: string,
+  market: Market,
+  category: string,
+  researchBrief: string,
+): Promise<Map<string, string>> {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) return new Map();
+
+  const mktConfig = marketConfig[market];
+  const catConfig = categoryConfig[category as Category];
+
+  const sectionList = sections
+    .map((s, i) => `${i + 1}. [${s.tag.toUpperCase()}] ${s.title}\n   Notes: ${s.notes}\n   Target: ${s.estimatedWords} words`)
+    .join('\n\n');
+
+  const prompt = `You are a professional finance content writer for SmartFinPro.com.
+
+TOPIC: "${keyword}"
+MARKET: ${mktConfig?.name || market.toUpperCase()} (${mktConfig?.currency || 'USD'})
+CATEGORY: ${catConfig?.name || category}
+
+RESEARCH BRIEF (factual data to use — incorporate specific numbers, names, facts):
+${researchBrief.slice(0, 10000)}
+
+TASK: Write the body content for each section below. Use real data and specific facts from the research brief. Write professionally in a trustworthy financial publication style. Each section should be self-contained and informative.
+
+SECTIONS TO WRITE:
+${sectionList}
+
+OUTPUT FORMAT — for EACH section, use EXACTLY this delimiter format:
+=== SECTION: [exact section title] ===
+[body content in plain markdown — no JSX, no code blocks, no H tags since those are added separately]
+=== END ===
+
+Rules:
+- Use specific data from the research brief (numbers, prices, names)
+- Write 250-450 words per section
+- Use **bold** for key terms and important figures
+- Use bullet lists for comparisons and feature lists
+- Do NOT include the section heading (it's added separately)
+- Do NOT include JSX components (CallToAction, TrustAuthority, etc.) — plain markdown only
+- Be specific and factual, not vague and generic`;
+
+  try {
+    const response = await createClaudeMessage({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 16000,
+      messages: [{ role: 'user', content: prompt }],
+    }, { apiKey, operation: 'section_content_generation' });
+
+    const textBlock = response.content.find((b) => b.type === 'text');
+    const rawText = textBlock?.text || '';
+
+    // Parse === SECTION: title === ... === END === blocks
+    const result = new Map<string, string>();
+    const pattern = /=== SECTION: (.+?) ===\n([\s\S]*?)=== END ===/g;
+    let match;
+    while ((match = pattern.exec(rawText)) !== null) {
+      const title = match[1].trim().toLowerCase();
+      const body = match[2].trim();
+      result.set(title, body);
+    }
+    return result;
+  } catch (err) {
+    Sentry.captureException(err);
+    logger.error('[content-generator] generateSectionBodiesWithAI failed:', err instanceof Error ? err.message : err);
+    return new Map();
+  }
+}
+
 export async function generateLongFormMdxContent(
   brief: ContentBrief,
   existingImages: string[],
+  researchBrief?: string,
 ): Promise<string> {
   const today = new Date().toISOString().split('T')[0];
   const year = new Date().getFullYear();
@@ -1110,6 +1192,18 @@ faqs:
 
 `;
 
+  // ── Pre-generate AI section bodies if research brief provided ──
+  let aiBodies: Map<string, string> = new Map();
+  if (researchBrief && researchBrief.trim().length > 100) {
+    aiBodies = await generateSectionBodiesWithAI(
+      brief.suggestedOutline,
+      brief.keyword,
+      brief.market,
+      brief.category,
+      researchBrief,
+    );
+  }
+
   // ── Detail Sections from Outline ────────────────
   let ctaInserted = 0;
   let sectionIndex = 0;
@@ -1134,6 +1228,28 @@ faqs:
 ${heading} ${section.title}
 
 `;
+
+    // Use AI-generated body if available (research brief was provided)
+    const aiBody = aiBodies.get(section.title.toLowerCase());
+    if (aiBody) {
+      mdx += `${aiBody}
+
+`;
+      // Still insert CTAs at intervals
+      if (sectionIndex % 4 === 0 && ctaInserted < 2) {
+        ctaInserted++;
+        mdx += `<CallToAction
+  title="See Our Top Pick"
+  description="Our #1 pick for ${brief.keyword.toLowerCase()} — trusted by thousands."
+  href="/go/${slugBase}"
+  buttonText="Check Current Offers →"
+  variant="secondary"
+/>
+
+`;
+      }
+      continue;
+    }
 
     // Substantive placeholder content for each section
     if (section.title.toLowerCase().includes('review') || section.title.toLowerCase().includes('deep-dive') || section.title.toLowerCase().includes('#1') || section.title.toLowerCase().includes('#2') || section.title.toLowerCase().includes('#3')) {

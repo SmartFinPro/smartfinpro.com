@@ -127,11 +127,13 @@ async function conversionExists(externalId: string): Promise<boolean> {
 }
 
 /**
- * Save a conversion to the database
+ * Save a conversion to the database + emit a conversion_events record
+ * for the event graph (P1: Closed-Loop Conversion Engine).
  */
 async function saveConversion(
   conversion: ConversionData,
-  linkId: string | null
+  linkId: string | null,
+  connectorName?: string,
 ): Promise<void> {
   const supabase = createServiceClient();
 
@@ -143,6 +145,43 @@ async function saveConversion(
     network_reference: conversion.external_id,
     status: conversion.status,
   });
+
+  // ── Emit to conversion_events (event graph) ──
+  // Maps conversion status to funnel event type for the event graph.
+  const clickId = conversion.click_id || conversion.sub_id;
+  if (clickId) {
+    const eventType =
+      conversion.status === 'approved' ? 'approved'
+      : conversion.status === 'rejected' ? 'rejected'
+      : 'qualified'; // 'pending' → treat as qualified (reached network)
+
+    try {
+      const eventRow = {
+        click_id: clickId,
+        link_id: linkId,
+        event_type: eventType,
+        event_value: conversion.amount,
+        event_currency: conversion.currency,
+        network: connectorName || null,
+        network_event_id: conversion.external_id || null,
+        occurred_at: conversion.converted_at.toISOString(),
+        metadata: conversion.raw_data || {},
+      };
+
+      if (eventRow.network_event_id) {
+        // With txn_id → dedup via partial unique index
+        await supabase.from('conversion_events').upsert(
+          eventRow,
+          { onConflict: 'click_id,event_type,network_event_id', ignoreDuplicates: true },
+        );
+      } else {
+        // Without txn_id → always insert (e.g. multiple deposits)
+        await supabase.from('conversion_events').insert(eventRow);
+      }
+    } catch {
+      // Non-blocking: event graph emission should never break conversion sync
+    }
+  }
 }
 
 /**
@@ -231,7 +270,7 @@ export async function syncConnector(
         const match = await matchConversionToClick(conversion);
 
         // Save conversion (even if no match, for manual assignment later)
-        await saveConversion(conversion, match?.link_id || null);
+        await saveConversion(conversion, match?.link_id || null, connectorName);
         result.records_synced++;
       }
 
@@ -335,7 +374,7 @@ export async function processWebhook(
       }
 
       const match = await matchConversionToClick(conversion);
-      await saveConversion(conversion, match?.link_id || null);
+      await saveConversion(conversion, match?.link_id || null, connectorName);
       result.records_synced++;
     }
 

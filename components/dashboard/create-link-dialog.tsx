@@ -22,7 +22,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { createAffiliateLink } from '@/lib/actions/affiliate-links';
 import type { Category, Market } from '@/types';
 
 interface CreateLinkDialogProps {
@@ -55,16 +54,22 @@ export function CreateLinkDialog({ children }: CreateLinkDialogProps) {
         return;
       }
 
-      const result = await createAffiliateLink({
-        partner_name: formData.partner_name.trim(),
-        slug: formData.slug.trim().toLowerCase(),
-        destination_url: formData.destination_url.trim(),
-        category: formData.category as Category,
-        market: formData.market as Market,
-        commission_type: formData.commission_type as 'cpa' | 'recurring' | 'hybrid',
-        commission_value: commissionValue,
-        active: true,
+      const res = await fetch('/api/dashboard/create-link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          partner_name: formData.partner_name.trim(),
+          slug: formData.slug.trim().toLowerCase(),
+          destination_url: formData.destination_url.trim(),
+          category: formData.category as Category,
+          market: formData.market as Market,
+          commission_type: formData.commission_type as 'cpa' | 'recurring' | 'hybrid',
+          commission_value: commissionValue,
+          active: true,
+        }),
       });
+
+      const result = await res.json();
 
       if (result.error) {
         toast.error(result.error);

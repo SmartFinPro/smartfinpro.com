@@ -25,9 +25,11 @@ import {
   Trash2,
   ImageIcon,
   ExternalLink,
+  BookOpen,
+  ChevronUp,
+  FolderOpen,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { deleteGenesisRun } from '@/lib/actions/genesis';
 import { GenesisEditModal } from '@/components/dashboard/genesis-edit-modal';
 import { GenesisStepper } from './genesis-stepper';
 import { GenesisMediaDropzone } from './genesis-media-dropzone';
@@ -198,6 +200,9 @@ export function GenesisHub({ recentRuns: initialRuns }: GenesisHubProps) {
   const [selectedKeyword, setSelectedKeyword] = useState<KeywordSuggestion | null>(null);
   const [runId, setRunId] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [researchBrief, setResearchBrief] = useState('');
+  const [showResearchPanel, setShowResearchPanel] = useState(false);
+  const [detectedResearchFile, setDetectedResearchFile] = useState<string | null>(null);
   const [genProgress, setGenProgress] = useState<GenerationProgress>({ step: 'idle', progress: 0, message: '' });
   const [generatedSlug, setGeneratedSlug] = useState('');
   const [wordCount, setWordCount] = useState(0);
@@ -258,8 +263,8 @@ export function GenesisHub({ recentRuns: initialRuns }: GenesisHubProps) {
       setIsLoadingTemplatePartnerPreview(true);
       setTemplatePartnerPreviewError(null);
       try {
-        const { getAutoTemplatePartnerPreview } = await import('@/lib/actions/genesis');
-        const result = await getAutoTemplatePartnerPreview(templateMarket, templateCategory);
+        const res = await fetch(`/api/genesis/auto-partner-preview?market=${templateMarket}&category=${templateCategory}`);
+        const result = await res.json();
         if (cancelled) return;
         if (result.success && result.partnerName && result.affiliateUrl && result.source) {
           setTemplatePartnerPreview({
@@ -292,8 +297,12 @@ export function GenesisHub({ recentRuns: initialRuns }: GenesisHubProps) {
     setIsResearching(true);
 
     try {
-      const { magicFind } = await import('@/lib/actions/genesis');
-      const result = await magicFind(query, market, category);
+      const res = await fetch('/api/genesis/magic-find', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query, market, category }),
+      });
+      const result = await res.json();
 
       if (result.success && result.data) {
         setResearchResult(result.data);
@@ -314,6 +323,25 @@ export function GenesisHub({ recentRuns: initialRuns }: GenesisHubProps) {
     setSelectedKeyword(suggestion);
     setCompletedSteps(new Set([0]));
     setCurrentStep(1);
+    // Check if a research file exists on disk for this keyword
+    const slugBase = suggestion.keyword
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .slice(0, 60);
+    fetch(`/api/genesis/check-research?market=${market}&category=${category}&slug=${slugBase}`)
+      .then((r) => r.json())
+      .then((data: { found: boolean; filename?: string; content?: string }) => {
+        if (data.found && data.filename) {
+          setDetectedResearchFile(data.filename);
+          if (data.content && !researchBrief) {
+            setResearchBrief(data.content);
+          }
+          setShowResearchPanel(true);
+        }
+      })
+      .catch(() => { /* non-critical */ });
   };
 
   // ── Step 2: Generate ───────────────────────────────────────
@@ -326,8 +354,8 @@ export function GenesisHub({ recentRuns: initialRuns }: GenesisHubProps) {
     // Start polling for progress
     pollingRef.current = setInterval(async () => {
       try {
-        const { getGenesisRunProgress } = await import('@/lib/actions/genesis');
-        const result = await getGenesisRunProgress(runId);
+        const progressRes = await fetch(`/api/genesis/progress?runId=${encodeURIComponent(runId)}`);
+        const result = await progressRes.json();
         if (result) {
           setGenProgress(result.progress);
           if (result.progress.step === 'done' || result.progress.step === 'error') {
@@ -338,13 +366,18 @@ export function GenesisHub({ recentRuns: initialRuns }: GenesisHubProps) {
     }, 2000);
 
     try {
-      const { generateLongFormAsset } = await import('@/lib/actions/genesis');
-      const result = await generateLongFormAsset(
-        runId,
-        selectedKeyword.keyword,
-        market,
-        category,
-      );
+      const genRes = await fetch('/api/genesis/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          runId,
+          keyword: selectedKeyword.keyword,
+          market,
+          category,
+          researchBrief: researchBrief.trim() || undefined,
+        }),
+      });
+      const result = await genRes.json();
 
       if (pollingRef.current) clearInterval(pollingRef.current);
 
@@ -357,8 +390,8 @@ export function GenesisHub({ recentRuns: initialRuns }: GenesisHubProps) {
 
         // Prefetch affiliate rates for step 4
         try {
-          const { getAffiliateRatesForMarket } = await import('@/lib/actions/genesis');
-          const partners = await getAffiliateRatesForMarket(market);
+          const ratesRes = await fetch(`/api/genesis/affiliate-rates?market=${market}`);
+          const partners = await ratesRes.json();
           setAffiliatePartners(partners);
         } catch { /* ignore */ }
 
@@ -376,7 +409,7 @@ export function GenesisHub({ recentRuns: initialRuns }: GenesisHubProps) {
     } finally {
       setIsGenerating(false);
     }
-  }, [selectedKeyword, runId, market, category, isGenerating]);
+  }, [selectedKeyword, runId, market, category, isGenerating, researchBrief]);
 
   // ── Step 3: Media ──────────────────────────────────────────
 
@@ -385,18 +418,21 @@ export function GenesisHub({ recentRuns: initialRuns }: GenesisHubProps) {
     if (processedImages.length > 0) {
       (async () => {
         try {
-          const { processAndInsertImages } = await import('@/lib/actions/genesis');
-          await processAndInsertImages(
-            runId,
-            processedImages.map((img) => ({
-              filename: img.filename,
-              altText: img.altText,
-              width: img.width,
-              height: img.height,
-              sizeKb: img.sizeKb,
-              position: img.position,
-            })),
-          );
+          await fetch('/api/genesis/insert-images', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              runId,
+              imageData: processedImages.map((img) => ({
+                filename: img.filename,
+                altText: img.altText,
+                width: img.width,
+                height: img.height,
+                sizeKb: img.sizeKb,
+                position: img.position,
+              })),
+            }),
+          });
         } catch { /* non-critical */ }
       })();
     }
@@ -417,8 +453,12 @@ export function GenesisHub({ recentRuns: initialRuns }: GenesisHubProps) {
     setIndexingResult(null);
 
     try {
-      const { distributeAndIndex } = await import('@/lib/actions/genesis');
-      const result = await distributeAndIndex(runId, affiliateMappings);
+      const distRes = await fetch('/api/genesis/distribute', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ runId, affiliateMappings }),
+      });
+      const result = await distRes.json();
 
       if (result.success) {
         setPublishResult({ deployed: result.deployed, indexed: result.indexed });
@@ -447,8 +487,12 @@ export function GenesisHub({ recentRuns: initialRuns }: GenesisHubProps) {
     if (isReindexing) return;
     setIsReindexing(reindexRunId);
     try {
-      const { instantIndexByRunId } = await import('@/lib/actions/genesis');
-      const result = await instantIndexByRunId(reindexRunId);
+      const idxRes = await fetch('/api/genesis/reindex', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ runId: reindexRunId }),
+      });
+      const result = await idxRes.json();
       if (result.success) {
         toast.success(`Indexing request sent (~${result.responseTimeMs}ms)`);
       } else {
@@ -465,7 +509,12 @@ export function GenesisHub({ recentRuns: initialRuns }: GenesisHubProps) {
   const handleDelete = useCallback(async (deleteRunId: string) => {
     setDeletingId(deleteRunId);
     try {
-      const result = await deleteGenesisRun(deleteRunId);
+      const res = await fetch('/api/genesis/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ runId: deleteRunId }),
+      });
+      const result = await res.json();
       if (result.success) {
         setRecentRuns((prev) => prev.filter((r) => r.id !== deleteRunId));
         toast.success('Page deleted');
@@ -491,17 +540,21 @@ export function GenesisHub({ recentRuns: initialRuns }: GenesisHubProps) {
 
     setIsCreatingTemplate(true);
     try {
-      const { createReviewFromTemplate } = await import('@/lib/actions/genesis');
-      const result = await createReviewFromTemplate({
-        market: templateMarket,
-        category: templateCategory,
-        title: templateTitle.trim(),
-        bodyContent: templateBody.trim(),
-        slug: templateSlug.trim() || undefined,
-        reviewedBy: templateReviewedBy.trim() || undefined,
-        affiliateUrl: templateAffiliateUrl.trim() || undefined,
-        autoPartner: templateAutoPartner,
+      const tplRes = await fetch('/api/genesis/create-template', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          market: templateMarket,
+          category: templateCategory,
+          title: templateTitle.trim(),
+          bodyContent: templateBody.trim(),
+          slug: templateSlug.trim() || undefined,
+          reviewedBy: templateReviewedBy.trim() || undefined,
+          affiliateUrl: templateAffiliateUrl.trim() || undefined,
+          autoPartner: templateAutoPartner,
+        }),
       });
+      const result = await tplRes.json();
 
       if (result.success) {
         toast.success(
@@ -982,6 +1035,70 @@ export function GenesisHub({ recentRuns: initialRuns }: GenesisHubProps) {
                   Est: ${selectedKeyword.estimatedCpaRevenue.toFixed(0)}/mo
                 </span>
               </div>
+            </div>
+          )}
+
+          {/* ── Research Brief Panel ── */}
+          {!isGenerating && genProgress.step !== 'done' && (
+            <div className="max-w-lg mx-auto">
+              {/* Toggle button */}
+              <button
+                onClick={() => setShowResearchPanel((p) => !p)}
+                className="w-full flex items-center justify-between px-4 py-3 rounded-xl border transition-all text-sm font-medium"
+                style={{
+                  borderColor: researchBrief.trim() ? 'rgba(16,185,129,0.4)' : 'rgba(203,213,225,0.8)',
+                  background: researchBrief.trim() ? 'rgba(236,253,245,0.8)' : 'rgba(248,250,252,0.8)',
+                  color: researchBrief.trim() ? '#059669' : '#64748b',
+                }}
+              >
+                <span className="flex items-center gap-2">
+                  <BookOpen className="h-4 w-4" />
+                  {researchBrief.trim()
+                    ? `Research brief ready (${researchBrief.trim().split(/\s+/).length.toLocaleString()} words)`
+                    : 'Add Perplexity research brief (optional)'}
+                  {detectedResearchFile && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-700">
+                      <FolderOpen className="h-2.5 w-2.5" />
+                      File detected
+                    </span>
+                  )}
+                </span>
+                {showResearchPanel
+                  ? <ChevronUp className="h-4 w-4 flex-shrink-0" />
+                  : <ChevronDown className="h-4 w-4 flex-shrink-0" />}
+              </button>
+
+              {/* Expanded panel */}
+              {showResearchPanel && (
+                <div className="mt-2 rounded-xl border border-slate-200 bg-white p-4 space-y-3 shadow-sm">
+                  {detectedResearchFile && (
+                    <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-50 border border-emerald-200">
+                      <FolderOpen className="h-3.5 w-3.5 text-emerald-600 flex-shrink-0" />
+                      <p className="text-xs text-emerald-700">
+                        Auto-loaded: <span className="font-mono font-semibold">{detectedResearchFile}</span>
+                      </p>
+                    </div>
+                  )}
+                  <textarea
+                    value={researchBrief}
+                    onChange={(e) => setResearchBrief(e.target.value)}
+                    placeholder={`Paste your Perplexity research here…\n\nTip: Save files as:\ncontent/research/${market}/${category}/[keyword-slug].md\nGenesis Hub will auto-load them.`}
+                    rows={10}
+                    className="w-full px-3 py-2.5 rounded-lg text-xs text-slate-700 placeholder-slate-400 border border-slate-200 bg-slate-50 focus:border-violet-400 focus:bg-white focus:outline-none resize-y font-mono leading-relaxed transition-colors"
+                  />
+                  <div className="flex items-center justify-between text-[11px] text-slate-400">
+                    <span>When provided, Claude will generate factual, data-rich content using your research.</span>
+                    {researchBrief.trim() && (
+                      <button
+                        onClick={() => { setResearchBrief(''); setDetectedResearchFile(null); }}
+                        className="text-rose-400 hover:text-rose-600 transition-colors"
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
@@ -55,6 +56,8 @@ import {
 
 // Marketing Components
 import { AffiliateLink } from '@/components/marketing/affiliate-link';
+import { RegulatorBadge } from '@/components/marketing/regulator-badge';
+import { PreQualQuiz } from '@/components/marketing/pre-qual-quiz';
 import { RegionalHeroImage } from '@/components/marketing/regional-hero-image';
 import { CTABox } from '@/components/marketing/cta-box';
 import { FAQSection } from '@/components/marketing/faq-section';
@@ -153,7 +156,7 @@ function MiniQuiz() { return null; }
 // Tip Component — Sky background + Navy left border (per Konzept 7.3 Info-Box)
 function Tip({ children }: { children: React.ReactNode }) {
   return (
-    <div className="my-4 rounded-2xl border-l-4 p-4" style={{ borderColor: 'var(--sfp-navy)', background: 'var(--sfp-sky)' }}>
+    <div className="my-4 rounded-lg border-l-4 p-4" style={{ borderColor: 'var(--sfp-navy)', background: 'var(--sfp-sky)' }}>
       <div className="flex gap-3">
         <Lightbulb className="h-4 w-4 shrink-0 mt-0.5" style={{ color: 'var(--sfp-navy)' }} />
         <div className="text-sm leading-relaxed" style={{ color: 'var(--sfp-ink)' }}>
@@ -167,7 +170,7 @@ function Tip({ children }: { children: React.ReactNode }) {
 // Info Component — Sky background + Navy left border (per Konzept 7.3 Info-Box)
 function InfoBox({ children }: { children: React.ReactNode }) {
   return (
-    <div className="my-4 rounded-2xl border-l-4 p-4" style={{ borderColor: 'var(--sfp-navy)', background: 'var(--sfp-sky)' }}>
+    <div className="my-4 rounded-lg border-l-4 p-4" style={{ borderColor: 'var(--sfp-navy)', background: 'var(--sfp-sky)' }}>
       <div className="flex gap-3">
         <Info className="h-4 w-4 shrink-0 mt-0.5" style={{ color: 'var(--sfp-navy)' }} />
         <div className="text-sm leading-relaxed" style={{ color: 'var(--sfp-ink)' }}>
@@ -181,7 +184,7 @@ function InfoBox({ children }: { children: React.ReactNode }) {
 // Warning Component — Gelb-Tint + Gold left border (per Konzept 7.3 Warning-Box)
 function Warning({ children }: { children: React.ReactNode }) {
   return (
-    <div className="my-4 rounded-2xl border-l-4 p-4" style={{ borderColor: 'var(--sfp-gold)', background: 'var(--sfp-warning-bg)' }}>
+    <div className="my-4 rounded-lg border-l-4 p-4" style={{ borderColor: 'var(--sfp-gold)', background: 'var(--sfp-warning-bg)' }}>
       <div className="flex gap-3">
         <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" style={{ color: 'var(--sfp-gold)' }} />
         <div className="text-sm leading-relaxed" style={{ color: 'var(--sfp-ink)' }}>
@@ -202,8 +205,8 @@ function ProsCons({
 }) {
   return (
     <div className="grid md:grid-cols-2 gap-4 my-6">
-      <Card className="border-green-200 bg-white rounded-2xl">
-        <CardContent className="p-5">
+      <Card className="border-green-200 bg-white">
+        <CardContent className="p-4">
           <h4 className="font-bold text-green-600 mb-3 flex items-center gap-2">
             <CheckCircle className="h-5 w-5" />
             Pros
@@ -218,8 +221,8 @@ function ProsCons({
           </ul>
         </CardContent>
       </Card>
-      <Card className="border-red-200 bg-white rounded-2xl">
-        <CardContent className="p-5">
+      <Card className="border-red-200 bg-white">
+        <CardContent className="p-4">
           <h4 className="font-bold text-red-600 mb-3 flex items-center gap-2">
             <XCircle className="h-5 w-5" />
             Cons
@@ -289,6 +292,7 @@ function AffiliateButton({
   provider,
   market,
   variant = 'emerald-shimmer',
+  enablePreQual = false,
   children,
 }: {
   href: string;
@@ -299,13 +303,37 @@ function AffiliateButton({
   market?: 'us' | 'uk' | 'ca' | 'au';
   /** CTA variant: 'primary' (gold action) or 'secondary' (navy learn more) */
   variant?: 'emerald-shimmer' | 'violet-pill' | 'primary' | 'secondary';
+  /** P3: Pre-Qual Quiz — opens qualification modal before outbound click */
+  enablePreQual?: boolean;
   children?: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const handleClick = () => {
+  const [showQuiz, setShowQuiz] = useState(false);
+  const resolvedMarket = market || detectMarketFromPath(pathname);
+
+  // Detect category from URL path: /[market]/[category]/[slug] or /[category]/[slug]
+  const segments = (pathname || '').split('/').filter(Boolean);
+  const firstSeg = segments[0];
+  const resolvedCategory =
+    firstSeg === 'uk' || firstSeg === 'ca' || firstSeg === 'au'
+      ? segments[1] || ''
+      : firstSeg || '';
+
+  // Extract slug from href for pre-qual
+  const affiliateSlug = href.startsWith('/go/')
+    ? href.replace('/go/', '').replace(/\/$/, '')
+    : href;
+
+  const handleClick = (e?: React.MouseEvent) => {
+    // If pre-qual enabled, intercept click and show quiz
+    if (enablePreQual) {
+      e?.preventDefault();
+      setShowQuiz(true);
+      return;
+    }
+
     const slug = pathname || '/';
     const resolvedProvider = provider || productName || 'unknown';
-    const resolvedMarket = market || detectMarketFromPath(pathname);
 
     fetch('/api/track-cta', {
       method: 'POST',
@@ -320,70 +348,63 @@ function AffiliateButton({
   };
 
   return (
-    <div className="my-10 not-prose" data-component="affiliate-button-v3">
-      <div
-        className="flex flex-wrap sm:flex-nowrap items-center justify-between gap-3 rounded-2xl border bg-white px-4 py-2.5"
-        style={{
-          borderColor: 'rgba(245,166,35,0.22)',
-          boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
-        }}
-      >
-        {/* Left: icon + label */}
-        <div className="flex items-center gap-3 min-w-0">
+    <div className="my-10 not-prose">
+      <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+        {/* Gradient accent bar */}
+        <div className="h-1" style={{ background: 'linear-gradient(90deg, var(--sfp-navy) 0%, var(--sfp-gold) 100%)' }} />
+
+        <div className="flex flex-col lg:flex-row">
+          {/* Left panel: Label */}
           <div
-            className="shrink-0 w-7 h-7 rounded-lg flex items-center justify-center"
+            className="shrink-0 px-6 py-5 lg:px-8 lg:py-0 flex flex-col justify-center lg:w-[260px] border-b lg:border-b-0 lg:border-r border-gray-100"
             style={{ background: 'var(--sfp-sky)' }}
           >
-            <ArrowRight className="h-4 w-4" style={{ color: 'var(--sfp-navy)' }} />
-          </div>
-          <div className="min-w-0">
-            <div
-              className="text-[11px] font-semibold uppercase tracking-wider"
-              style={{ color: 'var(--sfp-slate)' }}
-            >
-              Official Partner
-            </div>
-            {productName && (
-              <div className="text-sm font-bold truncate" style={{ color: 'var(--sfp-ink)' }}>
-                {productName}
+            <div className="flex items-center gap-2.5 mb-1.5">
+              <div
+                className="w-7 h-7 rounded-lg flex items-center justify-center"
+                style={{ background: 'rgba(26,107,58,0.1)' }}
+              >
+                <ArrowRight className="h-3.5 w-3.5" style={{ color: 'var(--sfp-gold)' }} />
               </div>
-            )}
+              <span
+                className="text-sm font-bold uppercase tracking-wider leading-tight"
+                style={{ color: 'var(--sfp-navy)' }}
+              >
+                Get Started
+              </span>
+            </div>
+            <p style={{ color: 'var(--sfp-slate)', fontSize: '11px' }} className="lg:pl-[38px]">
+              Official Partner Link
+            </p>
+          </div>
+
+          {/* Right panel: CTA + Regulator Badge */}
+          <div className="flex-1 flex flex-col items-center justify-center gap-2 px-6 py-4 lg:px-8">
+            <Link
+              href={enablePreQual ? '#' : href}
+              target={enablePreQual ? undefined : '_blank'}
+              rel="nofollow noopener sponsored"
+              onClick={handleClick}
+              className="inline-flex items-center justify-center gap-2 rounded-lg font-semibold text-white transition-all px-5 py-2.5 shadow-sm hover:shadow-md whitespace-nowrap"
+              style={{ background: 'var(--sfp-gold)', color: '#ffffff', fontSize: '13px' }}
+            >
+              {children || `Try ${productName || 'Now'} Free`}
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+            <RegulatorBadge market={resolvedMarket} category={resolvedCategory} size="md" />
           </div>
         </div>
-
-        {/* Right: compact CTA — matches sticky-nav button style */}
-        {/* NOTE: children from MDX are intentionally NOT rendered here —
-            MDX wraps text children in <p> tags which override color/height.
-            Button label is always derived from productName prop. */}
-        <Link
-          href={href}
-          target="_blank"
-          rel="nofollow noopener sponsored"
-          onClick={handleClick}
-          className="shrink-0 inline-flex items-center gap-1.5 rounded-2xl font-normal whitespace-nowrap transition-all duration-200"
-          style={{
-            background: 'var(--sfp-gold)',
-            color: '#ffffff',
-            fontSize: '13px',
-            lineHeight: '1',
-            padding: '8px 16px',
-            boxShadow: '0 3px 16px rgba(245,166,35,0.35)',
-          }}
-          onMouseEnter={e => {
-            (e.currentTarget as HTMLElement).style.background = 'var(--sfp-gold-dark)';
-            (e.currentTarget as HTMLElement).style.boxShadow = '0 5px 24px rgba(245,166,35,0.5)';
-            (e.currentTarget as HTMLElement).style.transform = 'translateY(-1px)';
-          }}
-          onMouseLeave={e => {
-            (e.currentTarget as HTMLElement).style.background = 'var(--sfp-gold)';
-            (e.currentTarget as HTMLElement).style.boxShadow = '0 3px 16px rgba(245,166,35,0.35)';
-            (e.currentTarget as HTMLElement).style.transform = 'translateY(0)';
-          }}
-        >
-          {`Visit ${productName || 'Now'}`}
-          <ArrowRight className="h-3.5 w-3.5" />
-        </Link>
       </div>
+
+      {/* P3: Pre-Qual Quiz Modal */}
+      {showQuiz && (
+        <PreQualQuiz
+          slug={affiliateSlug}
+          market={resolvedMarket}
+          category={resolvedCategory}
+          onClose={() => setShowQuiz(false)}
+        />
+      )}
     </div>
   );
 }
@@ -539,7 +560,7 @@ function CallToAction({
     <div className="my-8 not-prose">
       <div
         className="rounded-2xl p-6 border border-gray-200 bg-white"
-        style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}
+        style={{ boxShadow: '0 2px 12px rgba(27, 79, 140, 0.06)' }}
       >
         <h4 className="text-lg font-bold mb-1" style={{ color: 'var(--sfp-ink)' }}>{title}</h4>
         {description && (
@@ -549,7 +570,7 @@ function CallToAction({
           href={href}
           target="_blank"
           rel="nofollow noopener sponsored"
-          className="inline-flex items-center gap-2 px-9 py-4 rounded-2xl text-sm font-bold text-white transition-all"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold text-white transition-all"
           style={{
             background: isPrimary ? 'var(--sfp-gold)' : 'var(--sfp-navy)',
           }}
@@ -684,7 +705,7 @@ function AutoDisclaimer({ category, market }: { category: string; market?: strin
   const relevant = disclaimers[category] || disclaimers['ai-tools'];
 
   return (
-    <aside className="my-8 p-4 rounded-2xl text-sm border-l-4" style={{ background: 'var(--sfp-sky)', borderLeftColor: 'var(--sfp-navy)', borderTop: '1px solid rgba(27,79,140,0.12)', borderRight: '1px solid rgba(27,79,140,0.12)', borderBottom: '1px solid rgba(27,79,140,0.12)', color: 'var(--sfp-slate)' }}>
+    <aside className="my-8 p-4 bg-muted/50 rounded-lg text-sm text-muted-foreground border">
       {relevant.map((text, i) => (
         <p key={i} className="mb-2 last:mb-0">
           {text}
@@ -708,7 +729,7 @@ function AutoDisclaimer({ category, market }: { category: string; market?: strin
 
 function StyledH1({ children, ...props }: React.HTMLAttributes<HTMLHeadingElement>) {
   return (
-    <h1 className="font-bold tracking-tight mt-10 mb-6 leading-[1.15]" style={{ color: 'var(--sfp-navy)', fontSize: 'clamp(26px, 3.5vw, 36px)' }} {...props}>
+    <h1 className="text-4xl md:text-5xl lg:text-[56px] font-bold tracking-tight mt-10 mb-8 leading-[1.1]" style={{ color: 'var(--sfp-navy)' }} {...props}>
       {children}
     </h1>
   );
@@ -759,7 +780,7 @@ function StyledH4({ children, ...props }: React.HTMLAttributes<HTMLHeadingElemen
 function StyledUl({ children }: { children: React.ReactNode }) {
   return (
     <div className="relative my-6 not-prose">
-      <div className="rounded-2xl px-6 py-5 border border-gray-200 bg-white shadow-sm">
+      <div className="rounded-xl px-6 py-5 border border-gray-200 bg-white shadow-sm">
         <ul className="space-y-2.5" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
           {children}
         </ul>
@@ -771,7 +792,7 @@ function StyledUl({ children }: { children: React.ReactNode }) {
 function StyledOl({ children }: { children: React.ReactNode }) {
   return (
     <div className="relative my-6 not-prose">
-      <div className="rounded-2xl px-6 py-5 border border-gray-200 bg-white shadow-sm">
+      <div className="rounded-xl px-6 py-5 border border-gray-200 bg-white shadow-sm">
         <ol className="space-y-2.5 list-none counter-reset-[item]" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
           {children}
         </ol>
@@ -815,7 +836,7 @@ function StyledHr() {
 function StyledTable({ children }: { children: React.ReactNode }) {
   return (
     <div className="my-8 not-prose overflow-x-auto enterprise-table">
-      <div className="rounded-2xl overflow-hidden border border-gray-200 bg-white shadow-sm">
+      <div className="rounded-xl overflow-hidden border border-gray-200 bg-white shadow-sm">
         <table className="w-full text-sm">
           {children}
         </table>
@@ -932,7 +953,7 @@ function WinnerCta({ href, children }: { href: string; children: React.ReactNode
         href={href}
         target="_blank"
         rel="nofollow noopener sponsored"
-        className="btn-shimmer inline-flex items-center justify-center h-10 px-6 rounded-2xl text-xs font-bold whitespace-nowrap no-underline transition-all duration-200"
+        className="btn-shimmer inline-flex items-center justify-center h-10 px-6 rounded-lg text-xs font-bold whitespace-nowrap no-underline transition-all duration-200"
         style={{
           background: 'var(--sfp-gold)',
           color: 'white',
@@ -951,7 +972,7 @@ function StyledBlockquote({ children }: { children: React.ReactNode }) {
   return (
     <div className="my-6 not-prose">
       <div
-        className="relative rounded-2xl p-5 border border-gray-200"
+        className="relative rounded-xl p-5 border border-gray-200"
         style={{ background: 'var(--sfp-sky)' }}
       >
         <div
@@ -1112,7 +1133,7 @@ function VideoContainer({
     '@type': 'VideoObject',
     name: title,
     description: description || title,
-    uploadDate: uploadDate || new Date().toISOString().split('T')[0],
+    uploadDate: uploadDate || '2026-01-01', // safe — static fallback avoids SSR/client mismatch
     ...(thumbnail ? { thumbnailUrl: thumbnail } : {}),
     embedUrl: src,
   };
@@ -1296,7 +1317,7 @@ function QuickAnswer({
   return (
     <div className="relative my-8 not-prose">
       <div
-        className="rounded-2xl p-5 border-l-4"
+        className="rounded-xl p-5 border-l-4"
         style={{
           background: 'var(--sfp-sky)',
           borderLeftColor: 'var(--sfp-navy)',
@@ -1351,7 +1372,7 @@ function DefinitionBox({
 }) {
   return (
     <div className="relative my-8 not-prose">
-      <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+      <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
         {/* Top accent */}
         <div className="h-0.5" style={{ background: 'linear-gradient(90deg, var(--sfp-navy) 0%, var(--sfp-sky) 100%)' }} />
 
@@ -1372,8 +1393,8 @@ function DefinitionBox({
               </span>
               {category && (
                 <span
-                  className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full"
-                  style={{ background: 'var(--sfp-sky)', color: 'var(--sfp-navy)', letterSpacing: '1.5px' }}
+                  className="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded"
+                  style={{ background: 'var(--sfp-sky)', color: 'var(--sfp-navy)' }}
                 >
                   {category}
                 </span>
@@ -1419,7 +1440,7 @@ function StatBox({
   return (
     <div className="relative my-4 not-prose inline-block min-w-[180px]">
       <div
-        className="rounded-2xl border-l-4 border border-gray-100 px-5 py-4"
+        className="rounded-xl border-l-4 border border-gray-100 px-5 py-4"
         style={{ borderLeftColor: c.border, background: c.bg }}
       >
         <div className="flex items-start gap-2.5">
@@ -1480,14 +1501,14 @@ function RegulatorAlert({
   const c = regulatorMap[regulator] ?? regulatorMap.FCA;
   return (
     <div className="relative my-6 not-prose">
-      <div className="rounded-2xl border overflow-hidden" style={{ background: c.bg, borderColor: c.border }}>
+      <div className="rounded-xl border overflow-hidden" style={{ background: c.bg, borderColor: c.border }}>
         {/* Header row */}
         <div className="flex items-center gap-3 px-4 py-2.5 border-b" style={{ borderColor: c.border }}>
           <BadgeCheck className="h-4 w-4 shrink-0" style={{ color: c.badge }} />
           <div className="flex items-center gap-2 flex-wrap min-w-0">
             <span
-              className="text-[11px] font-bold uppercase px-2 py-0.5 rounded-full text-white shrink-0"
-              style={{ background: c.badge, letterSpacing: '1.5px' }}
+              className="text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded text-white shrink-0"
+              style={{ background: c.badge }}
             >
               {regulator} Regulated
             </span>
@@ -1503,8 +1524,8 @@ function RegulatorAlert({
             )}
             {type && (
               <span
-                className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full"
-                style={{ background: 'rgba(0,0,0,0.06)', color: 'var(--sfp-slate)', letterSpacing: '1.5px' }}
+                className="text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded-sm"
+                style={{ background: 'rgba(0,0,0,0.06)', color: 'var(--sfp-slate)' }}
               >
                 {type}
               </span>
@@ -1553,7 +1574,7 @@ function NewsAlert({
   return (
     <div className="relative my-6 not-prose">
       <div
-        className="rounded-2xl border-l-4 border border-gray-100 p-4"
+        className="rounded-xl border-l-4 border border-gray-100 p-4"
         style={{ borderLeftColor: c.accent, background: c.bg }}
       >
         <div className="flex items-start gap-3">
@@ -1562,8 +1583,8 @@ function NewsAlert({
             {/* Badge + date */}
             <div className="flex items-center gap-2 flex-wrap mb-1.5">
               <span
-                className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full text-white"
-                style={{ background: c.accent, letterSpacing: '1.5px' }}
+                className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full text-white"
+                style={{ background: c.accent }}
               >
                 {c.label}
               </span>
@@ -1655,7 +1676,7 @@ export const mdxComponents = {
         alt={alt || ''}
         width={imgWidth}
         height={imgHeight}
-        className="rounded-2xl my-4"
+        className="rounded-lg my-4"
       />
     );
   },

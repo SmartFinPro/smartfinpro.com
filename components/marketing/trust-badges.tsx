@@ -36,7 +36,7 @@ export function TrustBadges({
           ))}
         </div>
         <span className="text-sm text-muted-foreground">
-          {rating}/5 ({reviewCount.toLocaleString('en-US')} reviews)
+          {rating}/5 ({(reviewCount ?? 0).toLocaleString('en-US')} reviews)
         </span>
       </div>
 
