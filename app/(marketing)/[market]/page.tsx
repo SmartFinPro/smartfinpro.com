@@ -85,7 +85,7 @@ const marketHeroContent: Record<string, {
   },
 };
 
-const REPORTS_PER_PAGE = 10;
+const REPORTS_PER_PAGE = 8;
 
 interface MarketPageProps {
   params: Promise<{ market: string }>;

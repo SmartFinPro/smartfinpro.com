@@ -50,7 +50,7 @@ const categoryTools: Record<string, { name: string; href: string; description: s
   ],
 };
 
-const REPORTS_PER_PAGE = 10;
+const REPORTS_PER_PAGE = 8;
 
 interface CategoryPageProps {
   params: Promise<{
