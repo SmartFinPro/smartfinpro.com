@@ -384,8 +384,8 @@ export function ReportLayout({
               {hasAffiliate && (
                 <TrackedAffiliateLink
                   href={review.affiliateUrl}
-                  className="ml-auto px-5 py-3 text-sm font-normal rounded-t-2xl transition-colors flex items-center gap-2 no-underline hover:no-underline"
-                  style={{ background: 'var(--sfp-gold)', color: '#ffffff', textDecoration: 'none' }}
+                  className="ml-auto px-4 py-2 text-xs font-semibold rounded-xl transition-all flex items-center gap-2 no-underline hover:no-underline hover:brightness-110"
+                  style={{ background: 'var(--sfp-green)', color: '#ffffff', textDecoration: 'none', boxShadow: '0 2px 8px rgba(26, 107, 58, 0.3)' }}
                   eventLabel={primaryCtaLabel}
                   market={market}
                   category={category}
@@ -393,7 +393,7 @@ export function ReportLayout({
                   layoutVariant="decision_first"
                   placement="hero_top"
                 >
-                  {primaryCtaLabel} <ArrowRight className="h-4 w-4" />
+                  {primaryCtaLabel} <ArrowRight className="h-3.5 w-3.5" />
                 </TrackedAffiliateLink>
               )}
             </div>

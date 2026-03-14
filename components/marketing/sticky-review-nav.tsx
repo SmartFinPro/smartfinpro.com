@@ -78,37 +78,37 @@ interface ButtonColorScheme {
 
 // ── Module-level constants (avoid re-creation per render) ────────
 
-/** Variant A: Solid gold buttons (like cookie "Accept All") with opacity hover */
+/** Variant A: Green buttons matching the shield icon style */
 const BUTTON_COLORS: readonly ButtonColorScheme[] = [
   {
-    bg: 'var(--sfp-gold)', text: '#fff',
-    shadow: 'none',
-    hoverBg: 'var(--sfp-gold)', hoverText: '#fff',
-    hoverShadow: 'none',
+    bg: 'var(--sfp-green)', text: '#fff',
+    shadow: '0 2px 8px rgba(26, 107, 58, 0.35)',
+    hoverBg: 'var(--sfp-green)', hoverText: '#fff',
+    hoverShadow: '0 4px 12px rgba(26, 107, 58, 0.45)',
     badge: '★★★ Best Value',
   },
   {
-    bg: 'var(--sfp-gold)', text: '#fff',
-    shadow: 'none',
-    hoverBg: 'var(--sfp-gold)', hoverText: '#fff',
-    hoverShadow: 'none',
+    bg: 'var(--sfp-green)', text: '#fff',
+    shadow: '0 2px 8px rgba(26, 107, 58, 0.35)',
+    hoverBg: 'var(--sfp-green)', hoverText: '#fff',
+    hoverShadow: '0 4px 12px rgba(26, 107, 58, 0.45)',
     badge: '★★ Best Overall',
   },
   {
-    bg: 'var(--sfp-gold)', text: '#fff',
-    shadow: 'none',
-    hoverBg: 'var(--sfp-gold)', hoverText: '#fff',
-    hoverShadow: 'none',
+    bg: 'var(--sfp-green)', text: '#fff',
+    shadow: '0 2px 8px rgba(26, 107, 58, 0.35)',
+    hoverBg: 'var(--sfp-green)', hoverText: '#fff',
+    hoverShadow: '0 4px 12px rgba(26, 107, 58, 0.45)',
     badge: '★ Best Features',
   },
 ] as const;
 
-/** Variant B: Solid gold button (like cookie "Accept All") with opacity hover */
+/** Variant B: Green button matching the shield icon style */
 const FOCUSED_BUTTON: ButtonColorScheme = {
-  bg: 'var(--sfp-gold)', text: '#fff',
-  shadow: 'none',
-  hoverBg: 'var(--sfp-gold)', hoverText: '#fff',
-  hoverShadow: 'none',
+  bg: 'var(--sfp-green)', text: '#fff',
+  shadow: '0 2px 8px rgba(26, 107, 58, 0.35)',
+  hoverBg: 'var(--sfp-green)', hoverText: '#fff',
+  hoverShadow: '0 4px 12px rgba(26, 107, 58, 0.45)',
   badge: '',
 };
 
@@ -450,6 +450,8 @@ export function StickyReviewNav({
       const el = e.currentTarget;
       el.style.background = colors.hoverBg;
       el.style.color = colors.hoverText;
+      el.style.boxShadow = colors.hoverShadow;
+      el.style.filter = 'brightness(1.1)';
       el.style.textDecoration = 'none';
     },
     [],
@@ -460,6 +462,8 @@ export function StickyReviewNav({
       const el = e.currentTarget;
       el.style.background = colors.bg;
       el.style.color = colors.text;
+      el.style.boxShadow = colors.shadow;
+      el.style.filter = 'none';
       el.style.textDecoration = 'none';
     },
     [],
@@ -495,14 +499,26 @@ export function StickyReviewNav({
         </div>
       </div>
 
-      {/* RIGHT: Up to 3 CTA Buttons */}
-      <div className="flex items-center gap-2.5 shrink-0" role="group" aria-label="Partner offers">
+      {/* CENTER: Up to 3 CTA Buttons (absolutely centered on lg+, normal flow on mobile) */}
+      <div className="lg:absolute lg:left-1/2 lg:-translate-x-1/2 flex items-center gap-2.5 shrink-0" role="group" aria-label="Partner offers">
         {resolvedPartners.map((cta, i) => {
           const colors = BUTTON_COLORS[i] || BUTTON_COLORS[1];
           const isPrimary = i === 0;
 
           const buttonGroup = (
-            <div className="flex flex-col items-center gap-1.5">
+            <div className="flex flex-col items-center gap-1">
+              {/* Badge row: SEC REGULATED + stars ABOVE button */}
+              <div className="hidden sm:flex items-center gap-1.5">
+                <RegulatorBadge market={resolvedMarket} category={resolvedCategory} size="sm" />
+                <span
+                  className="text-xs leading-tight whitespace-nowrap"
+                  style={{ color: 'rgba(255, 255, 255, 0.6)', fontWeight: 400 }}
+                  aria-hidden="true"
+                >
+                  {colors.badge}
+                </span>
+              </div>
+              {/* CTA Button BELOW badge */}
               <Link
                 href={enablePreQual ? '#' : cta.url}
                 target={enablePreQual ? undefined : '_blank'}
@@ -510,16 +526,17 @@ export function StickyReviewNav({
                 tabIndex={visible ? 0 : -1}
                 aria-label={`${cta.label} (opens in new tab)`}
                 className="
-                  inline-flex items-center gap-2 rounded-2xl
-                  px-4 py-2 text-sm font-medium
+                  inline-flex items-center gap-2 rounded-xl
+                  px-4 py-1.5 text-xs font-semibold
                   whitespace-nowrap no-underline hover:no-underline
-                  transition-all hover:opacity-90
+                  transition-all duration-200
                   focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2
                   [text-decoration:none]
                 "
                 style={{
                   background: colors.bg,
                   color: colors.text,
+                  boxShadow: colors.shadow,
                   textDecoration: 'none',
                   '--tw-ring-offset-color': 'var(--sfp-navy)',
                 } as React.CSSProperties}
@@ -537,16 +554,6 @@ export function StickyReviewNav({
               >
                 <span>{cta.label}</span>
               </Link>
-              <div className="hidden sm:flex items-center gap-1.5">
-                <RegulatorBadge market={resolvedMarket} category={resolvedCategory} size="sm" />
-                <span
-                  className="text-xs sm:text-sm leading-tight whitespace-nowrap"
-                  style={{ color: 'rgba(255, 255, 255, 0.6)', fontWeight: 400 }}
-                  aria-hidden="true"
-                >
-                  {colors.badge}
-                </span>
-              </div>
             </div>
           );
 
@@ -575,8 +582,13 @@ export function StickyReviewNav({
           </div>
         </div>
 
-        {/* RIGHT: Single prominent CTA */}
-        <div className="shrink-0 flex flex-col items-center gap-1.5">
+        {/* CENTER: Single prominent CTA (absolutely centered on lg+) */}
+        <div className="lg:absolute lg:left-1/2 lg:-translate-x-1/2 shrink-0 flex flex-col items-center gap-1">
+          {/* Badge ABOVE button */}
+          <div className="hidden sm:block">
+            <RegulatorBadge market={resolvedMarket} category={resolvedCategory} size="sm" />
+          </div>
+          {/* CTA Button BELOW badge */}
           <Link
             href={enablePreQual ? '#' : cta.url}
             target={enablePreQual ? undefined : '_blank'}
@@ -584,16 +596,17 @@ export function StickyReviewNav({
             tabIndex={visible ? 0 : -1}
             aria-label={`${cta.label} (opens in new tab)`}
             className="
-              inline-flex items-center gap-2.5 rounded-2xl
-              px-4 py-2 text-sm font-medium
+              inline-flex items-center gap-2 rounded-xl
+              px-4 py-1.5 text-xs font-semibold
               whitespace-nowrap no-underline hover:no-underline
-              transition-all hover:opacity-90
+              transition-all duration-200
               focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2
               [text-decoration:none]
             "
             style={{
               background: colors.bg,
               color: colors.text,
+              boxShadow: colors.shadow,
               textDecoration: 'none',
               '--tw-ring-offset-color': 'var(--sfp-navy)',
             } as React.CSSProperties}
@@ -611,9 +624,6 @@ export function StickyReviewNav({
           >
             <span>Try {cta.label} Free</span>
           </Link>
-          <div className="hidden sm:block">
-            <RegulatorBadge market={resolvedMarket} category={resolvedCategory} size="sm" />
-          </div>
         </div>
       </>
     );
@@ -642,7 +652,7 @@ export function StickyReviewNav({
       />
 
       <div className="container mx-auto px-4 sm:px-6">
-        <div className="flex items-center justify-between py-3 gap-4 sm:gap-8">
+        <div className="relative flex items-center justify-between py-3 gap-4 sm:gap-8">
 
           {/* ── LEFT: Icon + Two-line headline ──────────────────────── */}
           <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
