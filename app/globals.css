@@ -15,7 +15,7 @@
   :root {
     /* === Shadcn/UI Theme Tokens === */
     --radius: 1rem;              /* 16px — matches landing page card radius */
-    --background: #F2F4F8;
+    --background: #ffffff;         /* Landing page body bg = white */
     --foreground: #1A1A2E;
     --card: #ffffff;
     --card-foreground: #1A1A2E;
@@ -25,7 +25,7 @@
     --primary-foreground: #ffffff;
     --secondary: #E8F0FB;
     --secondary-foreground: #1B4F8C;
-    --muted: #F2F4F8;
+    --muted: #F7F8FA;              /* Landing page --gray */
     --muted-foreground: #64748B;
     --accent: #F5A623;
     --accent-foreground: #1A1A2E; /* WCAG AA: dark ink on gold = 8.1:1 contrast (was #fff = 2.0:1 ✗) */
@@ -60,7 +60,7 @@
     --sfp-green:      #1A6B3A;
     --sfp-red:        #D64045;
     --sfp-sky:        #E8F0FB;
-    --sfp-gray:       #F2F4F8;
+    --sfp-gray:       #F7F8FA;   /* Landing page --gray */
     --sfp-ink:        #1A1A2E;
     --sfp-slate:      #64748B;   /* Tailwind slate-500 — matches landing page reference */
     --sfp-footer-text:rgba(255,255,255,0.5);
@@ -571,40 +571,38 @@ html {
    BUTTON STYLES
    ============================================================ */
 
-/* Primary CTA (Gold) */
+/* Primary CTA (Gold) — matches landing page exactly */
 .btn-primary {
   background: var(--sfp-gold);
   color: #ffffff;
   font-weight: 700;
-  padding: 1rem 2.25rem;
-  border-radius: 1rem;
-  font-size: 0.9375rem;
-  transition: all 0.25s;
-  box-shadow: 0 4px 24px rgba(245, 166, 35, 0.35);
+  padding: 0.875rem 2rem;        /* 14px 32px — landing page */
+  border-radius: 0.5rem;          /* 8px — landing page */
+  font-size: 0.875rem;            /* 14px — landing page */
+  transition: all 0.25s ease;
+  border: none;
 }
 
 .btn-primary:hover {
   background: var(--sfp-gold-dark);
-  box-shadow: 0 6px 32px rgba(245, 166, 35, 0.45);
-  transform: translateY(-1px);
+  transform: translateY(-2px);
 }
 
-/* Secondary CTA (Navy) */
+/* Secondary CTA / Ghost Button — matches landing page */
 .btn-secondary {
-  background: var(--sfp-navy);
-  color: #ffffff;
-  font-weight: 700;
-  padding: 1rem 2.25rem;
-  border-radius: 0.75rem;
-  font-size: 0.9375rem;
-  transition: all 0.25s;
-  box-shadow: 0 2px 8px rgba(27, 79, 140, 0.2);
+  background: transparent;
+  color: rgba(255,255,255,0.85);
+  font-weight: 600;
+  padding: 0.875rem 2rem;        /* 14px 32px — landing page */
+  border-radius: 0.5rem;          /* 8px — landing page */
+  font-size: 0.875rem;            /* 14px — landing page */
+  border: 1px solid rgba(255,255,255,0.2);
+  transition: all 0.2s ease;
 }
 
 .btn-secondary:hover {
-  background: var(--sfp-navy-dark);
-  box-shadow: 0 4px 16px rgba(27, 79, 140, 0.3);
-  transform: translateY(-1px);
+  border-color: rgba(255,255,255,0.4);
+  color: #fff;
 }
 
 /* Button Glow Effect */
@@ -769,11 +767,13 @@ article a:not([href^="/go/"]):not([href^="http"]):not([data-slot="button"]):not(
   --sfp-green:      #1A6B3A;
   --sfp-red:        #D64045;
   --sfp-sky:        #E8F0FB;
-  --sfp-gray:       #F2F4F8;
+  --sfp-gray:       #F7F8FA;   /* Landing page --gray */
   --sfp-ink:        #1A1A2E;
-  --sfp-slate:      #64748B;   /* Tailwind slate-500 — matches landing page reference */
+  --sfp-slate:      #64748B;   /* Tailwind slate-500 — matches landing page */
   --sfp-footer-text:#AAAAAA;
   --sfp-warning-bg: #FFF8E1;
+  --sfp-navy-deep:  #0F2E52;   /* Landing page hero deep navy */
+  --sfp-gold-light: #FFF8EB;   /* Landing page gold-light badges */
 
   /* Typography System (AP-04) */
   --font-primary:      var(--font-inter), system-ui, Arial, sans-serif;
@@ -786,7 +786,7 @@ article a:not([href^="/go/"]):not([href^="http"]):not([data-slot="button"]):not(
 
   /* Shadcn/UI Theme Overrides (SmartFinPro brand) */
   --radius: 0.625rem;
-  --background: #F2F4F8;
+  --background: #ffffff;        /* Landing page body bg = white */
   --foreground: #1A1A2E;
   --card: #ffffff;
   --card-foreground: #1A1A2E;
@@ -796,14 +796,14 @@ article a:not([href^="/go/"]):not([href^="http"]):not([data-slot="button"]):not(
   --primary-foreground: #ffffff;
   --secondary: #E8F0FB;
   --secondary-foreground: #1B4F8C;
-  --muted: #F2F4F8;
+  --muted: #F7F8FA;
   --muted-foreground: #64748B;
   --accent: #F5A623;
   --accent-foreground: #1A1A2E; /* WCAG AA: dark ink on gold = 8.1:1 contrast (was #fff = 2.0:1 ✗) */
   --destructive: #D64045;
   --destructive-foreground: #ffffff;
-  --border: #e5e5e5;
-  --input: #e5e5e5;
+  --border: #E2E8F0;            /* Landing page border */
+  --input: #E2E8F0;
   --ring: #1B4F8C;
   --chart-1: #F5A623;
   --chart-2: #1A6B3A;
@@ -824,3 +824,40 @@ html[data-silo="us"], body.silo-us { --sfp-silo-tint: #D5E8F0; }
 html[data-silo="uk"], body.silo-uk { --sfp-silo-tint: #D5F0E0; }
 html[data-silo="au"], body.silo-au { --sfp-silo-tint: #FFF3D5; }
 html[data-silo="ca"], body.silo-ca { --sfp-silo-tint: #FFE5E5; }
+
+/* ── Homepage Section Hover Effects ── */
+.sector-card-hover:hover { background: var(--sfp-gray) !important; }
+.sector-card-hover:hover .sector-tag { background: #fff !important; border-color: transparent !important; }
+.market-card-hover { transition: all 0.2s ease; }
+.market-card-hover:hover { transform: translateY(-2px); background: rgba(255,255,255,0.08) !important; border-color: var(--sfp-gold) !important; }
+
+/* Enterprise card hover — dezenter Hintergrund-Wechsel (wie sector-card-hover) */
+.enterprise-card-hover { transition: all 0.25s ease; }
+.enterprise-card-hover:hover { background: var(--sfp-gray) !important; }
+
+/* Portal sidebar link hover — dezentes Blau */
+.sidebar-link-hover:hover { background: var(--sfp-sky) !important; }
+
+/* Category summary — details/summary toggle */
+.category-summary-toggle::-webkit-details-marker { display: none; }
+.category-summary-details:not([open]) .category-summary-less { display: none; }
+.category-summary-details:not([open]) .category-summary-more { display: inline; }
+.category-summary-details[open] .category-summary-less { display: inline; }
+.category-summary-details[open] .category-summary-more { display: none; }
+
+/* Pagination button hover */
+.pagination-btn:hover { background: var(--sfp-navy) !important; color: #fff !important; }
+
+/* Stats card responsive — NO flex-wrap on desktop (matches landing/index.html) */
+@media (max-width: 640px) {
+  .stats-card-responsive { flex-wrap: wrap !important; max-width: 100% !important; }
+  .stats-card-responsive .stat-divider { display: none !important; }
+  .stats-card-responsive > div { padding: 14px 20px !important; }
+}
+
+/* Newsletter form responsive */
+@media (max-width: 640px) {
+  .newsletter-form-responsive { flex-direction: column !important; }
+  .newsletter-form-responsive input,
+  .newsletter-form-responsive button { width: 100%; }
+}

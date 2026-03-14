@@ -18,6 +18,8 @@ import { Calendar, FileText, BarChart3, Star, Wrench, ArrowRight, Shield, CheckC
 import { Breadcrumb } from '@/components/marketing/breadcrumb';
 import { PortalSidebar } from '@/components/marketing/portal-sidebar';
 import { ReportCard } from '@/components/marketing/report-card';
+import { CategorySummary } from '@/components/marketing/category-summary';
+import { ReportPagination } from '@/components/marketing/report-pagination';
 import { ExpertVerifier } from '@/components/marketing/expert-verifier';
 import { NewsletterBox } from '@/components/marketing/newsletter-box';
 import { getMarketExpert } from '@/lib/actions/experts';
@@ -48,11 +50,14 @@ const categoryTools: Record<string, { name: string; href: string; description: s
   ],
 };
 
+const REPORTS_PER_PAGE = 10;
+
 interface CategoryPageProps {
   params: Promise<{
     market: string;
     category: string;
   }>;
+  searchParams: Promise<{ page?: string }>;
 }
 
 export async function generateMetadata({
@@ -91,8 +96,10 @@ export async function generateMetadata({
   };
 }
 
-export default async function CategoryPage({ params }: CategoryPageProps) {
+export default async function CategoryPage({ params, searchParams }: CategoryPageProps) {
   const { market, category } = await params;
+  const sp = await searchParams;
+  const currentPage = Math.max(1, parseInt(sp.page || '1', 10) || 1);
 
   if (!isValidMarket(market) || !isValidCategory(category)) {
     notFound();
@@ -116,7 +123,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
     : { name: 'SmartFinPro Team', role: 'Editorial Team', bio: null, image_url: null, linkedin_url: null, credentials: ['Expert Reviewer'] as string[], market_slug: market as Market, category: (category as Category) || null, id: '', verified: true, created_at: '', updated_at: '' };
 
   // Filter reviews (exclude pillar index pages)
-  const reviews = allContent
+  const allReviews = allContent
     .filter((item) => item.slug !== 'index')
     .sort(
       (a, b) =>
@@ -124,8 +131,13 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
         new Date(a.meta.modifiedDate || a.meta.publishDate).getTime()
     );
 
-  // Compute average rating
-  const ratedReviews = reviews.filter((r) => r.meta.rating);
+  // Pagination
+  const totalPages = Math.max(1, Math.ceil(allReviews.length / REPORTS_PER_PAGE));
+  const safePage = Math.min(currentPage, totalPages);
+  const reviews = allReviews.slice((safePage - 1) * REPORTS_PER_PAGE, safePage * REPORTS_PER_PAGE);
+
+  // Compute average rating (across ALL reviews, not just current page)
+  const ratedReviews = allReviews.filter((r) => r.meta.rating);
   const avgRating = ratedReviews.length > 0
     ? (ratedReviews.reduce((sum, r) => sum + (r.meta.rating || 0), 0) / ratedReviews.length).toFixed(1)
     : null;
@@ -232,7 +244,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
       {/* ═══════════════════════════════════════════════════════════════
           2. TWO-COLUMN LAYOUT (Sidebar LEFT + Report Feed RIGHT)
       ═══════════════════════════════════════════════════════════════ */}
-      <section className="mx-auto px-6 py-24" style={{ maxWidth: '1200px' }}>
+      <section id="reports" className="mx-auto px-6 py-24" style={{ maxWidth: '1200px' }}>
         <div className="flex flex-col lg:flex-row gap-8">
 
           {/* LEFT: Sidebar (~25%) — Sticky Category Navigation */}
@@ -247,9 +259,18 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
                 {ratedReviews.length > 0 ? 'Latest Reports' : 'All Reports'}
               </h2>
               <span className="text-sm" style={{ color: 'var(--sfp-slate)' }}>
-                {reviews.length} {reviews.length === 1 ? 'report' : 'reports'} available
+                {allReviews.length} {allReviews.length === 1 ? 'report' : 'reports'} available
               </span>
             </div>
+
+            {/* Category Summary (collapsible) */}
+            {categoryInfo.summaryText && (
+              <CategorySummary
+                categoryName={categoryInfo.name}
+                summary={categoryInfo.summaryText}
+                details={categoryInfo.detailsText}
+              />
+            )}
 
             {/* Report Cards */}
             <div className="flex flex-col gap-5">
@@ -268,6 +289,13 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
                 />
               ))}
             </div>
+
+            {/* Pagination */}
+            <ReportPagination
+              currentPage={safePage}
+              totalPages={totalPages}
+              basePath={`${marketPrefix}/${category}`}
+            />
 
             {/* Empty State */}
             {reviews.length === 0 && (

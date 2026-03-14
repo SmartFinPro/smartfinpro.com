@@ -6,7 +6,7 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev:webpack", "--", "-p", "3002"],
       "port": 3002,
-      "url": "http://localhost:3002/us/trading/etoro-vs-robinhood"
+      "url": "http://localhost:3002"
     },
     {
       "name": "landing",

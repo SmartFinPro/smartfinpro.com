@@ -1,11 +1,11 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
-import { Toaster } from '@/components/ui/sonner';
-import { AnalyticsProvider } from '@/components/providers/analytics-provider';
+import Toaster from '@/components/ui/sonner';
+import AnalyticsProvider from '@/components/providers/analytics-provider';
 import SiloClassProvider from '@/components/providers/silo-class-provider';
-import { DevCacheBuster } from '@/components/providers/dev-cache-buster';
-import { ChunkRecoveryProvider } from '@/components/providers/chunk-recovery-provider';
+import DevCacheBuster from '@/components/providers/dev-cache-buster';
+import ChunkRecoveryProvider from '@/components/providers/chunk-recovery-provider';
 import { generateOrganizationSchema, generateWebsiteSchema } from '@/lib/seo/schema';
 import WebVitalsReporter from '@/components/providers/web-vitals-reporter';
 
@@ -52,12 +52,12 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: '/icon.svg', type: 'image/svg+xml' },
-      { url: '/icon.png', type: 'image/png', sizes: '32x32' },
-      { url: '/favicon.ico', type: 'image/x-icon', sizes: '16x16 32x32 48x48' },
+      { url: '/icon.svg?v=20260314e', type: 'image/svg+xml' },
+      { url: '/icon.png?v=20260314e', type: 'image/png', sizes: '512x512' },
+      { url: '/favicon.ico?v=20260314e', type: 'image/x-icon', sizes: '16x16 32x32 48x48' },
     ],
-    shortcut: ['/favicon.ico'],
-    apple: [{ url: '/apple-icon.png', sizes: '180x180', type: 'image/png' }],
+    shortcut: ['/favicon.ico?v=20260314e'],
+    apple: [{ url: '/apple-icon.png?v=20260314e', sizes: '180x180', type: 'image/png' }],
   },
   robots: {
     index: true,

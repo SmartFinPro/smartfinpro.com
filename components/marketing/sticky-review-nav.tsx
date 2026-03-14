@@ -78,37 +78,37 @@ interface ButtonColorScheme {
 
 // ── Module-level constants (avoid re-creation per render) ────────
 
-/** Variant A: Color palette for up to 3 CTA buttons: Gold → Teal → Lavender */
+/** Variant A: Solid gold buttons (like cookie "Accept All") with opacity hover */
 const BUTTON_COLORS: readonly ButtonColorScheme[] = [
   {
-    bg: 'rgba(255, 215, 100, 0.40)', text: '#FFE070',
-    shadow: '0 2px 10px rgba(255, 215, 100, 0.35)',
-    hoverBg: 'rgba(255, 215, 100, 0.60)', hoverText: '#FFF0A0',
-    hoverShadow: '0 4px 20px rgba(255, 215, 100, 0.6)',
+    bg: 'var(--sfp-gold)', text: '#fff',
+    shadow: 'none',
+    hoverBg: 'var(--sfp-gold)', hoverText: '#fff',
+    hoverShadow: 'none',
     badge: '★★★ Best Value',
   },
   {
-    bg: 'rgba(125, 211, 216, 0.15)', text: '#7DD3D8',
-    shadow: '0 2px 8px rgba(125, 211, 216, 0.2)',
-    hoverBg: 'rgba(125, 211, 216, 0.30)', hoverText: '#A5E8EC',
-    hoverShadow: '0 4px 16px rgba(125, 211, 216, 0.4)',
+    bg: 'var(--sfp-gold)', text: '#fff',
+    shadow: 'none',
+    hoverBg: 'var(--sfp-gold)', hoverText: '#fff',
+    hoverShadow: 'none',
     badge: '★★ Best Overall',
   },
   {
-    bg: 'rgba(167, 139, 250, 0.15)', text: '#A78BFA',
-    shadow: '0 2px 8px rgba(167, 139, 250, 0.2)',
-    hoverBg: 'rgba(167, 139, 250, 0.30)', hoverText: '#C4B5FD',
-    hoverShadow: '0 4px 16px rgba(167, 139, 250, 0.4)',
+    bg: 'var(--sfp-gold)', text: '#fff',
+    shadow: 'none',
+    hoverBg: 'var(--sfp-gold)', hoverText: '#fff',
+    hoverShadow: 'none',
     badge: '★ Best Features',
   },
 ] as const;
 
-/** Variant B: Single focused gold button — larger, more prominent */
+/** Variant B: Solid gold button (like cookie "Accept All") with opacity hover */
 const FOCUSED_BUTTON: ButtonColorScheme = {
-  bg: 'rgba(255, 215, 100, 0.50)', text: '#FFE070',
-  shadow: '0 2px 12px rgba(255, 215, 100, 0.4)',
-  hoverBg: 'rgba(255, 215, 100, 0.70)', hoverText: '#FFF5C0',
-  hoverShadow: '0 4px 24px rgba(255, 215, 100, 0.65)',
+  bg: 'var(--sfp-gold)', text: '#fff',
+  shadow: 'none',
+  hoverBg: 'var(--sfp-gold)', hoverText: '#fff',
+  hoverShadow: 'none',
   badge: '',
 };
 
@@ -450,21 +450,17 @@ export function StickyReviewNav({
       const el = e.currentTarget;
       el.style.background = colors.hoverBg;
       el.style.color = colors.hoverText;
-      el.style.boxShadow = colors.hoverShadow;
       el.style.textDecoration = 'none';
-      if (isPrimary) el.style.animation = 'none';
     },
     [],
   );
 
   const handleMouseLeave = useCallback(
-    (e: React.MouseEvent<HTMLAnchorElement>, colors: ButtonColorScheme, isPrimary: boolean) => {
+    (e: React.MouseEvent<HTMLAnchorElement>, colors: ButtonColorScheme, _isPrimary: boolean) => {
       const el = e.currentTarget;
       el.style.background = colors.bg;
       el.style.color = colors.text;
-      el.style.boxShadow = colors.shadow;
       el.style.textDecoration = 'none';
-      if (isPrimary) el.style.animation = PULSE_ANIMATION;
     },
     [],
   );
@@ -514,21 +510,18 @@ export function StickyReviewNav({
                 tabIndex={visible ? 0 : -1}
                 aria-label={`${cta.label} (opens in new tab)`}
                 className="
-                  sticky-pulse-glow
-                  inline-flex items-center gap-2 rounded-xl
-                  px-5 py-2 text-sm font-bold
+                  inline-flex items-center gap-2 rounded-2xl
+                  px-4 py-2 text-sm font-medium
                   whitespace-nowrap no-underline hover:no-underline
-                  transition-all duration-200 hover:scale-[1.02]
+                  transition-all hover:opacity-90
                   focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2
                   [text-decoration:none]
                 "
                 style={{
                   background: colors.bg,
                   color: colors.text,
-                  boxShadow: colors.shadow,
                   textDecoration: 'none',
                   '--tw-ring-offset-color': 'var(--sfp-navy)',
-                  ...(isPrimary ? { animation: PULSE_ANIMATION } : {}),
                 } as React.CSSProperties}
                 onMouseEnter={(e) => handleMouseEnter(e, colors, isPrimary)}
                 onMouseLeave={(e) => handleMouseLeave(e, colors, isPrimary)}
@@ -542,9 +535,7 @@ export function StickyReviewNav({
                   if (abVariant) trackAbEvent('click', resolvedCategory, resolvedMarket, abVariant, cta.label);
                 }}
               >
-                {isPrimary && <ExternalLink className="w-4 h-4 shrink-0" aria-hidden="true" />}
                 <span>{cta.label}</span>
-                {isPrimary && <ArrowRight className="w-4 h-4 shrink-0" aria-hidden="true" />}
               </Link>
               <div className="hidden sm:flex items-center gap-1.5">
                 <RegulatorBadge market={resolvedMarket} category={resolvedCategory} size="sm" />
@@ -593,20 +584,17 @@ export function StickyReviewNav({
             tabIndex={visible ? 0 : -1}
             aria-label={`${cta.label} (opens in new tab)`}
             className="
-              sticky-pulse-glow
-              inline-flex items-center gap-2.5 rounded-xl
-              px-6 py-2.5 text-sm sm:text-base font-bold
+              inline-flex items-center gap-2.5 rounded-2xl
+              px-4 py-2 text-sm font-medium
               whitespace-nowrap no-underline hover:no-underline
-              transition-all duration-200 hover:scale-[1.03]
+              transition-all hover:opacity-90
               focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2
               [text-decoration:none]
             "
             style={{
               background: colors.bg,
               color: colors.text,
-              boxShadow: colors.shadow,
               textDecoration: 'none',
-              animation: PULSE_ANIMATION,
               '--tw-ring-offset-color': 'var(--sfp-navy)',
             } as React.CSSProperties}
             onMouseEnter={(e) => handleMouseEnter(e, colors, true)}
@@ -621,9 +609,7 @@ export function StickyReviewNav({
               if (abVariant) trackAbEvent('click', resolvedCategory, resolvedMarket, abVariant, cta.label);
             }}
           >
-            <ExternalLink className="w-4 h-4 shrink-0" aria-hidden="true" />
             <span>Try {cta.label} Free</span>
-            <ArrowRight className="w-4 h-4 shrink-0" aria-hidden="true" />
           </Link>
           <div className="hidden sm:block">
             <RegulatorBadge market={resolvedMarket} category={resolvedCategory} size="sm" />
@@ -644,7 +630,7 @@ export function StickyReviewNav({
         ${visible ? 'translate-y-0' : '-translate-y-full'}
       `}
       style={{
-        background: 'linear-gradient(135deg, var(--sfp-navy) 0%, var(--sfp-navy-dark) 100%)',
+        background: 'linear-gradient(to bottom, var(--sfp-navy), #2563EB)',
         boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
       }}
     >

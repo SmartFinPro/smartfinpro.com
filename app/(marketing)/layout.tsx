@@ -1,8 +1,8 @@
-import { Header } from '@/components/marketing/header';
+import Header from '@/components/marketing/header';
 import { Footer } from '@/components/marketing/footer';
-import { ExitIntentPopup } from '@/components/marketing/exit-intent-popup';
-import { CookieConsentBanner } from '@/components/marketing/cookie-consent';
-import { GeoSuggestBanner } from '@/components/marketing/geo-suggest-banner';
+import ExitIntentPopup from '@/components/marketing/exit-intent-popup';
+import CookieConsentBanner from '@/components/marketing/cookie-consent';
+import GeoSuggestBanner from '@/components/marketing/geo-suggest-banner';
 
 export default function MarketingLayout({
   children,

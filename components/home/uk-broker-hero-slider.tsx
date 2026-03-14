@@ -140,7 +140,7 @@ function fireTrackingEvent(slide: BrokerSlide, action: 'cta_click' | 'review_cli
 const AUTOPLAY_INTERVAL = 6000;
 const SLIDE_DURATION = 400;
 
-export function UKBrokerHeroSlider() {
+export default function UKBrokerHeroSlider() {
   const [[activeIndex], setActiveIndex] = useState([0, 0]);
   const [isPaused, setIsPaused] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);

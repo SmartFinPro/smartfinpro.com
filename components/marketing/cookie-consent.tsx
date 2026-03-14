@@ -27,7 +27,7 @@ export function getCookieConsent(): CookieConsentValue {
 // Cookie Consent Banner Component
 // ============================================================
 
-export function CookieConsentBanner() {
+export default function CookieConsentBanner() {
   const [visible, setVisible] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -112,5 +112,3 @@ export function CookieConsentBanner() {
     </div>
   );
 }
-
-export default CookieConsentBanner;

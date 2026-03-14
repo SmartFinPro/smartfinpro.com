@@ -28,7 +28,7 @@ import { subscribeWithEmail } from '@/lib/newsletter-client';
 const STORAGE_KEY = 'sfp_exit_popup_shown';
 const COOLDOWN_DAYS = 7;
 
-export function ExitIntentPopup() {
+export default function ExitIntentPopup() {
   const [isOpen, setIsOpen] = useState(false);
   const [email, setEmail] = useState('');
   const [consent, setConsent] = useState(false);

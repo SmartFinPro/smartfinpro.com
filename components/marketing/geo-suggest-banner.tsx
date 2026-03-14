@@ -47,7 +47,7 @@ const DARK_SCROLL_THRESHOLD = 500;
 // Auto-switches from light (over hero) to dark (over content).
 // ============================================================
 
-export function GeoSuggestBanner() {
+export default function GeoSuggestBanner() {
   const pathname = usePathname();
   const [suggestedMarket, setSuggestedMarket] = useState<MarketCode | null>(null);
   const [visible, setVisible] = useState(false);

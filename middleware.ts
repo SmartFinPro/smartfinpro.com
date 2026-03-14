@@ -311,10 +311,10 @@ export async function middleware(request: NextRequest) {
     // ── Step 2: Skip static files (images, fonts, etc.) ──
     if (pathname.includes('.')) return NextResponse.next();
 
-    // ── Step 3: Homepage → redirect to /us ──
+    // ── Step 3: Homepage → served by app/(marketing)/page.tsx directly ──
     const segments = pathname.split('/').filter(Boolean);
     if (segments.length === 0) {
-      return NextResponse.redirect(new URL('/us', request.url), 301);
+      return withGeoCookie(request, NextResponse.next());
     }
 
     const firstSegment = segments[0];

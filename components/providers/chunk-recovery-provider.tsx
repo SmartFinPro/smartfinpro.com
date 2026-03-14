@@ -27,7 +27,7 @@ function getErrorMessage(input: unknown): string {
   return '';
 }
 
-export function ChunkRecoveryProvider() {
+export default function ChunkRecoveryProvider() {
   useEffect(() => {
     const maybeRecover = (message: string) => {
       if (!isChunkLikeError(message)) return;

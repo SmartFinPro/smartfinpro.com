@@ -23,6 +23,7 @@ import {
   Award,
   BookOpen,
   Calculator,
+  Clock,
 } from 'lucide-react';
 import type { Market, Category } from '@/lib/i18n/config';
 import { categoryConfig, marketCategories } from '@/lib/i18n/config';
@@ -45,7 +46,172 @@ const iconMap: Record<string, React.ElementType> = {
 };
 
 /* ═══════════════════════════════════════════════════════════════
-   1. CATEGORY SHOWCASE — 6 categories with icons + report counts
+   1. PLATFORM STATS BAR — Floating card overlapping hero
+   Sits ABOVE sectors with negative margin-top (-32px)
+═══════════════════════════════════════════════════════════════ */
+interface PlatformStatsProps {
+  totalReviews: number;
+  totalMarkets?: number;
+  totalTools?: number;
+}
+
+const statsItems = (reviews: number, markets: number, tools: number) => [
+  { value: `${reviews}+`, label: 'Expert Reviews' },
+  { value: `${markets}`, label: 'Regulated Markets' },
+  { value: '6', label: 'Sectors Covered' },
+  { value: `${tools}`, label: 'Interactive Tools' },
+];
+
+export function PlatformStats({
+  totalReviews,
+  totalMarkets = 4,
+  totalTools = 9,
+}: PlatformStatsProps) {
+  const items = statsItems(totalReviews, totalMarkets, totalTools);
+
+  return (
+    <div
+      style={{
+        maxWidth: '1140px',
+        margin: '-32px auto 0',
+        padding: '0 40px',
+        position: 'relative',
+        zIndex: 10,
+      }}
+    >
+      <div
+        style={{
+          background: '#fff',
+          border: '1px solid #E2E8F0',
+          borderRadius: '10px',
+          boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          maxWidth: '720px',
+          margin: '0 auto',
+        }}
+        className="stats-card-responsive"
+      >
+        {items.map((item, i) => (
+          <div
+            key={item.label}
+            style={{
+              padding: '20px 32px',
+              textAlign: 'center',
+              position: 'relative',
+              display: 'flex',
+              alignItems: 'baseline',
+              gap: '8px',
+            }}
+          >
+            <span
+              style={{
+                fontSize: '18px',
+                fontWeight: 800,
+                color: 'var(--sfp-navy)',
+                lineHeight: 1,
+                letterSpacing: '-0.3px',
+              }}
+            >
+              {item.value}
+            </span>
+            <span
+              style={{
+                fontSize: '11px',
+                color: 'var(--sfp-slate)',
+                fontWeight: 500,
+                letterSpacing: '0.02em',
+              }}
+            >
+              {item.label}
+            </span>
+            {/* Divider line — not on last item */}
+            {i < items.length - 1 && (
+              <span
+                style={{
+                  position: 'absolute',
+                  right: 0,
+                  top: '25%',
+                  height: '50%',
+                  width: '1px',
+                  background: '#E2E8F0',
+                }}
+                className="hidden sm:block"
+              />
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   2. COMPLIANCE BAR — Trust ticker with regulatory signals
+═══════════════════════════════════════════════════════════════ */
+const complianceItems = [
+  { text: 'FCA Regulated', icon: Shield },
+  { text: 'ASIC Licensed', icon: Shield },
+  { text: 'CIRO Compliant', icon: Shield },
+  { text: 'Independent Editorial', icon: CheckCircle },
+  { text: 'Updated Monthly', icon: Clock },
+];
+
+export function ComplianceBar() {
+  return (
+    <div
+      style={{
+        background: 'var(--sfp-sky)',
+        borderTop: '1px solid #E2E8F0',
+        borderBottom: '1px solid #E2E8F0',
+        padding: '22px 40px',
+        marginTop: '64px',
+      }}
+    >
+      <div
+        style={{
+          maxWidth: '1140px',
+          margin: '0 auto',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '48px',
+          flexWrap: 'wrap',
+        }}
+      >
+        {complianceItems.map((item) => (
+          <div
+            key={item.text}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+            }}
+          >
+            <item.icon
+              style={{ width: '16px', height: '16px', color: 'var(--sfp-navy)', flexShrink: 0 }}
+            />
+            <span
+              style={{
+                fontSize: '11px',
+                fontWeight: 600,
+                color: 'var(--sfp-navy)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.8px',
+              }}
+            >
+              {item.text}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   3. CATEGORY SHOWCASE — 6 sectors in 3-col bordered grid
 ═══════════════════════════════════════════════════════════════ */
 interface CategoryShowcaseProps {
   market: Market;
@@ -59,83 +225,135 @@ export function CategoryShowcase({ market, categoryCounts }: CategoryShowcasePro
   const prefix = market === 'us' ? '' : `/${market}`;
 
   return (
-    <section className="py-12 lg:py-16" style={{ background: 'var(--sfp-gray)' }}>
-      <div className="container mx-auto px-4">
-        <div className="max-w-6xl mx-auto">
-          {/* Section Header */}
-          <div className="text-center mb-10">
-            <span
-              className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] mb-3"
-              style={{ color: 'var(--sfp-navy)' }}
+    <section style={{ maxWidth: '1140px', margin: '0 auto', padding: '112px 40px' }}>
+      {/* Section Header */}
+      <div style={{ textAlign: 'center', marginBottom: '64px' }}>
+        <span
+          style={{
+            fontSize: '11px',
+            fontWeight: 700,
+            textTransform: 'uppercase',
+            letterSpacing: '2px',
+            color: 'var(--sfp-slate)',
+            display: 'block',
+            marginBottom: '16px',
+          }}
+        >
+          Research Coverage
+        </span>
+        <h2
+          style={{
+            fontSize: 'clamp(26px, 3.2vw, 38px)',
+            fontWeight: 800,
+            color: 'var(--sfp-ink)',
+            letterSpacing: '-0.6px',
+            marginBottom: '16px',
+            lineHeight: 1.15,
+          }}
+        >
+          Expert Analysis Across {displayCats.length} Sectors
+        </h2>
+        <p
+          style={{
+            fontSize: '16px',
+            color: 'var(--sfp-slate)',
+            maxWidth: '480px',
+            margin: '0 auto',
+            lineHeight: 1.7,
+          }}
+        >
+          Methodology-driven reviews updated monthly by certified financial analysts and technology experts.
+        </p>
+      </div>
+
+      {/* Sectors Grid — 3-col with 1px gap borders */}
+      <div
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+        style={{
+          gap: '1px',
+          background: '#E2E8F0',
+          border: '1px solid #E2E8F0',
+          borderRadius: '16px',
+          overflow: 'hidden',
+        }}
+      >
+        {displayCats.map((cat) => {
+          const config = categoryConfig[cat];
+          const IconComp = iconMap[config.icon] || Sparkles;
+          const count = categoryCounts[cat] || 0;
+
+          return (
+            <Link
+              key={cat}
+              href={`${prefix}/${cat}`}
+              className="no-underline sector-card-hover"
+              style={{
+                background: '#fff',
+                padding: '36px 32px',
+                transition: 'all 0.25s ease',
+                display: 'block',
+              }}
             >
-              <BarChart3 className="h-3.5 w-3.5" />
-              Market Sectors
-            </span>
-            <h2 className="text-2xl sm:text-3xl font-bold" style={{ color: 'var(--sfp-ink)' }}>
-              Expert Research Across{' '}
-              <span style={{ color: 'var(--sfp-navy)' }}>{displayCats.length} Sectors</span>
-            </h2>
-            <p className="mt-2 text-sm max-w-xl mx-auto" style={{ color: 'var(--sfp-slate)' }}>
-              In-depth reviews, comparisons, and guides — updated monthly by certified analysts.
-            </p>
-          </div>
+              {/* Icon */}
+              <div style={{ width: '40px', height: '40px', marginBottom: '16px', color: 'var(--sfp-navy)' }}>
+                <IconComp style={{ width: '24px', height: '24px' }} />
+              </div>
 
-          {/* Category Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {displayCats.map((cat) => {
-              const config = categoryConfig[cat];
-              const IconComp = iconMap[config.icon] || Sparkles;
-              const count = categoryCounts[cat] || 0;
+              {/* Title */}
+              <h3
+                style={{
+                  fontSize: '16px',
+                  fontWeight: 700,
+                  color: 'var(--sfp-ink)',
+                  marginBottom: '8px',
+                  letterSpacing: '-0.2px',
+                }}
+              >
+                {config.name}
+              </h3>
 
-              return (
-                <Link
-                  key={cat}
-                  href={`${prefix}/${cat}`}
-                  className="group rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition-all duration-200 hover:shadow-md hover:border-gray-300 hover:-translate-y-0.5 no-underline"
-                >
-                  <div className="flex items-start gap-4">
-                    {/* Icon */}
-                    <div
-                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
-                      style={{ background: 'var(--sfp-sky)' }}
-                    >
-                      <IconComp className="h-5 w-5" style={{ color: 'var(--sfp-navy)' }} />
-                    </div>
+              {/* Description */}
+              <p
+                style={{
+                  fontSize: '14px',
+                  color: 'var(--sfp-slate)',
+                  lineHeight: 1.65,
+                  marginBottom: '20px',
+                }}
+              >
+                {config.description}
+              </p>
 
-                    {/* Content */}
-                    <div className="min-w-0">
-                      <h3
-                        className="text-sm font-bold group-hover:underline"
-                        style={{ color: 'var(--sfp-ink)' }}
-                      >
-                        {config.name}
-                      </h3>
-                      <p className="mt-0.5 text-xs leading-relaxed" style={{ color: 'var(--sfp-slate)' }}>
-                        {config.description}
-                      </p>
-                      {count > 0 && (
-                        <span
-                          className="mt-2 inline-flex items-center gap-1 text-[11px] font-semibold"
-                          style={{ color: 'var(--sfp-navy)' }}
-                        >
-                          <FileText className="h-3 w-3" />
-                          {count} {count === 1 ? 'Report' : 'Reports'}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
-        </div>
+              {/* Tags */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                {count > 0 && (
+                  <span
+                    className="sector-tag"
+                    style={{
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      color: 'var(--sfp-slate)',
+                      background: 'var(--sfp-gray)',
+                      padding: '4px 10px',
+                      borderRadius: '4px',
+                      border: '1px solid #E2E8F0',
+                      transition: 'all 0.25s ease',
+                    }}
+                  >
+                    {count}+ Reviews
+                  </span>
+                )}
+              </div>
+            </Link>
+          );
+        })}
       </div>
     </section>
   );
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   2. EDITOR'S PICKS — Top 3 featured reviews
+   4. EDITOR'S PICKS — Top 3 featured reviews
 ═══════════════════════════════════════════════════════════════ */
 interface EditorsPick {
   title: string;
@@ -157,28 +375,43 @@ export function EditorsPicks({ market, picks }: EditorsPicksProps) {
   const prefix = market === 'us' ? '' : `/${market}`;
 
   return (
-    <section className="py-12 lg:py-16 bg-white">
-      <div className="container mx-auto px-4">
-        <div className="max-w-6xl mx-auto">
+    <section style={{ background: 'var(--sfp-gray)', padding: '64px 40px' }}>
+      <div style={{ maxWidth: '1140px', margin: '0 auto' }}>
+        <div>
           {/* Section Header */}
-          <div className="text-center mb-10">
+          <div className="text-center" style={{ marginBottom: '40px' }}>
             <span
-              className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] mb-3"
-              style={{ color: 'var(--sfp-gold)' }}
+              className="block"
+              style={{
+                fontSize: '11px',
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                letterSpacing: '2px',
+                color: 'var(--sfp-slate)',
+                marginBottom: '16px',
+              }}
             >
-              <Award className="h-3.5 w-3.5" />
               Editor&apos;s Choice
             </span>
-            <h2 className="text-2xl sm:text-3xl font-bold" style={{ color: 'var(--sfp-ink)' }}>
+            <h2
+              style={{
+                fontSize: 'clamp(26px, 3.2vw, 38px)',
+                fontWeight: 800,
+                color: 'var(--sfp-ink)',
+                letterSpacing: '-0.6px',
+                marginBottom: '16px',
+                lineHeight: 1.15,
+              }}
+            >
               Top-Rated This Month
             </h2>
-            <p className="mt-2 text-sm max-w-xl mx-auto" style={{ color: 'var(--sfp-slate)' }}>
+            <p style={{ fontSize: '16px', color: 'var(--sfp-slate)', maxWidth: '480px', margin: '0 auto', lineHeight: 1.7 }}>
               Our highest-scoring products based on rigorous testing and expert analysis.
             </p>
           </div>
 
           {/* Picks Grid */}
-          <div className="grid md:grid-cols-3 gap-5">
+          <div className="grid md:grid-cols-3 gap-6">
             {picks.map((pick, i) => {
               const catConfig = categoryConfig[pick.category];
 
@@ -186,36 +419,45 @@ export function EditorsPicks({ market, picks }: EditorsPicksProps) {
                 <Link
                   key={pick.slug}
                   href={`${prefix}/${pick.category}/${pick.slug}`}
-                  className="group relative rounded-2xl border border-gray-200 bg-white overflow-hidden shadow-sm transition-all duration-200 hover:shadow-lg hover:-translate-y-1 no-underline"
+                  className="group relative enterprise-card-hover overflow-hidden no-underline"
+                  style={{
+                    background: '#fff',
+                    border: '1px solid #E2E8F0',
+                    borderRadius: '12px',
+                    boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
+                  }}
                 >
-                  {/* Top gradient accent */}
+                  {/* Top accent — 1px dezent */}
                   <div
-                    className="h-1"
                     style={{
-                      background:
-                        i === 0
-                          ? 'linear-gradient(90deg, var(--sfp-gold), var(--sfp-gold-dark))'
-                          : 'linear-gradient(90deg, var(--sfp-navy), #3B82F6)',
+                      height: '1px',
+                      background: 'var(--sfp-navy)',
                     }}
                   />
 
-                  <div className="p-5">
+                  <div style={{ padding: '24px' }}>
                     {/* Badge row */}
-                    <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center justify-between" style={{ marginBottom: '16px' }}>
                       <span
-                        className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full"
                         style={{
-                          background: i === 0 ? 'var(--sfp-gold)' : 'var(--sfp-sky)',
-                          color: i === 0 ? '#fff' : 'var(--sfp-navy)',
+                          fontSize: '10px',
+                          fontWeight: 700,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.8px',
+                          padding: '3px 8px',
+                          borderRadius: '4px',
+                          background: i === 0 ? 'var(--sfp-navy)' : 'var(--sfp-gray)',
+                          color: i === 0 ? '#fff' : 'var(--sfp-ink)',
+                          border: i === 0 ? 'none' : '1px solid #E2E8F0',
                         }}
                       >
                         {i === 0 ? 'Best Pick' : catConfig?.name || pick.category}
                       </span>
 
                       {pick.rating && (
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-1.5">
                           <Star className="h-3.5 w-3.5 fill-current" style={{ color: '#F59E0B' }} />
-                          <span className="text-xs font-bold" style={{ color: 'var(--sfp-ink)' }}>
+                          <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--sfp-ink)' }}>
                             {pick.rating}
                           </span>
                         </div>
@@ -224,27 +466,39 @@ export function EditorsPicks({ market, picks }: EditorsPicksProps) {
 
                     {/* Title */}
                     <h3
-                      className="text-base font-bold leading-snug group-hover:underline mb-2"
-                      style={{ color: 'var(--sfp-ink)' }}
+                      style={{
+                        fontSize: '15px',
+                        fontWeight: 700,
+                        lineHeight: 1.4,
+                        color: 'var(--sfp-ink)',
+                        letterSpacing: '-0.2px',
+                        marginBottom: '8px',
+                      }}
                     >
                       {pick.title}
                     </h3>
 
                     {/* Description */}
                     <p
-                      className="text-xs leading-relaxed line-clamp-2 mb-4"
-                      style={{ color: 'var(--sfp-slate)' }}
+                      className="line-clamp-2"
+                      style={{
+                        fontSize: '13px',
+                        fontWeight: 400,
+                        lineHeight: 1.65,
+                        color: 'var(--sfp-slate)',
+                        marginBottom: '20px',
+                      }}
                     >
                       {pick.description}
                     </p>
 
                     {/* CTA */}
                     <span
-                      className="inline-flex items-center gap-1 text-xs font-semibold"
-                      style={{ color: 'var(--sfp-navy)' }}
+                      className="inline-flex items-center gap-1.5"
+                      style={{ fontSize: '13px', fontWeight: 600, color: 'var(--sfp-navy)' }}
                     >
                       Read Full Report
-                      <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-1" />
+                      <ArrowRight className="h-3 w-3" />
                     </span>
                   </div>
                 </Link>
@@ -258,271 +512,289 @@ export function EditorsPicks({ market, picks }: EditorsPicksProps) {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   3. METHODOLOGY — "How We Review" 4-step process
+   5. METHODOLOGY — "How We Review" 3-step process (3-col grid)
 ═══════════════════════════════════════════════════════════════ */
 const methodologySteps = [
   {
-    icon: Search,
-    title: 'Research',
-    description: 'We analyze market data, competitor offerings, and regulatory filings across all 4 markets.',
-    accent: 'var(--sfp-navy)',
-  },
-  {
-    icon: Eye,
+    num: '01',
     title: 'Hands-On Testing',
-    description: 'Every product is tested with real accounts — features, fees, support, and UX evaluated first-hand.',
-    accent: 'var(--sfp-navy)',
+    description:
+      'Every product is tested with real accounts over 2\u20134 weeks. We evaluate UX, pricing, execution speed, and support quality firsthand.',
   },
   {
-    icon: BarChart3,
-    title: 'Score & Compare',
-    description: 'Proprietary scoring across 8+ dimensions. Side-by-side comparisons with industry benchmarks.',
-    accent: 'var(--sfp-navy)',
+    num: '02',
+    title: 'Regulatory Verification',
+    description:
+      'We verify FCA, ASIC, CIRO, and SEC registration status directly with regulatory databases. Only compliant products are reviewed.',
   },
   {
-    icon: RefreshCw,
-    title: 'Monitor & Update',
-    description: 'Reviews are re-verified quarterly. Price changes, new features, and regulatory updates tracked live.',
-    accent: 'var(--sfp-navy)',
+    num: '03',
+    title: 'Monthly Data Refresh',
+    description:
+      'Pricing, spreads, fees, and feature sets are re-checked monthly. Reviews are timestamped and versioned for full transparency.',
   },
 ];
 
 export function MethodologySection() {
   return (
-    <section className="py-12 lg:py-16" style={{ background: 'var(--sfp-sky)' }}>
-      <div className="container mx-auto px-4">
-        <div className="max-w-6xl mx-auto">
-          {/* Section Header */}
-          <div className="text-center mb-10">
-            <span
-              className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] mb-3"
-              style={{ color: 'var(--sfp-green)' }}
+    <section style={{ maxWidth: '1140px', margin: '0 auto', padding: '112px 40px' }}>
+      {/* Section Header */}
+      <div style={{ textAlign: 'center', marginBottom: '64px' }}>
+        <span
+          style={{
+            fontSize: '11px',
+            fontWeight: 700,
+            textTransform: 'uppercase',
+            letterSpacing: '2px',
+            color: 'var(--sfp-slate)',
+            display: 'block',
+            marginBottom: '16px',
+          }}
+        >
+          Our Process
+        </span>
+        <h2
+          style={{
+            fontSize: 'clamp(26px, 3.2vw, 38px)',
+            fontWeight: 800,
+            color: 'var(--sfp-ink)',
+            letterSpacing: '-0.6px',
+            marginBottom: '16px',
+            lineHeight: 1.15,
+          }}
+        >
+          How We Review
+        </h2>
+        <p
+          style={{
+            fontSize: '16px',
+            color: 'var(--sfp-slate)',
+            maxWidth: '480px',
+            margin: '0 auto',
+            lineHeight: 1.7,
+          }}
+        >
+          Every product goes through a structured evaluation process before publication.
+        </p>
+      </div>
+
+      {/* Method Grid — 3 columns, 48px gap */}
+      <div className="grid grid-cols-1 lg:grid-cols-3" style={{ gap: '48px' }}>
+        {methodologySteps.map((step) => (
+          <div key={step.num}>
+            {/* Number Badge */}
+            <div
+              style={{
+                fontSize: '13px',
+                fontWeight: 800,
+                color: '#fff',
+                background: 'var(--sfp-navy)',
+                width: '36px',
+                height: '36px',
+                borderRadius: '10px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginBottom: '20px',
+              }}
             >
-              <CheckCircle className="h-3.5 w-3.5" />
-              Our Process
-            </span>
-            <h2 className="text-2xl sm:text-3xl font-bold" style={{ color: 'var(--sfp-ink)' }}>
-              How We Review Financial Products
-            </h2>
-            <p className="mt-2 text-sm max-w-xl mx-auto" style={{ color: 'var(--sfp-slate)' }}>
-              A transparent, multi-step methodology trusted by professionals worldwide.
+              {step.num}
+            </div>
+
+            {/* Title */}
+            <h3
+              style={{
+                fontSize: '16px',
+                fontWeight: 700,
+                color: 'var(--sfp-ink)',
+                marginBottom: '8px',
+                letterSpacing: '-0.2px',
+              }}
+            >
+              {step.title}
+            </h3>
+
+            {/* Description */}
+            <p
+              style={{
+                fontSize: '14px',
+                color: 'var(--sfp-slate)',
+                lineHeight: 1.7,
+              }}
+            >
+              {step.description}
             </p>
           </div>
-
-          {/* Steps Grid */}
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            {methodologySteps.map((step, i) => (
-              <div
-                key={step.title}
-                className="relative rounded-2xl border border-gray-200 bg-white p-6 shadow-sm"
-              >
-                {/* Step Number */}
-                <div
-                  className="absolute -top-3 -left-1 w-7 h-7 flex items-center justify-center rounded-full text-xs font-bold text-white"
-                  style={{ background: 'var(--sfp-navy)' }}
-                >
-                  {i + 1}
-                </div>
-
-                {/* Icon */}
-                <div
-                  className="w-10 h-10 flex items-center justify-center rounded-xl mb-4"
-                  style={{ background: 'var(--sfp-sky)' }}
-                >
-                  <step.icon className="h-5 w-5" style={{ color: step.accent }} />
-                </div>
-
-                {/* Content */}
-                <h3 className="text-sm font-bold mb-1.5" style={{ color: 'var(--sfp-ink)' }}>
-                  {step.title}
-                </h3>
-                <p className="text-xs leading-relaxed" style={{ color: 'var(--sfp-slate)' }}>
-                  {step.description}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
+        ))}
       </div>
     </section>
   );
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   4. PLATFORM STATS BAR — Key numbers
-═══════════════════════════════════════════════════════════════ */
-interface PlatformStatsProps {
-  totalReviews: number;
-  totalMarkets?: number;
-  totalTools?: number;
-}
-
-const statsItems = (reviews: number, markets: number, tools: number) => [
-  { value: `${reviews}+`, label: 'Expert Reviews', icon: FileText },
-  { value: `${markets}`, label: 'Global Markets', icon: Globe },
-  { value: `${tools}`, label: 'Interactive Tools', icon: Calculator },
-  { value: 'Daily', label: 'Data Updates', icon: RefreshCw },
-];
-
-export function PlatformStats({
-  totalReviews,
-  totalMarkets = 4,
-  totalTools = 9,
-}: PlatformStatsProps) {
-  const items = statsItems(totalReviews, totalMarkets, totalTools);
-
-  return (
-    <section className="py-10 bg-white border-y border-gray-200">
-      <div className="container mx-auto px-4">
-        <div className="max-w-5xl mx-auto grid grid-cols-2 lg:grid-cols-4 gap-6">
-          {items.map((item) => (
-            <div key={item.label} className="text-center">
-              <div
-                className="w-10 h-10 mx-auto mb-3 flex items-center justify-center rounded-xl"
-                style={{ background: 'var(--sfp-sky)' }}
-              >
-                <item.icon className="h-5 w-5" style={{ color: 'var(--sfp-navy)' }} />
-              </div>
-              <div className="text-2xl sm:text-3xl font-bold" style={{ color: 'var(--sfp-navy)' }}>
-                {item.value}
-              </div>
-              <div className="text-xs font-medium mt-1" style={{ color: 'var(--sfp-slate)' }}>
-                {item.label}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   5. HOMEPAGE NEWSLETTER CTA — Prominent section before footer
-═══════════════════════════════════════════════════════════════ */
-export function HomeNewsletterCTA() {
-  return (
-    <section className="py-12 lg:py-16" style={{ background: 'var(--sfp-navy)' }}>
-      <div className="container mx-auto px-4">
-        <div className="max-w-3xl mx-auto text-center">
-          {/* Badge */}
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 border border-white/20" style={{ background: 'rgba(255,255,255,0.1)' }}>
-            <BookOpen className="h-3.5 w-3.5" style={{ color: 'var(--sfp-gold)' }} />
-            <span className="text-[11px] font-semibold uppercase tracking-widest text-white/80">
-              Weekly Intelligence Brief
-            </span>
-          </div>
-
-          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3">
-            Stay Ahead of the Market
-          </h2>
-          <p className="text-sm text-white/70 max-w-lg mx-auto mb-6">
-            Expert analysis, new product alerts, and exclusive insights — delivered every Monday. Join 2,000+ finance professionals.
-          </p>
-
-          {/* CTA — links to newsletter page or uses inline form */}
-          <Link
-            href="/newsletter"
-            className="no-underline inline-flex items-center justify-center h-11 px-8 text-sm font-semibold rounded-md shadow-md transition-all duration-200 hover:shadow-lg hover:scale-[1.03] hover:brightness-110 hover:no-underline"
-            style={{ color: '#ffffff', background: 'var(--sfp-gold)', textDecoration: 'none' }}
-          >
-            Subscribe Free
-            <ArrowRight className="ml-2 h-4 w-4" />
-          </Link>
-
-          <p className="mt-3 text-[11px] text-white/50">
-            No spam. Unsubscribe anytime. Read our Privacy Policy.
-          </p>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   6. GLOBAL TRUST SECTION — Markets + regulator signals
+   7. GLOBAL TRUST SECTION — Dark navy-deep bg with market cards
 ═══════════════════════════════════════════════════════════════ */
 const globalMarkets = [
-  { flag: '🇺🇸', name: 'United States', regulators: ['SEC', 'FINRA'], href: '/us' },
-  { flag: '🇬🇧', name: 'United Kingdom', regulators: ['FCA'], href: '/uk' },
-  { flag: '🇨🇦', name: 'Canada', regulators: ['CIRO', 'CSA'], href: '/ca' },
-  { flag: '🇦🇺', name: 'Australia', regulators: ['ASIC'], href: '/au' },
+  {
+    flag: '🇺🇸',
+    region: 'North America',
+    name: 'United States',
+    description: 'SEC & FTC compliant reviews. Credit cards, brokers, AI tools, and cybersecurity.',
+    regLabel: 'FTC Compliant',
+    href: '/us',
+  },
+  {
+    flag: '🇬🇧',
+    region: 'Europe',
+    name: 'United Kingdom',
+    description: 'FCA-authorised broker referrals. ISAs, trading platforms, and cybersecurity solutions.',
+    regLabel: 'FCA Partners',
+    href: '/uk',
+  },
+  {
+    flag: '🇨🇦',
+    region: 'North America',
+    name: 'Canada',
+    description: 'CIRO/CIPF member brokers. TFSA, RRSP, and trading platform comparisons.',
+    regLabel: 'CIRO Compliant',
+    href: '/ca',
+  },
+  {
+    flag: '🇦🇺',
+    region: 'Asia-Pacific',
+    name: 'Australia',
+    description: 'AFSL-holding partners. Super funds, home loans, and trading platform reviews.',
+    regLabel: 'AFSL Licensed',
+    href: '/au',
+  },
 ];
 
 export function GlobalTrustSection() {
   return (
-    <section className="py-12 lg:py-16" style={{ background: 'var(--sfp-gray)' }}>
-      <div className="container mx-auto px-4">
-        <div className="max-w-5xl mx-auto">
-          {/* Section Header */}
-          <div className="text-center mb-10">
-            <span
-              className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] mb-3"
-              style={{ color: 'var(--sfp-navy)' }}
+    <section
+      style={{
+        background: '#0F2E52',
+        padding: '112px 40px',
+        boxShadow: 'inset 0 8px 24px rgba(15, 46, 82, 0.15)',
+      }}
+    >
+      <div style={{ maxWidth: '1140px', margin: '0 auto' }}>
+        {/* Section Header */}
+        <div style={{ textAlign: 'center', marginBottom: '64px' }}>
+          <span
+            style={{
+              fontSize: '11px',
+              fontWeight: 700,
+              textTransform: 'uppercase',
+              letterSpacing: '2px',
+              color: 'rgba(255,255,255,0.4)',
+              display: 'block',
+              marginBottom: '16px',
+            }}
+          >
+            Global Coverage
+          </span>
+          <h2
+            style={{
+              fontSize: 'clamp(26px, 3.2vw, 38px)',
+              fontWeight: 800,
+              color: '#fff',
+              letterSpacing: '-0.6px',
+              marginBottom: '16px',
+              lineHeight: 1.15,
+            }}
+          >
+            4 Markets. Local Compliance.
+          </h2>
+          <p
+            style={{
+              fontSize: '16px',
+              color: 'rgba(255,255,255,0.5)',
+              maxWidth: '480px',
+              margin: '0 auto',
+              lineHeight: 1.7,
+            }}
+          >
+            Region-specific reviews with local regulatory frameworks, currency support, and market-relevant product selection.
+          </p>
+        </div>
+
+        {/* Markets Grid — 4 columns */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4" style={{ gap: '20px' }}>
+          {globalMarkets.map((m) => (
+            <Link
+              key={m.name}
+              href={m.href}
+              className="no-underline market-card-hover"
+              style={{
+                background: 'rgba(255,255,255,0.04)',
+                border: '1px solid rgba(255,255,255,0.08)',
+                borderRadius: '12px',
+                padding: '36px 28px',
+                display: 'block',
+                textDecoration: 'none',
+              }}
             >
-              <Globe className="h-3.5 w-3.5" />
-              Global Coverage
-            </span>
-            <h2 className="text-2xl sm:text-3xl font-bold" style={{ color: 'var(--sfp-ink)' }}>
-              Trusted Across 4 Markets
-            </h2>
-            <p className="mt-2 text-sm max-w-xl mx-auto" style={{ color: 'var(--sfp-slate)' }}>
-              Localized research with region-specific regulatory compliance and pricing data.
-            </p>
-          </div>
+              {/* Flag */}
+              <span style={{ fontSize: '28px', display: 'block', marginBottom: '16px' }}>{m.flag}</span>
 
-          {/* Markets Grid */}
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {globalMarkets.map((m) => (
-              <Link
-                key={m.name}
-                href={m.href}
-                className="group rounded-2xl border border-gray-200 bg-white p-5 shadow-sm text-center transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 no-underline"
+              {/* Region label */}
+              <span
+                style={{
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  textTransform: 'uppercase',
+                  letterSpacing: '1.2px',
+                  color: 'rgba(255,255,255,0.35)',
+                  marginBottom: '8px',
+                  display: 'block',
+                }}
               >
-                <span className="text-3xl block mb-2">{m.flag}</span>
-                <h3 className="text-sm font-bold mb-1" style={{ color: 'var(--sfp-ink)' }}>
-                  {m.name}
-                </h3>
-                <div className="flex flex-wrap justify-center gap-1.5 mt-2">
-                  {m.regulators.map((reg) => (
-                    <span
-                      key={reg}
-                      className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full"
-                      style={{ background: 'var(--sfp-sky)', color: 'var(--sfp-navy)' }}
-                    >
-                      {reg}
-                    </span>
-                  ))}
-                </div>
-                <span
-                  className="mt-3 inline-flex items-center gap-1 text-xs font-semibold opacity-0 group-hover:opacity-100 transition-opacity"
-                  style={{ color: 'var(--sfp-navy)' }}
-                >
-                  Explore
-                  <ArrowRight className="h-3 w-3" />
-                </span>
-              </Link>
-            ))}
-          </div>
+                {m.region}
+              </span>
 
-          {/* Bottom Trust Signals */}
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-4 text-center">
-            {[
-              { icon: Shield, text: 'Only Regulated Partners' },
-              { icon: Users, text: 'Expert-Reviewed Content' },
-              { icon: Zap, text: 'Real-Time Data Updates' },
-              { icon: CheckCircle, text: 'Affiliate Disclosure on Every Page' },
-            ].map((signal) => (
-              <div
-                key={signal.text}
-                className="flex items-center gap-2 text-xs font-medium"
-                style={{ color: 'var(--sfp-slate)' }}
+              {/* Market name */}
+              <h3
+                style={{
+                  fontSize: '18px',
+                  fontWeight: 700,
+                  color: '#fff',
+                  marginBottom: '10px',
+                  letterSpacing: '-0.2px',
+                }}
               >
-                <signal.icon className="h-3.5 w-3.5" style={{ color: 'var(--sfp-green)' }} />
-                {signal.text}
-              </div>
-            ))}
-          </div>
+                {m.name}
+              </h3>
+
+              {/* Description */}
+              <p
+                style={{
+                  fontSize: '13px',
+                  color: 'rgba(255,255,255,0.5)',
+                  lineHeight: 1.65,
+                  marginBottom: '20px',
+                }}
+              >
+                {m.description}
+              </p>
+
+              {/* Regulatory badge */}
+              <span
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  color: '#6EE7A0',
+                  letterSpacing: '0.3px',
+                }}
+              >
+                <Shield style={{ width: '14px', height: '14px' }} />
+                {m.regLabel}
+              </span>
+            </Link>
+          ))}
         </div>
       </div>
     </section>

@@ -1,8 +1,7 @@
 import { Metadata } from 'next';
 import { unstable_cache } from 'next/cache';
 import { notFound } from 'next/navigation';
-import Link from 'next/link';
-import { Calendar, FileText, Globe, BarChart3 } from 'lucide-react';
+import { BarChart3 } from 'lucide-react';
 import {
   isValidMarket,
   Market,
@@ -37,18 +36,20 @@ const getMarketReviews = unstable_cache(
   ['market-homepage-reviews'],
   { revalidate: 300, tags: ['market-reviews'] } // 5 min cache, bust via revalidateTag
 );
-import { Hero } from '@/components/marketing/hero';
+import Hero from '@/components/marketing/hero';
 import { PortalSidebar } from '@/components/marketing/portal-sidebar';
 import { ReportCard } from '@/components/marketing/report-card';
-import { UKBrokerHeroSlider } from '@/components/home/uk-broker-hero-slider';
+import { ReportPagination } from '@/components/marketing/report-pagination';
+import UKBrokerHeroSlider from '@/components/home/uk-broker-hero-slider';
 import {
   CategoryShowcase,
   EditorsPicks,
   MethodologySection,
   PlatformStats,
-  HomeNewsletterCTA,
+  ComplianceBar,
   GlobalTrustSection,
 } from '@/components/marketing/homepage-sections';
+
 import type { Category } from '@/lib/i18n/config';
 
 /* Per-market Hero content */
@@ -59,33 +60,36 @@ const marketHeroContent: Record<string, {
   secondaryCta: { text: string; href: string };
 }> = {
   us: {
-    title: 'Financial Intelligence for Modern Professionals.',
-    subtitle: 'Discover AI-powered tools, cybersecurity solutions, and financial products — expert reviews, comparisons, and guides across 4 global markets.',
+    title: 'Financial Product\nResearch, Simplified.',
+    subtitle: '108+ expert-reviewed products across trading, AI, cybersecurity, and personal finance. Independent analysis. 4 regulated markets.',
     primaryCta: { text: 'Explore Reports', href: '/us/trading' },
-    secondaryCta: { text: 'Browse Tools', href: '/tools' },
+    secondaryCta: { text: 'How We Review', href: '/tools' },
   },
   uk: {
-    title: 'UK Financial Intelligence. Delivered.',
+    title: 'UK Financial\nIntelligence, Delivered.',
     subtitle: 'FCA-regulated broker reviews, cybersecurity solutions, and AI-powered tools — expert-reviewed for UK professionals.',
     primaryCta: { text: 'Explore UK Reports', href: '/uk/trading' },
-    secondaryCta: { text: 'Browse Tools', href: '/tools' },
+    secondaryCta: { text: 'How We Review', href: '/tools' },
   },
   ca: {
-    title: 'Canadian Finance. Simplified.',
+    title: 'Canadian Finance\nResearch, Simplified.',
     subtitle: 'CIRO-compliant broker reviews, AI tools, and financial products — expert-reviewed for Canadian professionals.',
     primaryCta: { text: 'Explore CA Reports', href: '/ca/forex' },
-    secondaryCta: { text: 'Browse Tools', href: '/tools' },
+    secondaryCta: { text: 'How We Review', href: '/tools' },
   },
   au: {
-    title: 'Australian Finance. Mastered.',
+    title: 'Australian Finance\nResearch, Mastered.',
     subtitle: 'ASIC-licensed broker reviews, cybersecurity solutions, and AI tools — expert-reviewed for Australian professionals.',
     primaryCta: { text: 'Explore AU Reports', href: '/au/trading' },
-    secondaryCta: { text: 'Browse Tools', href: '/tools' },
+    secondaryCta: { text: 'How We Review', href: '/tools' },
   },
 };
 
+const REPORTS_PER_PAGE = 10;
+
 interface MarketPageProps {
   params: Promise<{ market: string }>;
+  searchParams: Promise<{ page?: string }>;
 }
 
 export async function generateMetadata({
@@ -120,8 +124,10 @@ export async function generateMetadata({
   };
 }
 
-export default async function MarketHomePage({ params }: MarketPageProps) {
+export default async function MarketHomePage({ params, searchParams }: MarketPageProps) {
   const { market } = await params;
+  const sp = await searchParams;
+  const currentPage = Math.max(1, parseInt(sp.page || '1', 10) || 1);
 
   if (!isValidMarket(market)) {
     notFound();
@@ -136,6 +142,11 @@ export default async function MarketHomePage({ params }: MarketPageProps) {
   const allReviews = await getMarketReviews(marketData);
 
   const heroContent = marketHeroContent[marketData] || marketHeroContent['uk'];
+
+  // Pagination
+  const totalPages = Math.max(1, Math.ceil(allReviews.length / REPORTS_PER_PAGE));
+  const safePage = Math.min(currentPage, totalPages);
+  const paginatedReviews = allReviews.slice((safePage - 1) * REPORTS_PER_PAGE, safePage * REPORTS_PER_PAGE);
 
   // ── Compute data for new landing page sections ──
 
@@ -179,48 +190,35 @@ export default async function MarketHomePage({ params }: MarketPageProps) {
         secondaryCta={heroContent.secondaryCta}
       />
 
-      {/* Trust Ticker — E-E-A-T Signal */}
-      <div className="border-y border-gray-200 overflow-hidden py-3" style={{ background: 'var(--sfp-sky)' }}>
-        <div className="trust-marquee">
-          {[...Array(2)].map((_, i) => (
-            <div key={i} className="flex items-center gap-8 px-4 shrink-0">
-              {[
-                'WE REVIEW FCA-REGULATED BROKERS',
-                'ASIC-LICENSED PARTNERS',
-                'REAL-TIME MARKET DATA',
-                'CIRO-COMPLIANT PARTNERS',
-                'EXPERT-REVIEWED',
-                'SECURE & ENCRYPTED',
-              ].map((item) => (
-                <span key={`${i}-${item}`} className="flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.2em] whitespace-nowrap" style={{ color: 'var(--sfp-slate)' }}>
-                  <span className="w-1 h-1 rounded-full shrink-0" style={{ background: 'var(--sfp-green)' }} />
-                  {item}
-                </span>
-              ))}
-            </div>
-          ))}
-        </div>
-      </div>
-
       {/* ═══════════════════════════════════════════════════════════════
           2. PLATFORM STATS — Key numbers bar
       ═══════════════════════════════════════════════════════════════ */}
       <PlatformStats totalReviews={allReviews.length} />
 
       {/* ═══════════════════════════════════════════════════════════════
-          3. CATEGORY SHOWCASE — 6 sectors with icons + counts
+          3. COMPLIANCE BAR — Regulatory trust signals
+      ═══════════════════════════════════════════════════════════════ */}
+      <ComplianceBar />
+
+      {/* ═══════════════════════════════════════════════════════════════
+          4. CATEGORY SHOWCASE — 6 sectors with icons + counts
       ═══════════════════════════════════════════════════════════════ */}
       <CategoryShowcase market={marketData} categoryCounts={categoryCounts} />
 
       {/* ═══════════════════════════════════════════════════════════════
-          4. EDITOR'S PICKS — Top-rated this month
+          5. GLOBAL TRUST — Markets + Regulators
       ═══════════════════════════════════════════════════════════════ */}
-      <EditorsPicks market={marketData} picks={editorsPicks} />
+      <GlobalTrustSection />
 
       {/* ═══════════════════════════════════════════════════════════════
-          5. METHODOLOGY — How We Review
+          6. METHODOLOGY — How We Review
       ═══════════════════════════════════════════════════════════════ */}
       <MethodologySection />
+
+      {/* ═══════════════════════════════════════════════════════════════
+          8. EDITOR'S PICKS — Top-rated this month
+      ═══════════════════════════════════════════════════════════════ */}
+      <EditorsPicks market={marketData} picks={editorsPicks} />
 
       {/* UK Broker Hero Slider — Exclusive to UK Market */}
       {marketData === 'uk' && (
@@ -232,31 +230,36 @@ export default async function MarketHomePage({ params }: MarketPageProps) {
       )}
 
       {/* ═══════════════════════════════════════════════════════════════
-          6. REPORT FEED — Two-Column Layout (Sidebar + Reports)
+          9. REPORT FEED — Two-Column Layout (Sidebar + Reports)
       ═══════════════════════════════════════════════════════════════ */}
-      <section style={{ background: 'var(--sfp-gray)' }}>
-        <div className="container mx-auto px-4 py-8">
-          <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-8">
+      <section id="reports" style={{ background: '#fff', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)' }}>
+        <div style={{ maxWidth: '1140px', margin: '0 auto', padding: '80px 40px' }}>
+          <div className="flex flex-col lg:flex-row gap-8">
 
             {/* LEFT: Sidebar (~25%) — Sticky Category Navigation */}
-            <PortalSidebar market={marketData} />
+            <PortalSidebar market={marketData} categoryCounts={categoryCounts} />
 
             {/* RIGHT: Main Content (~75%) — Report Feed */}
             <div className="flex-1 min-w-0">
 
               {/* Section Title */}
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold" style={{ color: 'var(--sfp-ink)' }}>
-                  Latest Reports
-                </h2>
-                <span className="text-sm" style={{ color: 'var(--sfp-slate)' }}>
+              <div className="flex items-center justify-between mb-8">
+                <div>
+                  <span className="block text-[11px] font-bold uppercase tracking-[2px] mb-2" style={{ color: 'var(--sfp-slate)' }}>
+                    Research Library
+                  </span>
+                  <h2 className="text-2xl font-extrabold" style={{ color: 'var(--sfp-ink)', letterSpacing: '-0.6px' }}>
+                    Latest Reports
+                  </h2>
+                </div>
+                <span className="text-sm font-medium" style={{ color: 'var(--sfp-slate)' }}>
                   {allReviews.length} reports available
                 </span>
               </div>
 
               {/* Report Cards */}
               <div className="space-y-4">
-                {allReviews.map((item) => (
+                {paginatedReviews.map((item) => (
                   <ReportCard
                     key={`${item.meta.category}-${item.slug}`}
                     title={item.meta.seoTitle || item.meta.title}
@@ -271,6 +274,13 @@ export default async function MarketHomePage({ params }: MarketPageProps) {
                   />
                 ))}
               </div>
+
+              {/* Pagination */}
+              <ReportPagination
+                currentPage={safePage}
+                totalPages={totalPages}
+                basePath={marketPrefix}
+              />
 
               {/* Empty State */}
               {allReviews.length === 0 && (
@@ -289,16 +299,6 @@ export default async function MarketHomePage({ params }: MarketPageProps) {
           </div>
         </div>
       </section>
-
-      {/* ═══════════════════════════════════════════════════════════════
-          7. GLOBAL TRUST — Markets + Regulators
-      ═══════════════════════════════════════════════════════════════ */}
-      <GlobalTrustSection />
-
-      {/* ═══════════════════════════════════════════════════════════════
-          8. NEWSLETTER CTA — Before footer
-      ═══════════════════════════════════════════════════════════════ */}
-      <HomeNewsletterCTA />
     </>
   );
 }
