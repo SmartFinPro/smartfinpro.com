@@ -484,6 +484,35 @@ body {
   background: rgba(232, 240, 251, 0.55);
 }
 
+/* Enterprise Table Row Hover — subtle sky-blue highlight */
+.enterprise-table-row {
+  transition: background-color 0.15s ease;
+}
+.enterprise-table tbody .enterprise-table-row:hover {
+  background-color: rgba(232, 240, 251, 0.65) !important;
+}
+
+/* ============================================================
+   LEAD PARAGRAPH — First paragraph after H2 gets emphasis
+   ============================================================ */
+article .not-prose + p:first-of-type,
+.mdx-content > .not-prose + p {
+  font-size: 1.125rem;
+  line-height: 1.8;
+  color: var(--sfp-ink);
+  font-weight: 450;
+}
+
+/* ============================================================
+   STAT HIGHLIGHT — Bold inline numbers in text
+   ============================================================ */
+.stat-highlight {
+  font-weight: 700;
+  color: var(--sfp-navy);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
 /* ============================================================
    SLIDE TRANSITIONS
    ============================================================ */

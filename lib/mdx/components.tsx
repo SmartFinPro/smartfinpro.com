@@ -737,7 +737,12 @@ function StyledH1({ children, ...props }: React.HTMLAttributes<HTMLHeadingElemen
 
 function StyledH2({ children, ...props }: React.HTMLAttributes<HTMLHeadingElement>) {
   return (
-    <div className="relative mt-7 mb-6 not-prose">
+    <div className="relative mt-14 mb-6 not-prose">
+      {/* Subtle section separator */}
+      <div
+        className="mb-8 h-px w-full"
+        style={{ background: 'linear-gradient(90deg, transparent, rgba(27,79,140,0.12), transparent)' }}
+      />
       <div className="flex items-center gap-4">
         <div
           className="w-1 h-8 rounded-full shrink-0"
@@ -868,7 +873,7 @@ function StyledTh({ children, className, style, ...props }: React.ThHTMLAttribut
   };
   return (
     <th
-      className={className || "px-5 py-4 text-left text-xs font-bold uppercase tracking-wider"}
+      className={className || "px-6 py-5 text-left text-xs font-bold uppercase tracking-wider"}
       style={mergedStyle}
       {...props}
     >
@@ -880,8 +885,8 @@ function StyledTh({ children, className, style, ...props }: React.ThHTMLAttribut
 function StyledTd({ children, className, style, ...props }: React.TdHTMLAttributes<HTMLTableCellElement>) {
   return (
     <td
-      className={className || "px-5 py-4 border-b border-gray-100 [&>strong]:font-semibold text-sm"}
-      style={style || { color: 'var(--sfp-ink)' }}
+      className={className || "px-6 py-5 border-b border-gray-100 [&>strong]:font-semibold text-sm"}
+      style={style || { color: 'var(--sfp-ink)', fontVariantNumeric: 'tabular-nums' }}
       {...props}
     >
       {children}
@@ -891,7 +896,7 @@ function StyledTd({ children, className, style, ...props }: React.TdHTMLAttribut
 
 function StyledTr({ children, className, style, ...props }: React.HTMLAttributes<HTMLTableRowElement>) {
   return (
-    <tr className={className} style={style} {...props}>
+    <tr className={`enterprise-table-row ${className || ''}`} style={style} {...props}>
       {children}
     </tr>
   );
@@ -1614,6 +1619,132 @@ function NewsAlert({
   );
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// ENTERPRISE PREMIUM TEXT-STRUCTURE COMPONENTS
+// ═══════════════════════════════════════════════════════════════════════════
+
+// KeyStats — Horizontal stat tiles for key metrics (Rating, Price, Markets, etc.)
+// Usage: <KeyStats items={[{ value: "★ 4.6", label: "Rating" }, { value: "$0", label: "Commission" }]} />
+function KeyStats({ items }: { items: { value: string; label: string }[] }) {
+  return (
+    <div className="my-8 not-prose">
+      <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+        {/* Gradient accent bar */}
+        <div className="h-1" style={{ background: 'linear-gradient(90deg, var(--sfp-navy) 0%, var(--sfp-gold) 100%)' }} />
+        <div
+          className="grid gap-px"
+          style={{
+            gridTemplateColumns: `repeat(${Math.min(items.length, 4)}, 1fr)`,
+            background: 'var(--sfp-sky)',
+          }}
+        >
+          {items.map((item, i) => (
+            <div
+              key={i}
+              className="flex flex-col items-center justify-center bg-white px-4 py-5 text-center"
+            >
+              <span
+                className="font-bold whitespace-nowrap"
+                style={{
+                  fontSize: '28px',
+                  color: 'var(--sfp-navy)',
+                  fontVariantNumeric: 'tabular-nums',
+                  letterSpacing: '-0.5px',
+                }}
+              >
+                {item.value}
+              </span>
+              <span
+                className="font-semibold uppercase tracking-wider mt-1"
+                style={{
+                  fontSize: '11px',
+                  color: 'var(--sfp-slate)',
+                }}
+              >
+                {item.label}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ReportScope — Compact key-value summary table (like market.us Report Scope)
+// Usage: <ReportScope items={[{ metric: "Min. Deposit", value: "$0" }, ...]} />
+function ReportScope({ items, title = 'Report Scope' }: { items: { metric: string; value: string }[]; title?: string }) {
+  return (
+    <div className="my-8 not-prose">
+      <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+        {/* Gradient accent bar */}
+        <div className="h-1" style={{ background: 'linear-gradient(90deg, var(--sfp-navy) 0%, var(--sfp-gold) 100%)' }} />
+
+        <div className="flex flex-col lg:flex-row">
+          {/* Left panel: Label */}
+          <div
+            className="shrink-0 px-6 py-4 lg:px-8 lg:py-0 flex flex-col justify-center lg:w-[260px] border-b lg:border-b-0 lg:border-r border-gray-100"
+            style={{ background: 'var(--sfp-sky)' }}
+          >
+            <div className="flex items-center gap-2.5">
+              <div
+                className="w-7 h-7 rounded-lg flex items-center justify-center"
+                style={{ background: 'rgba(27,79,140,0.10)' }}
+              >
+                <FileText className="h-3.5 w-3.5" style={{ color: 'var(--sfp-navy)' }} />
+              </div>
+              <span
+                className="text-sm font-bold uppercase tracking-wider"
+                style={{ color: 'var(--sfp-navy)' }}
+              >
+                {title}
+              </span>
+            </div>
+          </div>
+
+          {/* Right panel: Key-Value pairs */}
+          <div className="flex-1">
+            <table className="w-full text-sm">
+              <tbody>
+                {items.map((item, i) => (
+                  <tr
+                    key={i}
+                    style={{
+                      borderBottom: i < items.length - 1 ? '1px solid #f1f5f9' : 'none',
+                      background: i % 2 === 1 ? 'rgba(232, 240, 251, 0.35)' : 'transparent',
+                    }}
+                  >
+                    <td
+                      className="px-6 py-3 font-semibold whitespace-nowrap"
+                      style={{ color: 'var(--sfp-navy)', fontSize: '13px', width: '40%' }}
+                    >
+                      {item.metric}
+                    </td>
+                    <td
+                      className="px-6 py-3"
+                      style={{ color: 'var(--sfp-ink)', fontSize: '13px', fontVariantNumeric: 'tabular-nums' }}
+                    >
+                      {item.value}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// StatHighlight — Inline number emphasis
+// Usage: <StatHighlight>$0</StatHighlight> commission
+function StatHighlight({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="stat-highlight">{children}</span>
+  );
+}
+
 // Export all MDX components
 export const mdxComponents = {
   // Base elements
@@ -1812,4 +1943,9 @@ export const mdxComponents = {
   StatBox,
   RegulatorAlert,
   NewsAlert,
+
+  // Enterprise Premium Text-Structure Components
+  KeyStats,
+  ReportScope,
+  StatHighlight,
 };
