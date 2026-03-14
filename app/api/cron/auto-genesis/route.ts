@@ -14,21 +14,21 @@ export const maxDuration = 300; // 5 minutes — enough for 3 briefs
 
 export async function GET(request: NextRequest) {
   // ── Auth ────────────────────────────────────────────────────────
+  const isDev = process.env.NODE_ENV === 'development';
   const authHeader = request.headers.get('authorization');
   const cronSecret = process.env.CRON_SECRET;
 
-  if (!cronSecret || cronSecret.startsWith('your-')) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const isDev = process.env.NODE_ENV === 'development';
-  const isAuthenticated = authHeader === `Bearer ${cronSecret}`;
-
-  if (!isAuthenticated && !isDev) {
-    logger.warn('[auto-genesis] Unauthorized attempt', {
-      ip: request.headers.get('x-forwarded-for') ?? 'unknown',
-    });
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!isDev) {
+    // Production: strict CRON_SECRET check
+    if (!cronSecret || cronSecret.startsWith('your-')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    if (authHeader !== `Bearer ${cronSecret}`) {
+      logger.warn('[auto-genesis] Unauthorized attempt', {
+        ip: request.headers.get('x-forwarded-for') ?? 'unknown',
+      });
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
   }
 
   try {
