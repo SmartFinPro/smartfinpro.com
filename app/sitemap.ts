@@ -1,11 +1,9 @@
 import { MetadataRoute } from 'next';
 import { getAllContent } from '@/lib/mdx';
 import { markets, marketCategories, Market } from '@/lib/i18n/config';
+import { brokerSlugs } from '@/lib/data/broker-reviews';
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://smartfinpro.com';
-
-// Broker review slugs available across all markets
-const brokerSlugs = ['etoro', 'capital-com', 'ibkr', 'investing', 'revolut', 'ig', 'plus500'];
 
 // Static tool pages (not market-prefixed)
 const toolPages = [
@@ -113,23 +111,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
 
     // ============================================================
-    // 3. OVERVIEW PAGES — Priority 0.85
-    // ============================================================
-
-    for (const market of markets) {
-      const cats = marketCategories[market as Market] || [];
-      for (const category of cats) {
-        entries.push({
-          url: marketUrl(market, `/${category}/overview`),
-          lastModified: now,
-          changeFrequency: 'weekly',
-          priority: 0.85,
-        });
-      }
-    }
-
-    // ============================================================
-    // 4. BROKER REVIEW PAGES — Priority 0.8
+    // 3. BROKER REVIEW PAGES — Priority 0.8
     // ============================================================
 
     for (const market of markets) {
@@ -144,7 +126,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
 
     // ============================================================
-    // 5. CONTENT PAGES (MDX Reviews & Articles) — Priority 0.7-0.8
+    // 4. CONTENT PAGES (MDX Reviews & Articles) — Priority 0.7-0.8
     // ============================================================
 
     const allContent = await getAllContent();
@@ -171,7 +153,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
 
     // ============================================================
-    // 6. SILO PAGES (Market-specific) — Priority 0.85
+    // 5. SILO PAGES (Market-specific) — Priority 0.85
     // ============================================================
 
     for (const market of markets) {
@@ -187,7 +169,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
 
     // ============================================================
-    // 7. CROSS-MARKET HUB PAGES — Priority 0.8
+    // 6. CROSS-MARKET HUB PAGES — Priority 0.8
     // ============================================================
 
     for (const path of hubPages) {
@@ -200,7 +182,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
 
     // ============================================================
-    // 8. TOOL PAGES — Priority 0.75
+    // 7. TOOL PAGES — Priority 0.75
     // ============================================================
 
     for (const path of toolPages) {
@@ -213,7 +195,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
 
     // ============================================================
-    // 9. STATIC PAGES — Priority 0.5-0.6
+    // 8. STATIC PAGES — Priority 0.5-0.6
     // ============================================================
 
     for (const path of staticPages) {
