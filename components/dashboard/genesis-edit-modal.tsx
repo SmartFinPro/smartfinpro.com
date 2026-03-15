@@ -100,7 +100,7 @@ export function GenesisEditModal({
       const result = await fetchRunDetail(runId);
       if (result.success && result.run && result.mdxContent) {
         setMdxContent(result.mdxContent);
-        setImages(result.run.images.map((img) => ({
+        setImages(result.run.images.map((img: { filename: string; position: string; altText: string }) => ({
           filename: img.filename,
           position: img.position,
           altText: img.altText,

@@ -16,7 +16,7 @@ export function AffiliateScanButton() {
       if (result.plans.length > 0) {
         toast.success(
           `${result.plans.length} neue High-CPA ${result.plans.length === 1 ? 'Chance' : 'Chancen'} gefunden!`,
-          { description: result.plans.map((p) => p.keyword).join(', ') },
+          { description: result.plans.map((p: { keyword: string }) => p.keyword).join(', ') },
         );
         // Reload to show new cards
         window.location.reload();

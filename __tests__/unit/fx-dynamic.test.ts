@@ -247,6 +247,7 @@ describe('Mutex lock parsing (Guard 1)', () => {
 
   it('13b. invalid timestamp lock → treated as stale (no throw)', () => {
     const value = 'garbage-value';
+    // @ts-expect-error -- intentional literal-type test: 'garbage-value' can never equal ''
     let isStale = !value || value === '';
     if (!isStale) {
       const lockTime = new Date(value).getTime();
@@ -311,6 +312,7 @@ EXR.D.GBP.EUR.SP00.A,D,GBP,EUR,SP00,A,2026-03-14,0.84`;
 describe('Mode validation (Guard 2)', () => {
   it('valid "shadow" → accepted', () => {
     const raw = 'shadow';
+    // @ts-expect-error -- intentional literal-type test: 'shadow' can never equal 'active'
     const mode = raw === 'active' ? 'active' : 'shadow';
     expect(mode).toBe('shadow');
   });
@@ -323,12 +325,14 @@ describe('Mode validation (Guard 2)', () => {
 
   it('invalid "foobar" → falls back to shadow', () => {
     const raw = 'foobar';
+    // @ts-expect-error -- intentional literal-type test: 'foobar' can never equal 'active'
     const mode = raw === 'active' ? 'active' : 'shadow';
     expect(mode).toBe('shadow');
   });
 
   it('empty string → falls back to shadow', () => {
     const raw = '';
+    // @ts-expect-error -- intentional literal-type test: '' can never equal 'active'
     const mode = raw === 'active' ? 'active' : 'shadow';
     expect(mode).toBe('shadow');
   });

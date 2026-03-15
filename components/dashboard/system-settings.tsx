@@ -226,7 +226,7 @@ export function SystemSettingsPanel({ initialSettings, credentialStatus }: Syste
       const result = await res.json();
 
       if (result.success) {
-        const total = Object.values(result.deleted).reduce((a, b) => a + b, 0);
+        const total = (Object.values(result.deleted) as number[]).reduce((a, b) => a + b, 0);
         toast.success(`Global Reset abgeschlossen: ${total} Eintraege entfernt`, { duration: 5000 });
         setShowResetConfirm(false);
         router.refresh();
