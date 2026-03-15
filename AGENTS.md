@@ -11,8 +11,8 @@ Applies to every change on review/comparison pages (`content/**` MDX + related S
 ### Required post-edit checks (must run automatically)
 
 **1. SEO meta quality**
-- `title` intent-strong, non-generic
-- `description` length: 140–160 chars
+- `title` intent-strong, non-generic — **length: 45–60 chars** (green range)
+- `description` length: **140–160 chars** (green range)
 - `modifiedDate` and `dataVerifiedDate` updated to current date
 
 **2. Document structure**
@@ -67,7 +67,7 @@ C = min(componentCount, 6) × 12  +  min(imageCount, 4) × 7   (cap 100)
 Quality = W×0.30 + S×0.25 + L×0.20 + C×0.25
 ```
 
-**Green thresholds:** Description 140–160 chars · W: 4000–7000 words = 100 · L: 8 internal + 6 external = 98 · C: 6 tracked components + 4 images = 100
+**Green thresholds:** Title 45–60 chars · Description 140–160 chars · W: 4000–7000 words = 100 · L: 8 internal + 6 external = 98 · C: 6 tracked components + 4 images = 100
 
 **Tracked MDX components for C-score:**
 `<TrustAuthority>` · `<ExpertBox>` · `<Rating>` · `<AffiliateButton>` · `<ExecutiveSummary>` · `<CollapsibleSection>` · `<ComparisonTable>` · `<SimpleComparison>` · `<BrokerComparison>` · `<EnterpriseTable>` · `<FAQ>` · `<Pros>` · `<Cons>` · `<Info>` · `<Warning>` · `<Tip>` · `<EvidenceCarousel>` · `<NewsletterBox>` · `<WinnerAtGlance>`
