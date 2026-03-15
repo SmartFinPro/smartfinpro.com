@@ -11,6 +11,8 @@ import {
   Category,
   marketConfig,
   categoryConfig,
+  markets,
+  marketCategories,
 } from '@/lib/i18n/config';
 import { generateAlternates, getCanonicalUrl } from '@/lib/seo/hreflang';
 import { generateArticleSchema } from '@/lib/seo/schema';
@@ -78,7 +80,12 @@ export async function generateMetadata({
     `Compare the best ${categoryInfo.name.toLowerCase()} for finance professionals. Expert reviews, pricing, and recommendations.`;
 
   const canonicalUrl = getCanonicalUrl(market as Market, `/${category}`);
-  const alternates = generateAlternates(`/${category}`);
+
+  // PP1: Only emit hreflang for markets that have this category
+  const availableMarkets = markets.filter((m) =>
+    marketCategories[m].includes(category as Category)
+  );
+  const alternates = generateAlternates(`/${category}`, availableMarkets);
 
   return {
     title,

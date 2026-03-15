@@ -2,8 +2,15 @@ import { Metadata } from 'next';
 import { notFound, redirect } from 'next/navigation';
 import { serializeMDX } from '@/lib/mdx/serialize';
 import { getContentBySlug, getAllContentSlugs, getRelatedContent, getContentByMarketAndCategory } from '@/lib/mdx';
-import { isValidMarket, isValidCategory, Market, Category, marketConfig } from '@/lib/i18n/config';
+import { isValidMarket, isValidCategory, Market, Category, marketConfig, markets, marketCategories } from '@/lib/i18n/config';
 import { generateAlternates, getCanonicalUrl } from '@/lib/seo/hreflang';
+import { cache } from 'react';
+
+// Memoized across all generateMetadata() calls within a single request/build phase
+const getCachedContentSlugs = cache(async () => {
+  const all = await getAllContentSlugs();
+  return new Set(all.map(s => `${s.market}/${s.category}/${s.slug}`));
+});
 import { ReportLayout } from '@/components/marketing/report-layout';
 import { getMarketExpert } from '@/lib/actions/experts';
 import { getEnrichedCtaPartners } from '@/lib/actions/page-cta-partners';
@@ -40,7 +47,13 @@ export async function generateMetadata({
   }
 
   const canonicalUrl = getCanonicalUrl(market as Market, `/${category}/${slug}`);
-  const alternates = generateAlternates(`/${category}/${slug}`);
+
+  // PP1: Only emit hreflang for markets where this content actually exists
+  const slugSet = await getCachedContentSlugs();
+  const availableMarkets = markets.filter((m) =>
+    marketCategories[m].includes(category as Category) && slugSet.has(`${m}/${category}/${slug}`)
+  );
+  const alternates = generateAlternates(`/${category}/${slug}`, availableMarkets);
 
   // X-Ray Score™ share override — enrich OG tags when ?xray= is present
   let ogTitle = content.meta.seoTitle || content.meta.title;
