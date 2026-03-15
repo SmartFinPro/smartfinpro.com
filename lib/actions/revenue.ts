@@ -481,29 +481,31 @@ function parseAmount(amountStr: string): number {
 // AUTOMATIC REVENUE STATS (No manual input needed)
 // ============================================================
 
+// ── Currency normalisation ─────────────────────────────────────────────────
+// FX_TO_USD — Single Source of Truth for all currency normalisation.
+// Used by revenue.ts AND dashboard.ts. For live rates: system_settings migration (Phase 2).
+// Rates are indicative mid-market values — update monthly via system_settings
+// if precision billing is required.
+export const FX_TO_USD: Record<string, number> = {
+  USD: 1, GBP: 1.27, CAD: 0.74, AUD: 0.65, EUR: 1.09,
+};
+
+export function toUSD(amount: number, currency?: string | null): number {
+  return amount * (FX_TO_USD[(currency ?? 'USD').toUpperCase()] ?? 1);
+}
+
+// marketConfig.exchangeRate derived from FX_TO_USD (Single Source of Truth — no duplication)
 const marketConfig: Record<'US' | 'GB' | 'CA' | 'AU', {
   name: string;
   flag: string;
   currency: string;
   exchangeRate: number;
 }> = {
-  US: { name: 'United States', flag: '🇺🇸', currency: 'USD', exchangeRate: 1 },
-  GB: { name: 'United Kingdom', flag: '🇬🇧', currency: 'GBP', exchangeRate: 1.27 },
-  CA: { name: 'Canada', flag: '🇨🇦', currency: 'CAD', exchangeRate: 0.74 },
-  AU: { name: 'Australia', flag: '🇦🇺', currency: 'AUD', exchangeRate: 0.65 },
+  US: { name: 'United States', flag: '🇺🇸', currency: 'USD', exchangeRate: FX_TO_USD.USD },
+  GB: { name: 'United Kingdom', flag: '🇬🇧', currency: 'GBP', exchangeRate: FX_TO_USD.GBP },
+  CA: { name: 'Canada', flag: '🇨🇦', currency: 'CAD', exchangeRate: FX_TO_USD.CAD },
+  AU: { name: 'Australia', flag: '🇦🇺', currency: 'AUD', exchangeRate: FX_TO_USD.AUD },
 };
-
-// ── Currency normalisation ─────────────────────────────────────────────────
-// Converts any supported currency amount to USD for unified dashboard totals.
-// Rates are indicative mid-market values — update monthly via system_settings
-// if precision billing is required.
-const FX_TO_USD: Record<string, number> = {
-  USD: 1, GBP: 1.27, CAD: 0.74, AUD: 0.65, EUR: 1.09,
-};
-
-function toUSD(amount: number, currency?: string | null): number {
-  return amount * (FX_TO_USD[(currency ?? 'USD').toUpperCase()] ?? 1);
-}
 
 function getMarketFromCountry(countryCode: string): 'US' | 'GB' | 'CA' | 'AU' | null {
   const mapping: Record<string, 'US' | 'GB' | 'CA' | 'AU'> = {
