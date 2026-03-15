@@ -161,7 +161,7 @@ function clearAttempts(ip: string): void {
 // MAIN MIDDLEWARE
 // ============================================================
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   try {
