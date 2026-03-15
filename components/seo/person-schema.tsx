@@ -45,6 +45,10 @@ export function PersonSchema({
   description,
   affiliateLinks,
 }: PersonSchemaProps) {
+  if (!name) {
+    console.warn('[PersonSchema] Skipped: missing name');
+    return null;
+  }
   const schema = generatePersonSchema({
     name,
     url,

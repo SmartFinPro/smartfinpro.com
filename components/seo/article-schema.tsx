@@ -56,6 +56,10 @@ export function ArticleSchema({
   reviewedBy,
   reviewedByUrl,
 }: ArticleSchemaProps) {
+  if (!title || !description || !author) {
+    console.warn('[ArticleSchema] Skipped: missing title, description, or author');
+    return null;
+  }
   const schema = generateArticleSchema({
     title,
     description,
