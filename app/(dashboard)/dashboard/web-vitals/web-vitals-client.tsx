@@ -51,7 +51,7 @@ const METRIC_DESCRIPTIONS: Record<string, string> = {
 function formatValue(value: number, unit: string, name: string): string {
   if (!value) return '—';
   if (name === 'CLS') return value.toFixed(3);
-  if (unit === 'ms') return `${Math.round(value).toLocaleString()}ms`;
+  if (unit === 'ms') return `${Math.round(value).toLocaleString('en-US')}ms`;
   return value.toString();
 }
 
@@ -177,7 +177,7 @@ export function WebVitalsClient({ metrics, timeSeries, slowPages }: Props) {
 
                 <div className="flex justify-between text-[10px] text-slate-400">
                   <span>🟢 {goodPct}%</span>
-                  <span>{m.total.toLocaleString()} Messungen</span>
+                  <span>{m.total.toLocaleString('en-US')} Messungen</span>
                 </div>
               </div>
             </button>
@@ -246,7 +246,7 @@ export function WebVitalsClient({ metrics, timeSeries, slowPages }: Props) {
                   <span className="text-xs font-medium text-slate-700 truncate flex-1">{page.page_url}</span>
                   <div className="flex items-center gap-3 ml-3 shrink-0">
                     <span className="text-xs text-slate-400">{page.count}×</span>
-                    <span className="text-sm font-bold text-red-600">{Math.round(page.p75).toLocaleString()}ms</span>
+                    <span className="text-sm font-bold text-red-600">{Math.round(page.p75).toLocaleString('en-US')}ms</span>
                   </div>
                 </div>
               ))}

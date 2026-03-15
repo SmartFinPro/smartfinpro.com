@@ -1054,7 +1054,7 @@ export function GenesisHub({ recentRuns: initialRuns }: GenesisHubProps) {
                 <span className="flex items-center gap-2">
                   <BookOpen className="h-4 w-4" />
                   {researchBrief.trim()
-                    ? `Research brief ready (${researchBrief.trim().split(/\s+/).length.toLocaleString()} words)`
+                    ? `Research brief ready (${researchBrief.trim().split(/s+/).length.toLocaleString('en-US')} words)`
                     : 'Add Perplexity research brief (optional)'}
                   {detectedResearchFile && (
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-700">

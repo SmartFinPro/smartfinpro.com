@@ -114,13 +114,13 @@ function VariantBlock({
       <div className="grid grid-cols-3 gap-3 text-center">
         <div className="bg-white rounded-lg p-2 border border-slate-100">
           <p className="text-base font-bold text-slate-800 tabular-nums">
-            {impressions.toLocaleString()}
+            {impressions.toLocaleString('en-US')}
           </p>
           <p className="text-[10px] text-slate-400 mt-0.5">Impressions</p>
         </div>
         <div className="bg-white rounded-lg p-2 border border-slate-100">
           <p className="text-base font-bold text-slate-800 tabular-nums">
-            {clicks.toLocaleString()}
+            {clicks.toLocaleString('en-US')}
           </p>
           <p className="text-[10px] text-slate-400 mt-0.5">Clicks</p>
         </div>
@@ -262,7 +262,7 @@ export default async function AbTestingPage() {
       {totalImpressions > 0 && (
         <div className="flex items-center gap-2 text-xs text-slate-400">
           <Users className="h-3.5 w-3.5" />
-          <span>{totalImpressions.toLocaleString()} total impressions across all hubs</span>
+          <span>{totalImpressions.toLocaleString('en-US')} total impressions across all hubs</span>
         </div>
       )}
 
@@ -435,7 +435,7 @@ export default async function AbTestingPage() {
                         {test.variantB.cr.toFixed(2)}%
                       </td>
                       <td className="px-5 py-3 text-right tabular-nums text-slate-400 text-xs">
-                        {test.totalImpressions.toLocaleString()}
+                        {test.totalImpressions.toLocaleString('en-US')}
                       </td>
                     </tr>
                   ))}

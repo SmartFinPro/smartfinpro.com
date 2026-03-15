@@ -208,7 +208,7 @@ export function AutoGenesisScanner({
                         </span>
                         {d.wordCount && (
                           <span className="text-slate-400">
-                            ({d.wordCount.toLocaleString()} Wörter)
+                            ({d.wordCount.toLocaleString('en-US')} Wörter)
                           </span>
                         )}
                         {d.indexed && (
@@ -278,7 +278,7 @@ export function AutoGenesisScanner({
                         {log.category}
                       </td>
                       <td className="px-4 py-2.5 text-right text-slate-500 tabular-nums">
-                        {log.word_count?.toLocaleString() || '—'}
+                        {log.word_count?.toLocaleString('en-US') || '—'}
                       </td>
                       <td className="px-4 py-2.5 text-center">
                         {log.indexed ? (

@@ -184,7 +184,7 @@ export async function WebVitalsWidget() {
 
             {/* Sample count */}
             <p className="text-[10px] text-slate-400 mt-4 text-right">
-              {metrics.reduce((a, m) => a + m.total, 0).toLocaleString()} samples · last 7 days
+              {metrics.reduce((a, m) => a + m.total, 0).toLocaleString('en-US')} samples · last 7 days
             </p>
           </>
         )}

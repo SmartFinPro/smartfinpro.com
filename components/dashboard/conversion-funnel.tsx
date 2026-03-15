@@ -147,7 +147,7 @@ export function ConversionFunnel({ totalClicks, stages }: ConversionFunnelProps)
           />
           <SummaryCard
             label="Total Value"
-            value={`$${(visibleStages.find((s) => s.event_type === 'approved')?.total_value ?? 0).toLocaleString()}`}
+            value={`$${(visibleStages.find((s) => s.event_type === 'approved')?.total_value ?? 0).toLocaleString('en-US')}`}
             color="text-slate-800"
           />
         </div>
@@ -191,12 +191,12 @@ function FunnelBar({ label, count, rate, maxCount, icon: Icon, color, bgColor, v
           </div>
           <div className="text-right">
             <span className={`text-base font-bold ${color} tabular-nums`}>
-              {count.toLocaleString()}
+              {count.toLocaleString('en-US')}
             </span>
             <span className="text-xs text-slate-400 ml-2">{rate.toFixed(1)}%</span>
             {value !== undefined && value > 0 && (
               <span className="text-xs font-medium text-emerald-600 ml-2">
-                ${value.toLocaleString()}
+                ${value.toLocaleString('en-US')}
               </span>
             )}
           </div>
@@ -265,7 +265,7 @@ export function OfferEVTable({ offers }: OfferEVTableProps) {
               >
                 <td className="px-4 py-2.5 font-medium text-slate-800 whitespace-nowrap">{o.partner_name}</td>
                 <td className="px-3 py-2.5 text-slate-500 uppercase text-xs">{o.market}</td>
-                <td className="px-3 py-2.5 text-right tabular-nums text-slate-600">{o.total_clicks.toLocaleString()}</td>
+                <td className="px-3 py-2.5 text-right tabular-nums text-slate-600">{o.total_clicks.toLocaleString('en-US')}</td>
                 <td className="px-3 py-2.5 text-right tabular-nums text-slate-600">{o.registrations}</td>
                 <td className="px-3 py-2.5 text-right tabular-nums text-slate-600">{o.ftds}</td>
                 <td className="px-3 py-2.5 text-right tabular-nums text-slate-600">{o.approved}</td>
@@ -275,7 +275,7 @@ export function OfferEVTable({ offers }: OfferEVTableProps) {
                     : <span className="text-slate-400">0</span>}
                 </td>
                 <td className="px-3 py-2.5 text-right tabular-nums font-medium text-emerald-700">
-                  ${o.net_revenue.toLocaleString()}
+                  ${o.net_revenue.toLocaleString('en-US')}
                 </td>
                 <td className="px-3 py-2.5 text-right tabular-nums">
                   {o.reversal_rate > 10
