@@ -355,6 +355,38 @@ function mapFinanceAdsStatus(status?: string): 'pending' | 'approved' | 'rejecte
 // Transaction Processing
 // ============================================================
 
+// ── Conversion Status Transition Rules (Fix 1.6) ──────────────────────────
+// Valid transitions: pending→approved, pending→rejected, approved→reversed,
+// rejected→approved (NEW — with audit trail). reversed→approved is FORBIDDEN.
+const VALID_TRANSITIONS: Record<string, string[]> = {
+  pending:  ['approved', 'rejected'],
+  approved: ['reversed'],
+  rejected: ['approved'],  // Re-approval after review, requires audit
+  reversed: [],            // Terminal state — no further transitions
+};
+
+function isValidTransition(from: string, to: string): boolean {
+  return VALID_TRANSITIONS[from]?.includes(to) ?? false;
+}
+
+// ── Audit Trail Helper (Fix 1.6) ──────────────────────────────────────────
+async function insertStatusAudit(
+  conversionId: string,
+  oldStatus: string,
+  newStatus: string,
+  changedBy: string,
+  metadata?: Record<string, unknown>,
+): Promise<void> {
+  const supabase = createServiceClient();
+  await supabase.from('conversion_status_audit').insert({
+    conversion_id: conversionId,
+    old_status: oldStatus,
+    new_status: newStatus,
+    changed_by: changedBy,
+    metadata: metadata || null,
+  });
+}
+
 async function processTransactions(
   transactions: AffiliateTransaction[],
   result: SyncResult
@@ -376,7 +408,7 @@ async function processTransactions(
       // Check if already exists
       const { data: existing } = await supabase
         .from('conversions')
-        .select('id, status')
+        .select('id, status, commission_earned')
         .eq('network_reference', tx.networkReference)
         .eq('network', tx.network)
         .single();
@@ -384,12 +416,37 @@ async function processTransactions(
       const linkId = tx.linkSlug ? linkMap.get(tx.linkSlug.toLowerCase()) : null;
 
       if (existing) {
-        // Update if status changed
-        if (existing.status !== tx.status) {
+        const statusChanged = existing.status !== tx.status;
+        const amountChanged = existing.commission_earned !== tx.amount;
+
+        if (statusChanged || amountChanged) {
+          // Fix 1.6: Validate state transition before updating
+          if (statusChanged && !isValidTransition(existing.status, tx.status)) {
+            result.errors.push(
+              `Invalid transition ${existing.status}→${tx.status} for ${tx.networkReference}`
+            );
+            result.recordsSkipped++;
+            continue;
+          }
+
+          // Fix 1.6: Write audit trail BEFORE update
+          if (statusChanged) {
+            await insertStatusAudit(existing.id, existing.status, tx.status, 'sync-revenue', {
+              network: tx.network,
+              network_reference: tx.networkReference,
+              amount_before: existing.commission_earned,
+              amount_after: tx.amount,
+            });
+          }
+
+          // Fix 1.7: Update commission_earned + currency alongside status
           await supabase
             .from('conversions')
             .update({
               status: tx.status,
+              commission_earned: tx.amount,
+              currency: tx.currency,
+              network_status: tx.status,
               updated_at: new Date().toISOString(),
             })
             .eq('id', existing.id);
