@@ -1,6 +1,6 @@
-// sentry.client.config.ts
+// instrumentation-client.ts
 // Client-side Sentry initialization — runs in the browser.
-// Loaded automatically by next.config.ts via withSentryConfig().
+// Loaded automatically by Next.js via the instrumentation-client convention.
 //
 // ENV required:
 //   NEXT_PUBLIC_SENTRY_DSN — from Sentry project settings → Client Keys
@@ -63,3 +63,6 @@ Sentry.init({
     return breadcrumb;
   },
 });
+
+// ── Navigation tracing — required for Next.js 16 router transitions ──
+export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;

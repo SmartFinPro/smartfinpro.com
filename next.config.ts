@@ -440,15 +440,18 @@ export default withSentryConfig(nextConfig, {
     disable: !process.env.SENTRY_AUTH_TOKEN, // only upload when token is set
   },
 
-  // Disable Sentry logger calls (we use our own logger)
-  disableLogger: true,
-
   // Tunnel all Sentry requests through our domain to avoid ad-blockers.
   // Creates a /monitoring route that proxies to ingest.sentry.io.
   tunnelRoute: '/monitoring',
 
-  // No automatic Vercel monitors (self-hosted on Cloudways)
-  automaticVercelMonitors: false,
+  webpack: {
+    // Remove Sentry debug/logger calls from client bundle (replaces deprecated disableLogger)
+    treeshake: {
+      removeDebugLogging: true,
+    },
+    // No automatic Vercel monitors (self-hosted on Cloudways, replaces deprecated automaticVercelMonitors)
+    automaticVercelMonitors: false,
+  },
 
   // Only upload source maps when SENTRY_AUTH_TOKEN is set (CI/production builds)
   // Without the token the plugin runs in no-upload mode automatically
