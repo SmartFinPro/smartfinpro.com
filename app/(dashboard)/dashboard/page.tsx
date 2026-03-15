@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { getDashboardStats, getGlobalMarketIntelligence, TimeRange, TimeComparison, ActionItem, GlobalMarketIntelligence } from '@/lib/actions/dashboard';
 import { getLowPerformancePages, getPerformanceAlertStats } from '@/lib/actions/performance-alerts';
+import { loadFxRates } from '@/lib/fx-rates';
 import { ClicksChart } from '@/components/dashboard/clicks-chart';
 import { RecentClicksLive } from '@/components/dashboard/recent-clicks-live';
 import { TopLinksLive } from '@/components/dashboard/top-links-live';
@@ -45,6 +46,42 @@ function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T
     promise,
     new Promise<T>((resolve) => setTimeout(() => resolve(fallback), ms)),
   ]);
+}
+
+// ── Timeout wrapper with timedOut flag — suppresses late rejections after timeout ──
+function withTimeoutAndFlag<T>(
+  promise: Promise<T>,
+  ms: number,
+  fallback: T,
+): Promise<{ data: T; timedOut: boolean }> {
+  let settled = false;
+  return new Promise((resolve) => {
+    const timer = setTimeout(() => {
+      if (!settled) {
+        settled = true;
+        resolve({ data: fallback, timedOut: true });
+        promise.catch(() => {}); // Suppress late rejection — guard against Unhandled Rejection in PM2
+      }
+    }, ms);
+
+    promise.then(
+      (data) => {
+        if (!settled) {
+          settled = true;
+          clearTimeout(timer);
+          resolve({ data, timedOut: false });
+        }
+      },
+      (err) => {
+        if (!settled) {
+          settled = true;
+          clearTimeout(timer);
+          console.error('[dashboard] stats query failed:', err);
+          resolve({ data: fallback, timedOut: true });
+        }
+      },
+    );
+  });
 }
 
 // Clean card style - white with subtle border and shadow
@@ -127,12 +164,17 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const emptyAlertStats = { totalLowPerformancePages: 0, criticalPages: 0, warningPages: 0, potentialLostRevenue: 0 };
   const emptyMarkets: GlobalMarketIntelligence = { markets: [], opportunities: [], leaderMarket: 'US', totalGlobalRevenue: 0, totalGlobalClicks: 0 };
 
-  const [stats, lowPerformancePages, performanceAlertStats, globalMarkets] = await Promise.all([
-    withTimeout(getDashboardStats(range), QUERY_TIMEOUT, emptyStats),
+  // SF4: Pre-warm FX cache so getDashboardStats uses dynamic rates (same as getGlobalMarketIntelligence)
+  await loadFxRates();
+
+  // SF2: All 4 queries start in parallel — stats uses withTimeoutAndFlag to surface timeout in UI
+  const [statsResult, lowPerformancePages, performanceAlertStats, globalMarkets] = await Promise.all([
+    withTimeoutAndFlag(getDashboardStats(range), QUERY_TIMEOUT, emptyStats),
     withTimeout(getLowPerformancePages(), QUERY_TIMEOUT, []),
     withTimeout(getPerformanceAlertStats(), QUERY_TIMEOUT, emptyAlertStats),
     withTimeout(getGlobalMarketIntelligence(range), QUERY_TIMEOUT, emptyMarkets),
   ]);
+  const { data: stats, timedOut: statsTimedOut } = statsResult;
 
   const rangeLabels: Record<TimeRange, string> = {
     '24h': 'last 24 hours',
@@ -174,6 +216,14 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             <TimeRangeSelector />
           </Suspense>
         </div>
+
+        {/* SF2: Timeout banner — shown when stats query exceeded 10s limit */}
+        {statsTimedOut && (
+          <div className="mb-6 flex items-center gap-3 px-4 py-3 rounded-lg bg-amber-50 border border-amber-200 text-sm text-amber-800">
+            <AlertTriangle className="h-4 w-4 shrink-0 text-amber-500" />
+            Statistiken aktuell nicht verfügbar — Daten werden im Hintergrund neu geladen.
+          </div>
+        )}
 
         {/* Stats Grid - 4 columns */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
