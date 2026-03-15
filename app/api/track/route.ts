@@ -162,7 +162,8 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Unknown track type' }, { status: 400 });
     }
   } catch (error) {
-    // Analytics should never return errors to the client
+    // Analytics should never return errors to the client — but log for observability
+    logger.error('[track] unexpected error:', error);
     return NextResponse.json({ success: true, skipped: true });
   }
 }

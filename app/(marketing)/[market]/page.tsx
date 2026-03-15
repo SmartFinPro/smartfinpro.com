@@ -179,7 +179,7 @@ export default async function MarketHomePage({ params, searchParams }: MarketPag
     }));
 
   return (
-    <>
+    <main id="main-content">
       {/* ═══════════════════════════════════════════════════════════════
           1. HERO SECTION
       ═══════════════════════════════════════════════════════════════ */}
@@ -299,7 +299,7 @@ export default async function MarketHomePage({ params, searchParams }: MarketPag
           </div>
         </div>
       </section>
-    </>
+    </main>
   );
 }
 

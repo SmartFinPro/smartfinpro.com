@@ -153,6 +153,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
   const canonicalUrl = getCanonicalUrl(market as Market, `/${category}`);
 
   return (
+    <main id="main-content">
     <article className="min-h-screen" style={{ background: 'var(--sfp-gray)' }}>
       {/* Schema.org JSON-LD */}
       {pillarContent && (
@@ -435,6 +436,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
         </div>
       </section>
     </article>
+    </main>
   );
 }
 

@@ -126,8 +126,8 @@ export default async function ContentPage({ params }: ContentPageProps) {
       if (redirectTarget) {
         redirect(redirectTarget);
       }
-    } catch {
-      // If archived_pages table doesn't exist yet or query fails, fall through to notFound
+    } catch (e) {
+      console.warn('[archived-redirect] lookup failed:', e);
     }
     notFound();
   }
@@ -162,7 +162,7 @@ export default async function ContentPage({ params }: ContentPageProps) {
     } catch { /* EV ranking non-critical — fall through to CPA sort */ }
 
     return (
-      <>
+      <main id="main-content">
         <ReportLayout
           ctaPartners={rankedPartners}
           expert={expert}
@@ -200,7 +200,7 @@ export default async function ContentPage({ params }: ContentPageProps) {
             content: '',
           }}
         />
-      </>
+      </main>
     );
   }
 

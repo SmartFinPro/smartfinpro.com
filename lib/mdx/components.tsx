@@ -344,7 +344,7 @@ function AffiliateButton({
         variant,
         market: resolvedMarket,
       }),
-    }).catch(() => {});
+    }).catch((err) => console.error('[affiliate-track]', err));
   };
 
   return (

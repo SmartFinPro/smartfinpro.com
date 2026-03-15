@@ -33,26 +33,26 @@ export function MeshBackground({
           <radialGradient id="meshBg1" cx="20%" cy="20%" r="50%">
             <stop offset="0%" stopColor="#8b5cf6" stopOpacity={0.3 * scale} />
             <stop offset="50%" stopColor="#6366f1" stopOpacity={0.15 * scale} />
-            <stop offset="100%" stopColor="#0f0a1a" stopOpacity="0" />
+            <stop offset="100%" stopColor="white" stopOpacity="0" />
           </radialGradient>
 
           {/* Mesh Gradient 2 - Cyan */}
           <radialGradient id="meshBg2" cx="80%" cy="50%" r="45%">
             <stop offset="0%" stopColor="#06b6d4" stopOpacity={0.25 * scale} />
             <stop offset="50%" stopColor="#0891b2" stopOpacity={0.1 * scale} />
-            <stop offset="100%" stopColor="#0f0a1a" stopOpacity="0" />
+            <stop offset="100%" stopColor="white" stopOpacity="0" />
           </radialGradient>
 
           {/* Mesh Gradient 3 - Purple */}
           <radialGradient id="meshBg3" cx="50%" cy="80%" r="40%">
             <stop offset="0%" stopColor="#a855f7" stopOpacity={0.2 * scale} />
-            <stop offset="100%" stopColor="#0f0a1a" stopOpacity="0" />
+            <stop offset="100%" stopColor="white" stopOpacity="0" />
           </radialGradient>
 
           {/* Mesh Gradient 4 - Blue accent */}
           <radialGradient id="meshBg4" cx="10%" cy="70%" r="35%">
             <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.15 * scale} />
-            <stop offset="100%" stopColor="#0f0a1a" stopOpacity="0" />
+            <stop offset="100%" stopColor="white" stopOpacity="0" />
           </radialGradient>
 
           {/* Dot Pattern */}
