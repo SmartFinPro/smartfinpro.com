@@ -6,6 +6,7 @@ import { logger } from '@/lib/logging';
 
 import { createServiceClient } from '@/lib/supabase/server';
 import type { LinkClick, Conversion, AffiliateLink, PageView } from '@/lib/supabase/types';
+import { toUSD } from '@/lib/actions/revenue';
 
 // ============================================================
 // SAFE QUERY HELPER
@@ -441,7 +442,7 @@ async function _getDashboardStats(range: TimeRange = '24h'): Promise<DashboardSt
     // 2. All-time click count (for conversion rate denominator)
     supabase.from('link_clicks').select('*', { count: 'exact', head: true }),
     // 3. All-time conversions (for EPC / totalRevenue)
-    supabase.from('conversions').select('link_id, commission_earned, status'),
+    supabase.from('conversions').select('link_id, commission_earned, currency, status'),
     // 4. Active affiliate links count
     supabase.from('affiliate_links').select('*', { count: 'exact', head: true }).eq('active', true),
     // 5. All affiliate links (id → name/category mapping)
@@ -469,7 +470,7 @@ async function _getDashboardStats(range: TimeRange = '24h'): Promise<DashboardSt
     previousPeriod
       ? supabase
           .from('conversions')
-          .select('commission_earned')
+          .select('commission_earned, currency')
           .eq('status', 'approved')
           .gte('converted_at', previousPeriod.start.toISOString())
           .lt('converted_at', previousPeriod.end.toISOString())
@@ -478,7 +479,7 @@ async function _getDashboardStats(range: TimeRange = '24h'): Promise<DashboardSt
     rangeStart
       ? supabase
           .from('conversions')
-          .select('commission_earned')
+          .select('commission_earned, currency')
           .eq('status', 'approved')
           .gte('converted_at', rangeStart.toISOString())
       : noop,
@@ -505,18 +506,18 @@ async function _getDashboardStats(range: TimeRange = '24h'): Promise<DashboardSt
   const clicks = (clicksInRangeResult.data || []) as ClickRecord[];
   const totalClicks = totalClicksResult.count || 0;
 
-  type ConversionRecord = Pick<Conversion, 'link_id' | 'commission_earned' | 'status'>;
+  type ConversionRecord = Pick<Conversion, 'link_id' | 'commission_earned' | 'currency' | 'status'>;
   const conversions = (allConversionsResult.data || []) as ConversionRecord[];
   const approvedConversions = conversions.filter((c) => c.status === 'approved');
-  const totalRevenue = approvedConversions.reduce((sum, c) => sum + (c.commission_earned || 0), 0);
+  const totalRevenue = approvedConversions.reduce((sum, c) => sum + toUSD(c.commission_earned || 0, c.currency), 0);
 
-  // Build revenue map by link_id (all-time, for EPC display)
+  // Build revenue map by link_id (all-time, for EPC display) — normalised to USD
   const linkRevenueMap = new Map<string, { revenue: number; conversions: number }>();
   approvedConversions.forEach((c) => {
     if (c.link_id) {
       const current = linkRevenueMap.get(c.link_id) || { revenue: 0, conversions: 0 };
       linkRevenueMap.set(c.link_id, {
-        revenue: current.revenue + (c.commission_earned || 0),
+        revenue: current.revenue + toUSD(c.commission_earned || 0, c.currency),
         conversions: current.conversions + 1,
       });
     }
@@ -841,13 +842,13 @@ async function _getDashboardStats(range: TimeRange = '24h'): Promise<DashboardSt
   const previousClicksCount = prevClicksResult.count || 0;
   const clicksComparison = calculateChange(totalClicksInRange, previousClicksCount);
 
-  // Revenue comparison — results from parallel queries
-  type CommissionRow = { commission_earned: number | null };
+  // Revenue comparison — results from parallel queries, normalised to USD
+  type CommissionRow = { commission_earned: number | null; currency?: string | null };
   const previousRevenue = ((prevConversionsResult.data || []) as CommissionRow[])
-    .reduce((sum, c) => sum + (c.commission_earned || 0), 0);
+    .reduce((sum, c) => sum + toUSD(c.commission_earned || 0, c.currency), 0);
   const revenueInRange = rangeStart
     ? ((currConversionsResult.data || []) as CommissionRow[])
-        .reduce((sum, c) => sum + (c.commission_earned || 0), 0)
+        .reduce((sum, c) => sum + toUSD(c.commission_earned || 0, c.currency), 0)
     : totalRevenue; // 'all' range → total all-time revenue
   const revenueComparison = calculateChange(revenueInRange, previousRevenue);
 
@@ -1073,9 +1074,9 @@ export async function getGlobalMarketIntelligence(range: TimeRange = '7d'): Prom
 
   let conversionsQuery = supabase
     .from('conversions')
-    .select('link_id, commission_earned, status, created_at');
+    .select('link_id, commission_earned, currency, status, converted_at');
   if (rangeStart) {
-    conversionsQuery = conversionsQuery.gte('created_at', rangeStart.toISOString());
+    conversionsQuery = conversionsQuery.gte('converted_at', rangeStart.toISOString());
   }
 
   let pageViewsQuery = supabase
@@ -1110,10 +1111,10 @@ export async function getGlobalMarketIntelligence(range: TimeRange = '7d'): Prom
     previousPeriod
       ? supabase
           .from('conversions')
-          .select('link_id, commission_earned')
+          .select('link_id, commission_earned, currency')
           .eq('status', 'approved')
-          .gte('created_at', previousPeriod.start.toISOString())
-          .lt('created_at', previousPeriod.end.toISOString())
+          .gte('converted_at', previousPeriod.start.toISOString())
+          .lt('converted_at', previousPeriod.end.toISOString())
       : gmiNoop,
     supabase.from('affiliate_links').select('id, slug, partner_name, category'),
     pageViewsQuery,
@@ -1122,8 +1123,8 @@ export async function getGlobalMarketIntelligence(range: TimeRange = '7d'): Prom
   // ── Extract results ───────────────────────────────────────────────────────
   const clicks = gmiClicksResult.data || [];
   const previousClicks = (gmiPrevClicksResult.data || []) as { country_code: string | null }[];
-  const conversions = ((gmiConversionsResult.data || []) as { link_id: string | null; commission_earned: number | null; status: string; created_at: string }[]).filter(c => c.status === 'approved');
-  const previousConversions = (gmiPrevConversionsResult.data || []) as { link_id: string | null; commission_earned: number | null }[];
+  const conversions = ((gmiConversionsResult.data || []) as { link_id: string | null; commission_earned: number | null; currency?: string | null; status: string; converted_at: string }[]).filter(c => c.status === 'approved');
+  const previousConversions = (gmiPrevConversionsResult.data || []) as { link_id: string | null; commission_earned: number | null; currency?: string | null }[];
   const linksMap = new Map((gmiLinksResult.data || []).map(l => [l.id, l]));
   const pageViews = safeData(gmiPageViewsResult);
 
@@ -1131,7 +1132,7 @@ export async function getGlobalMarketIntelligence(range: TimeRange = '7d'): Prom
   const marketData: Record<MarketCode, {
     clicks: { link_id: string; clicked_at: string; referrer: string | null }[];
     previousClicks: number;
-    conversions: { link_id: string | null; commission_earned: number | null }[];
+    conversions: { link_id: string | null; commission_earned: number | null; currency?: string | null }[];
     previousRevenue: number;
     scrollDepths: number[];
   }> = {
@@ -1194,7 +1195,7 @@ export async function getGlobalMarketIntelligence(range: TimeRange = '7d'): Prom
         for (const country of countries) {
           const market = getMarketFromCountry(country);
           if (market) {
-            marketData[market].previousRevenue += conv.commission_earned || 0;
+            marketData[market].previousRevenue += toUSD(conv.commission_earned || 0, conv.currency);
             break;
           }
         }
@@ -1229,15 +1230,15 @@ export async function getGlobalMarketIntelligence(range: TimeRange = '7d'): Prom
   });
 
   // Build sparkline data (last 7 days) for each market
-  function buildMarketSparkline(marketClicks: { clicked_at: string }[], marketConversions: { commission_earned: number | null; created_at: string }[]): MarketSparklineData[] {
+  function buildMarketSparkline(marketClicks: { clicked_at: string }[], marketConversions: { commission_earned: number | null; currency?: string | null; converted_at: string }[]): MarketSparklineData[] {
     const data: MarketSparklineData[] = [];
     for (let i = 6; i >= 0; i--) {
       const dayDate = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
       const dayKey = dayDate.toISOString().slice(0, 10);
       const dayClicks = marketClicks.filter(c => c.clicked_at.slice(0, 10) === dayKey).length;
       const dayRevenue = marketConversions
-        .filter(c => c.created_at?.slice(0, 10) === dayKey)
-        .reduce((sum, c) => sum + (c.commission_earned || 0), 0);
+        .filter(c => c.converted_at?.slice(0, 10) === dayKey)
+        .reduce((sum, c) => sum + toUSD(c.commission_earned || 0, c.currency), 0);
       data.push({
         label: dayDate.toLocaleDateString('en-US', { weekday: 'short' }),
         clicks: dayClicks,
@@ -1257,7 +1258,7 @@ export async function getGlobalMarketIntelligence(range: TimeRange = '7d'): Prom
     const data = marketData[code];
 
     const totalClicks = data.clicks.length;
-    const totalRevenue = data.conversions.reduce((sum, c) => sum + (c.commission_earned || 0), 0);
+    const totalRevenue = data.conversions.reduce((sum, c) => sum + toUSD(c.commission_earned || 0, c.currency), 0);
     const totalConversions = data.conversions.length;
 
     // Calculate trends
@@ -1296,7 +1297,7 @@ export async function getGlobalMarketIntelligence(range: TimeRange = '7d'): Prom
       if (conv.link_id) {
         const current = productClicks.get(conv.link_id);
         if (current) {
-          current.revenue += conv.commission_earned || 0;
+          current.revenue += toUSD(conv.commission_earned || 0, conv.currency);
         }
       }
     });
@@ -1316,7 +1317,7 @@ export async function getGlobalMarketIntelligence(range: TimeRange = '7d'): Prom
     // Build sparkline
     const sparklineData = buildMarketSparkline(
       data.clicks,
-      data.conversions.map(c => ({ ...c, created_at: (c as any).created_at || '' }))
+      data.conversions.map(c => ({ ...c, converted_at: (c as any).converted_at || '' }))
     );
 
     markets.push({
