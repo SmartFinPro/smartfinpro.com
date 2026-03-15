@@ -1,7 +1,10 @@
 import { MetadataRoute } from 'next';
+import { existsSync } from 'fs';
+import { join } from 'path';
 import { getAllContent } from '@/lib/mdx';
 import { markets, marketCategories, Market } from '@/lib/i18n/config';
 import { brokerSlugs } from '@/lib/data/broker-reviews';
+import { pillarHeroImages, reviewImages } from '@/lib/images/asset-registry';
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://smartfinpro.com';
 
@@ -101,11 +104,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     for (const market of markets) {
       const cats = marketCategories[market as Market] || [];
       for (const category of cats) {
+        const heroAsset = pillarHeroImages[market]?.[category];
         entries.push({
           url: marketUrl(market, `/${category}`),
           lastModified: now,
           changeFrequency: 'weekly',
           priority: 0.9,
+          ...(heroAsset && { images: [`${BASE_URL}${heroAsset.src}`] }),
         });
       }
     }
@@ -116,11 +121,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     for (const market of markets) {
       for (const broker of brokerSlugs) {
+        const brokerLogoPath = `/images/brokers/${broker}.svg`;
+        const logoExists = existsSync(join(process.cwd(), 'public', brokerLogoPath));
         entries.push({
           url: marketUrl(market, `/reviews/${broker}`),
           lastModified: now,
           changeFrequency: 'weekly',
           priority: 0.8,
+          ...(logoExists && { images: [`${BASE_URL}${brokerLogoPath}`] }),
         });
       }
     }
@@ -144,11 +152,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           ? new Date(content.meta.publishDate)
           : now;
 
+      const reviewAsset = reviewImages[`${market}/${category}/${content.slug}`];
       entries.push({
         url: marketUrl(market, `/${category}/${content.slug}`),
         lastModified: lastMod,
         changeFrequency: 'weekly',
         priority: content.meta.featured ? 0.8 : 0.7,
+        ...(reviewAsset && { images: [`${BASE_URL}${reviewAsset.src}`] }),
       });
     }
 
