@@ -6,7 +6,7 @@ import { logger } from '@/lib/logging';
 
 import { createServiceClient } from '@/lib/supabase/server';
 import type { LinkClick, Conversion, AffiliateLink, PageView } from '@/lib/supabase/types';
-import { toUSD } from '@/lib/actions/revenue';
+import { toUSD, loadFxRates, getFxRatesSnapshot, HARDCODED_FX } from '@/lib/actions/revenue';
 
 // ============================================================
 // SAFE QUERY HELPER
@@ -288,10 +288,10 @@ const marketConfig: Record<MarketCode, {
   langCode: string;
   exchangeRate: number; // to USD
 }> = {
-  US: { name: 'United States', flag: '🇺🇸', currency: 'USD', symbol: '$', langCode: 'en-US', exchangeRate: 1 },
-  GB: { name: 'United Kingdom', flag: '🇬🇧', currency: 'GBP', symbol: '£', langCode: 'en-GB', exchangeRate: 1.27 },
-  CA: { name: 'Canada', flag: '🇨🇦', currency: 'CAD', symbol: 'C$', langCode: 'en-CA', exchangeRate: 0.74 },
-  AU: { name: 'Australia', flag: '🇦🇺', currency: 'AUD', symbol: 'A$', langCode: 'en-AU', exchangeRate: 0.65 },
+  US: { name: 'United States', flag: '🇺🇸', currency: 'USD', symbol: '$', langCode: 'en-US', exchangeRate: HARDCODED_FX.USD },
+  GB: { name: 'United Kingdom', flag: '🇬🇧', currency: 'GBP', symbol: '£', langCode: 'en-GB', exchangeRate: HARDCODED_FX.GBP },
+  CA: { name: 'Canada', flag: '🇨🇦', currency: 'CAD', symbol: 'C$', langCode: 'en-CA', exchangeRate: HARDCODED_FX.CAD },
+  AU: { name: 'Australia', flag: '🇦🇺', currency: 'AUD', symbol: 'A$', langCode: 'en-AU', exchangeRate: HARDCODED_FX.AUD },
 };
 
 // Map country codes to market codes
@@ -1059,6 +1059,7 @@ function buildTimeSeries(clicks: { clicked_at: string }[], range: TimeRange, now
 // ============================================================
 
 export async function getGlobalMarketIntelligence(range: TimeRange = '7d'): Promise<GlobalMarketIntelligence> {
+  await loadFxRates(); // Pre-load dynamic FX rates into cache
   const supabase = createServiceClient();
   const now = new Date();
   const rangeStart = getTimeRangeStart(range);
@@ -1330,7 +1331,7 @@ export async function getGlobalMarketIntelligence(range: TimeRange = '7d'): Prom
       clicksTrend: clicksComparison.trend,
       clicksChange: clicksComparison.change,
       revenue: totalRevenue,
-      revenueLocal: totalRevenue / config.exchangeRate,
+      revenueLocal: totalRevenue / (getFxRatesSnapshot()[config.currency] || config.exchangeRate),
       revenueChange: revenueComparison.change,
       revenueTrend: revenueComparison.trend,
       conversions: totalConversions,
