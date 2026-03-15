@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="SmartFinPro icon">
-  <rect x="0" y="0" width="1024" height="1024" fill="#1B4F8C"/>
-  <rect x="420" y="190" width="184" height="644" rx="44" fill="#FFC942"/>
-  <rect x="190" y="420" width="644" height="184" rx="44" fill="#FFC942"/>
+<svg width="1400" height="1400" viewBox="0 0 1400 1400" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="SmartFinPro logo mark">
+  <rect x="140" y="140" width="1120" height="1120" rx="220" fill="#1B4F8C"/>
+  <rect x="595" y="300" width="210" height="800" rx="48" fill="#FFC942"/>
+  <rect x="300" y="595" width="800" height="210" rx="48" fill="#FFC942"/>
 </svg>
