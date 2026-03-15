@@ -146,9 +146,15 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
   // Pass frontmatter as scope so MDX can reference frontmatter.faqs, etc.
   // gray-matter already stripped the YAML block from pillarContent.content,
   // so parseFrontmatter: true would find nothing — we inject it manually here.
-  const mdxSource = pillarContent
-    ? await serializeMDX(pillarContent.content, { frontmatter: pillarContent.meta })
-    : null;
+  let mdxSource = null;
+  if (pillarContent) {
+    try {
+      mdxSource = await serializeMDX(pillarContent.content, { frontmatter: pillarContent.meta });
+    } catch (e) {
+      console.error('[serialize] Pillar MDX failed:', market, category, e);
+      // mdxSource stays null — page renders article list without MDX body
+    }
+  }
 
   const canonicalUrl = getCanonicalUrl(market as Market, `/${category}`);
 

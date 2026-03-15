@@ -134,8 +134,16 @@ export default async function ContentPage({ params }: ContentPageProps) {
 
   // For review pages, use the ReportLayout (Premium Research Report style)
   if (content.meta.rating) {
-    const [mdxSource, relatedArticles, expert, allCategoryContent, ctaPartners] = await Promise.all([
-      serializeMDX(content.content),
+    // serializeMDX separate from Promise.all — compilation errors must not crash non-MDX fetches
+    let mdxSource;
+    try {
+      mdxSource = await serializeMDX(content.content);
+    } catch (e) {
+      console.error('[serialize] MDX compilation failed:', market, category, slug, e);
+      notFound();
+    }
+
+    const [relatedArticles, expert, allCategoryContent, ctaPartners] = await Promise.all([
       getRelatedContent(market as Market, category as Category, slug, 3),
       getMarketExpert(market, category),
       getContentByMarketAndCategory(market as Market, category as Category),
@@ -206,8 +214,17 @@ export default async function ContentPage({ params }: ContentPageProps) {
 
   // For other content types (guides, articles), use the same ReportLayout in "guide mode"
   // This gives identical Two-Column Premium layout — just without rating stars, CTA buttons, and pros/cons
-  const [mdxSource, relatedArticles, expert, allCategoryContent, ctaPartners] = await Promise.all([
-    serializeMDX(content.content),
+
+  // serializeMDX separate from Promise.all — compilation errors must not crash non-MDX fetches
+  let mdxSource;
+  try {
+    mdxSource = await serializeMDX(content.content);
+  } catch (e) {
+    console.error('[serialize] MDX compilation failed:', market, category, slug, e);
+    notFound();
+  }
+
+  const [relatedArticles, expert, allCategoryContent, ctaPartners] = await Promise.all([
     getRelatedContent(market as Market, category as Category, slug, 3),
     getMarketExpert(market, category),
     getContentByMarketAndCategory(market as Market, category as Category),
