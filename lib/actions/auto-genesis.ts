@@ -57,8 +57,9 @@ async function autoGenerateSingle(
   const supabase = createServiceClient();
   const startTime = Date.now();
 
-  // Insert log entry
-  const { error: insertError } = await supabase
+  // Optimistic lock: only transition from 'pending' (or new) to 'generating'.
+  // If another worker already set 'generating', we skip this brief.
+  const { data: lockResult, error: insertError } = await supabase
     .from('auto_genesis_log')
     .upsert(
       {
@@ -72,10 +73,18 @@ async function autoGenerateSingle(
         started_at: new Date().toISOString(),
       },
       { onConflict: 'brief_path,brief_hash' },
-    );
+    )
+    .select('status')
+    .single();
 
   if (insertError) {
     logger.error('[auto-genesis] Failed to insert log entry:', insertError.message);
+  }
+
+  // If upsert returned but status isn't 'generating' (another worker won), skip
+  if (lockResult && lockResult.status !== 'generating') {
+    logger.info(`[auto-genesis] Skipping ${brief.folderName} — already being processed`);
+    return { status: 'failed', error: 'Already being processed by another worker' };
   }
 
   try {
@@ -202,28 +211,116 @@ async function autoGenerateSingle(
     const errorMsg = err instanceof Error ? err.message : 'Unknown error';
     const duration = Date.now() - startTime;
 
-    await supabase
+    // Get current retry_count to decide: reset to pending (retry) or mark as failed
+    const { data: currentLog } = await supabase
       .from('auto_genesis_log')
-      .update({
-        status: 'failed',
-        error_message: errorMsg,
-        completed_at: new Date().toISOString(),
-      })
+      .select('retry_count')
       .eq('brief_path', brief.folderName)
-      .eq('brief_hash', brief.briefHash);
+      .eq('brief_hash', brief.briefHash)
+      .single();
 
-    await sendTelegramAlert(
-      `<b>AUTO-GENESIS FAILED</b>\n\n` +
-      `Brief: ${brief.briefPath}\n` +
-      `Market: ${brief.market.toUpperCase()} | Category: ${brief.category}\n` +
-      `Error: ${errorMsg}\n\n` +
-      `Duration: ${(duration / 1000).toFixed(1)}s`,
-    );
+    const retryCount = (currentLog?.retry_count ?? 0) + 1;
 
-    logger.error(`[auto-genesis] Failed: ${brief.folderName} — ${errorMsg}`);
+    if (retryCount < MAX_RETRY_COUNT) {
+      // Reset to pending for retry on next cron run
+      await supabase
+        .from('auto_genesis_log')
+        .update({
+          status: 'pending',
+          error_message: `Attempt ${retryCount}: ${errorMsg}`,
+          retry_count: retryCount,
+          started_at: null,
+        })
+        .eq('brief_path', brief.folderName)
+        .eq('brief_hash', brief.briefHash);
+
+      logger.warn(`[auto-genesis] Retry ${retryCount}/${MAX_RETRY_COUNT}: ${brief.folderName} — ${errorMsg}`);
+    } else {
+      // Max retries exhausted — mark as permanently failed
+      await supabase
+        .from('auto_genesis_log')
+        .update({
+          status: 'failed',
+          error_message: `Failed after ${retryCount} attempts. Last: ${errorMsg}`,
+          retry_count: retryCount,
+          completed_at: new Date().toISOString(),
+        })
+        .eq('brief_path', brief.folderName)
+        .eq('brief_hash', brief.briefHash);
+
+      await sendTelegramAlert(
+        `<b>AUTO-GENESIS FAILED (${retryCount} attempts)</b>\n\n` +
+        `Brief: ${brief.briefPath}\n` +
+        `Market: ${brief.market.toUpperCase()} | Category: ${brief.category}\n` +
+        `Error: ${errorMsg}\n\n` +
+        `Duration: ${(duration / 1000).toFixed(1)}s`,
+      );
+    }
+
+    logger.error(`[auto-genesis] Failed: ${brief.folderName} — ${errorMsg} (attempt ${retryCount})`);
 
     return { status: 'failed', error: errorMsg };
   }
+}
+
+// ── Stale-State Recovery ──────────────────────────────────
+// Briefs stuck in 'generating' for >1 hour are reset to 'pending' (max 3 retries).
+// After 3 retries, status is set to 'failed' to prevent infinite loops.
+// Stale-Lock-Timeout: 1 hour (covers Claude API + image processing worst case).
+
+const STALE_THRESHOLD_HOURS = 1;
+const MAX_RETRY_COUNT = 3;
+
+async function recoverStaleGenerations(): Promise<number> {
+  const supabase = createServiceClient();
+
+  // Reset stale entries with retries remaining → pending
+  const { data: recovered } = await supabase
+    .from('auto_genesis_log')
+    .update({
+      status: 'pending',
+      started_at: null,
+    })
+    .eq('status', 'generating')
+    .lt('started_at', new Date(Date.now() - STALE_THRESHOLD_HOURS * 3600_000).toISOString())
+    .lt('retry_count', MAX_RETRY_COUNT)
+    .select('brief_path, retry_count');
+
+  // Increment retry_count for recovered entries
+  if (recovered && recovered.length > 0) {
+    for (const entry of recovered) {
+      await supabase
+        .from('auto_genesis_log')
+        .update({ retry_count: (entry.retry_count ?? 0) + 1 })
+        .eq('brief_path', entry.brief_path)
+        .eq('status', 'pending');
+    }
+    logger.warn(`[auto-genesis] Recovered ${recovered.length} stale 'generating' entries`);
+  }
+
+  // Mark exhausted retries as failed
+  const { data: exhausted } = await supabase
+    .from('auto_genesis_log')
+    .update({
+      status: 'failed',
+      error_message: `Max retries (${MAX_RETRY_COUNT}) exceeded after stale recovery`,
+      completed_at: new Date().toISOString(),
+    })
+    .eq('status', 'generating')
+    .lt('started_at', new Date(Date.now() - STALE_THRESHOLD_HOURS * 3600_000).toISOString())
+    .gte('retry_count', MAX_RETRY_COUNT)
+    .select('brief_path');
+
+  if (exhausted && exhausted.length > 0) {
+    logger.error(`[auto-genesis] ${exhausted.length} briefs failed after ${MAX_RETRY_COUNT} retries`);
+    await sendTelegramAlert(
+      `<b>AUTO-GENESIS MAX RETRIES</b>\n\n` +
+      `${exhausted.length} brief(s) failed after ${MAX_RETRY_COUNT} retries:\n` +
+      exhausted.map((e) => `  • ${e.brief_path}`).join('\n'),
+    );
+  }
+
+  return (recovered?.length ?? 0) + (exhausted?.length ?? 0);
 }
 
 // ── Main Orchestrator ───────────────────────────────────────
@@ -232,6 +329,12 @@ export async function runAutoGenesis(): Promise<AutoGenesisResult> {
   if (process.env.AUTO_GENESIS_ENABLED === 'false') {
     logger.info('[auto-genesis] Disabled via AUTO_GENESIS_ENABLED=false');
     return { scanned: 0, pending: 0, generated: 0, failed: 0, skipped: 0, details: [] };
+  }
+
+  // Recover stale 'generating' entries before processing new briefs
+  const staleRecovered = await recoverStaleGenerations();
+  if (staleRecovered > 0) {
+    logger.info(`[auto-genesis] Recovered ${staleRecovered} stale entries before scan`);
   }
 
   const supabase = createServiceClient();
