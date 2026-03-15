@@ -80,7 +80,7 @@ export const logger = {
 // Used by cron routes to emit consistent job-level logs.
 export interface CronLogContext {
   job:        string;
-  status:     'success' | 'error' | 'skipped';
+  status:     'success' | 'error' | 'partial' | 'skipped';
   duration_ms?: number;
   [key: string]: unknown;
 }
