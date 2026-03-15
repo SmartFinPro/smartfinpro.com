@@ -10,7 +10,10 @@ import type { PartnerAssignmentConfig, EnrichedCtaPartner, Placement, DisplayTyp
 
 // ── Batch Read (for Content Hub) ───────────────────────────────
 
-/** Load all CTA partner assignments for multiple pages in one query */
+/**
+ * Load all CTA partner assignments for multiple pages in one query.
+ * @returns Record mapping pageUrl → partner configs. Returns `{}` on error.
+ */
 export async function getCtaPartnersForPages(
   pageUrls: string[]
 ): Promise<Record<string, PartnerAssignmentConfig[]>> {
@@ -50,7 +53,10 @@ export async function getCtaPartnersForPages(
 
 // ── Single Page Read ───────────────────────────────────────────
 
-/** Load CTA partner configs for a single page */
+/**
+ * Load CTA partner configs for a single page.
+ * @returns Array of partner configs. Returns `[]` on error.
+ */
 export async function getCtaPartnersForPage(
   pageUrl: string
 ): Promise<PartnerAssignmentConfig[]> {
@@ -82,7 +88,10 @@ export async function getCtaPartnersForPage(
 
 // ── Enriched Read (for frontend rendering) ──────────────────────
 
-/** Load CTA partners with full affiliate_links data for rendering on marketing pages */
+/**
+ * Load CTA partners with full affiliate_links data for rendering on marketing pages.
+ * @returns Enriched partner array with slug, url, cpa_value etc. Returns `[]` on error.
+ */
 export async function getEnrichedCtaPartners(
   pageUrl: string
 ): Promise<EnrichedCtaPartner[]> {
@@ -134,7 +143,10 @@ export async function getEnrichedCtaPartners(
 
 // ── Write (replace all for a page) ─────────────────────────────
 
-/** Replace all CTA partner assignments for a page */
+/**
+ * Replace all CTA partner assignments for a page.
+ * @returns `{ success: true }` on success, `{ success: false, error: string }` on failure.
+ */
 export async function setCtaPartnersForPage(
   pageUrl: string,
   partners: PartnerAssignmentConfig[]
