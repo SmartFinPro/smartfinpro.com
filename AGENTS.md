@@ -1,77 +1,86 @@
 # SmartFinPro — Agent Instructions
-> **Version 1.0 | März 2026**
+> **Version 1.1 | März 2026**
 > Ergänzt CLAUDE.md. Beide Dateien gelten gemeinsam.
 
 ---
 
 ## Mandatory Review Content Quality Gate (Always-On)
 
-Applies to every change on review/comparison pages (`content/**` MDX + related SEO/layout/schema files).
+Ab jetzt gilt für alle Änderungen an Review-/Comparison-Seiten (MDX + zugehörige SEO-Metadaten) automatisch ein Review Quality Gate.
 
-### Required post-edit checks (must run automatically)
+**Pflicht nach JEDEM Text-Update:**
 
-**1. SEO meta quality**
-- `title` intent-strong, non-generic — **length: 45–60 chars** (green range)
-- `description` length: **140–160 chars** (green range)
-- `modifiedDate` and `dataVerifiedDate` updated to current date
+### 1. SEO-Meta
+- `title` klar, intent-stark — **Länge: 45–60 Zeichen** (green range)
+- `description` **140–160 Zeichen** (green range)
+- `modifiedDate` und `dataVerifiedDate` auf heutiges Datum aktualisieren
 
-**2. Document structure**
-- Exactly one `H1`
-- Logical `H2/H3` hierarchy
-- TOC/anchor IDs present and valid
+### 2. Struktur
+- Exakt **1× H1** (wird von `report-layout.tsx` aus `title` generiert — kein `# ...` in MDX)
+- Saubere **H2/H3-Hierarchie** (kein H3 ohne vorangehendes H2)
+- Alle **TOC/Anchor-IDs** aus `sections:` Frontmatter vorhanden
 
-**3. Link quality targets (when context allows)**
-- Internal links target: `>= 8`
-- External authority links target: `>= 6`
-- No broken/internal 404 links introduced
+### 3. Link-Qualität
+- Interne Links sinnvoll ergänzen — **Ziel: ≥ 8** (falls inhaltlich möglich)
+- Externe Autoritätslinks sinnvoll ergänzen — **Ziel: ≥ 6** (nur seriöse Quellen: Regulatoren, offizielle Produktseiten, IRS, etc.)
+- Keine kaputten Links einführen
 
-**4. Content quality**
-- Strengthen E-E-A-T signals (method, risk notes, recommendation clarity)
-- No keyword stuffing
-- Keep premium-professional tone consistent with existing design language
+### 4. Content-Qualität
+- **E-E-A-T stärken:** Methodik, Risikohinweise, klare Empfehlung
+- Keine Keyword-Stuffing-Passagen
+- Fließtext professionell, präzise, konsistent zum Premium-Design-Ton
 
-**5. SEO/Schema integrity**
-- JSON-LD valid, no missing required fields
-- Correct canonical/hreflang behavior
-- Avoid structural duplicates (e.g., duplicate H1/schema spam)
+### 5. Schema/SEO-Technik
+- JSON-LD valid (keine fehlenden Pflichtfelder)
+- hreflang/canonical korrekt
+- Keine doppelten strukturellen Fehler (z. B. Doppel-H1, doppelte Schemas)
 
-**6. Quality target**
-- Page quality score target: `>= 90`
-- If below target, perform focused optimization loop automatically until target is met or clearly blocked
+### 6. Score-Ziel
+- Interne Content-Qualität für die Seite auf **≥ 90** bringen (wenn möglich)
+- Falls < 90: automatisch gezielte Nachoptimierungen ausführen und erneut prüfen
 
-**7. Verification commands (minimum)**
+### 7. Verifikation
 - `npx tsc --noEmit`
-- `npx vitest run` (relevant scope minimum)
-- `npx next build` when routing/SEO/rendering is affected
+- `npx vitest run` (relevante Tests)
+- `npx next build` (wenn Routing/SEO/Rendering betroffen)
+- Kurze **Vorher/Nachher-Tabelle** mit Metriken
 
-### Reporting (required in final response)
+### Regeln
+- Keine unnötigen Refactors
+- Nur betroffene Dateien ändern
+- Nach Abschluss: **Commit + kurzer Report** (Dateien, Metriken, Hash)
 
-- Files changed
-- Before/after key metrics (word count, meta length, internal/external links, score)
-- Build/test status
-- Commit hash
-
-### Constraints
-
-- No unnecessary refactors
-- Edit only relevant files
-- No design-system changes unless explicitly requested
+### Trigger bei jeder neuen Seite/Integration
+> Bitte Text integrieren und danach **automatisch das Review Quality Gate ausführen.**
 
 ---
 
-## Internal Link Scoring Reference (lib/actions/content-hub.ts)
+## Scoring-Referenz (lib/actions/content-hub.ts)
 
 ```
-L = min(internalLinks, 8) × 7  +  min(externalLinks, 6) × 7  (cap 100)
-C = min(componentCount, 6) × 12  +  min(imageCount, 4) × 7   (cap 100)
 Quality = W×0.30 + S×0.25 + L×0.20 + C×0.25
+
+W = word score     (100 = 4000–7000 Wörter)
+S = structure score (H2×8 max 8 + H3×3 max 6 + FAQ+10 + ProsCons+8, cap 100)
+L = link score     min(internalLinks,8)×7 + min(externalLinks,6)×7  (cap 100)
+C = component score min(components,6)×12 + min(images,4)×7          (cap 100)
 ```
 
-**Green thresholds:** Title 45–60 chars · Description 140–160 chars · W: 4000–7000 words = 100 · L: 8 internal + 6 external = 98 · C: 6 tracked components + 4 images = 100
+**Green-Schwellen:**
 
-**Tracked MDX components for C-score:**
+| Metrik | Green |
+|--------|-------|
+| Title | 45–60 Zeichen |
+| Description | 140–160 Zeichen |
+| Words | 4000–7000 |
+| Internal links | ≥ 8 |
+| External links | ≥ 6 |
+| MDX components (tracked) | ≥ 6 |
+| Images `![...]` | ≥ 4 |
+
+**Tracked MDX components für C-Score:**
 `<TrustAuthority>` · `<ExpertBox>` · `<Rating>` · `<AffiliateButton>` · `<ExecutiveSummary>` · `<CollapsibleSection>` · `<ComparisonTable>` · `<SimpleComparison>` · `<BrokerComparison>` · `<EnterpriseTable>` · `<FAQ>` · `<Pros>` · `<Cons>` · `<Info>` · `<Warning>` · `<Tip>` · `<EvidenceCarousel>` · `<NewsletterBox>` · `<WinnerAtGlance>`
 
 ---
 
-*SmartFinPro.com | AGENTS.md | v1.0 | März 2026*
+*SmartFinPro.com | AGENTS.md | v1.1 | März 2026*
