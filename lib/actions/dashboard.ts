@@ -6,7 +6,7 @@ import { logger } from '@/lib/logging';
 
 import { createServiceClient } from '@/lib/supabase/server';
 import type { LinkClick, Conversion, AffiliateLink, PageView } from '@/lib/supabase/types';
-import { toUSD, loadFxRates, getFxRatesSnapshot, HARDCODED_FX } from '@/lib/actions/revenue';
+import { toUSD, loadFxRates, getFxRatesSnapshot, HARDCODED_FX } from '@/lib/fx-rates';
 
 // ============================================================
 // SAFE QUERY HELPER
