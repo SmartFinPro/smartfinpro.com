@@ -132,7 +132,7 @@ export function StickyFooterCTA({
             {/* Desktop dismiss */}
             <button
               onClick={dismiss}
-              className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+              className="rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-600"
               aria-label="Close"
             >
               <X className="h-4 w-4" />
@@ -151,7 +151,7 @@ export function StickyFooterCTA({
             </div>
             <button
               onClick={dismiss}
-              className="shrink-0 rounded p-1 text-gray-400 hover:text-gray-600"
+              className="shrink-0 rounded p-1 text-gray-500 hover:text-gray-600"
               aria-label="Close"
             >
               <X className="h-3.5 w-3.5" />

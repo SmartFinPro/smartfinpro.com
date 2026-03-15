@@ -115,7 +115,7 @@ function MobileMarketLinks({ market, prefix, onClose }: { market: Market; prefix
     <>
       {market === 'us' && (
         <>
-          <div className="mt-2 pt-2 border-t border-gray-200"><p className="px-3 py-1 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Credit Cards</p></div>
+          <div className="mt-2 pt-2 border-t border-gray-200"><p className="px-3 py-1 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Credit Cards</p></div>
           <Link href="/us/personal-finance/credit-cards-comparison" className={cls} style={{ color: 'var(--sfp-ink)' }} onClick={onClose}><CreditCard className="h-4 w-4" style={{ color: 'var(--sfp-gold)' }} /><span className="text-sm">Card Comparison</span><span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium" style={{ background: 'rgba(245,166,35,0.15)', color: 'var(--sfp-gold-dark)' }}>New</span></Link>
           <Link href="/us/personal-finance/amex-gold-card-review" className={cls} style={{ color: 'var(--sfp-ink)' }} onClick={onClose}><CreditCard className="h-4 w-4" style={{ color: 'var(--sfp-navy)' }} /><span className="text-sm">Amex Gold</span></Link>
           <Link href="/us/personal-finance/chase-sapphire-preferred-review" className={cls} style={{ color: 'var(--sfp-ink)' }} onClick={onClose}><CreditCard className="h-4 w-4" style={{ color: 'var(--sfp-navy)' }} /><span className="text-sm">Chase Sapphire Preferred</span></Link>
@@ -124,7 +124,7 @@ function MobileMarketLinks({ market, prefix, onClose }: { market: Market; prefix
       )}
       {market === 'ca' && (
         <>
-          <div className="mt-2 pt-2 border-t border-gray-200"><p className="px-3 py-1 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Wealthsimple</p></div>
+          <div className="mt-2 pt-2 border-t border-gray-200"><p className="px-3 py-1 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Wealthsimple</p></div>
           <Link href="/ca/personal-finance/wealthsimple-review" className={cls} style={{ color: 'var(--sfp-ink)' }} onClick={onClose}><Landmark className="h-4 w-4" style={{ color: 'var(--sfp-green)' }} /><span className="text-sm">Wealthsimple Review</span><span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium" style={{ background: 'rgba(26,107,58,0.12)', color: 'var(--sfp-green)' }}>Top</span></Link>
           <Link href="/ca/personal-finance/wealthsimple-tax" className={cls} style={{ color: 'var(--sfp-ink)' }} onClick={onClose}><Landmark className="h-4 w-4" style={{ color: 'var(--sfp-navy)' }} /><span className="text-sm">Wealthsimple Tax</span></Link>
           <Link href="/ca/personal-finance/wealthsimple-vs-questrade" className={cls} style={{ color: 'var(--sfp-ink)' }} onClick={onClose}><Landmark className="h-4 w-4" style={{ color: 'var(--sfp-navy)' }} /><span className="text-sm">vs Questrade</span></Link>
@@ -132,7 +132,7 @@ function MobileMarketLinks({ market, prefix, onClose }: { market: Market; prefix
       )}
       {market === 'au' && (
         <>
-          <div className="mt-2 pt-2 border-t border-gray-200"><p className="px-3 py-1 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Home Loans</p></div>
+          <div className="mt-2 pt-2 border-t border-gray-200"><p className="px-3 py-1 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Home Loans</p></div>
           <Link href="/au/personal-finance" className={cls} style={{ color: 'var(--sfp-ink)' }} onClick={onClose}><Home className="h-4 w-4" style={{ color: 'var(--sfp-gold)' }} /><span className="text-sm">Compare Home Loans</span><span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium" style={{ background: 'rgba(245,166,35,0.15)', color: 'var(--sfp-gold-dark)' }}>New</span></Link>
           <Link href="/au/personal-finance/athena-home-loans-review" className={cls} style={{ color: 'var(--sfp-ink)' }} onClick={onClose}><Home className="h-4 w-4" style={{ color: 'var(--sfp-navy)' }} /><span className="text-sm">Athena Home Loans</span></Link>
           <Link href="/au/personal-finance/commbank-home-loan-review" className={cls} style={{ color: 'var(--sfp-ink)' }} onClick={onClose}><Home className="h-4 w-4" style={{ color: 'var(--sfp-navy)' }} /><span className="text-sm">CommBank Home Loan</span></Link>
@@ -142,7 +142,7 @@ function MobileMarketLinks({ market, prefix, onClose }: { market: Market; prefix
       )}
       {market === 'uk' && (
         <>
-          <div className="mt-2 pt-2 border-t border-gray-200"><p className="px-3 py-1 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">ISA Investments</p></div>
+          <div className="mt-2 pt-2 border-t border-gray-200"><p className="px-3 py-1 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">ISA Investments</p></div>
           <Link href="/uk/personal-finance/vanguard-isa-review" className={cls} style={{ color: 'var(--sfp-ink)' }} onClick={onClose}><PiggyBank className="h-4 w-4" style={{ color: 'var(--sfp-green)' }} /><span className="text-sm">Vanguard ISA</span><span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium" style={{ background: 'rgba(26,107,58,0.12)', color: 'var(--sfp-green)' }}>Best</span></Link>
           <Link href="/uk/personal-finance/hargreaves-lansdown-isa-review" className={cls} style={{ color: 'var(--sfp-ink)' }} onClick={onClose}><PiggyBank className="h-4 w-4" style={{ color: 'var(--sfp-navy)' }} /><span className="text-sm">Hargreaves Lansdown ISA</span></Link>
           <Link href="/uk/personal-finance/fidelity-isa-review" className={cls} style={{ color: 'var(--sfp-ink)' }} onClick={onClose}><PiggyBank className="h-4 w-4" style={{ color: 'var(--sfp-navy)' }} /><span className="text-sm">Fidelity ISA</span></Link>
@@ -276,7 +276,7 @@ export default function Header({ market: marketProp }: HeaderProps) {
                   <div key={group} className="border-b border-gray-200">
                     <button onClick={() => toggleMobileSection(group.toLowerCase())} className="flex items-center justify-between w-full py-4 text-sm font-medium" style={{ color: 'var(--sfp-navy)' }}>
                       {group}
-                      <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform duration-200 ${mobileExpanded === group.toLowerCase() ? 'rotate-180' : ''}`} />
+                      <ChevronDown className={`h-4 w-4 text-gray-500 transition-transform duration-200 ${mobileExpanded === group.toLowerCase() ? 'rotate-180' : ''}`} />
                     </button>
                     {mobileExpanded === group.toLowerCase() && (
                       <div className="pb-4 space-y-1">
@@ -303,7 +303,7 @@ export default function Header({ market: marketProp }: HeaderProps) {
                             {group === 'Investing' && <MobileMarketLinks market={market} prefix={prefix} onClose={() => setMobileMenuOpen(false)} />}
                             {group === 'Trading' && (
                               <>
-                                <div className="mt-2 pt-2 border-t border-gray-200"><p className="px-3 py-1 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Top Reviews</p></div>
+                                <div className="mt-2 pt-2 border-t border-gray-200"><p className="px-3 py-1 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Top Reviews</p></div>
                                 {brokerCards.slice(0, 4).map((broker) => (
                                   <Link key={broker.slug} href={`${prefix}/reviews/${broker.slug}`} className="flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-gray-100 transition-colors" style={{ color: 'var(--sfp-ink)' }} onClick={() => setMobileMenuOpen(false)}>
                                     <span className="text-sm">{broker.name}</span>
@@ -321,7 +321,7 @@ export default function Header({ market: marketProp }: HeaderProps) {
 
                 {/* Region */}
                 <div className="pt-6 pb-4">
-                  <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-3">Select Region</p>
+                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">Select Region</p>
                   <div className="space-y-1">
                     {Object.entries(marketConfig).map(([key, config]) => (
                       <Link key={key} href={key === 'us' ? '/' : `/${key}`} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${key === market ? 'font-semibold bg-gray-100' : 'hover:bg-gray-100'}`} style={{ color: key === market ? 'var(--sfp-navy)' : 'var(--sfp-ink)' }} onClick={() => setMobileMenuOpen(false)}>
@@ -360,7 +360,7 @@ export default function Header({ market: marketProp }: HeaderProps) {
                 .filter(({ group }) => group !== 'Tools' && activeMenu === group.toLowerCase())
                 .map(({ group, categories: groupCats }) => (
                   <div key={group}>
-                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">{group}</p>
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">{group}</p>
                     <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-8 gap-y-1">
                       {/* Category links — compact text-only */}
                       {groupCats.map((cat) => {
@@ -383,7 +383,7 @@ export default function Header({ market: marketProp }: HeaderProps) {
                       {/* Featured links for this market — inline in the grid */}
                       {featuredLinks.length > 0 && (
                         <div className="col-span-1 row-span-3">
-                          <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2 px-2">
+                          <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-2 px-2">
                             Featured in {currentMarket.name}
                           </p>
                           <div className="space-y-0.5">
@@ -408,7 +408,7 @@ export default function Header({ market: marketProp }: HeaderProps) {
                     {/* Broker reviews in Trading mega-panel — compact text pills */}
                     {group === 'Trading' && (
                       <div className="mt-4 pt-3 border-t border-gray-100">
-                        <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Broker Reviews</p>
+                        <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-2">Broker Reviews</p>
                         <div className="flex flex-wrap gap-2">
                           {brokerCards.map((broker) => (
                             <Link
@@ -432,7 +432,7 @@ export default function Header({ market: marketProp }: HeaderProps) {
               {/* Tools Mega-Menu — compact text-only */}
               {activeMenu === 'tools' && (
                 <div>
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">Free Tools & Calculators</p>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">Free Tools & Calculators</p>
                   <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-1">
                     {getToolCardsForMarket(market).map((tool) => (
                       <Link

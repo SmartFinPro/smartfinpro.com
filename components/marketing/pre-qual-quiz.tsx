@@ -142,7 +142,7 @@ export function PreQualQuiz({ slug, market, category, onClose }: PreQualQuizProp
             <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--sfp-navy)' }}>
               Quick Match
             </p>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-slate-500">
               Step {step + 1} of {questions.length}
             </p>
           </div>
@@ -151,7 +151,7 @@ export function PreQualQuiz({ slug, market, category, onClose }: PreQualQuizProp
             className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
             aria-label="Close quiz"
           >
-            <X className="w-4 h-4 text-slate-400" />
+            <X className="w-4 h-4 text-slate-500" />
           </button>
         </div>
 
@@ -183,7 +183,7 @@ export function PreQualQuiz({ slug, market, category, onClose }: PreQualQuizProp
           <button
             onClick={handleSkip}
             disabled={submitting}
-            className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-600 transition-colors disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-600 transition-colors disabled:opacity-50"
           >
             <SkipForward className="w-3 h-3" />
             <span>Skip — go directly</span>
