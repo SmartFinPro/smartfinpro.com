@@ -2,6 +2,10 @@
 // PRLog.org free press release submission
 // Also handles PR.com and OpenPR.com as fallback channels
 // These are free-tier PR distribution sites (DA 55-65)
+//
+// Credential Priority: env vars → system_settings DB (dashboard-managed)
+
+import { getBacklinkCredentialsRaw } from '@/lib/actions/settings';
 
 export interface PressReleasePayload {
   title: string;           // Max 100 chars
@@ -74,14 +78,16 @@ export async function submitEINPresswire(params: {
   category: string;
   targetUrl: string;
 }): Promise<{ success: boolean; url?: string; error?: string }> {
-  const apiKey = process.env.EIN_PRESSWIRE_API_KEY;
+  let apiKey = process.env.EIN_PRESSWIRE_API_KEY;
+  if (!apiKey) {
+    const dbCreds = await getBacklinkCredentialsRaw();
+    apiKey = dbCreds.ein_presswire_api_key;
+  }
 
   if (!apiKey) {
-    // Return the payload formatted for manual submission
-    const payload = buildPressReleasePayload(params);
     return {
       success: false,
-      error: 'EIN_PRESSWIRE_API_KEY not configured. Manual submission required.',
+      error: 'EIN Presswire API Key not configured. Set via Dashboard or env.',
     };
   }
 
@@ -123,8 +129,10 @@ export async function submitEINPresswire(params: {
 /**
  * Check if any PR distribution is configured
  */
-export function isPRConfigured(): boolean {
-  return !!(process.env.EIN_PRESSWIRE_API_KEY);
+export async function isPRConfigured(): Promise<boolean> {
+  if (process.env.EIN_PRESSWIRE_API_KEY) return true;
+  const dbCreds = await getBacklinkCredentialsRaw();
+  return !!dbCreds.ein_presswire_api_key;
 }
 
 /**

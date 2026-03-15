@@ -1,6 +1,7 @@
 // app/(dashboard)/dashboard/backlinks/page.tsx
-import { Link2, TrendingUp, AlertTriangle, CheckCircle2, Clock, ExternalLink, Globe } from 'lucide-react';
+import { Link2, TrendingUp, AlertTriangle, CheckCircle2, Clock, ExternalLink, Globe, Settings } from 'lucide-react';
 import { getBacklinkDashboardData } from '@/lib/actions/backlink-automation';
+import BacklinkCredentialsPanel from '@/components/dashboard/backlink-credentials';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -286,59 +287,97 @@ export default async function BacklinksDashboardPage() {
         </div>
       </div>
 
-      {/* Setup Guide */}
+      {/* Backlink Explorer — Alle Placements mit Details */}
+      {placements.length > 0 && (
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+          <div className="h-1" style={{ background: 'linear-gradient(90deg, var(--sfp-navy) 0%, var(--sfp-gold) 100%)' }} />
+          <div className="p-5">
+            <h2 className="text-base font-semibold text-slate-800 mb-4">
+              <Link2 className="inline h-4 w-4 mr-1" style={{ color: 'var(--sfp-navy)' }} />
+              Backlink Explorer — Alle Placements
+              <span className="ml-2 bg-blue-100 text-blue-700 text-xs font-medium px-2 py-0.5 rounded-full">
+                {placements.length} total
+              </span>
+            </h2>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr style={{ background: 'var(--sfp-sky)' }}>
+                    <th className="text-left px-3 py-2.5 text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--sfp-ink)' }}>Platform</th>
+                    <th className="text-left px-3 py-2.5 text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--sfp-ink)' }}>Source</th>
+                    <th className="text-left px-3 py-2.5 text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--sfp-ink)' }}>Target</th>
+                    <th className="text-left px-3 py-2.5 text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--sfp-ink)' }}>Anchor</th>
+                    <th className="text-left px-3 py-2.5 text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--sfp-ink)' }}>DA</th>
+                    <th className="text-left px-3 py-2.5 text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--sfp-ink)' }}>DoFollow</th>
+                    <th className="text-left px-3 py-2.5 text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--sfp-ink)' }}>Status</th>
+                    <th className="text-left px-3 py-2.5 text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--sfp-ink)' }}>Erstellt</th>
+                    <th className="text-left px-3 py-2.5 text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--sfp-ink)' }}>Verifiziert</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {placements.map((p, i) => (
+                    <tr key={p.id} style={{ background: i % 2 === 0 ? 'white' : 'var(--sfp-gray)' }}>
+                      <td className="px-3 py-2.5">
+                        <PlatformBadge platform={p.platform} />
+                      </td>
+                      <td className="px-3 py-2.5 max-w-[180px]">
+                        <a
+                          href={p.source_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-500 hover:text-blue-700 text-xs truncate block flex items-center gap-1"
+                        >
+                          <ExternalLink className="h-3 w-3 flex-shrink-0" />
+                          <span className="truncate">{new URL(p.source_url).hostname.replace('www.', '')}</span>
+                        </a>
+                      </td>
+                      <td className="px-3 py-2.5 max-w-[140px] text-xs text-slate-600 truncate">
+                        {p.target_url ?? '—'}
+                      </td>
+                      <td className="px-3 py-2.5 max-w-[120px] text-xs text-slate-600 truncate">
+                        {p.anchor_text ?? '—'}
+                      </td>
+                      <td className="px-3 py-2.5">
+                        <DaBadge da={p.domain_authority} />
+                      </td>
+                      <td className="px-3 py-2.5">
+                        {p.is_dofollow !== false ? (
+                          <span className="text-green-600 text-xs font-medium">DoFollow</span>
+                        ) : (
+                          <span className="text-slate-400 text-xs">NoFollow</span>
+                        )}
+                      </td>
+                      <td className="px-3 py-2.5">
+                        <StatusBadge status={p.status} />
+                      </td>
+                      <td className="px-3 py-2.5 text-xs text-slate-500 tabular-nums whitespace-nowrap">
+                        {p.discovered_at ? new Date(p.discovered_at).toLocaleDateString('de-DE') : '—'}
+                      </td>
+                      <td className="px-3 py-2.5 text-xs text-slate-500 tabular-nums whitespace-nowrap">
+                        {p.last_verified_at ? new Date(p.last_verified_at).toLocaleDateString('de-DE') : '—'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Credential Manager */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
         <div className="h-1" style={{ background: 'linear-gradient(90deg, var(--sfp-navy) 0%, var(--sfp-gold) 100%)' }} />
         <div className="p-5">
-          <h2 className="text-base font-semibold text-slate-800 mb-4">⚙️ Setup Guide — Plattform-Accounts</h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {[
-              {
-                platform: 'Reddit',
-                emoji: '🟠',
-                envVars: ['REDDIT_CLIENT_ID', 'REDDIT_CLIENT_SECRET', 'REDDIT_USERNAME', 'REDDIT_PASSWORD'],
-                setup: 'apps.reddit.com → Create App (script type)',
-                note: 'Account muss 30+ Tage alt + 50+ Karma haben',
-              },
-              {
-                platform: 'Medium',
-                emoji: '⚫',
-                envVars: ['MEDIUM_API_TOKEN'],
-                setup: 'medium.com/me/settings → Integration tokens',
-                note: 'Artikel erscheinen mit canonical link zu SmartFinPro',
-              },
-              {
-                platform: 'EIN Presswire',
-                emoji: '📢',
-                envVars: ['EIN_PRESSWIRE_API_KEY'],
-                setup: 'einpresswire.com → Free Account → API Key',
-                note: '3 gratis Press Releases/Monat',
-              },
-              {
-                platform: 'Daily Limit',
-                emoji: '⚡',
-                envVars: ['BACKLINKS_DAILY_LIMIT'],
-                setup: '.env.local → BACKLINKS_DAILY_LIMIT=10',
-                note: 'Max Posts pro Backlink-Post-Run (default: 10)',
-              },
-            ].map(item => (
-              <div key={item.platform} className="rounded-lg border border-slate-200 p-4" style={{ background: 'var(--sfp-gray)' }}>
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-lg">{item.emoji}</span>
-                  <span className="font-semibold text-slate-800 text-sm">{item.platform}</span>
-                </div>
-                <p className="text-xs text-slate-500 mb-2">{item.setup}</p>
-                <div className="space-y-1">
-                  {item.envVars.map(env => (
-                    <code key={env} className="block text-xs px-2 py-1 rounded font-mono" style={{ background: 'var(--sfp-sky)', color: 'var(--sfp-navy)' }}>
-                      {env}
-                    </code>
-                  ))}
-                </div>
-                <p className="text-xs text-slate-400 mt-2 italic">{item.note}</p>
-              </div>
-            ))}
-          </div>
+          <h2 className="text-base font-semibold text-slate-800 mb-4 flex items-center gap-2">
+            <Settings className="h-4 w-4" style={{ color: 'var(--sfp-navy)' }} />
+            Plattform-Zugangsdaten
+          </h2>
+          <p className="text-xs text-slate-500 mb-5">
+            API-Keys und Zugangsdaten direkt hier verwalten — alternativ auch per .env.local konfigurierbar.
+            Env-Vars haben Prioritaet vor Dashboard-Einstellungen.
+          </p>
+          <BacklinkCredentialsPanel />
         </div>
       </div>
 

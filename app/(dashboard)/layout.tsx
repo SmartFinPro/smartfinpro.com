@@ -27,6 +27,7 @@ import {
   Activity,
   FlaskConical,
   TrendingUp,
+  Globe,
   Menu,
   X,
 } from 'lucide-react';
@@ -78,6 +79,7 @@ const SIDEBAR_GROUPS: NavGroup[] = [
       { name: 'Ranking Tracker', href: '/dashboard/ranking', icon: Search },
       { name: 'Competitor Radar', href: '/dashboard/competitors', icon: Radar, exact: true },
       { name: 'Keyword Gaps', href: '/dashboard/competitors/gaps', icon: Crosshair },
+      { name: 'Backlink Automation', href: '/dashboard/backlinks', icon: Globe },
     ],
   },
   {

@@ -294,7 +294,7 @@ export async function postBacklinkOpportunity(
   let result: { success: boolean; url?: string; error?: string } = { success: false };
 
   // ── Route to correct platform ──────────────────────────────────────────
-  if (opportunity.platform === 'reddit' && isRedditConfigured()) {
+  if (opportunity.platform === 'reddit' && await isRedditConfigured()) {
     // Extra check: verify thread isn't too busy or already has our link
     const threadInfo = await getRedditThreadInfo(opportunity.source_url);
     if (threadInfo && threadInfo.commentCount > 50) {
@@ -310,7 +310,7 @@ export async function postBacklinkOpportunity(
       result = { success: false, error: postResult.error };
     }
 
-  } else if (opportunity.platform === 'medium' && isMediumConfigured()) {
+  } else if (opportunity.platform === 'medium' && await isMediumConfigured()) {
     const targetPath = opportunity.target_url.startsWith('http')
       ? opportunity.target_url
       : `${SITE_URL}${opportunity.target_url}`;

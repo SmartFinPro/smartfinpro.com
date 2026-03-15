@@ -1,6 +1,10 @@
 // lib/backlinks/reddit-client.ts
 // Reddit OAuth2 client for posting comments on relevant threads
 // Uses Reddit's official API: https://www.reddit.com/dev/api/
+//
+// Credential Priority: env vars → system_settings DB (dashboard-managed)
+
+import { getBacklinkCredentialsRaw } from '@/lib/actions/settings';
 
 interface RedditTokenResponse {
   access_token: string;
@@ -38,13 +42,22 @@ async function getRedditToken(): Promise<string> {
     return cachedToken.token;
   }
 
-  const clientId = process.env.REDDIT_CLIENT_ID;
-  const clientSecret = process.env.REDDIT_CLIENT_SECRET;
-  const username = process.env.REDDIT_USERNAME;
-  const password = process.env.REDDIT_PASSWORD;
+  // Priority: env vars → DB (dashboard-managed)
+  let clientId = process.env.REDDIT_CLIENT_ID;
+  let clientSecret = process.env.REDDIT_CLIENT_SECRET;
+  let username = process.env.REDDIT_USERNAME;
+  let password = process.env.REDDIT_PASSWORD;
 
   if (!clientId || !clientSecret || !username || !password) {
-    throw new Error('Reddit OAuth credentials not configured. Set REDDIT_CLIENT_ID, REDDIT_CLIENT_SECRET, REDDIT_USERNAME, REDDIT_PASSWORD');
+    const dbCreds = await getBacklinkCredentialsRaw();
+    clientId = clientId || dbCreds.reddit_client_id;
+    clientSecret = clientSecret || dbCreds.reddit_client_secret;
+    username = username || dbCreds.reddit_username;
+    password = password || dbCreds.reddit_password;
+  }
+
+  if (!clientId || !clientSecret || !username || !password) {
+    throw new Error('Reddit OAuth credentials not configured. Set via Dashboard or env vars.');
   }
 
   const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
@@ -136,12 +149,21 @@ export async function postRedditComment(
 /**
  * Check if Reddit credentials are configured
  */
-export function isRedditConfigured(): boolean {
-  return !!(
+export async function isRedditConfigured(): Promise<boolean> {
+  if (
     process.env.REDDIT_CLIENT_ID &&
     process.env.REDDIT_CLIENT_SECRET &&
     process.env.REDDIT_USERNAME &&
     process.env.REDDIT_PASSWORD
+  ) return true;
+
+  // Check DB fallback
+  const dbCreds = await getBacklinkCredentialsRaw();
+  return !!(
+    dbCreds.reddit_client_id &&
+    dbCreds.reddit_client_secret &&
+    dbCreds.reddit_username &&
+    dbCreds.reddit_password
   );
 }
 

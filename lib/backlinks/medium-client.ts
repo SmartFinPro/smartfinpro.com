@@ -1,6 +1,10 @@
 // lib/backlinks/medium-client.ts
 // Medium API client for publishing condensed articles with canonical backlinks
 // API Docs: https://github.com/Medium/medium-api-docs
+//
+// Credential Priority: env vars → system_settings DB (dashboard-managed)
+
+import { getBacklinkCredentialsRaw } from '@/lib/actions/settings';
 
 interface MediumUser {
   id: string;
@@ -59,9 +63,13 @@ export async function publishMediumArticle(params: {
   canonicalUrl: string;
   tags: string[];
 }): Promise<{ success: true; url: string } | { success: false; error: string }> {
-  const token = process.env.MEDIUM_API_TOKEN;
+  let token = process.env.MEDIUM_API_TOKEN;
   if (!token) {
-    return { success: false, error: 'MEDIUM_API_TOKEN not configured' };
+    const dbCreds = await getBacklinkCredentialsRaw();
+    token = dbCreds.medium_api_token;
+  }
+  if (!token) {
+    return { success: false, error: 'Medium API Token not configured. Set via Dashboard or env.' };
   }
 
   try {
@@ -101,8 +109,10 @@ export async function publishMediumArticle(params: {
 /**
  * Check if Medium API is configured
  */
-export function isMediumConfigured(): boolean {
-  return !!process.env.MEDIUM_API_TOKEN;
+export async function isMediumConfigured(): Promise<boolean> {
+  if (process.env.MEDIUM_API_TOKEN) return true;
+  const dbCreds = await getBacklinkCredentialsRaw();
+  return !!dbCreds.medium_api_token;
 }
 
 /**

@@ -36,6 +36,16 @@ export interface SystemSettings {
   guardian_enabled: string;
 }
 
+export interface BacklinkCredentials {
+  reddit_client_id: string;
+  reddit_client_secret: string;
+  reddit_username: string;
+  reddit_password: string;
+  medium_api_token: string;
+  ein_presswire_api_key: string;
+  backlinks_daily_limit: string;
+}
+
 export type SettingsKey = keyof SystemSettings;
 
 /** Keys that are sensitive and should be masked on read */
@@ -43,6 +53,16 @@ const SENSITIVE_KEYS: SettingsKey[] = [
   'anthropic_api_key',
   'serper_api_key',
   'google_indexing_json',
+];
+
+/** Backlink credential keys that should be masked */
+const BACKLINK_SENSITIVE_KEYS: (keyof BacklinkCredentials)[] = [
+  'reddit_client_id',
+  'reddit_client_secret',
+  'reddit_username',
+  'reddit_password',
+  'medium_api_token',
+  'ein_presswire_api_key',
 ];
 
 const MASK = '\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022';
@@ -473,5 +493,272 @@ export async function globalReset(): Promise<{
     const msg = err instanceof Error ? err.message : 'Unknown error';
     logger.error('[settings] globalReset failed:', msg);
     return { success: false, deleted, error: msg };
+  }
+}
+
+// ════════════════════════════════════════════════════════════════
+// BACKLINK CREDENTIALS — Separate read/write for backlink platform keys
+// ════════════════════════════════════════════════════════════════
+
+const BACKLINK_DEFAULTS: BacklinkCredentials = {
+  reddit_client_id: '',
+  reddit_client_secret: '',
+  reddit_username: '',
+  reddit_password: '',
+  medium_api_token: '',
+  ein_presswire_api_key: '',
+  backlinks_daily_limit: '10',
+};
+
+/** Category map for backlink settings upsert */
+const BACKLINK_CATEGORY_MAP: Record<string, string> = {
+  reddit_client_id: 'backlink_credentials',
+  reddit_client_secret: 'backlink_credentials',
+  reddit_username: 'backlink_credentials',
+  reddit_password: 'backlink_credentials',
+  medium_api_token: 'backlink_credentials',
+  ein_presswire_api_key: 'backlink_credentials',
+  backlinks_daily_limit: 'backlink_config',
+};
+
+/**
+ * Get backlink credentials — masked for dashboard display.
+ * For actual credential values (cron jobs), use getBacklinkCredentialsRaw().
+ */
+export async function getBacklinkCredentials(): Promise<BacklinkCredentials> {
+  const supabase = createServiceClient();
+
+  const { data, error } = await supabase
+    .from('system_settings')
+    .select('key, value')
+    .in('category', ['backlink_credentials', 'backlink_config']);
+
+  if (error || !data) return { ...BACKLINK_DEFAULTS };
+
+  const settings = { ...BACKLINK_DEFAULTS };
+  for (const row of data) {
+    const key = row.key as keyof BacklinkCredentials;
+    if (key in settings) {
+      if (BACKLINK_SENSITIVE_KEYS.includes(key) && row.value && row.value.length > 0) {
+        settings[key] = MASK;
+      } else {
+        settings[key] = row.value ?? '';
+      }
+    }
+  }
+
+  return settings;
+}
+
+/**
+ * Get raw (unmasked) backlink credentials — ONLY for server-side use (cron jobs, platform clients).
+ */
+export async function getBacklinkCredentialsRaw(): Promise<BacklinkCredentials> {
+  const supabase = createServiceClient();
+
+  const { data, error } = await supabase
+    .from('system_settings')
+    .select('key, value')
+    .in('category', ['backlink_credentials', 'backlink_config']);
+
+  if (error || !data) return { ...BACKLINK_DEFAULTS };
+
+  const settings = { ...BACKLINK_DEFAULTS };
+  for (const row of data) {
+    const key = row.key as keyof BacklinkCredentials;
+    if (key in settings) {
+      settings[key] = row.value ?? '';
+    }
+  }
+
+  return settings;
+}
+
+/**
+ * Get credential status for backlink platforms (configured or not).
+ */
+export async function getBacklinkCredentialStatus(): Promise<Record<string, boolean>> {
+  const supabase = createServiceClient();
+
+  const { data } = await supabase
+    .from('system_settings')
+    .select('key, value')
+    .eq('category', 'backlink_credentials');
+
+  const status: Record<string, boolean> = {
+    reddit: false,
+    medium: false,
+    ein_presswire: false,
+  };
+
+  const values: Record<string, string> = {};
+  for (const row of (data || [])) {
+    values[row.key] = row.value ?? '';
+  }
+
+  // Reddit needs all 4 credentials
+  status.reddit = !!(
+    values.reddit_client_id &&
+    values.reddit_client_secret &&
+    values.reddit_username &&
+    values.reddit_password
+  );
+  status.medium = !!(values.medium_api_token);
+  status.ein_presswire = !!(values.ein_presswire_api_key);
+
+  return status;
+}
+
+/**
+ * Update backlink credentials. Skips masked values.
+ */
+export async function updateBacklinkCredentials(
+  updates: Partial<BacklinkCredentials>,
+): Promise<{ success: boolean; error?: string }> {
+  const supabase = createServiceClient();
+
+  try {
+    for (const [key, value] of Object.entries(updates)) {
+      if (value === MASK) continue;
+
+      // Validate daily limit
+      if (key === 'backlinks_daily_limit') {
+        const num = Number(value);
+        if (isNaN(num) || num < 1 || num > 50) {
+          return { success: false, error: 'Daily Limit muss zwischen 1 und 50 liegen.' };
+        }
+      }
+
+      const category = BACKLINK_CATEGORY_MAP[key] || 'backlink_credentials';
+
+      const { error } = await supabase
+        .from('system_settings')
+        .upsert(
+          { key, value: value ?? '', category, updated_at: new Date().toISOString() },
+          { onConflict: 'key' },
+        );
+
+      if (error) {
+        logger.error(`[settings] Failed to update backlink credential ${key}:`, error.message);
+        return { success: false, error: `Fehler beim Speichern: ${error.message}` };
+      }
+    }
+
+    return { success: true };
+  } catch (err) {
+    Sentry.captureException(err);
+    const msg = err instanceof Error ? err.message : 'Unknown error';
+    return { success: false, error: msg };
+  }
+}
+
+// ── Backlink Connection Tests ────────────────────────────────
+
+/**
+ * Test Reddit OAuth2 connection with provided credentials.
+ */
+export async function testRedditConnection(
+  credentials: { clientId: string; clientSecret: string; username: string; password: string },
+): Promise<ConnectionTestResult> {
+  const start = Date.now();
+
+  try {
+    // Resolve masked values from DB
+    const raw = await getBacklinkCredentialsRaw();
+    const clientId = credentials.clientId === MASK ? raw.reddit_client_id : credentials.clientId;
+    const clientSecret = credentials.clientSecret === MASK ? raw.reddit_client_secret : credentials.clientSecret;
+    const username = credentials.username === MASK ? raw.reddit_username : credentials.username;
+    const password = credentials.password === MASK ? raw.reddit_password : credentials.password;
+
+    if (!clientId || !clientSecret || !username || !password) {
+      return { success: false, message: 'Alle 4 Reddit-Felder muessen ausgefuellt sein.' };
+    }
+
+    const basicAuth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
+
+    const res = await fetch('https://www.reddit.com/api/v1/access_token', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Basic ${basicAuth}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'User-Agent': 'SmartFinPro/1.0',
+      },
+      body: `grant_type=password&username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`,
+    });
+
+    const latencyMs = Date.now() - start;
+    const data = await res.json();
+
+    if (data.access_token) {
+      return {
+        success: true,
+        message: `Verbunden als u/${username} (${latencyMs}ms)`,
+        latencyMs,
+      };
+    }
+
+    return {
+      success: false,
+      message: data.error === 'invalid_grant'
+        ? 'Ungueltige Zugangsdaten (Username/Passwort).'
+        : `Reddit-Fehler: ${data.error || 'Unbekannt'}`,
+      latencyMs,
+    };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'Unknown error';
+    return { success: false, message: `Fehler: ${msg}`, latencyMs: Date.now() - start };
+  }
+}
+
+/**
+ * Test Medium API connection — fetches user profile.
+ */
+export async function testMediumConnection(
+  tokenOverride?: string,
+): Promise<ConnectionTestResult> {
+  const start = Date.now();
+
+  try {
+    let token = tokenOverride;
+    if (!token || token === MASK) {
+      const raw = await getBacklinkCredentialsRaw();
+      token = raw.medium_api_token;
+    }
+
+    if (!token) {
+      return { success: false, message: 'Kein API-Token konfiguriert.' };
+    }
+
+    const res = await fetch('https://api.medium.com/v1/me', {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+    });
+
+    const latencyMs = Date.now() - start;
+
+    if (!res.ok) {
+      return {
+        success: false,
+        message: res.status === 401
+          ? 'Ungueltiger Token (401 Unauthorized).'
+          : `Medium API Fehler: HTTP ${res.status}`,
+        latencyMs,
+      };
+    }
+
+    const data = await res.json();
+    const name = data.data?.name || data.data?.username || 'Unbekannt';
+
+    return {
+      success: true,
+      message: `Verbunden als "${name}" (${latencyMs}ms)`,
+      latencyMs,
+    };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'Unknown error';
+    return { success: false, message: `Fehler: ${msg}`, latencyMs: Date.now() - start };
   }
 }
