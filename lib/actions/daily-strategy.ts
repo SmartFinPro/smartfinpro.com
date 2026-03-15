@@ -145,18 +145,19 @@ async function collectDailyData() {
   const indexedRuns = completedRuns.filter((r) => r.indexedAt);
 
   // Milestone detection — check if any market just hit 100 clicks
-  // Query clicks table to get all-time clicks per market
+  // Query link_clicks joined with affiliate_links to get market data
   const { data: allTimeClicksByMarket } = await supabase
-    .from('clicks')
-    .select('market', { count: 'exact' })
-    .not('market', 'is', null);
+    .from('link_clicks')
+    .select('affiliate_links!inner(market)')
+    .not('affiliate_links.market', 'is', null);
 
   const milestoneAlerts: string[] = [];
   const clicksByMarket = new Map<string, number>();
 
-  // Count clicks per market
+  // Count clicks per market (market comes from joined affiliate_links)
   for (const click of (allTimeClicksByMarket || [])) {
-    const market = (click.market as string) || 'us';
+    const affiliateLink = click.affiliate_links as unknown as { market: string } | null;
+    const market = affiliateLink?.market || 'us';
     clicksByMarket.set(market, (clicksByMarket.get(market) || 0) + 1);
   }
 
