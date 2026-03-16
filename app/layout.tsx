@@ -16,6 +16,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
+  verification: {
+    google: 'LiEOc7kngm8lF2HFwxZQUe14t3imoM-q8lANKDYQfvM',
+  },
   title: {
     default: 'SmartFinPro - Financial Intelligence for Modern Professionals',
     template: '%s | SmartFinPro',
