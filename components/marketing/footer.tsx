@@ -244,7 +244,7 @@ export function Footer({ market: marketProp }: FooterProps) {
               Imprint
             </Link>
             <span className="text-sm" style={{ color: 'var(--sfp-slate)' }} suppressHydrationWarning>
-              &copy; {new Date().getFullYear()} SmartFinPro. All rights reserved.
+              &copy; {new Date().getFullYear()} SmartFinPro.com — All rights reserved. Unauthorized reproduction, copying or distribution of content, reviews or data is strictly prohibited.
             </span>
           </div>
         </div>
