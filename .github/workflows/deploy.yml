@@ -65,6 +65,7 @@ jobs:
           TELEGRAM_CHAT_ID=${{ secrets.TELEGRAM_CHAT_ID }}
           CRON_SECRET=${{ secrets.CRON_SECRET }}
           SERPER_API_KEY=${{ secrets.SERPER_API_KEY }}
+          DASHBOARD_SECRET=${{ secrets.DASHBOARD_SECRET }}
           EOF
           echo "✅ .env written ($(wc -l < .next/standalone/.env) lines)"
 
