@@ -1,0 +1,208 @@
+/* ============================================================
+   DASHBOARD DESIGN SYSTEM - Canua-inspired Clean Fintech
+   ============================================================ */
+
+/* Dashboard color palette */
+.dashboard {
+  --dash-bg: #f8fafc;
+  --dash-sidebar: #ffffff;
+  --dash-card: #ffffff;
+  --dash-border: #e2e8f0;
+  --dash-text: #1e293b;
+  --dash-text-muted: #64748b;
+  --dash-primary: #7c3aed;
+  --dash-primary-light: #ede9fe;
+  --dash-secondary: #0f172a;
+  --dash-accent-blue: #00d4ff;
+  --dash-accent-mint: #a78bfa;
+  --dash-success: #8b5cf6;
+  --dash-danger: #ef4444;
+
+  /* Override shadcn defaults for light dashboard */
+  --primary: #7c3aed;
+  --primary-foreground: #ffffff;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --accent: #f1f5f9;
+  --accent-foreground: #1e293b;
+  --secondary: #f1f5f9;
+  --secondary-foreground: #1e293b;
+}
+
+/* Dashboard Layout */
+.dashboard-layout {
+  background: var(--dash-bg);
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* Dashboard Sidebar */
+.dashboard-sidebar {
+  background: var(--dash-sidebar);
+  border-right: 1px solid var(--dash-border);
+}
+
+.dashboard-sidebar .nav-item {
+  color: var(--dash-text-muted);
+  border-radius: 0.5rem;
+  transition: all 0.15s ease;
+}
+
+.dashboard-sidebar .nav-item:hover {
+  background: var(--dash-primary-light);
+  color: var(--dash-primary);
+}
+
+.dashboard-sidebar .nav-item .icon {
+  color: currentColor;
+}
+
+/* Dashboard Cards */
+.dashboard-card {
+  background: var(--dash-card);
+  border: 1px solid var(--dash-border);
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: box-shadow 0.2s ease;
+}
+
+.dashboard-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+/* Dashboard Stat Cards */
+.dashboard-stat {
+  position: relative;
+}
+
+.dashboard-stat .stat-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.625rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dashboard-stat .stat-icon.green {
+  background: var(--dash-primary-light);
+  color: var(--dash-primary);
+}
+
+.dashboard-stat .stat-icon.blue {
+  background: #dbeafe;
+  color: #2563eb;
+}
+
+.dashboard-stat .stat-icon.purple {
+  background: #ede9fe;
+  color: #7c3aed;
+}
+
+.dashboard-stat .stat-icon.amber {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.dashboard-stat .stat-value {
+  font-size: 1.875rem;
+  font-weight: 600;
+  color: var(--dash-text);
+  line-height: 1.2;
+}
+
+.dashboard-stat .stat-label {
+  font-size: 0.875rem;
+  color: var(--dash-text-muted);
+}
+
+.dashboard-stat .stat-change {
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.dashboard-stat .stat-change.positive {
+  color: var(--dash-success);
+}
+
+.dashboard-stat .stat-change.negative {
+  color: var(--dash-danger);
+}
+
+/* Dashboard Header */
+.dashboard-header {
+  background: var(--dash-card);
+  border-bottom: 1px solid var(--dash-border);
+}
+
+/* Dashboard Button Primary */
+.dashboard-btn-primary {
+  background: var(--dash-primary);
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.dashboard-btn-primary:hover {
+  background: #059669;
+}
+
+/* Dashboard Charts - Donut style */
+.dashboard-donut {
+  --donut-navy: #1a0f2e;
+  --donut-teal: #00d4ff;
+  --donut-mint: #a78bfa;
+  --donut-light-mint: #c4b5fd;
+}
+
+/* Dashboard Table */
+.dashboard-table {
+  width: 100%;
+}
+
+.dashboard-table th {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--dash-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--dash-border);
+}
+
+.dashboard-table td {
+  padding: 0.875rem 1rem;
+  border-bottom: 1px solid var(--dash-border);
+  color: var(--dash-text);
+}
+
+.dashboard-table tr:last-child td {
+  border-bottom: none;
+}
+
+/* Dashboard Progress Bar */
+.dashboard-progress {
+  height: 0.5rem;
+  background: #e2e8f0;
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.dashboard-progress .bar {
+  height: 100%;
+  border-radius: 9999px;
+  transition: width 0.3s ease;
+}
+
+.dashboard-progress .bar.green {
+  background: linear-gradient(90deg, var(--dash-primary), var(--dash-accent-mint));
+}
+
+.dashboard-progress .bar.blue {
+  background: linear-gradient(90deg, var(--dash-accent-blue), #8b5cf6);
+}

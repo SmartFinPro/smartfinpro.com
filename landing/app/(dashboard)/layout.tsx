@@ -1,0 +1,227 @@
+'use client';
+
+import './dashboard.css';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import {
+  LayoutDashboard,
+  Link2,
+  BarChart3,
+  DollarSign,
+  Settings,
+  LogOut,
+  Sparkles,
+  Shield,
+  Search,
+  Bell,
+  ChevronDown,
+  Radar,
+  Crosshair,
+  FileText,
+  Rocket,
+  Flame,
+  ClipboardCheck,
+  Brain,
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
+// Server action imports removed — loaded dynamically in useEffect to prevent
+// Turbopack from bundling 'use server' modules into the [app-client] chunk.
+
+// ── Grouped Sidebar Navigation ──────────────────────────────
+
+interface NavLink {
+  name: string;
+  href: string;
+  icon: React.ComponentType<{ className?: string }>;
+  /** Use exact matching only (no startsWith) */
+  exact?: boolean;
+  /** Show a dynamic badge (e.g., queue count) */
+  badgeKey?: string;
+}
+
+interface NavGroup {
+  label: string;
+  links: NavLink[];
+}
+
+const sidebarGroups: NavGroup[] = [
+  {
+    label: 'Overview',
+    links: [
+      { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, exact: true },
+      { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart3, exact: true },
+      { name: 'CTA Heatmap', href: '/dashboard/analytics/heatmap', icon: Flame },
+      { name: 'AI-Optimizer', href: '/dashboard/analytics/optimize', icon: Brain, badgeKey: 'optimize' },
+      { name: 'Revenue', href: '/dashboard/revenue', icon: DollarSign },
+    ],
+  },
+  {
+    label: 'Content & SEO',
+    links: [
+      { name: 'Auto-Genesis', href: '/dashboard/content/genesis', icon: Rocket },
+      { name: 'Approval Queue', href: '/dashboard/content/planning', icon: ClipboardCheck, badgeKey: 'planning' },
+      { name: 'Ranking Tracker', href: '/dashboard/ranking', icon: Search },
+      { name: 'Competitor Radar', href: '/dashboard/competitors', icon: Radar, exact: true },
+      { name: 'Keyword Gaps', href: '/dashboard/competitors/gaps', icon: Crosshair },
+    ],
+  },
+  {
+    label: 'Monetization',
+    links: [
+      { name: 'Affiliate Links', href: '/dashboard/links', icon: Link2 },
+      { name: 'Quiz Analytics', href: '/dashboard/quiz', icon: Sparkles },
+    ],
+  },
+  {
+    label: 'Operations',
+    links: [
+      { name: 'Compliance Audit', href: '/dashboard/compliance', icon: Shield },
+      { name: 'Settings', href: '/dashboard/settings', icon: Settings },
+    ],
+  },
+];
+
+function isLinkActive(pathname: string, link: NavLink): boolean {
+  if (link.exact) return pathname === link.href;
+  // Exact match or starts with href + "/" (prevents /competitors matching /competitors/gaps)
+  return pathname === link.href || pathname.startsWith(link.href + '/');
+}
+
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const pathname = usePathname();
+  const [badges, setBadges] = useState<Record<string, number>>({});
+
+  // Fetch queue counts for badge display (dynamic import to avoid client bundling)
+  useEffect(() => {
+    let cancelled = false;
+    async function fetchBadges() {
+      try {
+        const [{ getPlanningQueueCount }, { getOptimizationCount }] = await Promise.all([
+          import('@/lib/actions/daily-strategy'),
+          import('@/lib/actions/optimization-engine'),
+        ]);
+        const [planCount, optCount] = await Promise.all([
+          getPlanningQueueCount(),
+          getOptimizationCount(),
+        ]);
+        if (!cancelled) {
+          setBadges({ planning: planCount, optimize: optCount });
+        }
+      } catch {
+        // Silently ignore — badge is non-critical
+      }
+    }
+    fetchBadges();
+    return () => { cancelled = true; };
+  }, [pathname]); // Refetch when navigating
+
+  return (
+    <div className="dashboard flex min-h-screen dashboard-layout">
+      {/* Sidebar */}
+      <aside className="w-64 dashboard-sidebar hidden md:flex md:flex-col">
+        {/* Logo */}
+        <div className="flex items-center gap-2 px-6 pt-6 pb-4">
+          <div className="w-8 h-8 rounded-lg bg-violet-600 flex items-center justify-center">
+            <span className="text-white font-bold text-sm">SF</span>
+          </div>
+          <Link href="/dashboard" className="text-xl font-bold text-slate-800">
+            SmartFinPro
+          </Link>
+        </div>
+
+        {/* Grouped Navigation */}
+        <nav className="flex-1 overflow-y-auto px-4 pb-4 space-y-5">
+          {sidebarGroups.map((group) => (
+            <div key={group.label}>
+              <p className="px-3 mb-1.5 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                {group.label}
+              </p>
+              <div className="space-y-0.5">
+                {group.links.map((link) => {
+                  const active = isLinkActive(pathname, link);
+                  return (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      className={cn(
+                        'nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] transition-all',
+                        active
+                          ? 'bg-violet-50 text-violet-700 font-semibold'
+                          : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700 font-medium',
+                      )}
+                    >
+                      <link.icon
+                        className={cn(
+                          'h-4 w-4 shrink-0',
+                          active ? 'text-violet-500' : 'text-slate-400',
+                        )}
+                      />
+                      <span className="truncate flex-1">{link.name}</span>
+                      {link.badgeKey && badges[link.badgeKey] > 0 && (
+                        <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold bg-emerald-500 text-white">
+                          {badges[link.badgeKey]}
+                        </span>
+                      )}
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </nav>
+
+        {/* Bottom Links */}
+        <div className="px-4 py-4 border-t border-slate-200">
+          <Link
+            href="/"
+            className="nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] text-slate-500 hover:bg-slate-50 hover:text-slate-700 font-medium transition-all"
+          >
+            <LogOut className="h-4 w-4 text-slate-400" />
+            <span>Back to Site</span>
+          </Link>
+        </div>
+      </aside>
+
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Top Bar */}
+        <header className="h-14 dashboard-header px-6 flex items-center justify-between shrink-0">
+          <div className="md:hidden">
+            <div className="w-8 h-8 rounded-lg bg-violet-600 flex items-center justify-center">
+              <span className="text-white font-bold text-sm">SF</span>
+            </div>
+          </div>
+
+          <div className="flex-1" />
+
+          <div className="flex items-center gap-3">
+            {/* Account Selector */}
+            <button className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-slate-100 transition-colors">
+              <div className="w-2 h-2 rounded-full bg-emerald-500" />
+              <span className="text-sm font-medium text-slate-700">SmartFinPro Analytics</span>
+              <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
+            </button>
+
+            {/* Notifications */}
+            <button className="relative p-2 rounded-lg hover:bg-slate-100 transition-colors">
+              <Bell className="h-4.5 w-4.5 text-slate-500" />
+            </button>
+
+            {/* User Avatar */}
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center">
+              <span className="text-white font-medium text-xs">CB</span>
+            </div>
+          </div>
+        </header>
+
+        {/* Page Content */}
+        <main className="flex-1 p-6 overflow-auto bg-slate-50">{children}</main>
+      </div>
+    </div>
+  );
+}

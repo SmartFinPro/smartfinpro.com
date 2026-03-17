@@ -1,0 +1,119 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { runSpikeMonitor } from '@/lib/actions/spike-monitor';
+
+/**
+ * CTA Spike Monitor — Cron Job
+ *
+ * Compares CTA clicks in the last 60 minutes against the 7-day rolling
+ * average per slug. If clicks exceed 300% of the average:
+ *   1. Sends a Telegram spike alert
+ *   2. AUTO-PILOT: Updates content_overrides.boost_date
+ *   3. AUTO-PILOT: Fires DEPLOY_HOOK_URL for Cloudways rebuild
+ *   4. Records 24h cooldown per slug (build-loop prevention)
+ *
+ * Schedule: Every 15 minutes
+ *
+ * Self-hosted crontab entry:
+ *   *\/15 * * * * curl -sf -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/cron/spike-monitor >> /home/master/applications/smartfinpro/logs/cron.log 2>&1
+ */
+export async function GET(request: NextRequest) {
+  // Verify CRON_SECRET
+  const authHeader = request.headers.get('authorization');
+  const cronSecret = process.env.CRON_SECRET;
+
+  if (!cronSecret || cronSecret.startsWith('your-')) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  // Allow dev bypass
+  const isDev = process.env.NODE_ENV === 'development';
+  const isAuthenticated = authHeader === `Bearer ${cronSecret}`;
+
+  if (!isAuthenticated && !isDev) {
+    console.warn(
+      `[spike-monitor] Unauthorized attempt from ${request.headers.get('x-forwarded-for') || 'unknown'}`,
+    );
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  try {
+    const startTime = Date.now();
+    const result = await runSpikeMonitor();
+    const duration = ((Date.now() - startTime) / 1000).toFixed(1);
+
+    console.log(
+      `[spike-monitor] Complete: ${result.scanned} slugs, ${result.spikesDetected} spikes, ${result.alertsSent} alerts, ${result.autoPilotRuns} auto-pilot (${result.highPriorityRuns} high-priority), ${result.cooldownSkips} cooldowns, ${result.ctrGateBlocks} CTR-blocked, ${duration}s`,
+    );
+
+    // Guardian: API connectivity check (fail-safe — never blocks spike-monitor)
+    let guardianResult: {
+      checked: number;
+      failures: number;
+      alertsSent: number;
+      errors: string[];
+    } | null = null;
+
+    try {
+      const { checkAllApiConnectivities } = await import('@/lib/actions/guardian');
+      guardianResult = await checkAllApiConnectivities();
+      if (guardianResult.checked > 0) {
+        console.log(
+          `[guardian] Checked ${guardianResult.checked} APIs, ${guardianResult.failures} failures, ${guardianResult.alertsSent} alerts sent`,
+        );
+      }
+    } catch (guardianErr) {
+      console.error(
+        '[spike-monitor] Guardian check failed (non-blocking):',
+        guardianErr instanceof Error ? guardianErr.message : 'Unknown error',
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      scanned: result.scanned,
+      spikesDetected: result.spikesDetected,
+      alertsSent: result.alertsSent,
+      autoPilot: {
+        runs: result.autoPilotRuns,
+        highPriorityRuns: result.highPriorityRuns,
+        cooldownSkips: result.cooldownSkips,
+        ctrGateBlocks: result.ctrGateBlocks,
+        actions: result.autoPilotActions.map((a) => ({
+          slug: a.slug,
+          market: a.market,
+          boostSuccess: a.boostSuccess,
+          deploySuccess: a.deploySuccess,
+          cooldownSkipped: a.cooldownSkipped,
+          ctr: a.ctr,
+          pageViews: a.pageViews,
+          ctrBelowThreshold: a.ctrBelowThreshold,
+          priority: a.priority,
+        })),
+      },
+      alerts: result.alerts.map((a) => ({
+        slug: a.slug,
+        market: a.market,
+        clicks: a.clicksLastHour,
+        multiplier: a.spikeMultiplier.toFixed(1),
+      })),
+      errors: result.errors.length > 0 ? result.errors : undefined,
+      guardian: guardianResult
+        ? {
+            checked: guardianResult.checked,
+            failures: guardianResult.failures,
+            alertsSent: guardianResult.alertsSent,
+            errors: guardianResult.errors.length > 0 ? guardianResult.errors : undefined,
+          }
+        : undefined,
+      duration: `${duration}s`,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'Unknown error';
+    console.error('[spike-monitor] Cron failed:', msg);
+    return NextResponse.json(
+      { error: msg, timestamp: new Date().toISOString() },
+      { status: 500 },
+    );
+  }
+}

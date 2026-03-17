@@ -1,0 +1,756 @@
+/* app/globals.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================
+   SMARTFINPRO CSS DESIGN SYSTEM
+   ============================================================
+   IMPORTANT: ALL CSS custom properties live INSIDE @layer base.
+   @tailwind base injects Shadcn/Tailwind defaults first, then
+   OUR @layer base block follows — winning by source order.
+   ============================================================ */
+
+@layer base {
+  :root {
+    /* === Shadcn/UI Theme Tokens === */
+    --radius: 0.625rem;
+    --background: #F2F4F8;
+    --foreground: #1A1A2E;
+    --card: #ffffff;
+    --card-foreground: #1A1A2E;
+    --popover: #ffffff;
+    --popover-foreground: #1A1A2E;
+    --primary: #1B4F8C;
+    --primary-foreground: #ffffff;
+    --secondary: #E8F0FB;
+    --secondary-foreground: #1B4F8C;
+    --muted: #F2F4F8;
+    --muted-foreground: #555555;
+    --accent: #F5A623;
+    --accent-foreground: #ffffff;
+    --destructive: #D64045;
+    --destructive-foreground: #ffffff;
+    --border: #e5e5e5;
+    --input: #e5e5e5;
+    --ring: #1B4F8C;
+
+    /* === Chart Colors (SmartFinPro Palette) === */
+    --chart-1: #F5A623;
+    --chart-2: #1A6B3A;
+    --chart-3: #1B4F8C;
+    --chart-4: #E8F0FB;
+    --chart-5: #555555;
+
+    /* === Sidebar (Dashboard) === */
+    --sidebar: #ffffff;
+    --sidebar-foreground: #1A1A2E;
+    --sidebar-primary: #1B4F8C;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #E8F0FB;
+    --sidebar-accent-foreground: #1B4F8C;
+    --sidebar-border: #e5e5e5;
+    --sidebar-ring: #1B4F8C;
+
+    /* === SmartFinPro Brand Colors (YMYL Trust System) === */
+    --sfp-navy:       #1B4F8C;
+    --sfp-navy-dark:  #163D6E;
+    --sfp-gold:       #F5A623;
+    --sfp-gold-dark:  #D48B1A;
+    --sfp-green:      #1A6B3A;
+    --sfp-red:        #D64045;
+    --sfp-sky:        #E8F0FB;
+    --sfp-gray:       #F2F4F8;
+    --sfp-ink:        #1A1A2E;
+    --sfp-slate:      #555555;
+    --sfp-footer-text:#AAAAAA;
+
+    /* === Default Silo Tint === */
+    --sfp-silo-tint: #D5E8F0;
+  }
+
+  /* === Länderspezifische Silo-Akzentfarben (html[data-silo] = inline script, body.silo-* = SiloClassProvider) === */
+  html[data-silo="us"], body.silo-us { --sfp-silo-tint: #D5E8F0; }
+  html[data-silo="uk"], body.silo-uk { --sfp-silo-tint: #D5F0E0; }
+  html[data-silo="au"], body.silo-au { --sfp-silo-tint: #FFF3D5; }
+  html[data-silo="ca"], body.silo-ca { --sfp-silo-tint: #FFE5E5; }
+
+  /* === Global Base Styles === */
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* ============================================================
+   CROSS-BROWSER COMPATIBILITY FIXES
+   Safari, Firefox, Chrome, Edge
+   ============================================================ */
+
+/* Fix Safari mobile 100vh issue - dvh with fallback */
+@supports (min-height: 100dvh) {
+  .min-h-screen {
+    min-height: 100dvh !important;
+  }
+}
+
+/* Safari-specific fixes */
+@supports (-webkit-touch-callout: none) {
+  /* Fix Safari flexbox rendering */
+  .flex {
+    -webkit-box-orient: horizontal;
+    -webkit-box-direction: normal;
+  }
+  .flex-col {
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: normal;
+  }
+}
+
+/* Fix Safari rendering of position sticky */
+.sticky {
+  position: -webkit-sticky;
+  position: sticky;
+}
+
+/* Hardware-accelerated sticky (prevents Safari flicker) */
+.isolate .sticky {
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+/* Fix Safari text rendering */
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Fix Safari overflow with border-radius */
+.overflow-hidden {
+  -webkit-mask-image: -webkit-radial-gradient(white, black);
+  mask-image: radial-gradient(white, black);
+}
+
+/* Fix Safari gradient text rendering */
+.gradient-text {
+  -webkit-transform: translateZ(0);
+}
+
+/* Fix Safari animation performance */
+.aurora-bg,
+.aurora-bg::before,
+.aurora-bg::after {
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  will-change: transform, opacity;
+}
+
+/* ============================================================
+   SMARTFINPRO LIGHT DESIGN SYSTEM
+   Helles Trust-Design — Navy/Gold/Green Akzente
+   ============================================================ */
+
+/* Animated Background (Navy/Gold gradient) */
+@keyframes aurora {
+  0%, 100% {
+    opacity: 0.15;
+    transform: translateY(0) scale(1);
+  }
+  25% {
+    opacity: 0.25;
+    transform: translateY(-20px) scale(1.05);
+  }
+  50% {
+    opacity: 0.18;
+    transform: translateY(-10px) scale(1.02);
+  }
+  75% {
+    opacity: 0.28;
+    transform: translateY(-30px) scale(1.08);
+  }
+}
+
+@keyframes aurora-secondary {
+  0%, 100% {
+    opacity: 0.12;
+    transform: translateX(0) scale(1);
+  }
+  33% {
+    opacity: 0.22;
+    transform: translateX(30px) scale(1.1);
+  }
+  66% {
+    opacity: 0.16;
+    transform: translateX(-20px) scale(1.05);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+/* Shimmer Button Effect (Gold accent) */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.btn-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-shimmer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.4),
+    transparent
+  );
+  animation: shimmer 3s infinite;
+  -webkit-transform: translateX(-100%);
+  transform: translateX(-100%);
+}
+
+/* Glow Effects (Light Trust Design) */
+@keyframes glow-pulse-navy {
+  0%, 100% {
+    opacity: 0.2;
+    filter: blur(30px);
+  }
+  50% {
+    opacity: 0.4;
+    filter: blur(50px);
+  }
+}
+
+@keyframes glow-pulse-gold {
+  0%, 100% {
+    opacity: 0.15;
+    filter: blur(30px);
+  }
+  50% {
+    opacity: 0.3;
+    filter: blur(50px);
+  }
+}
+
+@keyframes glow-pulse-green {
+  0%, 100% {
+    opacity: 0.15;
+    filter: blur(30px);
+  }
+  50% {
+    opacity: 0.3;
+    filter: blur(50px);
+  }
+}
+
+.glow-navy {
+  background: radial-gradient(circle, rgba(27, 79, 140, 0.25) 0%, transparent 70%);
+  animation: glow-pulse-navy 4s ease-in-out infinite;
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+}
+
+.glow-gold {
+  background: radial-gradient(circle, rgba(245, 166, 35, 0.2) 0%, transparent 70%);
+  animation: glow-pulse-gold 4s ease-in-out infinite 1s;
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+}
+
+.glow-green {
+  background: radial-gradient(circle, rgba(26, 107, 58, 0.2) 0%, transparent 70%);
+  animation: glow-pulse-green 5s ease-in-out infinite 0.5s;
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+}
+
+/* Aurora Container (Light Background) */
+.aurora-bg {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.aurora-bg::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: 20%;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(27, 79, 140, 0.12) 0%, transparent 60%);
+  animation: aurora 8s ease-in-out infinite;
+  filter: blur(80px);
+}
+
+.aurora-bg::after {
+  content: '';
+  position: absolute;
+  top: -30%;
+  right: 10%;
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(245, 166, 35, 0.08) 0%, transparent 60%);
+  animation: aurora-secondary 10s ease-in-out infinite;
+  filter: blur(80px);
+}
+
+/* Solid Light Cards (NO Glassmorphism) */
+.card-light {
+  background: #ffffff;
+  border: 1px solid #e5e5e5;
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.04),
+    0 1px 3px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-light:hover {
+  border-color: var(--sfp-navy);
+  box-shadow:
+    0 4px 16px rgba(27, 79, 140, 0.08),
+    0 2px 8px rgba(0, 0, 0, 0.06);
+  transform: translateY(-2px);
+}
+
+/* Info Box (Sky Background) */
+.info-box {
+  background: var(--sfp-sky);
+  border-left: 4px solid var(--sfp-navy);
+  padding: 1rem 1.5rem;
+  border-radius: var(--radius);
+}
+
+/* Answer Block (GEO-optimized) */
+.answer-block {
+  background: var(--sfp-sky);
+  border-left: 4px solid var(--sfp-navy);
+  padding: 1.5rem 2rem;
+  border-radius: var(--radius);
+  margin: 2rem 0;
+}
+
+/* Trust Badge */
+.trust-badge {
+  background: var(--sfp-green);
+  color: #ffffff;
+  padding: 0.375rem 1rem;
+  border-radius: 9999px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Best Pick Badge (Gold) — Konzept 7.3: Gold bg, Dark Ink text, Bold 14px */
+.best-pick-badge {
+  background: var(--sfp-gold);
+  color: var(--sfp-ink);
+  padding: 0.5rem 1.25rem;
+  border-radius: 0.5rem;
+  font-weight: 700;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Icon Glow Effect */
+.icon-glow {
+  position: relative;
+}
+
+.icon-glow::before {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  background: inherit;
+  filter: blur(16px);
+  opacity: 0.3;
+  border-radius: inherit;
+  z-index: -1;
+}
+
+/* Gradient Text — Navy to Gold */
+.gradient-text {
+  background: linear-gradient(135deg, var(--sfp-navy) 0%, var(--sfp-gold) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  -webkit-transform: translateZ(0);
+}
+
+/* Gradient Text Accent — Green to Gold */
+.gradient-text-accent {
+  background: linear-gradient(135deg, var(--sfp-green) 0%, var(--sfp-gold) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Letter Spacing for Kicker Lines */
+.kicker {
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--sfp-slate);
+}
+
+/* ============================================================
+   MARQUEE TRUST TICKER
+   ============================================================ */
+@keyframes marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.trust-marquee {
+  display: flex;
+  width: max-content;
+  animation: marquee 30s linear infinite;
+  will-change: transform;
+}
+
+.trust-marquee:hover {
+  animation-play-state: paused;
+}
+
+/* ============================================================
+   SLIDE TRANSITIONS
+   ============================================================ */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.97) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes popupEnter {
+  from {
+    opacity: 0;
+    transform: scale(0.85) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+/* ============================================================
+   TABULAR NUMBERS — prevents layout shift on dynamic values
+   ============================================================ */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Apply tabular-nums globally to stats/numbers */
+[data-slot="stat"],
+.stat-card,
+.gradient-text {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Smooth scroll */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Selection color (Navy) */
+::selection {
+  background: rgba(27, 79, 140, 0.2);
+  color: inherit;
+}
+
+/* ============================================================
+   LIGHT MESH GRADIENT — Hero Background Depth
+   ============================================================ */
+.light-mesh {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 80% 50% at 20% 40%, rgba(27, 79, 140, 0.06) 0%, transparent 70%),
+    radial-gradient(ellipse 60% 40% at 80% 20%, rgba(245, 166, 35, 0.04) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 60% at 50% 80%, rgba(26, 107, 58, 0.03) 0%, transparent 50%);
+}
+
+/* Subtle dot grid overlay */
+.light-mesh::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(27, 79, 140, 0.04) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+/* ============================================================
+   BUTTON STYLES
+   ============================================================ */
+
+/* Primary CTA (Gold) */
+.btn-primary {
+  background: var(--sfp-gold);
+  color: #ffffff;
+  font-weight: 600;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--radius);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(245, 166, 35, 0.2);
+}
+
+.btn-primary:hover {
+  background: var(--sfp-gold-dark);
+  box-shadow: 0 4px 16px rgba(245, 166, 35, 0.3);
+  transform: translateY(-1px);
+}
+
+/* Secondary CTA (Navy) */
+.btn-secondary {
+  background: var(--sfp-navy);
+  color: #ffffff;
+  font-weight: 600;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--radius);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(27, 79, 140, 0.2);
+}
+
+.btn-secondary:hover {
+  background: var(--sfp-navy-dark);
+  box-shadow: 0 4px 16px rgba(27, 79, 140, 0.3);
+  transform: translateY(-1px);
+}
+
+/* Button Glow Effect */
+.btn-glow {
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 20px rgba(245, 166, 35, 0.3);
+}
+
+.btn-glow:hover {
+  box-shadow:
+    0 0 30px rgba(245, 166, 35, 0.5),
+    0 0 60px rgba(245, 166, 35, 0.2);
+  transform: translateY(-1px);
+}
+
+/* ============================================================
+   TABLE STYLES
+   ============================================================ */
+.table-row:nth-child(even) {
+  background: rgba(242, 244, 248, 0.5);
+}
+
+.table-row:hover {
+  background: var(--sfp-sky);
+}
+
+.table-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: #ffffff;
+  border-bottom: 2px solid var(--sfp-navy);
+  font-weight: 600;
+}
+
+/* ============================================================
+   TRUST SIGNAL — Green glow for regulated/safe
+   ============================================================ */
+.trust-signal {
+  position: relative;
+}
+
+.trust-signal::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(26, 107, 58, 0.15) 0%, rgba(27, 79, 140, 0.1) 100%);
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.trust-signal:hover::before {
+  opacity: 1;
+}
+
+/* ============================================================
+   PRO/CONTRA LISTS
+   ============================================================ */
+.pro-item::before {
+  content: '✓';
+  color: var(--sfp-green);
+  font-weight: 700;
+  margin-right: 0.5rem;
+}
+
+.contra-item::before {
+  content: '✗';
+  color: var(--sfp-red);
+  font-weight: 700;
+  margin-right: 0.5rem;
+}
+.contra-item {
+  color: var(--sfp-slate);
+}
+
+/* ============================================================
+   STAT CARD
+   ============================================================ */
+.stat-card {
+  background: #ffffff;
+  border: 1px solid #e5e5e5;
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+  border-color: var(--sfp-navy);
+  box-shadow: 0 4px 12px rgba(27, 79, 140, 0.08);
+  transform: translateY(-2px);
+}
+
+/* ============================================================
+   AFFILIATE LINK STYLES
+   ============================================================ */
+a[href^="/go/"] {
+  color: var(--sfp-gold);
+  text-decoration: underline;
+  text-decoration-color: rgba(245, 166, 35, 0.3);
+  text-underline-offset: 2px;
+  transition: all 0.2s ease;
+}
+
+a[href^="/go/"]:hover {
+  color: var(--sfp-gold-dark);
+  text-decoration-color: var(--sfp-gold-dark);
+}
+
+a[href^="/go/"]::after {
+  content: ' →';
+  margin-left: 0.25rem;
+}
+
+/* Internal Links (Navy) */
+a:not([href^="/go/"]):not([href^="http"]) {
+  color: var(--sfp-navy);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+a:not([href^="/go/"]):not([href^="http"]):hover {
+  color: var(--sfp-navy-dark);
+  text-decoration: underline;
+}
+
+/* ============================================================
+   FORCE INJECTION: SMARTFINPRO BRAND COLORS & SHADCN OVERRIDES
+   Bypassing Tailwind @layer to prevent Turbopack purging.
+   Turbopack has a known bug where @layer base :root variables
+   are overridden by Shadcn defaults. This vanilla :root block
+   sits OUTSIDE any @layer and at the END of the file, giving it
+   the highest cascade priority in the DOM.
+   ============================================================ */
+:root {
+  /* SmartFinPro Brand Colors */
+  --sfp-navy:       #1B4F8C;
+  --sfp-navy-dark:  #163D6E;
+  --sfp-gold:       #F5A623;
+  --sfp-gold-dark:  #D48B1A;
+  --sfp-green:      #1A6B3A;
+  --sfp-red:        #D64045;
+  --sfp-sky:        #E8F0FB;
+  --sfp-gray:       #F2F4F8;
+  --sfp-ink:        #1A1A2E;
+  --sfp-slate:      #555555;
+  --sfp-footer-text:#AAAAAA;
+  --sfp-silo-tint:  #D5E8F0;
+
+  /* Shadcn/UI Theme Overrides (SmartFinPro brand) */
+  --radius: 0.625rem;
+  --background: #F2F4F8;
+  --foreground: #1A1A2E;
+  --card: #ffffff;
+  --card-foreground: #1A1A2E;
+  --popover: #ffffff;
+  --popover-foreground: #1A1A2E;
+  --primary: #1B4F8C;
+  --primary-foreground: #ffffff;
+  --secondary: #E8F0FB;
+  --secondary-foreground: #1B4F8C;
+  --muted: #F2F4F8;
+  --muted-foreground: #555555;
+  --accent: #F5A623;
+  --accent-foreground: #ffffff;
+  --destructive: #D64045;
+  --destructive-foreground: #ffffff;
+  --border: #e5e5e5;
+  --input: #e5e5e5;
+  --ring: #1B4F8C;
+  --chart-1: #F5A623;
+  --chart-2: #1A6B3A;
+  --chart-3: #1B4F8C;
+  --chart-4: #E8F0FB;
+  --chart-5: #555555;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #1A1A2E;
+  --sidebar-primary: #1B4F8C;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #E8F0FB;
+  --sidebar-accent-foreground: #1B4F8C;
+  --sidebar-border: #e5e5e5;
+  --sidebar-ring: #1B4F8C;
+}
+
+html[data-silo="us"], body.silo-us { --sfp-silo-tint: #D5E8F0; }
+html[data-silo="uk"], body.silo-uk { --sfp-silo-tint: #D5F0E0; }
+html[data-silo="au"], body.silo-au { --sfp-silo-tint: #FFF3D5; }
+html[data-silo="ca"], body.silo-ca { --sfp-silo-tint: #FFE5E5; }
