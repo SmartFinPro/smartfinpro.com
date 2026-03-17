@@ -77,7 +77,7 @@ jobs:
           ssh -i ~/.ssh/deploy_key \
             -o StrictHostKeyChecking=no \
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
-            "pm2 restart SmartFinPro-Live --update-env && pm2 save"
+            "export PM2=/home/master/.npm-global/bin/pm2 && \$PM2 restart SmartFinPro-Live --update-env && \$PM2 save"
 
       # ── 10. Health Check ──────────────────────────────────────
       - name: Health Check
@@ -85,4 +85,4 @@ jobs:
           ssh -i ~/.ssh/deploy_key \
             -o StrictHostKeyChecking=no \
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
-            "sleep 3 && curl -sf -o /dev/null -w '%{http_code}' http://localhost:3000/ | grep -q '200' && echo '✅ Health check passed' || (echo '❌ Health check failed' && exit 1)"
+            "sleep 5 && curl -sf -o /dev/null -w '%{http_code}' http://localhost:3000/ | grep -q '200' && echo '✅ Health check passed' || (echo '❌ Health check failed' && exit 1)"
