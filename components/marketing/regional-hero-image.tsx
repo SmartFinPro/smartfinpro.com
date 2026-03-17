@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { getPillarHeroImage, getReviewImage } from '@/lib/images/asset-registry';
 
 interface RegionalHeroImageProps {
@@ -19,6 +20,10 @@ const heroConfig: Record<string, Record<string, { gradient: string; label: strin
     cybersecurity: { gradient: 'from-red-50 via-white to-orange-50', label: 'Cybersecurity', icon: '🔒' },
     'business-banking': { gradient: 'from-amber-50 via-white to-yellow-50', label: 'Business Banking', icon: '🏦' },
     forex: { gradient: 'from-sky-50 via-white to-blue-50', label: 'Forex Trading', icon: '💱' },
+    'gold-investing': { gradient: 'from-amber-50 via-white to-yellow-50', label: 'Gold Investing', icon: '🥇' },
+    'credit-score': { gradient: 'from-green-50 via-white to-emerald-50', label: 'Credit Score', icon: '📊' },
+    'credit-repair': { gradient: 'from-orange-50 via-white to-amber-50', label: 'Credit Repair', icon: '🔧' },
+    'debt-relief': { gradient: 'from-teal-50 via-white to-green-50', label: 'Debt Relief', icon: '💚' },
   },
   uk: {
     trading: { gradient: 'from-blue-50 via-white to-blue-50', label: 'London Markets', icon: '📊' },
@@ -26,6 +31,10 @@ const heroConfig: Record<string, Record<string, { gradient: string; label: strin
     'ai-tools': { gradient: 'from-blue-50 via-white to-sky-50', label: 'AI Tools', icon: '🤖' },
     cybersecurity: { gradient: 'from-red-50 via-white to-orange-50', label: 'Cybersecurity', icon: '🔒' },
     'business-banking': { gradient: 'from-amber-50 via-white to-yellow-50', label: 'UK Business Banking', icon: '🏦' },
+    forex: { gradient: 'from-sky-50 via-white to-blue-50', label: 'UK Forex Trading', icon: '💱' },
+    savings: { gradient: 'from-green-50 via-white to-teal-50', label: 'UK Savings Accounts', icon: '🏦' },
+    remortgaging: { gradient: 'from-sky-50 via-white to-blue-50', label: 'UK Remortgaging', icon: '🏠' },
+    'cost-of-living': { gradient: 'from-orange-50 via-white to-amber-50', label: 'UK Cost of Living', icon: '🛒' },
   },
   ca: {
     forex: { gradient: 'from-sky-50 via-white to-blue-50', label: 'Canadian Forex', icon: '🍁' },
@@ -33,14 +42,20 @@ const heroConfig: Record<string, Record<string, { gradient: string; label: strin
     'ai-tools': { gradient: 'from-blue-50 via-white to-sky-50', label: 'AI Tools', icon: '🤖' },
     cybersecurity: { gradient: 'from-red-50 via-white to-orange-50', label: 'Cybersecurity', icon: '🔒' },
     'business-banking': { gradient: 'from-amber-50 via-white to-yellow-50', label: 'CA Business Banking', icon: '🏦' },
+    housing: { gradient: 'from-sky-50 via-white to-teal-50', label: 'Canadian Housing & Mortgage', icon: '🏠' },
+    trading: { gradient: 'from-blue-50 via-white to-blue-50', label: 'Canadian Trading', icon: '📊' },
+    'tax-efficient-investing': { gradient: 'from-green-50 via-white to-emerald-50', label: 'Tax-Efficient Investing', icon: '🍁' },
   },
   au: {
     trading: { gradient: 'from-blue-50 via-white to-blue-50', label: 'ASX Trading', icon: '📈' },
     forex: { gradient: 'from-sky-50 via-white to-blue-50', label: 'Australian Forex', icon: '💱' },
-    'personal-finance': { gradient: 'from-green-50 via-white to-teal-50', label: 'AU Home Loans', icon: '🏠' },
+    'personal-finance': { gradient: 'from-green-50 via-white to-teal-50', label: 'AU Personal Finance', icon: '🦘' },
     'ai-tools': { gradient: 'from-blue-50 via-white to-sky-50', label: 'AI Tools', icon: '🤖' },
     cybersecurity: { gradient: 'from-red-50 via-white to-orange-50', label: 'Cybersecurity', icon: '🔒' },
     'business-banking': { gradient: 'from-amber-50 via-white to-yellow-50', label: 'AU Business Banking', icon: '🏦' },
+    'gold-investing': { gradient: 'from-amber-50 via-white to-yellow-50', label: 'AU Gold Investing', icon: '🥇' },
+    savings: { gradient: 'from-green-50 via-white to-teal-50', label: 'AU Savings Accounts', icon: '🏦' },
+    superannuation: { gradient: 'from-sky-50 via-white to-blue-50', label: 'Australian Superannuation', icon: '🦘' },
   },
 };
 
@@ -67,7 +82,8 @@ function GradientFallback({ config, className }: { config: { gradient: string; l
 
 export function RegionalHeroImage({ market, category, slug, className = '' }: RegionalHeroImageProps) {
   const [imgError, setImgError] = useState(false);
-  const config = heroConfig[market]?.[category] || heroConfig.us.trading;
+  const genericFallback = { gradient: 'from-slate-50 via-white to-blue-50', label: 'SmartFinPro', icon: '📋' };
+  const config = heroConfig[market]?.[category] || heroConfig.us?.[category] || genericFallback;
 
   // Try to resolve a real image from the asset registry
   const reviewAsset = slug ? getReviewImage(market, category, slug) : null;
@@ -76,7 +92,7 @@ export function RegionalHeroImage({ market, category, slug, className = '' }: Re
 
   // Build conventional path for Genesis-uploaded images (not in registry)
   // Pattern: /images/content/[prefix]/[category]/[slug]/hero.webp
-  const prefix = market === 'us' ? '' : market;
+  const prefix = market;
   const conventionalSrc = slug
     ? `/images/content/${prefix ? prefix + '/' : ''}${category}/${slug}/hero.webp`
     : null;
@@ -94,17 +110,15 @@ export function RegionalHeroImage({ market, category, slug, className = '' }: Re
     return (
       <div className={`relative overflow-hidden rounded-2xl border border-gray-200 ${className}`}>
         <div className="relative aspect-[21/9]">
-          {/* Shimmer while loading */}
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-gray-100 to-transparent animate-pulse" />
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <Image
             src={resolvedSrc}
             alt={resolvedAlt}
-            className="object-cover w-full h-full"
+            fill
+            className="object-cover object-center"
+            sizes="(max-width: 768px) 100vw, (max-width: 1280px) 90vw, 1200px"
             onError={() => setImgError(true)}
           />
-          {/* Bottom gradient for label readability */}
-          <div className="absolute inset-0 bg-gradient-to-t from-white/80 via-transparent to-transparent" />
+          {/* No gradient overlay — clean image, label has its own white bg */}
           {/* Category label overlay */}
           <div className="absolute bottom-4 left-4">
             <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium bg-white border border-gray-200 shadow-sm">

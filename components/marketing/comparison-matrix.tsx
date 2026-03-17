@@ -214,7 +214,7 @@ export function ComparisonMatrix({
                         asChild
                         size="sm"
                         className="gap-1.5 text-white"
-                        style={{ background: index === 0 ? 'var(--sfp-gold)' : 'var(--sfp-navy)' }}
+                        style={{ background: index === 0 ? 'var(--sfp-gold)' : 'var(--sfp-navy)', borderRadius: '1rem' }}
                       >
                         <Link href={tool.affiliateUrl} target="_blank" rel="noopener sponsored">
                           Try Free

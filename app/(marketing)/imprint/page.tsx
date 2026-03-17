@@ -106,7 +106,7 @@ export default function ImprintPage() {
               details for all SmartFinPro markets.
             </p>
             <p className="text-sm" style={{ color: 'var(--sfp-slate)' }}>
-              Last updated: February 11, 2026
+              Last updated: March 11, 2026
             </p>
           </div>
         </div>
@@ -169,15 +169,31 @@ export default function ImprintPage() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4 pt-4 border-t border-gray-200">
                     <div>
                       <p className="text-xs uppercase tracking-wider mb-1" style={{ color: 'var(--sfp-slate)' }}>Legal Entity</p>
-                      <p style={{ color: 'var(--sfp-ink)' }}>SmartFinPro Media</p>
+                      <p style={{ color: 'var(--sfp-ink)' }}>SmartFin Value LLC</p>
+                    </div>
+                    <div>
+                      <p className="text-xs uppercase tracking-wider mb-1" style={{ color: 'var(--sfp-slate)' }}>Registered Address</p>
+                      <p style={{ color: 'var(--sfp-ink)' }}>30 N Gould St Ste N<br />Sheridan, WY 82801, USA</p>
                     </div>
                     <div>
                       <p className="text-xs uppercase tracking-wider mb-1" style={{ color: 'var(--sfp-slate)' }}>Website</p>
                       <p style={{ color: 'var(--sfp-ink)' }}>smartfinpro.com</p>
                     </div>
                     <div>
+                      <p className="text-xs uppercase tracking-wider mb-1" style={{ color: 'var(--sfp-slate)' }}>Email</p>
+                      <p>
+                        <a href="mailto:info@smartfinpro.com" className="hover:opacity-80" style={{ color: 'var(--sfp-navy)' }}>
+                          info@smartfinpro.com
+                        </a>
+                      </p>
+                    </div>
+                    <div>
                       <p className="text-xs uppercase tracking-wider mb-1" style={{ color: 'var(--sfp-slate)' }}>Nature of Business</p>
                       <p style={{ color: 'var(--sfp-ink)' }}>Affiliate Publisher &amp; Financial Content Platform</p>
+                    </div>
+                    <div>
+                      <p className="text-xs uppercase tracking-wider mb-1" style={{ color: 'var(--sfp-slate)' }}>State of Formation</p>
+                      <p style={{ color: 'var(--sfp-ink)' }}>Wyoming, United States</p>
                     </div>
                     <div>
                       <p className="text-xs uppercase tracking-wider mb-1" style={{ color: 'var(--sfp-slate)' }}>Markets Served</p>
@@ -328,10 +344,12 @@ export default function ImprintPage() {
 
                   <DisclosureCard title="US Contact" icon="📬">
                     <p style={{ color: 'var(--sfp-ink)' }}>
-                      SmartFinPro Media<br />
+                      SmartFin Value LLC<br />
+                      30 N Gould St Ste N<br />
+                      Sheridan, WY 82801, USA<br />
                       Email:{' '}
-                      <a href="mailto:legal@smartfinpro.com" className="hover:opacity-80" style={{ color: 'var(--sfp-navy)' }}>
-                        legal@smartfinpro.com
+                      <a href="mailto:info@smartfinpro.com" className="hover:opacity-80" style={{ color: 'var(--sfp-navy)' }}>
+                        info@smartfinpro.com
                       </a>
                     </p>
                   </DisclosureCard>
@@ -405,14 +423,12 @@ export default function ImprintPage() {
 
                   <DisclosureCard title="UK Contact" icon="📬">
                     <p style={{ color: 'var(--sfp-ink)' }}>
-                      SmartFinPro Media<br />
+                      SmartFin Value LLC<br />
+                      30 N Gould St Ste N<br />
+                      Sheridan, WY 82801, USA<br />
                       Email:{' '}
-                      <a href="mailto:legal@smartfinpro.com" className="hover:opacity-80" style={{ color: 'var(--sfp-navy)' }}>
-                        legal@smartfinpro.com
-                      </a><br />
-                      For regulatory queries:{' '}
-                      <a href="mailto:compliance@smartfinpro.com" className="hover:opacity-80" style={{ color: 'var(--sfp-navy)' }}>
-                        compliance@smartfinpro.com
+                      <a href="mailto:info@smartfinpro.com" className="hover:opacity-80" style={{ color: 'var(--sfp-navy)' }}>
+                        info@smartfinpro.com
                       </a>
                     </p>
                   </DisclosureCard>
@@ -467,14 +483,12 @@ export default function ImprintPage() {
 
                   <DisclosureCard title="Canada Contact" icon="📬">
                     <p style={{ color: 'var(--sfp-ink)' }}>
-                      SmartFinPro Media<br />
+                      SmartFin Value LLC<br />
+                      30 N Gould St Ste N<br />
+                      Sheridan, WY 82801, USA<br />
                       Email:{' '}
-                      <a href="mailto:legal@smartfinpro.com" className="hover:opacity-80" style={{ color: 'var(--sfp-navy)' }}>
-                        legal@smartfinpro.com
-                      </a><br />
-                      For Canadian compliance inquiries:{' '}
-                      <a href="mailto:compliance@smartfinpro.com" className="hover:opacity-80" style={{ color: 'var(--sfp-navy)' }}>
-                        compliance@smartfinpro.com
+                      <a href="mailto:info@smartfinpro.com" className="hover:opacity-80" style={{ color: 'var(--sfp-navy)' }}>
+                        info@smartfinpro.com
                       </a>
                     </p>
                   </DisclosureCard>
@@ -569,14 +583,12 @@ export default function ImprintPage() {
 
                   <DisclosureCard title="Australia Contact" icon="📬">
                     <p style={{ color: 'var(--sfp-ink)' }}>
-                      SmartFinPro Media<br />
+                      SmartFin Value LLC<br />
+                      30 N Gould St Ste N<br />
+                      Sheridan, WY 82801, USA<br />
                       Email:{' '}
-                      <a href="mailto:legal@smartfinpro.com" className="hover:opacity-80" style={{ color: 'var(--sfp-navy)' }}>
-                        legal@smartfinpro.com
-                      </a><br />
-                      For Australian compliance inquiries:{' '}
-                      <a href="mailto:compliance@smartfinpro.com" className="hover:opacity-80" style={{ color: 'var(--sfp-navy)' }}>
-                        compliance@smartfinpro.com
+                      <a href="mailto:info@smartfinpro.com" className="hover:opacity-80" style={{ color: 'var(--sfp-navy)' }}>
+                        info@smartfinpro.com
                       </a>
                     </p>
                   </DisclosureCard>
@@ -588,36 +600,43 @@ export default function ImprintPage() {
               {/* ================================================== */}
               <Section id="contact" title="Contact Us">
                 <DisclosureCard title="General & Legal Inquiries" icon="📧">
+                  <div className="mb-4 pb-4 border-b border-gray-200">
+                    <p style={{ color: 'var(--sfp-ink)' }}>
+                      <strong>SmartFin Value LLC</strong><br />
+                      30 N Gould St Ste N<br />
+                      Sheridan, WY 82801, USA
+                    </p>
+                  </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <div>
                       <p className="text-xs uppercase tracking-wider mb-1" style={{ color: 'var(--sfp-slate)' }}>General Inquiries</p>
                       <p>
-                        <a href="mailto:hello@smartfinpro.com" className="hover:opacity-80" style={{ color: 'var(--sfp-navy)' }}>
-                          hello@smartfinpro.com
+                        <a href="mailto:info@smartfinpro.com" className="hover:opacity-80" style={{ color: 'var(--sfp-navy)' }}>
+                          info@smartfinpro.com
                         </a>
                       </p>
                     </div>
                     <div>
                       <p className="text-xs uppercase tracking-wider mb-1" style={{ color: 'var(--sfp-slate)' }}>Legal &amp; Compliance</p>
                       <p>
-                        <a href="mailto:legal@smartfinpro.com" className="hover:opacity-80" style={{ color: 'var(--sfp-navy)' }}>
-                          legal@smartfinpro.com
+                        <a href="mailto:info@smartfinpro.com" className="hover:opacity-80" style={{ color: 'var(--sfp-navy)' }}>
+                          info@smartfinpro.com
                         </a>
                       </p>
                     </div>
                     <div>
                       <p className="text-xs uppercase tracking-wider mb-1" style={{ color: 'var(--sfp-slate)' }}>Privacy Requests</p>
                       <p>
-                        <a href="mailto:privacy@smartfinpro.com" className="hover:opacity-80" style={{ color: 'var(--sfp-navy)' }}>
-                          privacy@smartfinpro.com
+                        <a href="mailto:info@smartfinpro.com" className="hover:opacity-80" style={{ color: 'var(--sfp-navy)' }}>
+                          info@smartfinpro.com
                         </a>
                       </p>
                     </div>
                     <div>
                       <p className="text-xs uppercase tracking-wider mb-1" style={{ color: 'var(--sfp-slate)' }}>Press &amp; Partnerships</p>
                       <p>
-                        <a href="mailto:partnerships@smartfinpro.com" className="hover:opacity-80" style={{ color: 'var(--sfp-navy)' }}>
-                          partnerships@smartfinpro.com
+                        <a href="mailto:info@smartfinpro.com" className="hover:opacity-80" style={{ color: 'var(--sfp-navy)' }}>
+                          info@smartfinpro.com
                         </a>
                       </p>
                     </div>

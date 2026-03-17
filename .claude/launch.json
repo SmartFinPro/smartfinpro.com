@@ -1,0 +1,18 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "dev",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev:webpack", "--", "-p", "3002"],
+      "port": 3002,
+      "url": "http://localhost:3002"
+    },
+    {
+      "name": "landing",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["serve", "landing", "-l", "3003"],
+      "port": 3003
+    }
+  ]
+}

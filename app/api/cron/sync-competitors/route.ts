@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { triggerCompetitorScan } from '@/lib/actions/competitors';
+import { logCron } from '@/lib/logging';
 
 /**
  * Competitor Radar — Daily Sync Cron Job
@@ -31,9 +32,11 @@ export async function GET(request: NextRequest) {
     const result = await triggerCompetitorScan();
     const duration = ((Date.now() - startTime) / 1000).toFixed(1);
 
-    console.log(
-      `[sync-competitors] Scan complete: ${result.scanned} keywords, ${result.newAlerts} new alerts, ${duration}s`,
-    );
+    logCron({
+      job: 'sync-competitors', status: 'success',
+      duration_ms: Math.round(parseFloat(duration) * 1000),
+      scanned: result.scanned, new_alerts: result.newAlerts,
+    });
 
     return NextResponse.json({
       success: true,
@@ -44,7 +47,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Unknown error';
-    console.error('[sync-competitors] Cron failed:', msg);
+    logCron({ job: 'sync-competitors', status: 'error', error: msg });
     return NextResponse.json(
       { error: msg, timestamp: new Date().toISOString() },
       { status: 500 },

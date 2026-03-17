@@ -14,8 +14,8 @@
 @layer base {
   :root {
     /* === Shadcn/UI Theme Tokens === */
-    --radius: 0.625rem;
-    --background: #F2F4F8;
+    --radius: 1rem;              /* 16px — matches landing page card radius */
+    --background: #ffffff;         /* Landing page body bg = white */
     --foreground: #1A1A2E;
     --card: #ffffff;
     --card-foreground: #1A1A2E;
@@ -25,14 +25,14 @@
     --primary-foreground: #ffffff;
     --secondary: #E8F0FB;
     --secondary-foreground: #1B4F8C;
-    --muted: #F2F4F8;
-    --muted-foreground: #555555;
+    --muted: #F7F8FA;              /* Landing page --gray */
+    --muted-foreground: #64748B;
     --accent: #F5A623;
-    --accent-foreground: #ffffff;
+    --accent-foreground: #1A1A2E; /* WCAG AA: dark ink on gold = 8.1:1 contrast (was #fff = 2.0:1 ✗) */
     --destructive: #D64045;
     --destructive-foreground: #ffffff;
-    --border: #e5e5e5;
-    --input: #e5e5e5;
+    --border: #E2E8F0;           /* Landing page border color */
+    --input: #E2E8F0;
     --ring: #1B4F8C;
 
     /* === Chart Colors (SmartFinPro Palette) === */
@@ -60,10 +60,20 @@
     --sfp-green:      #1A6B3A;
     --sfp-red:        #D64045;
     --sfp-sky:        #E8F0FB;
-    --sfp-gray:       #F2F4F8;
+    --sfp-gray:       #F7F8FA;   /* Landing page --gray */
     --sfp-ink:        #1A1A2E;
-    --sfp-slate:      #555555;
-    --sfp-footer-text:#AAAAAA;
+    --sfp-slate:      #64748B;   /* Tailwind slate-500 — matches landing page reference */
+    --sfp-footer-text:rgba(255,255,255,0.5);
+    --sfp-warning-bg: #FFF8E1;  /* Warning-Box Hintergrund — amber-50 */
+
+    /* === Typography System (AP-04) === */
+    /* Inter ist via next/font/google geladen → --font-inter auf <body> */
+    --font-primary:      var(--font-inter), system-ui, Arial, sans-serif;
+    --font-secondary:    Georgia, Lora, 'Times New Roman', serif;
+    /* Fluid Text-Scale */
+    --text-main-size:    clamp(1rem, 1.2vw, 1.125rem);  /* 16–18px */
+    --text-main-leading: 1.75;
+    --text-meta-size:    0.875rem;                       /* 14px */
 
     /* === Default Silo Tint === */
     --sfp-silo-tint: #D5E8F0;
@@ -266,6 +276,15 @@ body {
   }
 }
 
+/* Sticky Review Nav — primary CTA breathing glow (respects motion preferences) */
+@keyframes stickyPulseGlow {
+  0%, 100% { box-shadow: 0 2px 10px rgba(255, 215, 100, 0.35); }
+  50%      { box-shadow: 0 2px 20px rgba(255, 215, 100, 0.65), 0 0 30px rgba(255, 215, 100, 0.2); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sticky-pulse-glow { animation: none !important; }
+}
+
 .glow-navy {
   background: radial-gradient(circle, rgba(27, 79, 140, 0.25) 0%, transparent 70%);
   animation: glow-pulse-navy 4s ease-in-out infinite;
@@ -322,18 +341,25 @@ body {
 /* Solid Light Cards (NO Glassmorphism) */
 .card-light {
   background: #ffffff;
-  border: 1px solid #e5e5e5;
-  box-shadow:
-    0 2px 8px rgba(0, 0, 0, 0.04),
-    0 1px 3px rgba(0, 0, 0, 0.06);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .card-light:hover {
-  border-color: var(--sfp-navy);
-  box-shadow:
-    0 4px 16px rgba(27, 79, 140, 0.08),
-    0 2px 8px rgba(0, 0, 0, 0.06);
+  border-color: transparent;
+  box-shadow: 0 8px 40px rgba(27, 79, 140, 0.1), 0 1px 3px rgba(0, 0, 0, 0.04);
+  transform: translateY(-2px);
+}
+
+/* Hover lift for Server Component cards (CSS-only, no JS event handlers) */
+.card-hover-lift {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: all 0.2s ease;
+}
+.card-hover-lift:hover {
+  box-shadow: 0 8px 40px rgba(27, 79, 140, 0.1), 0 1px 3px rgba(0, 0, 0, 0.04);
   transform: translateY(-2px);
 }
 
@@ -445,6 +471,49 @@ body {
 }
 
 /* ============================================================
+   MARKET PAGE CARDS — Landing-style hover elevation
+   ============================================================ */
+.markets-card:hover {
+  box-shadow: 0 8px 40px rgba(27,79,140,0.1);
+}
+
+/* ============================================================
+   ENTERPRISE TABLE — Uniform alternating row backgrounds
+   ============================================================ */
+.enterprise-table tbody tr:nth-child(even) {
+  background: rgba(232, 240, 251, 0.55);
+}
+
+/* Enterprise Table Row Hover — subtle sky-blue highlight */
+.enterprise-table-row {
+  transition: background-color 0.15s ease;
+}
+.enterprise-table tbody .enterprise-table-row:hover {
+  background-color: rgba(232, 240, 251, 0.65) !important;
+}
+
+/* ============================================================
+   LEAD PARAGRAPH — First paragraph after H2 gets emphasis
+   ============================================================ */
+article .not-prose + p:first-of-type,
+.mdx-content > .not-prose + p {
+  font-size: 1.125rem;
+  line-height: 1.8;
+  color: var(--sfp-ink);
+  font-weight: 450;
+}
+
+/* ============================================================
+   STAT HIGHLIGHT — Bold inline numbers in text
+   ============================================================ */
+.stat-highlight {
+  font-weight: 700;
+  color: var(--sfp-navy);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* ============================================================
    SLIDE TRANSITIONS
    ============================================================ */
 @keyframes slideIn {
@@ -531,38 +600,38 @@ html {
    BUTTON STYLES
    ============================================================ */
 
-/* Primary CTA (Gold) */
+/* Primary CTA (Gold) — matches landing page exactly */
 .btn-primary {
   background: var(--sfp-gold);
   color: #ffffff;
-  font-weight: 600;
-  padding: 0.75rem 1.5rem;
-  border-radius: var(--radius);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 2px 8px rgba(245, 166, 35, 0.2);
+  font-weight: 700;
+  padding: 0.875rem 2rem;        /* 14px 32px — landing page */
+  border-radius: 0.5rem;          /* 8px — landing page */
+  font-size: 0.875rem;            /* 14px — landing page */
+  transition: all 0.25s ease;
+  border: none;
 }
 
 .btn-primary:hover {
   background: var(--sfp-gold-dark);
-  box-shadow: 0 4px 16px rgba(245, 166, 35, 0.3);
-  transform: translateY(-1px);
+  transform: translateY(-2px);
 }
 
-/* Secondary CTA (Navy) */
+/* Secondary CTA / Ghost Button — matches landing page */
 .btn-secondary {
-  background: var(--sfp-navy);
-  color: #ffffff;
+  background: transparent;
+  color: rgba(255,255,255,0.85);
   font-weight: 600;
-  padding: 0.75rem 1.5rem;
-  border-radius: var(--radius);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 2px 8px rgba(27, 79, 140, 0.2);
+  padding: 0.875rem 2rem;        /* 14px 32px — landing page */
+  border-radius: 0.5rem;          /* 8px — landing page */
+  font-size: 0.875rem;            /* 14px — landing page */
+  border: 1px solid rgba(255,255,255,0.2);
+  transition: all 0.2s ease;
 }
 
 .btn-secondary:hover {
-  background: var(--sfp-navy-dark);
-  box-shadow: 0 4px 16px rgba(27, 79, 140, 0.3);
-  transform: translateY(-1px);
+  border-color: rgba(255,255,255,0.4);
+  color: #fff;
 }
 
 /* Button Glow Effect */
@@ -674,19 +743,38 @@ a[href^="/go/"]:hover {
   text-decoration-color: var(--sfp-gold-dark);
 }
 
-a[href^="/go/"]::after {
+a[href^="/go/"]:not(.no-underline)::after {
   content: ' →';
   margin-left: 0.25rem;
 }
 
-/* Internal Links (Navy) */
-a:not([href^="/go/"]):not([href^="http"]) {
+/* Code blocks — prevent horizontal overflow */
+.prose pre,
+article pre,
+pre {
+  overflow-x: auto;
+  max-width: 100%;
+  white-space: pre;
+  word-wrap: normal;
+}
+
+.prose code,
+article code {
+  word-break: break-word;
+}
+
+/* Internal Links (Navy) — ONLY within content areas (prose, articles, sidebar text) */
+.prose a:not([href^="/go/"]):not([href^="http"]):not([data-slot="button"]):not(.no-underline),
+article a:not([href^="/go/"]):not([href^="http"]):not([data-slot="button"]):not(.no-underline),
+.silo-links a:not([href^="/go/"]):not([href^="http"]) {
   color: var(--sfp-navy);
   text-decoration: none;
   transition: color 0.2s ease;
 }
 
-a:not([href^="/go/"]):not([href^="http"]):hover {
+.prose a:not([href^="/go/"]):not([href^="http"]):not([data-slot="button"]):not(.no-underline):hover,
+article a:not([href^="/go/"]):not([href^="http"]):not([data-slot="button"]):not(.no-underline):hover,
+.silo-links a:not([href^="/go/"]):not([href^="http"]):hover {
   color: var(--sfp-navy-dark);
   text-decoration: underline;
 }
@@ -708,15 +796,26 @@ a:not([href^="/go/"]):not([href^="http"]):hover {
   --sfp-green:      #1A6B3A;
   --sfp-red:        #D64045;
   --sfp-sky:        #E8F0FB;
-  --sfp-gray:       #F2F4F8;
+  --sfp-gray:       #F7F8FA;   /* Landing page --gray */
   --sfp-ink:        #1A1A2E;
-  --sfp-slate:      #555555;
+  --sfp-slate:      #64748B;   /* Tailwind slate-500 — matches landing page */
   --sfp-footer-text:#AAAAAA;
+  --sfp-warning-bg: #FFF8E1;
+  --sfp-navy-deep:  #0F2E52;   /* Landing page hero deep navy */
+  --sfp-gold-light: #FFF8EB;   /* Landing page gold-light badges */
+
+  /* Typography System (AP-04) */
+  --font-primary:      var(--font-inter), system-ui, Arial, sans-serif;
+  --font-secondary:    Georgia, Lora, 'Times New Roman', serif;
+  --text-main-size:    clamp(1rem, 1.2vw, 1.125rem);
+  --text-main-leading: 1.75;
+  --text-meta-size:    0.875rem;
+
   --sfp-silo-tint:  #D5E8F0;
 
   /* Shadcn/UI Theme Overrides (SmartFinPro brand) */
   --radius: 0.625rem;
-  --background: #F2F4F8;
+  --background: #ffffff;        /* Landing page body bg = white */
   --foreground: #1A1A2E;
   --card: #ffffff;
   --card-foreground: #1A1A2E;
@@ -726,14 +825,14 @@ a:not([href^="/go/"]):not([href^="http"]):hover {
   --primary-foreground: #ffffff;
   --secondary: #E8F0FB;
   --secondary-foreground: #1B4F8C;
-  --muted: #F2F4F8;
-  --muted-foreground: #555555;
+  --muted: #F7F8FA;
+  --muted-foreground: #64748B;
   --accent: #F5A623;
-  --accent-foreground: #ffffff;
+  --accent-foreground: #1A1A2E; /* WCAG AA: dark ink on gold = 8.1:1 contrast (was #fff = 2.0:1 ✗) */
   --destructive: #D64045;
   --destructive-foreground: #ffffff;
-  --border: #e5e5e5;
-  --input: #e5e5e5;
+  --border: #E2E8F0;            /* Landing page border */
+  --input: #E2E8F0;
   --ring: #1B4F8C;
   --chart-1: #F5A623;
   --chart-2: #1A6B3A;
@@ -754,3 +853,40 @@ html[data-silo="us"], body.silo-us { --sfp-silo-tint: #D5E8F0; }
 html[data-silo="uk"], body.silo-uk { --sfp-silo-tint: #D5F0E0; }
 html[data-silo="au"], body.silo-au { --sfp-silo-tint: #FFF3D5; }
 html[data-silo="ca"], body.silo-ca { --sfp-silo-tint: #FFE5E5; }
+
+/* ── Homepage Section Hover Effects ── */
+.sector-card-hover:hover { background: var(--sfp-gray) !important; }
+.sector-card-hover:hover .sector-tag { background: #fff !important; border-color: transparent !important; }
+.market-card-hover { transition: all 0.2s ease; }
+.market-card-hover:hover { transform: translateY(-2px); background: rgba(255,255,255,0.08) !important; border-color: var(--sfp-gold) !important; }
+
+/* Enterprise card hover — dezenter Hintergrund-Wechsel (wie sector-card-hover) */
+.enterprise-card-hover { transition: all 0.25s ease; }
+.enterprise-card-hover:hover { background: var(--sfp-gray) !important; }
+
+/* Portal sidebar link hover — dezentes Blau */
+.sidebar-link-hover:hover { background: var(--sfp-sky) !important; }
+
+/* Category summary — details/summary toggle */
+.category-summary-toggle::-webkit-details-marker { display: none; }
+.category-summary-details:not([open]) .category-summary-less { display: none; }
+.category-summary-details:not([open]) .category-summary-more { display: inline; }
+.category-summary-details[open] .category-summary-less { display: inline; }
+.category-summary-details[open] .category-summary-more { display: none; }
+
+/* Pagination button hover */
+.pagination-btn:hover { background: var(--sfp-navy) !important; color: #fff !important; }
+
+/* Stats card responsive — NO flex-wrap on desktop (matches landing/index.html) */
+@media (max-width: 640px) {
+  .stats-card-responsive { flex-wrap: wrap !important; max-width: 100% !important; }
+  .stats-card-responsive .stat-divider { display: none !important; }
+  .stats-card-responsive > div { padding: 14px 20px !important; }
+}
+
+/* Newsletter form responsive */
+@media (max-width: 640px) {
+  .newsletter-form-responsive { flex-direction: column !important; }
+  .newsletter-form-responsive input,
+  .newsletter-form-responsive button { width: 100%; }
+}

@@ -43,11 +43,6 @@ import type {
   RealtimeRankingResult,
 } from '@/lib/actions/ranking';
 import type { PositionTrend } from '@/lib/seo/google-search-console';
-import {
-  getRealtimeRanking,
-  getKeywordPositionTrend,
-} from '@/lib/actions/ranking';
-import { boostAndDeploy } from '@/lib/actions/content-overrides';
 import { toast } from 'sonner';
 
 // ── Constants ────────────────────────────────────────────────
@@ -602,7 +597,17 @@ export function RankingDashboard({
     if (!serpKeyword.trim()) return;
     setSerpLoading(true);
     try {
-      const result = await getRealtimeRanking(serpKeyword.trim(), serpMarket);
+      const res = await fetch('/api/dashboard/ranking', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'realtime-ranking',
+          keyword: serpKeyword.trim(),
+          market: serpMarket,
+        }),
+      });
+      if (!res.ok) throw new Error(`SERP fetch failed: ${res.status}`);
+      const result: RealtimeRankingResult = await res.json();
       setSerpResult(result);
 
       // Update the keyword in our local state if it exists
@@ -634,7 +639,17 @@ export function RankingDashboard({
     if (!serperConfigured) return;
     setPulsingKeyword(keyword);
     try {
-      const result = await getRealtimeRanking(keyword, market);
+      const res = await fetch('/api/dashboard/ranking', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'realtime-ranking',
+          keyword,
+          market,
+        }),
+      });
+      if (!res.ok) throw new Error(`Row pulse failed: ${res.status}`);
+      const result: RealtimeRankingResult = await res.json();
 
       if (result.ownPosition !== null) {
         setKeywords((prev) =>
@@ -666,7 +681,17 @@ export function RankingDashboard({
       setTrendKeyword(keyword);
       setTrendLoading(true);
       try {
-        const data = await getKeywordPositionTrend(keyword, 30);
+        const res = await fetch('/api/dashboard/ranking', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'position-trend',
+            keyword,
+            days: 30,
+          }),
+        });
+        if (!res.ok) throw new Error(`Trend fetch failed: ${res.status}`);
+        const data: PositionTrend[] = await res.json();
         setTrend(data);
       } catch {
         // keep existing
@@ -689,7 +714,12 @@ export function RankingDashboard({
   const handleBoostFreshness = useCallback(async (kw: RankingKeyword) => {
     setBoostingKeyword(kw.keyword);
     try {
-      const result = await boostAndDeploy(kw.page, 'Ranking recovery — manual boost');
+      const res = await fetch('/api/dashboard/boost-deploy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slug: kw.page, reason: 'Ranking recovery — manual boost' }),
+      });
+      const result = await res.json();
 
       if (!result.boostSuccess) {
         toast.error(`Freshness Boost fehlgeschlagen: ${result.error}`, {
@@ -784,13 +814,13 @@ export function RankingDashboard({
         />
         <StatCard
           label="Total Clicks"
-          value={stats.totalClicks.toLocaleString()}
+          value={stats.totalClicks.toLocaleString('en-US')}
           icon={MousePointer}
           color="emerald"
         />
         <StatCard
           label="Impressions"
-          value={stats.totalImpressions.toLocaleString()}
+          value={stats.totalImpressions.toLocaleString('en-US')}
           icon={Eye}
           color="slate"
         />
@@ -944,12 +974,12 @@ export function RankingDashboard({
                       </td>
                       <td className="px-3 py-3 text-right">
                         <span className="text-sm tabular-nums text-slate-700">
-                          {kw.clicks > 0 ? kw.clicks.toLocaleString() : '\u2014'}
+                          {kw.clicks > 0 ? kw.clicks.toLocaleString('en-US') : '\u2014'}
                         </span>
                       </td>
                       <td className="px-3 py-3 text-right">
                         <span className="text-sm tabular-nums text-slate-500">
-                          {kw.impressions > 0 ? kw.impressions.toLocaleString() : '\u2014'}
+                          {kw.impressions > 0 ? kw.impressions.toLocaleString('en-US') : '\u2014'}
                         </span>
                       </td>
                       <td className="px-3 py-3 text-right">

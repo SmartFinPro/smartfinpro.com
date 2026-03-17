@@ -24,12 +24,6 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import {
-  configureConnector,
-  toggleConnector,
-  triggerManualSync,
-  deleteConnectorConfig,
-} from '@/lib/actions/connectors';
 import type { ConnectorInfo } from '@/lib/actions/connectors';
 
 interface ConnectorListProps {
@@ -48,14 +42,23 @@ export function ConnectorList({ connectors }: ConnectorListProps) {
     }
 
     setLoadingConnector(connector.name);
-    await toggleConnector(connector.name, enabled);
+    await fetch('/api/dashboard/connectors', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'toggle', connectorName: connector.name, enabled }),
+    });
     setLoadingConnector(null);
     router.refresh();
   };
 
   const handleSync = async (connectorName: string) => {
     setLoadingConnector(connectorName);
-    const result = await triggerManualSync(connectorName);
+    const res = await fetch('/api/dashboard/connectors', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'sync', connectorName }),
+    });
+    const result = await res.json();
     setLoadingConnector(null);
 
     if (result.success) {
@@ -220,12 +223,21 @@ function ConnectorConfigDialog({
     setLoading(true);
     setError('');
 
-    const result = await configureConnector(connector.name, {
-      api_key: apiKey,
-      api_secret: needsSecret ? apiSecret : undefined,
-      publisher_id: needsPublisherId ? publisherId : undefined,
-      webhook_secret: webhookSecret || undefined,
+    const res = await fetch('/api/dashboard/connectors', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'configure',
+        connectorName: connector.name,
+        config: {
+          api_key: apiKey,
+          api_secret: needsSecret ? apiSecret : undefined,
+          publisher_id: needsPublisherId ? publisherId : undefined,
+          webhook_secret: webhookSecret || undefined,
+        },
+      }),
     });
+    const result = await res.json();
 
     setLoading(false);
 
@@ -240,7 +252,11 @@ function ConnectorConfigDialog({
     if (!confirm('Are you sure you want to remove this configuration?')) return;
 
     setLoading(true);
-    await deleteConnectorConfig(connector.name);
+    await fetch('/api/dashboard/connectors', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'delete', connectorName: connector.name }),
+    });
     setLoading(false);
     onSave();
   };

@@ -1,6 +1,7 @@
 // components/ui/last-reviewed.tsx
 'use client';
 
+import Image from 'next/image';
 import { Calendar, User } from 'lucide-react';
 import type { Author } from '@/lib/authors';
 
@@ -24,10 +25,12 @@ export function LastReviewed({ date, author, showAuthorPhoto = false }: LastRevi
     >
       {showAuthorPhoto && author.photo && (
         <div className="relative w-8 h-8 rounded-full overflow-hidden shrink-0">
-          <img
+          <Image
             src={author.photo}
             alt={author.name}
-            className="w-full h-full object-cover"
+            fill
+            className="object-cover"
+            sizes="32px"
           />
         </div>
       )}

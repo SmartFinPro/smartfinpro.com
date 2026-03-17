@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { runSpikeMonitor } from '@/lib/actions/spike-monitor';
+import { logger, logCron } from '@/lib/logging';
 
 /**
  * CTA Spike Monitor — Cron Job
@@ -30,9 +31,7 @@ export async function GET(request: NextRequest) {
   const isAuthenticated = authHeader === `Bearer ${cronSecret}`;
 
   if (!isAuthenticated && !isDev) {
-    console.warn(
-      `[spike-monitor] Unauthorized attempt from ${request.headers.get('x-forwarded-for') || 'unknown'}`,
-    );
+    logger.warn('[spike-monitor] Unauthorized attempt', { ip: request.headers.get('x-forwarded-for') ?? 'unknown' });
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -41,9 +40,12 @@ export async function GET(request: NextRequest) {
     const result = await runSpikeMonitor();
     const duration = ((Date.now() - startTime) / 1000).toFixed(1);
 
-    console.log(
-      `[spike-monitor] Complete: ${result.scanned} slugs, ${result.spikesDetected} spikes, ${result.alertsSent} alerts, ${result.autoPilotRuns} auto-pilot (${result.highPriorityRuns} high-priority), ${result.cooldownSkips} cooldowns, ${result.ctrGateBlocks} CTR-blocked, ${duration}s`,
-    );
+    logCron({
+      job: 'spike-monitor', status: 'success',
+      duration_ms: Date.now() - startTime,
+      scanned: result.scanned, spikes: result.spikesDetected, alerts: result.alertsSent,
+      auto_pilot: result.autoPilotRuns, cooldown_skips: result.cooldownSkips,
+    });
 
     // Guardian: API connectivity check (fail-safe — never blocks spike-monitor)
     let guardianResult: {
@@ -57,15 +59,14 @@ export async function GET(request: NextRequest) {
       const { checkAllApiConnectivities } = await import('@/lib/actions/guardian');
       guardianResult = await checkAllApiConnectivities();
       if (guardianResult.checked > 0) {
-        console.log(
-          `[guardian] Checked ${guardianResult.checked} APIs, ${guardianResult.failures} failures, ${guardianResult.alertsSent} alerts sent`,
-        );
+        logger.info('[guardian] API connectivity check', {
+          checked: guardianResult.checked, failures: guardianResult.failures, alerts: guardianResult.alertsSent,
+        });
       }
     } catch (guardianErr) {
-      console.error(
-        '[spike-monitor] Guardian check failed (non-blocking):',
-        guardianErr instanceof Error ? guardianErr.message : 'Unknown error',
-      );
+      logger.warn('[spike-monitor] Guardian check failed (non-blocking)', {
+        error: guardianErr instanceof Error ? guardianErr.message : 'Unknown error',
+      });
     }
 
     return NextResponse.json({
@@ -110,7 +111,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Unknown error';
-    console.error('[spike-monitor] Cron failed:', msg);
+    logCron({ job: 'spike-monitor', status: 'error', error: msg });
     return NextResponse.json(
       { error: msg, timestamp: new Date().toISOString() },
       { status: 500 },

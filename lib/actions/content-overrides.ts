@@ -1,6 +1,8 @@
 'use server';
 
 import 'server-only';
+import * as Sentry from '@sentry/nextjs';
+import { logger } from '@/lib/logging';
 
 import { createServiceClient } from '@/lib/supabase/server';
 
@@ -38,7 +40,7 @@ function safeSingle<T>(result: SupabaseResult<T>): T | null {
     ) {
       return null;
     }
-    console.warn('[content-overrides] Query warning:', result.error.message);
+    logger.warn('[content-overrides] Query warning:', result.error.message);
   }
   return result.data;
 }
@@ -56,7 +58,7 @@ function safeRows<T>(result: {
     ) {
       return [];
     }
-    console.warn('[content-overrides] Query warning:', result.error.message);
+    logger.warn('[content-overrides] Query warning:', result.error.message);
   }
   return result.data || [];
 }
@@ -91,14 +93,15 @@ export async function triggerFreshnessBoost(
     );
 
     if (error) {
-      console.error('[content-overrides] Upsert failed:', error.message);
+      logger.error('[content-overrides] Upsert failed:', error.message);
       return { success: false, slug, boost_date: boostDate, error: error.message };
     }
 
     return { success: true, slug, boost_date: boostDate };
   } catch (err) {
+    Sentry.captureException(err);
     const msg = err instanceof Error ? err.message : 'Unknown error';
-    console.error('[content-overrides] triggerFreshnessBoost error:', msg);
+    logger.error('[content-overrides] triggerFreshnessBoost error:', msg);
     return { success: false, slug, boost_date: boostDate, error: msg };
   }
 }
@@ -118,7 +121,7 @@ export async function removeFreshnessBoost(
       .eq('slug', slug);
 
     if (error) {
-      console.error('[content-overrides] Delete failed:', error.message);
+      logger.error('[content-overrides] Delete failed:', error.message);
       return { success: false, error: error.message };
     }
 
@@ -194,14 +197,15 @@ async function triggerRevalidation(slug: string): Promise<RevalidateResult> {
 
     if (!res.ok) {
       const text = await res.text();
-      console.warn('[content-overrides] Revalidation failed:', res.status, text);
+      logger.warn('[content-overrides] Revalidation failed', { status: res.status, body: text });
       return { success: false, error: `Revalidation returned ${res.status}` };
     }
 
     return { success: true };
   } catch (err) {
+    Sentry.captureException(err);
     const msg = err instanceof Error ? err.message : 'Unknown error';
-    console.warn('[content-overrides] Revalidation error:', msg);
+    logger.warn('[content-overrides] Revalidation error:', msg);
     return { success: false, error: msg };
   }
 }
@@ -222,7 +226,7 @@ export async function triggerDeployHook(): Promise<DeployHookResult> {
   const hookUrl = process.env.DEPLOY_HOOK_URL;
 
   if (!hookUrl) {
-    console.warn('[content-overrides] DEPLOY_HOOK_URL not configured');
+    logger.warn('[content-overrides] DEPLOY_HOOK_URL not configured');
     return { success: false, error: 'DEPLOY_HOOK_URL not configured' };
   }
 
@@ -235,14 +239,15 @@ export async function triggerDeployHook(): Promise<DeployHookResult> {
 
     if (!res.ok) {
       const text = await res.text();
-      console.error('[content-overrides] Deploy hook failed:', res.status, text);
+      logger.error('[content-overrides] Deploy hook failed', { status: res.status, body: text });
       return { success: false, error: `Deploy hook returned ${res.status}` };
     }
 
     return { success: true };
   } catch (err) {
+    Sentry.captureException(err);
     const msg = err instanceof Error ? err.message : 'Unknown error';
-    console.error('[content-overrides] Deploy hook error:', msg);
+    logger.error('[content-overrides] Deploy hook error:', msg);
     return { success: false, error: msg };
   }
 }

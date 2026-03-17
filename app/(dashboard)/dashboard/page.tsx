@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { getDashboardStats, getGlobalMarketIntelligence, TimeRange, TimeComparison, ActionItem, GlobalMarketIntelligence } from '@/lib/actions/dashboard';
 import { getLowPerformancePages, getPerformanceAlertStats } from '@/lib/actions/performance-alerts';
+import { loadFxRates } from '@/lib/fx-rates';
 import { ClicksChart } from '@/components/dashboard/clicks-chart';
 import { RecentClicksLive } from '@/components/dashboard/recent-clicks-live';
 import { TopLinksLive } from '@/components/dashboard/top-links-live';
@@ -26,6 +27,9 @@ import { MarketOpportunities } from '@/components/dashboard/market-opportunities
 import { WorldMap } from '@/components/dashboard/world-map';
 import { ClickDetailsTable } from '@/components/dashboard/click-details-table';
 import { SystemIntegrityWidget } from '@/components/dashboard/system-integrity-widget';
+import { WebVitalsWidget } from '@/components/dashboard/web-vitals-widget';
+import { RevenueAttributionWidget } from '@/components/dashboard/revenue-attribution-widget';
+import { AuditStatusWidget } from '@/components/dashboard/audit-status-widget';
 import Link from 'next/link';
 
 export const dynamic = 'force-dynamic';
@@ -42,6 +46,42 @@ function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T
     promise,
     new Promise<T>((resolve) => setTimeout(() => resolve(fallback), ms)),
   ]);
+}
+
+// ── Timeout wrapper with timedOut flag — suppresses late rejections after timeout ──
+function withTimeoutAndFlag<T>(
+  promise: Promise<T>,
+  ms: number,
+  fallback: T,
+): Promise<{ data: T; timedOut: boolean }> {
+  let settled = false;
+  return new Promise((resolve) => {
+    const timer = setTimeout(() => {
+      if (!settled) {
+        settled = true;
+        resolve({ data: fallback, timedOut: true });
+        promise.catch(() => {}); // Suppress late rejection — guard against Unhandled Rejection in PM2
+      }
+    }, ms);
+
+    promise.then(
+      (data) => {
+        if (!settled) {
+          settled = true;
+          clearTimeout(timer);
+          resolve({ data, timedOut: false });
+        }
+      },
+      (err) => {
+        if (!settled) {
+          settled = true;
+          clearTimeout(timer);
+          console.error('[dashboard] stats query failed:', err);
+          resolve({ data: fallback, timedOut: true });
+        }
+      },
+    );
+  });
 }
 
 // Clean card style - white with subtle border and shadow
@@ -124,12 +164,17 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const emptyAlertStats = { totalLowPerformancePages: 0, criticalPages: 0, warningPages: 0, potentialLostRevenue: 0 };
   const emptyMarkets: GlobalMarketIntelligence = { markets: [], opportunities: [], leaderMarket: 'US', totalGlobalRevenue: 0, totalGlobalClicks: 0 };
 
-  const [stats, lowPerformancePages, performanceAlertStats, globalMarkets] = await Promise.all([
-    withTimeout(getDashboardStats(range), QUERY_TIMEOUT, emptyStats),
+  // SF4: Pre-warm FX cache so getDashboardStats uses dynamic rates (same as getGlobalMarketIntelligence)
+  await loadFxRates();
+
+  // SF2: All 4 queries start in parallel — stats uses withTimeoutAndFlag to surface timeout in UI
+  const [statsResult, lowPerformancePages, performanceAlertStats, globalMarkets] = await Promise.all([
+    withTimeoutAndFlag(getDashboardStats(range), QUERY_TIMEOUT, emptyStats),
     withTimeout(getLowPerformancePages(), QUERY_TIMEOUT, []),
     withTimeout(getPerformanceAlertStats(), QUERY_TIMEOUT, emptyAlertStats),
     withTimeout(getGlobalMarketIntelligence(range), QUERY_TIMEOUT, emptyMarkets),
   ]);
+  const { data: stats, timedOut: statsTimedOut } = statsResult;
 
   const rangeLabels: Record<TimeRange, string> = {
     '24h': 'last 24 hours',
@@ -171,6 +216,14 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             <TimeRangeSelector />
           </Suspense>
         </div>
+
+        {/* SF2: Timeout banner — shown when stats query exceeded 10s limit */}
+        {statsTimedOut && (
+          <div className="mb-6 flex items-center gap-3 px-4 py-3 rounded-lg bg-amber-50 border border-amber-200 text-sm text-amber-800">
+            <AlertTriangle className="h-4 w-4 shrink-0 text-amber-500" />
+            Statistiken aktuell nicht verfügbar — Daten werden im Hintergrund neu geladen.
+          </div>
+        )}
 
         {/* Stats Grid - 4 columns */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -250,11 +303,23 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           </div>
         )}
 
-        {/* System Integrity */}
-        <div className="mb-8">
-          <Suspense fallback={<Skeleton className="h-64" />}>
-            <SystemIntegrityWidget />
-          </Suspense>
+        {/* System Integrity + CWV + Revenue Attribution + Audit — 3-column grid */}
+        <div className="grid gap-6 lg:grid-cols-3 mb-8">
+          <div className="lg:col-span-2">
+            <Suspense fallback={<Skeleton className="h-64" />}>
+              <SystemIntegrityWidget />
+            </Suspense>
+          </div>
+          <div className="flex flex-col gap-6">
+            <Suspense fallback={<Skeleton className="h-48" />}>
+              <WebVitalsWidget />
+            </Suspense>
+            <Suspense fallback={<Skeleton className="h-48" />}>
+              <RevenueAttributionWidget />
+            </Suspense>
+            {/* S2S Postback Dedup Audit Status */}
+            <AuditStatusWidget />
+          </div>
         </div>
 
         {/* Charts Row */}
@@ -279,10 +344,11 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             <div className="p-6">
               <Suspense fallback={<Skeleton className="h-52" />}>
                 <ConversionFunnel
-                  clicks={stats.funnelData.clicks}
-                  conversions={stats.funnelData.conversions}
-                  approvedConversions={stats.funnelData.approvedConversions}
-                  approvedRevenue={stats.funnelData.approvedRevenue}
+                  totalClicks={stats.funnelData.clicks}
+                  stages={[
+                    { event_type: 'qualified', unique_clicks: stats.funnelData.conversions, conversion_rate: stats.funnelData.clicks > 0 ? (stats.funnelData.conversions / stats.funnelData.clicks) * 100 : 0, total_value: 0 },
+                    { event_type: 'approved', unique_clicks: stats.funnelData.approvedConversions, conversion_rate: stats.funnelData.conversions > 0 ? (stats.funnelData.approvedConversions / stats.funnelData.conversions) * 100 : 0, total_value: stats.funnelData.approvedRevenue },
+                  ]}
                 />
               </Suspense>
             </div>

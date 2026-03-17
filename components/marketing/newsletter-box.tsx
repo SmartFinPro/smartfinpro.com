@@ -121,12 +121,17 @@ export function NewsletterBox({
             Save 10+ hours/week with proven AI prompts.
           </p>
           <form onSubmit={handleSubmit} className="space-y-2">
+            {/* Visually-hidden label — WCAG 1.3.1 / 4.1.2 */}
+            <label htmlFor="newsletter-email-compact" className="sr-only">Email address</label>
             <Input
+              id="newsletter-email-compact"
               type="email"
               placeholder="Your email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               onFocus={handleFocus}
+              autoComplete="email"
+              aria-required="true"
               className="text-sm bg-white border-gray-300 placeholder:text-gray-400"
               style={{ color: 'var(--sfp-ink)' }}
               disabled={status === 'loading'}
@@ -144,7 +149,7 @@ export function NewsletterBox({
                 <a href="/privacy" className="underline hover:no-underline" style={{ color: 'var(--sfp-navy)' }}>Privacy Policy</a>.
               </span>
             </label>
-            <Button type="submit" className="w-full text-white" size="sm" disabled={status === 'loading'} style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}>
+            <Button type="submit" className="w-full" size="sm" disabled={status === 'loading'} style={{ background: 'var(--sfp-gold)', color: 'var(--sfp-ink)' }}>
               {status === 'loading' ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
@@ -180,12 +185,17 @@ export function NewsletterBox({
             {/* Form */}
             <form onSubmit={handleSubmit} className="flex flex-col gap-2 flex-shrink-0">
               <div className="flex gap-2">
+                {/* Visually-hidden label — WCAG 1.3.1 / 4.1.2 */}
+                <label htmlFor="newsletter-email-inline" className="sr-only">Email address</label>
                 <Input
+                  id="newsletter-email-inline"
                   type="email"
                   placeholder="Your email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   onFocus={handleFocus}
+                  autoComplete="email"
+                  aria-required="true"
                   className="w-48 h-9 text-sm bg-white border-gray-300 placeholder:text-gray-400"
                   style={{ color: 'var(--sfp-ink)' }}
                   disabled={status === 'loading'}
@@ -193,9 +203,9 @@ export function NewsletterBox({
                 <Button
                   type="submit"
                   size="sm"
-                  className="h-9 px-4 text-white gap-1.5"
+                  className="h-9 px-4 gap-1.5"
                   disabled={status === 'loading'}
-                  style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}
+                  style={{ background: 'var(--sfp-gold)', color: 'var(--sfp-ink)' }}
                 >
                   {status === 'loading' ? (
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -306,12 +316,17 @@ export function NewsletterBox({
             {/* Form */}
             <form onSubmit={handleSubmit} className="space-y-3">
               <div className="flex flex-col sm:flex-row gap-3">
+                {/* Visually-hidden label — WCAG 1.3.1 / 4.1.2 */}
+                <label htmlFor="newsletter-email-default" className="sr-only">Email address</label>
                 <Input
+                  id="newsletter-email-default"
                   type="email"
                   placeholder="Enter your best email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   onFocus={handleFocus}
+                  autoComplete="email"
+                  aria-required="true"
                   className="flex-1 h-12 bg-white border-gray-300 placeholder:text-gray-400"
                   style={{ color: 'var(--sfp-ink)' }}
                   disabled={status === 'loading'}
@@ -319,9 +334,9 @@ export function NewsletterBox({
                 <Button
                   type="submit"
                   size="lg"
-                  className="h-12 px-6 gap-2 border-0 shadow-lg text-white"
+                  className="h-12 px-6 gap-2 border-0 shadow-lg"
                   disabled={status === 'loading'}
-                  style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}
+                  style={{ background: 'var(--sfp-gold)', color: 'var(--sfp-ink)' }}
                 >
                   {status === 'loading' ? (
                     <>

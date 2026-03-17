@@ -72,7 +72,7 @@ export function WinnerAtGlance({
           <div className="mb-4 flex items-center gap-3">
             <span
               className="flex h-10 w-10 items-center justify-center rounded-lg text-white shadow-md"
-              style={{ background: 'var(--sfp-gold)' }}
+              style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}
             >
               <Trophy className="h-5 w-5" />
             </span>
@@ -150,7 +150,7 @@ export function WinnerAtGlance({
               href={ctaLink}
               rel="noopener sponsored"
               className="group flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold text-white shadow-md transition-all duration-200 hover:scale-[1.02] hover:shadow-lg"
-              style={{ background: 'var(--sfp-gold)' }}
+              style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}
             >
               {ctaText || 'Visit Site'}
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
@@ -236,6 +236,7 @@ export function WinnerAtGlance({
                 href={pick.affiliateUrl}
                 rel="noopener sponsored"
                 className={`group flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r ${colors.gradient} px-4 py-2.5 text-sm font-semibold text-white shadow-md transition-all duration-200 hover:scale-[1.02] hover:shadow-lg`}
+                style={{ color: '#ffffff' }}
               >
                 Visit Site
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />

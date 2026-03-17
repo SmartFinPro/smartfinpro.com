@@ -311,7 +311,7 @@ export default function TradingViewPage() {
                 asChild
                 size="lg"
                 className="h-14 px-10 text-lg text-white border-0 shadow-lg"
-                style={{ background: 'var(--sfp-gold)' }}
+                style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}
               >
                 <Link href="https://www.tradingview.com/?aff_id=SMARTFINPRO" target="_blank" rel="noopener sponsored">
                   Try TradingView Free
@@ -471,7 +471,7 @@ export default function TradingViewPage() {
                   asChild
                   size="sm"
                   className="w-full text-white border-0"
-                  style={{ background: 'var(--sfp-gold)' }}
+                  style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}
                 >
                   <Link href={option.href} target="_blank" rel="noopener sponsored">
                     {option.cta}
@@ -600,7 +600,7 @@ export default function TradingViewPage() {
               asChild
               size="lg"
               className="h-14 px-10 text-lg text-white border-0 shadow-lg"
-              style={{ background: 'var(--sfp-gold)' }}
+              style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}
             >
               <Link href="/us/trading">
                 Read Our Trading Reviews
@@ -644,7 +644,7 @@ export default function TradingViewPage() {
                 asChild
                 size="lg"
                 className="h-14 px-10 text-lg text-white border-0 shadow-lg"
-                style={{ background: 'var(--sfp-gold)' }}
+                style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}
               >
                 <Link href="https://www.tradingview.com/?aff_id=SMARTFINPRO" target="_blank" rel="noopener sponsored">
                   Start Trading for Free
@@ -724,7 +724,7 @@ export default function TradingViewPage() {
                 size="lg"
                 type="submit"
                 className="h-14 px-8 text-white border-0 shadow-lg"
-                style={{ background: 'var(--sfp-gold)' }}
+                style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}
               >
                 Subscribe
               </Button>

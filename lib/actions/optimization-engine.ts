@@ -1,11 +1,13 @@
 'use server';
 
 import 'server-only';
+import * as Sentry from '@sentry/nextjs';
+import { logger } from '@/lib/logging';
 
-import Anthropic from '@anthropic-ai/sdk';
 import { createServiceClient } from '@/lib/supabase/server';
 import { getContentBySlug } from '@/lib/mdx/index';
 import type { Market, Category } from '@/lib/i18n/config';
+import { createClaudeMessage } from '@/lib/claude/client';
 
 // ════════════════════════════════════════════════════════════════
 // AI-OPTIMIZATION ENGINE
@@ -233,11 +235,12 @@ export async function runOptimizationAnalysis(
       }
     }
 
-    console.log(`[optimizer] runOptimizationAnalysis: ${tasks.length} tasks created`);
+    logger.info(`[optimizer] runOptimizationAnalysis: ${tasks.length} tasks created`);
     return { success: true, tasksCreated: tasks.length, tasks };
   } catch (err) {
+    Sentry.captureException(err);
     const msg = err instanceof Error ? err.message : 'Unknown error';
-    console.error('[optimizer] runOptimizationAnalysis failed:', msg);
+    logger.error('[optimizer] runOptimizationAnalysis failed:', msg);
     return { success: false, tasksCreated: 0, tasks: [], error: msg };
   }
 }
@@ -302,11 +305,9 @@ async function generateOptimizationSuggestion(
 
   if (anthropicKey) {
     try {
-      const anthropic = new Anthropic({ apiKey: anthropicKey });
-
       const prompt = buildOptimizationPrompt(opp, mdxContent, pageTitle);
 
-      const response = await anthropic.messages.create({
+      const response = await createClaudeMessage({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 800,
         system: `You are SmartFinPro's Conversion Rate Optimization specialist.
@@ -327,7 +328,7 @@ Rules:
 - potentialUplift: estimated % revenue increase (conservative, 1-20)
 - Focus on CTA placement, wording, urgency elements, and partner prominence`,
         messages: [{ role: 'user', content: prompt }],
-      });
+      }, { apiKey: anthropicKey, operation: 'optimizer_suggestion' });
 
       const aiText = response.content[0].type === 'text' ? response.content[0].text : '';
       let parsed: { suggestionText: string; deltaCode: string | null; aiReasoning: string; potentialUplift: number };
@@ -345,7 +346,8 @@ Rules:
 
       return parsed;
     } catch (err) {
-      console.error('[optimizer] AI suggestion failed:', err);
+      Sentry.captureException(err);
+      logger.error('[optimizer] AI suggestion failed:', err);
     }
   }
 
@@ -533,7 +535,7 @@ export async function executePageOptimization(
     // Trigger rebuild via boostAndDeploy
     try {
       const { boostAndDeploy } = await import('@/lib/actions/content-overrides');
-      const prefix = actualMarket === 'us' ? '' : `/${actualMarket}`;
+      const prefix = `/${actualMarket}`;
       const fullSlug = `${prefix}/${actualCategory}/${actualSlug}`;
       await boostAndDeploy(fullSlug, `AI Optimization: ${task.task_type}`);
     } catch {
@@ -545,7 +547,7 @@ export async function executePageOptimization(
     try {
       const { requestInstantIndexing } = await import('@/lib/actions/genesis');
       const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://smartfinpro.com';
-      const prefix = actualMarket === 'us' ? '' : `/${actualMarket}`;
+      const prefix = `/${actualMarket}`;
       const fullUrl = `${siteUrl}${prefix}/${actualCategory}/${actualSlug}`;
       const indexResult = await requestInstantIndexing(fullUrl);
       if (indexResult.success) {
@@ -568,9 +570,10 @@ export async function executePageOptimization(
 
     return { success: true, slug: task.slug };
   } catch (err) {
+    Sentry.captureException(err);
     const msg = err instanceof Error ? err.message : 'Unknown error';
     await supabase.from('optimization_tasks').update({ status: 'failed' }).eq('id', taskId);
-    console.error('[optimizer] executePageOptimization failed:', msg);
+    logger.error('[optimizer] executePageOptimization failed:', msg);
     return { success: false, error: msg };
   }
 }
@@ -591,8 +594,7 @@ async function mergeOptimizationDelta(
   }
 
   try {
-    const anthropic = new Anthropic({ apiKey: anthropicKey });
-    const response = await anthropic.messages.create({
+    const response = await createClaudeMessage({
       model: 'claude-sonnet-4-20250514',
       max_tokens: 4000,
       system: `You are an MDX content optimizer. You will receive the current MDX content of a financial review/comparison page, an observation about its performance, a suggestion, and a delta code snippet to integrate.
@@ -604,7 +606,7 @@ CRITICAL: Return ONLY the complete updated MDX file content. No explanations, no
         role: 'user',
         content: `## CURRENT MDX:\n${currentMdx}\n\n## OBSERVATION:\n${observation}\n\n## SUGGESTION:\n${suggestion}\n\n## DELTA CODE TO INSERT:\n${deltaCode}`,
       }],
-    });
+    }, { apiKey: anthropicKey, operation: 'optimizer_merge_delta' });
 
     return response.content[0].type === 'text' ? response.content[0].text : currentMdx;
   } catch {
@@ -623,8 +625,7 @@ async function rewriteWithSuggestion(
   if (!anthropicKey) return currentMdx;
 
   try {
-    const anthropic = new Anthropic({ apiKey: anthropicKey });
-    const response = await anthropic.messages.create({
+    const response = await createClaudeMessage({
       model: 'claude-sonnet-4-20250514',
       max_tokens: 6000,
       system: `You are an MDX content optimizer for SmartFinPro, a finance affiliate SEO site.
@@ -644,7 +645,7 @@ CRITICAL: Return ONLY the complete updated MDX file. No explanations, no markdow
         role: 'user',
         content: `## OPTIMIZATION TYPE: ${taskType}\n## OBSERVATION: ${observation}\n## SUGGESTION: ${suggestion}\n\n## CURRENT MDX:\n${currentMdx}`,
       }],
-    });
+    }, { apiKey: anthropicKey, operation: 'optimizer_rewrite' });
 
     return response.content[0].type === 'text' ? response.content[0].text : currentMdx;
   } catch {

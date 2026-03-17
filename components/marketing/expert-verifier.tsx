@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { Calendar, Shield, CheckCircle, ExternalLink } from 'lucide-react';
 
 interface ExpertVerifierProps {
@@ -34,7 +35,7 @@ export function ExpertVerifier({
   credentials: credentialsProp,
   image,
   bio,
-  lastFactChecked = new Date().toISOString(),
+  lastFactChecked = '2026-03-01T00:00:00.000Z', // safe — static default avoids SSR/client mismatch
   factCheckNote = 'All data points verified against primary sources',
   linkedInUrl,
   variant = 'default',
@@ -61,7 +62,7 @@ export function ExpertVerifier({
           {/* Avatar */}
           <div className="shrink-0">
             {image ? (
-              <img
+              <Image
                 src={image}
                 alt={name}
                 width={40}
@@ -126,7 +127,7 @@ export function ExpertVerifier({
           {/* Avatar */}
           <div className="shrink-0">
             {image ? (
-              <img
+              <Image
                 src={image}
                 alt={name}
                 width={72}

@@ -284,10 +284,13 @@ export async function getHubWinner(
 export async function getAbTestLiveData(): Promise<AbTestLiveView[]> {
   const supabase = createServiceClient();
 
-  const { data: stats } = await supabase
-    .from('ab_test_stats')
-    .select('*')
-    .order('hub_id');
+  // Fetch both in parallel (independent queries)
+  const [{ data: stats }, { data: winners }] = await Promise.all([
+    supabase.from('ab_test_stats').select('*').order('hub_id'),
+    supabase
+      .from('ab_test_winners')
+      .select('hub_id, winning_variant, lift_percent, confidence'),
+  ]);
 
   if (!stats) return [];
 
@@ -298,11 +301,6 @@ export async function getAbTestLiveData(): Promise<AbTestLiveView[]> {
     existing.push(row);
     hubMap.set(row.hub_id, existing);
   }
-
-  // Get existing winners
-  const { data: winners } = await supabase
-    .from('ab_test_winners')
-    .select('hub_id, winning_variant, lift_percent, confidence');
 
   const winnerMap = new Map<string, (typeof winners extends (infer U)[] | null ? U : never)>();
   if (winners) {

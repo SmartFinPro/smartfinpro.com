@@ -281,7 +281,7 @@ export function AISavingsCalculator({
                 size="lg"
                 className="w-full gap-2 h-14 text-base border-0 shadow-lg text-white"
                 onClick={() => trackCTAClick(`start_saving_${productName}`)}
-                style={{ background: 'var(--sfp-gold)' }}
+                style={{ background: 'var(--sfp-gold)', color: '#ffffff', borderRadius: '1rem' }}
               >
                 <Link href={affiliateUrl} target="_blank" rel="noopener sponsored">
                   Start Saving with {productName}
@@ -333,7 +333,7 @@ export function AISavingsCalculatorCompact({
         asChild
         size="sm"
         className="w-full gap-1.5 border-0 shadow-lg text-white"
-        style={{ background: 'var(--sfp-gold)' }}
+        style={{ background: 'var(--sfp-gold)', color: '#ffffff', borderRadius: '1rem' }}
       >
         <Link href={affiliateUrl} target="_blank" rel="noopener sponsored">
           Calculate Your Savings

@@ -120,3 +120,42 @@ export interface AffiliateConnector {
  * Connector registry type
  */
 export type ConnectorRegistry = Map<string, new () => AffiliateConnector>;
+
+// ── S2S Postback Event Graph Types ──────────────────────────────────────────
+
+/** All funnel stages tracked by the conversion event graph. */
+export const FUNNEL_EVENT_TYPES = [
+  'registration',
+  'kyc_submitted',
+  'kyc_approved',
+  'kyc_rejected',
+  'ftd',
+  'deposit',
+  'qualified',
+  'approved',
+  'rejected',
+  'reversed',
+] as const;
+
+export type FunnelEventType = (typeof FUNNEL_EVENT_TYPES)[number];
+
+/** Ordered stages for funnel visualization (happy path). */
+export const FUNNEL_STAGE_ORDER: FunnelEventType[] = [
+  'registration',
+  'kyc_submitted',
+  'kyc_approved',
+  'ftd',
+  'qualified',
+  'approved',
+];
+
+/** Data received via S2S postback (GET params or POST body). */
+export interface PostbackEventData {
+  click_id: string;
+  event_type: FunnelEventType;
+  event_value?: number;
+  event_currency?: string;
+  network_event_id?: string;
+  occurred_at?: Date;
+  metadata?: Record<string, unknown>;
+}

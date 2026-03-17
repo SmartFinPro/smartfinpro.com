@@ -99,7 +99,7 @@ export function StickyComparisonBar({
                     target="_blank"
                     rel="noopener sponsored"
                     className="ml-auto inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold text-white transition-all whitespace-nowrap shrink-0"
-                    style={{ background: 'var(--sfp-gold)' }}
+                    style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}
                   >
                     Visit Site
                     <ArrowRight className="h-3 w-3" />
@@ -179,7 +179,7 @@ export function StickyComparisonBar({
                           target="_blank"
                           rel="noopener sponsored"
                           className="inline-flex items-center gap-1 px-3 py-1 rounded-md text-xs font-medium text-white transition-colors whitespace-nowrap"
-                          style={{ background: 'var(--sfp-gold)' }}
+                          style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}
                         >
                           Visit Site
                           <ArrowRight className="h-3 w-3" />

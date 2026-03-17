@@ -1,6 +1,8 @@
 'use server';
 
 import 'server-only';
+import * as Sentry from '@sentry/nextjs';
+import { logger } from '@/lib/logging';
 
 import { createClient } from '@/lib/supabase/server';
 import {
@@ -81,7 +83,7 @@ function safeRows<T>(result: {
     if (code === 'PGRST204' || code === '42P01' || msg.includes('does not exist') || msg.includes('schema cache')) {
       return [];
     }
-    console.warn('[gap-analysis] Query warning:', msg);
+    logger.warn('[gap-analysis] Query warning:', msg);
   }
   return result.data || [];
 }
@@ -111,13 +113,14 @@ async function fetchSerp(keyword: string, market: Market): Promise<SerperRespons
     });
 
     if (!res.ok) {
-      console.error('[gap-analysis] Serper API error:', res.status);
+      logger.error('[gap-analysis] Serper API error:', res.status);
       return null;
     }
 
     return (await res.json()) as SerperResponse;
   } catch (err) {
-    console.error('[gap-analysis] Serper fetch error:', err instanceof Error ? err.message : err);
+    Sentry.captureException(err);
+    logger.error('[gap-analysis] Serper fetch error:', err instanceof Error ? err.message : err);
     return null;
   }
 }
@@ -135,7 +138,7 @@ async function getScanLimit(): Promise<ScanLimitInfo> {
     .maybeSingle();
 
   if (result.error && !result.error.message?.includes('does not exist')) {
-    console.warn('[gap-analysis] Scan limit query warning:', result.error.message);
+    logger.warn('[gap-analysis] Scan limit query warning:', result.error.message);
   }
 
   const row = result.data;
@@ -337,7 +340,8 @@ async function analyzeGapKeyword(
       { onConflict: 'competitor_domain,keyword,market' },
     );
   } catch (err) {
-    console.error('[gap-analysis] Persist error:', err instanceof Error ? err.message : err);
+    Sentry.captureException(err);
+    logger.error('[gap-analysis] Persist error:', err instanceof Error ? err.message : err);
   }
 
   return {
@@ -440,7 +444,21 @@ export async function getGapDashboardData(
   }
   if (market) query = query.eq('market', market);
 
-  const gapRows = safeRows(await query);
+  // Build drafts query in advance (independent of gap results)
+  const draftsQuery = supabase
+    .from('keyword_gap_drafts')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(50);
+
+  // Fetch all three in parallel
+  const [gapQueryResult, draftResult, scanLimit] = await Promise.all([
+    query,
+    draftsQuery,
+    getScanLimit(),
+  ]);
+
+  const gapRows = safeRows(gapQueryResult);
 
   const results: GapResult[] = gapRows.map((r) => ({
     keyword: r.keyword,
@@ -477,14 +495,7 @@ export async function getGapDashboardData(
     }))
     .sort((a, b) => b.avgOpportunity - a.avgOpportunity);
 
-  // Drafts
-  const draftsQuery = supabase
-    .from('keyword_gap_drafts')
-    .select('*')
-    .order('created_at', { ascending: false })
-    .limit(50);
-
-  const draftRows = safeRows(await draftsQuery);
+  const draftRows = safeRows(draftResult);
   const drafts: GapDraft[] = draftRows.map((d) => ({
     id: d.id,
     keyword: d.keyword,
@@ -498,9 +509,6 @@ export async function getGapDashboardData(
     mdxSkeleton: d.mdx_skeleton,
     createdAt: d.created_at,
   }));
-
-  // Scan limits
-  const scanLimit = await getScanLimit();
 
   // Stats
   const totalGaps = results.filter((r) => r.gapType === 'missing' || r.gapType === 'behind').length;
@@ -543,7 +551,7 @@ export async function createShadowDraft(
     .replace(/-+/g, '-')
     .slice(0, 60);
 
-  const prefix = market === 'us' ? '' : `/${market}`;
+  const prefix = `/${market}`;
   const slug = `${prefix}/${category}/${slugBase}`;
 
   // Generate title
@@ -678,7 +686,7 @@ export async function bridgeTheGap(
   market: Market,
   category: string,
 ): Promise<{ success: boolean; error?: string }> {
-  const prefix = market === 'us' ? '' : `/${market}`;
+  const prefix = `/${market}`;
   const slug = `${prefix}/${category}`;
 
   const result = await boostAndDeploy(slug, `Gap Analysis: bridge gap for "${keyword}"`);

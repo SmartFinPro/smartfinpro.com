@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { withSentryConfig } from '@sentry/nextjs';
 
 const nextConfig: NextConfig = {
   // ============================================================
@@ -18,10 +19,11 @@ const nextConfig: NextConfig = {
   },
 
   // ============================================================
-  // Transpile MDX package to avoid Turbopack ESM/CJS chunk errors
-  // Recommended by next-mdx-remote README for Turbopack compat
+  // Note: transpilePackages for next-mdx-remote was REMOVED.
+  // transpilePackages pulls in next-mdx-remote/index.js AND its
+  // dependency @mdx-js/react into the client bundle, both of which
+  // crash in Turbopack. SafeMDX uses Direct Pass (no MDXRemote).
   // ============================================================
-  transpilePackages: ['next-mdx-remote'],
 
   // ============================================================
   // Experimental Features for Performance
@@ -65,6 +67,12 @@ const nextConfig: NextConfig = {
   // ============================================================
   reactStrictMode: true,
 
+  // ============================================================
+  // Disable the on-screen Next.js development indicator badge.
+  // Keeps local previews clean; actual runtime/build errors still appear.
+  // ============================================================
+  devIndicators: false,
+
 
   // ============================================================
   // FINANCIAL-GRADE SECURITY HEADERS
@@ -73,8 +81,15 @@ const nextConfig: NextConfig = {
   async headers() {
     // Content Security Policy for financial services
     // Strict but allows necessary functionality
-    // Only upgrade insecure requests in production (breaks Safari on localhost HTTP)
-    const upgradeInsecure = process.env.NODE_ENV === 'production' ? 'upgrade-insecure-requests;' : '';
+    // Only upgrade insecure requests on the deployed site (breaks Safari on localhost HTTP).
+    // next start also sets NODE_ENV=production, so we additionally check for a real
+    // production host indicator (VERCEL, HOSTNAME, or explicit ENABLE_CSP_UPGRADE).
+    const isDeployedProduction =
+      process.env.NODE_ENV === 'production' &&
+      (process.env.VERCEL === '1' ||
+       process.env.ENABLE_CSP_UPGRADE === '1' ||
+       (process.env.HOSTNAME && !process.env.HOSTNAME.includes('localhost')));
+    const upgradeInsecure = isDeployedProduction ? 'upgrade-insecure-requests;' : '';
 
     // next-mdx-remote uses new Function() for client-side MDX evaluation.
     // Allow 'unsafe-eval' so MDX pages hydrate correctly.
@@ -85,7 +100,7 @@ const nextConfig: NextConfig = {
       style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
       img-src 'self' data: blob: https:;
       font-src 'self' https://fonts.gstatic.com data:;
-      connect-src 'self' https://*.supabase.co wss://*.supabase.co https://plausible.io https://www.google-analytics.com https://api.resend.com https://*.partnerstack.com https://*.awin.com https://*.financeads.net;
+      connect-src 'self' https://*.supabase.co wss://*.supabase.co https://plausible.io https://www.google-analytics.com https://api.resend.com https://*.partnerstack.com https://*.awin.com https://*.financeads.net https://o*.ingest.sentry.io;
       frame-src 'self';
       frame-ancestors 'self';
       form-action 'self';
@@ -168,62 +183,90 @@ const nextConfig: NextConfig = {
     return [
       // ============================================================
       // Static Assets - Aggressive Caching (1 year, immutable)
+      // Hash-basierte Dateinamen → sicher für alle Browser.
+      // no-transform: verhindert Proxy-CSS-Mangling (Opera Mini,
+      // UC Browser, mobile Carrier-Proxies).
       // ============================================================
       {
         source: '/static/:path*',
         headers: [
           {
             key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
+            value: 'public, max-age=31536000, immutable, no-transform',
           },
           ...securityHeaders,
         ],
       },
 
       // ============================================================
-      // Next.js Generated Assets
+      // Next.js Generated Assets (CSS, JS, Chunks)
+      // Alle Dateien unter /_next/static/ haben Content-Hashes im
+      // Dateinamen → immutable ist sicher.
+      // no-transform: verhindert dass Proxies CSS/JS modifizieren
+      // (Ursache für kaputte Styles in Opera Mini, UC Browser,
+      // Samsung Internet über Carrier-Proxies).
       // ============================================================
       {
         source: '/_next/static/:path*',
         headers: [
           {
             key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
+            value: 'public, max-age=31536000, immutable, no-transform',
+          },
+          // Access-Control für cross-origin CSS-Fonts in Firefox
+          {
+            key: 'Access-Control-Allow-Origin',
+            value: '*',
+          },
+          // Korrekte MIME-Types erzwingen (IE11/Edge Legacy Fix)
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
           },
         ],
       },
 
       // ============================================================
-      // Fonts - Long Cache
+      // Fonts - Long Cache + CORS (Firefox cross-origin Fix)
+      // Firefox blockiert Fonts ohne CORS-Header wenn sie von
+      // einem anderen Origin geladen werden.
       // ============================================================
       {
         source: '/:path*.woff2',
         headers: [
           {
             key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
+            value: 'public, max-age=31536000, immutable, no-transform',
+          },
+          {
+            key: 'Access-Control-Allow-Origin',
+            value: '*',
           },
         ],
       },
 
       // ============================================================
       // Images - Long Cache with Revalidation
+      // no-transform: Proxies sollen Bilder nicht re-komprimieren
+      // (verhindert Qualitätsverlust auf mobilen Netzwerken).
       // ============================================================
       {
         source: '/:path*.(jpg|jpeg|png|gif|webp|avif|ico|svg)',
         headers: [
           {
             key: 'Cache-Control',
-            value: 'public, max-age=86400, stale-while-revalidate=604800',
+            value: 'public, max-age=86400, stale-while-revalidate=604800, no-transform',
           },
         ],
       },
 
       // ============================================================
       // API Routes - No Caching, Security Headers
+      // Pragma + Expires für HTTP/1.0 Proxy-Kompatibilität
+      // (ältere Corporate Proxies, IE11).
       // ============================================================
       {
-        source: '/api/:path*',
+        source: '/api/((?!widget/).*)',
         headers: [
           {
             key: 'Cache-Control',
@@ -242,29 +285,114 @@ const nextConfig: NextConfig = {
       },
 
       // ============================================================
-      // All Other Routes - Full Security Headers
+      // Widget Routes — Permissive headers for iFrame embedding
+      // These routes serve self-contained HTML widgets that external
+      // publishers embed via <iframe>. They need relaxed CSP
+      // (frame-ancestors *) and CORS (Access-Control-Allow-Origin *)
+      // to function on third-party domains.
+      // Separated from /api/:path* to avoid inheriting restrictive
+      // frame-ancestors 'self' and X-Frame-Options: SAMEORIGIN.
       // ============================================================
       {
-        source: '/:path*',
+        source: '/api/widget/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=300, s-maxage=600, stale-while-revalidate=3600',
+          },
+          {
+            key: 'Access-Control-Allow-Origin',
+            value: '*',
+          },
+          {
+            key: 'Content-Security-Policy',
+            value: "frame-ancestors *; default-src 'none'; style-src 'unsafe-inline'; img-src data:;",
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
+          },
+          {
+            key: 'X-Robots-Tag',
+            value: 'noindex, nofollow',
+          },
+          // Intentionally NO X-Frame-Options (CSP frame-ancestors takes precedence)
+          // Intentionally NO restrictive securityHeaders spread
+        ],
+      },
+
+      // ============================================================
+      // All Other Routes - Full Security Headers
+      // Excludes /api/widget/ which has its own permissive headers above.
+      // ============================================================
+      {
+        source: '/:path((?!api/widget/).*)',
         headers: [
           ...securityHeaders,
           // Preconnect hints for critical external resources
           {
             key: 'Link',
-            value: '<https://fonts.googleapis.com>; rel=preconnect, <https://fonts.gstatic.com>; rel=preconnect; crossorigin',
+            value: [
+              '<https://fonts.googleapis.com>; rel=preconnect',
+              '<https://fonts.gstatic.com>; rel=preconnect; crossorigin',
+              // YouTube — for VideoContainer iframe embeds (faster LCP for video pages)
+              '<https://www.youtube.com>; rel=preconnect',
+              '<https://i.ytimg.com>; rel=preconnect',
+              // Plausible analytics — already dns-prefetched in HTML head
+              '<https://plausible.io>; rel=preconnect',
+            ].join(', '),
           },
         ],
       },
 
       // ============================================================
-      // HTML Pages - Moderate Caching with Revalidation
+      // HTML Pages - Cross-Browser Cache-Busting
+      // ============================================================
+      // Problem: Browser cachen HTML mit alten CSS/JS-Hashes.
+      // Nach einem Build zeigen sie kaputte Styles.
+      //
+      // Betroffene Browser & Fix:
+      // ┌──────────────────┬──────────────────────────────────┐
+      // │ Safari (alle)    │ max-age=0 + must-revalidate      │
+      // │ Chrome/Edge      │ must-revalidate (304 via ETag)   │
+      // │ Firefox          │ no-cache (immer revalidieren)    │
+      // │ Samsung Internet │ no-cache + Pragma Fallback       │
+      // │ Opera Mini       │ no-transform (kein CSS-Mangling) │
+      // │ IE11/Edge Legacy │ Pragma + Expires Fallback        │
+      // │ UC Browser       │ no-transform + no-cache          │
+      // │ Mobile Proxies   │ proxy-revalidate + Surrogate     │
+      // └──────────────────┴──────────────────────────────────┘
+      //
+      // CDN (Cloudflare): s-maxage=3600 → cached 1h am Edge.
+      // Surrogate-Control: Varnish/Fastly/Cloudways-Proxy.
       // ============================================================
       {
         source: '/:path((?!api|_next|static|favicon).*)',
         headers: [
           {
             key: 'Cache-Control',
-            value: 'public, max-age=3600, stale-while-revalidate=86400',
+            value: 'public, no-cache, must-revalidate, proxy-revalidate, s-maxage=3600, stale-while-revalidate=86400, no-transform',
+          },
+          // HTTP/1.0 Fallback (Samsung Internet, IE11, Corporate Proxies)
+          {
+            key: 'Pragma',
+            value: 'no-cache',
+          },
+          // HTTP/1.0 Fallback (ältere Proxy-Server)
+          {
+            key: 'Expires',
+            value: '0',
+          },
+          // Varnish/Fastly/Cloudways Reverse-Proxy Caching
+          {
+            key: 'Surrogate-Control',
+            value: 'max-age=3600',
+          },
+          // Vary: Browser soll pro Encoding + Accept separaten Cache halten.
+          // Verhindert dass gzip-Version für brotli-Client ausgeliefert wird.
+          {
+            key: 'Vary',
+            value: 'Accept-Encoding, Accept',
           },
         ],
       },
@@ -285,4 +413,47 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+// ============================================================
+// Sentry — Error Monitoring & Performance Tracing
+// withSentryConfig wraps the config to inject source-map upload
+// and the /monitoring tunnel route (bypasses ad-blockers).
+//
+// ENVs required (add to .env.local + ecosystem.config.js):
+//   NEXT_PUBLIC_SENTRY_DSN       — from Sentry project → Client Keys (DSN)
+//   SENTRY_DSN                   — same value, but not public (server-side)
+//   SENTRY_AUTH_TOKEN            — from Sentry → Settings → Auth Tokens
+//   SENTRY_ORG                   — your Sentry org slug
+//   SENTRY_PROJECT               — your Sentry project slug
+//   NEXT_PUBLIC_SENTRY_RELEASE   — optional, set in CI (e.g. git commit hash)
+// ============================================================
+export default withSentryConfig(nextConfig, {
+  // Sentry org & project (for source map uploads)
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+
+  // Suppress Sentry CLI output (only show in CI)
+  silent: !process.env.CI,
+
+  // Hide source maps from client bundle (security) — Sentry v10 API
+  sourcemaps: {
+    disable: !process.env.SENTRY_AUTH_TOKEN, // only upload when token is set
+  },
+
+  // Tunnel all Sentry requests through our domain to avoid ad-blockers.
+  // Creates a /monitoring route that proxies to ingest.sentry.io.
+  tunnelRoute: '/monitoring',
+
+  webpack: {
+    // Remove Sentry debug/logger calls from client bundle (replaces deprecated disableLogger)
+    treeshake: {
+      removeDebugLogging: true,
+    },
+    // No automatic Vercel monitors (self-hosted on Cloudways, replaces deprecated automaticVercelMonitors)
+    automaticVercelMonitors: false,
+  },
+
+  // Only upload source maps when SENTRY_AUTH_TOKEN is set (CI/production builds)
+  // Without the token the plugin runs in no-upload mode automatically
+  widenClientFileUpload: false,
+});

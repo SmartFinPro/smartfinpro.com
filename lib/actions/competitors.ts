@@ -1,6 +1,8 @@
 'use server';
 
 import 'server-only';
+import * as Sentry from '@sentry/nextjs';
+import { logger } from '@/lib/logging';
 
 import { createClient } from '@/lib/supabase/server';
 import {
@@ -111,7 +113,7 @@ function safeRows<T>(result: {
     if (code === 'PGRST204' || code === '42P01' || msg.includes('does not exist') || msg.includes('schema cache')) {
       return [];
     }
-    console.warn('[competitors] Query warning:', msg);
+    logger.warn('[competitors] Query warning:', msg);
   }
   return result.data || [];
 }
@@ -141,13 +143,14 @@ async function fetchSerp(keyword: string, market: Market): Promise<SerperRespons
     });
 
     if (!res.ok) {
-      console.error('[competitors] Serper API error:', res.status);
+      logger.error('[competitors] Serper API error:', res.status);
       return null;
     }
 
     return (await res.json()) as SerperResponse;
   } catch (err) {
-    console.error('[competitors] Serper fetch error:', err instanceof Error ? err.message : err);
+    Sentry.captureException(err);
+    logger.error('[competitors] Serper fetch error:', err instanceof Error ? err.message : err);
     return null;
   }
 }
@@ -264,7 +267,8 @@ export async function analyzeKeyword(
       }
     }
   } catch (err) {
-    console.error('[competitors] Persist error:', err instanceof Error ? err.message : err);
+    Sentry.captureException(err);
+    logger.error('[competitors] Persist error:', err instanceof Error ? err.message : err);
   }
 
   return {
@@ -289,12 +293,29 @@ export async function getCompetitorData(): Promise<CompetitorDashboardData> {
   const supabase = await createClient();
   const serperConfigured = !!process.env.SERPER_API_KEY;
 
-  // Fetch latest snapshot per keyword (most recent per keyword+market)
-  const snapshotsResult = await supabase
-    .from('competitor_serp_snapshots')
-    .select('*')
-    .order('scanned_at', { ascending: false })
-    .limit(500);
+  // Pre-compute date range (needed by the trend query below)
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+  // Fetch all three in parallel (fully independent queries)
+  const [snapshotsResult, alertsResult, trendResult] = await Promise.all([
+    supabase
+      .from('competitor_serp_snapshots')
+      .select('*')
+      .order('scanned_at', { ascending: false })
+      .limit(500),
+    supabase
+      .from('competitor_alerts')
+      .select('*')
+      .eq('dismissed', false)
+      .order('detected_at', { ascending: false })
+      .limit(50),
+    supabase
+      .from('competitor_serp_snapshots')
+      .select('cps_score, scanned_at')
+      .gte('scanned_at', thirtyDaysAgo.toISOString())
+      .order('scanned_at', { ascending: true }),
+  ]);
 
   const allSnapshots = safeRows(snapshotsResult);
 
@@ -355,14 +376,7 @@ export async function getCompetitorData(): Promise<CompetitorDashboardData> {
     };
   });
 
-  // Alerts (undismissed)
-  const alertsResult = await supabase
-    .from('competitor_alerts')
-    .select('*')
-    .eq('dismissed', false)
-    .order('detected_at', { ascending: false })
-    .limit(50);
-
+  // Alerts (already fetched in parallel above)
   const rawAlerts = safeRows(alertsResult);
   const alerts: CompetitorAlert[] = rawAlerts.map((a) => ({
     id: a.id,
@@ -382,16 +396,7 @@ export async function getCompetitorData(): Promise<CompetitorDashboardData> {
     detectedAt: a.detected_at,
   }));
 
-  // CPS Trend: daily averages for the last 30 days
-  const thirtyDaysAgo = new Date();
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-  const trendResult = await supabase
-    .from('competitor_serp_snapshots')
-    .select('cps_score, scanned_at')
-    .gte('scanned_at', thirtyDaysAgo.toISOString())
-    .order('scanned_at', { ascending: true });
-
+  // CPS Trend: daily averages for the last 30 days (already fetched in parallel above)
   const trendRows = safeRows(trendResult);
 
   const trendByDay = new Map<string, { total: number; count: number }>();
@@ -798,11 +803,11 @@ function resolveSlug(keyword: string, market: string, category: string): string 
 
   if (match) {
     // Return the category index page
-    const prefix = market === 'us' ? '' : `/${market}`;
+    const prefix = `/${market}`;
     return `${prefix}/${match.category}`;
   }
 
   // Fallback: construct from market + category
-  const prefix = market === 'us' ? '' : `/${market}`;
+  const prefix = `/${market}`;
   return `${prefix}/${category}`;
 }

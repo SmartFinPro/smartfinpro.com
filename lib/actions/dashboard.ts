@@ -1,9 +1,12 @@
 'use server';
 
 import 'server-only';
+import { unstable_cache } from 'next/cache';
+import { logger } from '@/lib/logging';
 
 import { createServiceClient } from '@/lib/supabase/server';
 import type { LinkClick, Conversion, AffiliateLink, PageView } from '@/lib/supabase/types';
+import { toUSD, loadFxRates, getFxRatesSnapshot, HARDCODED_FX } from '@/lib/fx-rates';
 
 // ============================================================
 // SAFE QUERY HELPER
@@ -20,7 +23,7 @@ function safeData<T>(result: SupabaseResult<T>): T[] {
       return [];
     }
     // Log unexpected errors but don't crash
-    console.warn('[dashboard] Query warning:', result.error.message);
+    logger.warn('[dashboard] Query warning:', result.error.message);
   }
   return result.data || [];
 }
@@ -285,10 +288,10 @@ const marketConfig: Record<MarketCode, {
   langCode: string;
   exchangeRate: number; // to USD
 }> = {
-  US: { name: 'United States', flag: '🇺🇸', currency: 'USD', symbol: '$', langCode: 'en-US', exchangeRate: 1 },
-  GB: { name: 'United Kingdom', flag: '🇬🇧', currency: 'GBP', symbol: '£', langCode: 'en-GB', exchangeRate: 1.27 },
-  CA: { name: 'Canada', flag: '🇨🇦', currency: 'CAD', symbol: 'C$', langCode: 'en-CA', exchangeRate: 0.74 },
-  AU: { name: 'Australia', flag: '🇦🇺', currency: 'AUD', symbol: 'A$', langCode: 'en-AU', exchangeRate: 0.65 },
+  US: { name: 'United States', flag: '🇺🇸', currency: 'USD', symbol: '$', langCode: 'en-US', exchangeRate: HARDCODED_FX.USD },
+  GB: { name: 'United Kingdom', flag: '🇬🇧', currency: 'GBP', symbol: '£', langCode: 'en-GB', exchangeRate: HARDCODED_FX.GBP },
+  CA: { name: 'Canada', flag: '🇨🇦', currency: 'CAD', symbol: 'C$', langCode: 'en-CA', exchangeRate: HARDCODED_FX.CAD },
+  AU: { name: 'Australia', flag: '🇦🇺', currency: 'AUD', symbol: 'A$', langCode: 'en-AU', exchangeRate: HARDCODED_FX.AUD },
 };
 
 // Map country codes to market codes
@@ -383,75 +386,148 @@ function extractPagePath(referrer: string | null): string {
   }
 }
 
-export async function getDashboardStats(range: TimeRange = '24h'): Promise<DashboardStats> {
+// ── Internal implementation (uncached) ────────────────────────────────────────
+async function _getDashboardStats(range: TimeRange = '24h'): Promise<DashboardStats> {
   const supabase = createServiceClient();
   const now = new Date();
   const rangeStart = getTimeRangeStart(range);
   const previousPeriod = getPreviousPeriodRange(range);
 
-  // Base query for clicks in range
+  // ── Build all conditional queries upfront ────────────────────────────────
   let clicksQuery = supabase
     .from('link_clicks')
     .select('id, link_id, country_code, clicked_at, utm_source, referrer, user_agent');
-
   if (rangeStart) {
     clicksQuery = clicksQuery.gte('clicked_at', rangeStart.toISOString());
   }
 
-  const { data: clicksInRange } = await clicksQuery.order('clicked_at', { ascending: false });
-  type ClickRecord = Pick<LinkClick, 'id' | 'link_id' | 'country_code' | 'clicked_at' | 'utm_source' | 'referrer' | 'user_agent'>;
-
-  // Fetch previous period clicks for comparison
-  let previousClicksCount = 0;
-  if (previousPeriod) {
-    const { count } = await supabase
-      .from('link_clicks')
-      .select('*', { count: 'exact', head: true })
-      .gte('clicked_at', previousPeriod.start.toISOString())
-      .lt('clicked_at', previousPeriod.end.toISOString());
-    previousClicksCount = count || 0;
+  let scrollQuery = supabase
+    .from('page_views')
+    .select('page_path, article_slug, page_title, scroll_depth')
+    .not('scroll_depth', 'is', null)
+    .gt('scroll_depth', 0);
+  if (rangeStart) {
+    scrollQuery = scrollQuery.gte('viewed_at', rangeStart.toISOString());
   }
-  const clicks = (clicksInRange || []) as ClickRecord[];
 
-  // Get total clicks (all time)
-  const { count: totalClicks } = await supabase
-    .from('link_clicks')
-    .select('*', { count: 'exact', head: true });
+  let engagementQuery = supabase
+    .from('page_views')
+    .select('page_path, page_title, article_slug, category, time_on_page, scroll_depth')
+    .not('article_slug', 'is', null);
+  if (rangeStart) {
+    engagementQuery = engagementQuery.gte('viewed_at', rangeStart.toISOString());
+  }
 
-  // Get all conversions with link info for EPC calculation
-  const { data: allConversions } = await supabase
-    .from('conversions')
-    .select('link_id, commission_earned, status');
+  // Noop placeholder for conditional queries that don't apply
+  const noop = Promise.resolve({ data: null as null, count: 0, error: null });
 
-  const conversions = (allConversions || []) as Pick<Conversion, 'link_id' | 'commission_earned' | 'status'>[];
+  // ── Fire all 13 queries in parallel — eliminates ~8s of sequential I/O ──
+  const [
+    clicksInRangeResult,
+    totalClicksResult,
+    allConversionsResult,
+    activeLinksResult,
+    allLinksResult,
+    scrollResult,
+    engagementResult,
+    leadResult,
+    prevClicksResult,
+    prevConversionsResult,
+    currConversionsResult,
+    currLeadsResult,
+    prevLeadsResult,
+  ] = await Promise.all([
+    // 1. Clicks in selected range (ordered newest-first)
+    clicksQuery.order('clicked_at', { ascending: false }),
+    // 2. All-time click count (for conversion rate denominator)
+    supabase.from('link_clicks').select('*', { count: 'exact', head: true }),
+    // 3. All-time conversions (for EPC / totalRevenue)
+    supabase.from('conversions').select('link_id, commission_earned, currency, status'),
+    // 4. Active affiliate links count
+    supabase.from('affiliate_links').select('*', { count: 'exact', head: true }).eq('active', true),
+    // 5. All affiliate links (id → name/category mapping)
+    supabase.from('affiliate_links').select('id, slug, partner_name, category'),
+    // 6. Scroll-depth page views in range
+    scrollQuery,
+    // 7. Article engagement data in range (for "Sorgenkinder" analysis)
+    engagementQuery,
+    // 8. Latest 100 newsletter subscribers (for lead quality score)
+    supabase
+      .from('newsletter_subscribers')
+      .select('id, created_at, source_page')
+      .order('created_at', { ascending: false })
+      .limit(100),
+    // 9. Previous-period click count (for trend comparison)
+    previousPeriod
+      ? supabase
+          .from('link_clicks')
+          .select('*', { count: 'exact', head: true })
+          .gte('clicked_at', previousPeriod.start.toISOString())
+          .lt('clicked_at', previousPeriod.end.toISOString())
+      : noop,
+    // 10. Previous-period approved conversions (revenue trend)
+    // NOTE: conversions table uses converted_at (not created_at)
+    previousPeriod
+      ? supabase
+          .from('conversions')
+          .select('commission_earned, currency')
+          .eq('status', 'approved')
+          .gte('converted_at', previousPeriod.start.toISOString())
+          .lt('converted_at', previousPeriod.end.toISOString())
+      : noop,
+    // 11. Current-period approved conversions (revenueInRange)
+    rangeStart
+      ? supabase
+          .from('conversions')
+          .select('commission_earned, currency')
+          .eq('status', 'approved')
+          .gte('converted_at', rangeStart.toISOString())
+      : noop,
+    // 12. Current-period lead count
+    // NOTE: newsletter_subscribers table uses created_at
+    rangeStart
+      ? supabase
+          .from('newsletter_subscribers')
+          .select('*', { count: 'exact', head: true })
+          .gte('created_at', rangeStart.toISOString())
+      : noop,
+    // 13. Previous-period lead count
+    previousPeriod
+      ? supabase
+          .from('newsletter_subscribers')
+          .select('*', { count: 'exact', head: true })
+          .gte('created_at', previousPeriod.start.toISOString())
+          .lt('created_at', previousPeriod.end.toISOString())
+      : noop,
+  ]);
+
+  // ── Extract typed results ─────────────────────────────────────────────────
+  type ClickRecord = Pick<LinkClick, 'id' | 'link_id' | 'country_code' | 'clicked_at' | 'utm_source' | 'referrer' | 'user_agent'>;
+  const clicks = (clicksInRangeResult.data || []) as ClickRecord[];
+  const totalClicks = totalClicksResult.count || 0;
+
+  type ConversionRecord = Pick<Conversion, 'link_id' | 'commission_earned' | 'currency' | 'status'>;
+  const conversions = (allConversionsResult.data || []) as ConversionRecord[];
   const approvedConversions = conversions.filter((c) => c.status === 'approved');
-  const totalRevenue = approvedConversions.reduce((sum, c) => sum + (c.commission_earned || 0), 0);
+  const totalRevenue = approvedConversions.reduce((sum, c) => sum + toUSD(c.commission_earned || 0, c.currency), 0);
 
-  // Build revenue map by link_id
+  // Build revenue map by link_id (all-time, for EPC display) — normalised to USD
   const linkRevenueMap = new Map<string, { revenue: number; conversions: number }>();
   approvedConversions.forEach((c) => {
     if (c.link_id) {
       const current = linkRevenueMap.get(c.link_id) || { revenue: 0, conversions: 0 };
       linkRevenueMap.set(c.link_id, {
-        revenue: current.revenue + (c.commission_earned || 0),
+        revenue: current.revenue + toUSD(c.commission_earned || 0, c.currency),
         conversions: current.conversions + 1,
       });
     }
   });
 
-  // Get active links count
-  const { count: activeLinks } = await supabase
-    .from('affiliate_links')
-    .select('*', { count: 'exact', head: true })
-    .eq('active', true);
-
-  // Get all links for mapping
-  const { data: allLinks } = await supabase
-    .from('affiliate_links')
-    .select('id, slug, partner_name, category');
+  const activeLinks = activeLinksResult.count || 0;
 
   type LinkInfo = Pick<AffiliateLink, 'id' | 'slug' | 'partner_name' | 'category'>;
-  const linkMap = new Map((allLinks || []).map((l) => [l.id, l as LinkInfo]));
+  const allLinks = (allLinksResult.data || []) as LinkInfo[];
+  const linkMap = new Map(allLinks.map((l) => [l.id, l]));
 
   // Process clicks for various stats
   const geoMap = new Map<string, number>();
@@ -512,7 +588,7 @@ export async function getDashboardStats(range: TimeRange = '24h'): Promise<Dashb
   };
 
   // Build top links with EPC
-  const topLinks: TopLink[] = ((allLinks || []) as LinkInfo[])
+  const topLinks: TopLink[] = allLinks
     .map((link) => {
       const clicks = linkClickCounts.get(link.id) || 0;
       const revenueData = linkRevenueMap.get(link.id) || { revenue: 0, conversions: 0 };
@@ -536,7 +612,7 @@ export async function getDashboardStats(range: TimeRange = '24h'): Promise<Dashb
 
   // Recent clicks with link info and referrer domain
   const recentClicks: ClickData[] = clicks.slice(0, 20).map((click) => {
-    const link = linkMap.get(click.link_id);
+    const link = click.link_id ? linkMap.get(click.link_id) : undefined;
     const countryCode = click.country_code || 'XX';
 
     // Extract referrer domain
@@ -583,18 +659,7 @@ export async function getDashboardStats(range: TimeRange = '24h'): Promise<Dashb
     approvedRevenue: totalRevenue,
   };
 
-  // Fetch scroll depth stats from page_views table
-  let scrollQuery = supabase
-    .from('page_views')
-    .select('page_path, article_slug, page_title, scroll_depth')
-    .not('scroll_depth', 'is', null)
-    .gt('scroll_depth', 0);
-
-  if (rangeStart) {
-    scrollQuery = scrollQuery.gte('viewed_at', rangeStart.toISOString());
-  }
-
-  const scrollResult = await scrollQuery;
+  // Scroll depth results (already fetched in Promise.all above)
   type ScrollViewRecord = Pick<PageView, 'page_path' | 'article_slug' | 'page_title' | 'scroll_depth'>;
   const scrollViews = safeData(scrollResult) as ScrollViewRecord[];
 
@@ -647,17 +712,7 @@ export async function getDashboardStats(range: TimeRange = '24h'): Promise<Dashb
   // Articles with high engagement but low affiliate CTR
   // ============================================================
 
-  // Fetch all page views with engagement data
-  let engagementQuery = supabase
-    .from('page_views')
-    .select('page_path, page_title, article_slug, category, time_on_page, scroll_depth')
-    .not('article_slug', 'is', null); // Only articles, not pillar pages
-
-  if (rangeStart) {
-    engagementQuery = engagementQuery.gte('viewed_at', rangeStart.toISOString());
-  }
-
-  const engagementResult = await engagementQuery;
+  // Article engagement results (already fetched in Promise.all above)
   type EngagementRecord = Pick<PageView, 'page_path' | 'page_title' | 'article_slug' | 'category' | 'time_on_page' | 'scroll_depth'>;
   const articleViews = safeData(engagementResult) as EngagementRecord[];
 
@@ -780,56 +835,26 @@ export async function getDashboardStats(range: TimeRange = '24h'): Promise<Dashb
     .slice(0, 10);
 
   // ============================================================
-  // TIME COMPARISONS
+  // TIME COMPARISONS (data already fetched in Promise.all above)
   // ============================================================
 
   // Clicks comparison
+  const previousClicksCount = prevClicksResult.count || 0;
   const clicksComparison = calculateChange(totalClicksInRange, previousClicksCount);
 
-  // Revenue comparison - fetch previous period revenue
-  let previousRevenue = 0;
-  if (previousPeriod) {
-    const { data: prevConversions } = await supabase
-      .from('conversions')
-      .select('commission_earned')
-      .eq('status', 'approved')
-      .gte('created_at', previousPeriod.start.toISOString())
-      .lt('created_at', previousPeriod.end.toISOString());
-    previousRevenue = (prevConversions || []).reduce((sum, c) => sum + (c.commission_earned || 0), 0);
-  }
-
-  // Revenue in current range
-  let revenueInRange = 0;
-  if (rangeStart) {
-    const { data: currentConversions } = await supabase
-      .from('conversions')
-      .select('commission_earned')
-      .eq('status', 'approved')
-      .gte('created_at', rangeStart.toISOString());
-    revenueInRange = (currentConversions || []).reduce((sum, c) => sum + (c.commission_earned || 0), 0);
-  } else {
-    revenueInRange = totalRevenue;
-  }
+  // Revenue comparison — results from parallel queries, normalised to USD
+  type CommissionRow = { commission_earned: number | null; currency?: string | null };
+  const previousRevenue = ((prevConversionsResult.data || []) as CommissionRow[])
+    .reduce((sum, c) => sum + toUSD(c.commission_earned || 0, c.currency), 0);
+  const revenueInRange = rangeStart
+    ? ((currConversionsResult.data || []) as CommissionRow[])
+        .reduce((sum, c) => sum + toUSD(c.commission_earned || 0, c.currency), 0)
+    : totalRevenue; // 'all' range → total all-time revenue
   const revenueComparison = calculateChange(revenueInRange, previousRevenue);
 
-  // Leads comparison - from newsletter_subscribers (or subscribers fallback)
-  let leadsInRange = 0;
-  let previousLeads = 0;
-  if (rangeStart) {
-    const currentLeadsResult = await supabase
-      .from('newsletter_subscribers')
-      .select('*', { count: 'exact', head: true })
-      .gte('created_at', rangeStart.toISOString());
-    leadsInRange = safeCount(currentLeadsResult);
-  }
-  if (previousPeriod) {
-    const prevLeadsResult = await supabase
-      .from('newsletter_subscribers')
-      .select('*', { count: 'exact', head: true })
-      .gte('created_at', previousPeriod.start.toISOString())
-      .lt('created_at', previousPeriod.end.toISOString());
-    previousLeads = safeCount(prevLeadsResult);
-  }
+  // Leads comparison
+  const leadsInRange = currLeadsResult.count || 0;
+  const previousLeads = prevLeadsResult.count || 0;
   const leadsComparison = calculateChange(leadsInRange, previousLeads);
 
   // ============================================================
@@ -895,15 +920,8 @@ export async function getDashboardStats(range: TimeRange = '24h'): Promise<Dashb
   }
 
   // ============================================================
-  // LEAD QUALITY SCORE
+  // LEAD QUALITY SCORE (data already fetched in Promise.all above)
   // ============================================================
-
-  // Get newsletter subscribers with engagement data
-  const leadResult = await supabase
-    .from('newsletter_subscribers')
-    .select('id, created_at, source_page')
-    .order('created_at', { ascending: false })
-    .limit(100);
 
   const leads = safeData(leadResult);
 
@@ -929,10 +947,10 @@ export async function getDashboardStats(range: TimeRange = '24h'): Promise<Dashb
   };
 
   return {
-    totalClicks: totalClicks || 0,
+    totalClicks,
     totalClicksInRange,
     totalRevenue,
-    activeLinks: activeLinks || 0,
+    activeLinks,
     conversionRate,
     recentClicks,
     clicksOverTime,
@@ -944,16 +962,22 @@ export async function getDashboardStats(range: TimeRange = '24h'): Promise<Dashb
     scrollDepthStats,
     averageScrollDepth,
     problemArticles,
-    // NEW fields
     clicksComparison,
     revenueComparison,
     leadsComparison,
-    actionItems: actionItems.slice(0, 5), // Limit to 5 action items
+    actionItems: actionItems.slice(0, 5),
     leadQuality,
     revenueInRange,
     leadsInRange,
   };
 }
+
+// ── Exported cached version — 30s server-side cache keyed by [range] ──────────
+export const getDashboardStats = unstable_cache(
+  _getDashboardStats,
+  ['dashboard:stats'],
+  { revalidate: 30, tags: ['dashboard-stats'] }
+);
 
 function buildTimeSeries(clicks: { clicked_at: string }[], range: TimeRange, now: Date): TimeSeriesData[] {
   const data: TimeSeriesData[] = [];
@@ -1035,83 +1059,81 @@ function buildTimeSeries(clicks: { clicked_at: string }[], range: TimeRange, now
 // ============================================================
 
 export async function getGlobalMarketIntelligence(range: TimeRange = '7d'): Promise<GlobalMarketIntelligence> {
+  await loadFxRates(); // Pre-load dynamic FX rates into cache
   const supabase = createServiceClient();
   const now = new Date();
   const rangeStart = getTimeRangeStart(range);
   const previousPeriod = getPreviousPeriodRange(range);
 
-  // Fetch all clicks in range with country info
+  // ── Build conditional queries upfront ────────────────────────────────────
   let clicksQuery = supabase
     .from('link_clicks')
     .select('id, link_id, country_code, clicked_at, referrer');
-
   if (rangeStart) {
     clicksQuery = clicksQuery.gte('clicked_at', rangeStart.toISOString());
   }
 
-  const { data: clicksData } = await clicksQuery.order('clicked_at', { ascending: false });
-  const clicks = clicksData || [];
-
-  // Fetch previous period clicks for comparison
-  let previousClicks: { country_code: string | null }[] = [];
-  if (previousPeriod) {
-    const { data: prevClicksData } = await supabase
-      .from('link_clicks')
-      .select('country_code')
-      .gte('clicked_at', previousPeriod.start.toISOString())
-      .lt('clicked_at', previousPeriod.end.toISOString());
-    previousClicks = prevClicksData || [];
-  }
-
-  // Fetch all conversions with link info
   let conversionsQuery = supabase
     .from('conversions')
-    .select('link_id, commission_earned, status, created_at');
-
+    .select('link_id, commission_earned, currency, status, converted_at');
   if (rangeStart) {
-    conversionsQuery = conversionsQuery.gte('created_at', rangeStart.toISOString());
+    conversionsQuery = conversionsQuery.gte('converted_at', rangeStart.toISOString());
   }
 
-  const { data: conversionsData } = await conversionsQuery;
-  const conversions = (conversionsData || []).filter(c => c.status === 'approved');
-
-  // Fetch previous period conversions
-  let previousConversions: { link_id: string | null; commission_earned: number | null }[] = [];
-  if (previousPeriod) {
-    const { data: prevConvData } = await supabase
-      .from('conversions')
-      .select('link_id, commission_earned')
-      .eq('status', 'approved')
-      .gte('created_at', previousPeriod.start.toISOString())
-      .lt('created_at', previousPeriod.end.toISOString());
-    previousConversions = prevConvData || [];
-  }
-
-  // Fetch affiliate links for product mapping
-  const { data: linksData } = await supabase
-    .from('affiliate_links')
-    .select('id, slug, partner_name, category');
-  const linksMap = new Map((linksData || []).map(l => [l.id, l]));
-
-  // Fetch page views for scroll depth by market
   let pageViewsQuery = supabase
     .from('page_views')
     .select('page_path, scroll_depth, lang')
     .not('scroll_depth', 'is', null)
     .gt('scroll_depth', 0);
-
   if (rangeStart) {
     pageViewsQuery = pageViewsQuery.gte('viewed_at', rangeStart.toISOString());
   }
 
-  const pageViewsResult = await pageViewsQuery;
-  const pageViews = safeData(pageViewsResult);
+  const gmiNoop = Promise.resolve({ data: null as null, count: 0, error: null });
+
+  // ── Fire all 6 queries in parallel ───────────────────────────────────────
+  const [
+    gmiClicksResult,
+    gmiPrevClicksResult,
+    gmiConversionsResult,
+    gmiPrevConversionsResult,
+    gmiLinksResult,
+    gmiPageViewsResult,
+  ] = await Promise.all([
+    clicksQuery.order('clicked_at', { ascending: false }),
+    previousPeriod
+      ? supabase
+          .from('link_clicks')
+          .select('country_code')
+          .gte('clicked_at', previousPeriod.start.toISOString())
+          .lt('clicked_at', previousPeriod.end.toISOString())
+      : gmiNoop,
+    conversionsQuery,
+    previousPeriod
+      ? supabase
+          .from('conversions')
+          .select('link_id, commission_earned, currency')
+          .eq('status', 'approved')
+          .gte('converted_at', previousPeriod.start.toISOString())
+          .lt('converted_at', previousPeriod.end.toISOString())
+      : gmiNoop,
+    supabase.from('affiliate_links').select('id, slug, partner_name, category'),
+    pageViewsQuery,
+  ]);
+
+  // ── Extract results ───────────────────────────────────────────────────────
+  const clicks = gmiClicksResult.data || [];
+  const previousClicks = (gmiPrevClicksResult.data || []) as { country_code: string | null }[];
+  const conversions = ((gmiConversionsResult.data || []) as { link_id: string | null; commission_earned: number | null; currency?: string | null; status: string; converted_at: string }[]).filter(c => c.status === 'approved');
+  const previousConversions = (gmiPrevConversionsResult.data || []) as { link_id: string | null; commission_earned: number | null; currency?: string | null }[];
+  const linksMap = new Map((gmiLinksResult.data || []).map(l => [l.id, l]));
+  const pageViews = safeData(gmiPageViewsResult);
 
   // Build market-specific data
   const marketData: Record<MarketCode, {
     clicks: { link_id: string; clicked_at: string; referrer: string | null }[];
     previousClicks: number;
-    conversions: { link_id: string | null; commission_earned: number | null }[];
+    conversions: { link_id: string | null; commission_earned: number | null; currency?: string | null }[];
     previousRevenue: number;
     scrollDepths: number[];
   }> = {
@@ -1174,7 +1196,7 @@ export async function getGlobalMarketIntelligence(range: TimeRange = '7d'): Prom
         for (const country of countries) {
           const market = getMarketFromCountry(country);
           if (market) {
-            marketData[market].previousRevenue += conv.commission_earned || 0;
+            marketData[market].previousRevenue += toUSD(conv.commission_earned || 0, conv.currency);
             break;
           }
         }
@@ -1209,15 +1231,15 @@ export async function getGlobalMarketIntelligence(range: TimeRange = '7d'): Prom
   });
 
   // Build sparkline data (last 7 days) for each market
-  function buildMarketSparkline(marketClicks: { clicked_at: string }[], marketConversions: { commission_earned: number | null; created_at: string }[]): MarketSparklineData[] {
+  function buildMarketSparkline(marketClicks: { clicked_at: string }[], marketConversions: { commission_earned: number | null; currency?: string | null; converted_at: string }[]): MarketSparklineData[] {
     const data: MarketSparklineData[] = [];
     for (let i = 6; i >= 0; i--) {
       const dayDate = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
       const dayKey = dayDate.toISOString().slice(0, 10);
       const dayClicks = marketClicks.filter(c => c.clicked_at.slice(0, 10) === dayKey).length;
       const dayRevenue = marketConversions
-        .filter(c => c.created_at?.slice(0, 10) === dayKey)
-        .reduce((sum, c) => sum + (c.commission_earned || 0), 0);
+        .filter(c => c.converted_at?.slice(0, 10) === dayKey)
+        .reduce((sum, c) => sum + toUSD(c.commission_earned || 0, c.currency), 0);
       data.push({
         label: dayDate.toLocaleDateString('en-US', { weekday: 'short' }),
         clicks: dayClicks,
@@ -1237,7 +1259,7 @@ export async function getGlobalMarketIntelligence(range: TimeRange = '7d'): Prom
     const data = marketData[code];
 
     const totalClicks = data.clicks.length;
-    const totalRevenue = data.conversions.reduce((sum, c) => sum + (c.commission_earned || 0), 0);
+    const totalRevenue = data.conversions.reduce((sum, c) => sum + toUSD(c.commission_earned || 0, c.currency), 0);
     const totalConversions = data.conversions.length;
 
     // Calculate trends
@@ -1276,7 +1298,7 @@ export async function getGlobalMarketIntelligence(range: TimeRange = '7d'): Prom
       if (conv.link_id) {
         const current = productClicks.get(conv.link_id);
         if (current) {
-          current.revenue += conv.commission_earned || 0;
+          current.revenue += toUSD(conv.commission_earned || 0, conv.currency);
         }
       }
     });
@@ -1296,7 +1318,7 @@ export async function getGlobalMarketIntelligence(range: TimeRange = '7d'): Prom
     // Build sparkline
     const sparklineData = buildMarketSparkline(
       data.clicks,
-      data.conversions.map(c => ({ ...c, created_at: (c as any).created_at || '' }))
+      data.conversions.map(c => ({ ...c, converted_at: (c as any).converted_at || '' }))
     );
 
     markets.push({
@@ -1309,7 +1331,7 @@ export async function getGlobalMarketIntelligence(range: TimeRange = '7d'): Prom
       clicksTrend: clicksComparison.trend,
       clicksChange: clicksComparison.change,
       revenue: totalRevenue,
-      revenueLocal: totalRevenue / config.exchangeRate,
+      revenueLocal: totalRevenue / (getFxRatesSnapshot()[config.currency] || config.exchangeRate),
       revenueChange: revenueComparison.change,
       revenueTrend: revenueComparison.trend,
       conversions: totalConversions,

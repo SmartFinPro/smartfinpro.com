@@ -38,8 +38,8 @@ export function SimulationButton() {
 
   async function fetchStatus() {
     try {
-      const { getSimulationStatus } = await import('@/lib/actions/simulator');
-      const result = await getSimulationStatus();
+      const res = await fetch('/api/dashboard/simulator');
+      const result = await res.json();
       setStatus(result);
     } catch {
       // Status fetch is best-effort
@@ -51,8 +51,12 @@ export function SimulationButton() {
     toast('Simulation gestartet...', { icon: '🧪', duration: 4000 });
 
     try {
-      const { triggerFullSimulation } = await import('@/lib/actions/simulator');
-      const result = await triggerFullSimulation();
+      const res = await fetch('/api/dashboard/simulator', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'trigger' }),
+      });
+      const result = await res.json();
 
       if (result.success) {
         toast.success(
@@ -76,8 +80,12 @@ export function SimulationButton() {
     setIsClearing(true);
 
     try {
-      const { clearSimulationData } = await import('@/lib/actions/simulator');
-      const result = await clearSimulationData();
+      const res = await fetch('/api/dashboard/simulator', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'clear' }),
+      });
+      const result = await res.json();
 
       if (result.success) {
         const d = result.deleted;
@@ -152,7 +160,7 @@ export function SimulationButton() {
                     <BarChart3 className="h-3 w-3" /> CTA Clicks
                   </span>
                   <span className="font-semibold text-slate-700 tabular-nums">
-                    {status.clickCount.toLocaleString()}
+                    {status.clickCount.toLocaleString('en-US')}
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-[11px]">

@@ -45,7 +45,7 @@ export function PillarTemplate({
   modifiedDate,
 }: PillarPageProps) {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://smartfinpro.com';
-  const marketPrefix = market === 'us' ? '' : `/${market}`;
+  const marketPrefix = `/${market}`;
 
   return (
     <article className="max-w-4xl mx-auto px-4 py-12">
@@ -83,7 +83,7 @@ export function PillarTemplate({
           Updated {new Date().getFullYear()}
         </Badge>
 
-        <h1 className="text-4xl md:text-5xl font-bold mb-4">{title}</h1>
+        <h1 className="font-bold leading-tight mb-4" style={{ fontSize: 'clamp(2.25rem, 5vw, 3rem)' }}>{title}</h1>
 
         <p className="text-xl text-muted-foreground mb-6">{description}</p>
 

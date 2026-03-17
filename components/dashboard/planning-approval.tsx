@@ -388,8 +388,12 @@ export function PlanningApproval({ initialPlans }: PlanningApprovalProps) {
     setExecutingId(planId);
 
     try {
-      const { approveAndExecuteSingle } = await import('@/lib/actions/daily-strategy');
-      const result = await approveAndExecuteSingle(planId);
+      const res = await fetch('/api/dashboard/daily-strategy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'approve', planId }),
+      });
+      const result = await res.json();
 
       setResults((prev) => [
         ...prev,
@@ -404,7 +408,7 @@ export function PlanningApproval({ initialPlans }: PlanningApprovalProps) {
       ]);
 
       if (result.success) {
-        toast.success(`"${plan.keyword}" generiert! ${result.wordCount?.toLocaleString() || ''} Woerter`);
+        toast.success(`"${plan.keyword}" generiert! ${result.wordCount?.toLocaleString('en-US') || ''} Woerter`);
       } else {
         toast.error(`Fehlgeschlagen: ${result.error || 'Unbekannter Fehler'}`);
       }
@@ -425,8 +429,13 @@ export function PlanningApproval({ initialPlans }: PlanningApprovalProps) {
     if (!plan || executingId) return;
 
     try {
-      const { rejectPlanItem } = await import('@/lib/actions/daily-strategy');
-      await rejectPlanItem(planId);
+      const res = await fetch('/api/dashboard/daily-strategy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'reject', planId }),
+      });
+      const result = await res.json();
+      if (result.success === false) throw new Error(result.error);
       toast('Abgelehnt', { description: `"${plan.keyword}" archiviert` });
     } catch {
       toast.error('Reject fehlgeschlagen');
@@ -569,7 +578,7 @@ export function PlanningApproval({ initialPlans }: PlanningApprovalProps) {
                   {result.success ? (
                     <p className="text-[10px] text-slate-500">
                       <code className="text-emerald-500">{result.slug}</code>
-                      {result.wordCount && ` \u00B7 ${result.wordCount.toLocaleString()} words`}
+                      {result.wordCount && ` \u00B7 ${result.wordCount.toLocaleString('en-US')} words`}
                     </p>
                   ) : (
                     <p className="text-[10px] text-rose-400">{result.error}</p>

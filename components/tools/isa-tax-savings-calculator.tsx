@@ -411,7 +411,7 @@ export function ISATaxSavingsCalculator() {
               Compare the UK&apos;s top Stocks &amp; Shares ISA providers. Find the right platform
               for your investment goals.
             </p>
-            <Button asChild className="w-full text-white hover:opacity-90" style={{ background: 'var(--sfp-gold)' }}>
+            <Button asChild className="w-full text-white hover:opacity-90" style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}>
               <a href="/uk/personal-finance">
                 Compare ISA Providers
                 <ArrowRight className="h-4 w-4 ml-2" />

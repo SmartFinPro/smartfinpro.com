@@ -1,6 +1,8 @@
 'use server';
 
 import 'server-only';
+import * as Sentry from '@sentry/nextjs';
+import { logger } from '@/lib/logging';
 
 import { createServiceClient } from '@/lib/supabase/server';
 import {
@@ -17,7 +19,7 @@ const GL_MAP: Record<string, string> = { us: 'us', uk: 'uk', ca: 'ca', au: 'au' 
 import { boostAndDeploy } from '@/lib/actions/content-overrides';
 import { registerAffiliateSlug, getComplianceLabel } from '@/lib/affiliate/link-registry';
 import { extractDomain } from '@/lib/seo/competitor-keywords';
-import { marketConfig, categoryConfig } from '@/lib/i18n/config';
+import { marketConfig, categoryConfig, marketCategories } from '@/lib/i18n/config';
 import type { Market, Category } from '@/lib/i18n/config';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -96,6 +98,36 @@ export interface GenesisRunState {
   generationProgress: GenerationProgress;
   indexedAt: string | null;
   createdAt: string;
+}
+
+export interface CreateReviewFromTemplateInput {
+  market: Market;
+  category: string;
+  title: string;
+  bodyContent: string;
+  slug?: string;
+  reviewedBy?: string;
+  affiliateUrl?: string;
+  author?: string;
+  autoPartner?: boolean;
+  force?: boolean;
+}
+
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function stripFrontmatter(raw: string): string {
+  return raw.replace(/^---[\s\S]*?---\s*/m, '');
 }
 
 // ── Step 1: Magic Find ───────────────────────────────────────
@@ -195,7 +227,7 @@ export async function magicFind(
       .single();
 
     if (runError) {
-      console.error('[genesis] Pipeline run creation failed:', runError.message);
+      logger.error('[genesis] Pipeline run creation failed:', runError.message);
     }
 
     const result: ResearchResult = {
@@ -209,8 +241,9 @@ export async function magicFind(
 
     return { success: true, data: result, error: null };
   } catch (err) {
+    Sentry.captureException(err);
     const msg = err instanceof Error ? err.message : 'Unknown error';
-    console.error('[genesis] magicFind failed:', msg);
+    logger.error('[genesis] magicFind failed:', msg);
     return { success: false, data: null, error: msg };
   }
 }
@@ -222,6 +255,7 @@ export async function generateLongFormAsset(
   keyword: string,
   market: Market,
   category: string,
+  researchBrief?: string,
 ): Promise<{ success: boolean; slug: string; filePath: string; wordCount: number; error?: string }> {
   const supabase = createServiceClient();
 
@@ -238,6 +272,26 @@ export async function generateLongFormAsset(
       .from('genesis_pipeline_runs')
       .update({ status: 'generating', selected_keyword: keyword })
       .eq('id', runId);
+
+    // Auto-detect research brief from disk if none provided via UI
+    let finalResearchBrief = researchBrief;
+    if (!finalResearchBrief) {
+      const slugBase = keyword
+        .toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-')
+        .slice(0, 60);
+      const researchDir = path.join(process.cwd(), 'content', 'research', market, category);
+      for (const ext of ['.md', '.txt']) {
+        const candidate = path.join(researchDir, `${slugBase}${ext}`);
+        if (fs.existsSync(candidate)) {
+          finalResearchBrief = fs.readFileSync(candidate, 'utf-8');
+          logger.info(`[genesis] Auto-loaded research brief: ${candidate}`);
+          break;
+        }
+      }
+    }
 
     // Step 2a: Competitor research
     await updateProgress({ step: 'research', progress: 10, message: 'Analyzing competitor landscape...' });
@@ -257,7 +311,7 @@ export async function generateLongFormAsset(
 
     // Step 2b: Generate AI brief
     await updateProgress({ step: 'outline', progress: 30, message: 'Building content outline with AI...' });
-    const aiResult = await generateLongFormBriefWithAI(keyword, market, category, competitorOutlines);
+    const aiResult = await generateLongFormBriefWithAI(keyword, market, category, competitorOutlines, finalResearchBrief);
 
     // Step 2c: Build the brief
     await updateProgress({ step: 'content', progress: 55, message: 'Generating 4,000-7,000 word article...' });
@@ -269,7 +323,7 @@ export async function generateLongFormAsset(
       .slice(0, 60);
 
     const catConfig = categoryConfig[category as Category];
-    const mktPrefix = market === 'us' ? '' : `/${market}`;
+    const mktPrefix = `/${market}`;
     const fullSlug = `${mktPrefix}/${category}/${slugBase}`;
 
     // Build image requirements
@@ -281,7 +335,7 @@ export async function generateLongFormAsset(
     ];
 
     const internalLinkTargets = [
-      `/${market === 'us' ? '' : `${market}/`}${category}`,
+      `/${market}/${category}`,
     ];
 
     const brief: ContentBrief = {
@@ -300,8 +354,11 @@ export async function generateLongFormAsset(
     };
 
     // Step 2d: Generate MDX
-    await updateProgress({ step: 'schema', progress: 70, message: 'Generating MDX with Schema.org markup...' });
-    const mdxContent = await generateLongFormMdxContent(brief, []);
+    const mdxProgressMsg = finalResearchBrief
+      ? 'Generating AI-enriched MDX with research data...'
+      : 'Generating MDX with Schema.org markup...';
+    await updateProgress({ step: 'schema', progress: 70, message: mdxProgressMsg });
+    const mdxContent = await generateLongFormMdxContent(brief, [], finalResearchBrief);
 
     // Step 2e: Write file
     await updateProgress({ step: 'writing', progress: 85, message: 'Writing MDX file to disk...' });
@@ -316,9 +373,9 @@ export async function generateLongFormAsset(
     // Create image directory
     const imageDir = path.join(
       process.cwd(), 'public', 'images', 'content',
-      market === 'us' ? '' : market,
+      market,
       category, slugBase,
-    ).replace(/\/\//g, '/');
+    );
     if (!fs.existsSync(imageDir)) {
       fs.mkdirSync(imageDir, { recursive: true });
     }
@@ -332,7 +389,7 @@ export async function generateLongFormAsset(
       .filter(Boolean).length;
 
     // Step 2f: Update pipeline run
-    await updateProgress({ step: 'done', progress: 100, message: `Done! ${wordCount.toLocaleString()} words generated.` });
+    await updateProgress({ step: 'done', progress: 100, message: `Done! ${wordCount.toLocaleString('en-US')} words generated.` });
 
     await supabase
       .from('genesis_pipeline_runs')
@@ -346,7 +403,7 @@ export async function generateLongFormAsset(
       })
       .eq('id', runId);
 
-    console.log(`[genesis] Long-form MDX created: ${filePath} (${wordCount} words)`);
+    logger.info(`[genesis] Long-form MDX created: ${filePath} (${wordCount} words)`);
 
     return {
       success: true,
@@ -355,8 +412,9 @@ export async function generateLongFormAsset(
       wordCount,
     };
   } catch (err) {
+    Sentry.captureException(err);
     const msg = err instanceof Error ? err.message : 'Unknown error';
-    console.error('[genesis] generateLongFormAsset failed:', msg);
+    logger.error('[genesis] generateLongFormAsset failed:', msg);
     await updateProgress({ step: 'error', progress: 0, message: `Error: ${msg}` });
     await supabase
       .from('genesis_pipeline_runs')
@@ -397,7 +455,7 @@ export async function processAndInsertImages(
       let mdx = fs.readFileSync(mdxPath, 'utf-8');
       const market = run.market as Market;
       const slugBase = run.slug?.split('/').pop() || '';
-      const prefix = market === 'us' ? '' : `/${market}`;
+      const prefix = `/${market}`;
       const imageBase = `/images/content${prefix}/${run.category}/${slugBase}`;
 
       // Insert images at their designated positions
@@ -451,8 +509,9 @@ export async function processAndInsertImages(
 
     return { success: true };
   } catch (err) {
+    Sentry.captureException(err);
     const msg = err instanceof Error ? err.message : 'Unknown error';
-    console.error('[genesis] processAndInsertImages failed:', msg);
+    logger.error('[genesis] processAndInsertImages failed:', msg);
     return { success: false, error: msg };
   }
 }
@@ -530,7 +589,7 @@ export async function requestInstantIndexing(
     const notifyTime = response.data?.urlNotificationMetadata?.latestUpdate?.notifyTime || null;
     const elapsed = Date.now() - startTime;
 
-    console.log(`[indexing] Successfully submitted: ${url} (${elapsed}ms)`, response.data);
+    logger.info(`[indexing] Successfully submitted: ${url} (${elapsed}ms)`, response.data);
 
     return {
       success: true,
@@ -539,8 +598,9 @@ export async function requestInstantIndexing(
       responseTimeMs: elapsed,
     };
   } catch (err) {
+    Sentry.captureException(err);
     const msg = err instanceof Error ? err.message : 'Unknown error';
-    console.error('[indexing] requestInstantIndexing failed:', msg);
+    logger.error('[indexing] requestInstantIndexing failed:', msg);
     return {
       success: false,
       url,
@@ -612,7 +672,8 @@ export async function distributeAndIndex(
       const boostResult = await boostAndDeploy(run.slug, `Genesis Hub: ${run.keyword}`);
       deployed = boostResult.boostSuccess;
     } catch (err) {
-      console.warn('[genesis] Boost failed:', err);
+      Sentry.captureException(err);
+      logger.warn('[genesis] Boost failed:', err);
     }
 
     // 4. Google Indexing API via googleapis — only after deploy completes
@@ -625,7 +686,7 @@ export async function distributeAndIndex(
       indexingResult = await requestInstantIndexing(fullUrl);
       indexed = indexingResult.success;
     } catch {
-      console.warn('[genesis] Google Indexing API call failed — skipping');
+      logger.warn('[genesis] Google Indexing API call failed — skipping');
     }
 
     // 5. Update pipeline run as completed
@@ -643,8 +704,9 @@ export async function distributeAndIndex(
 
     return { success: true, deployed, indexed, indexingResult };
   } catch (err) {
+    Sentry.captureException(err);
     const msg = err instanceof Error ? err.message : 'Unknown error';
-    console.error('[genesis] distributeAndIndex failed:', msg);
+    logger.error('[genesis] distributeAndIndex failed:', msg);
     await supabase
       .from('genesis_pipeline_runs')
       .update({ status: 'failed' })
@@ -966,7 +1028,7 @@ export async function getTopPartnersForHub(
     // MDX module unavailable — continue without review cross-references
   }
 
-  const prefix = market === 'us' ? '' : `/${market}`;
+  const prefix = `/${market}`;
   const partners: HubPartner[] = [];
 
   for (const link of allLinks) {
@@ -1049,6 +1111,206 @@ export async function getTopPartnersForHub(
   return partners;
 }
 
+// ── Create Review from Master Template ──────────────────────
+
+export async function createReviewFromTemplate(
+  input: CreateReviewFromTemplateInput,
+): Promise<{ success: boolean; filePath?: string; slug?: string; pageUrl?: string; affiliateUrl?: string; partnerName?: string; error?: string }> {
+  try {
+    const market = input.market;
+    const category = input.category;
+    const title = input.title?.trim();
+    const bodyContent = input.bodyContent?.trim();
+
+    if (!title) return { success: false, error: 'Title is required' };
+    if (!bodyContent) return { success: false, error: 'Body content is required' };
+
+    const allowedCategories = marketCategories[market] || [];
+    if (!allowedCategories.includes(category as Category)) {
+      return { success: false, error: `Category '${category}' is not valid for market '${market}'` };
+    }
+
+    const resolvedSlug = (input.slug?.trim() || slugify(title)).slice(0, 90);
+    if (!resolvedSlug) return { success: false, error: 'Unable to generate slug from title' };
+
+    const templatePath = path.join(process.cwd(), 'content', '_templates', 'expert-review-master.mdx');
+    if (!fs.existsSync(templatePath)) {
+      return { success: false, error: 'Master template not found: content/_templates/expert-review-master.mdx' };
+    }
+
+    const targetDir = path.join(process.cwd(), 'content', market, category);
+    const targetPath = path.join(targetDir, `${resolvedSlug}.mdx`);
+
+    if (fs.existsSync(targetPath) && !input.force) {
+      return { success: false, error: `File already exists: /content/${market}/${category}/${resolvedSlug}.mdx` };
+    }
+
+    if (!fs.existsSync(targetDir)) {
+      fs.mkdirSync(targetDir, { recursive: true });
+    }
+
+    const template = fs.readFileSync(templatePath, 'utf-8');
+    const today = new Date().toISOString().slice(0, 10);
+    const reviewedBy = input.reviewedBy?.trim() || '[EXPERT NAME], [ROLE + CREDENTIALS]';
+    const shouldAutoPartner = input.autoPartner !== false;
+    let affiliateUrl = input.affiliateUrl?.trim() || '';
+    let partnerName = '[Primary Partner Name]';
+    let partnerTagline = '[Positioning line]';
+    let bestForBadge = '[Best for ...]';
+
+    if (shouldAutoPartner && (!affiliateUrl || affiliateUrl.includes('[partner-slug]'))) {
+      const supabase = createServiceClient();
+
+      // Strict source of truth: CTA partners managed in dashboard/affiliate_links by market+category.
+      let partnerRow:
+        | { partner_name: string; slug: string; commission_value: number | null }
+        | null = null;
+
+      const marketResult = await supabase
+        .from('affiliate_links')
+        .select('partner_name, slug, commission_value')
+        .eq('active', true)
+        .eq('market', market)
+        .eq('category', category)
+        .order('commission_value', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      partnerRow = marketResult.data;
+
+      // Fallback only to global entries WITH same category.
+      if (!partnerRow) {
+        const globalResult = await supabase
+          .from('affiliate_links')
+          .select('partner_name, slug, commission_value')
+          .eq('active', true)
+          .is('market', null)
+          .eq('category', category)
+          .order('commission_value', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        partnerRow = globalResult.data;
+      }
+
+      if (!partnerRow) {
+        return {
+          success: false,
+          error: `No CTA partner configured for market='${market}' and category='${category}' in affiliate_links.`,
+        };
+      }
+
+      affiliateUrl = `/go/${partnerRow.slug}`;
+      partnerName = partnerRow.partner_name || partnerName;
+      bestForBadge = `Best for ${category.replace(/-/g, ' ')}`;
+
+      if (partnerRow.commission_value && partnerRow.commission_value > 0) {
+        partnerTagline = `Top ${category.replace(/-/g, ' ')} partner (CPA $${partnerRow.commission_value})`;
+      } else {
+        partnerTagline = `Top ${category.replace(/-/g, ' ')} partner`;
+      }
+    }
+
+    if (!affiliateUrl) {
+      affiliateUrl = '/go/[partner-slug]';
+    }
+    const author = input.author?.trim() || 'SmartFinPro Finance Team';
+
+    const replacements: Array<[string, string]> = [
+      ['[PRIMARY KEYWORD] [YEAR]: Complete Expert Review', title],
+      ['[CATEGORY-SLUG]', category],
+      ['[us|uk|ca|au]', market],
+      ['[EXPERT NAME], [ROLE + CREDENTIALS]', reviewedBy],
+      ['/go/[partner-slug]', affiliateUrl],
+      ['[Primary Partner Name]', partnerName],
+      ['[Positioning line]', partnerTagline],
+      ['[Best for ...]', bestForBadge],
+      ['author: "SmartFinPro Finance Team"', `author: "${author}"`],
+      ['publishDate: "2026-02-24"', `publishDate: "${today}"`],
+      ['modifiedDate: "2026-02-24"', `modifiedDate: "${today}"`],
+    ];
+
+    let output = template;
+    for (const [from, to] of replacements) {
+      output = output.replace(new RegExp(escapeRegExp(from), 'g'), to);
+    }
+
+    const normalizedBody = stripFrontmatter(bodyContent).trim();
+    output = output.replace(/## Executive Summary[\s\S]*$/m, `${normalizedBody}\n`);
+
+    fs.writeFileSync(targetPath, output, 'utf-8');
+
+    return {
+      success: true,
+      filePath: `/content/${market}/${category}/${resolvedSlug}.mdx`,
+      slug: resolvedSlug,
+      pageUrl: `/${market}/${category}/${resolvedSlug}`,
+      affiliateUrl,
+      partnerName,
+    };
+  } catch (err) {
+    Sentry.captureException(err);
+    const msg = err instanceof Error ? err.message : 'Unknown error';
+    logger.error('[genesis] createReviewFromTemplate failed:', msg);
+    return { success: false, error: msg };
+  }
+}
+
+// ── Preview: Auto CTA Partner for Template Creator ──────────
+
+export async function getAutoTemplatePartnerPreview(
+  market: Market,
+  category: string,
+): Promise<{ success: boolean; partnerName?: string; affiliateUrl?: string; source?: 'market' | 'global'; error?: string }> {
+  try {
+    const supabase = createServiceClient();
+
+    const marketResult = await supabase
+      .from('affiliate_links')
+      .select('partner_name, slug')
+      .eq('active', true)
+      .eq('market', market)
+      .eq('category', category)
+      .order('commission_value', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (marketResult.data) {
+      return {
+        success: true,
+        partnerName: marketResult.data.partner_name,
+        affiliateUrl: `/go/${marketResult.data.slug}`,
+        source: 'market',
+      };
+    }
+
+    const globalResult = await supabase
+      .from('affiliate_links')
+      .select('partner_name, slug')
+      .eq('active', true)
+      .is('market', null)
+      .eq('category', category)
+      .order('commission_value', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (globalResult.data) {
+      return {
+        success: true,
+        partnerName: globalResult.data.partner_name,
+        affiliateUrl: `/go/${globalResult.data.slug}`,
+        source: 'global',
+      };
+    }
+
+    return { success: false, error: `No CTA partner configured for ${market}/${category}` };
+  } catch (err) {
+    Sentry.captureException(err);
+    const msg = err instanceof Error ? err.message : 'Unknown error';
+    logger.error('[genesis] getAutoTemplatePartnerPreview failed:', msg);
+    return { success: false, error: msg };
+  }
+}
+
 // ── Delete Genesis Run ──────────────────────────────────────
 
 export async function deleteGenesisRun(
@@ -1078,7 +1340,7 @@ export async function deleteGenesisRun(
 
     // 3. Delete image folder
     if (run.slug) {
-      const prefix = run.market === 'us' ? '' : run.market;
+      const prefix = run.market;
       const imgDir = path.join(
         process.cwd(),
         'public',
@@ -1105,7 +1367,8 @@ export async function deleteGenesisRun(
 
     return { success: true };
   } catch (err) {
-    console.error('[Genesis] Delete error:', err);
+    Sentry.captureException(err);
+    logger.error('[Genesis] Delete error:', err);
     return { success: false, error: 'Failed to delete run' };
   }
 }
@@ -1157,7 +1420,8 @@ export async function getRunDetail(
 
     return { success: true, run, mdxContent };
   } catch (err) {
-    console.error('[Genesis] Get run detail error:', err);
+    Sentry.captureException(err);
+    logger.error('[Genesis] Get run detail error:', err);
     return { success: false, error: 'Failed to load run' };
   }
 }
@@ -1203,7 +1467,8 @@ export async function updateGenesisContent(
 
     return { success: true, wordCount };
   } catch (err) {
-    console.error('[Genesis] Update content error:', err);
+    Sentry.captureException(err);
+    logger.error('[Genesis] Update content error:', err);
     return { success: false, error: 'Failed to update content' };
   }
 }

@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "deny": [
+      "Bash(rm*app/(dashboard)*)",
+      "Bash(rm*app/\\(dashboard\\)*)",
+      "Bash(rm*components/dashboard*)",
+      "Bash(rm*supabase/migrations*)",
+      "Bash(rm*lib/supabase*)",
+      "Bash(rm*lib/actions*)",
+      "Bash(rm*app/api/cron*)",
+      "Bash(rm*app/api/genesis*)",
+      "Bash(rm*app/api/track*)",
+      "Bash(rm*app/api/webhooks*)",
+      "Bash(rm*scripts/seo-baseline*)",
+      "Bash(rm*scripts/check-seo-quality*)",
+      "Bash(rimraf*dashboard*)",
+      "Bash(rimraf*supabase*)",
+      "Bash(rimraf*lib/actions*)",
+      "Bash(rimraf*app/api*)",
+      "Bash(git rm*app/(dashboard)*)",
+      "Bash(git rm*components/dashboard*)",
+      "Bash(git rm*supabase/migrations*)",
+      "Bash(git rm*lib/actions*)",
+      "Bash(git rm -r*dashboard*)",
+      "Bash(git rm -r*supabase*)"
+    ]
+  }
+}

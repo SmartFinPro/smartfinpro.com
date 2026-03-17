@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { ArrowRight, X, Shield } from 'lucide-react';
+import { useCTATracking } from '@/lib/hooks/use-component-tracking';
 
 interface StickyFooterCTAProps {
   productName: string;
@@ -27,6 +28,8 @@ export function StickyFooterCTA({
   const [isVisible, setIsVisible] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
   const footerObserverRef = useRef<IntersectionObserver | null>(null);
+  const { trackImpression, trackClick } = useCTATracking('sticky_footer');
+  const impressionFired = useRef(false);
 
   // Check dismiss state
   useEffect(() => {
@@ -50,6 +53,14 @@ export function StickyFooterCTA({
 
     return () => window.removeEventListener('scroll', onScroll);
   }, [showAfterScroll, isDismissed]);
+
+  // Track impression when CTA becomes visible
+  useEffect(() => {
+    if (isVisible && !impressionFired.current) {
+      impressionFired.current = true;
+      trackImpression();
+    }
+  }, [isVisible, trackImpression]);
 
   // Hide when near footer
   useEffect(() => {
@@ -111,8 +122,9 @@ export function StickyFooterCTA({
             <a
               href={affiliateUrl}
               rel="noopener sponsored"
+              onClick={() => trackClick(affiliateUrl)}
               className="group flex items-center gap-2 rounded-lg px-5 py-2 text-sm font-semibold text-white shadow-md transition-all duration-200 hover:scale-[1.02] hover:shadow-lg"
-              style={{ background: 'var(--sfp-gold)' }}
+              style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}
             >
               {ctaText}
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
@@ -120,7 +132,7 @@ export function StickyFooterCTA({
             {/* Desktop dismiss */}
             <button
               onClick={dismiss}
-              className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+              className="rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-600"
               aria-label="Close"
             >
               <X className="h-4 w-4" />
@@ -139,7 +151,7 @@ export function StickyFooterCTA({
             </div>
             <button
               onClick={dismiss}
-              className="shrink-0 rounded p-1 text-gray-400 hover:text-gray-600"
+              className="shrink-0 rounded p-1 text-gray-500 hover:text-gray-600"
               aria-label="Close"
             >
               <X className="h-3.5 w-3.5" />
@@ -148,8 +160,9 @@ export function StickyFooterCTA({
           <a
             href={affiliateUrl}
             rel="noopener sponsored"
+            onClick={() => trackClick(affiliateUrl)}
             className="group flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white shadow-md transition-all hover:shadow-lg"
-            style={{ background: 'var(--sfp-gold)' }}
+            style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}
           >
             {ctaText}
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />

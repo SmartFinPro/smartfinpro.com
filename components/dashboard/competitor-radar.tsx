@@ -46,14 +46,6 @@ import type {
   CpsTrendPoint,
   SpyResult,
 } from '@/lib/actions/competitors';
-import {
-  triggerCompetitorScan,
-  spyDomain as spyDomainAction,
-  dismissAlert,
-  boostFromAlert,
-  analyzeKeyword,
-} from '@/lib/actions/competitors';
-import { boostAndDeploy } from '@/lib/actions/content-overrides';
 
 // ── Constants ────────────────────────────────────────────────
 
@@ -290,7 +282,13 @@ export function CompetitorRadar({ initialData }: CompetitorRadarProps) {
     try {
       const market = marketFilter !== 'all' ? marketFilter : undefined;
       const category = categoryFilter !== 'all' ? categoryFilter : undefined;
-      const result = await triggerCompetitorScan(market, category);
+      const res = await fetch('/api/dashboard/competitors', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'scan', market, category }),
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || 'Scan failed');
       toast.success(
         `Scan abgeschlossen: ${result.scanned} Keywords analysiert, ${result.newAlerts} neue Alerts.`,
         { duration: 5000 },
@@ -308,7 +306,12 @@ export function CompetitorRadar({ initialData }: CompetitorRadarProps) {
     if (!initialData.serperConfigured) return;
     setPulsingKeyword(kw.keyword);
     try {
-      const result = await analyzeKeyword(kw.keyword, kw.market, kw.category);
+      const res = await fetch('/api/dashboard/competitors', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'analyze-keyword', keyword: kw.keyword, market: kw.market, category: kw.category }),
+      });
+      const result = res.ok ? await res.json() : null;
       if (result) {
         setTop25((prev) =>
           prev.map((k) =>
@@ -328,10 +331,15 @@ export function CompetitorRadar({ initialData }: CompetitorRadarProps) {
 
   const handleBoost = useCallback(async (kw: SerpSnapshot) => {
     setBoostingKeyword(kw.keyword);
-    const prefix = kw.market === 'us' ? '' : `/${kw.market}`;
+    const prefix = `/${kw.market}`;
     const slug = `${prefix}/${kw.category}`;
     try {
-      const result = await boostAndDeploy(slug, `Competitor opportunity: ${kw.keyword}`);
+      const res = await fetch('/api/dashboard/boost-deploy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slug, reason: `Competitor opportunity: ${kw.keyword}` }),
+      });
+      const result = await res.json();
       if (result.boostSuccess) {
         toast.success(`Freshness Boost eingeleitet. Revalidation der Seite ${slug} gestartet.`);
       } else {
@@ -348,7 +356,12 @@ export function CompetitorRadar({ initialData }: CompetitorRadarProps) {
     if (!spyInput.trim()) return;
     setSpyLoading(true);
     try {
-      const results = await spyDomainAction(spyInput.trim(), spyMarket);
+      const res = await fetch('/api/dashboard/competitors', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'spy', domain: spyInput.trim(), market: spyMarket }),
+      });
+      const results = res.ok ? await res.json() : [];
       setSpyResults(results);
       if (results.length === 0) {
         toast.info('Keine Keywords gefunden f\u00fcr diese Domain. Erst einen Scan durchf\u00fchren.');
@@ -361,7 +374,12 @@ export function CompetitorRadar({ initialData }: CompetitorRadarProps) {
   }, [spyInput, spyMarket]);
 
   const handleDismissAlert = useCallback(async (alertId: string) => {
-    const result = await dismissAlert(alertId);
+    const res = await fetch('/api/dashboard/competitors', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'dismiss-alert', alertId }),
+    });
+    const result = res.ok ? await res.json() : { success: false };
     if (result.success) {
       setAlerts((prev) => prev.filter((a) => a.id !== alertId));
       toast.success('Alert dismissed.');
@@ -369,7 +387,12 @@ export function CompetitorRadar({ initialData }: CompetitorRadarProps) {
   }, []);
 
   const handleBoostAlert = useCallback(async (alert: CompetitorAlert) => {
-    const result = await boostFromAlert(alert.id);
+    const res = await fetch('/api/dashboard/competitors', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'boost-from-alert', alertId: alert.id }),
+    });
+    const result = res.ok ? await res.json() : { success: false, error: 'Request failed' };
     if (result.success) {
       setAlerts((prev) => prev.map((a) => (a.id === alert.id ? { ...a, boostTriggered: true } : a)));
       toast.success(`Freshness Boost f\u00fcr "${alert.keyword}" eingeleitet.`);

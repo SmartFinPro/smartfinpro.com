@@ -8,6 +8,10 @@ interface ArticleSchemaProps {
   author: string;
   image?: string;
   url: string;
+  /** Fact-checker / reviewer — shown as reviewedBy Person in JSON-LD */
+  reviewedBy?: string;
+  /** Canonical profile URL for the reviewer (e.g. LinkedIn or /about) */
+  reviewedByUrl?: string;
 }
 
 /**
@@ -49,7 +53,13 @@ export function ArticleSchema({
   author,
   image,
   url,
+  reviewedBy,
+  reviewedByUrl,
 }: ArticleSchemaProps) {
+  if (!title || !description || !author) {
+    console.warn('[ArticleSchema] Skipped: missing title, description, or author');
+    return null;
+  }
   const schema = generateArticleSchema({
     title,
     description,
@@ -58,6 +68,8 @@ export function ArticleSchema({
     author,
     image,
     url,
+    reviewedBy,
+    reviewedByUrl,
   });
 
   return (

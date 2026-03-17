@@ -1,0 +1,701 @@
+{
+  "generatedAt": "2026-03-04T07:09:55.309Z",
+  "totalFiles": 173,
+  "avgScore": 10,
+  "perfectFiles": 173,
+  "minScore": 9.5,
+  "files": {
+    "au/ai-tools/jasper-ai-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "au/business-banking/revolut-business-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "au/business-banking/wise-business-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "au/cybersecurity/1password-business-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "au/cybersecurity/crowdstrike-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "au/cybersecurity/nordvpn-business-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "au/cybersecurity/perimeter-81-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "au/cybersecurity/proofpoint-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "au/forex/cmc-markets-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "au/forex/etoro-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "au/forex/ic-markets-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "au/forex/interactive-brokers-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "au/forex/pepperstone-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "au/gold-investing/ainslie-bullion-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "au/gold-investing/how-to-buy-gold-australia.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "au/gold-investing/perth-mint-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "au/personal-finance/anz-home-loan-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "au/personal-finance/athena-home-loans-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "au/personal-finance/commbank-home-loan-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "au/personal-finance/nab-home-loan-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "au/personal-finance/selfwealth-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "au/personal-finance/spaceship-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "au/personal-finance/ubank-home-loan-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "au/personal-finance/westpac-home-loan-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "au/savings/high-yield-savings-accounts-au.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "au/savings/ing-savings-maximiser-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "au/savings/ubank-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "au/superannuation/australian-retirement-trust-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "au/superannuation/australian-super-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "au/superannuation/best-super-funds-australia.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "au/superannuation/division-296-tax-explained.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "au/superannuation/self-managed-super-fund-setup.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "au/trading/cmc-markets-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "au/trading/plus500-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "au/trading/selfwealth-trading-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "ca/ai-tools/jasper-ai-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "ca/business-banking/eq-bank-business-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "ca/business-banking/revolut-business-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "ca/business-banking/wise-business-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "ca/cybersecurity/1password-business-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "ca/cybersecurity/crowdstrike-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "ca/cybersecurity/nordvpn-business-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "ca/cybersecurity/perimeter-81-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "ca/cybersecurity/proofpoint-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "ca/forex/cmc-markets-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "ca/forex/etoro-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "ca/forex/forex-com-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "ca/forex/interactive-brokers-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "ca/forex/oanda-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "ca/forex/questrade-forex-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "ca/forex/questrade-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "ca/housing/best-mortgage-rates-canada.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "ca/housing/first-time-home-buyer-grants-canada.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "ca/housing/ratehub-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "ca/personal-finance/crypto-trading.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "ca/personal-finance/eq-bank-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "ca/personal-finance/wealthsimple-cash.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "ca/personal-finance/wealthsimple-crypto.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "ca/personal-finance/wealthsimple-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "ca/personal-finance/wealthsimple-tax.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "ca/personal-finance/wealthsimple-vs-questrade.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "ca/tax-efficient-investing/best-robo-advisors-canada.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "ca/tax-efficient-investing/canadian-tax-guide.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "ca/tax-efficient-investing/fhsa-guide.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "ca/tax-efficient-investing/tfsa-vs-rrsp.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "ca/tax-efficient-investing/wealthsimple-vs-questrade.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "cross-market/ai-financial-coaching.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "cross-market/best-ai-financial-advisors.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "cross-market/best-esg-funds.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "cross-market/green-finance-esg-guide.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "uk/ai-tools/jasper-ai-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "uk/business-banking/revolut-business-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "uk/business-banking/starling-business-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "uk/business-banking/tide-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "uk/business-banking/wise-business-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "uk/cost-of-living/how-to-reduce-energy-bills-uk.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "uk/cybersecurity/1password-business-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "uk/cybersecurity/crowdstrike-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "uk/cybersecurity/nordvpn-business-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "uk/cybersecurity/perimeter-81-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "uk/cybersecurity/proofpoint-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "uk/forex/ig-markets-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "uk/forex/pepperstone-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "uk/personal-finance/aj-bell-isa-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "uk/personal-finance/barclays-personal-loan-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "uk/personal-finance/fidelity-isa-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "uk/personal-finance/hargreaves-lansdown-isa-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "uk/personal-finance/hsbc-personal-loan-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "uk/personal-finance/lending-works-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "uk/personal-finance/marcus-uk-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "uk/personal-finance/monzo-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "uk/personal-finance/nutmeg-isa-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "uk/personal-finance/nutmeg-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "uk/personal-finance/trading-212-isa-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "uk/personal-finance/vanguard-isa-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "uk/personal-finance/zopa-personal-loans-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "uk/remortgaging/best-mortgage-brokers-uk.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "uk/remortgaging/fixed-rate-ending-what-to-do.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "uk/remortgaging/habito-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "uk/remortgaging/habito-vs-trussle.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "uk/savings/best-high-yield-savings-uk.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "uk/savings/chip-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "uk/savings/marcus-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "uk/trading/etoro-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "uk/trading/freetrade-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "uk/trading/hargreaves-lansdown-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "uk/trading/ig-markets-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "uk/trading/ig-vs-plus500-vs-etoro.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "uk/trading/plus500-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "us/ai-tools/ai-driven-finance-future.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "us/ai-tools/ai-writing-tools-financial-content.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "us/ai-tools/chatgpt-for-finance-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "us/ai-tools/copilot-money-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "us/ai-tools/copy-ai-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "us/ai-tools/jasper-ai-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "us/ai-tools/monarch-money-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "us/ai-tools/quickbooks-ai-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "us/ai-tools/stripe-radar-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "us/ai-tools/ynab-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "us/business-banking/bluevine-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "us/business-banking/mercury-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "us/business-banking/novo-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "us/business-banking/relay-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "us/business-banking/revolut-business-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "us/business-banking/rho-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "us/business-banking/wise-business-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "us/credit-repair/best-credit-repair-companies.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "us/credit-repair/credit-recovery-action-guide.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "us/credit-repair/credit-repair-vs-debt-consolidation.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "us/credit-repair/credit-saint-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "us/credit-repair/how-to-fix-credit-score-fast.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "us/credit-repair/lexington-law-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "us/credit-repair/the-credit-people-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "us/credit-score/free-credit-score-check.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "us/cybersecurity/1password-business-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "us/cybersecurity/crowdstrike-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "us/cybersecurity/nordvpn-business-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "us/cybersecurity/perimeter-81-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "us/cybersecurity/sentinelone-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "us/debt-relief/debt-consolidation-loans-bad-credit.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "us/debt-relief/debt-consolidation-vs-debt-management.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "us/debt-relief/national-debt-relief-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "us/forex/forex-com-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "us/forex/ig-markets-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "us/forex/interactive-brokers-forex-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "us/forex/oanda-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "us/forex/tastyfx-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "us/gold-investing/apmex-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "us/gold-investing/goldco-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "us/gold-investing/jm-bullion-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "us/personal-finance/amex-gold-card-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "us/personal-finance/best-relay-review-2026.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "us/personal-finance/best-robo-advisors.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "us/personal-finance/best-wealthfront-review-2026.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "us/personal-finance/betterment-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "us/personal-finance/chase-sapphire-preferred-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "us/personal-finance/chase-sapphire-reserve-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "us/personal-finance/credit-cards-comparison.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "us/personal-finance/empower-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "us/personal-finance/sofi-personal-loans-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "us/personal-finance/sofi-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "us/personal-finance/wealthfront-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "us/trading/ai-crypto-investing.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "us/trading/best-brokerage-accounts-for-online-investing.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "us/trading/charles-schwab-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "us/trading/etoro-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "us/trading/etrade-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "us/trading/fidelity-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "us/trading/interactive-brokers-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "us/trading/robinhood-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "us/trading/tastytrade-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "us/trading/td-ameritrade-review.mdx": {
+      "score": 10,
+      "issues": []
+    },
+    "us/trading/webull-review.mdx": {
+      "score": 10,
+      "issues": []
+    }
+  }
+}

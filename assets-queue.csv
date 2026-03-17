@@ -1,0 +1,47 @@
+id,market,category,slug,page_type,keyword,status,notes
+1,us,trading,index,pillar,financial analyst trading multiple screens bright professional office white background,skip,Existing hero.webp (47KB) kept — REPLACE skipped per user instruction
+2,us,personal-finance,index,pillar,premium credit cards flat lay white marble background professional editorial clean,optimized,batch-image-pipeline.mjs — Pexels CDN — 
+3,us,ai-tools,index,pillar,professional using ai software laptop bright clean office white background editorial,optimized,batch-image-pipeline.mjs — Pexels CDN — 
+4,us,cybersecurity,index,pillar,cybersecurity professional bright office clean white background enterprise protection editorial,optimized,batch-image-pipeline.mjs — Pexels CDN — 
+5,us,business-banking,index,pillar,business banking app on tablet white background professional editorial clean fintech,optimized,batch-image-pipeline.mjs — Pexels CDN — 
+6,uk,trading,index,pillar,london financial professional office bright editorial trading screen white clean,optimized,batch-image-pipeline.mjs — Pexels CDN — 
+7,uk,personal-finance,index,pillar,investment savings professional british advisor bright clean white office editorial,optimized,batch-image-pipeline.mjs — Pexels CDN — 
+8,uk,ai-tools,index,pillar,professional ai productivity tool laptop bright white office uk editorial clean,optimized,batch-image-pipeline.mjs — Pexels CDN — 
+9,uk,cybersecurity,index,pillar,cybersecurity enterprise uk professional bright office editorial clean light,optimized,batch-image-pipeline.mjs — Pexels CDN — 
+10,uk,business-banking,index,pillar,neobank mobile app white background flat lay professional editorial clean british,optimized,batch-image-pipeline.mjs — Pexels CDN — 
+11,ca,forex,index,pillar,forex trading platform laptop white background professional clean editorial canada,optimized,batch-image-pipeline.mjs — Pexels CDN — 
+12,ca,personal-finance,index,pillar,investment portfolio app clean white background minimal professional editorial canada,optimized,batch-image-pipeline.mjs — Pexels CDN — 
+13,ca,ai-tools,index,pillar,ai business software laptop bright white professional workspace editorial clean,optimized,batch-image-pipeline.mjs — Pexels CDN — 
+14,ca,cybersecurity,index,pillar,cybersecurity professional bright clean white office business editorial,optimized,batch-image-pipeline.mjs — Pexels CDN — 
+15,ca,business-banking,index,pillar,business banking app tablet white background professional clean editorial,optimized,batch-image-pipeline.mjs — Pexels CDN — 
+16,au,trading,index,pillar,financial trading professional bright office australia editorial clean white background,optimized,batch-image-pipeline.mjs — Pexels CDN — 
+17,au,forex,index,pillar,forex trading platform clean white background professional editorial australia light,optimized,batch-image-pipeline.mjs — Pexels CDN — 
+18,au,personal-finance,index,pillar,,optimized,status: optimized — bereits heruntergeladen
+19,au,ai-tools,index,pillar,ai software professional laptop bright white editorial clean australia workspace,optimized,batch-image-pipeline.mjs — Pexels CDN — 
+20,au,cybersecurity,index,pillar,cybersecurity enterprise professional bright editorial clean white australia,optimized,batch-image-pipeline.mjs — Pexels CDN — 
+21,au,business-banking,index,pillar,business banking app white background professional editorial clean australia,optimized,batch-image-pipeline.mjs — Pexels CDN — 
+22,us,trading,etoro,review,trading app on laptop screen white background professional clean mockup editorial,optimized,batch-image-pipeline.mjs — Pexels CDN — 
+23,us,trading,td-ameritrade,review,professional trading platform on monitor clean bright office editorial,optimized,batch-image-pipeline.mjs — Pexels CDN — 
+24,us,trading,interactive-brokers,review,trader multiple monitors professional bright office clean editorial workstation,optimized,batch-image-pipeline.mjs — Pexels CDN — 
+25,us,personal-finance,amex-gold-card,review,gold premium credit card flat lay white background professional editorial clean,optimized,batch-image-pipeline.mjs — Pexels CDN — 
+26,us,personal-finance,chase-sapphire-preferred,review,blue premium travel credit card white background flat lay clean editorial,optimized,batch-image-pipeline.mjs — Pexels CDN — 
+27,us,personal-finance,chase-sapphire-reserve,review,premium metal credit card white marble flat lay editorial professional clean,optimized,batch-image-pipeline.mjs — Pexels CDN — 
+28,us,personal-finance,sofi-personal-loans,review,loan application approval on phone screen white background clean editorial minimal,optimized,batch-image-pipeline.mjs — Pexels CDN — 
+29,us,personal-finance,credit-cards-comparison,review,multiple credit cards comparison flat lay white background professional editorial clean,optimized,batch-image-pipeline.mjs — Pexels CDN — 
+30,us,personal-finance,best-robo-advisors,review,,optimized,status: optimized — bereits heruntergeladen
+31,uk,trading,etoro,review,trading platform laptop clean white office background professional editorial uk,optimized,batch-image-pipeline.mjs — Pexels CDN — 
+32,uk,trading,hargreaves-lansdown,review,investment platform dashboard laptop white background professional editorial british clean,optimized,batch-image-pipeline.mjs — Pexels CDN — 
+33,uk,trading,ig-markets,review,professional trading platform cfd on screen clean bright office editorial,optimized,batch-image-pipeline.mjs — Pexels CDN — 
+34,uk,trading,plus500,review,trading app phone and laptop white background clean professional editorial minimal,optimized,batch-image-pipeline.mjs — Pexels CDN — 
+35,uk,personal-finance,vanguard-isa,review,investment growth chart on screen white background clean professional editorial minimal,optimized,batch-image-pipeline.mjs — Pexels CDN — 
+36,uk,personal-finance,hargreaves-lansdown-isa,review,stocks shares investment account on laptop clean white background british editorial,optimized,batch-image-pipeline.mjs — Pexels CDN — 
+37,uk,personal-finance,trading-212-isa,review,commission free investment app phone white background clean minimal editorial professional,optimized,batch-image-pipeline.mjs — Pexels CDN — 
+38,ca,forex,questrade,review,forex trading platform laptop white background professional clean editorial canada,optimized,batch-image-pipeline.mjs — Pexels CDN — 
+39,ca,forex,oanda,review,currency trading platform professional clean white background editorial minimal,optimized,batch-image-pipeline.mjs — Pexels CDN — 
+40,ca,personal-finance,wealthsimple,review,investment app portfolio screen white background clean minimal professional editorial canada,optimized,batch-image-pipeline.mjs — Pexels CDN — 
+41,ca,personal-finance,wealthsimple-vs-questrade,review,two investment platform apps comparison white background clean professional editorial,optimized,batch-image-pipeline.mjs — Pexels CDN — 
+42,au,forex,pepperstone,review,forex trading metatrader platform laptop clean white background professional editorial,optimized,batch-image-pipeline.mjs — Pexels CDN — 
+43,au,forex,ic-markets,review,professional ecn trading platform laptop white background clean editorial australia,optimized,batch-image-pipeline.mjs — Pexels CDN — 
+44,au,personal-finance,commbank-home-loan,review,home loan mortgage professional advisor clean bright office australia editorial white,optimized,batch-image-pipeline.mjs — Pexels CDN — 
+45,au,personal-finance,athena-home-loans,review,digital mortgage app phone white background clean minimal professional editorial australia,optimized,batch-image-pipeline.mjs — Pexels CDN — 
+46,au,personal-finance,ubank-home-loan,review,mobile home loan banking app screen clean white background professional editorial minimal,optimized,batch-image-pipeline.mjs — Pexels CDN — 

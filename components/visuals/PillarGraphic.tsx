@@ -56,18 +56,18 @@ export function PillarGraphic({ className = '', variant }: PillarGraphicProps) {
           <radialGradient id={`mesh1-${variant}`} cx="25%" cy="25%" r="50%">
             <stop offset="0%" stopColor={colors.primary} stopOpacity="0.35" />
             <stop offset="70%" stopColor={colors.primary} stopOpacity="0.1" />
-            <stop offset="100%" stopColor="#0f0a1a" stopOpacity="0" />
+            <stop offset="100%" stopColor="white" stopOpacity="0" />
           </radialGradient>
 
           <radialGradient id={`mesh2-${variant}`} cx="75%" cy="65%" r="45%">
             <stop offset="0%" stopColor={colors.secondary} stopOpacity="0.3" />
             <stop offset="60%" stopColor={colors.secondary} stopOpacity="0.1" />
-            <stop offset="100%" stopColor="#0f0a1a" stopOpacity="0" />
+            <stop offset="100%" stopColor="white" stopOpacity="0" />
           </radialGradient>
 
           <radialGradient id={`mesh3-${variant}`} cx="50%" cy="85%" r="35%">
             <stop offset="0%" stopColor={colors.tertiary} stopOpacity="0.2" />
-            <stop offset="100%" stopColor="#0f0a1a" stopOpacity="0" />
+            <stop offset="100%" stopColor="white" stopOpacity="0" />
           </radialGradient>
 
           {/* Flow Line Gradient */}

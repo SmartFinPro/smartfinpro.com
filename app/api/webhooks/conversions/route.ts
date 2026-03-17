@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import * as Sentry from '@sentry/nextjs';
+import { logger } from '@/lib/logging';
 import { processWebhook } from '@/lib/api/sync-service';
 
 /**
@@ -49,7 +51,7 @@ export async function POST(request: NextRequest) {
     const result = await processWebhook(connectorName, payload, signature);
 
     if (!result.success) {
-      console.error(`Webhook processing failed for ${connectorName}:`, result.errors);
+      logger.error(`Webhook processing failed for ${connectorName}:`, result.errors);
       return NextResponse.json(
         { success: false, errors: result.errors },
         { status: result.errors[0]?.includes('signature') ? 401 : 500 }
@@ -62,7 +64,8 @@ export async function POST(request: NextRequest) {
       records_skipped: result.records_skipped,
     });
   } catch (error) {
-    console.error('Webhook error:', error);
+    Sentry.captureException(error);
+    logger.error('Webhook error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

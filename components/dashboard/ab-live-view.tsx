@@ -28,10 +28,10 @@ export function AbLiveView() {
 
   const fetchData = useCallback(() => {
     setLoading(true);
-    import('@/lib/actions/ab-testing')
-      .then(({ getAbTestLiveData }) => getAbTestLiveData())
+    fetch('/api/dashboard/ab-testing')
+      .then((res) => res.json())
       .then((data) => {
-        setTests(data);
+        setTests(Array.isArray(data) ? data : data.data || []);
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -46,8 +46,11 @@ export function AbLiveView() {
 
   const handleReset = async (hubId: string) => {
     setResetting(hubId);
-    const { resetAbTest } = await import('@/lib/actions/ab-testing');
-    await resetAbTest(hubId);
+    await fetch('/api/dashboard/ab-testing', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'reset', hubId }),
+    });
     fetchData();
     setResetting(null);
   };
@@ -189,7 +192,7 @@ function TestRow({ test, onReset, isResetting }: TestRowProps) {
 
         <div className="flex items-center gap-2">
           <span className="text-xs text-slate-400">
-            {test.totalImpressions.toLocaleString()} imp
+            {test.totalImpressions.toLocaleString('en-US')} imp
           </span>
           <button
             onClick={() => onReset(test.hubId)}
@@ -308,8 +311,8 @@ function VariantCard({
 
       {/* Impressions + Clicks */}
       <div className="flex items-center gap-3 text-xs text-slate-400 mb-2">
-        <span>{impressions.toLocaleString()} imp</span>
-        <span>{clicks.toLocaleString()} clicks</span>
+        <span>{impressions.toLocaleString('en-US')} imp</span>
+        <span>{clicks.toLocaleString('en-US')} clicks</span>
       </div>
 
       {/* Progress bar toward 500 min */}

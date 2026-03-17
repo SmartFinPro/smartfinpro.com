@@ -2,16 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import dynamic from 'next/dynamic';
-import { ArrowRight, Shield, Users, DollarSign, Sparkles } from 'lucide-react';
-
-const NetworkAnimation = dynamic(
-  () =>
-    import('@/components/marketing/network-animation').then((m) => ({
-      default: m.default,
-    })),
-  { ssr: false, loading: () => null }
-);
+import { Shield, Users, DollarSign } from 'lucide-react';
 
 interface HeroProps {
   title?: string;
@@ -32,18 +23,31 @@ const trustBadges = [
   { icon: DollarSign, text: '4 Global Markets' },
 ];
 
-export function Hero({
-  title = 'Financial Intelligence. Automated.',
-  subtitle = 'Discover AI-powered tools, cybersecurity solutions, and trading platforms — expert-reviewed for modern professionals.',
-  primaryCta = { text: 'Explore Tools', href: '/us/ai-tools' },
-  secondaryCta = { text: 'Start Free Trial', href: '/tools' },
+export default function Hero({
+  title = 'Financial Product\nResearch, Simplified.',
+  subtitle = '108+ expert-reviewed products across trading, AI, cybersecurity, and personal finance. Independent analysis. 4 regulated markets.',
+  primaryCta = { text: 'Explore Reports', href: '/us/ai-tools' },
+  secondaryCta = { text: 'How We Review', href: '/tools' },
 }: HeroProps) {
-  const [firstPart, secondPart] = title.includes('.')
-    ? [title.split('.')[0], title.split('.').slice(1).join('.')]
-    : [title, ''];
+  // Split title: everything before "\n" is the first line,
+  // the first word after "\n" gets the gold accent, rest follows normally
+  const lines = title.split('\n');
+  const firstLine = lines[0];
+  let accentWord = '';
+  let restOfSecondLine = '';
+  if (lines.length > 1) {
+    const secondLineParts = lines[1].split(/\s+/);
+    // Strip trailing comma/period from accent word for clean styling
+    accentWord = secondLineParts[0].replace(/[,.]$/, '');
+    const punctuation = secondLineParts[0].replace(accentWord, '');
+    restOfSecondLine = punctuation + (secondLineParts.length > 1 ? ' ' + secondLineParts.slice(1).join(' ') : '');
+  }
 
   return (
-    <section className="relative flex items-center overflow-hidden" style={{ background: 'var(--sfp-navy)' }}>
+    <section
+      className="relative overflow-hidden text-center"
+      style={{ background: '#0F2E52', padding: '80px 40px 80px' }}
+    >
       {/* Hero Background Image */}
       <div className="absolute inset-0" aria-hidden="true">
         <Image
@@ -53,97 +57,142 @@ export function Hero({
           priority
           className="object-cover object-center"
           sizes="100vw"
-          quality={85}
         />
-        {/* Minimal bottom fade only for smooth transition */}
-        <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(27, 79, 140, 0.6), transparent 50%)' }} />
+        {/* Gradient overlay matching landing page */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background: 'linear-gradient(180deg, rgba(15,46,82,0.45) 0%, rgba(15,46,82,0.65) 60%, rgba(15,46,82,0.85) 100%)',
+          }}
+        />
       </div>
 
-      {/* Network Animation Background */}
-      <NetworkAnimation className="opacity-20" />
-
-      <div className="container relative z-10 mx-auto px-4 pt-10 pb-16 lg:pt-14 lg:pb-20">
+      {/* Hero Inner Content */}
+      <div className="relative z-[2] mx-auto" style={{ maxWidth: '720px' }}>
+        {/* Chip / Kicker Badge */}
         <div
-          className="mx-auto max-w-4xl text-center rounded-3xl px-6 py-8 sm:px-10 sm:py-10"
-          style={{ background: 'radial-gradient(ellipse at center, rgba(20, 55, 100, 0.55) 0%, rgba(20, 55, 100, 0.35) 60%, transparent 100%)' }}
+          className="mb-9 inline-flex items-center gap-2"
+          style={{
+            border: '1px solid rgba(255,255,255,0.18)',
+            borderRadius: '6px',
+            padding: '7px 16px',
+          }}
         >
-          {/* Kicker Badge */}
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 border border-white/20" style={{ background: 'rgba(255,255,255,0.1)' }}>
-            <Sparkles className="h-3.5 w-3.5" style={{ color: 'var(--sfp-gold)' }} />
-            <span className="text-[11px] font-semibold uppercase tracking-widest text-white/80">
-              Trusted by Finance Professionals Worldwide
-            </span>
-          </div>
+          <Shield className="h-3.5 w-3.5" style={{ color: 'rgba(255,255,255,0.7)' }} />
+          <span
+            style={{
+              fontSize: '11px',
+              fontWeight: 600,
+              textTransform: 'uppercase',
+              letterSpacing: '1.8px',
+              color: 'rgba(255,255,255,0.7)',
+            }}
+          >
+            Independent Financial Research
+          </span>
+        </div>
 
-          {/* Main Headline — compact but impactful */}
-          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl lg:text-[3.5rem]" style={{ textShadow: '0 2px 12px rgba(0,0,0,0.35)' }}>
-            <span className="text-white">{firstPart}.</span>
-            {secondPart && (
-              <>
-                <br className="hidden sm:inline" />
-                <span style={{ color: 'var(--sfp-gold)' }}>{secondPart}</span>
-              </>
-            )}
-          </h1>
+        {/* Main Headline */}
+        <h1
+          style={{
+            fontSize: 'clamp(34px, 5.5vw, 62px)',
+            fontWeight: 700,
+            color: '#fff',
+            lineHeight: 1.06,
+            marginBottom: '28px',
+            letterSpacing: '-2.5px',
+          }}
+        >
+          {firstLine}
+          {lines.length > 1 && (
+            <>
+              <br />
+              <span style={{ color: 'var(--sfp-gold)' }}>{accentWord}</span>
+              {restOfSecondLine}
+            </>
+          )}
+        </h1>
 
-          {/* Subheadline */}
-          <p className="mt-3 text-sm sm:text-base md:text-lg max-w-2xl mx-auto leading-relaxed text-white/80" style={{ textShadow: '0 1px 6px rgba(0,0,0,0.3)' }}>
-            {subtitle}
-          </p>
+        {/* Subheadline */}
+        <p
+          className="mx-auto"
+          style={{
+            fontSize: '16px',
+            fontWeight: 400,
+            color: 'rgba(255,255,255,0.55)',
+            maxWidth: '500px',
+            marginBottom: '48px',
+            lineHeight: 1.75,
+          }}
+        >
+          {subtitle}
+        </p>
 
-          {/* CTAs */}
-          <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
-            <Link
-              href={primaryCta.href}
-              className="no-underline inline-flex items-center justify-center h-11 px-6 text-sm font-semibold rounded-md border-0 shadow-md transition-all duration-200 hover:shadow-lg hover:scale-[1.03] hover:brightness-110 hover:no-underline"
-              style={{ color: '#ffffff', background: 'var(--sfp-gold)', textDecoration: 'none' }}
+        {/* CTAs */}
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+          <Link
+            href={primaryCta.href}
+            className="no-underline inline-flex items-center justify-center transition-all duration-200 hover:brightness-110 hover:no-underline"
+            style={{
+              padding: '14px 32px',
+              background: 'var(--sfp-gold)',
+              color: '#fff',
+              fontSize: '14px',
+              fontWeight: 700,
+              borderRadius: '8px',
+              textDecoration: 'none',
+              border: 'none',
+            }}
+          >
+            {primaryCta.text} →
+          </Link>
+          <Link
+            href={secondaryCta.href}
+            className="no-underline inline-flex items-center justify-center transition-all duration-200 hover:border-white/40 hover:no-underline"
+            style={{
+              padding: '14px 32px',
+              background: 'transparent',
+              border: '1px solid rgba(255,255,255,0.2)',
+              color: 'rgba(255,255,255,0.85)',
+              fontSize: '14px',
+              fontWeight: 600,
+              borderRadius: '8px',
+              textDecoration: 'none',
+            }}
+          >
+            {secondaryCta.text}
+          </Link>
+        </div>
+
+        {/* Trust Badges */}
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+          {trustBadges.map((badge) => (
+            <div
+              key={badge.text}
+              className="flex items-center gap-2"
+              style={{
+                border: '1px solid rgba(255,255,255,0.18)',
+                borderRadius: '6px',
+                padding: '7px 16px',
+              }}
             >
-              {primaryCta.text}
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
-            <Link
-              href={secondaryCta.href}
-              className="no-underline hero-secondary-btn inline-flex items-center justify-center h-11 px-6 text-sm font-semibold rounded-md border border-white/50 transition-all duration-300 hover:border-white hover:shadow-[0_0_20px_rgba(255,255,255,0.25)] hover:scale-[1.03] hover:no-underline"
-              style={{ color: '#ffffff', background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(4px)', textDecoration: 'none' }}
-            >
-              {secondaryCta.text}
-            </Link>
-          </div>
-
-          {/* Trust Badges — inline compact row */}
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-            {trustBadges.map((badge) => (
-              <div
-                key={badge.text}
-                className="flex items-center gap-2 rounded-full px-3.5 py-1.5 border border-white/20"
-                style={{ background: 'rgba(255,255,255,0.1)' }}
+              <badge.icon className="h-3.5 w-3.5" style={{ color: 'var(--sfp-gold)' }} />
+              <span
+                style={{
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  textTransform: 'uppercase',
+                  letterSpacing: '1.8px',
+                  color: 'rgba(255,255,255,0.7)',
+                }}
               >
-                <badge.icon className="h-3.5 w-3.5" style={{ color: 'var(--sfp-gold)' }} />
-                <span className="text-xs font-medium text-white/80">
-                  {badge.text}
-                </span>
-              </div>
-            ))}
-          </div>
+                {badge.text}
+              </span>
+            </div>
+          ))}
         </div>
       </div>
 
-      {/* Bottom transition: gradient fade + SVG curve */}
-      <div className="absolute bottom-0 left-0 right-0 h-16 pointer-events-none" style={{ background: 'linear-gradient(to top, var(--sfp-sky), rgba(232, 240, 251, 0.8), transparent)' }} />
-      <div className="absolute -bottom-px left-0 right-0 pointer-events-none">
-        <svg
-          viewBox="0 0 1440 56"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          className="w-full h-auto block"
-          preserveAspectRatio="none"
-        >
-          <path
-            d="M0 24C240 46 480 56 720 50C960 44 1200 22 1440 8V56H0V24Z"
-            fill="var(--sfp-sky)"
-          />
-        </svg>
-      </div>
     </section>
   );
 }

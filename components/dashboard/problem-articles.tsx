@@ -1,6 +1,6 @@
 'use client';
 
-import { ProblemArticle } from '@/lib/actions/dashboard';
+import type { ProblemArticle } from '@/lib/actions/dashboard';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import {

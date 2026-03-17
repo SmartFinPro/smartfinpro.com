@@ -13,7 +13,27 @@ import {
   MapPin,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { getRunDetail, updateGenesisContent, processAndInsertImages } from '@/lib/actions/genesis';
+// Server action proxies — direct 'use server' imports crash Webpack client bundles
+async function fetchRunDetail(runId: string) {
+  const res = await fetch(`/api/genesis/detail?runId=${encodeURIComponent(runId)}`);
+  return res.json();
+}
+async function fetchUpdateContent(runId: string, fullMdx: string) {
+  const res = await fetch('/api/genesis/update-content', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ runId, fullMdx }),
+  });
+  return res.json();
+}
+async function fetchInsertImages(runId: string, imageData: Array<{ filename: string; altText: string; width: number; height: number; sizeKb: number; position: string }>) {
+  const res = await fetch('/api/genesis/insert-images', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ runId, imageData }),
+  });
+  return res.json();
+}
 
 // ── Types ────────────────────────────────────────────────────
 
@@ -77,10 +97,10 @@ export function GenesisEditModal({
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const result = await getRunDetail(runId);
+      const result = await fetchRunDetail(runId);
       if (result.success && result.run && result.mdxContent) {
         setMdxContent(result.mdxContent);
-        setImages(result.run.images.map((img) => ({
+        setImages(result.run.images.map((img: { filename: string; position: string; altText: string }) => ({
           filename: img.filename,
           position: img.position,
           altText: img.altText,
@@ -143,9 +163,9 @@ export function GenesisEditModal({
     setSaving(true);
     try {
       const fullMdx = rebuildMdx(sections);
-      const result = await updateGenesisContent(runId, fullMdx);
+      const result = await fetchUpdateContent(runId, fullMdx);
       if (result.success) {
-        toast.success(`Saved — ${result.wordCount?.toLocaleString()} words`);
+        toast.success(`Saved — ${result.wordCount?.toLocaleString('en-US')} words`);
         onSaved();
       } else {
         toast.error(result.error || 'Failed to save');
@@ -209,7 +229,7 @@ export function GenesisEditModal({
 
   // Image path helper
   const getImageSrc = (filename: string) => {
-    const prefix = market === 'us' ? '' : market + '/';
+    const prefix = market + '/';
     return `/images/content/${prefix}${category}/${slug}/${filename}`;
   };
 
@@ -320,19 +340,18 @@ export function GenesisEditModal({
 
         // Step 3: Save to DB
         setUploadStep('Speichere Bilder...');
-        await processAndInsertImages(
+        const allImages = [...images, ...newImages];
+        await fetchInsertImages(
           runId,
-          [...images, ...newImages].map((img) => ({
+          allImages.map((img) => ({
             filename: img.filename,
             altText: img.altText,
             width: 1200,
             height: 600,
             sizeKb: 0,
-            position: img.position as 'hero' | 'mid-scroll' | 'comparison' | 'deep-content',
+            position: img.position,
           })),
         );
-
-        const allImages = [...images, ...newImages];
         setImages(allImages);
         toast.success(`${newImages.length} Bild(er) hochgeladen`);
       } catch (err) {

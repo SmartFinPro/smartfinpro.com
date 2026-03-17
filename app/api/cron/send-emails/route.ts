@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { processNurtureSequence } from '@/lib/email/nurture-sequence';
+import { logger, logCron } from '@/lib/logging';
 
 /**
  * Email Sequence Cron Job
@@ -23,11 +24,11 @@ export async function GET(request: NextRequest) {
   }
 
   if (authHeader !== `Bearer ${cronSecret}`) {
-    console.warn('[send-emails] Unauthorized cron attempt');
+    logger.warn('[send-emails] Unauthorized cron attempt');
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  console.log('[send-emails] Starting email sequence processing...');
+  logger.info('[send-emails] Starting email sequence processing');
   const startTime = Date.now();
 
   try {
@@ -35,11 +36,9 @@ export async function GET(request: NextRequest) {
 
     const duration = Date.now() - startTime;
 
-    console.log('[send-emails] Processing completed:', {
-      success: result.success,
-      emailsSent: result.emailsSent,
-      errors: result.errors.length,
-      duration: `${duration}ms`,
+    logCron({
+      job: 'send-emails', status: 'success', duration_ms: duration,
+      emails_sent: result.emailsSent, errors: result.errors.length,
     });
 
     return NextResponse.json({
@@ -52,7 +51,7 @@ export async function GET(request: NextRequest) {
       errors: result.errors.slice(0, 10), // Limit errors in response
     });
   } catch (error) {
-    console.error('[send-emails] Processing failed:', error);
+    logCron({ job: 'send-emails', status: 'error', duration_ms: Date.now() - startTime, error: error instanceof Error ? error.message : String(error) });
 
     return NextResponse.json(
       {

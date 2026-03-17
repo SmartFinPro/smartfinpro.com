@@ -23,6 +23,10 @@ interface ReviewSchemaProps {
  * ```
  */
 export function ReviewSchema({ review }: ReviewSchemaProps) {
+  if (!review.productName || review.rating == null) {
+    console.warn('[ReviewSchema] Skipped: missing productName or rating');
+    return null;
+  }
   const schema = generateReviewSchema(review);
 
   return (

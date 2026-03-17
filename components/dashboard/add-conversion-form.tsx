@@ -21,7 +21,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { addConversion } from '@/lib/actions/revenue';
 
 interface AddConversionFormProps {
   affiliateLinks: { id: string; slug: string; partner_name: string }[];
@@ -49,13 +48,18 @@ export function AddConversionForm({ affiliateLinks }: AddConversionFormProps) {
 
     setLoading(true);
     try {
-      await addConversion({
-        link_id: linkId || undefined,
-        converted_at: new Date(date).toISOString(),
-        commission_earned: amountNum,
-        network_reference: reference || undefined,
-        status,
+      const res = await fetch('/api/dashboard/add-conversion', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          link_id: linkId || undefined,
+          converted_at: new Date(date).toISOString(),
+          commission_earned: amountNum,
+          network_reference: reference || undefined,
+          status,
+        }),
       });
+      if (!res.ok) throw new Error('Failed to add conversion');
 
       setOpen(false);
       resetForm();

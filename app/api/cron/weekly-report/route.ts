@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateWeeklyReport } from '@/lib/actions/weekly-report';
+import { logger, logCron } from '@/lib/logging';
 
 /**
  * Weekly Performance Report — Cron Job
@@ -31,9 +32,7 @@ export async function GET(request: NextRequest) {
   const isAuthenticated = authHeader === `Bearer ${cronSecret}`;
 
   if (!isAuthenticated && !isDev) {
-    console.warn(
-      `[weekly-report] Unauthorized attempt from ${request.headers.get('x-forwarded-for') || 'unknown'}`,
-    );
+    logger.warn('[weekly-report] Unauthorized attempt', { ip: request.headers.get('x-forwarded-for') ?? 'unknown' });
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -43,7 +42,7 @@ export async function GET(request: NextRequest) {
     const duration = ((Date.now() - startTime) / 1000).toFixed(1);
 
     if (!result.success) {
-      console.error('[weekly-report] Generation failed:', result.error);
+      logCron({ job: 'weekly-report', status: 'error', duration_ms: Math.round(parseFloat(duration) * 1000), error: result.error });
       return NextResponse.json(
         {
           error: result.error,
@@ -55,12 +54,12 @@ export async function GET(request: NextRequest) {
 
     const d = result.data;
 
-    console.log(
-      `[weekly-report] Complete: $${d?.totalRevenue} revenue, ` +
-      `${d?.totalClicks} clicks, ` +
-      `${(d?.revenueDelta ?? 0) > 0 ? '+' : ''}${d?.revenueDelta ?? 0}% delta, ` +
-      `telegram=${result.telegramSent}, ${duration}s`,
-    );
+    logCron({
+      job: 'weekly-report', status: 'success',
+      duration_ms: Math.round(parseFloat(duration) * 1000),
+      revenue: d?.totalRevenue, clicks: d?.totalClicks,
+      delta_pct: d?.revenueDelta, telegram_sent: result.telegramSent,
+    });
 
     return NextResponse.json({
       success: true,
@@ -94,7 +93,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Unknown error';
-    console.error('[weekly-report] Cron failed:', msg);
+    logCron({ job: 'weekly-report', status: 'error', error: msg });
     return NextResponse.json(
       { error: msg, timestamp: new Date().toISOString() },
       { status: 500 },

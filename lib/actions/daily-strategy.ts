@@ -1,8 +1,9 @@
 'use server';
 
 import 'server-only';
+import * as Sentry from '@sentry/nextjs';
+import { logger } from '@/lib/logging';
 
-import Anthropic from '@anthropic-ai/sdk';
 import { createServiceClient } from '@/lib/supabase/server';
 import { getRevenueForecast } from '@/lib/actions/revenue-forecast';
 import { getRecentRuns } from '@/lib/actions/genesis';
@@ -10,6 +11,7 @@ import { getRankingData } from '@/lib/actions/ranking';
 import { getAlertSettings } from '@/lib/actions/spike-monitor';
 import { getAllContentSlugs } from '@/lib/mdx/index';
 import type { Market } from '@/lib/i18n/config';
+import { createClaudeMessage } from '@/lib/claude/client';
 
 // ════════════════════════════════════════════════════════════════
 // AI-STRATEGIST — Daily Digest Generator
@@ -143,18 +145,19 @@ async function collectDailyData() {
   const indexedRuns = completedRuns.filter((r) => r.indexedAt);
 
   // Milestone detection — check if any market just hit 100 clicks
-  // Query clicks table to get all-time clicks per market
+  // Query link_clicks joined with affiliate_links to get market data
   const { data: allTimeClicksByMarket } = await supabase
-    .from('clicks')
-    .select('market', { count: 'exact' })
-    .not('market', 'is', null);
+    .from('link_clicks')
+    .select('affiliate_links!inner(market)')
+    .not('affiliate_links.market', 'is', null);
 
   const milestoneAlerts: string[] = [];
   const clicksByMarket = new Map<string, number>();
 
-  // Count clicks per market
+  // Count clicks per market (market comes from joined affiliate_links)
   for (const click of (allTimeClicksByMarket || [])) {
-    const market = (click.market as string) || 'us';
+    const affiliateLink = click.affiliate_links as unknown as { market: string } | null;
+    const market = affiliateLink?.market || 'us';
     clicksByMarket.set(market, (clicksByMarket.get(market) || 0) + 1);
   }
 
@@ -290,9 +293,7 @@ ${thresholds.join('\n') || '(Not configured)'}
     };
 
     if (anthropicKey) {
-      const anthropic = new Anthropic({ apiKey: anthropicKey });
-
-      const response = await anthropic.messages.create({
+      const response = await createClaudeMessage({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 1200,
         system: `You are the AI Strategy Officer for SmartFinPro, a finance affiliate SEO platform.
@@ -333,7 +334,7 @@ JSON format:
   }
 }`,
         messages: [{ role: 'user', content: dataPrompt }],
-      });
+      }, { apiKey: anthropicKey, operation: 'daily_strategy_digest' });
 
       const aiText = response.content[0].type === 'text' ? response.content[0].text : '';
 
@@ -423,8 +424,9 @@ JSON format:
 
     return { success: true, digest };
   } catch (err) {
+    Sentry.captureException(err);
     const msg = err instanceof Error ? err.message : 'Unknown error';
-    console.error('[daily-strategy] generateDailyStrategy failed:', msg);
+    logger.error('[daily-strategy] generateDailyStrategy failed:', msg);
     return { success: false, digest: null, error: msg };
   }
 }
@@ -544,7 +546,7 @@ export async function analyzeAndPlanNextDay(): Promise<{
       // Slug format: /market/category/slug or /category/slug (US)
       const parts = (click.slug || '').split('/').filter(Boolean);
       let category: string;
-      let market: Market = (click.market as Market) || 'us';
+      const market: Market = (click.market as Market) || 'us';
 
       if (parts.length >= 2) {
         // Could be /uk/trading/slug or /trading/slug
@@ -752,11 +754,12 @@ export async function analyzeAndPlanNextDay(): Promise<{
       }
     }
 
-    console.log(`[planning] analyzeAndPlanNextDay: ${plans.length} plans created`);
+    logger.info(`[planning] analyzeAndPlanNextDay: ${plans.length} plans created`);
     return { success: true, plans };
   } catch (err) {
+    Sentry.captureException(err);
     const msg = err instanceof Error ? err.message : 'Unknown error';
-    console.error('[planning] analyzeAndPlanNextDay failed:', msg);
+    logger.error('[planning] analyzeAndPlanNextDay failed:', msg);
     return { success: false, plans: [], error: msg };
   }
 }
@@ -907,11 +910,12 @@ export async function approvePlanAndExecute(
       await new Promise((r) => setTimeout(r, 1000));
     }
 
-    console.log(`[planning] approvePlanAndExecute: ${results.filter((r) => r.status === 'completed').length}/${results.length} succeeded`);
+    logger.info(`[planning] approvePlanAndExecute: ${results.filter((r) => r.status === 'completed').length}/${results.length} succeeded`);
     return { success: true, results };
   } catch (err) {
+    Sentry.captureException(err);
     const msg = err instanceof Error ? err.message : 'Unknown error';
-    console.error('[planning] approvePlanAndExecute failed:', msg);
+    logger.error('[planning] approvePlanAndExecute failed:', msg);
     return { success: false, results: [], error: msg };
   }
 }
@@ -1012,8 +1016,9 @@ export async function approveAndExecuteSingle(
       wordCount: generation.wordCount,
     };
   } catch (err) {
+    Sentry.captureException(err);
     const msg = err instanceof Error ? err.message : 'Unknown error';
-    console.error('[planning] approveAndExecuteSingle failed:', msg);
+    logger.error('[planning] approveAndExecuteSingle failed:', msg);
     return { success: false, keyword: '', error: msg };
   }
 }
@@ -1354,15 +1359,16 @@ export async function analyzeAffiliateOpportunities(
         plans.push(mapPlanRow(inserted));
       } else if (error) {
         // Likely duplicate — skip silently
-        console.warn(`[affiliate-opportunities] Skipped "${keyword}": ${error.message}`);
+        logger.warn(`[affiliate-opportunities] Skipped "${keyword}": ${error.message}`);
       }
     }
 
-    console.log(`[affiliate-opportunities] Found ${missingAssets.length} gaps, created ${plans.length} opportunities`);
+    logger.info(`[affiliate-opportunities] Found ${missingAssets.length} gaps, created ${plans.length} opportunities`);
     return { success: true, plans };
   } catch (err) {
+    Sentry.captureException(err);
     const msg = err instanceof Error ? err.message : 'Unknown error';
-    console.error('[affiliate-opportunities] analyzeAffiliateOpportunities failed:', msg);
+    logger.error('[affiliate-opportunities] analyzeAffiliateOpportunities failed:', msg);
     return { success: false, plans: [], error: msg };
   }
 }

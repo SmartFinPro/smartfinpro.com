@@ -146,8 +146,11 @@ export function ComparisonTablePremium({
     : items;
 
   // Grid: Name(2fr) + Rating(1fr) + dynamic columns + CTA(1fr)
+  // minWidth ensures the table scrolls horizontally instead of being squeezed
+  const colCount = columns.length + 3; // name + rating + dynamic + cta
   const gridCols: React.CSSProperties = {
     gridTemplateColumns: `2fr 1fr ${columns.map((c) => c.width || '1fr').join(' ')} 1fr`,
+    minWidth: `${Math.max(colCount * 140, 800)}px`,
   };
 
   return (
@@ -160,7 +163,7 @@ export function ComparisonTablePremium({
       )}
 
       {/* ── Desktop Table ──────────────────────────────────────── */}
-      <div className="hidden lg:block">
+      <div className="hidden lg:block overflow-x-auto">
         {/* Header Row */}
         <div
           className="grid gap-0 border-b border-gray-200 relative z-10"
@@ -258,8 +261,8 @@ export function ComparisonTablePremium({
                 <Button
                   asChild
                   size="sm"
-                  className="w-full gap-1.5 text-xs transition-all duration-200 group-hover/row:scale-105 group-hover/row:shadow-md font-bold"
-                  style={{ background: item.isEditorsChoice ? 'var(--sfp-gold)' : 'var(--sfp-navy)', color: item.isEditorsChoice ? 'var(--sfp-ink)' : '#ffffff' }}
+                  className="w-full gap-1.5 text-xs transition-all duration-200 group-hover/row:scale-105 group-hover/row:shadow-md font-normal"
+                  style={{ background: item.isEditorsChoice ? 'var(--sfp-gold)' : 'var(--sfp-navy)', color: '#ffffff', borderRadius: '1rem', fontWeight: 400 }}
                 >
                   <Link href={item.affiliateUrl} target="_blank" rel="noopener sponsored">
                     {ctaLabel}
@@ -421,8 +424,8 @@ export function ComparisonTablePremium({
                 {/* CTA Button (Mobile) */}
                 <Button
                   asChild
-                  className="w-full gap-2 font-bold"
-                  style={{ background: item.isEditorsChoice ? 'var(--sfp-gold)' : 'var(--sfp-navy)', color: item.isEditorsChoice ? 'var(--sfp-ink)' : '#ffffff' }}
+                  className="w-full gap-2 font-normal"
+                  style={{ background: item.isEditorsChoice ? 'var(--sfp-gold)' : 'var(--sfp-navy)', color: '#ffffff', borderRadius: '1rem', fontWeight: 400 }}
                 >
                   <Link href={item.affiliateUrl} target="_blank" rel="noopener sponsored">
                     {ctaLabel} {item.name}

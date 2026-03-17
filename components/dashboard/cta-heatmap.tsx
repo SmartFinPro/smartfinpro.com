@@ -122,13 +122,13 @@ export function CtaHeatmap({ initialData, initialAlertSettings }: CtaHeatmapProp
     async (newRange?: HeatmapTimeRange, newMarket?: Market | 'all') => {
       setLoading(true);
       try {
-        const { getCtaHeatmapData } = await import('@/lib/actions/cta-analytics');
         const range = newRange ?? timeRange;
         const market = newMarket ?? marketFilter;
-        const result = await getCtaHeatmapData(
-          range,
-          market === 'all' ? undefined : market
-        );
+        const params = new URLSearchParams({ timeRange: range });
+        if (market !== 'all') params.set('market', market);
+        const res = await fetch(`/api/dashboard/cta-heatmap?${params.toString()}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const result = await res.json();
         if (result.success && result.data) {
           setData(result.data);
         }
@@ -154,10 +154,15 @@ export function CtaHeatmap({ initialData, initialAlertSettings }: CtaHeatmapProp
   const handleToggleAlert = useCallback(async (market: Market) => {
     setTogglingMarket(market);
     try {
-      const { toggleMarketAlert } = await import('@/lib/actions/spike-monitor');
       const current = alertSettings.find((s) => s.market === market);
       const newValue = !(current?.telegramEnabled ?? false);
-      const result = await toggleMarketAlert(market, newValue);
+      const res = await fetch('/api/dashboard/spike-monitor', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'toggleMarketAlert', market, enabled: newValue }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const result = await res.json();
       if (result.success) {
         setAlertSettings((prev) =>
           prev.map((s) => (s.market === market ? { ...s, telegramEnabled: newValue } : s))
@@ -173,11 +178,16 @@ export function CtaHeatmap({ initialData, initialAlertSettings }: CtaHeatmapProp
   const handleCtrThreshold = useCallback(async (market: Market, delta: number) => {
     setUpdatingThreshold(market);
     try {
-      const { updateCtrThreshold } = await import('@/lib/actions/spike-monitor');
       const current = alertSettings.find((s) => s.market === market);
       const currentVal = current?.ctrThreshold ?? 5.0;
       const newVal = Math.max(0, Math.min(100, currentVal + delta));
-      const result = await updateCtrThreshold(market, newVal);
+      const res = await fetch('/api/dashboard/spike-monitor', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'updateCtrThreshold', market, threshold: newVal }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const result = await res.json();
       if (result.success) {
         setAlertSettings((prev) =>
           prev.map((s) => (s.market === market ? { ...s, ctrThreshold: newVal } : s))
@@ -218,7 +228,7 @@ export function CtaHeatmap({ initialData, initialAlertSettings }: CtaHeatmapProp
         <StatCard
           icon={MousePointerClick}
           label="Total CTA Clicks"
-          value={totalClicks.toLocaleString()}
+          value={totalClicks.toLocaleString('en-US')}
           color="emerald"
         />
         <StatCard
@@ -431,7 +441,7 @@ export function CtaHeatmap({ initialData, initialAlertSettings }: CtaHeatmapProp
                       <Eye className="h-3 w-3 text-blue-500" />
                       Page Views
                     </span>
-                    <span className="font-medium text-slate-700">{hoveredCell.pageViews.toLocaleString()}</span>
+                    <span className="font-medium text-slate-700">{hoveredCell.pageViews.toLocaleString('en-US')}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="flex items-center gap-1">
@@ -541,7 +551,7 @@ export function CtaHeatmap({ initialData, initialAlertSettings }: CtaHeatmapProp
                     {cell.topProvider || '—'}
                   </td>
                   <td className="px-3 py-2.5 text-right text-xs text-slate-500">
-                    {cell.pageViews > 0 ? cell.pageViews.toLocaleString() : '—'}
+                    {cell.pageViews > 0 ? cell.pageViews.toLocaleString('en-US') : '—'}
                   </td>
                   <td className="px-3 py-2.5">
                     <div className="flex items-center gap-2">

@@ -1,11 +1,13 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
-import { Toaster } from '@/components/ui/sonner';
-import { AnalyticsProvider } from '@/components/providers/analytics-provider';
+import Toaster from '@/components/ui/sonner';
+import AnalyticsProvider from '@/components/providers/analytics-provider';
 import SiloClassProvider from '@/components/providers/silo-class-provider';
-import { DevCacheBuster } from '@/components/providers/dev-cache-buster';
+import DevCacheBuster from '@/components/providers/dev-cache-buster';
+import ChunkRecoveryProvider from '@/components/providers/chunk-recovery-provider';
 import { generateOrganizationSchema, generateWebsiteSchema } from '@/lib/seo/schema';
+import WebVitalsReporter from '@/components/providers/web-vitals-reporter';
 
 const inter = Inter({
   variable: '--font-inter',
@@ -14,6 +16,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
+  verification: {
+    google: 'LiEOc7kngm8lF2HFwxZQUe14t3imoM-q8lANKDYQfvM',
+  },
   title: {
     default: 'SmartFinPro - Financial Intelligence for Modern Professionals',
     template: '%s | SmartFinPro',
@@ -48,6 +53,15 @@ export const metadata: Metadata = {
     images: ['/og-image.png'],
     creator: '@smartfinpro',
   },
+  icons: {
+    icon: [
+      { url: '/icon.svg?v=20260314e', type: 'image/svg+xml' },
+      { url: '/icon.png?v=20260314e', type: 'image/png', sizes: '512x512' },
+      { url: '/favicon.ico?v=20260314e', type: 'image/x-icon', sizes: '16x16 32x32 48x48' },
+    ],
+    shortcut: ['/favicon.ico?v=20260314e'],
+    apple: [{ url: '/apple-icon.png?v=20260314e', sizes: '180x180', type: 'image/png' }],
+  },
   robots: {
     index: true,
     follow: true,
@@ -58,10 +72,6 @@ export const metadata: Metadata = {
       'max-image-preview': 'large',
       'max-snippet': -1,
     },
-  },
-  icons: {
-    icon: [{ url: '/favicon.ico?v=20260313c' }],
-    shortcut: [{ url: '/favicon.ico?v=20260313c' }],
   },
   // Add Google verification code when available:
   // verification: { google: 'ACTUAL-CODE-HERE' },
@@ -102,7 +112,9 @@ export default function RootLayout({
       </head>
       <body className={`${inter.variable} font-sans antialiased`}>
         <DevCacheBuster />
+        <ChunkRecoveryProvider />
         <SiloClassProvider />
+        <WebVitalsReporter />
         <AnalyticsProvider>
           {children}
         </AnalyticsProvider>

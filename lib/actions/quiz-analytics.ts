@@ -1,6 +1,8 @@
 'use server';
 
 import 'server-only';
+import * as Sentry from '@sentry/nextjs';
+import { logger } from '@/lib/logging';
 
 import { createServiceClient } from '@/lib/supabase/server';
 import { QuizStats } from '@/components/dashboard/quiz-analytics';
@@ -44,7 +46,9 @@ export async function getQuizAnalytics(range: TimeRange = '7d'): Promise<QuizSta
     let eventsQuery = supabase
       .from('analytics_events')
       .select('event_name, event_label, properties, occurred_at')
-      .in('event_name', ['quiz_started', 'quiz_completed', 'quiz_cta_click', 'quiz_answer']);
+      .in('event_name', ['quiz_started', 'quiz_completed', 'quiz_cta_click', 'quiz_answer'])
+      .order('occurred_at', { ascending: false })
+      .limit(10000); // Cap to prevent full-table scans on large datasets
 
     if (rangeStart) {
       eventsQuery = eventsQuery.gte('occurred_at', rangeStart.toISOString());
@@ -57,7 +61,7 @@ export async function getQuizAnalytics(range: TimeRange = '7d'): Promise<QuizSta
       if (error.code === 'PGRST204' || error.code === '42P01' || error.message?.includes('schema cache') || error.message?.includes('relation')) {
         return emptyStats;
       }
-      console.error('Error fetching quiz analytics:', error);
+      logger.error('Error fetching quiz analytics:', error);
       return emptyStats;
     }
 
@@ -147,7 +151,8 @@ export async function getQuizAnalytics(range: TimeRange = '7d'): Promise<QuizSta
       answerDistribution,
     };
   } catch (error) {
-    console.error('Error in getQuizAnalytics:', error);
+    Sentry.captureException(error);
+    logger.error('Error in getQuizAnalytics:', error);
     return emptyStats;
   }
 }
@@ -177,7 +182,7 @@ export async function getHighIntentEvents(range: TimeRange = '7d') {
     if (error.code === 'PGRST204' || error.code === '42P01' || error.message?.includes('schema cache') || error.message?.includes('relation')) {
       return [];
     }
-    console.error('Error fetching high-intent events:', error);
+    logger.error('Error fetching high-intent events:', error);
     return [];
   }
 

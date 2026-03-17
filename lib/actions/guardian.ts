@@ -1,6 +1,8 @@
 'use server';
 
 import 'server-only';
+import * as Sentry from '@sentry/nextjs';
+import { logger } from '@/lib/logging';
 
 import { createServiceClient } from '@/lib/supabase/server';
 import { sendEmail } from '@/lib/email/resend';
@@ -190,8 +192,9 @@ export async function checkAllApiConnectivities(): Promise<{
       errors,
     };
   } catch (err) {
+    Sentry.captureException(err);
     const msg = err instanceof Error ? err.message : 'Unknown error';
-    console.error('[guardian] checkAllApiConnectivities failed:', msg);
+    logger.error('[guardian] checkAllApiConnectivities failed:', msg);
     return {
       checked: 0,
       failures: 0,
@@ -442,8 +445,9 @@ SmartFinPro Guardian — Automatische API-Ueberwachung
 
     return result;
   } catch (err) {
+    Sentry.captureException(err);
     const msg = err instanceof Error ? err.message : 'Unknown error';
-    console.error('[guardian] sendTestNotification failed:', msg);
+    logger.error('[guardian] sendTestNotification failed:', msg);
     return { success: false, error: msg };
   }
 }

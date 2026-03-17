@@ -39,7 +39,7 @@ export function TrackedCTA({
     : '';
 
   const premiumStyle = variant === 'default'
-    ? { background: 'var(--sfp-gold)' }
+    ? { background: 'var(--sfp-gold)', color: '#ffffff' }
     : {};
 
   return (
@@ -111,7 +111,7 @@ export function HighlightCTA({
           <Button
             size="default"
             className="w-full sm:w-auto gap-2 border-0 shadow-lg text-white"
-            style={{ background: 'var(--sfp-gold)' }}
+            style={{ background: 'var(--sfp-gold)', color: '#ffffff', borderRadius: '1rem' }}
           >
             Try {productName}
             <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
@@ -162,7 +162,7 @@ export function StickyBottomCTA({ href, productName, price }: StickyBottomCTAPro
           asChild
           size="lg"
           className="gap-2 border-0 shadow-lg text-white"
-          style={{ background: 'var(--sfp-gold)' }}
+          style={{ background: 'var(--sfp-gold)', color: '#ffffff', borderRadius: '1rem' }}
         >
           <Link href={href} target="_blank" rel="noopener sponsored">
             Get Started

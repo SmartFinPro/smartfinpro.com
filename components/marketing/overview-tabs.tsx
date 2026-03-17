@@ -239,7 +239,7 @@ function ExpertTabContent({ content, categoryName, categoryHref }: { content: Ov
       {/* Closing CTA */}
       <div className="text-center py-6">
         <p className="mb-6" style={{ color: 'var(--sfp-slate)' }}>{content.closingCta}</p>
-        <Button asChild size="lg" className="border-0 text-white shadow-lg" style={{ background: 'var(--sfp-gold)' }}>
+        <Button asChild size="lg" className="border-0 text-white shadow-lg" style={{ background: 'var(--sfp-gold)', color: '#ffffff', borderRadius: '1rem' }}>
           <Link href={categoryHref}>
             Explore {categoryName} Tools
             <ArrowRight className="ml-2 h-5 w-5" />
@@ -261,7 +261,7 @@ function ReportTabContent({ categoryName, categoryHref }: { categoryName: string
         <p className="mb-8" style={{ color: 'var(--sfp-slate)' }}>
           Access our comprehensive {categoryName.toLowerCase()} reviews, comparisons, and expert recommendations. Find the best tools for your specific needs.
         </p>
-        <Button asChild size="lg" className="border-0 shadow-lg text-white" style={{ background: 'var(--sfp-gold)' }}>
+        <Button asChild size="lg" className="border-0 shadow-lg text-white" style={{ background: 'var(--sfp-gold)', color: '#ffffff', borderRadius: '1rem' }}>
           <Link href={categoryHref}>
             Browse All {categoryName}
             <ArrowRight className="ml-2 h-5 w-5" />
@@ -305,8 +305,8 @@ export function OverviewTabs({ content, categoryName, categoryHref }: OverviewTa
           </TabsTrigger>
           <TabsTrigger
             value="report"
-            className="rounded-lg border border-gray-200 px-4 py-2 ml-2 whitespace-nowrap text-white"
-            style={{ background: 'var(--sfp-gold)' }}
+            className="rounded-2xl border border-gray-200 px-4 py-2 ml-2 whitespace-nowrap text-white"
+            style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}
           >
             Get Full Analysis
           </TabsTrigger>

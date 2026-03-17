@@ -1,11 +1,12 @@
 import { MetadataRoute } from 'next';
+import { existsSync } from 'fs';
+import { join } from 'path';
 import { getAllContent } from '@/lib/mdx';
 import { markets, marketCategories, Market } from '@/lib/i18n/config';
+import { brokerSlugs } from '@/lib/data/broker-reviews';
+import { pillarHeroImages, reviewImages } from '@/lib/images/asset-registry';
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://smartfinpro.com';
-
-// Broker review slugs available across all markets
-const brokerSlugs = ['etoro', 'capital-com', 'ibkr', 'investing', 'revolut', 'ig', 'plus500'];
 
 // Static tool pages (not market-prefixed)
 const toolPages = [
@@ -34,7 +35,7 @@ const hubPages = [
   '/green-finance',
 ];
 
-// New Silo specific pages per market
+// Silo-specific pages per market (paths relative to market prefix)
 const siloPages: Record<string, string[]> = {
   us: [
     '/credit-repair',
@@ -71,165 +72,169 @@ const staticPages = [
   '/terms',
 ];
 
+/**
+ * All markets use /{market} prefix (symmetric routing).
+ */
 function marketUrl(market: string, path: string): string {
-  return market === 'us' ? `${BASE_URL}${path}` : `${BASE_URL}/${market}${path}`;
+  return `${BASE_URL}/${market}${path}`;
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const entries: MetadataRoute.Sitemap = [];
-  const now = new Date();
+  try {
+    const entries: MetadataRoute.Sitemap = [];
+    const now = new Date();
 
-  // ============================================================
-  // 1. HOMEPAGE — Priority 1.0
-  // ============================================================
+    // ============================================================
+    // 1. MARKET HOMEPAGES — Priority 1.0/0.9
+    // ============================================================
 
-  // US homepage (clean URL)
-  entries.push({
-    url: BASE_URL,
-    lastModified: now,
-    changeFrequency: 'daily',
-    priority: 1.0,
-  });
-
-  // Regional homepages
-  for (const market of markets) {
-    if (market === 'us') continue;
-    entries.push({
-      url: `${BASE_URL}/${market}`,
-      lastModified: now,
-      changeFrequency: 'daily',
-      priority: 0.9,
-    });
-  }
-
-  // ============================================================
-  // 2. PILLAR PAGES (Category Pages) — Priority 0.9
-  // ============================================================
-
-  for (const market of markets) {
-    const cats = marketCategories[market as Market] || [];
-    for (const category of cats) {
+    for (const market of markets) {
       entries.push({
-        url: marketUrl(market, `/${category}`),
+        url: `${BASE_URL}/${market}`,
         lastModified: now,
-        changeFrequency: 'weekly',
-        priority: 0.9,
+        changeFrequency: 'daily',
+        priority: market === 'us' ? 1.0 : 0.9,
       });
     }
-  }
 
-  // ============================================================
-  // 3. OVERVIEW PAGES — Priority 0.85
-  // ============================================================
+    // ============================================================
+    // 2. PILLAR PAGES (Category Pages) — Priority 0.9
+    // ============================================================
 
-  for (const market of markets) {
-    const cats = marketCategories[market as Market] || [];
-    for (const category of cats) {
+    for (const market of markets) {
+      const cats = marketCategories[market as Market] || [];
+      for (const category of cats) {
+        const heroAsset = pillarHeroImages[market]?.[category];
+        entries.push({
+          url: marketUrl(market, `/${category}`),
+          lastModified: now,
+          changeFrequency: 'weekly',
+          priority: 0.9,
+          ...(heroAsset && { images: [`${BASE_URL}${heroAsset.src}`] }),
+        });
+      }
+    }
+
+    // ============================================================
+    // 3. BROKER REVIEW PAGES — Priority 0.8
+    // ============================================================
+
+    for (const market of markets) {
+      for (const broker of brokerSlugs) {
+        const brokerLogoPath = `/images/brokers/${broker}.svg`;
+        const logoExists = existsSync(join(process.cwd(), 'public', brokerLogoPath));
+        entries.push({
+          url: marketUrl(market, `/reviews/${broker}`),
+          lastModified: now,
+          changeFrequency: 'weekly',
+          priority: 0.8,
+          ...(logoExists && { images: [`${BASE_URL}${brokerLogoPath}`] }),
+        });
+      }
+    }
+
+    // ============================================================
+    // 4. CONTENT PAGES (MDX Reviews & Articles) — Priority 0.7-0.8
+    // ============================================================
+
+    const allContent = await getAllContent();
+
+    for (const content of allContent) {
+      if (content.slug === 'index') continue;
+
+      const market = content.meta.market || 'us';
+      const category = content.meta.category;
+      if (!category) continue;
+
+      const lastMod = content.meta.modifiedDate
+        ? new Date(content.meta.modifiedDate)
+        : content.meta.publishDate
+          ? new Date(content.meta.publishDate)
+          : now;
+
+      const reviewAsset = reviewImages[`${market}/${category}/${content.slug}`];
       entries.push({
-        url: marketUrl(market, `/${category}/overview`),
-        lastModified: now,
+        url: marketUrl(market, `/${category}/${content.slug}`),
+        lastModified: lastMod,
         changeFrequency: 'weekly',
-        priority: 0.85,
+        priority: content.meta.featured ? 0.8 : 0.7,
+        ...(reviewAsset && { images: [`${BASE_URL}${reviewAsset.src}`] }),
       });
     }
-  }
 
-  // ============================================================
-  // 4. BROKER REVIEW PAGES — Priority 0.8
-  // ============================================================
+    // ============================================================
+    // 5. SILO PAGES (Market-specific) — Priority 0.85
+    // ============================================================
 
-  for (const market of markets) {
-    for (const broker of brokerSlugs) {
+    for (const market of markets) {
+      const pages = siloPages[market] || [];
+      for (const path of pages) {
+        entries.push({
+          url: marketUrl(market, path),
+          lastModified: now,
+          changeFrequency: 'weekly',
+          priority: 0.85,
+        });
+      }
+    }
+
+    // ============================================================
+    // 6. CROSS-MARKET HUB PAGES — Priority 0.8
+    // ============================================================
+
+    for (const path of hubPages) {
       entries.push({
-        url: marketUrl(market, `/reviews/${broker}`),
+        url: `${BASE_URL}${path}`,
         lastModified: now,
         changeFrequency: 'weekly',
         priority: 0.8,
       });
     }
-  }
 
-  // ============================================================
-  // 5. CONTENT PAGES (MDX Reviews & Articles) — Priority 0.7-0.8
-  // ============================================================
+    // ============================================================
+    // 7. TOOL PAGES — Priority 0.75
+    // ============================================================
 
-  const allContent = await getAllContent();
-
-  for (const content of allContent) {
-    if (content.slug === 'index') continue;
-
-    const market = content.meta.market || 'us';
-    const category = content.meta.category;
-    if (!category) continue;
-
-    const lastMod = content.meta.modifiedDate
-      ? new Date(content.meta.modifiedDate)
-      : content.meta.publishDate
-        ? new Date(content.meta.publishDate)
-        : now;
-
-    entries.push({
-      url: marketUrl(market, `/${category}/${content.slug}`),
-      lastModified: lastMod,
-      changeFrequency: 'weekly',
-      priority: content.meta.featured ? 0.8 : 0.7,
-    });
-  }
-
-  // ============================================================
-  // 6. NEW SILO PAGES (Market-specific) — Priority 0.85
-  // ============================================================
-
-  for (const market of markets) {
-    const pages = siloPages[market] || [];
-    for (const path of pages) {
+    for (const path of toolPages) {
       entries.push({
-        url: marketUrl(market, path),
+        url: `${BASE_URL}${path}`,
         lastModified: now,
-        changeFrequency: 'weekly',
-        priority: 0.85,
+        changeFrequency: 'monthly',
+        priority: path === '/tools' ? 0.8 : 0.75,
       });
     }
+
+    // ============================================================
+    // 8. STATIC PAGES — Priority 0.5-0.6
+    // ============================================================
+
+    for (const path of staticPages) {
+      entries.push({
+        url: `${BASE_URL}${path}`,
+        lastModified: now,
+        changeFrequency: 'monthly',
+        priority: 0.6,
+      });
+    }
+
+    return entries;
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : 'Unknown sitemap error';
+    console.error('[sitemap] fallback sitemap emitted:', msg);
+    const now = new Date();
+    return [
+      {
+        url: `${BASE_URL}/us`,
+        lastModified: now,
+        changeFrequency: 'daily',
+        priority: 1.0,
+      },
+      {
+        url: `${BASE_URL}/tools`,
+        lastModified: now,
+        changeFrequency: 'weekly',
+        priority: 0.8,
+      },
+    ];
   }
-
-  // ============================================================
-  // 7. CROSS-MARKET HUB PAGES — Priority 0.8
-  // ============================================================
-
-  for (const path of hubPages) {
-    entries.push({
-      url: `${BASE_URL}${path}`,
-      lastModified: now,
-      changeFrequency: 'weekly',
-      priority: 0.8,
-    });
-  }
-
-  // ============================================================
-  // 8. TOOL PAGES — Priority 0.75
-  // ============================================================
-
-  for (const path of toolPages) {
-    entries.push({
-      url: `${BASE_URL}${path}`,
-      lastModified: now,
-      changeFrequency: 'monthly',
-      priority: path === '/tools' ? 0.8 : 0.75,
-    });
-  }
-
-  // ============================================================
-  // 9. STATIC PAGES — Priority 0.5-0.6
-  // ============================================================
-
-  for (const path of staticPages) {
-    entries.push({
-      url: `${BASE_URL}${path}`,
-      lastModified: now,
-      changeFrequency: 'monthly',
-      priority: 0.6,
-    });
-  }
-
-  return entries;
 }

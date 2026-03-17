@@ -27,7 +27,7 @@ export function getCookieConsent(): CookieConsentValue {
 // Cookie Consent Banner Component
 // ============================================================
 
-export function CookieConsentBanner() {
+export default function CookieConsentBanner() {
   const [visible, setVisible] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -93,15 +93,15 @@ export function CookieConsentBanner() {
             <div className="flex shrink-0 items-center gap-3">
               <button
                 onClick={() => handleConsent('essential')}
-                className="cursor-pointer rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium transition-all hover:border-gray-400 hover:bg-gray-50"
+                className="cursor-pointer rounded-2xl border border-gray-300 px-4 py-2 text-sm font-medium transition-all hover:border-gray-400 hover:bg-gray-50"
                 style={{ color: 'var(--sfp-ink)', background: 'white' }}
               >
                 Essential Only
               </button>
               <button
                 onClick={() => handleConsent('all')}
-                className="cursor-pointer rounded-lg px-4 py-2 text-sm font-medium text-white transition-all hover:opacity-90"
-                style={{ background: 'var(--sfp-gold)' }}
+                className="cursor-pointer rounded-2xl px-4 py-2 text-sm font-medium text-white transition-all hover:opacity-90"
+                style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}
               >
                 Accept All
               </button>
@@ -112,5 +112,3 @@ export function CookieConsentBanner() {
     </div>
   );
 }
-
-export default CookieConsentBanner;

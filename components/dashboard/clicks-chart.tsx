@@ -10,21 +10,23 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import type { TimeSeriesData } from '@/lib/actions/dashboard';
+import { DASHBOARD_CHART, CHART_NEUTRAL } from '@/lib/constants/brand-colors';
 
 interface ClicksChartProps {
   data: TimeSeriesData[];
 }
 
-// Light theme chart colors
+// AP-03 Phase 3 — Farben aus brand-colors.ts (Single Source of Truth)
+// DASHBOARD_CHART.primary = #10b981 (emerald-500) — originale Optik beibehalten
 const CHART_COLORS = {
-  stroke: '#10b981', // Emerald-500
-  fill: '#10b981',
-  grid: '#e2e8f0', // Slate-200 - light gray grid
-  text: '#64748b', // Slate-500
+  stroke: DASHBOARD_CHART.primary,      // emerald-500 — Klick-Linie
+  fill:   DASHBOARD_CHART.primary,
+  grid:   CHART_NEUTRAL.grid,
+  text:   CHART_NEUTRAL.axisText,
   tooltip: {
-    bg: '#ffffff', // White
-    border: '#e2e8f0', // Slate-200
-    text: '#1e293b', // Slate-800
+    bg:     CHART_NEUTRAL.tooltipBg,
+    border: CHART_NEUTRAL.tooltipBorder,
+    text:   CHART_NEUTRAL.tooltipText,
   },
 };
 
@@ -92,7 +94,7 @@ export function ClicksChart({ data }: ClicksChartProps) {
             const val = typeof value === 'number' ? value : 0;
             return [`${val}`, 'Clicks'];
           }}
-          labelStyle={{ color: '#64748b' }}
+          labelStyle={{ color: CHART_NEUTRAL.axisText }}
         />
         <Area
           type="monotone"

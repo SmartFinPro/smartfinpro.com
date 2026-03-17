@@ -222,7 +222,7 @@ export function DebtPayoffCalculator() {
               />
               <div className="flex justify-between text-xs mt-1" style={{ color: 'var(--sfp-slate)' }}>
                 <span>Min: ${minPayment}</span>
-                <span>Max: ${Math.min(debtBalance, 5000).toLocaleString()}</span>
+                <span>Max: ${Math.min(debtBalance, 5000).toLocaleString('en-US')}</span>
               </div>
               {monthlyPayment < minPayment + 50 && (
                 <div className="mt-2 flex items-start gap-2 text-xs" style={{ color: 'var(--sfp-red)' }}>
@@ -321,7 +321,7 @@ export function DebtPayoffCalculator() {
                 <span className="text-xs" style={{ color: 'var(--sfp-slate)' }}>Interest Saved</span>
               </div>
               <div className="text-2xl font-bold" style={{ color: 'var(--sfp-green)' }}>
-                {results.interestSavings > 0 ? `$${results.interestSavings.toLocaleString()}` : '—'}
+                {results.interestSavings > 0 ? `$${results.interestSavings.toLocaleString('en-US')}` : '—'}
               </div>
             </div>
           </div>

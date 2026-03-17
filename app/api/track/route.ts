@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { logger } from '@/lib/logging';
 import { createServiceClient } from '@/lib/supabase/server';
 import crypto from 'crypto';
+import { validate, TrackSchema } from '@/lib/validation';
 
 // Rate limiting: simple in-memory store (use Redis in production)
 const rateLimitMap = new Map<string, { count: number; timestamp: number }>();
@@ -51,14 +53,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 });
     }
 
-    const body = (await request.json()) as TrackPayload;
-
-    if (!body.type || !body.sessionId) {
-      return NextResponse.json(
-        { error: 'Missing required fields: type, sessionId' },
-        { status: 400 }
-      );
-    }
+    const raw = await request.json();
+    const parsed = validate(TrackSchema, raw);
+    if (!parsed.ok) return parsed.error;
+    const body = parsed.data;
 
     const supabase = createServiceClient();
     const userAgent = request.headers.get('user-agent') || '';
@@ -100,7 +98,7 @@ export async function POST(request: NextRequest) {
 
         if (error) {
           // Log but never fail — analytics must not affect UX
-          if (process.env.NODE_ENV === 'development') console.warn('Analytics: pageview insert failed');
+          if (process.env.NODE_ENV === 'development') logger.warn('Analytics: pageview insert failed');
         }
 
         return NextResponse.json({ success: true });
@@ -124,7 +122,7 @@ export async function POST(request: NextRequest) {
         });
 
         if (error) {
-          if (process.env.NODE_ENV === 'development') console.warn('Analytics: event insert failed');
+          if (process.env.NODE_ENV === 'development') logger.warn('Analytics: event insert failed');
         }
 
         return NextResponse.json({ success: true });
@@ -132,21 +130,29 @@ export async function POST(request: NextRequest) {
 
       case 'scroll':
       case 'time_on_page': {
-        // Update existing page view
-        const { error } = await supabase
+        // Supabase JS does NOT support .order().limit() on .update() — use SELECT first, then UPDATE by id
+        const { data: existing } = await supabase
           .from('page_views')
-          .update({
-            time_on_page:
-              body.type === 'time_on_page' ? (body.data.timeOnPage as number) : undefined,
-            scroll_depth: body.type === 'scroll' ? (body.data.scrollDepth as number) : undefined,
-          })
+          .select('id')
           .eq('session_id', body.sessionId)
           .eq('page_path', body.data.pagePath as string)
           .order('viewed_at', { ascending: false })
-          .limit(1);
+          .limit(1)
+          .maybeSingle();
 
-        if (error) {
-          if (process.env.NODE_ENV === 'development') console.warn('Analytics: page view update failed');
+        if (existing?.id) {
+          const updatePayload: Record<string, unknown> = {};
+          if (body.type === 'time_on_page') updatePayload.time_on_page = body.data.timeOnPage;
+          if (body.type === 'scroll') updatePayload.scroll_depth = body.data.scrollDepth;
+
+          const { error } = await supabase
+            .from('page_views')
+            .update(updatePayload)
+            .eq('id', existing.id);
+
+          if (error) {
+            if (process.env.NODE_ENV === 'development') logger.warn('Analytics: page view update failed');
+          }
         }
 
         return NextResponse.json({ success: true });
@@ -156,7 +162,8 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Unknown track type' }, { status: 400 });
     }
   } catch (error) {
-    // Analytics should never return errors to the client
+    // Analytics should never return errors to the client — but log for observability
+    logger.error('[track] unexpected error:', error);
     return NextResponse.json({ success: true, skipped: true });
   }
 }

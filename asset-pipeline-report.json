@@ -1,0 +1,295 @@
+{
+  "pipeline": "SmartFinPro Image Batch Worker — Phase 1–5",
+  "timestamp": "2026-03-04T15:38:25.866Z",
+  "source": "Pexels (free commercial license, no attribution required — pexels.com/license/)",
+  "summary": {
+    "total_queue": 46,
+    "processed": 43,
+    "skipped": 3,
+    "failed": 0,
+    "remaining_pending": 0
+  },
+  "skipped": [
+    { "id": 1,  "path": "public/images/content/us/trading/hero.webp",            "reason": "Existing file (47KB) kept — REPLACE übersprungen per User-Anweisung" },
+    { "id": 18, "path": "public/images/content/au/personal-finance/hero.webp",   "reason": "Queue-Status: optimized — bereits heruntergeladen" },
+    { "id": 30, "path": "public/images/content/us/personal-finance/best-robo-advisors.webp", "reason": "Queue-Status: optimized — bereits heruntergeladen" }
+  ],
+  "qa": {
+    "check_mdx":        "PASS — keine HTML-Kommentare in MDX-Dateien",
+    "check_frontmatter":"PASS — 0 Errors, 29 pre-existing Warnings (nicht image-related)",
+    "file_existence":   "PASS — 43/43 Dateien vorhanden",
+    "file_sizes":       "PASS — alle Dateien >5KB, kein korrupter Output",
+    "asset_registry":   "PASS — alle 45 placeholder-Einträge auf 'optimized' gesetzt",
+    "unrelated_changes":"KEINE — kein MDX-Content, keine Slug/URL-Änderungen, kein Refactoring"
+  },
+  "changed_files": [
+    "scripts/batch-image-pipeline.mjs (neu)",
+    "assets-queue.csv (43 Zeilen: pending → optimized, ID 1: skip)",
+    "asset-candidates.json (neu)",
+    "asset-selection.json (neu)",
+    "lib/images/asset-registry.ts (45× placeholder → optimized)",
+    "public/images/content/** — 43 neue .webp Dateien (siehe done-Liste)"
+  ],
+  "done": [
+    {
+      "id": 2,
+      "path": "public/images/content/us/personal-finance/hero.webp",
+      "raw": 363505,
+      "out": 131102
+    },
+    {
+      "id": 3,
+      "path": "public/images/content/us/ai-tools/hero.webp",
+      "raw": 338535,
+      "out": 41114
+    },
+    {
+      "id": 4,
+      "path": "public/images/content/us/cybersecurity/hero.webp",
+      "raw": 161441,
+      "out": 49574
+    },
+    {
+      "id": 5,
+      "path": "public/images/content/us/business-banking/hero.webp",
+      "raw": 417100,
+      "out": 55146
+    },
+    {
+      "id": 6,
+      "path": "public/images/content/uk/trading/hero.webp",
+      "raw": 246344,
+      "out": 86748
+    },
+    {
+      "id": 7,
+      "path": "public/images/content/uk/personal-finance/hero.webp",
+      "raw": 154315,
+      "out": 19422
+    },
+    {
+      "id": 8,
+      "path": "public/images/content/uk/ai-tools/hero.webp",
+      "raw": 285995,
+      "out": 83664
+    },
+    {
+      "id": 9,
+      "path": "public/images/content/uk/cybersecurity/hero.webp",
+      "raw": 154004,
+      "out": 37470
+    },
+    {
+      "id": 10,
+      "path": "public/images/content/uk/business-banking/hero.webp",
+      "raw": 126754,
+      "out": 31758
+    },
+    {
+      "id": 11,
+      "path": "public/images/content/ca/forex/hero.webp",
+      "raw": 193120,
+      "out": 58874
+    },
+    {
+      "id": 12,
+      "path": "public/images/content/ca/personal-finance/hero.webp",
+      "raw": 201571,
+      "out": 43302
+    },
+    {
+      "id": 13,
+      "path": "public/images/content/ca/ai-tools/hero.webp",
+      "raw": 122433,
+      "out": 11894
+    },
+    {
+      "id": 14,
+      "path": "public/images/content/ca/cybersecurity/hero.webp",
+      "raw": 244324,
+      "out": 5892
+    },
+    {
+      "id": 15,
+      "path": "public/images/content/ca/business-banking/hero.webp",
+      "raw": 214306,
+      "out": 73970
+    },
+    {
+      "id": 16,
+      "path": "public/images/content/au/trading/hero.webp",
+      "raw": 125990,
+      "out": 30724
+    },
+    {
+      "id": 17,
+      "path": "public/images/content/au/forex/hero.webp",
+      "raw": 488022,
+      "out": 32370
+    },
+    {
+      "id": 19,
+      "path": "public/images/content/au/ai-tools/hero.webp",
+      "raw": 150453,
+      "out": 43048
+    },
+    {
+      "id": 20,
+      "path": "public/images/content/au/cybersecurity/hero.webp",
+      "raw": 215527,
+      "out": 67408
+    },
+    {
+      "id": 21,
+      "path": "public/images/content/au/business-banking/hero.webp",
+      "raw": 295698,
+      "out": 28560
+    },
+    {
+      "id": 22,
+      "path": "public/images/content/us/trading/etoro-review.webp",
+      "raw": 88854,
+      "out": 21136
+    },
+    {
+      "id": 23,
+      "path": "public/images/content/us/trading/td-ameritrade-review.webp",
+      "raw": 153089,
+      "out": 37246
+    },
+    {
+      "id": 24,
+      "path": "public/images/content/us/trading/interactive-brokers-review.webp",
+      "raw": 187255,
+      "out": 52242
+    },
+    {
+      "id": 25,
+      "path": "public/images/content/us/personal-finance/amex-gold-card-review.webp",
+      "raw": 139789,
+      "out": 31624
+    },
+    {
+      "id": 26,
+      "path": "public/images/content/us/personal-finance/chase-sapphire-preferred-review.webp",
+      "raw": 363505,
+      "out": 131102
+    },
+    {
+      "id": 27,
+      "path": "public/images/content/us/personal-finance/chase-sapphire-reserve-review.webp",
+      "raw": 184934,
+      "out": 18130
+    },
+    {
+      "id": 28,
+      "path": "public/images/content/us/personal-finance/sofi-personal-loans-review.webp",
+      "raw": 201571,
+      "out": 43302
+    },
+    {
+      "id": 29,
+      "path": "public/images/content/us/personal-finance/credit-cards-comparison.webp",
+      "raw": 154315,
+      "out": 19422
+    },
+    {
+      "id": 31,
+      "path": "public/images/content/uk/trading/etoro-review.webp",
+      "raw": 113691,
+      "out": 34266
+    },
+    {
+      "id": 32,
+      "path": "public/images/content/uk/trading/hargreaves-lansdown-review.webp",
+      "raw": 153089,
+      "out": 37246
+    },
+    {
+      "id": 33,
+      "path": "public/images/content/uk/trading/ig-markets-review.webp",
+      "raw": 176628,
+      "out": 43492
+    },
+    {
+      "id": 34,
+      "path": "public/images/content/uk/trading/plus500-review.webp",
+      "raw": 214306,
+      "out": 73970
+    },
+    {
+      "id": 35,
+      "path": "public/images/content/uk/personal-finance/vanguard-isa-review.webp",
+      "raw": 295698,
+      "out": 28560
+    },
+    {
+      "id": 36,
+      "path": "public/images/content/uk/personal-finance/hargreaves-lansdown-isa-review.webp",
+      "raw": 150453,
+      "out": 43048
+    },
+    {
+      "id": 37,
+      "path": "public/images/content/uk/personal-finance/trading-212-isa-review.webp",
+      "raw": 126754,
+      "out": 31758
+    },
+    {
+      "id": 38,
+      "path": "public/images/content/ca/forex/questrade-review.webp",
+      "raw": 88854,
+      "out": 21136
+    },
+    {
+      "id": 39,
+      "path": "public/images/content/ca/forex/oanda-review.webp",
+      "raw": 125990,
+      "out": 30724
+    },
+    {
+      "id": 40,
+      "path": "public/images/content/ca/personal-finance/wealthsimple-review.webp",
+      "raw": 417100,
+      "out": 55146
+    },
+    {
+      "id": 41,
+      "path": "public/images/content/ca/personal-finance/wealthsimple-vs-questrade.webp",
+      "raw": 488022,
+      "out": 32370
+    },
+    {
+      "id": 42,
+      "path": "public/images/content/au/forex/pepperstone-review.webp",
+      "raw": 246344,
+      "out": 86748
+    },
+    {
+      "id": 43,
+      "path": "public/images/content/au/forex/ic-markets-review.webp",
+      "raw": 187255,
+      "out": 52242
+    },
+    {
+      "id": 44,
+      "path": "public/images/content/au/personal-finance/commbank-home-loan-review.webp",
+      "raw": 155134,
+      "out": 41596
+    },
+    {
+      "id": 45,
+      "path": "public/images/content/au/personal-finance/athena-home-loans-review.webp",
+      "raw": 149618,
+      "out": 44898
+    },
+    {
+      "id": 46,
+      "path": "public/images/content/au/personal-finance/ubank-home-loan-review.webp",
+      "raw": 146331,
+      "out": 38832
+    }
+  ],
+  "failed": [],
+  "timestamp": "2026-03-04T15:38:25.866Z"
+}

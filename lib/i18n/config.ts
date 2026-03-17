@@ -79,11 +79,14 @@ export const marketCategories: Record<Market, Category[]> = {
     'credit-repair',
     'debt-relief',
     'credit-score',
+    'forex',
+    'gold-investing',
   ],
   uk: [
     'ai-tools',
     'cybersecurity',
     'trading',
+    'forex',
     'personal-finance',
     'business-banking',
     'remortgaging',
@@ -118,37 +121,51 @@ export const categoryConfig: Record<
     name: string;
     description: string;
     icon: string;
+    summaryText?: string;
+    detailsText?: string;
   }
 > = {
   'ai-tools': {
     name: 'AI Tools',
     description: 'AI-powered software for finance professionals',
     icon: 'Sparkles',
+    summaryText: 'Artificial intelligence is transforming the financial services industry, enabling professionals to automate complex workflows, generate predictive analytics, and streamline compliance processes. Our expert research covers the leading AI platforms purpose-built for finance — from portfolio optimization engines to intelligent document processing and fraud detection systems.',
+    detailsText: 'Each report in this category evaluates pricing models, integration capabilities with existing fintech stacks, regulatory compliance features, and measurable ROI. Whether you are a wealth manager seeking AI-driven client insights or a CFO exploring automated reporting, our independent reviews help you identify the right solution for your specific use case and budget.',
   },
   cybersecurity: {
     name: 'Cybersecurity',
     description: 'Security solutions for financial services',
     icon: 'Shield',
+    summaryText: 'Financial institutions face increasingly sophisticated cyber threats — from ransomware attacks targeting transaction systems to social engineering exploits aimed at customer data. Our cybersecurity research evaluates the most effective security platforms designed specifically for the financial sector, covering endpoint protection, threat intelligence, and regulatory compliance.',
+    detailsText: 'Reports in this category assess deployment complexity, detection accuracy, incident response capabilities, and total cost of ownership. We benchmark each solution against frameworks like PCI DSS, SOC 2, and ISO 27001 to ensure your security infrastructure meets both operational needs and compliance mandates.',
   },
   trading: {
     name: 'Trading Platforms',
     description: 'CFD and stock trading platforms',
     icon: 'TrendingUp',
+    summaryText: 'Selecting the right trading platform directly impacts execution speed, available instruments, and overall profitability. Our research covers the leading CFD, stock, and multi-asset platforms — evaluating spreads, commissions, charting tools, and regulatory protections across global markets.',
+    detailsText: 'Each report includes hands-on testing of order execution, platform stability during volatile markets, mobile trading capabilities, and educational resources. We compare fee structures transparently and assess regulatory standing with bodies like the FCA, ASIC, and SEC to help traders at every level make informed decisions.',
   },
   forex: {
     name: 'Forex Brokers',
     description: 'Foreign exchange trading platforms',
     icon: 'DollarSign',
+    summaryText: 'The foreign exchange market processes over $7.5 trillion in daily volume, making broker selection critical for both retail and institutional traders. Our expert reviews analyze forex brokers across key dimensions including spreads, leverage options, execution models, and multi-jurisdictional regulation.',
+    detailsText: 'Reports cover currency pair availability, swap rates, copy trading features, and the quality of analytical tools provided. We verify regulatory licenses, test withdrawal processing times, and evaluate customer support responsiveness to give you a complete picture before you commit capital.',
   },
   'personal-finance': {
     name: 'Personal Finance',
     description: 'Loans, credit and personal finance solutions',
     icon: 'Wallet',
+    summaryText: 'Managing personal finances effectively requires access to the right tools — from loan comparison engines and credit monitoring services to budgeting apps and robo-advisors. Our research covers platforms that help individuals optimize borrowing costs, build credit, and grow long-term wealth.',
+    detailsText: 'Each report evaluates interest rates, fee transparency, user experience, and integration with banking ecosystems. We assess eligibility criteria, approval timelines, and customer support quality so you can confidently choose financial products that align with your goals and circumstances.',
   },
   'business-banking': {
     name: 'Business Banking',
     description: 'Banking solutions for businesses',
     icon: 'Building',
+    summaryText: 'Modern business banking extends far beyond basic checking accounts — encompassing payroll integration, multi-currency capabilities, expense management, and API-driven financial infrastructure. Our reviews evaluate banking platforms tailored for startups, SMEs, and enterprise organizations across key global markets.',
+    detailsText: 'Reports assess account fees, transaction limits, lending products, and the quality of accounting software integrations. We compare digital-first challengers against established banks, testing onboarding speed, customer support, and the availability of specialized features like invoice financing and international payments.',
   },
   'credit-repair': {
     name: 'Credit Repair',

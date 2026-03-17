@@ -40,17 +40,15 @@ export async function getConnectorsWithStatus(): Promise<ConnectorInfo[]> {
   const supabase = createServiceClient();
   const availableConnectors = getAvailableConnectors();
 
-  // Get configured connectors from database
-  const { data: dbConnectors } = await supabase
-    .from('api_connectors')
-    .select('*');
-
-  // Get recent sync logs for error messages
-  const { data: recentLogs } = await supabase
-    .from('sync_logs')
-    .select('connector_name, status, error_message, records_synced')
-    .order('started_at', { ascending: false })
-    .limit(50);
+  // Fetch both in parallel (independent queries)
+  const [{ data: dbConnectors }, { data: recentLogs }] = await Promise.all([
+    supabase.from('api_connectors').select('*'),
+    supabase
+      .from('sync_logs')
+      .select('connector_name, status, error_message, records_synced')
+      .order('started_at', { ascending: false })
+      .limit(50),
+  ]);
 
   // Create map of latest log per connector
   interface SyncLog {
@@ -257,6 +255,51 @@ export async function triggerManualSync(
       message: error instanceof Error ? error.message : 'Sync failed',
     };
   }
+}
+
+/**
+ * Generate the S2S postback URL template for a connector.
+ * Networks replace {MACROS} with actual values at fire time.
+ */
+export async function getPostbackUrl(
+  connectorName: string,
+): Promise<{ url: string; token: string }> {
+  const supabase = createServiceClient();
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://smartfinpro.com';
+
+  // Lookup or generate postback token
+  const { data } = await supabase
+    .from('api_connectors')
+    .select('config')
+    .eq('name', connectorName)
+    .single();
+
+  let token: string;
+  const config = (data?.config as Record<string, unknown>) || {};
+
+  if (config.postback_token) {
+    token = config.postback_token as string;
+  } else {
+    // Generate and persist a new token
+    token = crypto.randomUUID();
+    await supabase
+      .from('api_connectors')
+      .update({ config: { ...config, postback_token: token } })
+      .eq('name', connectorName);
+  }
+
+  // Build template URL with network macros in {CAPS}
+  const url =
+    `${baseUrl}/api/postback` +
+    `?connector=${encodeURIComponent(connectorName)}` +
+    `&token=${token}` +
+    `&click_id={SUBID}` +
+    `&event={EVENT}` +
+    `&payout={PAYOUT}` +
+    `&currency={CURRENCY}` +
+    `&txn_id={TXN_ID}`;
+
+  return { url, token };
 }
 
 /**

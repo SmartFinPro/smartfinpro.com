@@ -4,30 +4,6 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 
-// CORS — allow requests from GitHub Pages landing page + main domain
-const ALLOWED_ORIGINS = [
-  'https://smartfinpro.com',
-  'https://www.smartfinpro.com',
-  'https://smartfinpro.github.io',
-  'http://localhost:3000',
-  'http://localhost:3002',
-];
-
-function corsHeaders(origin: string | null) {
-  const allowed = origin && ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
-  return {
-    'Access-Control-Allow-Origin':  allowed,
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
-  };
-}
-
-// Handle CORS preflight
-export async function OPTIONS(request: NextRequest) {
-  const origin = request.headers.get('origin');
-  return new NextResponse(null, { status: 204, headers: corsHeaders(origin) });
-}
-
 // Internal routing — never sent to client
 const CONTACT_ROUTES: Record<string, string> = {
   general:      'support@smartfinpro.com',
@@ -40,9 +16,6 @@ const rateLimitMap = new Map<string, number>();
 const RATE_LIMIT_MS = 5 * 60 * 1000;
 
 export async function POST(request: NextRequest) {
-  const origin = request.headers.get('origin');
-  const headers = corsHeaders(origin);
-
   try {
     // Rate limiting
     const ip =
@@ -54,7 +27,7 @@ export async function POST(request: NextRequest) {
     if (lastSubmit && Date.now() - lastSubmit < RATE_LIMIT_MS) {
       return NextResponse.json(
         { error: 'Please wait a few minutes before submitting again.' },
-        { status: 429, headers }
+        { status: 429 }
       );
     }
 
@@ -70,7 +43,7 @@ export async function POST(request: NextRequest) {
     ) {
       return NextResponse.json(
         { error: 'All fields are required.' },
-        { status: 400, headers }
+        { status: 400 }
       );
     }
 
@@ -79,7 +52,7 @@ export async function POST(request: NextRequest) {
     if (!emailRegex.test(email)) {
       return NextResponse.json(
         { error: 'Please enter a valid email address.' },
-        { status: 400, headers }
+        { status: 400 }
       );
     }
 
@@ -87,7 +60,7 @@ export async function POST(request: NextRequest) {
     if (message.trim().length < 10 || message.trim().length > 5000) {
       return NextResponse.json(
         { error: 'Message must be between 10 and 5000 characters.' },
-        { status: 400, headers }
+        { status: 400 }
       );
     }
 
@@ -105,7 +78,7 @@ export async function POST(request: NextRequest) {
       console.error('[contact] RESEND_API_KEY not configured');
       return NextResponse.json(
         { error: 'Email service temporarily unavailable.' },
-        { status: 503, headers }
+        { status: 503 }
       );
     }
 
@@ -172,7 +145,7 @@ export async function POST(request: NextRequest) {
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        from:     process.env.RESEND_FROM_EMAIL || 'SmartFinPro <hello@smartfinpro.com>',
+        from: process.env.RESEND_FROM_EMAIL || 'SmartFinPro <hello@smartfinpro.com>',
         to:       toEmail,
         reply_to: email,
         subject:  `[Contact] ${departmentLabel} — ${name}`,
@@ -185,11 +158,11 @@ export async function POST(request: NextRequest) {
       console.error('[contact] Resend error:', errText);
       return NextResponse.json(
         { error: 'Failed to send message. Please try again later.' },
-        { status: 502, headers }
+        { status: 502 }
       );
     }
 
-    // Auto-reply to sender (fire and forget)
+    // Send auto-reply to sender
     const autoReplyHtml = `
 <!DOCTYPE html>
 <html>
@@ -221,6 +194,7 @@ export async function POST(request: NextRequest) {
 </body>
 </html>`;
 
+    // Auto-reply (fire and forget — don't fail the request if this fails)
     fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
@@ -238,12 +212,12 @@ export async function POST(request: NextRequest) {
     // Record rate limit timestamp
     rateLimitMap.set(ip, Date.now());
 
-    return NextResponse.json({ success: true }, { headers });
+    return NextResponse.json({ success: true });
   } catch (err) {
     console.error('[contact] handler error:', err);
     return NextResponse.json(
       { error: 'An unexpected error occurred. Please try again.' },
-      { status: 500, headers }
+      { status: 500 }
     );
   }
 }

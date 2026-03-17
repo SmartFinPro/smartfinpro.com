@@ -1,0 +1,212 @@
+[
+  {
+    "queue_id": 1,
+    "market": "us",
+    "category": "trading",
+    "slug": "index",
+    "page_type": "pillar",
+    "target_path": "public/images/content/us/trading/hero.webp",
+    "note": "File already exists (47KB). Replace if new candidate scores higher.",
+    "keyword": "financial analyst trading multiple screens bright professional office white background",
+    "candidates": [
+      {
+        "rank": 1,
+        "source": "pexels",
+        "photo_id": "31650949",
+        "source_url": "https://www.pexels.com/photo/trading-desk-with-financial-charts-and-technology-31650949/",
+        "preview_url": "https://images.pexels.com/photos/31650949/pexels-photo-31650949.jpeg?auto=compress&cs=tinysrgb&w=600",
+        "photographer": "Jakub Zerdzicki",
+        "license": "Pexels License (Free, commercial use OK, no attribution required)",
+        "rationale": "Modern trading desk setup by Jakub Zerdzicki — known for clean, light-background fintech compositions."
+      },
+      {
+        "rank": 2,
+        "source": "pexels",
+        "photo_id": "31738798",
+        "source_url": "https://www.pexels.com/photo/modern-digital-trading-workspace-with-charts-31738798/",
+        "preview_url": "https://images.pexels.com/photos/31738798/pexels-photo-31738798.jpeg?auto=compress&cs=tinysrgb&w=600",
+        "photographer": "Jakub Zerdzicki",
+        "license": "Pexels License (Free, commercial use OK, no attribution required)",
+        "rationale": "High-tech trading setup with charts on tablet and computer screens — clean composition, professional editorial."
+      },
+      {
+        "rank": 3,
+        "source": "pexels",
+        "photo_id": "4911663",
+        "source_url": "https://www.pexels.com/photo/happy-man-looking-at-screens-4911663/",
+        "preview_url": "https://images.pexels.com/photos/4911663/pexels-photo-4911663.jpeg?auto=compress&cs=tinysrgb&w=600",
+        "photographer": "George Morina",
+        "license": "Pexels License (Free, commercial use OK, no attribution required)",
+        "rationale": "Happy professional man at trading screens — editorial, real person adds trust/EEAT value."
+      }
+    ]
+  },
+  {
+    "queue_id": 2,
+    "market": "us",
+    "category": "personal-finance",
+    "slug": "index",
+    "page_type": "pillar",
+    "target_path": "public/images/content/us/personal-finance/hero.webp",
+    "note": "No hero image exists yet — must be created.",
+    "keyword": "premium credit cards flat lay white marble background professional editorial clean",
+    "candidates": [
+      {
+        "rank": 1,
+        "source": "pexels",
+        "photo_id": "32641817",
+        "source_url": "https://www.pexels.com/photo/collection-of-various-credit-and-debit-cards-32641817/",
+        "preview_url": "https://images.pexels.com/photos/32641817/pexels-photo-32641817.jpeg?auto=compress&cs=tinysrgb&w=600",
+        "photographer": "DAVE GARCIA",
+        "license": "Pexels License (Free, commercial use OK, no attribution required)",
+        "rationale": "Flat lay of assorted credit/debit cards — exactly matches the pillar page topic (personal-finance, credit cards comparison)."
+      },
+      {
+        "rank": 2,
+        "source": "pexels",
+        "photo_id": "7621381",
+        "source_url": "https://www.pexels.com/photo/credit-cards-and-a-smartphone-on-a-white-wall-7621381/",
+        "preview_url": "https://images.pexels.com/photos/7621381/pexels-photo-7621381.jpeg?auto=compress&cs=tinysrgb&w=600",
+        "photographer": "Pexels contributor",
+        "license": "Pexels License (Free, commercial use OK, no attribution required)",
+        "rationale": "Credit cards + smartphone on white wall — light background confirmed in title, adds digital finance dimension."
+      },
+      {
+        "rank": 3,
+        "source": "pexels",
+        "photo_id": "8937443",
+        "source_url": "https://www.pexels.com/photo/credit-cards-lying-down-by-the-eyeglasses-8937443/",
+        "preview_url": "https://images.pexels.com/photos/8937443/pexels-photo-8937443.jpeg?auto=compress&cs=tinysrgb&w=600",
+        "photographer": "Pexels contributor",
+        "license": "Pexels License (Free, commercial use OK, no attribution required)",
+        "rationale": "Credit cards with eyeglasses on desk — professional, editorial feel for a finance/loans pillar page."
+      }
+    ]
+  },
+  {
+    "queue_id": 3,
+    "market": "us",
+    "category": "trading",
+    "slug": "etoro-review",
+    "page_type": "review",
+    "target_path": "public/images/content/us/trading/etoro-review.webp",
+    "note": "No image exists yet — must be created.",
+    "keyword": "trading app on laptop screen white background professional clean mockup editorial",
+    "candidates": [
+      {
+        "rank": 1,
+        "source": "pexels",
+        "photo_id": "6801649",
+        "source_url": "https://www.pexels.com/photo/marketing-person-laptop-technology-6801649/",
+        "preview_url": "https://images.pexels.com/photos/6801649/pexels-photo-6801649.jpeg?auto=compress&cs=tinysrgb&w=600",
+        "photographer": "Hanna Pad",
+        "license": "Pexels License (Free, commercial use OK, no attribution required)",
+        "rationale": "Person at laptop showing financial charts on white background — exact tags include 'white background', 'trading', 'stock exchange'."
+      },
+      {
+        "rank": 2,
+        "source": "pexels",
+        "photo_id": "8532637",
+        "source_url": "https://www.pexels.com/photo/macbook-mockup-on-white-table-8532637/",
+        "preview_url": "https://images.pexels.com/photos/8532637/pexels-photo-8532637.jpeg?auto=compress&cs=tinysrgb&w=600",
+        "photographer": "Pexels contributor",
+        "license": "Pexels License (Free, commercial use OK, no attribution required)",
+        "rationale": "MacBook mockup on clean white table — perfect base for trading platform review page hero."
+      },
+      {
+        "rank": 3,
+        "source": "pexels",
+        "photo_id": "7567486",
+        "source_url": "https://www.pexels.com/photo/graph-displayed-on-laptop-screen-7567486/",
+        "preview_url": "https://images.pexels.com/photos/7567486/pexels-photo-7567486.jpeg?auto=compress&cs=tinysrgb&w=600",
+        "photographer": "Tima Miroshnichenko",
+        "license": "Pexels License (Free, commercial use OK, no attribution required)",
+        "rationale": "Graph/chart clearly visible on laptop screen — editorial photography showing trading data."
+      }
+    ]
+  },
+  {
+    "queue_id": 4,
+    "market": "uk",
+    "category": "trading",
+    "slug": "etoro-review",
+    "page_type": "review",
+    "target_path": "public/images/content/uk/trading/etoro-review.webp",
+    "note": "No image exists yet — must be created. Same product as ID 3, different market — use a visually different candidate.",
+    "keyword": "trading platform laptop clean white office background professional editorial uk",
+    "candidates": [
+      {
+        "rank": 1,
+        "source": "pexels",
+        "photo_id": "8532637",
+        "source_url": "https://www.pexels.com/photo/macbook-mockup-on-white-table-8532637/",
+        "preview_url": "https://images.pexels.com/photos/8532637/pexels-photo-8532637.jpeg?auto=compress&cs=tinysrgb&w=600",
+        "photographer": "Pexels contributor",
+        "license": "Pexels License (Free, commercial use OK, no attribution required)",
+        "rationale": "MacBook on white table — neutral, market-agnostic clean mockup, ideal for UK review page."
+      },
+      {
+        "rank": 2,
+        "source": "pexels",
+        "photo_id": "6770610",
+        "source_url": "https://www.pexels.com/photo/multiple-graphs-on-a-laptop-screen-6770610/",
+        "preview_url": "https://images.pexels.com/photos/6770610/pexels-photo-6770610.jpeg?auto=compress&cs=tinysrgb&w=600",
+        "photographer": "Pexels contributor",
+        "license": "Pexels License (Free, commercial use OK, no attribution required)",
+        "rationale": "Multiple financial graphs on laptop screen — strong relevance for trading platform review, close-up editorial."
+      },
+      {
+        "rank": 3,
+        "source": "pexels",
+        "photo_id": "6801649",
+        "source_url": "https://www.pexels.com/photo/marketing-person-laptop-technology-6801649/",
+        "preview_url": "https://images.pexels.com/photos/6801649/pexels-photo-6801649.jpeg?auto=compress&cs=tinysrgb&w=600",
+        "photographer": "Hanna Pad",
+        "license": "Pexels License (Free, commercial use OK, no attribution required)",
+        "rationale": "Person with laptop showing financial charts — white background confirmed, professional editorial."
+      }
+    ]
+  },
+  {
+    "queue_id": 5,
+    "market": "ca",
+    "category": "personal-finance",
+    "slug": "wealthsimple-review",
+    "page_type": "review",
+    "target_path": "public/images/content/ca/personal-finance/wealthsimple-review.webp",
+    "note": "No image exists yet — must be created.",
+    "keyword": "investment app portfolio screen white background clean minimal professional editorial canada",
+    "candidates": [
+      {
+        "rank": 1,
+        "source": "pexels",
+        "photo_id": "6771900",
+        "source_url": "https://www.pexels.com/photo/person-holding-a-smartphone-6771900/",
+        "preview_url": "https://images.pexels.com/photos/6771900/pexels-photo-6771900.jpeg?auto=compress&cs=tinysrgb&w=600",
+        "photographer": "Alesia Kozik",
+        "license": "Pexels License (Free, commercial use OK, no attribution required)",
+        "rationale": "Person holding smartphone with stock/finance app, laptop with charts in background — Alesia Kozik known for clean editorial finance photography."
+      },
+      {
+        "rank": 2,
+        "source": "pexels",
+        "photo_id": "31450274",
+        "source_url": "https://www.pexels.com/photo/person-holding-smartphone-with-modern-app-interface-31450274/",
+        "preview_url": "https://images.pexels.com/photos/31450274/pexels-photo-31450274.jpeg?auto=compress&cs=tinysrgb&w=600",
+        "photographer": "Abdelrahman Ahmed",
+        "license": "Pexels License (Free, commercial use OK, no attribution required)",
+        "rationale": "Modern app interface on smartphone with laptop keyboard in background — clean minimal, professional editorial."
+      },
+      {
+        "rank": 3,
+        "source": "pexels",
+        "photo_id": "4549416",
+        "source_url": "https://www.pexels.com/photo/person-holding-smartphone-4549416/",
+        "preview_url": "https://images.pexels.com/photos/4549416/pexels-photo-4549416.jpeg?auto=compress&cs=tinysrgb&w=600",
+        "photographer": "Plann",
+        "license": "Pexels License (Free, commercial use OK, no attribution required)",
+        "rationale": "Person holding phone with clean white background — minimal, professional, fits investment app review hero."
+      }
+    ]
+  }
+]

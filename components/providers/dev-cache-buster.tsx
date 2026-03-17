@@ -9,7 +9,7 @@ const DEV_BUILD_MARKER =
 
 const STORAGE_KEY = 'sfp_dev_build_marker';
 
-export function DevCacheBuster() {
+export default function DevCacheBuster() {
   useEffect(() => {
     if (process.env.NODE_ENV !== 'development') return;
 

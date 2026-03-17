@@ -75,9 +75,9 @@ export function createRateLimiter(options: RateLimiterOptions): RateLimiter {
 
 // ── Pre-configured limiters for common routes ──
 
-/** Affiliate redirect: 30 req/min per IP */
+/** Affiliate redirect: 10 req/min per IP — tighter to prevent click fraud */
 export const affiliateRedirectLimiter = createRateLimiter({
-  maxRequests: 30,
+  maxRequests: 10,
   windowMs: 60_000,
 });
 
@@ -90,5 +90,23 @@ export const genesisApiLimiter = createRateLimiter({
 /** Webhook endpoint: 60 req/min per IP */
 export const webhookLimiter = createRateLimiter({
   maxRequests: 60,
+  windowMs: 60_000,
+});
+
+/** Newsletter subscribe: 5 req/min per IP — prevents email-bombing */
+export const subscribeLimiter = createRateLimiter({
+  maxRequests: 5,
+  windowMs: 60_000,
+});
+
+/** Web Vitals ingestion: 60 req/min per IP — generous for real browsers */
+export const webVitalsLimiter = createRateLimiter({
+  maxRequests: 60,
+  windowMs: 60_000,
+});
+
+/** Track CTA / pageview: 120 req/min per IP */
+export const trackLimiter = createRateLimiter({
+  maxRequests: 120,
   windowMs: 60_000,
 });

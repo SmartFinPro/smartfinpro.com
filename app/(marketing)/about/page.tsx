@@ -1,8 +1,10 @@
+// app/(marketing)/about/page.tsx
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import {
   CheckCircle2,
   Shield,
+  ShieldCheck,
   Award,
   Mail,
 } from 'lucide-react';
@@ -27,7 +29,7 @@ export default function AboutPage() {
   ];
 
   return (
-    <main className="min-h-screen">
+    <main className="min-h-screen" style={{ background: 'var(--sfp-gray)' }}>
       {/* Hero Section */}
       <section
         className="relative py-20 sm:py-24 lg:py-32 overflow-hidden"
@@ -43,8 +45,24 @@ export default function AboutPage() {
           />
         </div>
 
-        <div className="container relative z-10 mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="relative z-10 mx-auto px-4 sm:px-6 lg:px-8" style={{ maxWidth: '1200px' }}>
           <div className="max-w-3xl">
+            <div
+              className="inline-flex items-center mb-6 px-2 py-0.5 rounded"
+              style={{ background: 'rgba(232,240,251,0.15)' }}
+            >
+              <span
+                style={{
+                  fontSize: '10px',
+                  fontWeight: 700,
+                  letterSpacing: '1.5px',
+                  textTransform: 'uppercase',
+                  color: 'rgba(255,255,255,0.85)',
+                }}
+              >
+                About SmartFinPro
+              </span>
+            </div>
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
               Expert Financial Reviews Built on Trust
             </h1>
@@ -80,11 +98,27 @@ export default function AboutPage() {
       </section>
 
       {/* Mission Statement */}
-      <section className="py-16 sm:py-20 lg:py-24 bg-white">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="py-24 bg-white border-b border-[#E2E8F0]">
+        <div className="mx-auto px-4 sm:px-6 lg:px-8" style={{ maxWidth: '1200px' }}>
           <div className="max-w-3xl mx-auto">
+            <div
+              className="inline-flex items-center mb-4 px-2 py-0.5 rounded"
+              style={{ background: '#E8F0FB' }}
+            >
+              <span
+                style={{
+                  fontSize: '10px',
+                  fontWeight: 700,
+                  letterSpacing: '1.5px',
+                  textTransform: 'uppercase',
+                  color: '#1B4F8C',
+                }}
+              >
+                Our Mission
+              </span>
+            </div>
             <h2 className="text-3xl sm:text-4xl font-bold mb-8" style={{ color: 'var(--sfp-navy)' }}>
-              Our Mission
+              Why We Exist
             </h2>
             <div className="prose prose-lg max-w-none" style={{ color: 'var(--sfp-ink)' }}>
               <p>
@@ -97,37 +131,79 @@ export default function AboutPage() {
 
             {/* Mission Values Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
-              <div className="p-6 rounded-lg border" style={{ background: 'var(--sfp-gray)', borderColor: '#e5e5e5' }}>
+              <div
+                className="p-8 rounded-2xl border"
+                style={{ background: 'var(--sfp-gray)', borderColor: '#E2E8F0' }}
+              >
                 <div className="flex items-center gap-3 mb-4">
                   <Shield style={{ color: 'var(--sfp-navy)', width: '24px', height: '24px' }} />
-                  <h3 className="font-bold" style={{ color: 'var(--sfp-navy)' }}>
+                  <span
+                    style={{
+                      fontSize: '10px',
+                      fontWeight: 700,
+                      letterSpacing: '1.5px',
+                      textTransform: 'uppercase',
+                      color: '#555',
+                    }}
+                  >
                     Independence
-                  </h3>
+                  </span>
                 </div>
+                <h3 className="font-bold mb-3" style={{ color: 'var(--sfp-navy)' }}>
+                  Independence
+                </h3>
                 <p style={{ color: 'var(--sfp-slate)', fontSize: '0.95rem' }}>
                   We are not influenced by affiliate fees. Our reviews are driven by product quality and consumer benefit, not commission size.
                 </p>
               </div>
 
-              <div className="p-6 rounded-lg border" style={{ background: 'var(--sfp-gray)', borderColor: '#e5e5e5' }}>
+              <div
+                className="p-8 rounded-2xl border"
+                style={{ background: 'var(--sfp-gray)', borderColor: '#E2E8F0' }}
+              >
                 <div className="flex items-center gap-3 mb-4">
                   <Award style={{ color: 'var(--sfp-green)', width: '24px', height: '24px' }} />
-                  <h3 className="font-bold" style={{ color: 'var(--sfp-navy)' }}>
+                  <span
+                    style={{
+                      fontSize: '10px',
+                      fontWeight: 700,
+                      letterSpacing: '1.5px',
+                      textTransform: 'uppercase',
+                      color: '#555',
+                    }}
+                  >
                     Expertise
-                  </h3>
+                  </span>
                 </div>
+                <h3 className="font-bold mb-3" style={{ color: 'var(--sfp-navy)' }}>
+                  Expertise
+                </h3>
                 <p style={{ color: 'var(--sfp-slate)', fontSize: '0.95rem' }}>
                   Our reviews are written by certified professionals with decades of combined experience in finance, investing, and financial services.
                 </p>
               </div>
 
-              <div className="p-6 rounded-lg border" style={{ background: 'var(--sfp-gray)', borderColor: '#e5e5e5' }}>
+              <div
+                className="p-8 rounded-2xl border"
+                style={{ background: 'var(--sfp-gray)', borderColor: '#E2E8F0' }}
+              >
                 <div className="flex items-center gap-3 mb-4">
                   <CheckCircle2 style={{ color: 'var(--sfp-gold)', width: '24px', height: '24px' }} />
-                  <h3 className="font-bold" style={{ color: 'var(--sfp-navy)' }}>
+                  <span
+                    style={{
+                      fontSize: '10px',
+                      fontWeight: 700,
+                      letterSpacing: '1.5px',
+                      textTransform: 'uppercase',
+                      color: '#555',
+                    }}
+                  >
                     Transparency
-                  </h3>
+                  </span>
                 </div>
+                <h3 className="font-bold mb-3" style={{ color: 'var(--sfp-navy)' }}>
+                  Transparency
+                </h3>
                 <p style={{ color: 'var(--sfp-slate)', fontSize: '0.95rem' }}>
                   We disclose all affiliate relationships, explain our methodology, and publish corrections promptly when we get something wrong.
                 </p>
@@ -138,9 +214,25 @@ export default function AboutPage() {
       </section>
 
       {/* Our Team */}
-      <section className="py-16 sm:py-20 lg:py-24">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="py-24 border-b border-[#E2E8F0]" style={{ background: 'var(--sfp-gray)' }}>
+        <div className="mx-auto px-4 sm:px-6 lg:px-8" style={{ maxWidth: '1200px' }}>
           <div className="max-w-4xl mx-auto">
+            <div
+              className="inline-flex items-center mb-4 px-2 py-0.5 rounded"
+              style={{ background: '#E8F0FB' }}
+            >
+              <span
+                style={{
+                  fontSize: '10px',
+                  fontWeight: 700,
+                  letterSpacing: '1.5px',
+                  textTransform: 'uppercase',
+                  color: '#1B4F8C',
+                }}
+              >
+                Expert Team
+              </span>
+            </div>
             <h2 className="text-3xl sm:text-4xl font-bold mb-4" style={{ color: 'var(--sfp-navy)' }}>
               Meet Our Expert Team
             </h2>
@@ -158,9 +250,25 @@ export default function AboutPage() {
       </section>
 
       {/* Methodology Section */}
-      <section id="methodology" className="py-16 sm:py-20 lg:py-24 bg-white">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+      <section id="methodology" className="py-24 bg-white border-b border-[#E2E8F0]">
+        <div className="mx-auto px-4 sm:px-6 lg:px-8" style={{ maxWidth: '1200px' }}>
           <div className="max-w-3xl mx-auto">
+            <div
+              className="inline-flex items-center mb-4 px-2 py-0.5 rounded"
+              style={{ background: '#E8F0FB' }}
+            >
+              <span
+                style={{
+                  fontSize: '10px',
+                  fontWeight: 700,
+                  letterSpacing: '1.5px',
+                  textTransform: 'uppercase',
+                  color: '#1B4F8C',
+                }}
+              >
+                Methodology
+              </span>
+            </div>
             <h2 className="text-3xl sm:text-4xl font-bold mb-8" style={{ color: 'var(--sfp-navy)' }}>
               How We Review Products
             </h2>
@@ -211,7 +319,11 @@ export default function AboutPage() {
                     'We assign a weighted numerical rating and publish the full review with transparent scoring methodology. Reviews are documented for audit purposes.',
                 },
               ].map((item) => (
-                <div key={item.step} className="flex gap-6">
+                <div
+                  key={item.step}
+                  className="flex gap-6 p-6 rounded-2xl border"
+                  style={{ background: 'var(--sfp-gray)', borderColor: '#E2E8F0' }}
+                >
                   <div className="flex-shrink-0">
                     <div
                       className="flex items-center justify-center h-10 w-10 rounded-full font-bold text-white"
@@ -234,16 +346,51 @@ export default function AboutPage() {
       </section>
 
       {/* Editorial Standards */}
-      <section className="py-16 sm:py-20 lg:py-24">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="py-24 border-b border-[#E2E8F0]" style={{ background: 'var(--sfp-gray)' }}>
+        <div className="mx-auto px-4 sm:px-6 lg:px-8" style={{ maxWidth: '1200px' }}>
           <div className="max-w-3xl mx-auto">
+            <div
+              className="inline-flex items-center mb-4 px-2 py-0.5 rounded"
+              style={{ background: '#E8F0FB' }}
+            >
+              <span
+                style={{
+                  fontSize: '10px',
+                  fontWeight: 700,
+                  letterSpacing: '1.5px',
+                  textTransform: 'uppercase',
+                  color: '#1B4F8C',
+                }}
+              >
+                Editorial Standards
+              </span>
+            </div>
             <h2 className="text-3xl sm:text-4xl font-bold mb-8" style={{ color: 'var(--sfp-navy)' }}>
               Editorial Standards
             </h2>
 
             <div className="space-y-8">
               {/* Independence */}
-              <div>
+              <div
+                className="p-8 rounded-2xl border"
+                style={{ background: 'white', borderColor: '#E2E8F0' }}
+              >
+                <span
+                  className="inline-flex items-center mb-3 px-2 py-0.5 rounded"
+                  style={{ background: '#E8F0FB' }}
+                >
+                  <span
+                    style={{
+                      fontSize: '10px',
+                      fontWeight: 700,
+                      letterSpacing: '1.5px',
+                      textTransform: 'uppercase',
+                      color: '#1B4F8C',
+                    }}
+                  >
+                    Independence
+                  </span>
+                </span>
                 <h3 className="text-xl font-bold mb-4" style={{ color: 'var(--sfp-navy)' }}>
                   Editorial Independence
                 </h3>
@@ -253,7 +400,26 @@ export default function AboutPage() {
               </div>
 
               {/* Regulatory Compliance */}
-              <div>
+              <div
+                className="p-8 rounded-2xl border"
+                style={{ background: 'white', borderColor: '#E2E8F0' }}
+              >
+                <span
+                  className="inline-flex items-center mb-3 px-2 py-0.5 rounded"
+                  style={{ background: '#E8F0FB' }}
+                >
+                  <span
+                    style={{
+                      fontSize: '10px',
+                      fontWeight: 700,
+                      letterSpacing: '1.5px',
+                      textTransform: 'uppercase',
+                      color: '#1B4F8C',
+                    }}
+                  >
+                    Compliance
+                  </span>
+                </span>
                 <h3 className="text-xl font-bold mb-4" style={{ color: 'var(--sfp-navy)' }}>
                   Regulatory Compliance
                 </h3>
@@ -277,7 +443,26 @@ export default function AboutPage() {
               </div>
 
               {/* Update Schedule */}
-              <div>
+              <div
+                className="p-8 rounded-2xl border"
+                style={{ background: 'white', borderColor: '#E2E8F0' }}
+              >
+                <span
+                  className="inline-flex items-center mb-3 px-2 py-0.5 rounded"
+                  style={{ background: '#E8F0FB' }}
+                >
+                  <span
+                    style={{
+                      fontSize: '10px',
+                      fontWeight: 700,
+                      letterSpacing: '1.5px',
+                      textTransform: 'uppercase',
+                      color: '#1B4F8C',
+                    }}
+                  >
+                    Updates
+                  </span>
+                </span>
                 <h3 className="text-xl font-bold mb-4" style={{ color: 'var(--sfp-navy)' }}>
                   Review Update Schedule
                 </h3>
@@ -302,16 +487,35 @@ export default function AboutPage() {
       </section>
 
       {/* Trust & Transparency */}
-      <section className="py-16 sm:py-20 lg:py-24 bg-white">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="py-24 bg-white border-b border-[#E2E8F0]">
+        <div className="mx-auto px-4 sm:px-6 lg:px-8" style={{ maxWidth: '1200px' }}>
           <div className="max-w-3xl mx-auto">
+            <div
+              className="inline-flex items-center mb-4 px-2 py-0.5 rounded"
+              style={{ background: '#E8F0FB' }}
+            >
+              <span
+                style={{
+                  fontSize: '10px',
+                  fontWeight: 700,
+                  letterSpacing: '1.5px',
+                  textTransform: 'uppercase',
+                  color: '#1B4F8C',
+                }}
+              >
+                Trust & Transparency
+              </span>
+            </div>
             <h2 className="text-3xl sm:text-4xl font-bold mb-8" style={{ color: 'var(--sfp-navy)' }}>
               Trust & Transparency
             </h2>
 
-            <div className="space-y-8">
+            <div className="space-y-6">
               {/* Affiliate Disclosure */}
-              <div className="p-6 rounded-lg border-2" style={{ background: 'var(--sfp-sky)', borderColor: 'var(--sfp-navy)' }}>
+              <div
+                className="p-8 rounded-2xl border-2"
+                style={{ background: 'var(--sfp-sky)', borderColor: 'var(--sfp-navy)' }}
+              >
                 <h3 className="text-lg font-bold mb-3" style={{ color: 'var(--sfp-navy)' }}>
                   Affiliate Disclosure
                 </h3>
@@ -321,7 +525,10 @@ export default function AboutPage() {
               </div>
 
               {/* No Pay-to-Play */}
-              <div className="p-6 rounded-lg border-2" style={{ background: 'var(--sfp-gray)', borderColor: '#e5e5e5' }}>
+              <div
+                className="p-8 rounded-2xl border"
+                style={{ background: 'var(--sfp-gray)', borderColor: '#E2E8F0' }}
+              >
                 <h3 className="text-lg font-bold mb-3" style={{ color: 'var(--sfp-navy)' }}>
                   No Pay-to-Play
                 </h3>
@@ -331,7 +538,10 @@ export default function AboutPage() {
               </div>
 
               {/* Fact-Checking */}
-              <div className="p-6 rounded-lg border-2" style={{ background: 'var(--sfp-gray)', borderColor: '#e5e5e5' }}>
+              <div
+                className="p-8 rounded-2xl border"
+                style={{ background: 'var(--sfp-gray)', borderColor: '#E2E8F0' }}
+              >
                 <h3 className="text-lg font-bold mb-3" style={{ color: 'var(--sfp-navy)' }}>
                   Fact-Checking & Accuracy
                 </h3>
@@ -347,7 +557,10 @@ export default function AboutPage() {
               </div>
 
               {/* Corrections */}
-              <div>
+              <div
+                className="p-8 rounded-2xl border"
+                style={{ background: 'white', borderColor: '#E2E8F0' }}
+              >
                 <h3 className="text-lg font-bold mb-3" style={{ color: 'var(--sfp-navy)' }}>
                   Corrections Policy
                 </h3>
@@ -364,10 +577,71 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Contact Section */}
+      {/* Data Integrity & Verification */}
       <section className="py-16 sm:py-20 lg:py-24">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-3xl mx-auto">
+            <div className="flex items-center gap-3 mb-6">
+              <div
+                className="flex items-center justify-center h-10 w-10 rounded-full flex-shrink-0"
+                style={{ background: 'rgba(26,107,58,0.10)' }}
+              >
+                <ShieldCheck style={{ color: 'var(--sfp-green)', width: '20px', height: '20px' }} />
+              </div>
+              <h2 className="text-3xl sm:text-4xl font-bold" style={{ color: 'var(--sfp-navy)' }}>
+                Data Integrity & Verification
+              </h2>
+            </div>
+
+            <p className="text-lg mb-6" style={{ color: 'var(--sfp-ink)' }}>
+              Every affiliate conversion event on SmartFinPro is verified through our proprietary S2S Postback Dedup system — a dual-bucket deduplication engine that ensures no double-counted conversions or inflated metrics. The system is independently audited with integration and unit test suites, and the results are published transparently.
+            </p>
+
+            <div
+              className="p-6 rounded-lg border mb-8"
+              style={{ background: 'var(--sfp-sky)', borderColor: 'var(--sfp-navy)' }}
+            >
+              <p className="text-sm font-medium" style={{ color: 'var(--sfp-navy)' }}>
+                Our Integrity Engine runs automated audit gates on every deployment. When all tests pass, the system earns a &quot;Certified&quot; seal — visible on our dashboard and public integrity page.
+              </p>
+            </div>
+
+            <Link href="/integrity">
+              <Button
+                size="lg"
+                style={{
+                  background: 'var(--sfp-navy)',
+                  color: 'white',
+                }}
+                className="hover:opacity-90"
+              >
+                View Integrity Report
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Contact Section */}
+      <section className="py-24" style={{ background: 'var(--sfp-gray)' }}>
+        <div className="mx-auto px-4 sm:px-6 lg:px-8" style={{ maxWidth: '1200px' }}>
           <div className="max-w-3xl mx-auto text-center">
+            <div
+              className="inline-flex items-center mb-4 px-2 py-0.5 rounded"
+              style={{ background: '#E8F0FB' }}
+            >
+              <span
+                style={{
+                  fontSize: '10px',
+                  fontWeight: 700,
+                  letterSpacing: '1.5px',
+                  textTransform: 'uppercase',
+                  color: '#1B4F8C',
+                }}
+              >
+                Contact
+              </span>
+            </div>
             <h2 className="text-3xl sm:text-4xl font-bold mb-6" style={{ color: 'var(--sfp-navy)' }}>
               Get in Touch
             </h2>
@@ -378,8 +652,8 @@ export default function AboutPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
               <a
                 href="mailto:editorial@smartfinpro.com"
-                className="flex items-center justify-center gap-3 p-6 rounded-lg border-2 hover:bg-gray-50 transition-colors"
-                style={{ borderColor: 'var(--sfp-navy)' }}
+                className="flex items-center justify-center gap-3 p-6 rounded-2xl border hover:bg-white transition-colors"
+                style={{ borderColor: '#E2E8F0', background: 'white' }}
               >
                 <Mail style={{ color: 'var(--sfp-navy)', width: '24px', height: '24px' }} />
                 <div className="text-left">
@@ -394,8 +668,8 @@ export default function AboutPage() {
 
               <a
                 href="mailto:hello@smartfinpro.com"
-                className="flex items-center justify-center gap-3 p-6 rounded-lg border-2 hover:bg-gray-50 transition-colors"
-                style={{ borderColor: 'var(--sfp-navy)' }}
+                className="flex items-center justify-center gap-3 p-6 rounded-2xl border hover:bg-white transition-colors"
+                style={{ borderColor: '#E2E8F0', background: 'white' }}
               >
                 <Mail style={{ color: 'var(--sfp-navy)', width: '24px', height: '24px' }} />
                 <div className="text-left">

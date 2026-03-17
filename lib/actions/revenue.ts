@@ -4,6 +4,7 @@ import 'server-only';
 
 import { createServiceClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
+import { logger } from '@/lib/logging';
 
 // Internal type for raw Supabase query results (affiliate_links is returned as array from join)
 interface ConversionQueryResultRaw {
@@ -133,6 +134,7 @@ export async function getAffiliateLinksForMapping() {
 
 // Get revenue statistics
 export async function getRevenueStats(): Promise<RevenueStats> {
+  await loadFxRates(); // Pre-load dynamic FX rates into cache
   const supabase = createServiceClient();
 
   // Get all conversions with link info
@@ -160,14 +162,14 @@ export async function getRevenueStats(): Promise<RevenueStats> {
     affiliate_links: c.affiliate_links?.[0] ?? null,
   }));
 
-  // Calculate totals
+  // Calculate totals (normalised to USD via toUSD())
   const totalRevenue = allConversions
     .filter((c) => c.status === 'approved')
-    .reduce((sum, c) => sum + (c.commission_earned || 0), 0);
+    .reduce((sum, c) => sum + toUSD(c.commission_earned || 0, c.currency), 0);
 
   const pendingRevenue = allConversions
     .filter((c) => c.status === 'pending')
-    .reduce((sum, c) => sum + (c.commission_earned || 0), 0);
+    .reduce((sum, c) => sum + toUSD(c.commission_earned || 0, c.currency), 0);
 
   const approvedRevenue = totalRevenue;
 
@@ -179,7 +181,7 @@ export async function getRevenueStats(): Promise<RevenueStats> {
       const month = c.converted_at.slice(0, 7); // YYYY-MM
       const existing = monthlyMap.get(month) || { revenue: 0, count: 0 };
       monthlyMap.set(month, {
-        revenue: existing.revenue + (c.commission_earned || 0),
+        revenue: existing.revenue + toUSD(c.commission_earned || 0, c.currency),
         count: existing.count + 1,
       });
     });
@@ -481,16 +483,28 @@ function parseAmount(amountStr: string): number {
 // AUTOMATIC REVENUE STATS (No manual input needed)
 // ============================================================
 
+// ── Currency normalisation ─────────────────────────────────────────────────
+// FX utilities extracted to lib/fx-rates.ts (sync exports not allowed in 'use server' files).
+// Import here for internal use; external consumers should import from '@/lib/fx-rates'.
+import {
+  HARDCODED_FX,
+  loadFxRates,
+  getFxRatesSnapshot,
+  toUSD,
+} from '@/lib/fx-rates';
+
+// marketConfig — static UI metadata (name, flag, currency)
+// exchangeRate uses HARDCODED_FX for static display; dynamic calculations use getFxRatesSnapshot()
 const marketConfig: Record<'US' | 'GB' | 'CA' | 'AU', {
   name: string;
   flag: string;
   currency: string;
   exchangeRate: number;
 }> = {
-  US: { name: 'United States', flag: '🇺🇸', currency: 'USD', exchangeRate: 1 },
-  GB: { name: 'United Kingdom', flag: '🇬🇧', currency: 'GBP', exchangeRate: 1.27 },
-  CA: { name: 'Canada', flag: '🇨🇦', currency: 'CAD', exchangeRate: 0.74 },
-  AU: { name: 'Australia', flag: '🇦🇺', currency: 'AUD', exchangeRate: 0.65 },
+  US: { name: 'United States', flag: '🇺🇸', currency: 'USD', exchangeRate: HARDCODED_FX.USD },
+  GB: { name: 'United Kingdom', flag: '🇬🇧', currency: 'GBP', exchangeRate: HARDCODED_FX.GBP },
+  CA: { name: 'Canada', flag: '🇨🇦', currency: 'CAD', exchangeRate: HARDCODED_FX.CAD },
+  AU: { name: 'Australia', flag: '🇦🇺', currency: 'AUD', exchangeRate: HARDCODED_FX.AUD },
 };
 
 function getMarketFromCountry(countryCode: string): 'US' | 'GB' | 'CA' | 'AU' | null {
@@ -505,31 +519,11 @@ function getMarketFromCountry(countryCode: string): 'US' | 'GB' | 'CA' | 'AU' | 
 }
 
 export async function getAutoRevenueStats(): Promise<AutoRevenueStats> {
+  await loadFxRates(); // Pre-load dynamic FX rates into cache
   const supabase = createServiceClient();
   const now = new Date();
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
   const sixtyDaysAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
-
-  // Fetch all conversions
-  const { data: conversionsData } = await supabase
-    .from('conversions')
-    .select(`
-      id,
-      link_id,
-      converted_at,
-      commission_earned,
-      currency,
-      network_reference,
-      status,
-      created_at,
-      affiliate_links (
-        id,
-        slug,
-        partner_name
-      )
-    `)
-    .eq('status', 'approved')
-    .order('converted_at', { ascending: false });
 
   interface ConversionWithLink {
     id: string;
@@ -543,14 +537,6 @@ export async function getAutoRevenueStats(): Promise<AutoRevenueStats> {
     affiliate_links: { id: string; slug: string; partner_name: string }[] | null;
   }
 
-  const conversions = (conversionsData || []) as unknown as ConversionWithLink[];
-
-  // Fetch all clicks with country info
-  const { data: clicksData } = await supabase
-    .from('link_clicks')
-    .select('id, link_id, country_code, clicked_at')
-    .gte('clicked_at', sixtyDaysAgo.toISOString());
-
   interface ClickRecord {
     id: string;
     link_id: string;
@@ -558,26 +544,50 @@ export async function getAutoRevenueStats(): Promise<AutoRevenueStats> {
     clicked_at: string;
   }
 
-  const clicks = (clicksData || []) as ClickRecord[];
-
-  // Fetch all affiliate links
-  const { data: linksData } = await supabase
-    .from('affiliate_links')
-    .select('id, slug, partner_name');
-
   interface LinkRecord {
     id: string;
     slug: string;
     partner_name: string;
   }
 
+  // Fetch all three in parallel (independent queries)
+  const [{ data: conversionsData }, { data: clicksData }, { data: linksData }] =
+    await Promise.all([
+      supabase
+        .from('conversions')
+        .select(`
+          id,
+          link_id,
+          converted_at,
+          commission_earned,
+          currency,
+          network_reference,
+          status,
+          created_at,
+          affiliate_links (
+            id,
+            slug,
+            partner_name
+          )
+        `)
+        .eq('status', 'approved')
+        .order('converted_at', { ascending: false }),
+      supabase
+        .from('link_clicks')
+        .select('id, link_id, country_code, clicked_at')
+        .gte('clicked_at', sixtyDaysAgo.toISOString()),
+      supabase.from('affiliate_links').select('id, slug, partner_name'),
+    ]);
+
+  const conversions = (conversionsData || []) as unknown as ConversionWithLink[];
+  const clicks = (clicksData || []) as ClickRecord[];
   const links = (linksData || []) as LinkRecord[];
   const linksMap = new Map(links.map(l => [l.id, l]));
 
   // ============================================================
   // Calculate totals
   // ============================================================
-  const totalRevenue = conversions.reduce((sum, c) => sum + (c.commission_earned || 0), 0);
+  const totalRevenue = conversions.reduce((sum, c) => sum + toUSD(c.commission_earned || 0, c.currency), 0);
   const totalClicks = clicks.filter(c => new Date(c.clicked_at) >= thirtyDaysAgo).length;
   const totalConversions = conversions.length;
   const globalEPC = totalClicks > 0 ? totalRevenue / totalClicks : 0;
@@ -592,8 +602,8 @@ export async function getAutoRevenueStats(): Promise<AutoRevenueStats> {
     return date >= sixtyDaysAgo && date < thirtyDaysAgo;
   });
 
-  const currentRevenue = currentPeriodConversions.reduce((sum, c) => sum + (c.commission_earned || 0), 0);
-  const previousRevenue = previousPeriodConversions.reduce((sum, c) => sum + (c.commission_earned || 0), 0);
+  const currentRevenue = currentPeriodConversions.reduce((sum, c) => sum + toUSD(c.commission_earned || 0, c.currency), 0);
+  const previousRevenue = previousPeriodConversions.reduce((sum, c) => sum + toUSD(c.commission_earned || 0, c.currency), 0);
 
   const currentClicks = clicks.filter(c => new Date(c.clicked_at) >= thirtyDaysAgo).length;
   const previousClicks = clicks.filter(c => {
@@ -637,12 +647,12 @@ export async function getAutoRevenueStats(): Promise<AutoRevenueStats> {
   conversions.forEach(conv => {
     if (conv.link_id && productStats.has(conv.link_id)) {
       const stats = productStats.get(conv.link_id)!;
-      stats.revenue += conv.commission_earned || 0;
+      stats.revenue += toUSD(conv.commission_earned || 0, conv.currency);
       stats.conversions += 1;
 
       // Track previous period
       if (new Date(conv.converted_at) < thirtyDaysAgo) {
-        stats.previousRevenue += conv.commission_earned || 0;
+        stats.previousRevenue += toUSD(conv.commission_earned || 0, conv.currency);
       }
     }
   });
@@ -716,7 +726,7 @@ export async function getAutoRevenueStats(): Promise<AutoRevenueStats> {
         for (const country of countries) {
           const market = getMarketFromCountry(country);
           if (market) {
-            marketStats[market].revenue += conv.commission_earned || 0;
+            marketStats[market].revenue += toUSD(conv.commission_earned || 0, conv.currency);
             marketStats[market].conversions += 1;
             break;
           }
@@ -736,7 +746,7 @@ export async function getAutoRevenueStats(): Promise<AutoRevenueStats> {
       flag: config.flag,
       currency: config.currency,
       revenue: stats.revenue,
-      revenueLocal: stats.revenue / config.exchangeRate,
+      revenueLocal: stats.revenue / (getFxRatesSnapshot()[config.currency] || config.exchangeRate),
       conversions: stats.conversions,
       clicks: stats.clicks,
       epc: stats.clicks > 0 ? stats.revenue / stats.clicks : 0,
@@ -756,7 +766,7 @@ export async function getAutoRevenueStats(): Promise<AutoRevenueStats> {
     const dayClicks = clicks.filter(c => c.clicked_at.slice(0, 10) === dayKey).length;
     const dayRevenue = conversions
       .filter(c => c.converted_at.slice(0, 10) === dayKey)
-      .reduce((sum, c) => sum + (c.commission_earned || 0), 0);
+      .reduce((sum, c) => sum + toUSD(c.commission_earned || 0, c.currency), 0);
     const dayEPC = dayClicks > 0 ? dayRevenue / dayClicks : 0;
 
     epcTrendData.push({
@@ -775,7 +785,7 @@ export async function getAutoRevenueStats(): Promise<AutoRevenueStats> {
     const month = c.converted_at.slice(0, 7);
     const existing = monthlyMap.get(month) || { revenue: 0, count: 0 };
     monthlyMap.set(month, {
-      revenue: existing.revenue + (c.commission_earned || 0),
+      revenue: existing.revenue + toUSD(c.commission_earned || 0, c.currency),
       count: existing.count + 1,
     });
   });

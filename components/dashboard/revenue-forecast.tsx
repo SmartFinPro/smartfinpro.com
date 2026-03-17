@@ -13,7 +13,6 @@ import {
   ArrowDownRight,
   Minus,
 } from 'lucide-react';
-import { getRevenueForecast } from '@/lib/actions/revenue-forecast';
 import type { RevenueForecastSummary } from '@/lib/actions/revenue-forecast';
 
 // ============================================================
@@ -41,7 +40,8 @@ export function RevenueForecast({ initialData }: RevenueForecastProps) {
     setLoading(true);
     try {
       const range = newRange ?? timeRange;
-      const result = await getRevenueForecast(range);
+      const res = await fetch('/api/dashboard/revenue-forecast?range=' + range);
+      const result = await res.json();
       if (result.success && result.data) {
         setData(result.data);
       }
@@ -147,7 +147,7 @@ export function RevenueForecast({ initialData }: RevenueForecastProps) {
               <span className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Action Clicks</span>
             </div>
             <div className="flex items-end gap-2">
-              <span className="text-xl font-bold text-slate-800">{data.totalEmeraldClicks.toLocaleString()}</span>
+              <span className="text-xl font-bold text-slate-800">{data.totalEmeraldClicks.toLocaleString('en-US')}</span>
               <span className="text-[10px] text-slate-500 mb-0.5">
                 {data.totalMatchedClicks} matched
               </span>

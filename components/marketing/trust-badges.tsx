@@ -36,7 +36,7 @@ export function TrustBadges({
           ))}
         </div>
         <span className="text-sm text-muted-foreground">
-          {rating}/5 ({reviewCount.toLocaleString('en-US')} reviews)
+          {rating}/5 ({(reviewCount ?? 0).toLocaleString('en-US')} reviews)
         </span>
       </div>
 
@@ -57,7 +57,7 @@ export function TrustBadges({
               <Image
                 key={logo}
                 src={`/logos/${logo}.svg`}
-                alt={logo}
+                alt={`${logo} — featured media partner`}
                 width={60}
                 height={20}
                 className="h-5 w-auto opacity-60 grayscale"

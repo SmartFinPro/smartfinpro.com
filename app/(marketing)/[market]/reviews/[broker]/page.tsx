@@ -110,7 +110,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const review = getBrokerReview(broker);
   if (!review) return {};
 
-  const prefix = market === 'us' ? '' : `/${market}`;
+  const prefix = `/${market}`;
   return {
     title: review.seo.title,
     description: review.seo.description,
@@ -119,7 +119,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       languages: Object.fromEntries(
         markets.map((m) => [
           marketConfig[m].hreflang,
-          `${m === 'us' ? '' : `/${m}`}/reviews/${broker}`,
+          `/${m}/reviews/${broker}`,
         ])
       ),
     },
@@ -264,7 +264,7 @@ export default async function BrokerReviewPage({ params }: PageProps) {
                   />
                 ))}
                 <span className="ml-2 text-sm tabular-nums" style={{ color: 'var(--sfp-slate)' }}>
-                  {review.rating}/5 ({review.reviewCount.toLocaleString('en-US')} reviews)
+                  {review.rating}/5 ({(review.reviewCount ?? 0).toLocaleString('en-US')} reviews)
                 </span>
               </div>
               <span className="text-gray-300">|</span>
@@ -279,7 +279,7 @@ export default async function BrokerReviewPage({ params }: PageProps) {
                 asChild
                 size="lg"
                 className="btn-shimmer h-14 px-10 text-lg border-0 text-white shadow-md"
-                style={{ background: 'var(--sfp-gold)' }}
+                style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}
               >
                 <Link href={review.affiliateUrl} target="_blank" rel="noopener sponsored">
                   {review.ctaLabel}
@@ -562,7 +562,7 @@ export default async function BrokerReviewPage({ params }: PageProps) {
             </h2>
             <p className="text-lg mb-8 max-w-xl mx-auto leading-relaxed" style={{ color: 'var(--sfp-slate)' }}>
               Open your free account today and experience why{' '}
-              {review.reviewCount.toLocaleString('en-US')}+ traders trust {review.name}.
+              {(review.reviewCount ?? 0).toLocaleString('en-US')}+ traders trust {review.name}.
               No commitment, cancel anytime.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -570,7 +570,7 @@ export default async function BrokerReviewPage({ params }: PageProps) {
                 asChild
                 size="lg"
                 className="btn-shimmer h-14 px-10 text-lg border-0 text-white shadow-md"
-                style={{ background: 'var(--sfp-gold)' }}
+                style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}
               >
                 <Link href={review.affiliateUrl} target="_blank" rel="noopener sponsored">
                   {review.ctaLabel}

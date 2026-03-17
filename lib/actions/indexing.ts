@@ -7,6 +7,7 @@
 'use server';
 
 import 'server-only';
+import { logger } from '@/lib/logging';
 
 import {
   submitUrlForIndexing,
@@ -76,7 +77,7 @@ export async function indexAllContentUrls(): Promise<BatchIndexingResult> {
     (item) => `${baseUrl}/${item.market}/${item.category}/${item.slug}`
   );
 
-  console.log(`[Indexing API] Submitting ${urls.length} content URLs from database...`);
+  logger.info(`[Indexing API] Submitting ${urls.length} content URLs from database...`);
 
   return await submitBatchForIndexing(urls, 'URL_UPDATED');
 }

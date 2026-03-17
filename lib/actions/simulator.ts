@@ -1,6 +1,8 @@
 'use server';
 
 import 'server-only';
+import * as Sentry from '@sentry/nextjs';
+import { logger } from '@/lib/logging';
 
 import { createServiceClient } from '@/lib/supabase/server';
 import { sendTelegramAlert } from '@/lib/alerts/telegram';
@@ -163,7 +165,7 @@ export async function triggerFullSimulation(): Promise<SimulationResult> {
       const chunk = baseRows.slice(i, i + CHUNK_SIZE);
       const { error } = await supabase.from('cta_analytics').insert(chunk);
       if (error) {
-        console.error(`[simulator] Chunk insert error at ${i}:`, error.message);
+        logger.error(`[simulator] Chunk insert error at ${i}:`, error.message);
       } else {
         clicksInserted += chunk.length;
       }
@@ -193,7 +195,7 @@ export async function triggerFullSimulation(): Promise<SimulationResult> {
 
     const { error: spikeError } = await supabase.from('cta_analytics').insert(spikeRows);
     if (spikeError) {
-      console.error('[simulator] Spike insert error:', spikeError.message);
+      logger.error('[simulator] Spike insert error:', spikeError.message);
     } else {
       spikeClicksInserted = spikeRows.length;
     }
@@ -253,7 +255,8 @@ export async function triggerFullSimulation(): Promise<SimulationResult> {
         alertsSent: spikeResult.alertsSent,
       };
     } catch (err) {
-      console.error('[simulator] runSpikeMonitor failed:', err);
+      Sentry.captureException(err);
+      logger.error('[simulator] runSpikeMonitor failed:', err);
     }
 
     // D2: Run Optimization Analysis → analyzes fake CTA data, creates tasks
@@ -264,7 +267,8 @@ export async function triggerFullSimulation(): Promise<SimulationResult> {
         tasksCreated: optResult.tasksCreated,
       };
     } catch (err) {
-      console.error('[simulator] runOptimizationAnalysis failed:', err);
+      Sentry.captureException(err);
+      logger.error('[simulator] runOptimizationAnalysis failed:', err);
     }
 
     // D3: Send Telegram summary
@@ -299,8 +303,9 @@ export async function triggerFullSimulation(): Promise<SimulationResult> {
       optimizationResult,
     };
   } catch (err) {
+    Sentry.captureException(err);
     const msg = err instanceof Error ? err.message : 'Unknown error';
-    console.error('[simulator] triggerFullSimulation failed:', msg);
+    logger.error('[simulator] triggerFullSimulation failed:', msg);
     return {
       success: false,
       clicksInserted,
@@ -332,7 +337,7 @@ export async function clearSimulationData(): Promise<ClearResult> {
       .select('id');
 
     if (ctaError) {
-      console.error('[simulator] cta_analytics cleanup error:', ctaError.message);
+      logger.error('[simulator] cta_analytics cleanup error:', ctaError.message);
     } else {
       deleted.ctaAnalytics = ctaDeleted?.length || 0;
     }
@@ -345,7 +350,7 @@ export async function clearSimulationData(): Promise<ClearResult> {
       .select('id');
 
     if (planError) {
-      console.error('[simulator] planning_queue cleanup error:', planError.message);
+      logger.error('[simulator] planning_queue cleanup error:', planError.message);
     } else {
       deleted.planningQueue = planDeleted?.length || 0;
     }
@@ -362,7 +367,7 @@ export async function clearSimulationData(): Promise<ClearResult> {
       .select('id');
 
     if (optError) {
-      console.error('[simulator] optimization_tasks cleanup error:', optError.message);
+      logger.error('[simulator] optimization_tasks cleanup error:', optError.message);
     } else {
       deleted.optimizationTasks = optDeleted?.length || 0;
     }
@@ -375,7 +380,7 @@ export async function clearSimulationData(): Promise<ClearResult> {
       .select('slug');
 
     if (cooldownError) {
-      console.error('[simulator] autopilot_cooldowns cleanup error:', cooldownError.message);
+      logger.error('[simulator] autopilot_cooldowns cleanup error:', cooldownError.message);
     } else {
       deleted.autopilotCooldowns = cooldownDeleted?.length || 0;
     }
@@ -401,8 +406,9 @@ export async function clearSimulationData(): Promise<ClearResult> {
 
     return { success: true, deleted };
   } catch (err) {
+    Sentry.captureException(err);
     const msg = err instanceof Error ? err.message : 'Unknown error';
-    console.error('[simulator] clearSimulationData failed:', msg);
+    logger.error('[simulator] clearSimulationData failed:', msg);
     return { success: false, deleted, error: msg };
   }
 }
@@ -440,7 +446,8 @@ export async function getSimulationStatus(): Promise<SimulationStatus> {
       optimizationCount,
     };
   } catch (err) {
-    console.error('[simulator] getSimulationStatus failed:', err);
+    Sentry.captureException(err);
+    logger.error('[simulator] getSimulationStatus failed:', err);
     return {
       active: false,
       clickCount: 0,

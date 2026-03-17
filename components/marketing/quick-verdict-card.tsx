@@ -185,7 +185,7 @@ export function QuickVerdictCard({
 
         {/* CTA */}
         {affiliateUrl && (
-          <Button asChild size="lg" className="w-full sm:w-auto gap-2 font-semibold text-white" style={{ background: 'var(--sfp-gold)' }}>
+          <Button asChild size="lg" className="w-full sm:w-auto gap-2 font-semibold text-white" style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}>
             <Link href={affiliateUrl} target="_blank" rel="noopener sponsored">
               Visit {name}
               <ExternalLink className="h-4 w-4" />

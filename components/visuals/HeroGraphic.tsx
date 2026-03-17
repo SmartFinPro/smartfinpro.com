@@ -33,18 +33,18 @@ export function HeroGraphic({ className = '', variant = 'default' }: HeroGraphic
           <radialGradient id="meshGradient1" cx="30%" cy="30%" r="60%">
             <stop offset="0%" stopColor="#8b5cf6" stopOpacity="0.4" />
             <stop offset="50%" stopColor="#6366f1" stopOpacity="0.2" />
-            <stop offset="100%" stopColor="#0f0a1a" stopOpacity="0" />
+            <stop offset="100%" stopColor="white" stopOpacity="0" />
           </radialGradient>
 
           <radialGradient id="meshGradient2" cx="70%" cy="60%" r="50%">
             <stop offset="0%" stopColor="#06b6d4" stopOpacity="0.35" />
             <stop offset="50%" stopColor="#0891b2" stopOpacity="0.15" />
-            <stop offset="100%" stopColor="#0f0a1a" stopOpacity="0" />
+            <stop offset="100%" stopColor="white" stopOpacity="0" />
           </radialGradient>
 
           <radialGradient id="meshGradient3" cx="50%" cy="80%" r="40%">
             <stop offset="0%" stopColor="#a855f7" stopOpacity="0.25" />
-            <stop offset="100%" stopColor="#0f0a1a" stopOpacity="0" />
+            <stop offset="100%" stopColor="white" stopOpacity="0" />
           </radialGradient>
 
           {/* Line Gradient */}

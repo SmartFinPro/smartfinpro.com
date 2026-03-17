@@ -16,6 +16,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { useCTATracking } from '@/lib/hooks/use-component-tracking';
 import {
   ArrowRight,
   CheckCircle,
@@ -44,7 +45,10 @@ export function FrictionlessCTA({
 }: FrictionlessCTAProps) {
   const [count, setCount] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
+  const [todayStr, setTodayStr] = useState('');
   const ref = useRef<HTMLDivElement>(null);
+  const { trackImpression, trackClick } = useCTATracking('frictionless');
+  const impressionFired = useRef(false);
 
   // Animated counter for social proof
   useEffect(() => {
@@ -95,6 +99,14 @@ export function FrictionlessCTA({
     return () => observer.disconnect();
   }, []);
 
+  // Track CTA impression when visible
+  useEffect(() => {
+    if (isVisible && !impressionFired.current) {
+      impressionFired.current = true;
+      trackImpression();
+    }
+  }, [isVisible, trackImpression]);
+
   // Format the social proof string with animated count
   const formattedSocialProof = socialProof
     ? socialProof.replace(
@@ -103,11 +115,14 @@ export function FrictionlessCTA({
       )
     : null;
 
-  const todayStr = new Date().toLocaleDateString('en-US', {
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric',
-  });
+  // Hydration-safe: compute today's date client-side only
+  useEffect(() => {
+    setTodayStr(new Date().toLocaleDateString('en-US', { // safe — useEffect
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric',
+    }));
+  }, []);
 
   return (
     <div ref={ref} className="my-12">
@@ -155,8 +170,9 @@ export function FrictionlessCTA({
               href={affiliateUrl}
               target="_blank"
               rel="noopener sponsored"
+              onClick={() => trackClick(affiliateUrl)}
               className="inline-flex items-center gap-2 px-8 py-4 rounded-xl text-lg font-bold text-white shadow-md transition-all hover:shadow-lg hover:scale-105"
-              style={{ background: 'var(--sfp-gold)' }}
+              style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}
             >
               <Sparkles className="h-5 w-5" />
               Try {productName} Free

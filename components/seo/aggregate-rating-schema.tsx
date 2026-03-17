@@ -37,6 +37,10 @@ export function AggregateRatingSchema({
   reviewCount,
   ratedBy,
 }: AggregateRatingSchemaProps) {
+  if (ratingValue == null || reviewCount == null) {
+    console.warn('[AggregateRatingSchema] Skipped: missing ratingValue or reviewCount');
+    return null;
+  }
   const schema = generateAggregateRatingSchema({
     ratingValue,
     reviewCount,

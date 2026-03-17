@@ -1,26 +1,7 @@
 import { Metadata } from 'next';
+import { unstable_cache } from 'next/cache';
 import { notFound } from 'next/navigation';
-import Link from 'next/link';
-import { Hero } from '@/components/marketing/hero';
-import { UKBrokerHeroSlider } from '@/components/home/uk-broker-hero-slider';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import {
-  Sparkles,
-  Shield,
-  TrendingUp,
-  Building,
-  DollarSign,
-  ArrowRight,
-  CreditCard,
-  Landmark,
-  Home,
-  PiggyBank,
-  Coins,
-  Wallet,
-  Zap,
-} from 'lucide-react';
+import { BarChart3 } from 'lucide-react';
 import {
   isValidMarket,
   Market,
@@ -29,48 +10,87 @@ import {
   categoryConfig,
 } from '@/lib/i18n/config';
 import { generateAlternates } from '@/lib/seo/hreflang';
+import { getContentByMarketAndCategory } from '@/lib/mdx';
+
+// Cache the MDX filesystem scan per market — avoids re-reading 74+ files on every request.
+// Static pages are pre-rendered at build time anyway; this helps ISR and dev mode warm reqs.
+// NOTE: content field is intentionally excluded — it can be 30KB+ per file (3.5MB total for US),
+//       which exceeds Next.js unstable_cache's 2MB hard limit. The homepage only needs meta+slug.
+const getMarketReviews = unstable_cache(
+  async (market: Market) => {
+    const categories = marketCategories[market];
+    const allCategoryContent = await Promise.all(
+      categories.map((cat) => getContentByMarketAndCategory(market, cat))
+    );
+    return allCategoryContent
+      .flat()
+      .filter((item) => item.slug !== 'index' && item.meta.rating)
+      .sort(
+        (a, b) =>
+          new Date(b.meta.modifiedDate || b.meta.publishDate).getTime() -
+          new Date(a.meta.modifiedDate || a.meta.publishDate).getTime()
+      )
+      // Strip full MDX body before caching — meta+slug is all the homepage needs.
+      .map(({ slug, meta, readingTime }) => ({ slug, meta, readingTime }));
+  },
+  ['market-homepage-reviews'],
+  { revalidate: 300, tags: ['market-reviews'] } // 5 min cache, bust via revalidateTag
+);
+import Hero from '@/components/marketing/hero';
+import { PortalSidebar } from '@/components/marketing/portal-sidebar';
+import { ReportCard } from '@/components/marketing/report-card';
+import { ReportPagination } from '@/components/marketing/report-pagination';
+import UKBrokerHeroSlider from '@/components/home/uk-broker-hero-slider';
+import {
+  CategoryShowcase,
+  EditorsPicks,
+  MethodologySection,
+  PlatformStats,
+  ComplianceBar,
+  GlobalTrustSection,
+} from '@/components/marketing/homepage-sections';
+
+import type { Category } from '@/lib/i18n/config';
+
+/* Per-market Hero content */
+const marketHeroContent: Record<string, {
+  title: string;
+  subtitle: string;
+  primaryCta: { text: string; href: string };
+  secondaryCta: { text: string; href: string };
+}> = {
+  us: {
+    title: 'Financial Product\nResearch, Simplified.',
+    subtitle: '108+ expert-reviewed products across trading, AI, cybersecurity, and personal finance. Independent analysis. 4 regulated markets.',
+    primaryCta: { text: 'Explore Reports', href: '/us/trading' },
+    secondaryCta: { text: 'How We Review', href: '/tools' },
+  },
+  uk: {
+    title: 'UK Financial\nIntelligence, Delivered.',
+    subtitle: 'FCA-regulated broker reviews, cybersecurity solutions, and AI-powered tools — expert-reviewed for UK professionals.',
+    primaryCta: { text: 'Explore UK Reports', href: '/uk/trading' },
+    secondaryCta: { text: 'How We Review', href: '/tools' },
+  },
+  ca: {
+    title: 'Canadian Finance\nResearch, Simplified.',
+    subtitle: 'CIRO-compliant broker reviews, AI tools, and financial products — expert-reviewed for Canadian professionals.',
+    primaryCta: { text: 'Explore CA Reports', href: '/ca/forex' },
+    secondaryCta: { text: 'How We Review', href: '/tools' },
+  },
+  au: {
+    title: 'Australian Finance\nResearch, Mastered.',
+    subtitle: 'ASIC-licensed broker reviews, cybersecurity solutions, and AI tools — expert-reviewed for Australian professionals.',
+    primaryCta: { text: 'Explore AU Reports', href: '/au/trading' },
+    secondaryCta: { text: 'How We Review', href: '/tools' },
+  },
+};
+
+const REPORTS_PER_PAGE = 8;
 
 interface MarketPageProps {
   params: Promise<{ market: string }>;
+  searchParams: Promise<{ page?: string }>;
 }
-
-const categoryIcons: Record<string, typeof Sparkles> = {
-  'ai-tools': Sparkles,
-  cybersecurity: Shield,
-  trading: TrendingUp,
-  forex: DollarSign,
-  'personal-finance': DollarSign,
-  'business-banking': Building,
-  'credit-repair': CreditCard,
-  'debt-relief': Wallet,
-  'credit-score': Zap,
-  remortgaging: Home,
-  'cost-of-living': PiggyBank,
-  savings: PiggyBank,
-  superannuation: Landmark,
-  'gold-investing': Coins,
-  'tax-efficient-investing': TrendingUp,
-  housing: Home,
-};
-
-const categoryColors: Record<string, { text: string; bg: string }> = {
-  'ai-tools': { text: 'text-purple-500', bg: 'bg-purple-500/10' },
-  cybersecurity: { text: 'text-blue-500', bg: 'bg-blue-500/10' },
-  trading: { text: 'text-green-500', bg: 'bg-green-500/10' },
-  forex: { text: 'text-yellow-500', bg: 'bg-yellow-500/10' },
-  'personal-finance': { text: 'text-emerald-500', bg: 'bg-emerald-500/10' },
-  'business-banking': { text: 'text-blue-500', bg: 'bg-blue-500/10' },
-  'credit-repair': { text: 'text-orange-500', bg: 'bg-orange-500/10' },
-  'debt-relief': { text: 'text-red-500', bg: 'bg-red-500/10' },
-  'credit-score': { text: 'text-blue-500', bg: 'bg-blue-500/10' },
-  remortgaging: { text: 'text-teal-500', bg: 'bg-teal-500/10' },
-  'cost-of-living': { text: 'text-amber-500', bg: 'bg-amber-500/10' },
-  savings: { text: 'text-lime-500', bg: 'bg-lime-500/10' },
-  superannuation: { text: 'text-sky-500', bg: 'bg-sky-500/10' },
-  'gold-investing': { text: 'text-yellow-600', bg: 'bg-yellow-600/10' },
-  'tax-efficient-investing': { text: 'text-rose-500', bg: 'bg-rose-500/10' },
-  housing: { text: 'text-stone-500', bg: 'bg-stone-500/10' },
-};
 
 export async function generateMetadata({
   params,
@@ -84,9 +104,16 @@ export async function generateMetadata({
   const config = marketConfig[market as Market];
   const alternates = generateAlternates('/');
 
+  // US gets the primary brand title, other markets get localized titles
+  const isUS = market === 'us';
+
   return {
-    title: `SmartFinPro ${config.name} - Financial Intelligence`,
-    description: `Discover AI-powered tools, cybersecurity solutions, and financial products for ${config.name} professionals.`,
+    title: isUS
+      ? 'SmartFinPro - Financial Intelligence for Modern Professionals'
+      : `${config.name} Financial Intelligence Hub — Expert Research Reports | SmartFinPro`,
+    description: isUS
+      ? 'Discover AI-powered tools, cybersecurity solutions, and financial products for modern professionals. Expert reviews, comparisons, and guides across 4 global markets.'
+      : `Discover AI-powered tools, cybersecurity solutions, and financial products for ${config.name} professionals. ${marketCategories[market as Market].length} market sectors with expert reviews.`,
     alternates: {
       canonical: `/${market}`,
       languages: alternates,
@@ -97,8 +124,10 @@ export async function generateMetadata({
   };
 }
 
-export default async function MarketHomePage({ params }: MarketPageProps) {
+export default async function MarketHomePage({ params, searchParams }: MarketPageProps) {
   const { market } = await params;
+  const sp = await searchParams;
+  const currentPage = Math.max(1, parseInt(sp.page || '1', 10) || 1);
 
   if (!isValidMarket(market)) {
     notFound();
@@ -107,121 +136,173 @@ export default async function MarketHomePage({ params }: MarketPageProps) {
   const marketData = market as Market;
   const config = marketConfig[marketData];
   const categories = marketCategories[marketData];
+  const marketPrefix = `/${marketData}`;
+
+  // Fetch all reviews via cached MDX scan (fast in dev + ISR; pre-rendered at build in prod)
+  const allReviews = await getMarketReviews(marketData);
+
+  const heroContent = marketHeroContent[marketData] || marketHeroContent['uk'];
+
+  // Pagination
+  const totalPages = Math.max(1, Math.ceil(allReviews.length / REPORTS_PER_PAGE));
+  const safePage = Math.min(currentPage, totalPages);
+  const paginatedReviews = allReviews.slice((safePage - 1) * REPORTS_PER_PAGE, safePage * REPORTS_PER_PAGE);
+
+  // ── Compute data for new landing page sections ──
+
+  // Category counts (reviews per category)
+  const categoryCounts: Record<string, number> = {};
+  for (const item of allReviews) {
+    const cat = item.meta.category;
+    if (cat) categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
+  }
+
+  // Editor's Picks — top 3 rated reviews (different categories preferred)
+  const seenCategories = new Set<string>();
+  const editorsPicks = allReviews
+    .filter((item) => item.meta.rating && item.meta.rating >= 4.0)
+    .sort((a, b) => (b.meta.rating || 0) - (a.meta.rating || 0))
+    .filter((item) => {
+      // Prefer diversity — one per category
+      if (seenCategories.has(item.meta.category)) return false;
+      seenCategories.add(item.meta.category);
+      return true;
+    })
+    .slice(0, 3)
+    .map((item) => ({
+      title: item.meta.seoTitle || item.meta.title,
+      description: item.meta.description,
+      slug: item.slug,
+      category: item.meta.category as Category,
+      rating: item.meta.rating,
+      reviewCount: item.meta.reviewCount,
+    }));
 
   return (
-    <>
-      {/* Hero Section */}
+    <main id="main-content">
+      {/* ═══════════════════════════════════════════════════════════════
+          1. HERO SECTION
+      ═══════════════════════════════════════════════════════════════ */}
       <Hero
-        title={`Financial Intelligence for ${config.name}.`}
-        subtitle={`Discover AI-powered tools, cybersecurity solutions, and trading platforms trusted by professionals across ${config.name}.`}
-        primaryCta={{
-          text: 'Explore Tools',
-          href: `/${market}/${categories[0]}`,
-        }}
-        secondaryCta={{
-          text: 'Start Free Trial',
-          href: '/tools',
-        }}
+        title={heroContent.title}
+        subtitle={heroContent.subtitle}
+        primaryCta={heroContent.primaryCta}
+        secondaryCta={heroContent.secondaryCta}
       />
+
+      {/* ═══════════════════════════════════════════════════════════════
+          2. PLATFORM STATS — Key numbers bar
+      ═══════════════════════════════════════════════════════════════ */}
+      <PlatformStats totalReviews={allReviews.length} />
+
+      {/* ═══════════════════════════════════════════════════════════════
+          3. COMPLIANCE BAR — Regulatory trust signals
+      ═══════════════════════════════════════════════════════════════ */}
+      <ComplianceBar />
+
+      {/* ═══════════════════════════════════════════════════════════════
+          4. CATEGORY SHOWCASE — 6 sectors with icons + counts
+      ═══════════════════════════════════════════════════════════════ */}
+      <CategoryShowcase market={marketData} categoryCounts={categoryCounts} />
+
+      {/* ═══════════════════════════════════════════════════════════════
+          5. GLOBAL TRUST — Markets + Regulators
+      ═══════════════════════════════════════════════════════════════ */}
+      <GlobalTrustSection />
+
+      {/* ═══════════════════════════════════════════════════════════════
+          6. METHODOLOGY — How We Review
+      ═══════════════════════════════════════════════════════════════ */}
+      <MethodologySection />
+
+      {/* ═══════════════════════════════════════════════════════════════
+          8. EDITOR'S PICKS — Top-rated this month
+      ═══════════════════════════════════════════════════════════════ */}
+      <EditorsPicks market={marketData} picks={editorsPicks} />
 
       {/* UK Broker Hero Slider — Exclusive to UK Market */}
       {marketData === 'uk' && (
-        <section className="py-16 sm:py-20" style={{ background: 'var(--sfp-gray)' }}>
+        <section className="py-10" style={{ background: 'var(--sfp-gray)' }}>
           <div className="container mx-auto px-4">
             <UKBrokerHeroSlider />
           </div>
         </section>
       )}
 
-      {/* Categories Section */}
-      <section className="py-20" style={{ background: 'var(--sfp-gray)' }}>
-        <div className="container mx-auto px-4">
-          <div className="text-center max-w-2xl mx-auto mb-12">
-            <Badge variant="secondary" className="mb-4">
-              {config.flag} {config.name}
-            </Badge>
-            <h2 className="text-3xl font-bold mb-4">
-              Solutions for {config.name} Businesses
-            </h2>
-            <p className="text-muted-foreground">
-              Curated financial technology products for {config.name}{' '}
-              professionals and businesses.
-            </p>
-          </div>
+      {/* ═══════════════════════════════════════════════════════════════
+          9. REPORT FEED — Two-Column Layout (Sidebar + Reports)
+      ═══════════════════════════════════════════════════════════════ */}
+      <section id="reports" style={{ background: '#fff', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)' }}>
+        <div style={{ maxWidth: '1140px', margin: '0 auto', padding: '80px 40px' }}>
+          <div className="flex flex-col lg:flex-row gap-8">
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {categories.map((category) => {
-              const Icon = categoryIcons[category];
-              const colors = categoryColors[category];
-              const categoryInfo = categoryConfig[category];
+            {/* LEFT: Sidebar (~25%) — Sticky Category Navigation */}
+            <PortalSidebar market={marketData} categoryCounts={categoryCounts} />
 
-              return (
-                <Card
-                  key={category}
-                  className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border-t-4"
-                  style={{ borderTopColor: 'var(--sfp-navy)' }}
-                >
-                  <CardHeader>
-                    <div
-                      className={`w-12 h-12 rounded-lg ${colors.bg} flex items-center justify-center mb-4`}
-                    >
-                      <Icon className={`h-6 w-6 ${colors.text}`} />
-                    </div>
-                    <CardTitle className="flex items-center justify-between">
-                      {categoryInfo.name}
-                      <ArrowRight className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-muted-foreground mb-4">
-                      {categoryInfo.description}
-                    </p>
-                    <Button asChild variant="ghost" className="p-0 h-auto">
-                      <Link
-                        href={`/${market}/${category}`}
-                        className="text-primary"
-                      >
-                        Explore {categoryInfo.name} →
-                      </Link>
-                    </Button>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        </div>
-      </section>
+            {/* RIGHT: Main Content (~75%) — Report Feed */}
+            <div className="flex-1 min-w-0">
 
-      {/* Trust Section */}
-      <section className="py-20 bg-background">
-        <div className="container mx-auto px-4 text-center">
-          <div className="max-w-3xl mx-auto rounded-2xl p-10 border-2" style={{ borderColor: 'var(--sfp-navy)', background: 'var(--sfp-gray)' }}>
-            <h2 className="text-3xl font-bold mb-4">
-              Trusted by {config.name} Professionals
-            </h2>
-            <p className="text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Join thousands of finance professionals across {config.name} who use
-              SmartFinPro to find the best tools and make smarter decisions.
-            </p>
+              {/* Section Title */}
+              <div className="flex items-center justify-between mb-8">
+                <div>
+                  <span className="block text-[11px] font-bold uppercase tracking-[2px] mb-2" style={{ color: 'var(--sfp-slate)' }}>
+                    Research Library
+                  </span>
+                  <h2 className="text-2xl font-extrabold" style={{ color: 'var(--sfp-ink)', letterSpacing: '-0.6px' }}>
+                    Latest Reports
+                  </h2>
+                </div>
+                <span className="text-sm font-medium" style={{ color: 'var(--sfp-slate)' }}>
+                  {allReviews.length} reports available
+                </span>
+              </div>
 
-            <div className="flex flex-wrap justify-center gap-4">
-              <Badge className="text-base py-2 px-5 text-white font-semibold" style={{ background: 'var(--sfp-navy)' }}>
-                {config.currency} Pricing
-              </Badge>
-              <Badge className="text-base py-2 px-5 text-white font-semibold" style={{ background: 'var(--sfp-navy)' }}>
-                Local Support
-              </Badge>
-              <Badge className="text-base py-2 px-5 text-white font-semibold" style={{ background: 'var(--sfp-navy)' }}>
-                Compliant Reviews
-              </Badge>
+              {/* Report Cards */}
+              <div className="space-y-4">
+                {paginatedReviews.map((item) => (
+                  <ReportCard
+                    key={`${item.meta.category}-${item.slug}`}
+                    title={item.meta.seoTitle || item.meta.title}
+                    description={item.meta.description}
+                    slug={item.slug}
+                    market={marketData}
+                    category={item.meta.category as Category}
+                    rating={item.meta.rating}
+                    reviewCount={item.meta.reviewCount}
+                    publishDate={item.meta.modifiedDate || item.meta.publishDate}
+                    pricing={item.meta.pricing}
+                  />
+                ))}
+              </div>
+
+              {/* Pagination */}
+              <ReportPagination
+                currentPage={safePage}
+                totalPages={totalPages}
+                basePath={marketPrefix}
+              />
+
+              {/* Empty State */}
+              {allReviews.length === 0 && (
+                <div className="rounded-2xl border border-gray-200 bg-white p-12 text-center shadow-sm">
+                  <BarChart3 className="h-12 w-12 mx-auto mb-4" style={{ color: 'var(--sfp-slate)' }} />
+                  <h3 className="text-lg font-semibold mb-2" style={{ color: 'var(--sfp-ink)' }}>
+                    Reports Coming Soon
+                  </h3>
+                  <p className="text-sm" style={{ color: 'var(--sfp-slate)' }}>
+                    Our expert team is preparing research reports for {config.name}. Check back soon.
+                  </p>
+                </div>
+              )}
+
             </div>
           </div>
         </div>
       </section>
-    </>
+    </main>
   );
 }
 
 export function generateStaticParams() {
-  return [{ market: 'uk' }, { market: 'ca' }, { market: 'au' }];
+  return [{ market: 'us' }, { market: 'uk' }, { market: 'ca' }, { market: 'au' }];
 }

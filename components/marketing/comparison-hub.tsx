@@ -31,10 +31,28 @@ import {
   Sparkles,
   Users,
 } from 'lucide-react';
-import type { Market, Category } from '@/lib/i18n/config';
-import type { HubPartner } from '@/lib/actions/genesis';
-import type { AbVariant } from '@/lib/actions/ab-testing';
 import { FeaturedPartnerOffer } from './featured-partner-offer';
+
+// Local type definitions — mirror the server-side types without importing server-only modules
+type AbVariant = 'A' | 'B';
+
+interface HubPartner {
+  providerName: string;
+  cpaValue: number;
+  currency: string;
+  rating: number;
+  tagline: string;
+  affiliateUrl: string;
+  reviewSlug: string | null;
+  benefits: string[];
+  slug: string;
+  winnerBadge: string | null;
+  winnerBadgeType: 'editorial' | 'auto' | null;
+  isFeatured: boolean;
+  featuredHeadline: string | null;
+  featuredOffer: string | null;
+  clickCount30d: number;
+}
 
 interface ComparisonHubProps {
   category?: string;
@@ -58,8 +76,8 @@ function getOrAssignVariant(hubId: string): AbVariant {
       return map[hubId];
     }
 
-    // 50/50 random assignment
-    const variant: AbVariant = Math.random() < 0.5 ? 'A' : 'B';
+    // 50/50 random assignment (localStorage-guarded — client-only)
+    const variant: AbVariant = Math.random() < 0.5 ? 'A' : 'B'; // safe — localStorage branch
     map[hubId] = variant;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(map));
     return variant;
@@ -78,12 +96,12 @@ function getSessionId(): string {
   try {
     let sid = sessionStorage.getItem('sfp_session');
     if (!sid) {
-      sid = `s_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+      sid = `s_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`; // safe — sessionStorage branch
       sessionStorage.setItem('sfp_session', sid);
     }
     return sid;
   } catch {
-    return `s_${Date.now()}`;
+    return `s_${Date.now()}`; // safe — catch fallback, never during SSR
   }
 }
 
@@ -141,8 +159,9 @@ export function ComparisonHub({
         fetch(`/api/hub-partners?market=${resolvedMarket}&category=${resolvedCategory}&limit=${limit}&sortBy=rating`)
           .then((res) => res.json())
           .then((data) => {
-            if (!cancelled && data) setPartners(data);
-          }).catch(() => {
+            if (!cancelled && data && data.length > 0) setPartners(data);
+          })
+          .catch(() => {
             // Variant B re-sort failed — keep initial CPA-sorted data (safe fallback)
           });
       }
@@ -153,7 +172,7 @@ export function ComparisonHub({
     setLoading(true);
 
     // Check if there's already a declared winner
-    fetch(`/api/ab-testing/winner?category=${resolvedCategory}&market=${resolvedMarket}`)
+    fetch(`/api/hub-ab?category=${resolvedCategory}&market=${resolvedMarket}`)
       .then((res) => res.json())
       .then(({ winner }) => {
         if (cancelled) return;
@@ -168,8 +187,10 @@ export function ComparisonHub({
           .then((res) => res.json());
       })
       .then((data) => {
-        if (!cancelled && data) {
+        if (!cancelled && data && data.length > 0) {
           setPartners(data);
+          setLoading(false);
+        } else if (!cancelled) {
           setLoading(false);
         }
       })
@@ -191,10 +212,16 @@ export function ComparisonHub({
     impressionLogged.current = true;
 
     const sid = getSessionId();
-    fetch('/api/ab-testing/impression', {
+    fetch('/api/hub-ab', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: 'impression', category: resolvedCategory, market: resolvedMarket, variant, sessionId: sid }),
+      body: JSON.stringify({
+        action: 'impression',
+        category: resolvedCategory,
+        market: resolvedMarket,
+        variant,
+        sessionId: sid,
+      }),
     }).catch(() => {});
   }, [variant, partners, resolvedCategory, resolvedMarket]);
 
@@ -203,10 +230,17 @@ export function ComparisonHub({
     (providerName: string) => {
       if (!variant) return;
       const sid = getSessionId();
-      fetch('/api/ab-testing/impression', {
+      fetch('/api/hub-ab', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: 'click', category: resolvedCategory, market: resolvedMarket, variant, providerName, sessionId: sid }),
+        body: JSON.stringify({
+          action: 'click',
+          category: resolvedCategory,
+          market: resolvedMarket,
+          variant,
+          providerName,
+          sessionId: sid,
+        }),
       }).catch(() => {});
     },
     [variant, resolvedCategory, resolvedMarket],
@@ -225,7 +259,8 @@ export function ComparisonHub({
     <div className="my-12 not-prose">
       {/* ── Card Container ── */}
       <div
-        className="rounded-2xl border border-gray-200 overflow-hidden bg-white"
+        className="rounded-2xl overflow-hidden bg-white"
+        style={{ border: '1px solid #E2E8F0', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}
       >
         {/* ── Header ── */}
         <div
@@ -243,7 +278,7 @@ export function ComparisonHub({
               <Sparkles className="h-5 w-5" style={{ color: 'var(--sfp-navy)' }} />
             </div>
             <div>
-              <h3 className="text-lg font-bold" style={{ color: 'var(--sfp-ink)' }}>{displayTitle}</h3>
+              <h3 className="text-lg font-black tracking-tight" style={{ color: 'var(--sfp-ink)' }}>{displayTitle}</h3>
               <p className="text-xs" style={{ color: 'var(--sfp-slate)' }}>
                 {variant === 'B'
                   ? 'Ranked by user rating & trust'
@@ -436,7 +471,7 @@ function PartnerRow({ partner, index, isWinner, onCtaClick }: PartnerRowProps) {
             <div className="flex items-center gap-1.5 mt-1.5">
               <Users className="h-3 w-3 text-amber-400/80" />
               <span className="text-[11px] text-amber-400/80 font-medium">
-                {partner.clickCount30d.toLocaleString()} users chose this
+                {partner.clickCount30d.toLocaleString('en-US')} users chose this
               </span>
             </div>
           )}
@@ -458,13 +493,13 @@ function PartnerRow({ partner, index, isWinner, onCtaClick }: PartnerRowProps) {
             target="_blank"
             rel="noopener sponsored"
             onClick={handleClick}
-            className={`inline-flex items-center gap-1.5 px-5 py-2.5 rounded-lg text-sm font-semibold text-white transition-all whitespace-nowrap ${
+            className={`inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all whitespace-nowrap ${
               isWinner
-                ? 'btn-shimmer hover:opacity-90 shadow-md'
+                ? 'btn-shimmer hover:opacity-90'
                 : 'border border-gray-200 hover:bg-gray-50'
             }`}
             style={isWinner
-              ? { background: 'var(--sfp-gold)' }
+              ? { background: 'var(--sfp-gold)', color: '#ffffff', boxShadow: '0 4px 14px rgba(245,166,35,0.35)' }
               : { background: 'white', color: 'var(--sfp-navy)' }
             }
           >
@@ -547,7 +582,7 @@ function PartnerRow({ partner, index, isWinner, onCtaClick }: PartnerRowProps) {
           <div className="flex items-center gap-1.5 mb-4">
             <Users className="h-3 w-3 text-amber-400/80" />
             <span className="text-[11px] text-amber-400/80 font-medium">
-              {partner.clickCount30d.toLocaleString()} users chose this
+              {partner.clickCount30d.toLocaleString('en-US')} users chose this
             </span>
           </div>
         )}
@@ -568,13 +603,13 @@ function PartnerRow({ partner, index, isWinner, onCtaClick }: PartnerRowProps) {
             target="_blank"
             rel="noopener sponsored"
             onClick={handleClick}
-            className={`ml-auto inline-flex items-center gap-1.5 px-5 py-2.5 rounded-lg text-sm font-semibold text-white transition-all ${
+            className={`ml-auto inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all ${
               isWinner
-                ? 'btn-shimmer hover:opacity-90 shadow-md'
+                ? 'btn-shimmer hover:opacity-90'
                 : 'border border-gray-200 hover:bg-gray-50'
             }`}
             style={isWinner
-              ? { background: 'var(--sfp-gold)' }
+              ? { background: 'var(--sfp-gold)', color: '#ffffff', boxShadow: '0 4px 14px rgba(245,166,35,0.35)' }
               : { background: 'white', color: 'var(--sfp-navy)' }
             }
           >

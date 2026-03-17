@@ -32,6 +32,7 @@ export interface ContentMeta {
   featured?: boolean;
   customH1?: boolean;
   keywords?: string[];
+  miniQuiz?: { topic: string; market?: string; title?: string };
 }
 
 // ── Currency Map ────────────────────────────────────────────
@@ -76,6 +77,7 @@ function normalizeFrontmatter(raw: Record<string, unknown>): ContentMeta {
     featured: Boolean(raw.featured),
     customH1: Boolean(raw.customH1),
     keywords: (raw.keywords as string[]) ?? undefined,
+    miniQuiz: (raw.miniQuiz as ContentMeta['miniQuiz']) ?? undefined,
   };
 }
 

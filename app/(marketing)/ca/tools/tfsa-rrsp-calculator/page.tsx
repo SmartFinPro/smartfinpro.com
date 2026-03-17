@@ -225,7 +225,7 @@ export default function TfsaRrspCalculatorPage() {
             <a
               href="/go/wealthsimple"
               className="inline-block px-6 py-3 rounded-lg font-semibold text-white transition-all hover:shadow-lg"
-              style={{ background: 'var(--sfp-gold)' }}
+              style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}
             >
               Open Your TFSA & RRSP Today →
             </a>

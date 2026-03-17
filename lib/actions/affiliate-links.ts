@@ -1,8 +1,10 @@
 'use server';
 
 import 'server-only';
+import * as Sentry from '@sentry/nextjs';
+import { logger } from '@/lib/logging';
 
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
 import type { AffiliateLink } from '@/types';
 
@@ -39,13 +41,14 @@ async function syncToAffiliateRates(link: {
       .upsert(upsertData, { onConflict: 'provider_name,market' });
 
     if (error) {
-      console.warn('[affiliate-sync] Failed to sync to affiliate_rates:', error.message);
+      logger.warn('[affiliate-sync] Failed to sync to affiliate_rates:', error.message);
     } else {
-      console.log(`[affiliate-sync] Synced "${link.partner_name}" (${link.market || 'global'}) → affiliate_rates`);
+      logger.info(`[affiliate-sync] Synced "${link.partner_name}" (${link.market || 'global'}) → affiliate_rates`);
     }
   } catch (err) {
+    Sentry.captureException(err);
     // Non-blocking — log but don't fail the primary operation
-    console.warn('[affiliate-sync] Sync error:', err);
+    logger.warn('[affiliate-sync] Sync error:', err);
   }
 }
 
@@ -67,12 +70,13 @@ async function deactivateInAffiliateRates(partnerName: string, market?: string |
     const { error } = await query;
 
     if (error) {
-      console.warn('[affiliate-sync] Failed to deactivate in affiliate_rates:', error.message);
+      logger.warn('[affiliate-sync] Failed to deactivate in affiliate_rates:', error.message);
     } else {
-      console.log(`[affiliate-sync] Deactivated "${partnerName}" (${market || 'global'}) in affiliate_rates`);
+      logger.info(`[affiliate-sync] Deactivated "${partnerName}" (${market || 'global'}) in affiliate_rates`);
     }
   } catch (err) {
-    console.warn('[affiliate-sync] Deactivate error:', err);
+    Sentry.captureException(err);
+    logger.warn('[affiliate-sync] Deactivate error:', err);
   }
 }
 
@@ -86,7 +90,7 @@ export async function getAffiliateLinks() {
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Error fetching affiliate links:', error);
+      logger.error('Error fetching affiliate links:', error);
       return { error: error.message };
     }
 
@@ -98,24 +102,36 @@ export async function getAffiliateLinks() {
   }
 }
 
-/** Cookie-free fetch for Server Components & SSR */
-export async function getAffiliateLinksService() {
-  try {
+// ── 30s Cached Query (AP-06 Phase 2) ────────────────────────
+// Wraps the raw Supabase fetch with a 30-second TTL cache.
+// Invalidated immediately by revalidateTag('affiliate-links')
+// whenever a link is created, updated, or deleted.
+const _fetchLinksService = unstable_cache(
+  async () => {
     const supabase = createServiceClient();
-
     const { data, error } = await supabase
       .from('affiliate_links')
       .select('*')
       .order('created_at', { ascending: false });
-
     if (error) {
-      console.error('Error fetching affiliate links (service):', error);
-      return { error: error.message };
+      logger.error('[affiliate-links] cache fetch error:', error.message);
+      return null;
     }
+    return data;
+  },
+  ['affiliate-links-all'],
+  { revalidate: 30, tags: ['affiliate-links'] },
+);
 
+/** Cookie-free fetch for Server Components & SSR — cached 30s */
+export async function getAffiliateLinksService() {
+  try {
+    const data = await _fetchLinksService();
+    if (data === null) return { error: 'Failed to fetch affiliate links' };
     return { data };
   } catch (err) {
-    console.error('Error fetching affiliate links (service):', err);
+    Sentry.captureException(err);
+    logger.error('Error fetching affiliate links (service):', err);
     return { data: [] };
   }
 }
@@ -130,7 +146,7 @@ export async function getAffiliateLink(id: string) {
     .single();
 
   if (error) {
-    console.error('Error fetching affiliate link:', error);
+    logger.error('Error fetching affiliate link:', error);
     return { error: error.message };
   }
 
@@ -149,7 +165,7 @@ export async function createAffiliateLink(
     .single();
 
   if (error) {
-    console.error('Error creating affiliate link:', error);
+    logger.error('Error creating affiliate link:', error);
     return { error: error.message };
   }
 
@@ -166,6 +182,7 @@ export async function createAffiliateLink(
 
   revalidatePath('/dashboard/links');
   revalidatePath('/dashboard/content/genesis');
+  revalidateTag('affiliate-links', {}); // Invalidate 30s cache
   return { data };
 }
 
@@ -183,7 +200,7 @@ export async function updateAffiliateLink(
     .single();
 
   if (error) {
-    console.error('Error updating affiliate link:', error);
+    logger.error('Error updating affiliate link:', error);
     return { error: error.message };
   }
 
@@ -201,6 +218,7 @@ export async function updateAffiliateLink(
 
   revalidatePath('/dashboard/links');
   revalidatePath('/dashboard/content/genesis');
+  revalidateTag('affiliate-links', {}); // Invalidate 30s cache
   return { data };
 }
 
@@ -220,7 +238,7 @@ export async function deleteAffiliateLink(id: string) {
     .eq('id', id);
 
   if (error) {
-    console.error('Error deleting affiliate link:', error);
+    logger.error('Error deleting affiliate link:', error);
     return { error: error.message };
   }
 
@@ -231,6 +249,7 @@ export async function deleteAffiliateLink(id: string) {
 
   revalidatePath('/dashboard/links');
   revalidatePath('/dashboard/content/genesis');
+  revalidateTag('affiliate-links', {}); // Invalidate 30s cache
   return { success: true };
 }
 
@@ -253,7 +272,7 @@ export async function getLinkClickStats(linkId: string, days: number = 30) {
     .order('clicked_at', { ascending: false });
 
   if (error) {
-    console.error('Error fetching click stats:', error);
+    logger.error('Error fetching click stats:', error);
     return { error: error.message };
   }
 

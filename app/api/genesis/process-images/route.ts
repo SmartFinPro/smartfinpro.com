@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { logger } from '@/lib/logging';
 import sharp from 'sharp';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -65,7 +66,7 @@ export async function POST(req: NextRequest) {
     const safeSlug = sanitize(slugBase);
 
     // Build output directory with sanitized segments
-    const prefix = safeMarket === 'us' ? '' : safeMarket;
+    const prefix = safeMarket;
     const imageDir = path.join(process.cwd(), 'public', 'images', 'content', prefix, safeCategory, safeSlug);
 
     // Verify resolved path is within expected directory
@@ -127,7 +128,7 @@ export async function POST(req: NextRequest) {
       const finalH = metadata.height || 0;
 
       if (origW > MAX_DIMENSION || origH > MAX_DIMENSION) {
-        console.log(
+        logger.info(
           `[process-images] Resized ${file.name}: ${origW}×${origH} → ${finalW}×${finalH} (capped at ${MAX_DIMENSION}px)`,
         );
       }
@@ -148,7 +149,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true, images: results });
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Unknown error';
-    console.error('[process-images] Error:', msg);
+    logger.error('[process-images] Error:', msg);
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }

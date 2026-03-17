@@ -1,6 +1,8 @@
 'use server';
 
 import 'server-only';
+import * as Sentry from '@sentry/nextjs';
+import { logger } from '@/lib/logging';
 
 import { createClient } from '@/lib/supabase/server';
 import {
@@ -95,7 +97,7 @@ function safeData<T>(result: SupabaseResult<T>): T[] {
     ) {
       return [];
     }
-    console.warn('[ranking] Query warning:', result.error.message);
+    logger.warn('[ranking] Query warning:', result.error.message);
   }
   return result.data || [];
 }
@@ -313,7 +315,7 @@ export async function getRealtimeRanking(
     );
 
     savedToDb = !error;
-    if (error) console.warn('[ranking] Failed to persist SERP result:', error.message);
+    if (error) logger.warn('[ranking] Failed to persist SERP result:', error.message);
   }
 
   return {
@@ -344,7 +346,7 @@ async function fetchLiveSERPInternal(
   const apiKey = process.env.SERPER_API_KEY;
 
   if (!apiKey) {
-    console.warn('[ranking] SERPER_API_KEY not configured');
+    logger.warn('[ranking] SERPER_API_KEY not configured');
     return [];
   }
 
@@ -371,7 +373,7 @@ async function fetchLiveSERPInternal(
 
     if (!res.ok) {
       const text = await res.text();
-      console.error('[ranking] Serper API error:', res.status, text);
+      logger.error('[ranking] Serper API error', { status: res.status, body: text });
       return [];
     }
 
@@ -403,7 +405,8 @@ async function fetchLiveSERPInternal(
       };
     });
   } catch (err) {
-    console.error('[ranking] SERP fetch failed:', err);
+    Sentry.captureException(err);
+    logger.error('[ranking] SERP fetch failed:', err);
     return [];
   }
 }
@@ -458,7 +461,7 @@ export async function syncKeywordTracking(): Promise<{
 
     if (error) {
       errors++;
-      if (errors <= 3) console.warn('[ranking] Upsert error:', error.message);
+      if (errors <= 3) logger.warn('[ranking] Upsert error:', error.message);
     } else {
       synced++;
     }

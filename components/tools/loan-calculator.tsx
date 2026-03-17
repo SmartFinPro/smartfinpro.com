@@ -336,7 +336,7 @@ export function LoanCalculator() {
               Check your rate in minutes without affecting your credit score.
               97% of applicants receive at least one offer.
             </p>
-            <Button asChild className="w-full text-white hover:opacity-90" style={{ background: 'var(--sfp-gold)' }}>
+            <Button asChild className="w-full text-white hover:opacity-90" style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}>
               <a href="/go/lending-tree" target="_blank" rel="noopener noreferrer">
                 Compare Personal Loan Rates
                 <ArrowRight className="h-4 w-4 ml-2" />

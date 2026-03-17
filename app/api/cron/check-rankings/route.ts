@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
 import { sendTelegramAlert } from '@/lib/alerts/telegram';
+import { logger, logCron } from '@/lib/logging';
 
 /**
  * Ranking Health Check — Cron Job
@@ -32,9 +33,7 @@ export async function GET(request: NextRequest) {
 
   const isAuthenticated = authHeader === `Bearer ${cronSecret}`;
   if (!isAuthenticated) {
-    console.warn(
-      `[check-rankings] Unauthorized attempt from ${request.headers.get('x-forwarded-for') || 'unknown'}`,
-    );
+    logger.warn('[check-rankings] Unauthorized attempt', { ip: request.headers.get('x-forwarded-for') ?? 'unknown' });
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -47,8 +46,7 @@ export async function GET(request: NextRequest) {
     const { data: poorRankings, error: rankingError } = await supabase
       .from('keyword_rankings')
       .select('id, keyword, market, position, page, clicks, ctr')
-      .gt('position', 20)
-      .is('position', null) // Also include unranked (position = null)
+      .or('position.gt.20,position.is.null') // Include both: >20 and unranked
       .order('position', { ascending: true, nullsFirst: false });
 
     if (rankingError) {
@@ -56,10 +54,11 @@ export async function GET(request: NextRequest) {
     }
 
     const poorKeywords = poorRankings || [];
-    console.log(`[check-rankings] Found ${poorKeywords.length} keywords outside top 20`);
+    logger.info('[check-rankings] Keywords scanned', { outside_top20: poorKeywords.length });
 
     // 2. Group by slug and market to identify affected articles
     const affectedArticles = new Map<string, {
+      slug: string;
       market: string;
       category: string;
       keywords: string[];
@@ -70,11 +69,14 @@ export async function GET(request: NextRequest) {
     for (const kw of poorKeywords) {
       const slug = kw.page || '';
       if (!slug) continue;
+      const pathParts = slug.replace(/^\/+/, '').split('/');
+      const category = pathParts[1] || 'unknown';
 
       const key = `${slug}:${kw.market}`;
       const existing = affectedArticles.get(key) || {
+        slug,
         market: kw.market,
-        category: slug.split('/')[1] || 'unknown',
+        category,
         keywords: [] as string[],
         avgPosition: 0,
         totalClicks: 0,
@@ -86,9 +88,7 @@ export async function GET(request: NextRequest) {
       affectedArticles.set(key, existing);
     }
 
-    console.log(
-      `[check-rankings] Mapped to ${affectedArticles.size} affected articles`,
-    );
+    logger.info('[check-rankings] Articles mapped', { affected: affectedArticles.size });
 
     // 3. Insert/update planning_queue entries for affected articles
     const queueUpdates: Array<{
@@ -101,15 +101,9 @@ export async function GET(request: NextRequest) {
     }> = [];
 
     for (const [, article] of affectedArticles) {
-      const slug = Array.from(affectedArticles.keys())
-        .find((k) => k.startsWith(`${article.market}`))
-        ?.split(':')[0];
-
-      if (!slug) continue;
-
       for (const keyword of article.keywords) {
         queueUpdates.push({
-          slug,
+          slug: article.slug,
           market: article.market,
           category: article.category,
           keyword,
@@ -136,7 +130,7 @@ export async function GET(request: NextRequest) {
       for (const update of queueUpdates) {
         const key = `${update.slug}:needs-update`;
         if (existingMap.has(key)) {
-          console.log(`[check-rankings] Skipping duplicate: ${update.slug}`);
+          logger.debug('[check-rankings] Skipping duplicate', { slug: update.slug });
           continue;
         }
 
@@ -153,9 +147,7 @@ export async function GET(request: NextRequest) {
           });
 
         if (insertError) {
-          console.warn(
-            `[check-rankings] Insert error for ${update.keyword}: ${insertError.message}`,
-          );
+          logger.warn('[check-rankings] Insert error', { keyword: update.keyword, error: insertError.message });
         } else {
           insertedCount++;
         }
@@ -182,9 +174,10 @@ export async function GET(request: NextRequest) {
 
     await sendTelegramAlert(message);
 
-    console.log(
-      `[check-rankings] Complete: ${poorKeywords.length} keywords, ${affectedArticles.size} articles, ${insertedCount} queued (${duration}ms)`,
-    );
+    logCron({
+      job: 'check-rankings', status: 'success', duration_ms: duration,
+      keywords: poorKeywords.length, articles: affectedArticles.size, queued: insertedCount,
+    });
 
     return NextResponse.json({
       success: true,
@@ -196,7 +189,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Unknown error';
-    console.error('[check-rankings] Job failed:', msg);
+    logCron({ job: 'check-rankings', status: 'error', duration_ms: Date.now() - startTime, error: msg });
 
     const duration = Date.now() - startTime;
 

@@ -63,6 +63,10 @@ export function FinancialProductSchema({
   image,
   areaServed,
 }: FinancialProductSchemaProps) {
+  if (!name || !description || rating == null || reviewCount == null) {
+    console.warn('[FinancialProductSchema] Skipped: missing required fields');
+    return null;
+  }
   const schema = generateFinancialProductSchema({
     name,
     description,

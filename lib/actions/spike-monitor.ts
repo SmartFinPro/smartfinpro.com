@@ -1,6 +1,7 @@
 'use server';
 
 import 'server-only';
+import { logger } from '@/lib/logging';
 
 import { createServiceClient } from '@/lib/supabase/server';
 import {
@@ -486,7 +487,7 @@ async function recordCooldown(
       { onConflict: 'slug' }
     )
     .then(({ error }) => {
-      if (error) console.error('[Auto-Pilot] Cooldown record failed:', error.message);
+      if (error) logger.error('[Auto-Pilot] Cooldown record failed:', error.message);
     });
 }
 
@@ -544,7 +545,7 @@ export async function toggleMarketAlert(
     );
 
   if (error) {
-    console.error('[Spike Monitor] Toggle error:', error.message);
+    logger.error('[Spike Monitor] Toggle error:', error.message);
     return { success: false, error: error.message };
   }
 
@@ -568,7 +569,7 @@ export async function updateCtrThreshold(
     );
 
   if (error) {
-    console.error('[Spike Monitor] CTR threshold update error:', error.message);
+    logger.error('[Spike Monitor] CTR threshold update error:', error.message);
     return { success: false, error: error.message };
   }
 

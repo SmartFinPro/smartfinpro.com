@@ -30,7 +30,7 @@ export default function ContentPageError({
           <button
             onClick={() => reset()}
             className="inline-flex items-center gap-2 px-5 py-2.5 text-white rounded-xl hover:opacity-90 transition-colors font-semibold text-sm"
-            style={{ background: 'var(--sfp-gold)' }}
+            style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}
           >
             <RefreshCw className="h-4 w-4" />
             Try Again

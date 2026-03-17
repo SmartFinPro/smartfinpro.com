@@ -51,7 +51,7 @@ function buildBreadcrumbs(pathname: string, overrides?: Record<string, string>):
   }
 
   // Build remaining breadcrumbs from segments
-  let currentPath = market === 'us' ? '' : `/${market}`;
+  let currentPath = `/${market}`;
 
   for (let i = startIndex; i < segments.length; i++) {
     const segment = segments[i];

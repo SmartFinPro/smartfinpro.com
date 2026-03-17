@@ -453,10 +453,14 @@ function HealthSummaryPanel({
   links,
   onRunChecks,
   checking,
+  activeFilter,
+  onFilterChange,
 }: {
   links: LinkWithStats[];
   onRunChecks: () => void;
   checking: boolean;
+  activeFilter: string;
+  onFilterChange: (filter: string) => void;
 }) {
   const active = links.filter((l) => l.active);
   const healthy = active.filter((l) => l.health_status === 'healthy').length;
@@ -493,22 +497,23 @@ function HealthSummaryPanel({
       </div>
 
       <div className="grid grid-cols-4 gap-3">
-        <div className="text-center p-3 rounded-lg bg-emerald-50 border border-emerald-100">
-          <p className="text-2xl font-bold text-emerald-600">{healthy}</p>
-          <p className="text-xs text-emerald-600">Healthy</p>
-        </div>
-        <div className="text-center p-3 rounded-lg bg-amber-50 border border-amber-100">
-          <p className="text-2xl font-bold text-amber-600">{degraded}</p>
-          <p className="text-xs text-amber-600">Slow</p>
-        </div>
-        <div className="text-center p-3 rounded-lg bg-red-50 border border-red-100">
-          <p className="text-2xl font-bold text-red-600">{dead}</p>
-          <p className="text-xs text-red-600">Dead</p>
-        </div>
-        <div className="text-center p-3 rounded-lg bg-slate-50 border border-slate-100">
-          <p className="text-2xl font-bold text-slate-500">{unchecked}</p>
-          <p className="text-xs text-slate-500">Unchecked</p>
-        </div>
+        {([
+          { key: 'healthy', value: healthy, label: 'Healthy', bg: 'bg-emerald-50', border: 'border-emerald-100', ring: 'ring-emerald-400', text: 'text-emerald-600' },
+          { key: 'degraded', value: degraded, label: 'Slow', bg: 'bg-amber-50', border: 'border-amber-100', ring: 'ring-amber-400', text: 'text-amber-600' },
+          { key: 'dead', value: dead, label: 'Dead', bg: 'bg-red-50', border: 'border-red-100', ring: 'ring-red-400', text: 'text-red-600' },
+          { key: 'unchecked', value: unchecked, label: 'Unchecked', bg: 'bg-slate-50', border: 'border-slate-100', ring: 'ring-slate-400', text: 'text-slate-500' },
+        ] as const).map((card) => (
+          <button
+            key={card.key}
+            onClick={() => onFilterChange(activeFilter === card.key ? 'all' : card.key)}
+            className={`text-center p-3 rounded-lg ${card.bg} border ${card.border} cursor-pointer transition-all hover:scale-105 ${
+              activeFilter === card.key ? `ring-2 ${card.ring} shadow-sm` : ''
+            }`}
+          >
+            <p className={`text-2xl font-bold ${card.text}`}>{card.value}</p>
+            <p className={`text-xs ${card.text}`}>{card.label}</p>
+          </button>
+        ))}
       </div>
     </div>
   );
@@ -568,8 +573,13 @@ export function AffiliateCommandCenter({ initialLinks }: AffiliateCommandCenterP
   useEffect(() => {
     async function loadExpiryReport() {
       try {
-        const { getOfferExpiryReport } = await import('@/lib/actions/link-health');
-        const report = await getOfferExpiryReport(14);
+        const res = await fetch('/api/dashboard/link-health', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'getOfferExpiryReport', withinDays: 14 }),
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const report = await res.json();
         setExpiryReport(report);
       } catch (err) {
         console.error('Failed to load expiry report:', err);
@@ -602,14 +612,20 @@ export function AffiliateCommandCenter({ initialLinks }: AffiliateCommandCenterP
   const handleRunHealthChecks = useCallback(async () => {
     setChecking(true);
     try {
-      const { runHealthChecks } = await import('@/lib/actions/link-health');
-      const result = await runHealthChecks();
+      const healthRes = await fetch('/api/dashboard/link-health', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'runHealthChecks' }),
+      });
+      if (!healthRes.ok) throw new Error(`HTTP ${healthRes.status}`);
+      const result = await healthRes.json();
       toast.success(
         `Health check complete: ${result.healthy} healthy, ${result.degraded} slow, ${result.dead} dead`
       );
       // Reload links
-      const { getAffiliateLinks } = await import('@/lib/actions/affiliate-links');
-      const { data } = await getAffiliateLinks();
+      const linksRes = await fetch('/api/dashboard/affiliate-links');
+      if (!linksRes.ok) throw new Error(`HTTP ${linksRes.status}`);
+      const { data } = await linksRes.json();
       if (data) setLinks(data as LinkWithStats[]);
     } catch (err) {
       toast.error('Health check failed');
@@ -622,13 +638,19 @@ export function AffiliateCommandCenter({ initialLinks }: AffiliateCommandCenterP
   const handleSearchReplace = useCallback(
     async (paramKey: string, oldValue: string, newValue: string) => {
       try {
-        const { bulkReplaceParam } = await import('@/lib/actions/link-health');
-        const result = await bulkReplaceParam(paramKey, oldValue, newValue);
+        const replaceRes = await fetch('/api/dashboard/link-health', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'bulkReplaceParam', paramKey, oldValue, newValue }),
+        });
+        if (!replaceRes.ok) throw new Error(`HTTP ${replaceRes.status}`);
+        const result = await replaceRes.json();
         if (result.updated > 0) {
           toast.success(`Updated ${result.updated} links`);
           // Reload links
-          const { getAffiliateLinks } = await import('@/lib/actions/affiliate-links');
-          const { data } = await getAffiliateLinks();
+          const linksRes = await fetch('/api/dashboard/affiliate-links');
+          if (!linksRes.ok) throw new Error(`HTTP ${linksRes.status}`);
+          const { data } = await linksRes.json();
           if (data) setLinks(data as LinkWithStats[]);
         } else {
           toast.info('No matching links found');
@@ -652,8 +674,12 @@ export function AffiliateCommandCenter({ initialLinks }: AffiliateCommandCenterP
 
   const toggleStatus = useCallback(async (id: string, active: boolean) => {
     try {
-      const { toggleAffiliateLinkStatus } = await import('@/lib/actions/affiliate-links');
-      await toggleAffiliateLinkStatus(id, !active);
+      const res = await fetch('/api/dashboard/affiliate-links', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'toggleStatus', id, active: !active }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       setLinks((prev) =>
         prev.map((l) => (l.id === id ? { ...l, active: !active } : l))
       );
@@ -665,8 +691,12 @@ export function AffiliateCommandCenter({ initialLinks }: AffiliateCommandCenterP
 
   const deleteLink = useCallback(async (id: string) => {
     try {
-      const { deleteAffiliateLink } = await import('@/lib/actions/affiliate-links');
-      await deleteAffiliateLink(id);
+      const res = await fetch('/api/dashboard/affiliate-links', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'delete', id }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       setLinks((prev) => prev.filter((l) => l.id !== id));
       toast.success('Link deleted');
     } catch {
@@ -704,6 +734,8 @@ export function AffiliateCommandCenter({ initialLinks }: AffiliateCommandCenterP
           links={links}
           onRunChecks={handleRunHealthChecks}
           checking={checking}
+          activeFilter={healthFilter}
+          onFilterChange={setHealthFilter}
         />
         <ExpiryAlertsPanel report={expiryReport} />
       </div>

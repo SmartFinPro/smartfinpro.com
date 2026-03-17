@@ -9,19 +9,21 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
+import { DASHBOARD_CHART, CHART_NEUTRAL } from '@/lib/constants/brand-colors';
 
 interface RevenueChartProps {
   data: { month: string; revenue: number; count: number }[];
 }
 
-// Light theme chart colors
+// AP-03 Phase 3 — Farben aus brand-colors.ts (Single Source of Truth)
+// DASHBOARD_CHART.primary = #10b981 (emerald-500) — originale Optik beibehalten
 const CHART_COLORS = {
-  bar: '#10b981', // Emerald-500
-  grid: '#e2e8f0', // Slate-200
+  bar: DASHBOARD_CHART.primary,        // emerald-500 — Revenue-Balken
+  grid: CHART_NEUTRAL.grid,
   tooltip: {
-    bg: '#ffffff',
-    border: '#e2e8f0',
-    text: '#1e293b',
+    bg:     CHART_NEUTRAL.tooltipBg,
+    border: CHART_NEUTRAL.tooltipBorder,
+    text:   CHART_NEUTRAL.tooltipText,
   },
 };
 
@@ -52,12 +54,12 @@ export function RevenueChart({ data }: RevenueChartProps) {
         />
         <XAxis
           dataKey="month"
-          tick={{ fontSize: 11, fill: '#64748b' }}
+          tick={{ fontSize: 11, fill: CHART_NEUTRAL.axisText }}
           tickLine={false}
-          axisLine={{ stroke: '#e2e8f0' }}
+          axisLine={{ stroke: CHART_NEUTRAL.axisLine }}
         />
         <YAxis
-          tick={{ fontSize: 11, fill: '#64748b' }}
+          tick={{ fontSize: 11, fill: CHART_NEUTRAL.axisText }}
           tickLine={false}
           axisLine={false}
           tickFormatter={(value) => `$${value}`}
@@ -79,7 +81,7 @@ export function RevenueChart({ data }: RevenueChartProps) {
             }
             return [value, 'Conversions'];
           }}
-          labelStyle={{ color: '#64748b' }}
+          labelStyle={{ color: CHART_NEUTRAL.axisText }}
         />
         <Bar
           dataKey="revenue"

@@ -352,7 +352,7 @@ export function BrokerComparison() {
 
                 {/* CTA */}
                 <div className="text-right shrink-0">
-                  <Button asChild className="text-white" style={{ background: 'var(--sfp-gold)' }}>
+                  <Button asChild className="text-white" style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}>
                     <a href={broker.affiliateLink} target="_blank" rel="noopener noreferrer">
                       Visit Broker
                       <ExternalLink className="h-4 w-4 ml-2" />

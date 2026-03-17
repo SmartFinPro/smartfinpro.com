@@ -1,6 +1,8 @@
 'use server';
 
 import 'server-only';
+import * as Sentry from '@sentry/nextjs';
+import { logger } from '@/lib/logging';
 
 import { createServiceClient } from '@/lib/supabase/server';
 import { headers } from 'next/headers';
@@ -78,7 +80,7 @@ export async function createLead(params: CreateLeadParams): Promise<LeadResult> 
         .eq('id', existing.id);
 
       if (error) {
-        console.error('Error updating lead:', error);
+        logger.error('Error updating lead:', error);
         return { success: false, message: 'Failed to update lead information' };
       }
 
@@ -119,7 +121,7 @@ export async function createLead(params: CreateLeadParams): Promise<LeadResult> 
       .single();
 
     if (error) {
-      console.error('Error creating lead:', error);
+      logger.error('Error creating lead:', error);
       if (error.code === '23505') {
         return { success: false, message: 'This email is already registered' };
       }
@@ -133,7 +135,8 @@ export async function createLead(params: CreateLeadParams): Promise<LeadResult> 
       isNew: true,
     };
   } catch (error) {
-    console.error('Error in createLead:', error);
+    Sentry.captureException(error);
+    logger.error('Error in createLead:', error);
     return { success: false, message: 'An unexpected error occurred.' };
   }
 }
@@ -155,13 +158,14 @@ export async function updateLeadStatus(leadId: string, status: LeadStatus) {
       .eq('id', leadId);
 
     if (error) {
-      console.error('Error updating lead status:', error);
+      logger.error('Error updating lead status:', error);
       return { success: false, message: 'Failed to update status' };
     }
 
     return { success: true, message: 'Lead status updated' };
   } catch (error) {
-    console.error('Error in updateLeadStatus:', error);
+    Sentry.captureException(error);
+    logger.error('Error in updateLeadStatus:', error);
     return { success: false, message: 'An unexpected error occurred' };
   }
 }
@@ -200,13 +204,14 @@ export async function updateLeadScore(leadId: string, scoreChange: number, reaso
       .eq('id', leadId);
 
     if (error) {
-      console.error('Error updating lead score:', error);
+      logger.error('Error updating lead score:', error);
       return { success: false, message: 'Failed to update score' };
     }
 
     return { success: true, newScore };
   } catch (error) {
-    console.error('Error in updateLeadScore:', error);
+    Sentry.captureException(error);
+    logger.error('Error in updateLeadScore:', error);
     return { success: false, message: 'An unexpected error occurred' };
   }
 }
@@ -255,13 +260,14 @@ export async function getLeads(params: GetLeadsParams = {}) {
     const { data, error, count } = await query;
 
     if (error) {
-      console.error('Error fetching leads:', error);
+      logger.error('Error fetching leads:', error);
       return { error: error.message };
     }
 
     return { data, count };
   } catch (error) {
-    console.error('Error in getLeads:', error);
+    Sentry.captureException(error);
+    logger.error('Error in getLeads:', error);
     return { error: 'Failed to fetch leads' };
   }
 }
@@ -277,13 +283,14 @@ export async function getLead(id: string) {
       .single();
 
     if (error) {
-      console.error('Error fetching lead:', error);
+      logger.error('Error fetching lead:', error);
       return { error: error.message };
     }
 
     return { data };
   } catch (error) {
-    console.error('Error in getLead:', error);
+    Sentry.captureException(error);
+    logger.error('Error in getLead:', error);
     return { error: 'Failed to fetch lead' };
   }
 }
@@ -301,7 +308,7 @@ export async function getLeadStats() {
       .select('status, market, created_at, score');
 
     if (error) {
-      console.error('Error fetching lead stats:', error);
+      logger.error('Error fetching lead stats:', error);
       return { error: error.message };
     }
 
@@ -342,7 +349,8 @@ export async function getLeadStats() {
 
     return { data: stats };
   } catch (error) {
-    console.error('Error in getLeadStats:', error);
+    Sentry.captureException(error);
+    logger.error('Error in getLeadStats:', error);
     return { error: 'Failed to fetch lead stats' };
   }
 }

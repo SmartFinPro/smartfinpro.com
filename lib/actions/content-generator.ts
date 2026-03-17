@@ -1,13 +1,15 @@
 'use server';
 
 import 'server-only';
+import * as Sentry from '@sentry/nextjs';
+import { logger } from '@/lib/logging';
 
-import Anthropic from '@anthropic-ai/sdk';
 import { createClient } from '@/lib/supabase/server';
 import { boostAndDeploy } from '@/lib/actions/content-overrides';
 import { extractDomain, AUTHORITY_DOMAINS } from '@/lib/seo/competitor-keywords';
 import type { Market, Category } from '@/lib/i18n/config';
 import { marketConfig, categoryConfig } from '@/lib/i18n/config';
+import { createClaudeMessage } from '@/lib/claude/client';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -185,8 +187,6 @@ async function generateBriefWithAI(
     return generateFallbackBrief(keyword, market, category);
   }
 
-  const client = new Anthropic({ apiKey });
-
   // Build competitor structure summary
   const competitorSummary = competitorOutlines.map((c, i) => {
     const headingList = c.headings
@@ -235,11 +235,11 @@ The outline should have 6-10 sections (mix of h2 and h3). Include:
 - A verdict/conclusion section`;
 
   try {
-    const response = await client.messages.create({
+    const response = await createClaudeMessage({
       model: 'claude-3-5-sonnet-20241022',
       max_tokens: 2000,
       messages: [{ role: 'user', content: prompt }],
-    });
+    }, { apiKey, operation: 'content_brief' });
 
     // Extract text from response
     const textBlock = response.content.find((b) => b.type === 'text');
@@ -261,7 +261,8 @@ The outline should have 6-10 sections (mix of h2 and h3). Include:
       trustSignals: parsed.trustSignals || [],
     };
   } catch (err) {
-    console.error('[content-generator] AI brief generation failed:', err instanceof Error ? err.message : err);
+    Sentry.captureException(err);
+    logger.error('[content-generator] AI brief generation failed:', err instanceof Error ? err.message : err);
     return generateFallbackBrief(keyword, market, category);
   }
 }
@@ -372,7 +373,7 @@ function generateMdxContent(
     .replace(/\s+/g, '-')
     .replace(/-+/g, '-')
     .slice(0, 60);
-  const prefix = brief.market === 'us' ? '' : `/${brief.market}`;
+  const prefix = `/${brief.market}`;
   const imageBase = `/images/content${prefix}/${brief.category}/${slugBase}`;
 
   const hasHero = existingImages.includes('hero.webp');
@@ -624,15 +625,15 @@ export async function generateAIContentBrief(
       .replace(/\s+/g, '-')
       .replace(/-+/g, '-')
       .slice(0, 60);
-    const prefix = market === 'us' ? '' : `/${market}`;
+    const prefix = `/${market}`;
     const fullSlug = `${prefix}/${category}/${slugBase}`.replace(/^\//, '');
     const imageRequirements = buildImageRequirements(fullSlug);
 
     // Step 5: Determine internal link targets
     const internalLinkTargets = [
-      `/${market === 'us' ? '' : `${market}/`}${category}`,
-      ...(category === 'trading' ? [`/${market === 'us' ? '' : `${market}/`}forex`] : []),
-      ...(category === 'forex' ? [`/${market === 'us' ? '' : `${market}/`}trading`] : []),
+      `/${market}/${category}`,
+      ...(category === 'trading' ? [`/${market}/forex`] : []),
+      ...(category === 'forex' ? [`/${market}/trading`] : []),
     ];
 
     const brief: ContentBrief = {
@@ -652,8 +653,9 @@ export async function generateAIContentBrief(
 
     return { success: true, brief };
   } catch (err) {
+    Sentry.captureException(err);
     const msg = err instanceof Error ? err.message : 'Unknown error';
-    console.error('[content-generator] Brief generation failed:', msg);
+    logger.error('[content-generator] Brief generation failed:', msg);
     return { success: false, error: msg };
   }
 }
@@ -691,11 +693,11 @@ export async function generateAndPublishPage(
 
     const contentDir = path.join(process.cwd(), 'content', market, category);
     const filePath = path.join(contentDir, `${slugBase}.mdx`);
-    const prefix = market === 'us' ? '' : `/${market}`;
+    const prefix = `/${market}`;
     const slug = `${prefix}/${category}/${slugBase}`;
 
     // Step 3: Check existing images
-    const imageSlugPath = `${market === 'us' ? '' : `${market}/`}${category}/${slugBase}`;
+    const imageSlugPath = `${market}/${category}/${slugBase}`;
     const { existing: existingImages, missing: missingImages } = checkExistingImages(imageSlugPath);
 
     // Step 4: Generate MDX content
@@ -708,7 +710,7 @@ export async function generateAndPublishPage(
 
     // Step 6: Write the MDX file
     fs.writeFileSync(filePath, mdxContent, 'utf-8');
-    console.log(`[content-generator] MDX file created: ${filePath}`);
+    logger.info(`[content-generator] MDX file created: ${filePath}`);
 
     // Step 7: Create image directory (so user knows where to put images)
     const imageDir = path.join(process.cwd(), 'public', 'images', 'content', imageSlugPath);
@@ -731,7 +733,7 @@ export async function generateAndPublishPage(
     // Step 9: Trigger Freshness Boost + Rebuild
     const boostResult = await boostAndDeploy(slug, `AI-generated page: ${keyword}`);
     if (!boostResult.boostSuccess) {
-      console.warn('[content-generator] Boost failed but page was created:', boostResult.error);
+      logger.warn('[content-generator] Boost failed but page was created:', boostResult.error);
     }
 
     return {
@@ -742,8 +744,9 @@ export async function generateAndPublishPage(
       imageHints: missingImages,
     };
   } catch (err) {
+    Sentry.captureException(err);
     const msg = err instanceof Error ? err.message : 'Unknown error';
-    console.error('[content-generator] Page generation failed:', msg);
+    logger.error('[content-generator] Page generation failed:', msg);
     return {
       success: false,
       slug: '',
@@ -770,6 +773,7 @@ export async function generateLongFormBriefWithAI(
   market: Market,
   category: string,
   competitorOutlines: CompetitorOutline[],
+  researchBrief?: string,
 ): Promise<{
   suggestedTitle: string;
   suggestedDescription: string;
@@ -782,8 +786,6 @@ export async function generateLongFormBriefWithAI(
     return generateLongFormFallbackBrief(keyword, market, category);
   }
 
-  const client = new Anthropic({ apiKey });
-
   const competitorSummary = competitorOutlines.map((c, i) => {
     const headingList = c.headings
       .map((h) => `  ${h.tag}: ${h.text}`)
@@ -794,7 +796,11 @@ export async function generateLongFormBriefWithAI(
   const mktConfig = marketConfig[market];
   const catConfig = categoryConfig[category as Category];
 
-  const prompt = `You are an elite SEO content strategist for SmartFinPro.com, a finance affiliate site.
+  const researchSection = researchBrief
+    ? `\nRESEARCH BRIEF (from Perplexity or similar — use these facts, data points, and insights to enrich the outline):\n${researchBrief.slice(0, 8000)}\n`
+    : '';
+
+  const prompt = `You are an elite SEO content strategist for SmartFinPro.com, a finance affiliate site.${researchSection}
 
 TARGET KEYWORD: "${keyword}"
 TARGET MARKET: ${mktConfig?.name || market.toUpperCase()} (${mktConfig?.currency || 'USD'})
@@ -837,11 +843,11 @@ The outline MUST have 18-28 sections (mix of h2 and h3). Include:
 - A final verdict / conclusion section with CTA`;
 
   try {
-    const response = await client.messages.create({
+    const response = await createClaudeMessage({
       model: 'claude-sonnet-4-20250514',
       max_tokens: 4000,
       messages: [{ role: 'user', content: prompt }],
-    });
+    }, { apiKey, operation: 'content_brief_longform' });
 
     const textBlock = response.content.find((b) => b.type === 'text');
     const rawText = textBlock?.text || '';
@@ -860,7 +866,8 @@ The outline MUST have 18-28 sections (mix of h2 and h3). Include:
       trustSignals: parsed.trustSignals || [],
     };
   } catch (err) {
-    console.error('[content-generator] Long-form AI brief failed:', err instanceof Error ? err.message : err);
+    Sentry.captureException(err);
+    logger.error('[content-generator] Long-form AI brief failed:', err instanceof Error ? err.message : err);
     return generateLongFormFallbackBrief(keyword, market, category);
   }
 }
@@ -929,9 +936,86 @@ function generateLongFormFallbackBrief(
  * - Detailed section content
  * - Schema declarations
  */
+/**
+ * Use Claude to generate body content for each outline section using research brief context.
+ * Returns a map of sectionTitle (lowercased) → markdown body.
+ */
+async function generateSectionBodiesWithAI(
+  sections: BriefSection[],
+  keyword: string,
+  market: Market,
+  category: string,
+  researchBrief: string,
+): Promise<Map<string, string>> {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) return new Map();
+
+  const mktConfig = marketConfig[market];
+  const catConfig = categoryConfig[category as Category];
+
+  const sectionList = sections
+    .map((s, i) => `${i + 1}. [${s.tag.toUpperCase()}] ${s.title}\n   Notes: ${s.notes}\n   Target: ${s.estimatedWords} words`)
+    .join('\n\n');
+
+  const prompt = `You are a professional finance content writer for SmartFinPro.com.
+
+TOPIC: "${keyword}"
+MARKET: ${mktConfig?.name || market.toUpperCase()} (${mktConfig?.currency || 'USD'})
+CATEGORY: ${catConfig?.name || category}
+
+RESEARCH BRIEF (factual data to use — incorporate specific numbers, names, facts):
+${researchBrief.slice(0, 10000)}
+
+TASK: Write the body content for each section below. Use real data and specific facts from the research brief. Write professionally in a trustworthy financial publication style. Each section should be self-contained and informative.
+
+SECTIONS TO WRITE:
+${sectionList}
+
+OUTPUT FORMAT — for EACH section, use EXACTLY this delimiter format:
+=== SECTION: [exact section title] ===
+[body content in plain markdown — no JSX, no code blocks, no H tags since those are added separately]
+=== END ===
+
+Rules:
+- Use specific data from the research brief (numbers, prices, names)
+- Write 250-450 words per section
+- Use **bold** for key terms and important figures
+- Use bullet lists for comparisons and feature lists
+- Do NOT include the section heading (it's added separately)
+- Do NOT include JSX components (CallToAction, TrustAuthority, etc.) — plain markdown only
+- Be specific and factual, not vague and generic`;
+
+  try {
+    const response = await createClaudeMessage({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 16000,
+      messages: [{ role: 'user', content: prompt }],
+    }, { apiKey, operation: 'section_content_generation' });
+
+    const textBlock = response.content.find((b) => b.type === 'text');
+    const rawText = textBlock?.text || '';
+
+    // Parse === SECTION: title === ... === END === blocks
+    const result = new Map<string, string>();
+    const pattern = /=== SECTION: (.+?) ===\n([\s\S]*?)=== END ===/g;
+    let match;
+    while ((match = pattern.exec(rawText)) !== null) {
+      const title = match[1].trim().toLowerCase();
+      const body = match[2].trim();
+      result.set(title, body);
+    }
+    return result;
+  } catch (err) {
+    Sentry.captureException(err);
+    logger.error('[content-generator] generateSectionBodiesWithAI failed:', err instanceof Error ? err.message : err);
+    return new Map();
+  }
+}
+
 export async function generateLongFormMdxContent(
   brief: ContentBrief,
   existingImages: string[],
+  researchBrief?: string,
 ): Promise<string> {
   const today = new Date().toISOString().split('T')[0];
   const year = new Date().getFullYear();
@@ -949,7 +1033,7 @@ export async function generateLongFormMdxContent(
     .replace(/\s+/g, '-')
     .replace(/-+/g, '-')
     .slice(0, 60);
-  const prefix = brief.market === 'us' ? '' : `/${brief.market}`;
+  const prefix = `/${brief.market}`;
   const imageBase = `/images/content${prefix}/${brief.category}/${slugBase}`;
 
   const hasHero = existingImages.includes('hero.webp');
@@ -1108,6 +1192,18 @@ faqs:
 
 `;
 
+  // ── Pre-generate AI section bodies if research brief provided ──
+  let aiBodies: Map<string, string> = new Map();
+  if (researchBrief && researchBrief.trim().length > 100) {
+    aiBodies = await generateSectionBodiesWithAI(
+      brief.suggestedOutline,
+      brief.keyword,
+      brief.market,
+      brief.category,
+      researchBrief,
+    );
+  }
+
   // ── Detail Sections from Outline ────────────────
   let ctaInserted = 0;
   let sectionIndex = 0;
@@ -1132,6 +1228,28 @@ faqs:
 ${heading} ${section.title}
 
 `;
+
+    // Use AI-generated body if available (research brief was provided)
+    const aiBody = aiBodies.get(section.title.toLowerCase());
+    if (aiBody) {
+      mdx += `${aiBody}
+
+`;
+      // Still insert CTAs at intervals
+      if (sectionIndex % 4 === 0 && ctaInserted < 2) {
+        ctaInserted++;
+        mdx += `<CallToAction
+  title="See Our Top Pick"
+  description="Our #1 pick for ${brief.keyword.toLowerCase()} — trusted by thousands."
+  href="/go/${slugBase}"
+  buttonText="Check Current Offers →"
+  variant="secondary"
+/>
+
+`;
+      }
+      continue;
+    }
 
     // Substantive placeholder content for each section
     if (section.title.toLowerCase().includes('review') || section.title.toLowerCase().includes('deep-dive') || section.title.toLowerCase().includes('#1') || section.title.toLowerCase().includes('#2') || section.title.toLowerCase().includes('#3')) {

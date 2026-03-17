@@ -14,14 +14,18 @@ import { createServiceClient } from '@/lib/supabase/server';
 import { sendEmail } from './resend';
 import { RegionalToolsEmail } from './templates/regional-tools-email';
 import { CaseStudyEmail } from './templates/case-study-email';
+import { BrokerPicksEmail } from './templates/broker-picks-email';
+import { ReEngagementEmail } from './templates/reengagement-email';
 
-// Sequence configuration
+// Sequence configuration — 5-step welcome funnel
 export const SEQUENCE_CONFIG = {
   name: 'welcome',
   steps: [
-    { step: 0, name: 'welcome', daysAfterSignup: 0, subject: 'Your Download: The 5-Minute AI Finance Workflow' },
-    { step: 1, name: 'regional-tools', daysAfterSignup: 2, subject: 'The Top 3 Tools for Your Region' },
-    { step: 2, name: 'case-study', daysAfterSignup: 5, subject: 'Case Study: How AI Saves 10h/Week in Finance' },
+    { step: 0, name: 'welcome',       daysAfterSignup: 0,  subject: 'Your Download: The 5-Minute AI Finance Workflow' },
+    { step: 1, name: 'regional-tools', daysAfterSignup: 2,  subject: 'The Top 3 Tools for Your Region' },
+    { step: 2, name: 'case-study',     daysAfterSignup: 5,  subject: 'Case Study: How AI Saves 10h/Week in Finance' },
+    { step: 3, name: 'broker-picks',   daysAfterSignup: 10, subject: 'Our Top 3 Regulated Brokers for You' },
+    { step: 4, name: 'reengagement',   daysAfterSignup: 21, subject: 'What your peers are reading this month' },
   ],
 } as const;
 
@@ -235,7 +239,7 @@ async function sendSequenceEmail(
     }
 
     case 2: {
-      // Day 5: Case Study Email
+      // Day 5: Case Study Email — market-specific subject, generic body
       const html = await render(
         CaseStudyEmail({
           unsubscribeUrl,
@@ -243,9 +247,49 @@ async function sendSequenceEmail(
         })
       );
 
+      const subject = getLocalizedSubject(country, 'case-study');
+
       return sendEmail({
         to: email,
-        subject: 'Case Study: How AI Automates 10h of Finance Work Weekly',
+        subject,
+        html,
+      });
+    }
+
+    case 3: {
+      // Day 10: Top Broker Picks — market-specific subject + regulator name
+      const html = await render(
+        BrokerPicksEmail({
+          unsubscribeUrl,
+          baseUrl,
+          country,
+        })
+      );
+
+      const subject = getLocalizedSubject(country, 'broker-picks');
+
+      return sendEmail({
+        to: email,
+        subject,
+        html,
+      });
+    }
+
+    case 4: {
+      // Day 21: Re-engagement — market-specific curated content digest
+      const html = await render(
+        ReEngagementEmail({
+          unsubscribeUrl,
+          baseUrl,
+          country,
+        })
+      );
+
+      const subject = getLocalizedSubject(country, 'reengagement');
+
+      return sendEmail({
+        to: email,
+        subject,
         html,
       });
     }
@@ -276,7 +320,7 @@ function normalizeCountry(countryCode: string): 'us' | 'uk' | 'ca' | 'au' | 'de'
 }
 
 /**
- * Get localized subject line
+ * Get localized subject line for all sequence steps
  */
 function getLocalizedSubject(country: string, emailType: string): string {
   const subjects: Record<string, Record<string, string>> = {
@@ -285,11 +329,36 @@ function getLocalizedSubject(country: string, emailType: string): string {
       uk: 'The Top 3 Tools for UK Finance Professionals',
       ca: 'The Top 3 Tools for Canadian Finance Professionals',
       au: 'The Top 3 Tools for Australian Finance Professionals',
-      de: 'Die Top 3 Tools fur deutsche Finanzprofis',
+      de: 'Die Top 3 Tools für deutsche Finanzprofis',
+    },
+    'case-study': {
+      us: 'Case Study: How AI Automates 10h of Finance Work Weekly',
+      uk: 'Case Study: How UK Traders Save 10h Weekly with AI',
+      ca: 'Case Study: How Canadian Advisors Cut Admin Time by 10h/Week',
+      au: 'Case Study: How Australian Finance Pros Automate 10h Weekly',
+      de: 'Fallstudie: 10 Stunden Finanzarbeit pro Woche automatisieren',
+    },
+    'broker-picks': {
+      us: 'Our Top 3 SEC-Regulated Brokers Right Now',
+      uk: 'Our Top 3 FCA-Regulated Brokers for UK Traders',
+      ca: 'Our Top 3 CIRO-Regulated Brokers for Canadians',
+      au: 'Our Top 3 ASIC-Regulated Brokers for Australians',
+      de: 'Unsere Top 3 regulierten Broker für deutsche Anleger',
+    },
+    'reengagement': {
+      us: 'What US finance pros are reading this month',
+      uk: 'What UK traders are reading right now',
+      ca: 'What Canadian investors are reading this month',
+      au: 'What Australian traders are reading right now',
+      de: 'Was deutsche Finanzprofis gerade lesen',
     },
   };
 
-  return subjects[emailType]?.[country] || subjects[emailType]?.['us'] || 'Your Personalized Tool Recommendations';
+  return (
+    subjects[emailType]?.[country] ||
+    subjects[emailType]?.['us'] ||
+    'Your Personalized Finance Update'
+  );
 }
 
 /**

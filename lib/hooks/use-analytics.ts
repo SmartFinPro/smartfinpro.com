@@ -46,36 +46,38 @@ export function useAnalytics(options: UseAnalyticsOptions = {}) {
     }
   }, []);
 
-  // Track function
+  // Track function — fire-and-forget, never blocks UI
   const track = useCallback(
-    async (
+    (
       type: 'pageview' | 'event' | 'scroll' | 'time_on_page',
       data: Record<string, unknown>
     ) => {
       if (typeof window === 'undefined') return;
 
-      // Skip in development if needed
-      // if (process.env.NODE_ENV === 'development') return;
-
       const sessionId = getSessionId();
       if (!sessionId) return;
 
-      try {
-        await fetch('/api/track', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            type,
-            sessionId,
-            data: {
-              ...data,
-              pagePath: pathname,
-            },
-          }),
-        });
-      } catch {
-        // Silently ignore analytics failures — they should never affect UX
+      const payload = JSON.stringify({
+        type,
+        sessionId,
+        data: { ...data, pagePath: pathname },
+      });
+
+      // Use sendBeacon when available — designed for analytics, guaranteed delivery
+      // on page unload, never blocks the UI, no concurrent-fetch overhead
+      if (navigator.sendBeacon) {
+        const blob = new Blob([payload], { type: 'application/json' });
+        navigator.sendBeacon('/api/track', blob);
+        return;
       }
+
+      // Fallback: fire-and-forget fetch (no await)
+      fetch('/api/track', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: payload,
+        keepalive: true,
+      }).catch(() => {/* silently ignore */});
     },
     [pathname]
   );

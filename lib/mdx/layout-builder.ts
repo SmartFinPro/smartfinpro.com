@@ -52,7 +52,7 @@ function buildWinnerCards(reviews: ContentItem[]): Record<string, unknown>[] {
     tagline: taglines[i] || `#${i + 1}`,
     rating: r.meta.rating || 4.5,
     highlight: r.meta.bestFor || r.meta.description.slice(0, 80),
-    affiliateUrl: r.meta.affiliateUrl || `/${r.meta.market === 'us' ? '' : r.meta.market + '/'}${r.meta.category}/${r.slug}`,
+    affiliateUrl: r.meta.affiliateUrl || `/${r.meta.market + '/'}${r.meta.category}/${r.slug}`,
     badge: i === 0 ? "Editor's Choice" : undefined,
   }));
 }

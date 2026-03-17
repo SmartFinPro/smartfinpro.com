@@ -137,7 +137,7 @@ export function QuickPicks({ picks }: QuickPicksProps) {
                       asChild
                       size="sm"
                       className="border-0 shadow-lg text-white"
-                      style={{ background: 'var(--sfp-gold)' }}
+                      style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}
                     >
                       <Link
                         href={pick.affiliateUrl}

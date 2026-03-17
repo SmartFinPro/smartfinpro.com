@@ -84,6 +84,15 @@ export function generateReviewSchema(review: ReviewData) {
       name: review.author || 'SmartFinPro Editorial Team',
       url: `${BASE_URL}/about`,
     },
+    // Phase 1 GEO — Fact-Checker Integration (separate from author)
+    // reviewedBy = the expert who fact-checked and reviewed the article
+    ...(review.reviewedBy && {
+      reviewedBy: {
+        '@type': 'Person',
+        name: review.reviewedBy.split(',')[0].trim(),
+        url: `${BASE_URL}/about`,
+      },
+    }),
     publisher: {
       '@type': 'Organization',
       name: 'SmartFinPro',
@@ -192,6 +201,10 @@ export function generateArticleSchema(article: {
   author: string;
   image?: string;
   url: string;
+  /** Fact-checker / reviewer name — separate from the author (Phase 1 GEO) */
+  reviewedBy?: string;
+  /** Expert profile URL for the reviewer (used in reviewedBy Person node) */
+  reviewedByUrl?: string;
 }) {
   return {
     '@context': 'https://schema.org',
@@ -204,6 +217,14 @@ export function generateArticleSchema(article: {
       name: article.author || 'SmartFinPro Editorial Team',
       url: `${BASE_URL}/about`,
     },
+    // Fact-Checker / Reviewer node — boosts EEAT trust signal for AI crawlers
+    ...(article.reviewedBy && {
+      reviewedBy: {
+        '@type': 'Person',
+        name: article.reviewedBy,
+        url: article.reviewedByUrl || `${BASE_URL}/about`,
+      },
+    }),
     publisher: {
       '@type': 'Organization',
       name: 'SmartFinPro',
@@ -224,6 +245,8 @@ export function generateArticleSchema(article: {
 /**
  * Person Schema - For author/expert profiles
  * Used to identify individual contributors and experts on the site
+ *
+ * Phase 2 GEO: Added sameAs (LinkedIn) + hasCredential (CFA, CFP, etc.)
  */
 export function generatePersonSchema(person: {
   name: string;
@@ -232,6 +255,12 @@ export function generatePersonSchema(person: {
   jobTitle?: string;
   description?: string;
   affiliateLinks?: string[];
+  /** External profile URLs (LinkedIn, etc.) — emitted as sameAs array */
+  sameAs?: string[];
+  /** Professional credentials / certifications (CFA, CFP, CIM, CISI, …) */
+  credentials?: string[];
+  /** Topics the expert is known for — boosts relevance for AI models */
+  knowsAbout?: string[];
 }) {
   return {
     '@context': 'https://schema.org',
@@ -241,6 +270,22 @@ export function generatePersonSchema(person: {
     image: person.image,
     jobTitle: person.jobTitle || 'Financial Expert',
     description: person.description,
+    // External social profiles — primary GEO signal for AI crawlers
+    ...(person.sameAs && person.sameAs.length > 0 && {
+      sameAs: person.sameAs,
+    }),
+    // Professional credentials as EducationalOccupationalCredential nodes
+    ...(person.credentials && person.credentials.length > 0 && {
+      hasCredential: person.credentials.map((cred) => ({
+        '@type': 'EducationalOccupationalCredential',
+        credentialCategory: cred,
+        name: cred,
+      })),
+    }),
+    // Expert topic coverage — helps AI models understand authority scope
+    ...(person.knowsAbout && person.knowsAbout.length > 0 && {
+      knowsAbout: person.knowsAbout,
+    }),
     ...(person.affiliateLinks && {
       affiliation: person.affiliateLinks.map(link => ({
         '@type': 'Organization',

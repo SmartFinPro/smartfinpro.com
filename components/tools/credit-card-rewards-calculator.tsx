@@ -412,7 +412,7 @@ export function CreditCardRewardsCalculator() {
                     <td className="p-3 text-xs" style={{ color: 'var(--sfp-slate)' }}>Dining Points</td>
                     {results.map((r) => (
                       <td key={r.card.name} className="p-3 text-center text-xs" style={{ color: 'var(--sfp-slate)' }}>
-                        {r.pointsByCategory.dining.toLocaleString()}
+                        {r.pointsByCategory.dining.toLocaleString('en-US')}
                       </td>
                     ))}
                   </tr>
@@ -420,7 +420,7 @@ export function CreditCardRewardsCalculator() {
                     <td className="p-3 text-xs" style={{ color: 'var(--sfp-slate)' }}>Grocery Points</td>
                     {results.map((r) => (
                       <td key={r.card.name} className="p-3 text-center text-xs" style={{ color: 'var(--sfp-slate)' }}>
-                        {r.pointsByCategory.groceries.toLocaleString()}
+                        {r.pointsByCategory.groceries.toLocaleString('en-US')}
                       </td>
                     ))}
                   </tr>
@@ -428,7 +428,7 @@ export function CreditCardRewardsCalculator() {
                     <td className="p-3 text-xs" style={{ color: 'var(--sfp-slate)' }}>Travel Points</td>
                     {results.map((r) => (
                       <td key={r.card.name} className="p-3 text-center text-xs" style={{ color: 'var(--sfp-slate)' }}>
-                        {r.pointsByCategory.travel.toLocaleString()}
+                        {r.pointsByCategory.travel.toLocaleString('en-US')}
                       </td>
                     ))}
                   </tr>
@@ -436,7 +436,7 @@ export function CreditCardRewardsCalculator() {
                     <td className="p-3 text-xs" style={{ color: 'var(--sfp-slate)' }}>Other Points</td>
                     {results.map((r) => (
                       <td key={r.card.name} className="p-3 text-center text-xs" style={{ color: 'var(--sfp-slate)' }}>
-                        {r.pointsByCategory.other.toLocaleString()}
+                        {r.pointsByCategory.other.toLocaleString('en-US')}
                       </td>
                     ))}
                   </tr>
@@ -444,7 +444,7 @@ export function CreditCardRewardsCalculator() {
                     <td className="p-3 text-xs font-medium" style={{ color: 'var(--sfp-slate)' }}>Total Points</td>
                     {results.map((r) => (
                       <td key={r.card.name} className="p-3 text-center text-xs font-medium" style={{ color: 'var(--sfp-ink)' }}>
-                        {r.totalPoints.toLocaleString()}
+                        {r.totalPoints.toLocaleString('en-US')}
                       </td>
                     ))}
                   </tr>
@@ -512,7 +512,7 @@ export function CreditCardRewardsCalculator() {
                 Based on your spending, the {winner.card.name} is the best fit. Apply through our
                 link to access the current welcome bonus offer.
               </p>
-              <Button asChild className="w-full text-white font-semibold hover:opacity-90" style={{ background: 'var(--sfp-gold)' }}>
+              <Button asChild className="w-full text-white font-semibold hover:opacity-90" style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}>
                 <a href={`/go/${winner.card.affiliateSlug}`}>
                   Apply for {winner.card.name}
                   <ArrowRight className="h-4 w-4 ml-2" />
@@ -540,7 +540,7 @@ export function CreditCardRewardsCalculator() {
                 provides the best net value. Try adjusting your dining or grocery spending to see
                 when a premium card makes sense.
               </p>
-              <Button asChild className="w-full text-white hover:opacity-90" style={{ background: 'var(--sfp-gold)' }}>
+              <Button asChild className="w-full text-white hover:opacity-90" style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}>
                 <a href="/personal-finance">
                   Compare Credit Cards
                   <ArrowRight className="h-4 w-4 ml-2" />

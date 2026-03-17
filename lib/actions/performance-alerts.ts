@@ -1,6 +1,7 @@
 'use server';
 
 import 'server-only';
+import { logger } from '@/lib/logging';
 
 import { createServiceClient } from '@/lib/supabase/server';
 
@@ -58,7 +59,7 @@ export async function getLowPerformancePages(): Promise<LowPerformancePage[]> {
   // Safe query helper — returns [] if table doesn't exist (pre-migration)
   const safe = <T>(result: { data: T[] | null; error: { code?: string; message?: string } | null }): T[] => {
     if (result.error?.code === 'PGRST204' || result.error?.message?.includes('schema cache')) return [];
-    if (result.error) console.warn('[performance-alerts] Query warning:', result.error.message);
+    if (result.error) logger.warn('[performance-alerts] Query warning:', result.error.message);
     return result.data || [];
   };
 

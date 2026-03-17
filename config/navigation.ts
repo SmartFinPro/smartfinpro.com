@@ -72,6 +72,7 @@ export const trustLinks: NavLink[] = [
   { label: 'Contact', href: '/contact' },
   { label: 'Our Methodology', href: '/methodology' },
   { label: 'Editorial Policy', href: '/editorial-policy' },
+  { label: 'Data Integrity', href: '/integrity' },
   { label: 'Review Policy', href: '/review-policy' },
   { label: 'Corrections Policy', href: '/corrections-policy' },
   { label: 'Affiliate Disclosure', href: '/affiliate-disclosure' },

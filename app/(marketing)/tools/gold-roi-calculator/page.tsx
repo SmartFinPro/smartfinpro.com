@@ -228,7 +228,7 @@ export default function GoldRoiCalculatorPage() {
             <a
               href="/go/perth-mint"
               className="inline-block px-6 py-3 rounded-lg font-semibold text-white transition-all hover:shadow-lg"
-              style={{ background: 'var(--sfp-gold)' }}
+              style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}
             >
               Open Your Gold Account Today →
             </a>
