@@ -25,7 +25,6 @@ import {
   Home,
   PiggyBank,
   Landmark,
-  LayoutDashboard,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -242,16 +241,6 @@ export default function Header({ market: marketProp }: HeaderProps) {
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>
-            {/* Dashboard Quick-Access */}
-            <Link
-              href="/dashboard"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-medium hover:bg-white/10 transition-colors"
-              style={{ color: 'rgba(255,255,255,0.85)' }}
-              title="Admin Dashboard"
-            >
-              <LayoutDashboard className="h-4 w-4" />
-              <span>Dashboard</span>
-            </Link>
             <Link
               href="/tools"
               className="inline-flex items-center text-[11px] font-bold transition-colors"
@@ -333,16 +322,6 @@ export default function Header({ market: marketProp }: HeaderProps) {
                 <Button asChild className="w-full text-white border-0 mt-2 font-medium" style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}>
                   <Link href="/tools" onClick={() => setMobileMenuOpen(false)}>Get Started</Link>
                 </Button>
-                {/* Dashboard Quick-Access */}
-                <Link
-                  href="/dashboard"
-                  className="flex items-center justify-center gap-2 w-full mt-3 px-4 py-2.5 rounded-lg text-sm font-medium border border-gray-200 hover:bg-gray-50 transition-colors"
-                  style={{ color: 'var(--sfp-navy)' }}
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <LayoutDashboard className="h-4 w-4" />
-                  Admin Dashboard
-                </Link>
               </nav>
             </SheetContent>
           </Sheet>
