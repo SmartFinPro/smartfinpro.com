@@ -184,8 +184,11 @@ for (const file of files) {
     if (!errorFiles.includes(rel)) errorFiles.push(rel);
   }
   if (fileWarns.length > 0) {
-    console.warn(`  ⚠️  [LEGACY] ${rel}`);
-    for (const w of fileWarns) console.warn(`     WARN: ${w}`);
+    // Legacy warnings are non-blocking — suppressed per-file, shown as summary only
+    if (VERBOSE) {
+      console.warn(`  ⚠️  [LEGACY] ${rel}`);
+      for (const w of fileWarns) console.warn(`     WARN: ${w}`);
+    }
     warnCount += fileWarns.length;
   }
   if (fileErrors.length === 0 && fileWarns.length === 0 && VERBOSE) {
