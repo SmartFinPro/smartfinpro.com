@@ -305,8 +305,9 @@ export function Header({ market: marketProp, trendingPartners: trendingProp = []
   useEffect(() => {
     if (trendingProp.length > 0) return;
     let cancelled = false;
-    import('@/lib/actions/genesis').then(({ getAffiliateRatesForMarket }) => {
-      getAffiliateRatesForMarket(market).then((rates) => {
+    fetch(`/api/affiliate-rates?market=${market}`)
+      .then((res) => res.json())
+      .then((rates: Array<{ providerName: string; cpaValue: number; currency: string }>) => {
         if (cancelled) return;
         setTrendingPartners(
           rates.slice(0, 3).map((r) => ({
@@ -316,7 +317,6 @@ export function Header({ market: marketProp, trendingPartners: trendingProp = []
           })),
         );
       }).catch(() => {});
-    }).catch(() => {});
     return () => { cancelled = true; };
   }, [market, trendingProp.length]);
 
