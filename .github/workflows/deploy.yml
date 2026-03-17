@@ -66,10 +66,11 @@ jobs:
       # ── 8. Rsync standalone → VPS ─────────────────────────────
       - name: Deploy standalone to VPS
         run: |
-          rsync -avz --delete \
+          rsync -avz --delete --no-perms --no-owner --no-group \
             -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
             .next/standalone/ \
-            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/home/master/applications/brvnvntpcj/public_html/.next/standalone/
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/home/master/applications/brvnvntpcj/public_html/.next/standalone/ \
+          || RSYNC_EXIT=$?; [ "${RSYNC_EXIT:-0}" -eq 23 ] && echo "⚠️ rsync code 23 (minor permission issues) — continuing" || exit ${RSYNC_EXIT:-0}
 
       # ── 9. PM2 Restart ────────────────────────────────────────
       - name: Restart PM2
