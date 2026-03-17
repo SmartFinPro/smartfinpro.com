@@ -46,7 +46,7 @@ async function getStats() {
   ]);
 
   const totalRevenueForecast = (topOpps ?? [])
-    .reduce((sum, o) => sum + (o.revenue_forecast_monthly ?? 0), 0);
+    .reduce((sum: number, o: { revenue_forecast_monthly?: number | null }) => sum + (o.revenue_forecast_monthly ?? 0), 0);
 
   return {
     total:                total ?? 0,
