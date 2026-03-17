@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { getFunnelStats, getOfferExpectedValues, getRecentEvents } from '@/lib/actions/funnel';
 import { ConversionFunnel, OfferEVTable, RecentEventsFeed } from '@/components/dashboard/conversion-funnel';
 import { getPostbackUrl } from '@/lib/actions/connectors';
