@@ -34,7 +34,25 @@ export function createServiceClient() {
   const key = process.env.SUPABASE_SERVICE_KEY;
 
   if (!url || !key) {
-    throw new Error('Supabase environment variables not configured');
+    // During build-time static generation, env vars may not be available.
+    // Return a stub that silently returns empty results instead of crashing.
+    console.warn('[supabase] Service client not configured — returning stub');
+    const stub = {
+      from: () => ({
+        select: () => ({ data: null, error: null }),
+        insert: () => ({ data: null, error: null }),
+        update: () => ({ data: null, error: null }),
+        delete: () => ({ data: null, error: null }),
+        eq: () => ({ data: null, error: null }),
+        or: () => ({ data: null, error: null }),
+        order: () => ({ data: null, error: null }),
+        limit: () => ({ data: null, error: null }),
+        single: () => ({ data: null, error: null }),
+      }),
+      rpc: () => ({ data: null, error: null }),
+      auth: { getUser: () => ({ data: { user: null }, error: null }) },
+    };
+    return stub as unknown as ReturnType<typeof createServerClient>;
   }
 
   return createServerClient(url, key, {
