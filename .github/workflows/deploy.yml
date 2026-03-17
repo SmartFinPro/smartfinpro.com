@@ -50,6 +50,24 @@ jobs:
           cp -r .next/static .next/standalone/.next/static
           cp -r public .next/standalone/public
 
+      # ── 5b. Write production .env into standalone ──────────────
+      - name: Write production .env
+        run: |
+          cat > .next/standalone/.env << 'EOF'
+          NEXT_PUBLIC_SITE_URL=${{ secrets.NEXT_PUBLIC_SITE_URL }}
+          NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY }}
+          RESEND_API_KEY=${{ secrets.RESEND_API_KEY }}
+          RESEND_FROM_EMAIL=${{ secrets.RESEND_FROM_EMAIL }}
+          TELEGRAM_BOT_TOKEN=${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID=${{ secrets.TELEGRAM_CHAT_ID }}
+          CRON_SECRET=${{ secrets.CRON_SECRET }}
+          SERPER_API_KEY=${{ secrets.SERPER_API_KEY }}
+          EOF
+          echo "✅ .env written ($(wc -l < .next/standalone/.env) lines)"
+
       # ── 6. Inject Critical CSS ────────────────────────────────
       - name: Inject Critical CSS
         run: node scripts/inject-critical-css.mjs
