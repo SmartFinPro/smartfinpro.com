@@ -226,7 +226,7 @@ export async function submitMarketUrlsForIndexing(
 /**
  * Check if Indexing API credentials are configured.
  */
-export function isIndexingApiConfigured(): boolean {
+export async function isIndexingApiConfigured(): Promise<boolean> {
   return !!(
     process.env.GSC_CLIENT_EMAIL &&
     process.env.GSC_PRIVATE_KEY &&

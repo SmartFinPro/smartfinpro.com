@@ -1,6 +1,7 @@
 import { Search } from 'lucide-react';
 import { getRankingData } from '@/lib/actions/ranking';
 import { RankingDashboard } from '@/components/dashboard/ranking-dashboard';
+import { IndexingCard } from './indexing-card';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -20,6 +21,9 @@ export default async function RankingPage() {
           Google-Positionen &amp; SERP-Monitoring f&uuml;r alle 4 M&auml;rkte
         </p>
       </div>
+
+      {/* Google Indexing API — fast URL submission */}
+      <IndexingCard />
 
       {/* Ranking Dashboard Component */}
       <RankingDashboard
