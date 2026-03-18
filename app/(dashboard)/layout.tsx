@@ -176,7 +176,7 @@ function SidebarContent({ pathname, badges, onNavigate }: SidebarContentProps) {
       </nav>
 
       {/* Bottom Links */}
-      <div className="px-4 py-4 border-t border-slate-200">
+      <div className="px-4 py-4 border-t border-slate-200 flex flex-col gap-1">
         <Link
           href="/"
           className="nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] text-slate-500 hover:bg-slate-50 hover:text-slate-700 font-medium transition-all"
@@ -184,6 +184,13 @@ function SidebarContent({ pathname, badges, onNavigate }: SidebarContentProps) {
         >
           <LogOut className="h-4 w-4 text-slate-400" />
           <span>Back to Site</span>
+        </Link>
+        <Link
+          href="/api/dashboard/logout"
+          className="nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] text-red-500 hover:bg-red-50 hover:text-red-700 font-medium transition-all"
+        >
+          <LogOut className="h-4 w-4 text-red-400" />
+          <span>Sign Out</span>
         </Link>
         {process.env.NODE_ENV === 'development' && (
           <div className="px-3 pt-3 text-[10px] text-slate-400">
