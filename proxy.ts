@@ -288,10 +288,14 @@ export async function proxy(request: NextRequest) {
           if (process.env.NODE_ENV === 'production') clearAttempts(clientIp);
           const sessionToken = await createSessionToken(dashSecret);
           const response = NextResponse.redirect(new URL(safePath, request.url));
+          // no-store: prevents Cloudflare/browser from caching the 302 redirect
+          // (cached redirects cause ERR_TOO_MANY_REDIRECTS on subsequent visits)
+          response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+          response.headers.set('Pragma', 'no-cache');
           response.cookies.set('sfp-dash-auth', sessionToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax', // 'strict' prevents cookie being sent on POST→redirect chain (ERR_TOO_MANY_REDIRECTS)
+            sameSite: 'lax', // 'strict' prevents cookie being sent on POST→redirect chain
             maxAge: SESSION_MAX_AGE, // 30 min
             path: '/dashboard',
           });
@@ -318,6 +322,8 @@ export async function proxy(request: NextRequest) {
         // ✅ Authenticated — refresh cookie to reset idle timer (sliding session)
         // User inactive for >30 min → cookie expires → next request shows login page.
         const response = NextResponse.next();
+        response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+        response.headers.set('Pragma', 'no-cache');
         response.cookies.set('sfp-dash-auth', expectedToken, {
           httpOnly: true,
           secure: process.env.NODE_ENV === 'production',
@@ -793,7 +799,11 @@ function dashboardLoginPage(
 
   return new NextResponse(html, {
     status: 401,
-    headers: { 'Content-Type': 'text/html' },
+    headers: {
+      'Content-Type': 'text/html',
+      'Cache-Control': 'no-store, no-cache, must-revalidate',
+      'Pragma': 'no-cache',
+    },
   });
 }
 
