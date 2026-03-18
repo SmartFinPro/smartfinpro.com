@@ -1,8 +1,10 @@
 // app/api/dashboard/trigger-cron/route.ts
 // Manually triggers any cron job from the dashboard.
 // Protected by proxy.ts (same session auth as all /api/dashboard/* routes).
+// Always logs to cron_logs so the Cron Health page picks up the run.
 
 import { NextRequest, NextResponse } from 'next/server';
+import { createServiceClient } from '@/lib/supabase/server';
 
 const ALLOWED_JOBS = [
   'spike-monitor',
@@ -55,6 +57,22 @@ export async function POST(req: NextRequest) {
     const body = await res.text().catch(() => '');
     const duration = Date.now() - start;
 
+    // Always log to cron_logs — most cron jobs don't log themselves,
+    // so without this the Cron Health page would always show "never run".
+    try {
+      const supabase = createServiceClient();
+      await supabase.from('cron_logs').insert({
+        job_name: job,
+        status: res.ok ? 'success' : 'error',
+        duration_ms: duration,
+        error: res.ok ? null : `HTTP ${res.status}: ${body.slice(0, 200)}`,
+        metadata: { source: 'dashboard-trigger', httpStatus: res.status },
+        executed_at: new Date().toISOString(),
+      });
+    } catch {
+      // Don't fail the response if logging fails
+    }
+
     return NextResponse.json({
       ok: res.ok,
       status: res.status,
@@ -62,10 +80,27 @@ export async function POST(req: NextRequest) {
       body: body.slice(0, 500),
     });
   } catch (err) {
+    const duration = Date.now() - start;
+
+    // Log failure to cron_logs too
+    try {
+      const supabase = createServiceClient();
+      await supabase.from('cron_logs').insert({
+        job_name: job,
+        status: 'error',
+        duration_ms: duration,
+        error: err instanceof Error ? err.message : 'fetch failed',
+        metadata: { source: 'dashboard-trigger' },
+        executed_at: new Date().toISOString(),
+      });
+    } catch {
+      // Don't fail the response if logging fails
+    }
+
     return NextResponse.json({
       ok: false,
       error: err instanceof Error ? err.message : 'fetch failed',
-      duration: Date.now() - start,
+      duration,
     }, { status: 502 });
   }
 }
