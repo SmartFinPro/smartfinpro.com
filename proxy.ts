@@ -370,13 +370,13 @@ function dashboardLoginPage(
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>SmartFinPro — Command Center</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800;14..32,900&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
       font-family: 'Inter', system-ui, -apple-system, sans-serif;
-      background: #f8fafc;
+      background: #f0f2f5;
       color: #1a1a2e;
       min-height: 100vh;
       display: flex;
@@ -385,299 +385,394 @@ function dashboardLoginPage(
     }
 
     /* ── Left Panel ── */
-    .left-panel {
+    .lp {
       display: none;
-      width: 50%;
+      width: 52%;
       position: relative;
-      background: linear-gradient(160deg, #1B4F8C 0%, #12396b 40%, #0a2444 100%);
+      background: #091428;
       overflow: hidden;
-      padding: 48px 56px;
+      padding: 52px 60px;
       flex-direction: column;
       justify-content: space-between;
     }
-    @media(min-width:900px){ .left-panel { display: flex; } }
+    @media(min-width:900px){ .lp { display: flex; } }
 
-    /* Animated aurora gradient */
-    .left-panel::before {
-      content: '';
-      position: absolute;
-      inset: -50%;
-      background:
-        radial-gradient(ellipse 50% 40% at 30% 20%, rgba(245,166,35,0.15) 0%, transparent 60%),
-        radial-gradient(ellipse 40% 50% at 70% 70%, rgba(26,107,58,0.12) 0%, transparent 60%),
-        radial-gradient(ellipse 60% 40% at 60% 30%, rgba(59,130,246,0.1) 0%, transparent 60%);
-      animation: auroraShift 12s ease-in-out infinite alternate;
-    }
-    @keyframes auroraShift {
-      0%   { transform: translate(0, 0) rotate(0deg); opacity: 0.7; }
-      33%  { transform: translate(5%, -3%) rotate(1deg); opacity: 1; }
-      66%  { transform: translate(-3%, 5%) rotate(-1deg); opacity: 0.8; }
-      100% { transform: translate(2%, 2%) rotate(0.5deg); opacity: 1; }
-    }
-
-    /* Refined grid overlay */
-    .left-panel::after {
-      content: '';
+    /* Layered gradient atmosphere */
+    .lp-bg {
       position: absolute;
       inset: 0;
-      background-image:
-        linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
-      background-size: 64px 64px;
+      background:
+        radial-gradient(ellipse 120% 80% at 0% 0%, rgba(27,79,140,0.7) 0%, transparent 50%),
+        radial-gradient(ellipse 80% 120% at 100% 100%, rgba(10,36,68,0.9) 0%, transparent 50%),
+        radial-gradient(ellipse 60% 60% at 50% 50%, rgba(27,79,140,0.15) 0%, transparent 70%);
     }
 
-    /* Floating orb decorations */
-    .orb {
+    /* Animated mesh blobs */
+    .lp-mesh {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+    .blob {
       position: absolute;
       border-radius: 50%;
-      filter: blur(60px);
-      z-index: 1;
-      pointer-events: none;
+      mix-blend-mode: screen;
+      filter: blur(80px);
+      opacity: 0.5;
     }
-    .orb-1 {
+    .blob-1 {
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, rgba(245,166,35,0.25), transparent 70%);
+      top: -15%; left: -10%;
+      animation: blobDrift1 16s ease-in-out infinite alternate;
+    }
+    .blob-2 {
+      width: 400px; height: 400px;
+      background: radial-gradient(circle, rgba(59,130,246,0.15), transparent 70%);
+      bottom: -10%; right: -5%;
+      animation: blobDrift2 20s ease-in-out infinite alternate;
+    }
+    .blob-3 {
       width: 300px; height: 300px;
-      background: rgba(245,166,35,0.08);
-      top: -80px; right: -60px;
-      animation: orbFloat1 10s ease-in-out infinite alternate;
+      background: radial-gradient(circle, rgba(245,166,35,0.1), transparent 70%);
+      top: 50%; left: 40%;
+      animation: blobDrift3 14s ease-in-out infinite alternate;
     }
-    .orb-2 {
-      width: 200px; height: 200px;
-      background: rgba(59,130,246,0.06);
-      bottom: 10%; left: -40px;
-      animation: orbFloat2 14s ease-in-out infinite alternate;
+    @keyframes blobDrift1 {
+      0%   { transform: translate(0, 0) scale(1); }
+      50%  { transform: translate(60px, 40px) scale(1.1); }
+      100% { transform: translate(-20px, 80px) scale(0.95); }
     }
-    .orb-3 {
-      width: 160px; height: 160px;
-      background: rgba(26,107,58,0.06);
-      top: 40%; right: 10%;
-      animation: orbFloat3 11s ease-in-out infinite alternate;
+    @keyframes blobDrift2 {
+      0%   { transform: translate(0, 0) scale(1); }
+      50%  { transform: translate(-50px, -30px) scale(1.15); }
+      100% { transform: translate(30px, -60px) scale(1.05); }
     }
-    @keyframes orbFloat1 { from { transform: translate(0,0); } to { transform: translate(-30px,40px); } }
-    @keyframes orbFloat2 { from { transform: translate(0,0); } to { transform: translate(20px,-30px); } }
-    @keyframes orbFloat3 { from { transform: translate(0,0); } to { transform: translate(-20px,20px); } }
+    @keyframes blobDrift3 {
+      0%   { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(-40px, -40px) scale(1.2); }
+    }
+
+    /* Noise texture overlay */
+    .lp-noise {
+      position: absolute;
+      inset: 0;
+      opacity: 0.3;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      background-size: 128px;
+    }
+
+    /* Subtle dot grid */
+    .lp-grid {
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(circle, rgba(255,255,255,0.04) 1px, transparent 1px);
+      background-size: 32px 32px;
+    }
+
+    /* Glowing edge line between panels */
+    .lp-edge {
+      position: absolute;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      width: 1px;
+      background: linear-gradient(to bottom, transparent, rgba(245,166,35,0.3) 30%, rgba(27,79,140,0.4) 70%, transparent);
+    }
 
     .brand { position: relative; z-index: 2; }
     .brand-logo {
       display: flex;
       align-items: center;
       gap: 14px;
-      margin-bottom: 80px;
+      margin-bottom: 0;
     }
     .brand-icon {
-      width: 48px; height: 48px;
-      background: linear-gradient(135deg, #F5A623 0%, #e09520 100%);
-      border-radius: 14px;
+      width: 44px; height: 44px;
+      background: linear-gradient(145deg, #F5A623 0%, #c9891a 100%);
+      border-radius: 13px;
       display: flex; align-items: center; justify-content: center;
-      font-weight: 800; font-size: 18px; color: #fff;
-      box-shadow: 0 8px 32px rgba(245,166,35,0.3), inset 0 1px 0 rgba(255,255,255,0.2);
+      font-weight: 900; font-size: 17px; color: #fff;
+      box-shadow: 0 0 0 1px rgba(245,166,35,0.2), 0 8px 24px rgba(245,166,35,0.25);
+      position: relative;
     }
-    .brand-name { font-size: 22px; font-weight: 700; color: #fff; letter-spacing: -0.5px; }
+    .brand-icon::after {
+      content: '';
+      position: absolute;
+      inset: -3px;
+      border-radius: 16px;
+      border: 1px solid rgba(245,166,35,0.15);
+    }
+    .brand-name { font-size: 21px; font-weight: 700; color: #fff; letter-spacing: -0.5px; }
     .brand-name span { color: #F5A623; }
 
-    .hero-content { position: relative; z-index: 2; }
+    .hero { position: relative; z-index: 2; margin-top: -20px; }
     .hero-eyebrow {
       display: inline-flex;
       align-items: center;
-      gap: 8px;
-      font-size: 11px;
-      font-weight: 600;
+      gap: 10px;
+      font-size: 10px;
+      font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 1.5px;
-      color: rgba(245,166,35,0.9);
-      margin-bottom: 24px;
+      letter-spacing: 2.5px;
+      color: #F5A623;
+      margin-bottom: 28px;
+      opacity: 0.85;
     }
-    .hero-eyebrow-line {
-      width: 32px;
-      height: 1.5px;
-      background: linear-gradient(90deg, rgba(245,166,35,0.6), transparent);
+    .hero-eyebrow::before {
+      content: '';
+      width: 24px;
+      height: 1px;
+      background: linear-gradient(90deg, #F5A623, transparent);
     }
     .hero-headline {
-      font-size: 48px;
-      font-weight: 800;
-      line-height: 1.1;
-      letter-spacing: -1.5px;
+      font-size: 52px;
+      font-weight: 900;
+      line-height: 1.05;
+      letter-spacing: -2px;
       color: #fff;
-      margin-bottom: 24px;
+      margin-bottom: 20px;
     }
     .hero-headline em {
       font-style: normal;
-      background: linear-gradient(135deg, #F5A623, #f7c164);
+      display: block;
+      background: linear-gradient(135deg, #F5A623 0%, #f7c76c 50%, #F5A623 100%);
+      background-size: 200% auto;
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
+      animation: shimmerText 4s linear infinite;
+    }
+    @keyframes shimmerText {
+      0%   { background-position: 0% center; }
+      100% { background-position: 200% center; }
     }
     .hero-sub {
-      font-size: 16px;
-      color: rgba(255,255,255,0.5);
+      font-size: 15px;
+      color: rgba(255,255,255,0.45);
       line-height: 1.7;
-      max-width: 360px;
+      max-width: 380px;
       font-weight: 400;
     }
 
-    /* Feature pills */
-    .feature-pills {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-top: 32px;
+    /* Capabilities grid */
+    .capabilities {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 36px;
       position: relative;
       z-index: 2;
     }
-    .feature-pill {
-      display: inline-flex;
+    .cap {
+      display: flex;
       align-items: center;
-      gap: 6px;
-      padding: 7px 14px;
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 100px;
-      font-size: 12px;
-      font-weight: 500;
-      color: rgba(255,255,255,0.65);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-    }
-    .feature-pill svg { flex-shrink: 0; opacity: 0.7; }
-
-    /* Stats bar at bottom */
-    .stats-bar {
-      position: relative;
-      z-index: 2;
-      display: flex;
-      gap: 0;
+      gap: 10px;
+      padding: 12px 16px;
       background: rgba(255,255,255,0.04);
       border: 1px solid rgba(255,255,255,0.06);
-      border-radius: 16px;
-      padding: 0;
-      overflow: hidden;
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 500;
+      color: rgba(255,255,255,0.6);
+      transition: all 0.3s;
     }
-    .stat {
+    .cap:hover {
+      background: rgba(255,255,255,0.07);
+      border-color: rgba(255,255,255,0.1);
+      color: rgba(255,255,255,0.8);
+    }
+    .cap-icon {
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .cap-icon svg { width: 15px; height: 15px; }
+    .cap-icon-gold { background: rgba(245,166,35,0.12); color: #F5A623; }
+    .cap-icon-blue { background: rgba(59,130,246,0.12); color: #60a5fa; }
+    .cap-icon-green { background: rgba(26,107,58,0.12); color: #4ade80; }
+    .cap-icon-purple { background: rgba(139,92,246,0.12); color: #a78bfa; }
+
+    /* Bottom section */
+    .lp-bottom {
+      position: relative;
+      z-index: 2;
+    }
+    .stats-row {
+      display: flex;
+      gap: 0;
+      margin-bottom: 20px;
+    }
+    .sr-item {
       flex: 1;
-      padding: 20px 24px;
       text-align: center;
+      padding: 0 16px;
       position: relative;
     }
-    .stat + .stat::before {
+    .sr-item + .sr-item::before {
       content: '';
       position: absolute;
       left: 0;
-      top: 20%;
-      height: 60%;
+      top: 10%;
+      height: 80%;
       width: 1px;
-      background: rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.06);
     }
-    .stat-value {
-      font-size: 28px;
-      font-weight: 800;
+    .sr-val {
+      font-size: 32px;
+      font-weight: 900;
       color: #fff;
-      letter-spacing: -0.5px;
+      letter-spacing: -1px;
       line-height: 1;
+      font-variant-numeric: tabular-nums;
     }
-    .stat-value span { color: #F5A623; font-weight: 800; }
-    .stat-label {
-      font-size: 10px;
-      color: rgba(255,255,255,0.35);
+    .sr-val span { color: #F5A623; }
+    .sr-lbl {
+      font-size: 9px;
+      color: rgba(255,255,255,0.3);
       margin-top: 6px;
-      font-weight: 600;
+      font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 1px;
+      letter-spacing: 1.5px;
     }
 
-    /* ── Right Panel ── */
-    .right-panel {
-      flex: 1;
+    /* Trust bar */
+    .trust-bar {
       display: flex;
       align-items: center;
       justify-content: center;
-      background: #f8fafc;
+      gap: 20px;
+      padding: 14px 0;
+      border-top: 1px solid rgba(255,255,255,0.05);
+    }
+    .trust-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 10px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.3);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+    .trust-item svg { opacity: 0.5; }
+
+    /* ── Right Panel ── */
+    .rp {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #f0f2f5;
       padding: 40px 32px;
       position: relative;
     }
 
-    /* Subtle background pattern on right */
-    .right-panel::before {
+    /* Subtle radial glow */
+    .rp::before {
       content: '';
       position: absolute;
-      inset: 0;
-      background:
-        radial-gradient(circle at 80% 20%, rgba(27,79,140,0.03) 0%, transparent 50%),
-        radial-gradient(circle at 20% 80%, rgba(245,166,35,0.02) 0%, transparent 50%);
+      width: 600px; height: 600px;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      background: radial-gradient(circle, rgba(27,79,140,0.04) 0%, transparent 70%);
+      pointer-events: none;
     }
 
-    .login-card {
+    .login-wrap {
       width: 100%;
-      max-width: 420px;
+      max-width: 440px;
       position: relative;
       z-index: 1;
-      animation: cardReveal 0.7s cubic-bezier(0.16,1,0.3,1) both;
+      animation: cardIn 0.8s cubic-bezier(0.16,1,0.3,1) both;
+      animation-delay: 0.1s;
     }
-    @keyframes cardReveal {
-      from { opacity: 0; transform: translateY(32px) scale(0.98); }
+    @keyframes cardIn {
+      from { opacity: 0; transform: translateY(40px) scale(0.96); }
       to   { opacity: 1; transform: translateY(0) scale(1); }
     }
 
-    /* Glass form card */
-    .form-container {
-      background: #ffffff;
-      border-radius: 24px;
-      border: 1px solid rgba(0,0,0,0.06);
+    /* Animated gradient border wrapper */
+    .card-glow {
+      padding: 1px;
+      border-radius: 28px;
+      background: linear-gradient(135deg, rgba(27,79,140,0.15), rgba(245,166,35,0.1), rgba(27,79,140,0.08));
+      background-size: 300% 300%;
+      animation: glowShift 8s ease infinite;
       box-shadow:
-        0 1px 2px rgba(0,0,0,0.04),
-        0 4px 16px rgba(0,0,0,0.04),
-        0 16px 48px rgba(0,0,0,0.06);
-      padding: 40px 36px;
+        0 2px 4px rgba(0,0,0,0.02),
+        0 8px 24px rgba(0,0,0,0.04),
+        0 24px 64px rgba(0,0,0,0.06);
+    }
+    @keyframes glowShift {
+      0%, 100% { background-position: 0% 50%; }
+      50%      { background-position: 100% 50%; }
+    }
+
+    .form-card {
+      background: #ffffff;
+      border-radius: 27px;
+      padding: 44px 40px 40px;
     }
 
     /* Mobile logo */
-    .mobile-brand {
+    .mob-brand {
       display: flex;
       align-items: center;
       gap: 10px;
       margin-bottom: 32px;
     }
-    @media(min-width:900px){ .mobile-brand { display: none; } }
-    .mobile-brand-icon {
+    @media(min-width:900px){ .mob-brand { display: none; } }
+    .mob-icon {
       width: 40px; height: 40px;
       background: linear-gradient(135deg, #F5A623, #D48B1A);
       border-radius: 12px;
       display: flex; align-items: center; justify-content: center;
-      font-weight: 800; font-size: 16px; color: #fff;
-      box-shadow: 0 4px 16px rgba(245,166,35,0.3);
+      font-weight: 900; font-size: 16px; color: #fff;
     }
-    .mobile-brand-name { font-size: 20px; font-weight: 700; color: #1A1A2E; }
-    .mobile-brand-name span { color: #1B4F8C; }
+    .mob-name { font-size: 20px; font-weight: 700; color: #1A1A2E; }
+    .mob-name span { color: #1B4F8C; }
 
-    .card-badge {
+    /* Badge */
+    .badge {
       display: inline-flex;
       align-items: center;
-      gap: 7px;
-      background: linear-gradient(135deg, #eef4ff, #e8f0fb);
-      color: #1B4F8C;
-      font-size: 10px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      padding: 6px 14px;
+      gap: 8px;
+      padding: 6px 14px 6px 10px;
       border-radius: 100px;
-      margin-bottom: 28px;
-      border: 1px solid rgba(27,79,140,0.08);
+      background: #f0f4ff;
+      border: 1px solid rgba(27,79,140,0.06);
+      margin-bottom: 32px;
     }
-    .card-badge svg { color: #1B4F8C; }
+    .badge-dot {
+      width: 18px; height: 18px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #1B4F8C, #2563eb);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .badge-dot svg { width: 10px; height: 10px; color: #fff; }
+    .badge-text {
+      font-size: 11px;
+      font-weight: 700;
+      color: #1B4F8C;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
 
     .card-title {
-      font-size: 30px;
+      font-size: 32px;
       font-weight: 800;
-      color: #0d1117;
-      letter-spacing: -0.8px;
+      color: #0a0a0f;
+      letter-spacing: -1px;
       margin-bottom: 8px;
       line-height: 1.1;
     }
     .card-sub {
       font-size: 14px;
-      color: #6e7681;
-      margin-bottom: 32px;
+      color: #7c818a;
+      margin-bottom: 36px;
       line-height: 1.6;
     }
 
@@ -688,51 +783,65 @@ function dashboardLoginPage(
       background: #fef2f2;
       border: 1px solid #fecaca;
       border-left: 3px solid #D64045;
-      border-radius: 12px;
-      padding: 12px 16px;
-      margin-bottom: 20px;
+      border-radius: 14px;
+      padding: 14px 18px;
+      margin-bottom: 24px;
       font-size: 13px;
       color: #991b1b;
       font-weight: 500;
     }
 
-    .field-group { margin-bottom: 18px; }
+    .field-group { margin-bottom: 20px; }
     .field-label {
       display: flex;
       align-items: center;
-      gap: 7px;
+      gap: 6px;
       font-size: 11px;
       font-weight: 700;
-      color: #444d56;
+      color: #4a5060;
       text-transform: uppercase;
       letter-spacing: 0.8px;
-      margin-bottom: 8px;
+      margin-bottom: 10px;
     }
-    .field-label svg { color: #1B4F8C; opacity: 0.7; }
+    .field-label svg { color: #1B4F8C; opacity: 0.6; }
+
+    .input-wrap {
+      position: relative;
+    }
+    .input-icon {
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #b0b8c1;
+      pointer-events: none;
+      transition: color 0.25s;
+    }
     .field-input {
       width: 100%;
-      padding: 14px 18px;
-      border: 1.5px solid #e1e4e8;
+      padding: 15px 18px 15px 46px;
+      border: 1.5px solid #e4e7ec;
       border-radius: 14px;
       font-size: 15px;
       font-family: inherit;
-      color: #0d1117;
-      background: #f8fafc;
+      color: #0a0a0f;
+      background: #fafbfc;
       outline: none;
       transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
     }
     .field-input:focus {
       border-color: #1B4F8C;
       background: #fff;
-      box-shadow: 0 0 0 4px rgba(27,79,140,0.06), 0 2px 8px rgba(27,79,140,0.08);
+      box-shadow: 0 0 0 4px rgba(27,79,140,0.06), 0 1px 4px rgba(27,79,140,0.08);
     }
-    .field-input::placeholder { color: #b0b8c1; }
+    .field-input:focus ~ .input-icon { color: #1B4F8C; }
+    .field-input::placeholder { color: #c0c5ce; }
     .totp-input {
       letter-spacing: 0.5em;
       text-align: center;
       font-size: 24px;
       font-weight: 700;
-      padding: 16px 18px;
+      padding: 16px 18px 16px 18px;
       font-variant-numeric: tabular-nums;
     }
 
@@ -741,19 +850,22 @@ function dashboardLoginPage(
       padding: 16px;
       border: none;
       border-radius: 14px;
-      background: linear-gradient(135deg, #F5A623 0%, #e09520 100%);
+      background: linear-gradient(135deg, #F5A623 0%, #d4901a 100%);
       color: #fff;
       font-size: 15px;
       font-weight: 700;
       font-family: inherit;
       cursor: pointer;
-      transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+      transition: all 0.35s cubic-bezier(0.4,0,0.2,1);
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 10px;
       margin-top: 8px;
-      box-shadow: 0 4px 16px rgba(245,166,35,0.25), 0 1px 3px rgba(245,166,35,0.2);
+      box-shadow:
+        0 1px 2px rgba(212,144,26,0.3),
+        0 4px 12px rgba(245,166,35,0.2),
+        0 8px 24px rgba(245,166,35,0.15);
       letter-spacing: 0.3px;
       position: relative;
       overflow: hidden;
@@ -761,183 +873,239 @@ function dashboardLoginPage(
     .submit-btn::before {
       content: '';
       position: absolute;
-      inset: 0;
-      background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 60%);
-      opacity: 0;
-      transition: opacity 0.3s;
+      top: 0; left: -100%;
+      width: 100%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+      transition: left 0.5s ease;
     }
-    .submit-btn:hover::before { opacity: 1; }
+    .submit-btn:hover::before { left: 100%; }
     .submit-btn:hover {
       transform: translateY(-2px);
-      box-shadow: 0 8px 32px rgba(245,166,35,0.35), 0 2px 8px rgba(245,166,35,0.25);
+      box-shadow:
+        0 2px 4px rgba(212,144,26,0.3),
+        0 8px 24px rgba(245,166,35,0.3),
+        0 16px 48px rgba(245,166,35,0.2);
     }
     .submit-btn:active { transform: translateY(0); }
-    .submit-btn svg { transition: transform 0.3s cubic-bezier(0.4,0,0.2,1); }
-    .submit-btn:hover svg { transform: translateX(4px); }
+    .submit-btn .arrow-icon { transition: transform 0.35s cubic-bezier(0.4,0,0.2,1); }
+    .submit-btn:hover .arrow-icon { transform: translateX(4px); }
 
-    /* Security indicators below card */
-    .security-footer {
-      margin-top: 24px;
+    /* Security footer */
+    .sec-footer {
+      margin-top: 28px;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 16px;
+      gap: 20px;
     }
-    .security-item {
+    .sec-item {
       display: flex;
       align-items: center;
-      gap: 5px;
+      gap: 6px;
       font-size: 11px;
-      color: #9ca3af;
+      color: #a0a5b0;
       font-weight: 500;
     }
-    .security-item svg { flex-shrink: 0; }
-    .security-dot {
-      width: 3px;
-      height: 3px;
-      border-radius: 50%;
-      background: #d1d5db;
-    }
+    .sec-item svg { flex-shrink: 0; opacity: 0.6; }
 
-    /* Live pulse indicator */
-    .live-dot {
-      width: 6px;
-      height: 6px;
+    /* Live pulse */
+    .pulse-dot {
+      width: 7px; height: 7px;
       border-radius: 50%;
       background: #1A6B3A;
       position: relative;
       flex-shrink: 0;
     }
-    .live-dot::before {
+    .pulse-dot::after {
       content: '';
       position: absolute;
-      inset: -3px;
+      inset: -4px;
       border-radius: 50%;
-      border: 1.5px solid rgba(26,107,58,0.3);
-      animation: livePulse 2s ease-out infinite;
+      background: rgba(26,107,58,0.15);
+      animation: pulse 2.5s cubic-bezier(0.4,0,0.6,1) infinite;
     }
-    @keyframes livePulse {
-      0%   { transform: scale(1); opacity: 1; }
-      100% { transform: scale(2); opacity: 0; }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50%      { transform: scale(1.8); opacity: 0; }
+    }
+
+    .sec-sep {
+      width: 3px; height: 3px;
+      border-radius: 50%;
+      background: #d5d8de;
+    }
+
+    /* Version tag */
+    .version-tag {
+      position: absolute;
+      bottom: 24px;
+      right: 28px;
+      font-size: 10px;
+      font-weight: 600;
+      color: #c8cbd0;
+      letter-spacing: 0.5px;
     }
   </style>
 </head>
 <body>
 
-<!-- Left Branding Panel -->
-<div class="left-panel">
-  <div class="orb orb-1"></div>
-  <div class="orb orb-2"></div>
-  <div class="orb orb-3"></div>
+<!-- ── Left Panel ── -->
+<div class="lp">
+  <div class="lp-bg"></div>
+  <div class="lp-mesh">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+  </div>
+  <div class="lp-noise"></div>
+  <div class="lp-grid"></div>
+  <div class="lp-edge"></div>
 
   <div class="brand">
     <div class="brand-logo">
       <div class="brand-icon">SF</div>
       <div class="brand-name">Smart<span>Fin</span>Pro</div>
     </div>
-    <div class="hero-content">
-      <div class="hero-eyebrow">
-        <span class="hero-eyebrow-line"></span>
-        Enterprise Platform
+  </div>
+
+  <div class="hero">
+    <div class="hero-eyebrow">Enterprise Platform</div>
+    <h1 class="hero-headline">Your Affiliate<br><em>Command Center</em></h1>
+    <p class="hero-sub">AI-powered analytics, content generation, and revenue intelligence across 4 global markets.</p>
+
+    <div class="capabilities">
+      <div class="cap">
+        <div class="cap-icon cap-icon-gold">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+        </div>
+        Real-time Analytics
       </div>
-      <h1 class="hero-headline">Your Affiliate<br><em>Command Center</em></h1>
-      <p class="hero-sub">Real-time analytics, AI-powered content, and revenue intelligence across 4 global markets.</p>
-      <div class="feature-pills">
-        <span class="feature-pill">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-          Real-time Analytics
-        </span>
-        <span class="feature-pill">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
-          AI Content Engine
-        </span>
-        <span class="feature-pill">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
-          Revenue Intelligence
-        </span>
+      <div class="cap">
+        <div class="cap-icon cap-icon-blue">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+        </div>
+        AI Content Engine
+      </div>
+      <div class="cap">
+        <div class="cap-icon cap-icon-green">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+        </div>
+        Revenue Intelligence
+      </div>
+      <div class="cap">
+        <div class="cap-icon cap-icon-purple">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        Compliance Guard
       </div>
     </div>
   </div>
 
-  <div class="stats-bar">
-    <div class="stat">
-      <div class="stat-value">200<span>+</span></div>
-      <div class="stat-label">Live Routes</div>
+  <div class="lp-bottom">
+    <div class="stats-row">
+      <div class="sr-item">
+        <div class="sr-val">200<span>+</span></div>
+        <div class="sr-lbl">Routes</div>
+      </div>
+      <div class="sr-item">
+        <div class="sr-val">108<span>+</span></div>
+        <div class="sr-lbl">Reviews</div>
+      </div>
+      <div class="sr-item">
+        <div class="sr-val">4</div>
+        <div class="sr-lbl">Markets</div>
+      </div>
+      <div class="sr-item">
+        <div class="sr-val">24<span>/7</span></div>
+        <div class="sr-lbl">Uptime</div>
+      </div>
     </div>
-    <div class="stat">
-      <div class="stat-value">108<span>+</span></div>
-      <div class="stat-label">MDX Reviews</div>
-    </div>
-    <div class="stat">
-      <div class="stat-value">4</div>
-      <div class="stat-label">Markets</div>
-    </div>
-    <div class="stat">
-      <div class="stat-value">24<span>/7</span></div>
-      <div class="stat-label">Monitoring</div>
+    <div class="trust-bar">
+      <div class="trust-item">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        AES-256 Encrypted
+      </div>
+      <div class="trust-item">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        SOC 2 Aligned
+      </div>
+      <div class="trust-item">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        Audit Logged
+      </div>
     </div>
   </div>
 </div>
 
-<!-- Right Form Panel -->
-<div class="right-panel">
-  <div class="login-card">
+<!-- ── Right Panel ── -->
+<div class="rp">
+  <div class="login-wrap">
 
-    <!-- Mobile brand -->
-    <div class="mobile-brand">
-      <div class="mobile-brand-icon">SF</div>
-      <div class="mobile-brand-name">Smart<span>Fin</span>Pro</div>
+    <div class="mob-brand">
+      <div class="mob-icon">SF</div>
+      <div class="mob-name">Smart<span>Fin</span>Pro</div>
     </div>
 
-    <div class="form-container">
-      <div class="card-badge">
-        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-        Secure Access
-      </div>
+    <div class="card-glow">
+      <div class="form-card">
 
-      <h1 class="card-title">Welcome back</h1>
-      <p class="card-sub">${totpEnabled ? 'Enter your password and authenticator code to access the dashboard.' : 'Enter your dashboard password to continue.'}</p>
-
-      ${errorBanner}
-
-      <form method="POST" action="${redirectPath}" autocomplete="on">
-        <input type="hidden" name="redirect" value="${redirectPath}">
-
-        <div class="field-group">
-          <label class="field-label">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-            Password
-          </label>
-          <input type="password" name="secret" placeholder="Enter your password" required
-            autocomplete="current-password" autofocus class="field-input">
+        <div class="badge">
+          <div class="badge-dot">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          <span class="badge-text">Secure Access</span>
         </div>
 
-        ${totpField}
+        <h1 class="card-title">Welcome back</h1>
+        <p class="card-sub">${totpEnabled ? 'Enter your credentials and authenticator code to continue.' : 'Enter your credentials to access the command center.'}</p>
 
-        <button type="submit" class="submit-btn">
-          Access Dashboard
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-        </button>
-      </form>
+        ${errorBanner}
+
+        <form method="POST" action="${redirectPath}" autocomplete="on">
+          <input type="hidden" name="redirect" value="${redirectPath}">
+
+          <div class="field-group">
+            <label class="field-label">
+              Password
+            </label>
+            <div class="input-wrap">
+              <input type="password" name="secret" placeholder="Enter your password" required
+                autocomplete="current-password" autofocus class="field-input">
+              <div class="input-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              </div>
+            </div>
+          </div>
+
+          ${totpField}
+
+          <button type="submit" class="submit-btn">
+            Access Dashboard
+            <svg class="arrow-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </button>
+        </form>
+      </div>
     </div>
 
-    <div class="security-footer">
-      <div class="security-item">
-        <div class="live-dot"></div>
+    <div class="sec-footer">
+      <div class="sec-item">
+        <div class="pulse-dot"></div>
         System Online
       </div>
-      <div class="security-dot"></div>
-      <div class="security-item">
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-        ${totpEnabled ? 'TOTP 2FA' : 'Encrypted'}
+      <div class="sec-sep"></div>
+      <div class="sec-item">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        ${totpEnabled ? 'TOTP 2FA Active' : '256-bit TLS'}
       </div>
-      <div class="security-dot"></div>
-      <div class="security-item">
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+      <div class="sec-sep"></div>
+      <div class="sec-item">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
         Monitored
       </div>
     </div>
   </div>
+
+  <div class="version-tag">v3.2.0</div>
 </div>
 
 </body>
