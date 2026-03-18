@@ -38,8 +38,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'CRON_SECRET not configured' }, { status: 500 });
   }
 
-  // Call the cron endpoint on the same server
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+  // Call the cron endpoint on the same server process.
+  // Use the incoming request host so this works in dev (any port) and prod.
+  const proto = req.headers.get('x-forwarded-proto') ?? 'http';
+  const host  = req.headers.get('host') ?? 'localhost:3000';
+  const baseUrl = `${proto}://${host}`;
   const start = Date.now();
 
   try {
