@@ -63,7 +63,10 @@ export async function getLowPerformancePages(): Promise<LowPerformancePage[]> {
     return result.data || [];
   };
 
-  // Get clicks per affiliate link
+  // Limit to last 90 days to avoid full-table scans that timeout on VPS
+  const since = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
+
+  // Get clicks per affiliate link (last 90 days)
   const clicksResult = await supabase
     .from('link_clicks')
     .select(`
@@ -74,19 +77,25 @@ export async function getLowPerformancePages(): Promise<LowPerformancePage[]> {
         category
       )
     `)
-    .not('link_id', 'is', null);
+    .not('link_id', 'is', null)
+    .gte('clicked_at', since)
+    .limit(50000);
 
-  // Get conversions per link
+  // Get conversions per link (last 90 days)
   const conversionsResult = await supabase
     .from('conversions')
     .select('link_id')
-    .not('link_id', 'is', null);
+    .not('link_id', 'is', null)
+    .gte('converted_at', since)
+    .limit(50000);
 
-  // Get page views with article info
+  // Get page views with article info (last 90 days)
   const pageViewsResult = await supabase
     .from('page_views')
     .select('page_path, article_slug, page_title')
-    .not('article_slug', 'is', null);
+    .not('article_slug', 'is', null)
+    .gte('viewed_at', since)
+    .limit(50000);
 
   const typedClicks = safe(clicksResult) as unknown as LinkClickRecord[];
   const typedConversions = safe(conversionsResult) as unknown as ConversionRecord[];

@@ -188,7 +188,7 @@ export async function getCtaHeatmapData(
       query = query.eq('market', marketFilter);
     }
 
-    const { data, error } = await query;
+    const { data, error } = await query.limit(50000);
 
     if (error) {
       // Table may not exist yet — return empty data gracefully
@@ -211,7 +211,7 @@ export async function getCtaHeatmapData(
       pvQuery = pvQuery.eq('market', marketFilter);
     }
 
-    const { data: pvData } = await pvQuery;
+    const { data: pvData } = await pvQuery.limit(50000);
 
     // Aggregate page views per slug+market
     const pvMap = new Map<string, number>();

@@ -439,10 +439,10 @@ async function _getDashboardStats(range: TimeRange = '24h'): Promise<DashboardSt
   ] = await Promise.all([
     // 1. Clicks in selected range (ordered newest-first)
     clicksQuery.order('clicked_at', { ascending: false }),
-    // 2. All-time click count (for conversion rate denominator)
+    // 2. All-time click count (for conversion rate denominator) — head:true = count only, no rows
     supabase.from('link_clicks').select('*', { count: 'exact', head: true }),
-    // 3. All-time conversions (for EPC / totalRevenue)
-    supabase.from('conversions').select('link_id, commission_earned, currency, status'),
+    // 3. All-time conversions (for EPC / totalRevenue) — limit to 10K most recent to avoid timeout
+    supabase.from('conversions').select('link_id, commission_earned, currency, status').order('converted_at', { ascending: false }).limit(10000),
     // 4. Active affiliate links count
     supabase.from('affiliate_links').select('*', { count: 'exact', head: true }).eq('active', true),
     // 5. All affiliate links (id → name/category mapping)

@@ -140,19 +140,20 @@ export async function getAnalyticsStats(range: TimeRange = '7d'): Promise<Analyt
   const now = new Date();
   const rangeStart = getTimeRangeStart(range);
 
-  // Fetch page views
+  // Fetch page views — explicit columns (avoid fetching large user_agent/referrer text)
+  // Limit to 20K rows max to prevent VPS memory issues
   let pageViewsQuery = supabase
     .from('page_views')
-    .select('*');
+    .select('id, page_path, article_slug, page_title, market, viewed_at, scroll_depth, time_on_page, referrer, utm_source, utm_medium, utm_campaign, country_code, device_type, browser');
 
   if (rangeStart) {
     pageViewsQuery = pageViewsQuery.gte('viewed_at', rangeStart.toISOString());
   }
 
-  const { data: pageViewsData } = await pageViewsQuery.order('viewed_at', { ascending: false });
+  const { data: pageViewsData } = await pageViewsQuery.order('viewed_at', { ascending: false }).limit(20000);
   const pageViews = (pageViewsData || []) as PageView[];
 
-  // Fetch link clicks for conversion tracking
+  // Fetch link clicks for conversion tracking — limit to 20K
   let clicksQuery = supabase
     .from('link_clicks')
     .select('id, link_id, utm_source, utm_medium, utm_campaign, referrer');
@@ -161,14 +162,14 @@ export async function getAnalyticsStats(range: TimeRange = '7d'): Promise<Analyt
     clicksQuery = clicksQuery.gte('clicked_at', rangeStart.toISOString());
   }
 
-  const { data: clicksData, error: clicksError } = await clicksQuery;
+  const { data: clicksData, error: clicksError } = await clicksQuery.limit(20000);
   if (clicksError) {
     logger.error('link_clicks query error:', clicksError.message);
   }
   type ClickRecord = { id: string; link_id: string | null; utm_source: string | null; utm_medium: string | null; utm_campaign: string | null; referrer: string | null };
   const clicks = (clicksData || []) as ClickRecord[];
 
-  // Get total page views (all time)
+  // Get total page views (all time) — head:true = count only, no data transferred
   const { count: totalPageViews } = await supabase
     .from('page_views')
     .select('*', { count: 'exact', head: true });
