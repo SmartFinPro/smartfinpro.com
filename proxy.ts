@@ -114,6 +114,32 @@ async function verifyTOTP(secret: string, code: string): Promise<boolean> {
 }
 
 // ============================================================
+// SESSION TOKEN — HMAC-based, never stores plaintext password
+// Cookie value = HMAC-SHA256(secret, "sfp-dash-session") → hex
+// Attacker who reads the cookie CANNOT reverse it to the password.
+// ============================================================
+
+async function createSessionToken(secret: string): Promise<string> {
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    'raw', enc.encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'],
+  );
+  const sig = new Uint8Array(await crypto.subtle.sign('HMAC', key, enc.encode('sfp-dash-session')));
+  return Array.from(sig).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+/** Constant-time string comparison to prevent timing attacks. */
+function timingSafeCompare(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let result = 0;
+  for (let i = 0; i < a.length; i++) {
+    result |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return result === 0;
+}
+
+// ============================================================
 // BRUTE-FORCE PROTECTION (production-only)
 // In-memory per-Edge-worker rate limiter.
 // Local dev: no lockout — simple access as designed.
@@ -187,11 +213,11 @@ export async function proxy(request: NextRequest) {
       // Dev-Bypass
       if (authDisabled) return NextResponse.next();
 
-      // Block if secret not configured in production
-      if (!dashSecret && process.env.NODE_ENV === 'production') {
+      // Block if secret not configured (any environment)
+      if (!dashSecret) {
         return new NextResponse(
-          'Dashboard disabled — DASHBOARD_SECRET not configured',
-          { status: 503 },
+          'Dashboard unavailable.',
+          { status: 503, headers: { 'Content-Type': 'text/plain' } },
         );
       }
 
@@ -203,7 +229,7 @@ export async function proxy(request: NextRequest) {
         if (!ipWhitelist.includes(clientIp)) {
           console.warn(`[dashboard] IP ${clientIp} blocked by whitelist`);
           return new NextResponse(
-            `403 Forbidden — Your IP (${clientIp}) is not authorised.`,
+            '403 Forbidden',
             { status: 403, headers: { 'Content-Type': 'text/plain' } },
           );
         }
@@ -229,8 +255,8 @@ export async function proxy(request: NextRequest) {
           const target    = fd.get('redirect')?.toString() ?? '/dashboard';
           const safePath  = target.startsWith('/dashboard') ? target : '/dashboard';
 
-          // Step 1: Password check
-          if (submitted !== dashSecret) {
+          // Step 1: Password check (timing-safe)
+          if (!timingSafeCompare(submitted, dashSecret)) {
             // Record failed attempt (production only)
             if (process.env.NODE_ENV === 'production') {
               const nowLocked = recordFailedAttempt(clientIp);
@@ -260,8 +286,9 @@ export async function proxy(request: NextRequest) {
 
           // ✅ Both checks passed — clear failed attempts + issue sliding session cookie
           if (process.env.NODE_ENV === 'production') clearAttempts(clientIp);
+          const sessionToken = await createSessionToken(dashSecret);
           const response = NextResponse.redirect(new URL(safePath, request.url));
-          response.cookies.set('sfp-dash-auth', dashSecret, {
+          response.cookies.set('sfp-dash-auth', sessionToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'lax', // 'strict' prevents cookie being sent on POST→redirect chain (ERR_TOO_MANY_REDIRECTS)
@@ -278,7 +305,8 @@ export async function proxy(request: NextRequest) {
       // ── Validate auth cookie + renew sliding session ─────────
       if (dashSecret) {
         const authCookie = request.cookies.get('sfp-dash-auth')?.value;
-        if (authCookie !== dashSecret) {
+        const expectedToken = await createSessionToken(dashSecret);
+        if (!authCookie || !timingSafeCompare(authCookie, expectedToken)) {
           const clientIp =
             request.headers.get('x-forwarded-for')?.split(',')[0] ?? 'unknown';
           console.warn(
@@ -290,7 +318,7 @@ export async function proxy(request: NextRequest) {
         // ✅ Authenticated — refresh cookie to reset idle timer (sliding session)
         // User inactive for >30 min → cookie expires → next request shows login page.
         const response = NextResponse.next();
-        response.cookies.set('sfp-dash-auth', dashSecret, {
+        response.cookies.set('sfp-dash-auth', expectedToken, {
           httpOnly: true,
           secure: process.env.NODE_ENV === 'production',
           sameSite: 'lax', // consistent with login cookie
@@ -300,7 +328,9 @@ export async function proxy(request: NextRequest) {
         return response;
       }
 
-      return NextResponse.next();
+      // Unreachable — dashSecret is always set at this point (blocked above if not).
+      // Safety fallback: deny access.
+      return new NextResponse('Forbidden', { status: 403 });
     }
 
     // ── Step 1: Skip system paths & protected route prefixes ──
@@ -368,7 +398,7 @@ function dashboardLoginPage(
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>SmartFinPro — Command Center</title>
+  <title>SmartFinPro</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800;14..32,900&display=swap" rel="stylesheet">
   <style>
@@ -384,279 +414,38 @@ function dashboardLoginPage(
       overflow: hidden;
     }
 
-    /* ── Left Panel ── */
+    /* ── Left Panel — exact header gradient ── */
     .lp {
       display: none;
-      width: 52%;
+      width: 50%;
       position: relative;
-      background: #091428;
+      background: linear-gradient(to bottom, #1B4F8C, #2563EB);
       overflow: hidden;
-      padding: 52px 60px;
-      flex-direction: column;
-      justify-content: space-between;
+      align-items: center;
+      justify-content: center;
     }
     @media(min-width:900px){ .lp { display: flex; } }
 
-    /* Layered gradient atmosphere */
-    .lp-bg {
-      position: absolute;
-      inset: 0;
-      background:
-        radial-gradient(ellipse 120% 80% at 0% 0%, rgba(27,79,140,0.7) 0%, transparent 50%),
-        radial-gradient(ellipse 80% 120% at 100% 100%, rgba(10,36,68,0.9) 0%, transparent 50%),
-        radial-gradient(ellipse 60% 60% at 50% 50%, rgba(27,79,140,0.15) 0%, transparent 70%);
-    }
-
-    /* Animated mesh blobs */
-    .lp-mesh {
-      position: absolute;
-      inset: 0;
-      overflow: hidden;
-    }
-    .blob {
-      position: absolute;
-      border-radius: 50%;
-      mix-blend-mode: screen;
-      filter: blur(80px);
-      opacity: 0.5;
-    }
-    .blob-1 {
-      width: 500px; height: 500px;
-      background: radial-gradient(circle, rgba(245,166,35,0.25), transparent 70%);
-      top: -15%; left: -10%;
-      animation: blobDrift1 16s ease-in-out infinite alternate;
-    }
-    .blob-2 {
-      width: 400px; height: 400px;
-      background: radial-gradient(circle, rgba(59,130,246,0.15), transparent 70%);
-      bottom: -10%; right: -5%;
-      animation: blobDrift2 20s ease-in-out infinite alternate;
-    }
-    .blob-3 {
-      width: 300px; height: 300px;
-      background: radial-gradient(circle, rgba(245,166,35,0.1), transparent 70%);
-      top: 50%; left: 40%;
-      animation: blobDrift3 14s ease-in-out infinite alternate;
-    }
-    @keyframes blobDrift1 {
-      0%   { transform: translate(0, 0) scale(1); }
-      50%  { transform: translate(60px, 40px) scale(1.1); }
-      100% { transform: translate(-20px, 80px) scale(0.95); }
-    }
-    @keyframes blobDrift2 {
-      0%   { transform: translate(0, 0) scale(1); }
-      50%  { transform: translate(-50px, -30px) scale(1.15); }
-      100% { transform: translate(30px, -60px) scale(1.05); }
-    }
-    @keyframes blobDrift3 {
-      0%   { transform: translate(0, 0) scale(1); }
-      100% { transform: translate(-40px, -40px) scale(1.2); }
-    }
-
-    /* Noise texture overlay */
-    .lp-noise {
-      position: absolute;
-      inset: 0;
-      opacity: 0.3;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
-      background-size: 128px;
-    }
-
-    /* Subtle dot grid */
-    .lp-grid {
-      position: absolute;
-      inset: 0;
-      background-image: radial-gradient(circle, rgba(255,255,255,0.04) 1px, transparent 1px);
-      background-size: 32px 32px;
-    }
-
-    /* Glowing edge line between panels */
-    .lp-edge {
-      position: absolute;
-      right: 0;
-      top: 0;
-      bottom: 0;
-      width: 1px;
-      background: linear-gradient(to bottom, transparent, rgba(245,166,35,0.3) 30%, rgba(27,79,140,0.4) 70%, transparent);
-    }
-
-    .brand { position: relative; z-index: 2; }
-    .brand-logo {
+    /* Centered logo — 1:1 header design */
+    .lp-brand {
       display: flex;
       align-items: center;
       gap: 14px;
-      margin-bottom: 0;
     }
-    .brand-icon {
-      width: 44px; height: 44px;
-      background: linear-gradient(145deg, #F5A623 0%, #c9891a 100%);
-      border-radius: 13px;
+    .lp-icon {
+      width: 42px; height: 42px;
+      background: rgba(255,255,255,0.15);
+      border-radius: 10px;
       display: flex; align-items: center; justify-content: center;
-      font-weight: 900; font-size: 17px; color: #fff;
-      box-shadow: 0 0 0 1px rgba(245,166,35,0.2), 0 8px 24px rgba(245,166,35,0.25);
-      position: relative;
     }
-    .brand-icon::after {
-      content: '';
-      position: absolute;
-      inset: -3px;
-      border-radius: 16px;
-      border: 1px solid rgba(245,166,35,0.15);
-    }
-    .brand-name { font-size: 21px; font-weight: 700; color: #fff; letter-spacing: -0.5px; }
-    .brand-name span { color: #F5A623; }
-
-    .hero { position: relative; z-index: 2; margin-top: -20px; }
-    .hero-eyebrow {
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 10px;
+    .lp-icon svg { width: 24px; height: 24px; }
+    .lp-name {
+      font-size: 26px;
       font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 2.5px;
-      color: #F5A623;
-      margin-bottom: 28px;
-      opacity: 0.85;
-    }
-    .hero-eyebrow::before {
-      content: '';
-      width: 24px;
-      height: 1px;
-      background: linear-gradient(90deg, #F5A623, transparent);
-    }
-    .hero-headline {
-      font-size: 52px;
-      font-weight: 900;
-      line-height: 1.05;
-      letter-spacing: -2px;
       color: #fff;
-      margin-bottom: 20px;
+      letter-spacing: -0.6px;
     }
-    .hero-headline em {
-      font-style: normal;
-      display: block;
-      background: linear-gradient(135deg, #F5A623 0%, #f7c76c 50%, #F5A623 100%);
-      background-size: 200% auto;
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      animation: shimmerText 4s linear infinite;
-    }
-    @keyframes shimmerText {
-      0%   { background-position: 0% center; }
-      100% { background-position: 200% center; }
-    }
-    .hero-sub {
-      font-size: 15px;
-      color: rgba(255,255,255,0.45);
-      line-height: 1.7;
-      max-width: 380px;
-      font-weight: 400;
-    }
-
-    /* Capabilities grid */
-    .capabilities {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      margin-top: 36px;
-      position: relative;
-      z-index: 2;
-    }
-    .cap {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 12px 16px;
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.06);
-      border-radius: 12px;
-      font-size: 12px;
-      font-weight: 500;
-      color: rgba(255,255,255,0.6);
-      transition: all 0.3s;
-    }
-    .cap:hover {
-      background: rgba(255,255,255,0.07);
-      border-color: rgba(255,255,255,0.1);
-      color: rgba(255,255,255,0.8);
-    }
-    .cap-icon {
-      width: 32px; height: 32px;
-      border-radius: 8px;
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
-    }
-    .cap-icon svg { width: 15px; height: 15px; }
-    .cap-icon-gold { background: rgba(245,166,35,0.12); color: #F5A623; }
-    .cap-icon-blue { background: rgba(59,130,246,0.12); color: #60a5fa; }
-    .cap-icon-green { background: rgba(26,107,58,0.12); color: #4ade80; }
-    .cap-icon-purple { background: rgba(139,92,246,0.12); color: #a78bfa; }
-
-    /* Bottom section */
-    .lp-bottom {
-      position: relative;
-      z-index: 2;
-    }
-    .stats-row {
-      display: flex;
-      gap: 0;
-      margin-bottom: 20px;
-    }
-    .sr-item {
-      flex: 1;
-      text-align: center;
-      padding: 0 16px;
-      position: relative;
-    }
-    .sr-item + .sr-item::before {
-      content: '';
-      position: absolute;
-      left: 0;
-      top: 10%;
-      height: 80%;
-      width: 1px;
-      background: rgba(255,255,255,0.06);
-    }
-    .sr-val {
-      font-size: 32px;
-      font-weight: 900;
-      color: #fff;
-      letter-spacing: -1px;
-      line-height: 1;
-      font-variant-numeric: tabular-nums;
-    }
-    .sr-val span { color: #F5A623; }
-    .sr-lbl {
-      font-size: 9px;
-      color: rgba(255,255,255,0.3);
-      margin-top: 6px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 1.5px;
-    }
-
-    /* Trust bar */
-    .trust-bar {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 20px;
-      padding: 14px 0;
-      border-top: 1px solid rgba(255,255,255,0.05);
-    }
-    .trust-item {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 10px;
-      font-weight: 600;
-      color: rgba(255,255,255,0.3);
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
-    }
-    .trust-item svg { opacity: 0.5; }
+    .lp-name span { color: rgba(255,255,255,0.85); }
 
     /* ── Right Panel ── */
     .rp {
@@ -669,15 +458,13 @@ function dashboardLoginPage(
       padding: 40px 32px;
       position: relative;
     }
-
-    /* Subtle radial glow */
     .rp::before {
       content: '';
       position: absolute;
       width: 600px; height: 600px;
       top: 50%; left: 50%;
       transform: translate(-50%, -50%);
-      background: radial-gradient(circle, rgba(27,79,140,0.04) 0%, transparent 70%);
+      background: radial-gradient(circle, rgba(27,79,140,0.03) 0%, transparent 70%);
       pointer-events: none;
     }
 
@@ -694,11 +481,11 @@ function dashboardLoginPage(
       to   { opacity: 1; transform: translateY(0) scale(1); }
     }
 
-    /* Animated gradient border wrapper */
+    /* Gradient border */
     .card-glow {
       padding: 1px;
       border-radius: 28px;
-      background: linear-gradient(135deg, rgba(27,79,140,0.15), rgba(245,166,35,0.1), rgba(27,79,140,0.08));
+      background: linear-gradient(135deg, rgba(27,79,140,0.12), rgba(245,166,35,0.08), rgba(27,79,140,0.06));
       background-size: 300% 300%;
       animation: glowShift 8s ease infinite;
       box-shadow:
@@ -726,12 +513,12 @@ function dashboardLoginPage(
     }
     @media(min-width:900px){ .mob-brand { display: none; } }
     .mob-icon {
-      width: 40px; height: 40px;
-      background: linear-gradient(135deg, #F5A623, #D48B1A);
-      border-radius: 12px;
+      width: 32px; height: 32px;
+      background: #1B4F8C;
+      border-radius: 8px;
       display: flex; align-items: center; justify-content: center;
-      font-weight: 900; font-size: 16px; color: #fff;
     }
+    .mob-icon svg { width: 18px; height: 18px; }
     .mob-name { font-size: 20px; font-weight: 700; color: #1A1A2E; }
     .mob-name span { color: #1B4F8C; }
 
@@ -803,15 +590,11 @@ function dashboardLoginPage(
       letter-spacing: 0.8px;
       margin-bottom: 10px;
     }
-    .field-label svg { color: #1B4F8C; opacity: 0.6; }
 
-    .input-wrap {
-      position: relative;
-    }
+    .input-wrap { position: relative; }
     .input-icon {
       position: absolute;
-      left: 16px;
-      top: 50%;
+      left: 16px; top: 50%;
       transform: translateY(-50%);
       color: #b0b8c1;
       pointer-events: none;
@@ -841,7 +624,7 @@ function dashboardLoginPage(
       text-align: center;
       font-size: 24px;
       font-weight: 700;
-      padding: 16px 18px 16px 18px;
+      padding: 16px 18px;
       font-variant-numeric: tabular-nums;
     }
 
@@ -890,7 +673,7 @@ function dashboardLoginPage(
     .submit-btn .arrow-icon { transition: transform 0.35s cubic-bezier(0.4,0,0.2,1); }
     .submit-btn:hover .arrow-icon { transform: translateX(4px); }
 
-    /* Security footer */
+    /* Footer */
     .sec-footer {
       margin-top: 28px;
       display: flex;
@@ -907,8 +690,6 @@ function dashboardLoginPage(
       font-weight: 500;
     }
     .sec-item svg { flex-shrink: 0; opacity: 0.6; }
-
-    /* Live pulse */
     .pulse-dot {
       width: 7px; height: 7px;
       border-radius: 50%;
@@ -928,112 +709,20 @@ function dashboardLoginPage(
       0%, 100% { transform: scale(1); opacity: 1; }
       50%      { transform: scale(1.8); opacity: 0; }
     }
-
     .sec-sep {
       width: 3px; height: 3px;
       border-radius: 50%;
       background: #d5d8de;
     }
-
-    /* Version tag */
-    .version-tag {
-      position: absolute;
-      bottom: 24px;
-      right: 28px;
-      font-size: 10px;
-      font-weight: 600;
-      color: #c8cbd0;
-      letter-spacing: 0.5px;
-    }
   </style>
 </head>
 <body>
 
-<!-- ── Left Panel ── -->
+<!-- ── Left Panel — 1:1 header style ── -->
 <div class="lp">
-  <div class="lp-bg"></div>
-  <div class="lp-mesh">
-    <div class="blob blob-1"></div>
-    <div class="blob blob-2"></div>
-    <div class="blob blob-3"></div>
-  </div>
-  <div class="lp-noise"></div>
-  <div class="lp-grid"></div>
-  <div class="lp-edge"></div>
-
-  <div class="brand">
-    <div class="brand-logo">
-      <div class="brand-icon">SF</div>
-      <div class="brand-name">Smart<span>Fin</span>Pro</div>
-    </div>
-  </div>
-
-  <div class="hero">
-    <div class="hero-eyebrow">Enterprise Platform</div>
-    <h1 class="hero-headline">Your Affiliate<br><em>Command Center</em></h1>
-    <p class="hero-sub">AI-powered analytics, content generation, and revenue intelligence across 4 global markets.</p>
-
-    <div class="capabilities">
-      <div class="cap">
-        <div class="cap-icon cap-icon-gold">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-        </div>
-        Real-time Analytics
-      </div>
-      <div class="cap">
-        <div class="cap-icon cap-icon-blue">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
-        </div>
-        AI Content Engine
-      </div>
-      <div class="cap">
-        <div class="cap-icon cap-icon-green">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
-        </div>
-        Revenue Intelligence
-      </div>
-      <div class="cap">
-        <div class="cap-icon cap-icon-purple">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-        </div>
-        Compliance Guard
-      </div>
-    </div>
-  </div>
-
-  <div class="lp-bottom">
-    <div class="stats-row">
-      <div class="sr-item">
-        <div class="sr-val">200<span>+</span></div>
-        <div class="sr-lbl">Routes</div>
-      </div>
-      <div class="sr-item">
-        <div class="sr-val">108<span>+</span></div>
-        <div class="sr-lbl">Reviews</div>
-      </div>
-      <div class="sr-item">
-        <div class="sr-val">4</div>
-        <div class="sr-lbl">Markets</div>
-      </div>
-      <div class="sr-item">
-        <div class="sr-val">24<span>/7</span></div>
-        <div class="sr-lbl">Uptime</div>
-      </div>
-    </div>
-    <div class="trust-bar">
-      <div class="trust-item">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-        AES-256 Encrypted
-      </div>
-      <div class="trust-item">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-        SOC 2 Aligned
-      </div>
-      <div class="trust-item">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-        Audit Logged
-      </div>
-    </div>
+  <div class="lp-brand">
+    <div class="lp-icon"><svg viewBox="0 0 18 18" fill="none"><rect x="6.5" y="1" width="5" height="16" rx="1.5" fill="#FFC942"/><rect x="1" y="6.5" width="16" height="5" rx="1.5" fill="#FFC942"/></svg></div>
+    <div class="lp-name">Smart<span>Fin</span>Pro</div>
   </div>
 </div>
 
@@ -1042,7 +731,7 @@ function dashboardLoginPage(
   <div class="login-wrap">
 
     <div class="mob-brand">
-      <div class="mob-icon">SF</div>
+      <div class="mob-icon"><svg viewBox="0 0 18 18" fill="none"><rect x="6.5" y="1" width="5" height="16" rx="1.5" fill="#FFC942"/><rect x="1" y="6.5" width="16" height="5" rx="1.5" fill="#FFC942"/></svg></div>
       <div class="mob-name">Smart<span>Fin</span>Pro</div>
     </div>
 
@@ -1057,7 +746,7 @@ function dashboardLoginPage(
         </div>
 
         <h1 class="card-title">Welcome back</h1>
-        <p class="card-sub">${totpEnabled ? 'Enter your credentials and authenticator code to continue.' : 'Enter your credentials to access the command center.'}</p>
+        <p class="card-sub">${totpEnabled ? 'Enter your credentials and authenticator code to continue.' : 'Enter your credentials to continue.'}</p>
 
         ${errorBanner}
 
@@ -1065,9 +754,7 @@ function dashboardLoginPage(
           <input type="hidden" name="redirect" value="${redirectPath}">
 
           <div class="field-group">
-            <label class="field-label">
-              Password
-            </label>
+            <label class="field-label">Password</label>
             <div class="input-wrap">
               <input type="password" name="secret" placeholder="Enter your password" required
                 autocomplete="current-password" autofocus class="field-input">
@@ -1080,7 +767,7 @@ function dashboardLoginPage(
           ${totpField}
 
           <button type="submit" class="submit-btn">
-            Access Dashboard
+            Sign In
             <svg class="arrow-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
           </button>
         </form>
@@ -1090,22 +777,15 @@ function dashboardLoginPage(
     <div class="sec-footer">
       <div class="sec-item">
         <div class="pulse-dot"></div>
-        System Online
+        Online
       </div>
       <div class="sec-sep"></div>
       <div class="sec-item">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-        ${totpEnabled ? 'TOTP 2FA Active' : '256-bit TLS'}
-      </div>
-      <div class="sec-sep"></div>
-      <div class="sec-item">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-        Monitored
+        ${totpEnabled ? '2FA' : 'Encrypted'}
       </div>
     </div>
   </div>
-
-  <div class="version-tag">v3.2.0</div>
 </div>
 
 </body>
