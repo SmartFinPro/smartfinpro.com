@@ -40,6 +40,10 @@
 .dashboard-sidebar {
   background: var(--dash-sidebar);
   border-right: 1px solid var(--dash-border);
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: hidden;
 }
 
 .dashboard-sidebar .nav-item {
