@@ -370,14 +370,14 @@ function dashboardLoginPage(
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>SmartFinPro — Command Center</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
       font-family: 'Inter', system-ui, -apple-system, sans-serif;
-      background: #0d1117;
-      color: #e6edf3;
+      background: #f8fafc;
+      color: #1a1a2e;
       min-height: 100vh;
       display: flex;
       align-items: stretch;
@@ -387,88 +387,203 @@ function dashboardLoginPage(
     /* ── Left Panel ── */
     .left-panel {
       display: none;
-      width: 52%;
+      width: 50%;
       position: relative;
-      background: linear-gradient(145deg, #1B4F8C 0%, #0d2d52 50%, #071828 100%);
+      background: linear-gradient(160deg, #1B4F8C 0%, #12396b 40%, #0a2444 100%);
       overflow: hidden;
-      padding: 60px 56px;
+      padding: 48px 56px;
       flex-direction: column;
       justify-content: space-between;
     }
     @media(min-width:900px){ .left-panel { display: flex; } }
 
-    /* Animated mesh gradient */
+    /* Animated aurora gradient */
     .left-panel::before {
       content: '';
       position: absolute;
-      inset: 0;
+      inset: -50%;
       background:
-        radial-gradient(ellipse 80% 60% at 20% 20%, rgba(245,166,35,0.12) 0%, transparent 60%),
-        radial-gradient(ellipse 60% 80% at 80% 80%, rgba(27,79,140,0.3) 0%, transparent 60%);
-      animation: meshPulse 8s ease-in-out infinite alternate;
+        radial-gradient(ellipse 50% 40% at 30% 20%, rgba(245,166,35,0.15) 0%, transparent 60%),
+        radial-gradient(ellipse 40% 50% at 70% 70%, rgba(26,107,58,0.12) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 40% at 60% 30%, rgba(59,130,246,0.1) 0%, transparent 60%);
+      animation: auroraShift 12s ease-in-out infinite alternate;
     }
-    @keyframes meshPulse {
-      from { opacity: 0.6; transform: scale(1); }
-      to   { opacity: 1;   transform: scale(1.05); }
+    @keyframes auroraShift {
+      0%   { transform: translate(0, 0) rotate(0deg); opacity: 0.7; }
+      33%  { transform: translate(5%, -3%) rotate(1deg); opacity: 1; }
+      66%  { transform: translate(-3%, 5%) rotate(-1deg); opacity: 0.8; }
+      100% { transform: translate(2%, 2%) rotate(0.5deg); opacity: 1; }
     }
 
-    /* Grid pattern overlay */
+    /* Refined grid overlay */
     .left-panel::after {
       content: '';
       position: absolute;
       inset: 0;
       background-image:
-        linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
-      background-size: 48px 48px;
+        linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+      background-size: 64px 64px;
     }
+
+    /* Floating orb decorations */
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(60px);
+      z-index: 1;
+      pointer-events: none;
+    }
+    .orb-1 {
+      width: 300px; height: 300px;
+      background: rgba(245,166,35,0.08);
+      top: -80px; right: -60px;
+      animation: orbFloat1 10s ease-in-out infinite alternate;
+    }
+    .orb-2 {
+      width: 200px; height: 200px;
+      background: rgba(59,130,246,0.06);
+      bottom: 10%; left: -40px;
+      animation: orbFloat2 14s ease-in-out infinite alternate;
+    }
+    .orb-3 {
+      width: 160px; height: 160px;
+      background: rgba(26,107,58,0.06);
+      top: 40%; right: 10%;
+      animation: orbFloat3 11s ease-in-out infinite alternate;
+    }
+    @keyframes orbFloat1 { from { transform: translate(0,0); } to { transform: translate(-30px,40px); } }
+    @keyframes orbFloat2 { from { transform: translate(0,0); } to { transform: translate(20px,-30px); } }
+    @keyframes orbFloat3 { from { transform: translate(0,0); } to { transform: translate(-20px,20px); } }
 
     .brand { position: relative; z-index: 2; }
     .brand-logo {
       display: flex;
       align-items: center;
-      gap: 12px;
-      margin-bottom: 64px;
+      gap: 14px;
+      margin-bottom: 80px;
     }
     .brand-icon {
-      width: 44px; height: 44px;
-      background: linear-gradient(135deg, #F5A623, #D48B1A);
-      border-radius: 12px;
+      width: 48px; height: 48px;
+      background: linear-gradient(135deg, #F5A623 0%, #e09520 100%);
+      border-radius: 14px;
       display: flex; align-items: center; justify-content: center;
       font-weight: 800; font-size: 18px; color: #fff;
-      box-shadow: 0 4px 24px rgba(245,166,35,0.4);
+      box-shadow: 0 8px 32px rgba(245,166,35,0.3), inset 0 1px 0 rgba(255,255,255,0.2);
     }
-    .brand-name { font-size: 20px; font-weight: 700; color: #fff; letter-spacing: -0.3px; }
+    .brand-name { font-size: 22px; font-weight: 700; color: #fff; letter-spacing: -0.5px; }
     .brand-name span { color: #F5A623; }
 
-    .hero-headline {
-      font-size: 42px;
-      font-weight: 700;
-      line-height: 1.15;
-      letter-spacing: -1px;
-      color: #fff;
-      margin-bottom: 20px;
+    .hero-content { position: relative; z-index: 2; }
+    .hero-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: rgba(245,166,35,0.9);
+      margin-bottom: 24px;
     }
-    .hero-headline em { font-style: normal; color: #F5A623; }
+    .hero-eyebrow-line {
+      width: 32px;
+      height: 1.5px;
+      background: linear-gradient(90deg, rgba(245,166,35,0.6), transparent);
+    }
+    .hero-headline {
+      font-size: 48px;
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -1.5px;
+      color: #fff;
+      margin-bottom: 24px;
+    }
+    .hero-headline em {
+      font-style: normal;
+      background: linear-gradient(135deg, #F5A623, #f7c164);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
     .hero-sub {
       font-size: 16px;
-      color: rgba(255,255,255,0.55);
-      line-height: 1.6;
-      max-width: 340px;
+      color: rgba(255,255,255,0.5);
+      line-height: 1.7;
+      max-width: 360px;
+      font-weight: 400;
     }
 
-    .stats-row {
+    /* Feature pills */
+    .feature-pills {
       display: flex;
-      gap: 32px;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 32px;
       position: relative;
       z-index: 2;
     }
-    .stat { }
-    .stat-value { font-size: 28px; font-weight: 700; color: #fff; letter-spacing: -0.5px; }
-    .stat-label { font-size: 12px; color: rgba(255,255,255,0.4); margin-top: 2px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
-    .stat-divider { width: 1px; background: rgba(255,255,255,0.1); }
+    .feature-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 14px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 100px;
+      font-size: 12px;
+      font-weight: 500;
+      color: rgba(255,255,255,0.65);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+    .feature-pill svg { flex-shrink: 0; opacity: 0.7; }
 
-    .hero-content { position: relative; z-index: 2; }
+    /* Stats bar at bottom */
+    .stats-bar {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      gap: 0;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 16px;
+      padding: 0;
+      overflow: hidden;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+    .stat {
+      flex: 1;
+      padding: 20px 24px;
+      text-align: center;
+      position: relative;
+    }
+    .stat + .stat::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 20%;
+      height: 60%;
+      width: 1px;
+      background: rgba(255,255,255,0.08);
+    }
+    .stat-value {
+      font-size: 28px;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -0.5px;
+      line-height: 1;
+    }
+    .stat-value span { color: #F5A623; font-weight: 800; }
+    .stat-label {
+      font-size: 10px;
+      color: rgba(255,255,255,0.35);
+      margin-top: 6px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
 
     /* ── Right Panel ── */
     .right-panel {
@@ -476,18 +591,43 @@ function dashboardLoginPage(
       display: flex;
       align-items: center;
       justify-content: center;
-      background: #ffffff;
+      background: #f8fafc;
       padding: 40px 32px;
+      position: relative;
+    }
+
+    /* Subtle background pattern on right */
+    .right-panel::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 80% 20%, rgba(27,79,140,0.03) 0%, transparent 50%),
+        radial-gradient(circle at 20% 80%, rgba(245,166,35,0.02) 0%, transparent 50%);
     }
 
     .login-card {
       width: 100%;
-      max-width: 400px;
-      animation: slideUp 0.5s cubic-bezier(0.16,1,0.3,1) both;
+      max-width: 420px;
+      position: relative;
+      z-index: 1;
+      animation: cardReveal 0.7s cubic-bezier(0.16,1,0.3,1) both;
     }
-    @keyframes slideUp {
-      from { opacity: 0; transform: translateY(24px); }
-      to   { opacity: 1; transform: translateY(0); }
+    @keyframes cardReveal {
+      from { opacity: 0; transform: translateY(32px) scale(0.98); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    /* Glass form card */
+    .form-container {
+      background: #ffffff;
+      border-radius: 24px;
+      border: 1px solid rgba(0,0,0,0.06);
+      box-shadow:
+        0 1px 2px rgba(0,0,0,0.04),
+        0 4px 16px rgba(0,0,0,0.04),
+        0 16px 48px rgba(0,0,0,0.06);
+      padding: 40px 36px;
     }
 
     /* Mobile logo */
@@ -495,57 +635,60 @@ function dashboardLoginPage(
       display: flex;
       align-items: center;
       gap: 10px;
-      margin-bottom: 40px;
+      margin-bottom: 32px;
     }
     @media(min-width:900px){ .mobile-brand { display: none; } }
     .mobile-brand-icon {
-      width: 36px; height: 36px;
+      width: 40px; height: 40px;
       background: linear-gradient(135deg, #F5A623, #D48B1A);
-      border-radius: 10px;
+      border-radius: 12px;
       display: flex; align-items: center; justify-content: center;
-      font-weight: 800; font-size: 15px; color: #fff;
+      font-weight: 800; font-size: 16px; color: #fff;
+      box-shadow: 0 4px 16px rgba(245,166,35,0.3);
     }
-    .mobile-brand-name { font-size: 18px; font-weight: 700; color: #1A1A2E; }
+    .mobile-brand-name { font-size: 20px; font-weight: 700; color: #1A1A2E; }
     .mobile-brand-name span { color: #1B4F8C; }
 
     .card-badge {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      background: #EEF4FF;
+      gap: 7px;
+      background: linear-gradient(135deg, #eef4ff, #e8f0fb);
       color: #1B4F8C;
-      font-size: 11px;
-      font-weight: 600;
+      font-size: 10px;
+      font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.8px;
-      padding: 5px 12px;
+      letter-spacing: 1px;
+      padding: 6px 14px;
       border-radius: 100px;
-      margin-bottom: 24px;
+      margin-bottom: 28px;
+      border: 1px solid rgba(27,79,140,0.08);
     }
     .card-badge svg { color: #1B4F8C; }
 
     .card-title {
-      font-size: 28px;
-      font-weight: 700;
+      font-size: 30px;
+      font-weight: 800;
       color: #0d1117;
-      letter-spacing: -0.5px;
+      letter-spacing: -0.8px;
       margin-bottom: 8px;
+      line-height: 1.1;
     }
     .card-sub {
       font-size: 14px;
       color: #6e7681;
       margin-bottom: 32px;
-      line-height: 1.5;
+      line-height: 1.6;
     }
 
     .error-banner {
       display: flex;
       align-items: center;
       gap: 10px;
-      background: #fff0f0;
+      background: #fef2f2;
       border: 1px solid #fecaca;
       border-left: 3px solid #D64045;
-      border-radius: 10px;
+      border-radius: 12px;
       padding: 12px 16px;
       margin-bottom: 20px;
       font-size: 13px;
@@ -553,88 +696,129 @@ function dashboardLoginPage(
       font-weight: 500;
     }
 
-    .field-group { margin-bottom: 16px; }
+    .field-group { margin-bottom: 18px; }
     .field-label {
       display: flex;
       align-items: center;
-      gap: 6px;
-      font-size: 12px;
-      font-weight: 600;
+      gap: 7px;
+      font-size: 11px;
+      font-weight: 700;
       color: #444d56;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.8px;
       margin-bottom: 8px;
     }
-    .field-label svg { color: #1B4F8C; }
+    .field-label svg { color: #1B4F8C; opacity: 0.7; }
     .field-input {
       width: 100%;
-      padding: 13px 16px;
+      padding: 14px 18px;
       border: 1.5px solid #e1e4e8;
-      border-radius: 12px;
+      border-radius: 14px;
       font-size: 15px;
       font-family: inherit;
       color: #0d1117;
-      background: #f6f8fa;
+      background: #f8fafc;
       outline: none;
-      transition: all 0.2s;
+      transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
     }
     .field-input:focus {
       border-color: #1B4F8C;
       background: #fff;
-      box-shadow: 0 0 0 4px rgba(27,79,140,0.08);
+      box-shadow: 0 0 0 4px rgba(27,79,140,0.06), 0 2px 8px rgba(27,79,140,0.08);
     }
-    .field-input::placeholder { color: #adb5bd; }
+    .field-input::placeholder { color: #b0b8c1; }
     .totp-input {
-      letter-spacing: 0.4em;
+      letter-spacing: 0.5em;
       text-align: center;
-      font-size: 22px;
-      font-weight: 600;
-      padding: 14px 16px;
+      font-size: 24px;
+      font-weight: 700;
+      padding: 16px 18px;
+      font-variant-numeric: tabular-nums;
     }
 
     .submit-btn {
       width: 100%;
-      padding: 14px;
+      padding: 16px;
       border: none;
-      border-radius: 12px;
-      background: linear-gradient(135deg, #F5A623 0%, #D48B1A 100%);
+      border-radius: 14px;
+      background: linear-gradient(135deg, #F5A623 0%, #e09520 100%);
       color: #fff;
       font-size: 15px;
       font-weight: 700;
       font-family: inherit;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
+      gap: 10px;
       margin-top: 8px;
-      box-shadow: 0 4px 16px rgba(245,166,35,0.35);
-      letter-spacing: 0.2px;
+      box-shadow: 0 4px 16px rgba(245,166,35,0.25), 0 1px 3px rgba(245,166,35,0.2);
+      letter-spacing: 0.3px;
+      position: relative;
+      overflow: hidden;
     }
+    .submit-btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 60%);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .submit-btn:hover::before { opacity: 1; }
     .submit-btn:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 6px 24px rgba(245,166,35,0.5);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(245,166,35,0.35), 0 2px 8px rgba(245,166,35,0.25);
     }
     .submit-btn:active { transform: translateY(0); }
-    .submit-btn svg { transition: transform 0.2s; }
-    .submit-btn:hover svg { transform: translateX(3px); }
+    .submit-btn svg { transition: transform 0.3s cubic-bezier(0.4,0,0.2,1); }
+    .submit-btn:hover svg { transform: translateX(4px); }
 
-    .footer-note {
+    /* Security indicators below card */
+    .security-footer {
       margin-top: 24px;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 6px;
-      font-size: 12px;
-      color: #adb5bd;
+      gap: 16px;
     }
-    .footer-note svg { color: #1A6B3A; }
+    .security-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      color: #9ca3af;
+      font-weight: 500;
+    }
+    .security-item svg { flex-shrink: 0; }
+    .security-dot {
+      width: 3px;
+      height: 3px;
+      border-radius: 50%;
+      background: #d1d5db;
+    }
 
-    .divider {
-      height: 1px;
-      background: #e1e4e8;
-      margin: 24px 0;
+    /* Live pulse indicator */
+    .live-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #1A6B3A;
+      position: relative;
+      flex-shrink: 0;
+    }
+    .live-dot::before {
+      content: '';
+      position: absolute;
+      inset: -3px;
+      border-radius: 50%;
+      border: 1.5px solid rgba(26,107,58,0.3);
+      animation: livePulse 2s ease-out infinite;
+    }
+    @keyframes livePulse {
+      0%   { transform: scale(1); opacity: 1; }
+      100% { transform: scale(2); opacity: 0; }
     }
   </style>
 </head>
@@ -642,30 +826,55 @@ function dashboardLoginPage(
 
 <!-- Left Branding Panel -->
 <div class="left-panel">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+
   <div class="brand">
     <div class="brand-logo">
       <div class="brand-icon">SF</div>
       <div class="brand-name">Smart<span>Fin</span>Pro</div>
     </div>
     <div class="hero-content">
+      <div class="hero-eyebrow">
+        <span class="hero-eyebrow-line"></span>
+        Enterprise Platform
+      </div>
       <h1 class="hero-headline">Your Affiliate<br><em>Command Center</em></h1>
-      <p class="hero-sub">Real-time analytics, AI-powered content, and revenue intelligence — all in one platform.</p>
+      <p class="hero-sub">Real-time analytics, AI-powered content, and revenue intelligence across 4 global markets.</p>
+      <div class="feature-pills">
+        <span class="feature-pill">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          Real-time Analytics
+        </span>
+        <span class="feature-pill">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+          AI Content Engine
+        </span>
+        <span class="feature-pill">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+          Revenue Intelligence
+        </span>
+      </div>
     </div>
   </div>
-  <div class="stats-row">
+
+  <div class="stats-bar">
     <div class="stat">
-      <div class="stat-value">200+</div>
+      <div class="stat-value">200<span>+</span></div>
       <div class="stat-label">Live Routes</div>
     </div>
-    <div class="stat-divider"></div>
     <div class="stat">
-      <div class="stat-value">108+</div>
+      <div class="stat-value">108<span>+</span></div>
       <div class="stat-label">MDX Reviews</div>
     </div>
-    <div class="stat-divider"></div>
     <div class="stat">
       <div class="stat-value">4</div>
       <div class="stat-label">Markets</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">24<span>/7</span></div>
+      <div class="stat-label">Monitoring</div>
     </div>
   </div>
 </div>
@@ -680,41 +889,53 @@ function dashboardLoginPage(
       <div class="mobile-brand-name">Smart<span>Fin</span>Pro</div>
     </div>
 
-    <div class="card-badge">
-      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-      Secure Access
-    </div>
-
-    <h1 class="card-title">Welcome back</h1>
-    <p class="card-sub">${totpEnabled ? 'Enter your password and authenticator code to access the dashboard.' : 'Enter your dashboard password to continue.'}</p>
-
-    ${errorBanner}
-
-    <form method="POST" action="${redirectPath}" autocomplete="on">
-      <input type="hidden" name="redirect" value="${redirectPath}">
-
-      <div class="field-group">
-        <label class="field-label">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-          Password
-        </label>
-        <input type="password" name="secret" placeholder="Enter your password" required
-          autocomplete="current-password" autofocus class="field-input">
+    <div class="form-container">
+      <div class="card-badge">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        Secure Access
       </div>
 
-      ${totpField}
+      <h1 class="card-title">Welcome back</h1>
+      <p class="card-sub">${totpEnabled ? 'Enter your password and authenticator code to access the dashboard.' : 'Enter your dashboard password to continue.'}</p>
 
-      <button type="submit" class="submit-btn">
-        Access Dashboard
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-      </button>
-    </form>
+      ${errorBanner}
 
-    <div class="divider"></div>
+      <form method="POST" action="${redirectPath}" autocomplete="on">
+        <input type="hidden" name="redirect" value="${redirectPath}">
 
-    <div class="footer-note">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-      ${totpEnabled ? 'Protected by password + TOTP 2FA' : 'Access is logged and monitored'}
+        <div class="field-group">
+          <label class="field-label">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            Password
+          </label>
+          <input type="password" name="secret" placeholder="Enter your password" required
+            autocomplete="current-password" autofocus class="field-input">
+        </div>
+
+        ${totpField}
+
+        <button type="submit" class="submit-btn">
+          Access Dashboard
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </button>
+      </form>
+    </div>
+
+    <div class="security-footer">
+      <div class="security-item">
+        <div class="live-dot"></div>
+        System Online
+      </div>
+      <div class="security-dot"></div>
+      <div class="security-item">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        ${totpEnabled ? 'TOTP 2FA' : 'Encrypted'}
+      </div>
+      <div class="security-dot"></div>
+      <div class="security-item">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        Monitored
+      </div>
     </div>
   </div>
 </div>
