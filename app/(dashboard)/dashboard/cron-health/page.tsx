@@ -1,6 +1,7 @@
 // app/(dashboard)/dashboard/cron-health/page.tsx
 import { createClient } from '@supabase/supabase-js';
 import { CheckCircle2, XCircle, AlertTriangle, Clock, RefreshCw } from 'lucide-react';
+import { TriggerButton } from './trigger-button';
 
 // All 19 active cron jobs with expected max interval (minutes)
 const CRON_DEFINITIONS = [
@@ -166,6 +167,9 @@ export default async function CronHealthPage() {
                     {log.error}
                   </div>
                 )}
+
+                {/* Trigger button */}
+                <TriggerButton job={cron.name} />
               </div>
             );
           })}
