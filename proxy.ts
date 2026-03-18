@@ -350,58 +350,375 @@ function dashboardLoginPage(
   totpEnabled: boolean,
 ): NextResponse {
   const errorBanner = errorMsg
-    ? `<p style="color:#D64045;font-size:13px;margin:0 0 16px;padding:8px 12px;background:rgba(214,64,69,0.08);border-radius:8px;text-align:left">${errorMsg}</p>`
+    ? `<div class="error-banner"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span>${errorMsg}</span></div>`
     : '';
 
-  const totpField = totpEnabled
-    ? `<input type="text" name="totp" placeholder="6-digit 2FA code" required inputmode="numeric"
-         autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6"
-         style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:10px;font-size:16px;
-                outline:none;margin-bottom:12px;letter-spacing:0.2em;text-align:center">`
-    : '';
-
-  const totpHint = totpEnabled
-    ? `<p style="font-size:11px;color:#888;margin-top:14px">Use Google Authenticator, Authy, or any TOTP app.</p>`
-    : '';
+  const totpField = totpEnabled ? `
+    <div class="field-group">
+      <label class="field-label">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+        Authenticator Code
+      </label>
+      <input type="text" name="totp" placeholder="000000" required inputmode="numeric"
+        autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" class="field-input totp-input">
+    </div>` : '';
 
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Dashboard Login — SmartFinPro</title>
+  <title>SmartFinPro — Command Center</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    *{box-sizing:border-box}
-    body{font-family:system-ui,-apple-system,sans-serif;display:flex;justify-content:center;
-         align-items:center;height:100vh;margin:0;background:#F2F4F8;color:#1A1A2E}
-    input:focus{border-color:#1B4F8C!important;box-shadow:0 0 0 3px rgba(27,79,140,.12);outline:none}
-    input,button{transition:all .15s}
-    button:hover{opacity:.9}
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: #0d1117;
+      color: #e6edf3;
+      min-height: 100vh;
+      display: flex;
+      align-items: stretch;
+      overflow: hidden;
+    }
+
+    /* ── Left Panel ── */
+    .left-panel {
+      display: none;
+      width: 52%;
+      position: relative;
+      background: linear-gradient(145deg, #1B4F8C 0%, #0d2d52 50%, #071828 100%);
+      overflow: hidden;
+      padding: 60px 56px;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    @media(min-width:900px){ .left-panel { display: flex; } }
+
+    /* Animated mesh gradient */
+    .left-panel::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 20% 20%, rgba(245,166,35,0.12) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 80% at 80% 80%, rgba(27,79,140,0.3) 0%, transparent 60%);
+      animation: meshPulse 8s ease-in-out infinite alternate;
+    }
+    @keyframes meshPulse {
+      from { opacity: 0.6; transform: scale(1); }
+      to   { opacity: 1;   transform: scale(1.05); }
+    }
+
+    /* Grid pattern overlay */
+    .left-panel::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+      background-size: 48px 48px;
+    }
+
+    .brand { position: relative; z-index: 2; }
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 64px;
+    }
+    .brand-icon {
+      width: 44px; height: 44px;
+      background: linear-gradient(135deg, #F5A623, #D48B1A);
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 18px; color: #fff;
+      box-shadow: 0 4px 24px rgba(245,166,35,0.4);
+    }
+    .brand-name { font-size: 20px; font-weight: 700; color: #fff; letter-spacing: -0.3px; }
+    .brand-name span { color: #F5A623; }
+
+    .hero-headline {
+      font-size: 42px;
+      font-weight: 700;
+      line-height: 1.15;
+      letter-spacing: -1px;
+      color: #fff;
+      margin-bottom: 20px;
+    }
+    .hero-headline em { font-style: normal; color: #F5A623; }
+    .hero-sub {
+      font-size: 16px;
+      color: rgba(255,255,255,0.55);
+      line-height: 1.6;
+      max-width: 340px;
+    }
+
+    .stats-row {
+      display: flex;
+      gap: 32px;
+      position: relative;
+      z-index: 2;
+    }
+    .stat { }
+    .stat-value { font-size: 28px; font-weight: 700; color: #fff; letter-spacing: -0.5px; }
+    .stat-label { font-size: 12px; color: rgba(255,255,255,0.4); margin-top: 2px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+    .stat-divider { width: 1px; background: rgba(255,255,255,0.1); }
+
+    .hero-content { position: relative; z-index: 2; }
+
+    /* ── Right Panel ── */
+    .right-panel {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #ffffff;
+      padding: 40px 32px;
+    }
+
+    .login-card {
+      width: 100%;
+      max-width: 400px;
+      animation: slideUp 0.5s cubic-bezier(0.16,1,0.3,1) both;
+    }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Mobile logo */
+    .mobile-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 40px;
+    }
+    @media(min-width:900px){ .mobile-brand { display: none; } }
+    .mobile-brand-icon {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, #F5A623, #D48B1A);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 15px; color: #fff;
+    }
+    .mobile-brand-name { font-size: 18px; font-weight: 700; color: #1A1A2E; }
+    .mobile-brand-name span { color: #1B4F8C; }
+
+    .card-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #EEF4FF;
+      color: #1B4F8C;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      padding: 5px 12px;
+      border-radius: 100px;
+      margin-bottom: 24px;
+    }
+    .card-badge svg { color: #1B4F8C; }
+
+    .card-title {
+      font-size: 28px;
+      font-weight: 700;
+      color: #0d1117;
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+    }
+    .card-sub {
+      font-size: 14px;
+      color: #6e7681;
+      margin-bottom: 32px;
+      line-height: 1.5;
+    }
+
+    .error-banner {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #fff0f0;
+      border: 1px solid #fecaca;
+      border-left: 3px solid #D64045;
+      border-radius: 10px;
+      padding: 12px 16px;
+      margin-bottom: 20px;
+      font-size: 13px;
+      color: #991b1b;
+      font-weight: 500;
+    }
+
+    .field-group { margin-bottom: 16px; }
+    .field-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #444d56;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+    .field-label svg { color: #1B4F8C; }
+    .field-input {
+      width: 100%;
+      padding: 13px 16px;
+      border: 1.5px solid #e1e4e8;
+      border-radius: 12px;
+      font-size: 15px;
+      font-family: inherit;
+      color: #0d1117;
+      background: #f6f8fa;
+      outline: none;
+      transition: all 0.2s;
+    }
+    .field-input:focus {
+      border-color: #1B4F8C;
+      background: #fff;
+      box-shadow: 0 0 0 4px rgba(27,79,140,0.08);
+    }
+    .field-input::placeholder { color: #adb5bd; }
+    .totp-input {
+      letter-spacing: 0.4em;
+      text-align: center;
+      font-size: 22px;
+      font-weight: 600;
+      padding: 14px 16px;
+    }
+
+    .submit-btn {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #F5A623 0%, #D48B1A 100%);
+      color: #fff;
+      font-size: 15px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 8px;
+      box-shadow: 0 4px 16px rgba(245,166,35,0.35);
+      letter-spacing: 0.2px;
+    }
+    .submit-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 24px rgba(245,166,35,0.5);
+    }
+    .submit-btn:active { transform: translateY(0); }
+    .submit-btn svg { transition: transform 0.2s; }
+    .submit-btn:hover svg { transform: translateX(3px); }
+
+    .footer-note {
+      margin-top: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      font-size: 12px;
+      color: #adb5bd;
+    }
+    .footer-note svg { color: #1A6B3A; }
+
+    .divider {
+      height: 1px;
+      background: #e1e4e8;
+      margin: 24px 0;
+    }
   </style>
 </head>
 <body>
-<div style="text-align:center;width:100%;max-width:360px;padding:0 24px">
-  <div style="font-size:40px;margin-bottom:16px">&#128274;</div>
-  <h1 style="font-size:20px;font-weight:600;margin:0 0 8px">Dashboard Access</h1>
-  <p style="color:#555;font-size:14px;margin:0 0 24px">
-    ${totpEnabled ? 'Enter your secret and 2FA code to continue.' : 'Enter your dashboard secret to continue.'}
-  </p>
-  ${errorBanner}
-  <form method="POST" action="${redirectPath}">
-    <input type="hidden" name="redirect" value="${redirectPath}">
-    <input type="password" name="secret" placeholder="Dashboard Secret" required
-      autocomplete="current-password"
-      style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:10px;
-             font-size:14px;outline:none;margin-bottom:12px">
-    ${totpField}
-    <button type="submit"
-      style="width:100%;padding:10px 14px;border:none;border-radius:10px;
-             font-size:14px;font-weight:600;color:#fff;background:#F5A623;cursor:pointer">
-      Sign In
-    </button>
-  </form>
-  ${totpHint}
+
+<!-- Left Branding Panel -->
+<div class="left-panel">
+  <div class="brand">
+    <div class="brand-logo">
+      <div class="brand-icon">SF</div>
+      <div class="brand-name">Smart<span>Fin</span>Pro</div>
+    </div>
+    <div class="hero-content">
+      <h1 class="hero-headline">Your Affiliate<br><em>Command Center</em></h1>
+      <p class="hero-sub">Real-time analytics, AI-powered content, and revenue intelligence — all in one platform.</p>
+    </div>
+  </div>
+  <div class="stats-row">
+    <div class="stat">
+      <div class="stat-value">200+</div>
+      <div class="stat-label">Live Routes</div>
+    </div>
+    <div class="stat-divider"></div>
+    <div class="stat">
+      <div class="stat-value">108+</div>
+      <div class="stat-label">MDX Reviews</div>
+    </div>
+    <div class="stat-divider"></div>
+    <div class="stat">
+      <div class="stat-value">4</div>
+      <div class="stat-label">Markets</div>
+    </div>
+  </div>
 </div>
+
+<!-- Right Form Panel -->
+<div class="right-panel">
+  <div class="login-card">
+
+    <!-- Mobile brand -->
+    <div class="mobile-brand">
+      <div class="mobile-brand-icon">SF</div>
+      <div class="mobile-brand-name">Smart<span>Fin</span>Pro</div>
+    </div>
+
+    <div class="card-badge">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      Secure Access
+    </div>
+
+    <h1 class="card-title">Welcome back</h1>
+    <p class="card-sub">${totpEnabled ? 'Enter your password and authenticator code to access the dashboard.' : 'Enter your dashboard password to continue.'}</p>
+
+    ${errorBanner}
+
+    <form method="POST" action="${redirectPath}" autocomplete="on">
+      <input type="hidden" name="redirect" value="${redirectPath}">
+
+      <div class="field-group">
+        <label class="field-label">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          Password
+        </label>
+        <input type="password" name="secret" placeholder="Enter your password" required
+          autocomplete="current-password" autofocus class="field-input">
+      </div>
+
+      ${totpField}
+
+      <button type="submit" class="submit-btn">
+        Access Dashboard
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </button>
+    </form>
+
+    <div class="divider"></div>
+
+    <div class="footer-note">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      ${totpEnabled ? 'Protected by password + TOTP 2FA' : 'Access is logged and monitored'}
+    </div>
+  </div>
+</div>
+
 </body>
 </html>`;
 
