@@ -59,9 +59,10 @@ export async function POST(req: NextRequest) {
 
     // Always log to cron_logs — most cron jobs don't log themselves,
     // so without this the Cron Health page would always show "never run".
+    let logError: string | null = null;
     try {
       const supabase = createServiceClient();
-      await supabase.from('cron_logs').insert({
+      const { error: insertErr } = await supabase.from('cron_logs').insert({
         job_name: job,
         status: res.ok ? 'success' : 'error',
         duration_ms: duration,
@@ -69,8 +70,9 @@ export async function POST(req: NextRequest) {
         metadata: { source: 'dashboard-trigger', httpStatus: res.status },
         executed_at: new Date().toISOString(),
       });
-    } catch {
-      // Don't fail the response if logging fails
+      if (insertErr) logError = insertErr.message;
+    } catch (e) {
+      logError = e instanceof Error ? e.message : 'unknown';
     }
 
     return NextResponse.json({
@@ -78,6 +80,8 @@ export async function POST(req: NextRequest) {
       status: res.status,
       duration,
       body: body.slice(0, 500),
+      logged: !logError,
+      logError,
     });
   } catch (err) {
     const duration = Date.now() - start;
