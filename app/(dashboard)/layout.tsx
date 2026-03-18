@@ -30,6 +30,7 @@ import {
   Globe,
   Menu,
   X,
+  HeartPulse,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 // Server action imports removed — loaded dynamically in useEffect to prevent
@@ -97,6 +98,7 @@ const SIDEBAR_GROUPS: NavGroup[] = [
     links: [
       { name: 'Compliance Audit', href: '/dashboard/compliance', icon: Shield },
       { name: 'Web Vitals', href: '/dashboard/web-vitals', icon: Activity },
+      { name: 'Cron Health', href: '/dashboard/cron-health', icon: HeartPulse },
       { name: 'Settings', href: '/dashboard/settings', icon: Settings },
     ],
   },
