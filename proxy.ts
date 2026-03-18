@@ -187,18 +187,30 @@ function clearAttempts(ip: string): void {
 // MAIN MIDDLEWARE
 // ============================================================
 
-// Cookie config — derived from NEXT_PUBLIC_SITE_URL instead of NODE_ENV
-// because PM2 on Cloudways VPS runs with NODE_ENV=development by default.
-const COOKIE_DOMAIN = (() => {
-  try {
-    const host = new URL(process.env.NEXT_PUBLIC_SITE_URL ?? '').hostname;
-    return host.includes('localhost') || host.includes('127.0.0.1') ? undefined : host.replace(/^www\./, '');
-  } catch { return undefined; }
-})();
-const COOKIE_SECURE = !!COOKIE_DOMAIN; // secure=true when we have a real domain
+// Cookie config must come from the real incoming request host/proto.
+// Relying on NEXT_PUBLIC_SITE_URL can break auth cookies on Cloudflare/www/apex setups.
+function getCookieConfig(request: NextRequest): { domain?: string; secure: boolean } {
+  const forwardedHost = request.headers.get('x-forwarded-host');
+  const hostHeader = request.headers.get('host');
+  const rawHost = (forwardedHost || hostHeader || request.nextUrl.hostname || '').split(',')[0].trim();
+  const hostname = rawHost.split(':')[0].toLowerCase();
+
+  const isLocal =
+    hostname === 'localhost' ||
+    hostname === '127.0.0.1' ||
+    hostname.endsWith('.localhost');
+
+  const domain = isLocal || !hostname ? undefined : hostname.replace(/^www\./, '');
+  const forwardedProto = request.headers.get('x-forwarded-proto')?.split(',')[0].trim().toLowerCase();
+  const proto = forwardedProto || request.nextUrl.protocol.replace(':', '').toLowerCase();
+  const secure = !isLocal && proto === 'https';
+
+  return { domain, secure };
+}
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const { domain: cookieDomain, secure: cookieSecure } = getCookieConfig(request);
 
   try {
     // ── Dashboard Auth Gate ──────────────────────────────────────
@@ -297,20 +309,23 @@ export async function proxy(request: NextRequest) {
           // ✅ Both checks passed — clear failed attempts + issue sliding session cookie
           if (process.env.NODE_ENV === 'production') clearAttempts(clientIp);
           const sessionToken = await createSessionToken(dashSecret);
-          const response = NextResponse.redirect(new URL(safePath, request.url));
+          // IMPORTANT: Use 303 after login form POST.
+          // NextResponse.redirect defaults to 307 (method preserved),
+          // which replays POST /dashboard and can cause redirect loops.
+          const response = NextResponse.redirect(new URL(safePath, request.url), 303);
           // no-store: prevents Cloudflare/browser from caching the 302 redirect
           // (cached redirects cause ERR_TOO_MANY_REDIRECTS on subsequent visits)
           response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
           response.headers.set('Pragma', 'no-cache');
           response.cookies.set('sfp-dash-auth', sessionToken, {
             httpOnly: true,
-            secure: COOKIE_SECURE,
+            secure: cookieSecure,
             sameSite: 'lax', // 'strict' prevents cookie being sent on POST→redirect chain
             maxAge: SESSION_MAX_AGE, // 30 min
             path: '/dashboard',
             // domain covers both www and non-www so the cookie is sent
             // regardless of which subdomain the browser is currently on
-            domain: COOKIE_DOMAIN,
+            domain: cookieDomain,
           });
           return response;
         } catch {
@@ -339,11 +354,11 @@ export async function proxy(request: NextRequest) {
         response.headers.set('Pragma', 'no-cache');
         response.cookies.set('sfp-dash-auth', expectedToken, {
           httpOnly: true,
-          secure: COOKIE_SECURE,
+          secure: cookieSecure,
           sameSite: 'lax', // consistent with login cookie
           maxAge: SESSION_MAX_AGE, // sliding: resets on every page load
           path: '/dashboard',
-          domain: COOKIE_DOMAIN,
+          domain: cookieDomain,
         });
         return response;
       }
@@ -844,7 +859,7 @@ function withGeoCookie(request: NextRequest, response: NextResponse): NextRespon
 
   response.cookies.set(GEO_COOKIE_NAME, market, {
     httpOnly: false, // Must be readable by client JS
-    secure: COOKIE_SECURE,
+    secure: cookieSecure,
     sameSite: 'lax',
     maxAge: 60 * 60 * 24, // 24 hours
     path: '/',

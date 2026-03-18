@@ -85,7 +85,15 @@ export function middleware(request: NextRequest) {
       if (authCookie !== dashSecret) {
         return new NextResponse(
           '<html><body style="font-family:system-ui;display:flex;justify-content:center;align-items:center;height:100vh;background:#0f0a1a;color:#fff"><div style="text-align:center"><h1>🔒 Dashboard Access Required</h1><p style="color:#94a3b8">Append <code style="background:#1e293b;padding:2px 8px;border-radius:4px">?auth=YOUR_SECRET</code> to the URL</p></div></div></html>',
-          { status: 401, headers: { 'Content-Type': 'text/html' } }
+          {
+            // 200 instead of 401 to avoid Cloudways/Nginx auth error interception loops.
+            status: 200,
+            headers: {
+              'Content-Type': 'text/html',
+              'Cache-Control': 'no-store, no-cache, must-revalidate',
+              'Pragma': 'no-cache',
+            },
+          }
         );
       }
     }
