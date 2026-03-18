@@ -38,11 +38,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'CRON_SECRET not configured' }, { status: 500 });
   }
 
-  // Call the cron endpoint on the same server process.
-  // Use the incoming request host so this works in dev (any port) and prod.
-  const proto = req.headers.get('x-forwarded-proto') ?? 'http';
-  const host  = req.headers.get('host') ?? 'localhost:3000';
-  const baseUrl = `${proto}://${host}`;
+  // Call the cron endpoint directly on the local process — bypasses Cloudflare
+  // so there's no hairpin-loop through the CDN. PORT is set by PM2 (prod=3000)
+  // and by the Next.js dev server (dev=3002 via launch.json).
+  const port    = process.env.PORT ?? '3000';
+  const baseUrl = `http://localhost:${port}`;
   const start = Date.now();
 
   try {
