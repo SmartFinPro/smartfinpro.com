@@ -10,13 +10,16 @@ export async function GET() {
     new URL('/dashboard', process.env.NEXT_PUBLIC_SITE_URL ?? 'https://smartfinpro.com'),
   );
 
-  // Delete the auth cookie by setting maxAge=0
+  // Delete the auth cookie by setting maxAge=0.
+  // domain MUST match the domain used when setting the cookie (smartfinpro.com),
+  // otherwise the browser ignores the deletion and the user stays logged in.
   response.cookies.set('sfp-dash-auth', '', {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
     maxAge: 0,
     path: '/dashboard',
+    domain: process.env.NODE_ENV === 'production' ? 'smartfinpro.com' : undefined,
   });
 
   return response;
