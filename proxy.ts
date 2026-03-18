@@ -264,7 +264,7 @@ export async function proxy(request: NextRequest) {
           response.cookies.set('sfp-dash-auth', dashSecret, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
+            sameSite: 'lax', // 'strict' prevents cookie being sent on POST→redirect chain (ERR_TOO_MANY_REDIRECTS)
             maxAge: SESSION_MAX_AGE, // 30 min
             path: '/dashboard',
           });
@@ -293,7 +293,7 @@ export async function proxy(request: NextRequest) {
         response.cookies.set('sfp-dash-auth', dashSecret, {
           httpOnly: true,
           secure: process.env.NODE_ENV === 'production',
-          sameSite: 'strict',
+          sameSite: 'lax', // consistent with login cookie
           maxAge: SESSION_MAX_AGE, // sliding: resets on every page load
           path: '/dashboard',
         });
