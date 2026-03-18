@@ -339,11 +339,11 @@ export async function proxy(request: NextRequest) {
         response.headers.set('Pragma', 'no-cache');
         response.cookies.set('sfp-dash-auth', expectedToken, {
           httpOnly: true,
-          secure: process.env.NODE_ENV === 'production',
+          secure: COOKIE_SECURE,
           sameSite: 'lax', // consistent with login cookie
           maxAge: SESSION_MAX_AGE, // sliding: resets on every page load
           path: '/dashboard',
-          domain: process.env.NODE_ENV === 'production' ? 'smartfinpro.com' : undefined,
+          domain: COOKIE_DOMAIN,
         });
         return response;
       }
@@ -844,7 +844,7 @@ function withGeoCookie(request: NextRequest, response: NextResponse): NextRespon
 
   response.cookies.set(GEO_COOKIE_NAME, market, {
     httpOnly: false, // Must be readable by client JS
-    secure: process.env.NODE_ENV === 'production',
+    secure: COOKIE_SECURE,
     sameSite: 'lax',
     maxAge: 60 * 60 * 24, // 24 hours
     path: '/',
