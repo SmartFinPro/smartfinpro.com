@@ -381,33 +381,72 @@ const nextConfig: NextConfig = {
       // CDN (Cloudflare): s-maxage=3600 → cached 1h am Edge.
       // Surrogate-Control: Varnish/Fastly/Cloudways-Proxy.
       // ============================================================
+      // Review & Category Pages — Aggressive Cloudflare Edge Caching
+      // MDX-Reviews ändern sich selten → 24h CDN Cache sinnvoll.
+      // CDN-Cache-Control: Cloudflare-spezifisch, überschreibt Cache-Control
+      // am Edge. Browser sehen nur Cache-Control (no-cache → immer fresh).
+      // ============================================================
       {
-        source: '/:path((?!api|_next|static|favicon).*)',
+        source: '/:market(uk|ca|au)/:category/:slug*',
         headers: [
           {
             key: 'Cache-Control',
-            value: 'public, no-cache, must-revalidate, proxy-revalidate, s-maxage=3600, stale-while-revalidate=86400, no-transform',
+            value: 'public, max-age=0, s-maxage=86400, stale-while-revalidate=86400, no-transform',
           },
-          // HTTP/1.0 Fallback (Samsung Internet, IE11, Corporate Proxies)
           {
-            key: 'Pragma',
-            value: 'no-cache',
+            key: 'CDN-Cache-Control',
+            value: 'max-age=86400',
           },
-          // HTTP/1.0 Fallback (ältere Proxy-Server)
           {
-            key: 'Expires',
-            value: '0',
+            key: 'Cloudflare-CDN-Cache-Control',
+            value: 'max-age=86400',
           },
-          // Varnish/Fastly/Cloudways Reverse-Proxy Caching
-          {
-            key: 'Surrogate-Control',
-            value: 'max-age=3600',
-          },
-          // Vary: Browser soll pro Encoding + Accept separaten Cache halten.
-          // Verhindert dass gzip-Version für brotli-Client ausgeliefert wird.
           {
             key: 'Vary',
-            value: 'Accept-Encoding, Accept',
+            value: 'Accept-Encoding',
+          },
+        ],
+      },
+      // US Review Pages (kein Market-Prefix)
+      {
+        source: '/:category(ai-tools|trading|forex|personal-finance|business-banking|cybersecurity|credit-repair|debt-relief|credit-score)/:slug*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=0, s-maxage=86400, stale-while-revalidate=86400, no-transform',
+          },
+          {
+            key: 'CDN-Cache-Control',
+            value: 'max-age=86400',
+          },
+          {
+            key: 'Cloudflare-CDN-Cache-Control',
+            value: 'max-age=86400',
+          },
+          {
+            key: 'Vary',
+            value: 'Accept-Encoding',
+          },
+        ],
+      },
+      // ============================================================
+      // Alle anderen HTML-Seiten (Homepage, Kategorieseiten etc.)
+      // 1h CDN-Cache, Browser revalidiert immer.
+      // ============================================================
+      {
+        source: '/:path((?!api|_next|static|favicon|dashboard).*)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=0, s-maxage=3600, stale-while-revalidate=86400, no-transform',
+          },
+          {
+            key: 'CDN-Cache-Control',
+            value: 'max-age=3600',
+          },
+          {
+            key: 'Vary',
+            value: 'Accept-Encoding',
           },
         ],
       },
