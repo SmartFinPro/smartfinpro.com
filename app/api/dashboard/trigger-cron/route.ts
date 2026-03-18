@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
       const supabase = createServiceClient();
       const { error: insertErr } = await supabase.from('cron_logs').insert({
         job_name: job,
-        status: res.ok ? 'success' : 'error',
+        status: res.ok ? 'completed' : 'error',
         duration_ms: duration,
         error: res.ok ? null : `HTTP ${res.status}: ${body.slice(0, 200)}`,
         metadata: { source: 'dashboard-trigger', httpStatus: res.status },
