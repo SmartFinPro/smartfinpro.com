@@ -200,6 +200,37 @@ export async function proxy(request: NextRequest) {
     //
     // Dev-Bypass: DASHBOARD_AUTH_DISABLED=true in .env.local
     // → Dashboard ohne Login erreichbar (für lokale Entwicklung).
+    // ── Temporary debug endpoint: /dashboard?_debug=1 ──────────
+    // Returns JSON with request details to diagnose redirect loops.
+    // REMOVE after debugging is complete.
+    if (pathname === '/dashboard' && request.nextUrl.searchParams.get('_debug') === '1') {
+      const info = {
+        url: request.url,
+        hostname: request.nextUrl.hostname,
+        protocol: request.nextUrl.protocol,
+        pathname: request.nextUrl.pathname,
+        method: request.method,
+        headers: {
+          host: request.headers.get('host'),
+          'x-forwarded-proto': request.headers.get('x-forwarded-proto'),
+          'x-forwarded-host': request.headers.get('x-forwarded-host'),
+          'x-forwarded-for': request.headers.get('x-forwarded-for'),
+          'cf-connecting-ip': request.headers.get('cf-connecting-ip'),
+          'cf-ray': request.headers.get('cf-ray'),
+        },
+        cookies: request.cookies.getAll().map(c => c.name),
+        env: {
+          NODE_ENV: process.env.NODE_ENV,
+          hasSecret: !!process.env.DASHBOARD_SECRET,
+          siteUrl: process.env.NEXT_PUBLIC_SITE_URL,
+        },
+      };
+      return new NextResponse(JSON.stringify(info, null, 2), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
+      });
+    }
+
     if (pathname.startsWith('/dashboard')) {
       const dashSecret  = process.env.DASHBOARD_SECRET;
       const totpSecret  = process.env.DASHBOARD_TOTP_SECRET;   // optional 2FA
