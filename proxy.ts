@@ -187,6 +187,16 @@ function clearAttempts(ip: string): void {
 // MAIN MIDDLEWARE
 // ============================================================
 
+// Cookie config — derived from NEXT_PUBLIC_SITE_URL instead of NODE_ENV
+// because PM2 on Cloudways VPS runs with NODE_ENV=development by default.
+const COOKIE_DOMAIN = (() => {
+  try {
+    const host = new URL(process.env.NEXT_PUBLIC_SITE_URL ?? '').hostname;
+    return host.includes('localhost') || host.includes('127.0.0.1') ? undefined : host.replace(/^www\./, '');
+  } catch { return undefined; }
+})();
+const COOKIE_SECURE = !!COOKIE_DOMAIN; // secure=true when we have a real domain
+
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -294,13 +304,13 @@ export async function proxy(request: NextRequest) {
           response.headers.set('Pragma', 'no-cache');
           response.cookies.set('sfp-dash-auth', sessionToken, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
+            secure: COOKIE_SECURE,
             sameSite: 'lax', // 'strict' prevents cookie being sent on POST→redirect chain
             maxAge: SESSION_MAX_AGE, // 30 min
             path: '/dashboard',
             // domain covers both www and non-www so the cookie is sent
             // regardless of which subdomain the browser is currently on
-            domain: process.env.NODE_ENV === 'production' ? 'smartfinpro.com' : undefined,
+            domain: COOKIE_DOMAIN,
           });
           return response;
         } catch {
