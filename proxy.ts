@@ -191,6 +191,18 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   try {
+    // ── www → non-www redirect ────────────────────────────────────
+    // Ensures the auth cookie domain is always smartfinpro.com.
+    // Without this, a cookie set on www.smartfinpro.com is not sent
+    // to smartfinpro.com on client-side navigation → instant logout.
+    if (request.nextUrl.hostname.startsWith('www.')) {
+      const url = request.nextUrl.clone();
+      url.hostname = url.hostname.slice(4); // strip "www."
+      const res = NextResponse.redirect(url, 302);
+      res.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+      return res;
+    }
+
     // ── Dashboard Auth Gate ──────────────────────────────────────
     // Protects /dashboard/* with DASHBOARD_SECRET cookie check.
     // Login via POST form — secret never appears in URL or browser history.
