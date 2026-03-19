@@ -181,10 +181,11 @@ function SidebarContent({ pathname, badges, onNavigate }: SidebarContentProps) {
       <div className="px-4 py-4 border-t border-slate-200 flex flex-col gap-1">
         <Link
           href="/"
+          target="_blank"
+          rel="noopener noreferrer"
           className="nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] text-slate-500 hover:bg-slate-50 hover:text-slate-700 font-medium transition-all"
-          onClick={onNavigate}
         >
-          <LogOut className="h-4 w-4 text-slate-400" />
+          <Globe className="h-4 w-4 text-slate-400" />
           <span>Back to Site</span>
         </Link>
         <Link
