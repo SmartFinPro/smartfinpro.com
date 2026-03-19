@@ -3,6 +3,7 @@
 // Solves: client can't know CRON_SECRET; sends DASHBOARD_SECRET cookie instead.
 
 import { NextRequest, NextResponse } from 'next/server';
+import { isValidDashboardSessionValue } from '@/lib/auth/dashboard-session';
 
 function isAuthed(request: NextRequest): boolean {
   // Auth-disabled flag takes priority (dev / local)
@@ -14,7 +15,7 @@ function isAuthed(request: NextRequest): boolean {
   const cookie = request.cookies.get('sfp-dash-auth')?.value;
   const bearer = request.headers.get('authorization')?.replace('Bearer ', '');
 
-  return cookie === dashSecret || bearer === dashSecret;
+  return isValidDashboardSessionValue(cookie, dashSecret) || bearer === dashSecret;
 }
 
 export async function POST(request: NextRequest) {

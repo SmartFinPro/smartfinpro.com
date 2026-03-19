@@ -4,6 +4,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
 import { cookies } from 'next/headers';
+import { isValidDashboardSessionValue } from '@/lib/auth/dashboard-session';
 
 const VALID_STATUSES = ['new', 'reviewing', 'approved', 'rejected', 'published'] as const;
 type Status = typeof VALID_STATUSES[number];
@@ -15,7 +16,7 @@ async function isAuthorized(): Promise<boolean> {
 
   if (process.env.DASHBOARD_AUTH_DISABLED === 'true') return true;
   if (!secret || !authCookie) return false;
-  return authCookie === secret;
+  return isValidDashboardSessionValue(authCookie, secret);
 }
 
 export async function PATCH(

@@ -139,6 +139,31 @@ function timingSafeCompare(a: string, b: string): boolean {
   return result === 0;
 }
 
+/**
+ * Collect all possible dashboard cookie values.
+ * Browsers can send duplicate cookie names when legacy/domain variants exist.
+ */
+function getDashboardCookieCandidates(request: NextRequest): string[] {
+  const values: string[] = [];
+  const direct = request.cookies.get('sfp-dash-auth')?.value;
+  if (direct) values.push(direct);
+
+  const rawCookie = request.headers.get('cookie') ?? '';
+  for (const part of rawCookie.split(';')) {
+    const [name, ...rest] = part.trim().split('=');
+    if (name !== 'sfp-dash-auth') continue;
+    const value = rest.join('=').trim();
+    if (!value) continue;
+    try {
+      values.push(decodeURIComponent(value));
+    } catch {
+      values.push(value);
+    }
+  }
+
+  return Array.from(new Set(values));
+}
+
 // ============================================================
 // BRUTE-FORCE PROTECTION (production-only)
 // In-memory per-Edge-worker rate limiter.
@@ -336,9 +361,15 @@ export async function proxy(request: NextRequest) {
 
       // ── Validate auth cookie + renew sliding session ─────────
       if (dashSecret) {
-        const authCookie = request.cookies.get('sfp-dash-auth')?.value;
         const expectedToken = await createSessionToken(dashSecret);
-        if (!authCookie || !timingSafeCompare(authCookie, expectedToken)) {
+        const candidates = getDashboardCookieCandidates(request);
+        const isAuthed = candidates.some(
+          (value) =>
+            timingSafeCompare(value, expectedToken) ||
+            timingSafeCompare(value, dashSecret), // legacy cookie compatibility
+        );
+
+        if (!isAuthed) {
           const clientIp =
             request.headers.get('x-forwarded-for')?.split(',')[0] ?? 'unknown';
           console.warn(

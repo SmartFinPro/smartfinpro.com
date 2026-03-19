@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { isValidDashboardSessionValue } from '@/lib/auth/dashboard-session';
 
 /**
  * GET /api/dashboard/totp-setup
@@ -25,7 +26,7 @@ export async function GET(request: NextRequest) {
   const bearerToken = request.headers.get('authorization')?.replace('Bearer ', '');
 
   const isAuthed =
-    (dashSecret && authCookie === dashSecret) ||
+    isValidDashboardSessionValue(authCookie, dashSecret) ||
     (dashSecret && bearerToken === dashSecret);
 
   if (!isAuthed) {

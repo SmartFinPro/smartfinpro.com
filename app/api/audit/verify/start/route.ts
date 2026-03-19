@@ -19,6 +19,7 @@ import fs from 'fs';
 import path from 'path';
 import { tryAcquireLock, markFinished, PATHS } from '@/lib/audit/verify-status';
 import type { VerifyStartResponse, VerifyStartConflictResponse } from '@/lib/audit/verify-types';
+import { isValidDashboardSessionValue } from '@/lib/auth/dashboard-session';
 
 export const dynamic = 'force-dynamic';
 
@@ -33,7 +34,7 @@ function isAuthed(request: NextRequest): boolean {
   const cookie = request.cookies.get('sfp-dash-auth')?.value;
   const bearer = request.headers.get('authorization')?.replace('Bearer ', '');
 
-  return cookie === dashSecret || bearer === dashSecret;
+  return isValidDashboardSessionValue(cookie, dashSecret) || bearer === dashSecret;
 }
 
 // ── POST handler ───────────────────────────────────────────────────────────────

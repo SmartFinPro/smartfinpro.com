@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isGSCConfigured, getTopKeywords } from '@/lib/seo/google-search-console';
+import { isValidDashboardSessionValue } from '@/lib/auth/dashboard-session';
 
 /**
  * GET /api/dashboard/gsc-test
@@ -7,10 +8,10 @@ import { isGSCConfigured, getTopKeywords } from '@/lib/seo/google-search-console
  * Tests the Google Search Console connection.
  * Returns config status and a test query if credentials are present.
  *
- * Auth: requires sfp-dash-auth cookie (same secret as DASHBOARD_SECRET).
+ * Auth: requires sfp-dash-auth session cookie (HMAC token) or DASHBOARD_SECRET bearer.
  *
  * Usage from browser: fetch('/api/dashboard/gsc-test')
- * Usage from curl:    curl -H "Cookie: sfp-dash-auth=<secret>" https://smartfinpro.com/api/dashboard/gsc-test
+ * Usage from curl:    curl -H "Authorization: Bearer <DASHBOARD_SECRET>" https://smartfinpro.com/api/dashboard/gsc-test
  */
 export async function GET(request: NextRequest) {
   // ── Auth check (reads DASHBOARD_SECRET from env) ──────────────
@@ -23,7 +24,7 @@ export async function GET(request: NextRequest) {
     ?.replace('Bearer ', '');
 
   const isAuthed =
-    (dashSecret && authCookie === dashSecret) ||
+    isValidDashboardSessionValue(authCookie, dashSecret) ||
     (dashSecret && bearerToken === dashSecret);
 
   if (!isAuthed) {
