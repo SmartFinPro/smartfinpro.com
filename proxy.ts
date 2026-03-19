@@ -347,10 +347,7 @@ export async function proxy(request: NextRequest) {
             secure: cookieSecure,
             sameSite: 'lax', // 'strict' prevents cookie being sent on POST→redirect chain
             maxAge: SESSION_MAX_AGE, // 30 min
-            path: '/dashboard',
-            // domain covers both www and non-www so the cookie is sent
-            // regardless of which subdomain the browser is currently on
-            domain: cookieDomain,
+            path: '/', // Root path — cookie sent for ALL requests (avoids RSC navigation path-mismatch)
           });
           return response;
         } catch {
@@ -388,8 +385,7 @@ export async function proxy(request: NextRequest) {
           secure: cookieSecure,
           sameSite: 'lax', // consistent with login cookie
           maxAge: SESSION_MAX_AGE, // sliding: resets on every page load
-          path: '/dashboard',
-          domain: cookieDomain,
+          path: '/', // Root path — cookie sent for ALL requests
         });
         return response;
       }
