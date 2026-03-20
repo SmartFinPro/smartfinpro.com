@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import type { TimeRange } from '@/lib/actions/dashboard';
 
 const ranges: { value: TimeRange; label: string }[] = [
@@ -13,12 +13,13 @@ const ranges: { value: TimeRange; label: string }[] = [
 export function TimeRangeSelector() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const pathname = usePathname();
   const currentRange = (searchParams.get('range') as TimeRange) || '24h';
 
   const handleRangeChange = (value: string) => {
     const params = new URLSearchParams(searchParams.toString());
     params.set('range', value);
-    router.push(`/dashboard?${params.toString()}`);
+    router.push(`${pathname}?${params.toString()}`);
   };
 
   return (
