@@ -188,13 +188,18 @@ function SidebarContent({ pathname, badges, onNavigate }: SidebarContentProps) {
           <Globe className="h-4 w-4 text-slate-400" />
           <span>Back to Site</span>
         </Link>
-        <Link
+        {/* IMPORTANT: Use <a> NOT <Link> for logout.
+            <Link> prefetches routes automatically — prefetching the logout
+            endpoint would silently delete the auth cookie and log the user out
+            on the next navigation. This was the root cause of the "auto-logout
+            on sidebar click" bug. */}
+        <a
           href="/api/dashboard/logout"
           className="nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] text-red-500 hover:bg-red-50 hover:text-red-700 font-medium transition-all"
         >
           <LogOut className="h-4 w-4 text-red-400" />
           <span>Sign Out</span>
-        </Link>
+        </a>
         {process.env.NODE_ENV === 'development' && (
           <div className="px-3 pt-3 text-[10px] text-slate-400">
             Build: <span className="font-mono text-slate-500">{DEV_BUILD_MARKER}</span>
