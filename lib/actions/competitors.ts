@@ -492,41 +492,65 @@ export async function spyDomain(
 
 // ── Manual Scan Trigger ─────────────────────────────────────
 
+/**
+ * Max keywords to scan per request to avoid HTTP timeouts.
+ * Cloudflare/Nginx typically enforce 60s limits. At ~200ms per Serper call + 50ms delay,
+ * 40 keywords ≈ 10s which is safe. The dashboard "Full Scan" button can be clicked
+ * multiple times — each run picks the least-recently-scanned batch.
+ */
+const SCAN_BATCH_SIZE = 40;
+
 export async function triggerCompetitorScan(
   market?: Market,
   category?: string,
-): Promise<{ scanned: number; newAlerts: number }> {
+): Promise<{ scanned: number; newAlerts: number; remaining: number }> {
   const supabase = await createClient();
 
-  // Fetch active tracked keywords
+  // Fetch active tracked keywords, ordered by least recently scanned first
   let query = supabase
     .from('competitor_tracked_keywords')
-    .select('keyword, market, category')
+    .select('keyword, market, category, last_scanned_at')
     .eq('active', true)
-    .limit(200);
+    .order('last_scanned_at', { ascending: true, nullsFirst: true })
+    .limit(500);
 
   if (market) query = query.eq('market', market);
   if (category) query = query.eq('category', category);
 
   const result = await query;
-  const keywords = safeRows(result);
+  let keywords = safeRows(result);
 
-  // If no tracked keywords, seed them first
+  // If no tracked keywords, seed them first (only insert to DB, don't scan all)
   if (keywords.length === 0) {
     await seedCompetitorKeywords();
-    const seeded = COMPETITOR_KEYWORDS
-      .filter((k) => (!market || k.market === market) && (!category || k.category === category));
-    keywords.push(...seeded.map((k) => ({ keyword: k.keyword, market: k.market, category: k.category })));
+    // Re-fetch after seeding — now ordered by last_scanned_at (all null = never scanned)
+    let seedQuery = supabase
+      .from('competitor_tracked_keywords')
+      .select('keyword, market, category, last_scanned_at')
+      .eq('active', true)
+      .order('last_scanned_at', { ascending: true, nullsFirst: true })
+      .limit(500);
+
+    if (market) seedQuery = seedQuery.eq('market', market);
+    if (category) seedQuery = seedQuery.eq('category', category);
+
+    const seedResult = await seedQuery;
+    keywords = safeRows(seedResult);
   }
+
+  const totalKeywords = keywords.length;
+
+  // Take only SCAN_BATCH_SIZE keywords (least-recently scanned first)
+  const batch = keywords.slice(0, SCAN_BATCH_SIZE);
 
   let scanned = 0;
 
-  for (const kw of keywords) {
+  for (const kw of batch) {
     await analyzeKeyword(kw.keyword, kw.market as Market, kw.category);
     scanned++;
 
     // Rate limit: 50ms between requests
-    if (scanned < keywords.length) {
+    if (scanned < batch.length) {
       await new Promise((r) => setTimeout(r, 50));
     }
   }
@@ -534,7 +558,7 @@ export async function triggerCompetitorScan(
   // Run alert detection
   const newAlerts = await detectAlerts(market);
 
-  return { scanned, newAlerts };
+  return { scanned, newAlerts, remaining: Math.max(0, totalKeywords - scanned) };
 }
 
 // ── Seed Keywords ───────────────────────────────────────────

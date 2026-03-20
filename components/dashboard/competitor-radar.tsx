@@ -289,9 +289,12 @@ export function CompetitorRadar({ initialData }: CompetitorRadarProps) {
       });
       const result = await res.json();
       if (!res.ok) throw new Error(result.error || 'Scan failed');
+      const remainingMsg = result.remaining > 0
+        ? ` (${result.remaining} verbleibend — klick erneut für nächsten Batch)`
+        : '';
       toast.success(
-        `Scan abgeschlossen: ${result.scanned} Keywords analysiert, ${result.newAlerts} neue Alerts.`,
-        { duration: 5000 },
+        `Scan abgeschlossen: ${result.scanned} Keywords analysiert, ${result.newAlerts} neue Alerts.${remainingMsg}`,
+        { duration: 6000 },
       );
       // Reload page to get fresh data
       window.location.reload();

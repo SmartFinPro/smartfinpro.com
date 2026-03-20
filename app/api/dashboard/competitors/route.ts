@@ -9,6 +9,9 @@ import {
 } from '@/lib/actions/competitors';
 import type { Market } from '@/lib/i18n/config';
 
+// Allow up to 55s for scan batches (Cloudflare free tier = 100s)
+export const maxDuration = 55;
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
