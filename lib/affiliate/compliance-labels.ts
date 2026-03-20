@@ -11,7 +11,7 @@
  *            any 'use server' module. Breaking this rule will
  *            re-introduce the Turbopack enqueueModel crash.
  *
- * Coverage: 4 markets x 6 categories = 24 cells + 4 defaults
+ * Coverage: 4 markets x 16 categories = 64 cells (full matrix)
  */
 
 import type { Market, Category } from '@/types';
@@ -47,6 +47,20 @@ const COMPLIANCE_MAP: Record<Market, Partial<Record<Category, string>> & { defau
       'Debt relief programs may have tax consequences. Fees apply. Results vary based on individual circumstances.',
     'credit-score':
       'Credit scores are for educational purposes only. Actual scores may vary by bureau and scoring model.',
+    remortgaging:
+      'Refinancing may involve closing costs and fees. Not FDIC insured. Rates subject to credit approval. NMLS regulated.',
+    'cost-of-living':
+      'Information provided for educational purposes only. Not financial advice. Rates and prices may vary by state.',
+    savings:
+      'Rates and APYs may vary. Deposits may be FDIC insured up to $250,000. Terms and conditions apply.',
+    superannuation:
+      'US equivalent: 401(k)/IRA retirement accounts. SEC regulated. Past performance is not indicative of future results.',
+    'gold-investing':
+      'Investing in precious metals carries risk. Not FDIC insured. Past performance is not indicative of future returns.',
+    'tax-efficient-investing':
+      'Tax benefits depend on individual circumstances. Not tax advice. Consult a qualified tax professional. SEC regulated.',
+    housing:
+      'Terms apply. Mortgage rates subject to credit approval. Not FDIC insured. NMLS regulated. Equal Housing Lender.',
   },
 
   // ────────────────────────────────────────────────────────────
@@ -72,6 +86,20 @@ const COMPLIANCE_MAP: Record<Market, Partial<Record<Category, string>> & { defau
       'Information provided for guidance only. Eligibility for government schemes varies. FCA regulated where applicable.',
     savings:
       'Your capital is at risk. FSCS protected up to £85,000 where applicable. Interest rates may vary.',
+    'credit-repair':
+      'FCA regulated where applicable. Credit repair outcomes are not guaranteed. Seek independent financial advice.',
+    'debt-relief':
+      'Debt solutions may affect your credit rating. FCA authorised. Fees may apply. Seek independent debt advice.',
+    'credit-score':
+      'Credit scores are for educational purposes only. Scores may vary between CRAs (Experian, Equifax, TransUnion).',
+    superannuation:
+      'UK equivalent: Workplace pensions. FCA regulated. The Pensions Regulator rules apply. Tax relief subject to eligibility.',
+    'gold-investing':
+      'Capital at risk. FCA regulated where applicable. Past performance is not a reliable indicator of future results.',
+    'tax-efficient-investing':
+      'ISA/SIPP tax benefits depend on individual circumstances. FCA regulated. HMRC rules apply. Not tax advice.',
+    housing:
+      'Your home may be repossessed if you do not keep up repayments. FCA regulated. Stamp Duty may apply.',
   },
 
   // ────────────────────────────────────────────────────────────
@@ -93,6 +121,22 @@ const COMPLIANCE_MAP: Record<Market, Partial<Record<Category, string>> & { defau
       'Affiliate link. Terms apply. Feature availability may vary by plan.',
     'tax-efficient-investing':
       'Terms apply. CIRO regulated where applicable. Tax rules vary by province. Not tax advice.',
+    'credit-repair':
+      'CIRO regulated where applicable. Credit repair outcomes are not guaranteed. Provincial consumer protection rules apply.',
+    'debt-relief':
+      'Debt relief may affect your credit rating. Provincial licensing requirements apply. Fees may apply.',
+    'credit-score':
+      'Credit scores are for educational purposes only. Scores may vary between bureaus (Equifax, TransUnion).',
+    remortgaging:
+      'Terms apply. OSFI regulated. Mortgage rates subject to credit approval. Provincial rules may vary.',
+    'cost-of-living':
+      'Information provided for educational purposes only. Prices and benefits may vary by province.',
+    savings:
+      'Terms apply. CDIC insured up to $100,000 per category where applicable. Interest rates may vary.',
+    superannuation:
+      'Canadian equivalent: RRSP/RPP pension accounts. CIRO regulated. Tax rules vary by province.',
+    'gold-investing':
+      'Investing in precious metals carries risk. CIRO regulated where applicable. Past performance is not indicative of future returns.',
     housing:
       'Terms apply. CDIC insured where applicable. Mortgage rates and eligibility may vary.',
   },
@@ -118,8 +162,22 @@ const COMPLIANCE_MAP: Record<Market, Partial<Record<Category, string>> & { defau
       'General advice warning. Consider the PDS and TMD before deciding. Past performance is not a reliable indicator of future results.',
     'gold-investing':
       'Investing in gold carries risk. AFSL regulated where applicable. Consider the PDS. Past performance is not indicative of future returns.',
+    'credit-repair':
+      'ASIC regulated where applicable. Credit repair outcomes are not guaranteed. Consider seeking independent financial advice.',
+    'debt-relief':
+      'General advice warning. Debt agreements may affect your credit rating. ASIC regulated. Consider the PDS.',
+    'credit-score':
+      'Credit scores are for educational purposes only. Scores may vary between CRAs (Equifax, Experian, illion).',
+    remortgaging:
+      'Consider the PDS and TMD before deciding. ASIC regulated. Your home may be at risk if you do not keep up repayments.',
+    'cost-of-living':
+      'Information provided for educational purposes only. General advice warning. Prices may vary by state and territory.',
     savings:
       'ACL regulated where applicable. Consider the PDS and TMD before deciding. Interest rates may vary.',
+    'tax-efficient-investing':
+      'General advice warning. Tax benefits depend on individual circumstances. ASIC regulated. ATO rules apply. Not tax advice.',
+    housing:
+      'Consider the PDS and TMD before deciding. ASIC regulated. Mortgage rates subject to credit approval. Stamp duty may apply.',
   },
 };
 
@@ -151,7 +209,7 @@ export function getComplianceLabel(market?: Market, category?: Category): string
 
 // ── Dashboard Export ────────────────────────────────────────
 // Pre-structured for the Affiliate Command Center dashboard.
-// Allows rendering all 24 disclaimer cells in one table view.
+// Allows rendering all 64 disclaimer cells in one table view.
 
 export interface MarketRule {
   market: Market;
@@ -190,7 +248,7 @@ const ALL_MARKETS: Market[] = ['us', 'uk', 'ca', 'au'];
 
 /**
  * Full market rules matrix for dashboard display.
- * 24 entries: 4 markets x 6 categories.
+ * 64 entries: 4 markets x 16 categories.
  *
  * @example
  *   // In a dashboard component:
