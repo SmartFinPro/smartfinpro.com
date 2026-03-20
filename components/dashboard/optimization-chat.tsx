@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { LazyMotion, domAnimation, m, AnimatePresence } from 'framer-motion';
 import {
   Bot,
   Check,
@@ -102,7 +102,8 @@ function ChatMessage({
   const isRunning = task.status === 'executing' || isExecuting;
 
   return (
-    <motion.div
+    <LazyMotion features={domAnimation}>
+    <m.div
       initial={{ opacity: 0, y: 20, scale: 0.97 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: -10, scale: 0.97 }}
@@ -218,9 +219,10 @@ function ChatMessage({
                 <Code2 className="h-3 w-3" />
                 {showDelta ? 'Code-Patch verbergen' : 'Code-Patch anzeigen'}
               </button>
+              <LazyMotion features={domAnimation}>
               <AnimatePresence>
                 {showDelta && (
-                  <motion.pre
+                  <m.pre
                     initial={{ height: 0, opacity: 0 }}
                     animate={{ height: 'auto', opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
@@ -228,9 +230,10 @@ function ChatMessage({
                     className="mt-2 p-3 rounded-lg text-[10px] leading-relaxed text-slate-600 font-mono overflow-x-auto bg-slate-100 border border-slate-200"
                   >
                     {task.deltaCode}
-                  </motion.pre>
+                  </m.pre>
                 )}
               </AnimatePresence>
+              </LazyMotion>
             </div>
           )}
 
@@ -296,7 +299,8 @@ function ChatMessage({
           </div>
         )}
       </div>
-    </motion.div>
+    </m.div>
+    </LazyMotion>
   );
 }
 
@@ -483,7 +487,8 @@ export function OptimizationChat({ initialTasks, historyTasks }: OptimizationCha
         }}
       >
         {/* System Welcome Message */}
-        <motion.div
+        <LazyMotion features={domAnimation}>
+        <m.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           className="flex gap-3 items-start"
@@ -501,12 +506,14 @@ export function OptimizationChat({ initialTasks, historyTasks }: OptimizationCha
               Klicke &quot;Neue Analyse&quot; um die {interval === 'weekly' ? '7-Tage' : interval === 'biweekly' ? '14-Tage' : '30-Tage'} Performance zu scannen und Optimierungen vorzuschlagen.
             </p>
           </div>
-        </motion.div>
+        </m.div>
+        </LazyMotion>
 
         {/* Analyzing Animation */}
+        <LazyMotion features={domAnimation}>
         <AnimatePresence>
           {isAnalyzing && (
-            <motion.div
+            <m.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
@@ -521,7 +528,7 @@ export function OptimizationChat({ initialTasks, historyTasks }: OptimizationCha
                 </p>
                 <div className="flex gap-1 mt-2">
                   {[0, 1, 2].map((i) => (
-                    <motion.div
+                    <m.div
                       key={i}
                       className="w-1.5 h-1.5 rounded-full bg-violet-500"
                       animate={{ opacity: [0.3, 1, 0.3] }}
@@ -530,9 +537,10 @@ export function OptimizationChat({ initialTasks, historyTasks }: OptimizationCha
                   ))}
                 </div>
               </div>
-            </motion.div>
+            </m.div>
           )}
         </AnimatePresence>
+        </LazyMotion>
 
         {/* Task Messages */}
         <AnimatePresence mode="popLayout">

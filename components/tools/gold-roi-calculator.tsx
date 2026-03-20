@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { motion } from 'framer-motion';
+import { LazyMotion, domAnimation, m } from 'framer-motion';
 import {
   Calculator,
   DollarSign,
@@ -275,24 +275,26 @@ export function GoldROICalculator() {
         {/* Results Section */}
         <div className="space-y-6">
           {/* Projected Value Highlight */}
-          <motion.div
-            initial={{ scale: 0.95, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.3 }}
-            className="rounded-2xl p-6 text-white shadow-lg"
-            style={{ background: 'linear-gradient(135deg, var(--sfp-navy) 0%, var(--sfp-gold) 100%)' }}
-          >
-            <div className="flex items-center gap-2 mb-2">
-              <TrendingUp className="h-5 w-5" />
-              <span className="text-sm font-medium">Projected Value</span>
-            </div>
-            <div className="text-5xl font-bold mb-2">
-              {formatAUD(results.projectedValue)}
-            </div>
-            <p className="text-sm opacity-90">
-              After {holdingPeriodYears} year{holdingPeriodYears !== 1 ? 's' : ''} at {expectedReturnRate}% annual return
-            </p>
-          </motion.div>
+          <LazyMotion features={domAnimation}>
+            <m.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.3 }}
+              className="rounded-2xl p-6 text-white shadow-lg"
+              style={{ background: 'linear-gradient(135deg, var(--sfp-navy) 0%, var(--sfp-gold) 100%)' }}
+            >
+              <div className="flex items-center gap-2 mb-2">
+                <TrendingUp className="h-5 w-5" />
+                <span className="text-sm font-medium">Projected Value</span>
+              </div>
+              <div className="text-5xl font-bold mb-2">
+                {formatAUD(results.projectedValue)}
+              </div>
+              <p className="text-sm opacity-90">
+                After {holdingPeriodYears} year{holdingPeriodYears !== 1 ? 's' : ''} at {expectedReturnRate}% annual return
+              </p>
+            </m.div>
+          </LazyMotion>
 
           {/* Stats Grid */}
           <div className="grid grid-cols-2 gap-4">

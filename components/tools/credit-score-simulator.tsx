@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { motion } from 'framer-motion';
+import { LazyMotion, domAnimation, m } from 'framer-motion';
 import {
   CreditCard,
   TrendingUp,
@@ -381,33 +381,35 @@ export function CreditScoreSimulator() {
         {/* Results Section */}
         <div className="space-y-6">
           {/* 12-Month Projection Highlight */}
-          <motion.div
-            initial={{ scale: 0.95, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.3 }}
-            className="rounded-2xl p-6 text-white shadow-lg"
-            style={{ background: 'linear-gradient(135deg, var(--sfp-navy) 0%, var(--sfp-gold) 100%)' }}
-          >
-            <div className="flex items-center gap-2 mb-2">
-              <Clock className="h-5 w-5" />
-              <span className="text-sm font-medium">Projected Score in 12 Months</span>
-            </div>
-            <div className="flex items-baseline gap-3 mb-2">
-              <div className="text-5xl font-bold">{projection.months_12}</div>
-              <div
-                className="text-2xl font-bold px-3 py-1 rounded"
-                style={{
-                  background: projection.change_12 >= 0 ? 'rgba(26, 107, 58, 0.3)' : 'rgba(214, 64, 69, 0.3)',
-                  color: '#ffffff',
-                }}
-              >
-                {projection.change_12 >= 0 ? '↑' : '↓'} {formatChange(projection.change_12)}
+          <LazyMotion features={domAnimation}>
+            <m.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.3 }}
+              className="rounded-2xl p-6 text-white shadow-lg"
+              style={{ background: 'linear-gradient(135deg, var(--sfp-navy) 0%, var(--sfp-gold) 100%)' }}
+            >
+              <div className="flex items-center gap-2 mb-2">
+                <Clock className="h-5 w-5" />
+                <span className="text-sm font-medium">Projected Score in 12 Months</span>
               </div>
-            </div>
-            <p className="text-sm opacity-90">
-              {projectedRange12.label} range ({projectedRange12.min}–{projectedRange12.max})
-            </p>
-          </motion.div>
+              <div className="flex items-baseline gap-3 mb-2">
+                <div className="text-5xl font-bold">{projection.months_12}</div>
+                <div
+                  className="text-2xl font-bold px-3 py-1 rounded"
+                  style={{
+                    background: projection.change_12 >= 0 ? 'rgba(26, 107, 58, 0.3)' : 'rgba(214, 64, 69, 0.3)',
+                    color: '#ffffff',
+                  }}
+                >
+                  {projection.change_12 >= 0 ? '↑' : '↓'} {formatChange(projection.change_12)}
+                </div>
+              </div>
+              <p className="text-sm opacity-90">
+                {projectedRange12.label} range ({projectedRange12.min}–{projectedRange12.max})
+              </p>
+            </m.div>
+          </LazyMotion>
 
           {/* Timeline Grid */}
           <div className="grid grid-cols-3 gap-3">
@@ -464,15 +466,17 @@ export function CreditScoreSimulator() {
                       </span>
                     </div>
                     <div className="w-full h-8 rounded-lg bg-gray-100 overflow-hidden relative">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${normalizedScore * 100}%` }}
-                        transition={{ duration: 0.5, delay: idx * 0.1 }}
-                        className="h-full rounded-lg transition-all"
-                        style={{
-                          background: `linear-gradient(90deg, var(--sfp-navy) 0%, var(--sfp-gold) 100%)`,
-                        }}
-                      />
+                      <LazyMotion features={domAnimation}>
+                        <m.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${normalizedScore * 100}%` }}
+                          transition={{ duration: 0.5, delay: idx * 0.1 }}
+                          className="h-full rounded-lg transition-all"
+                          style={{
+                            background: `linear-gradient(90deg, var(--sfp-navy) 0%, var(--sfp-gold) 100%)`,
+                          }}
+                        />
+                      </LazyMotion>
                       <div className="absolute inset-0 flex items-center justify-end pr-3">
                         <span className="text-xs font-bold text-white opacity-0 group-hover:opacity-100">
                           {point.score}
@@ -499,50 +503,52 @@ export function CreditScoreSimulator() {
 
           {/* Impact Analysis */}
           {selectedActionObj && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm"
-            >
-              <h4 className="font-semibold mb-3" style={{ color: 'var(--sfp-navy)' }}>
-                Action Impact: {selectedActionObj.label}
-              </h4>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between items-center">
-                  <span style={{ color: 'var(--sfp-slate)' }}>Short term (3 months)</span>
-                  <span
-                    className="font-semibold"
-                    style={{
-                      color: selectedActionObj.impact_3 >= 0 ? 'var(--sfp-green)' : 'var(--sfp-red)',
-                    }}
-                  >
-                    {selectedActionObj.impact_3 >= 0 ? '+' : ''}{selectedActionObj.impact_3} points
-                  </span>
+            <LazyMotion features={domAnimation}>
+              <m.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm"
+              >
+                <h4 className="font-semibold mb-3" style={{ color: 'var(--sfp-navy)' }}>
+                  Action Impact: {selectedActionObj.label}
+                </h4>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between items-center">
+                    <span style={{ color: 'var(--sfp-slate)' }}>Short term (3 months)</span>
+                    <span
+                      className="font-semibold"
+                      style={{
+                        color: selectedActionObj.impact_3 >= 0 ? 'var(--sfp-green)' : 'var(--sfp-red)',
+                      }}
+                    >
+                      {selectedActionObj.impact_3 >= 0 ? '+' : ''}{selectedActionObj.impact_3} points
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span style={{ color: 'var(--sfp-slate)' }}>Medium term (6 months)</span>
+                    <span
+                      className="font-semibold"
+                      style={{
+                        color: selectedActionObj.impact_6 >= 0 ? 'var(--sfp-green)' : 'var(--sfp-red)',
+                      }}
+                    >
+                      {selectedActionObj.impact_6 >= 0 ? '+' : ''}{selectedActionObj.impact_6} points
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span style={{ color: 'var(--sfp-slate)' }}>Long term (12 months)</span>
+                    <span
+                      className="font-semibold"
+                      style={{
+                        color: selectedActionObj.impact_12 >= 0 ? 'var(--sfp-green)' : 'var(--sfp-red)',
+                      }}
+                    >
+                      {selectedActionObj.impact_12 >= 0 ? '+' : ''}{selectedActionObj.impact_12} points
+                    </span>
+                  </div>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span style={{ color: 'var(--sfp-slate)' }}>Medium term (6 months)</span>
-                  <span
-                    className="font-semibold"
-                    style={{
-                      color: selectedActionObj.impact_6 >= 0 ? 'var(--sfp-green)' : 'var(--sfp-red)',
-                    }}
-                  >
-                    {selectedActionObj.impact_6 >= 0 ? '+' : ''}{selectedActionObj.impact_6} points
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span style={{ color: 'var(--sfp-slate)' }}>Long term (12 months)</span>
-                  <span
-                    className="font-semibold"
-                    style={{
-                      color: selectedActionObj.impact_12 >= 0 ? 'var(--sfp-green)' : 'var(--sfp-red)',
-                    }}
-                  >
-                    {selectedActionObj.impact_12 >= 0 ? '+' : ''}{selectedActionObj.impact_12} points
-                  </span>
-                </div>
-              </div>
-            </motion.div>
+              </m.div>
+            </LazyMotion>
           )}
 
           {/* CTA */}
@@ -582,10 +588,10 @@ export function CreditScoreSimulator() {
 
       {/* Factor Breakdown Table */}
       {showBreakdown && (
-        <motion.div
+        <LazyMotion features={domAnimation}>
+        <m.div
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: 'auto' }}
-          exit={{ opacity: 0, height: 0 }}
           className="mt-8 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm"
         >
           <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--sfp-navy)' }}>
@@ -723,7 +729,8 @@ export function CreditScoreSimulator() {
               </tbody>
             </table>
           </div>
-        </motion.div>
+        </m.div>
+        </LazyMotion>
       )}
     </div>
   );

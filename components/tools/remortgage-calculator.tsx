@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { motion } from 'framer-motion';
+import { LazyMotion, domAnimation, m } from 'framer-motion';
 import {
   Calculator,
   Percent,
@@ -259,24 +259,26 @@ export function RemortgageCalculator() {
         {/* Results Section */}
         <div className="space-y-6">
           {/* Monthly Savings Highlight */}
-          <motion.div
-            initial={{ scale: 0.95, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.3 }}
-            className="rounded-2xl p-6 text-white shadow-lg"
-            style={{ background: 'linear-gradient(135deg, var(--sfp-green) 0%, var(--sfp-navy) 100%)' }}
-          >
-            <div className="flex items-center gap-2 mb-2">
-              <TrendingDown className="h-5 w-5" />
-              <span className="text-sm font-medium">Monthly Savings</span>
-            </div>
-            <div className="text-5xl font-bold mb-2">
-              £{results.monthlySavings.toLocaleString('en-GB')}
-            </div>
-            <p className="text-sm opacity-90">
-              £{results.annualSavings.toLocaleString('en-GB')} per year
-            </p>
-          </motion.div>
+          <LazyMotion features={domAnimation}>
+            <m.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.3 }}
+              className="rounded-2xl p-6 text-white shadow-lg"
+              style={{ background: 'linear-gradient(135deg, var(--sfp-green) 0%, var(--sfp-navy) 100%)' }}
+            >
+              <div className="flex items-center gap-2 mb-2">
+                <TrendingDown className="h-5 w-5" />
+                <span className="text-sm font-medium">Monthly Savings</span>
+              </div>
+              <div className="text-5xl font-bold mb-2">
+                £{results.monthlySavings.toLocaleString('en-GB')}
+              </div>
+              <p className="text-sm opacity-90">
+                £{results.annualSavings.toLocaleString('en-GB')} per year
+              </p>
+            </m.div>
+          </LazyMotion>
 
           {/* Comparison Grid */}
           <div className="grid grid-cols-2 gap-4">

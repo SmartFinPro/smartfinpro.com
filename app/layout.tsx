@@ -88,6 +88,10 @@ export default function RootLayout({
         {/* Preconnect to image CDN for faster LCP */}
         <link rel="preconnect" href="https://images.smartfinpro.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://images.smartfinpro.com" />
+        {/* Preconnect to Supabase DB for faster TTFB on SSR queries */}
+        {process.env.NEXT_PUBLIC_SUPABASE_URL && (
+          <link rel="preconnect" href={process.env.NEXT_PUBLIC_SUPABASE_URL} crossOrigin="anonymous" />
+        )}
         {/* Preconnect to analytics */}
         <link rel="dns-prefetch" href="https://plausible.io" />
         {/* Inline silo detection — sets html[data-silo] immediately (no body mutation = no hydration mismatch).

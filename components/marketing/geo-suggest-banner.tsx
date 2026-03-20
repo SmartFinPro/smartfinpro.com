@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { usePathname } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
+import { LazyMotion, domAnimation, m, AnimatePresence } from 'framer-motion';
 import { X, ArrowRight } from 'lucide-react';
 import { getVisitorMarketFromCookie } from '@/lib/geo/geo-cookie';
 import { marketConfig } from '@/lib/i18n/config';
@@ -136,16 +136,17 @@ export default function GeoSuggestBanner() {
       };
 
   return (
-    <AnimatePresence>
-      {visible && (
-        <motion.div
-          initial={{ y: -20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: -20, opacity: 0 }}
-          transition={{ type: 'spring', damping: 28, stiffness: 350 }}
-          style={{ position: 'fixed', top: 72, right: 16, zIndex: 50 }}
-          className="sm:right-6"
-        >
+    <LazyMotion features={domAnimation}>
+      <AnimatePresence>
+        {visible && (
+          <m.div
+            initial={{ y: -20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: -20, opacity: 0 }}
+            transition={{ type: 'spring', damping: 28, stiffness: 350 }}
+            style={{ position: 'fixed', top: 72, right: 16, zIndex: 50 }}
+            className="sm:right-6"
+          >
           <div
             className="rounded-xl border overflow-hidden transition-all duration-500"
             style={{
@@ -230,8 +231,9 @@ export default function GeoSuggestBanner() {
               </button>
             </div>
           </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+          </m.div>
+        )}
+      </AnimatePresence>
+    </LazyMotion>
   );
 }

@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { motion } from 'framer-motion';
+import { LazyMotion, domAnimation, m } from 'framer-motion';
 import {
   TrendingUp,
   DollarSign,
@@ -360,24 +360,26 @@ export function SuperannuationCalculator() {
         {/* Results Section */}
         <div className="space-y-6">
           {/* Final Balance Highlight */}
-          <motion.div
-            initial={{ scale: 0.95, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.3 }}
-            className="rounded-2xl p-6 text-white shadow-lg"
-            style={{ background: 'linear-gradient(135deg, var(--sfp-navy) 0%, var(--sfp-gold) 100%)' }}
-          >
-            <div className="flex items-center gap-2 mb-2">
-              <Calendar className="h-5 w-5" />
-              <span className="text-sm font-medium">Balance at Age {RETIREMENT_AGE}</span>
-            </div>
-            <div className="text-5xl font-bold mb-2">
-              A${results.finalBalance.toLocaleString('en-AU')}
-            </div>
-            <p className="text-sm opacity-90">
-              Status: <span style={{ color: balanceStatus.color }}>{balanceStatus.label}</span>
-            </p>
-          </motion.div>
+          <LazyMotion features={domAnimation}>
+            <m.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.3 }}
+              className="rounded-2xl p-6 text-white shadow-lg"
+              style={{ background: 'linear-gradient(135deg, var(--sfp-navy) 0%, var(--sfp-gold) 100%)' }}
+            >
+              <div className="flex items-center gap-2 mb-2">
+                <Calendar className="h-5 w-5" />
+                <span className="text-sm font-medium">Balance at Age {RETIREMENT_AGE}</span>
+              </div>
+              <div className="text-5xl font-bold mb-2">
+                A${results.finalBalance.toLocaleString('en-AU')}
+              </div>
+              <p className="text-sm opacity-90">
+                Status: <span style={{ color: balanceStatus.color }}>{balanceStatus.label}</span>
+              </p>
+            </m.div>
+          </LazyMotion>
 
           {/* Stats Grid */}
           <div className="grid grid-cols-2 gap-4">
@@ -424,25 +426,27 @@ export function SuperannuationCalculator() {
 
           {/* Preservation Age Alert */}
           {yearsToPreservation > 0 && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="rounded-xl border-l-4 bg-white p-4 shadow-sm"
-              style={{ borderLeftColor: 'var(--sfp-gold)' }}
-            >
-              <div className="flex items-start gap-3">
-                <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" style={{ color: 'var(--sfp-gold)' }} />
-                <div>
-                  <h4 className="text-sm font-semibold" style={{ color: 'var(--sfp-navy)' }}>
-                    Preservation Age
-                  </h4>
-                  <p className="text-xs mt-1" style={{ color: 'var(--sfp-slate)' }}>
-                    You can access your super in {yearsToPreservation} year{yearsToPreservation !== 1 ? 's' : ''} at age {PRESERVATION_AGE}
-                    (preservation age). Before then, your super remains locked away.
-                  </p>
+            <LazyMotion features={domAnimation}>
+              <m.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="rounded-xl border-l-4 bg-white p-4 shadow-sm"
+                style={{ borderLeftColor: 'var(--sfp-gold)' }}
+              >
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" style={{ color: 'var(--sfp-gold)' }} />
+                  <div>
+                    <h4 className="text-sm font-semibold" style={{ color: 'var(--sfp-navy)' }}>
+                      Preservation Age
+                    </h4>
+                    <p className="text-xs mt-1" style={{ color: 'var(--sfp-slate)' }}>
+                      You can access your super in {yearsToPreservation} year{yearsToPreservation !== 1 ? 's' : ''} at age {PRESERVATION_AGE}
+                      (preservation age). Before then, your super remains locked away.
+                    </p>
+                  </div>
                 </div>
-              </div>
-            </motion.div>
+              </m.div>
+            </LazyMotion>
           )}
 
           {/* Contribution Breakdown */}
@@ -534,10 +538,10 @@ export function SuperannuationCalculator() {
       </div>
 
       {/* Yearly Projection Table */}
-      <motion.div
+      <LazyMotion features={domAnimation}>
+      <m.div
         initial={{ opacity: 0, height: 0 }}
         animate={{ opacity: 1, height: 'auto' }}
-        exit={{ opacity: 0, height: 0 }}
         className="mt-8 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm"
       >
         <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--sfp-navy)' }}>
@@ -602,7 +606,8 @@ export function SuperannuationCalculator() {
           Assumptions: 7% annual investment return, no salary growth, current contribution rates. Actual results may vary.
           This is not financial advice. Consult a financial adviser before making decisions.
         </p>
-      </motion.div>
+      </m.div>
+      </LazyMotion>
     </div>
   );
 }

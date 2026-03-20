@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { motion } from 'framer-motion';
+import { LazyMotion, domAnimation, m } from 'framer-motion';
 import {
   Calculator,
   DollarSign,
@@ -263,25 +263,27 @@ export function DebtPayoffCalculator() {
         {/* Results Section */}
         <div className="space-y-6">
           {/* Payoff Timeline Highlight */}
-          <motion.div
-            initial={{ scale: 0.95, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.3 }}
-            className="rounded-2xl p-6 text-white shadow-lg"
-            style={{ background: 'linear-gradient(135deg, var(--sfp-navy) 0%, var(--sfp-gold) 100%)' }}
-          >
-            <div className="flex items-center gap-2 mb-2">
-              <Calendar className="h-5 w-5" />
-              <span className="text-sm font-medium">Time to Debt Freedom</span>
-            </div>
-            <div className="text-5xl font-bold mb-2">
-              {years > 0 && `${years}y `}
-              {months > 0 && `${months}m`}
-            </div>
-            <p className="text-sm opacity-90">
-              Debt-free by {results.payoffDate}
-            </p>
-          </motion.div>
+          <LazyMotion features={domAnimation}>
+            <m.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.3 }}
+              className="rounded-2xl p-6 text-white shadow-lg"
+              style={{ background: 'linear-gradient(135deg, var(--sfp-navy) 0%, var(--sfp-gold) 100%)' }}
+            >
+              <div className="flex items-center gap-2 mb-2">
+                <Calendar className="h-5 w-5" />
+                <span className="text-sm font-medium">Time to Debt Freedom</span>
+              </div>
+              <div className="text-5xl font-bold mb-2">
+                {years > 0 && `${years}y `}
+                {months > 0 && `${months}m`}
+              </div>
+              <p className="text-sm opacity-90">
+                Debt-free by {results.payoffDate}
+              </p>
+            </m.div>
+          </LazyMotion>
 
           {/* Stats Grid */}
           <div className="grid grid-cols-2 gap-4">
@@ -410,10 +412,10 @@ export function DebtPayoffCalculator() {
 
       {/* Payment Schedule Table */}
       {showSchedule && (
-        <motion.div
+        <LazyMotion features={domAnimation}>
+        <m.div
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: 'auto' }}
-          exit={{ opacity: 0, height: 0 }}
           className="mt-8 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm"
         >
           <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--sfp-navy)' }}>
@@ -462,7 +464,8 @@ export function DebtPayoffCalculator() {
               </tbody>
             </table>
           </div>
-        </motion.div>
+        </m.div>
+        </LazyMotion>
       )}
     </div>
   );

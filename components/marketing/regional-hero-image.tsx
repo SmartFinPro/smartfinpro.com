@@ -114,6 +114,8 @@ export function RegionalHeroImage({ market, category, slug, className = '' }: Re
             src={resolvedSrc}
             alt={resolvedAlt}
             fill
+            priority
+            fetchPriority="high"
             className="object-cover object-center"
             sizes="(max-width: 768px) 100vw, (max-width: 1280px) 90vw, 1200px"
             onError={() => setImgError(true)}
