@@ -16,6 +16,7 @@ import { RevenueByMarketGrid } from '@/components/dashboard/revenue-by-market';
 import { EPCTrendChart } from '@/components/dashboard/epc-trend-chart';
 import { RevenueChart } from '@/components/dashboard/revenue-chart';
 import { RecentConversions } from '@/components/dashboard/recent-conversions';
+import { WidgetErrorBoundary } from '@/components/dashboard/widget-error-boundary';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -137,9 +138,11 @@ export default async function RevenuePage() {
             <p className="text-xs text-slate-500">Performance across core markets</p>
           </div>
         </div>
-        <Suspense fallback={<Skeleton className="h-48" />}>
-          <RevenueByMarketGrid markets={stats.revenueByMarket} />
-        </Suspense>
+        <WidgetErrorBoundary label="Revenue by Market" minHeight="h-48">
+          <Suspense fallback={<Skeleton className="h-48" />}>
+            <RevenueByMarketGrid markets={stats.revenueByMarket} />
+          </Suspense>
+        </WidgetErrorBoundary>
       </div>
 
       {/* Charts Row */}
@@ -176,9 +179,11 @@ export default async function RevenuePage() {
           <span className="text-xs text-slate-400 ml-auto">All time</span>
         </div>
         <div className="p-4">
-          <Suspense fallback={<Skeleton className="h-64" />}>
-            <RevenueByProductTable products={stats.revenueByProduct} />
-          </Suspense>
+          <WidgetErrorBoundary label="Revenue by Product" minHeight="h-64">
+            <Suspense fallback={<Skeleton className="h-64" />}>
+              <RevenueByProductTable products={stats.revenueByProduct} />
+            </Suspense>
+          </WidgetErrorBoundary>
         </div>
       </div>
 
@@ -189,9 +194,11 @@ export default async function RevenuePage() {
           <h3 className="font-semibold text-slate-900">Recent Conversions</h3>
         </div>
         <div className="p-6">
-          <Suspense fallback={<Skeleton className="h-48" />}>
-            <RecentConversions conversions={stats.recentConversions} />
-          </Suspense>
+          <WidgetErrorBoundary label="Recent Conversions" minHeight="h-48">
+            <Suspense fallback={<Skeleton className="h-48" />}>
+              <RecentConversions conversions={stats.recentConversions} />
+            </Suspense>
+          </WidgetErrorBoundary>
         </div>
       </div>
     </div>

@@ -24,6 +24,7 @@ import { LandingPagesTable } from '@/components/dashboard/landing-pages-table';
 import { UTMCampaignsTable } from '@/components/dashboard/utm-campaigns-table';
 import { ReferrersList } from '@/components/dashboard/referrers-list';
 import { SiloFilterDropdown } from '@/components/dashboard/silo-filter-dropdown';
+import { WidgetErrorBoundary } from '@/components/dashboard/widget-error-boundary';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -70,9 +71,11 @@ export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps
         <div className="flex items-center gap-3 relative">
           <SimulationButton />
           <SiloFilterDropdown currentSilo={silo} />
-          <Suspense fallback={<div className="h-10 w-40 bg-slate-200 animate-pulse rounded-lg" />}>
-            <TimeRangeSelector />
-          </Suspense>
+          <WidgetErrorBoundary label="Time Range" minHeight="h-10">
+            <Suspense fallback={<div className="h-10 w-40 bg-slate-200 animate-pulse rounded-lg" />}>
+              <TimeRangeSelector />
+            </Suspense>
+          </WidgetErrorBoundary>
         </div>
       </div>
 

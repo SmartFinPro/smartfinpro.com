@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { AffiliateCommandCenter } from '@/components/dashboard/affiliate-command-center';
 import { CreateLinkDialog } from '@/components/dashboard/create-link-dialog';
 import { getAffiliateLinksService } from '@/lib/actions/affiliate-links';
+import { WidgetErrorBoundary } from '@/components/dashboard/widget-error-boundary';
 
 export default async function LinksPage() {
   const { data: links } = await getAffiliateLinksService();
@@ -21,13 +22,15 @@ export default async function LinksPage() {
         </CreateLinkDialog>
       </div>
 
-      <Suspense
-        fallback={
-          <div className="h-[600px] animate-pulse bg-slate-100 rounded-lg" />
-        }
-      >
-        <AffiliateCommandCenter initialLinks={links || []} />
-      </Suspense>
+      <WidgetErrorBoundary label="Affiliate Links" minHeight="h-[600px]">
+        <Suspense
+          fallback={
+            <div className="h-[600px] animate-pulse bg-slate-100 rounded-lg" />
+          }
+        >
+          <AffiliateCommandCenter initialLinks={links || []} />
+        </Suspense>
+      </WidgetErrorBoundary>
     </div>
   );
 }

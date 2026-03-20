@@ -30,6 +30,7 @@ import { SystemIntegrityWidget } from '@/components/dashboard/system-integrity-w
 import { WebVitalsWidget } from '@/components/dashboard/web-vitals-widget';
 import { RevenueAttributionWidget } from '@/components/dashboard/revenue-attribution-widget';
 import { AuditStatusWidget } from '@/components/dashboard/audit-status-widget';
+import { WidgetErrorBoundary } from '@/components/dashboard/widget-error-boundary';
 import Link from 'next/link';
 
 export const dynamic = 'force-dynamic';
@@ -297,28 +298,38 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         {/* Performance Alerts */}
         {lowPerformancePages.length > 0 && (
           <div className="mb-8">
-            <Suspense fallback={<Skeleton className="h-32" />}>
-              <PerformanceAlerts pages={lowPerformancePages} stats={performanceAlertStats} />
-            </Suspense>
+            <WidgetErrorBoundary label="Performance Alerts" minHeight="h-32">
+              <Suspense fallback={<Skeleton className="h-32" />}>
+                <PerformanceAlerts pages={lowPerformancePages} stats={performanceAlertStats} />
+              </Suspense>
+            </WidgetErrorBoundary>
           </div>
         )}
 
         {/* System Integrity + CWV + Revenue Attribution + Audit — 3-column grid */}
         <div className="grid gap-6 lg:grid-cols-3 mb-8">
           <div className="lg:col-span-2">
-            <Suspense fallback={<Skeleton className="h-64" />}>
-              <SystemIntegrityWidget />
-            </Suspense>
+            <WidgetErrorBoundary label="System Integrity" minHeight="h-64">
+              <Suspense fallback={<Skeleton className="h-64" />}>
+                <SystemIntegrityWidget />
+              </Suspense>
+            </WidgetErrorBoundary>
           </div>
           <div className="flex flex-col gap-6">
-            <Suspense fallback={<Skeleton className="h-48" />}>
-              <WebVitalsWidget />
-            </Suspense>
-            <Suspense fallback={<Skeleton className="h-48" />}>
-              <RevenueAttributionWidget />
-            </Suspense>
+            <WidgetErrorBoundary label="Web Vitals" minHeight="h-48">
+              <Suspense fallback={<Skeleton className="h-48" />}>
+                <WebVitalsWidget />
+              </Suspense>
+            </WidgetErrorBoundary>
+            <WidgetErrorBoundary label="Revenue Attribution" minHeight="h-48">
+              <Suspense fallback={<Skeleton className="h-48" />}>
+                <RevenueAttributionWidget />
+              </Suspense>
+            </WidgetErrorBoundary>
             {/* S2S Postback Dedup Audit Status */}
-            <AuditStatusWidget />
+            <WidgetErrorBoundary label="Audit Status" minHeight="h-24">
+              <AuditStatusWidget />
+            </WidgetErrorBoundary>
           </div>
         </div>
 
@@ -330,9 +341,11 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
               <h3 className="text-sm font-semibold text-slate-900">Click Activity</h3>
             </div>
             <div className="p-6">
-              <Suspense fallback={<Skeleton className="h-52" />}>
-                <ClicksChart data={stats.clicksOverTime} />
-              </Suspense>
+              <WidgetErrorBoundary label="Click Activity" minHeight="h-52">
+                <Suspense fallback={<Skeleton className="h-52" />}>
+                  <ClicksChart data={stats.clicksOverTime} />
+                </Suspense>
+              </WidgetErrorBoundary>
             </div>
           </div>
 
@@ -342,15 +355,17 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
               <h3 className="text-sm font-semibold text-slate-900">Conversion Funnel</h3>
             </div>
             <div className="p-6">
-              <Suspense fallback={<Skeleton className="h-52" />}>
-                <ConversionFunnel
-                  totalClicks={stats.funnelData.clicks}
-                  stages={[
-                    { event_type: 'qualified', unique_clicks: stats.funnelData.conversions, conversion_rate: stats.funnelData.clicks > 0 ? (stats.funnelData.conversions / stats.funnelData.clicks) * 100 : 0, total_value: 0 },
-                    { event_type: 'approved', unique_clicks: stats.funnelData.approvedConversions, conversion_rate: stats.funnelData.conversions > 0 ? (stats.funnelData.approvedConversions / stats.funnelData.conversions) * 100 : 0, total_value: stats.funnelData.approvedRevenue },
-                  ]}
-                />
-              </Suspense>
+              <WidgetErrorBoundary label="Conversion Funnel" minHeight="h-52">
+                <Suspense fallback={<Skeleton className="h-52" />}>
+                  <ConversionFunnel
+                    totalClicks={stats.funnelData.clicks}
+                    stages={[
+                      { event_type: 'qualified', unique_clicks: stats.funnelData.conversions, conversion_rate: stats.funnelData.clicks > 0 ? (stats.funnelData.conversions / stats.funnelData.clicks) * 100 : 0, total_value: 0 },
+                      { event_type: 'approved', unique_clicks: stats.funnelData.approvedConversions, conversion_rate: stats.funnelData.conversions > 0 ? (stats.funnelData.approvedConversions / stats.funnelData.conversions) * 100 : 0, total_value: stats.funnelData.approvedRevenue },
+                    ]}
+                  />
+                </Suspense>
+              </WidgetErrorBoundary>
             </div>
           </div>
         </div>
@@ -371,9 +386,11 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
               </span>
             )}
           </div>
-          <Suspense fallback={<Skeleton className="h-48" />}>
-            <MarketHealthGrid markets={globalMarkets.markets} />
-          </Suspense>
+          <WidgetErrorBoundary label="Market Health" minHeight="h-48">
+            <Suspense fallback={<Skeleton className="h-48" />}>
+              <MarketHealthGrid markets={globalMarkets.markets} />
+            </Suspense>
+          </WidgetErrorBoundary>
         </div>
 
         {/* Market Opportunities */}
@@ -397,9 +414,11 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
               <h3 className="text-sm font-semibold text-slate-900">Geographic Distribution</h3>
             </div>
             <div className="p-6">
-              <Suspense fallback={<Skeleton className="h-48" />}>
-                <WorldMap data={stats.geoStats} />
-              </Suspense>
+              <WidgetErrorBoundary label="World Map" minHeight="h-48">
+                <Suspense fallback={<Skeleton className="h-48" />}>
+                  <WorldMap data={stats.geoStats} />
+                </Suspense>
+              </WidgetErrorBoundary>
             </div>
           </div>
 
@@ -410,9 +429,11 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
               <p className="text-xs text-slate-500 mt-0.5">Country, referrer domain, and source page for each click</p>
             </div>
             <div className="p-4 max-h-[400px] overflow-y-auto">
-              <Suspense fallback={<Skeleton className="h-48" />}>
-                <ClickDetailsTable clicks={stats.recentClicks} />
-              </Suspense>
+              <WidgetErrorBoundary label="Click Details" minHeight="h-48">
+                <Suspense fallback={<Skeleton className="h-48" />}>
+                  <ClickDetailsTable clicks={stats.recentClicks} />
+                </Suspense>
+              </WidgetErrorBoundary>
             </div>
           </div>
         </div>
@@ -425,9 +446,11 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
               <h3 className="text-sm font-semibold text-slate-900">Top Links</h3>
             </div>
             <div className="p-6">
-              <Suspense fallback={<Skeleton className="h-40" />}>
-                <TopLinksLive links={stats.topLinks} />
-              </Suspense>
+              <WidgetErrorBoundary label="Top Links" minHeight="h-40">
+                <Suspense fallback={<Skeleton className="h-40" />}>
+                  <TopLinksLive links={stats.topLinks} />
+                </Suspense>
+              </WidgetErrorBoundary>
             </div>
           </div>
 
@@ -437,9 +460,11 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
               <h3 className="text-sm font-semibold text-slate-900">Top Pages</h3>
             </div>
             <div className="p-6">
-              <Suspense fallback={<Skeleton className="h-40" />}>
-                <TopPages data={stats.topPages} />
-              </Suspense>
+              <WidgetErrorBoundary label="Top Pages" minHeight="h-40">
+                <Suspense fallback={<Skeleton className="h-40" />}>
+                  <TopPages data={stats.topPages} />
+                </Suspense>
+              </WidgetErrorBoundary>
             </div>
           </div>
 
@@ -449,9 +474,11 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
               <h3 className="text-sm font-semibold text-slate-900">Devices</h3>
             </div>
             <div className="p-6">
-              <Suspense fallback={<Skeleton className="h-40" />}>
-                <DeviceChart data={stats.deviceStats} />
-              </Suspense>
+              <WidgetErrorBoundary label="Devices" minHeight="h-40">
+                <Suspense fallback={<Skeleton className="h-40" />}>
+                  <DeviceChart data={stats.deviceStats} />
+                </Suspense>
+              </WidgetErrorBoundary>
             </div>
           </div>
 
@@ -462,9 +489,11 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
               <span className="w-2 h-2 rounded-full bg-green-500" />
             </div>
             <div className="p-6">
-              <Suspense fallback={<Skeleton className="h-40" />}>
-                <RecentClicksLive clicks={stats.recentClicks} />
-              </Suspense>
+              <WidgetErrorBoundary label="Recent Activity" minHeight="h-40">
+                <Suspense fallback={<Skeleton className="h-40" />}>
+                  <RecentClicksLive clicks={stats.recentClicks} />
+                </Suspense>
+              </WidgetErrorBoundary>
             </div>
           </div>
         </div>
@@ -478,9 +507,11 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
               <p className="text-xs text-slate-500 mt-0.5">Articles with high engagement but low CTR</p>
             </div>
             <div className="p-6">
-              <Suspense fallback={<Skeleton className="h-40" />}>
-                <ProblemArticles data={stats.problemArticles} />
-              </Suspense>
+              <WidgetErrorBoundary label="Optimization Opportunities" minHeight="h-40">
+                <Suspense fallback={<Skeleton className="h-40" />}>
+                  <ProblemArticles data={stats.problemArticles} />
+                </Suspense>
+              </WidgetErrorBoundary>
             </div>
           </div>
 
@@ -532,12 +563,14 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             <h3 className="text-sm font-semibold text-slate-900">Scroll Depth by Article</h3>
           </div>
           <div className="p-6">
-            <Suspense fallback={<Skeleton className="h-40" />}>
-              <ScrollDepthStats
-                data={stats.scrollDepthStats}
-                averageScrollDepth={stats.averageScrollDepth}
-              />
-            </Suspense>
+            <WidgetErrorBoundary label="Scroll Depth" minHeight="h-40">
+              <Suspense fallback={<Skeleton className="h-40" />}>
+                <ScrollDepthStats
+                  data={stats.scrollDepthStats}
+                  averageScrollDepth={stats.averageScrollDepth}
+                />
+              </Suspense>
+            </WidgetErrorBoundary>
           </div>
         </div>
 
