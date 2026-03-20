@@ -4,7 +4,7 @@ import 'server-only';
 import * as Sentry from '@sentry/nextjs';
 import { logger } from '@/lib/logging';
 
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createServiceClient } from '@/lib/supabase/server';
 import {
   COMPETITOR_KEYWORDS,
   AUTHORITY_DOMAINS,
@@ -205,7 +205,7 @@ export async function analyzeKeyword(
 
   // Persist snapshot to Supabase
   try {
-    const supabase = await createClient();
+    const supabase = createServiceClient();
 
     await supabase.from('competitor_serp_snapshots').insert({
       keyword,
@@ -290,7 +290,7 @@ export async function analyzeKeyword(
 // ── Dashboard Data Fetcher ──────────────────────────────────
 
 export async function getCompetitorData(): Promise<CompetitorDashboardData> {
-  const supabase = await createClient();
+  const supabase = createServiceClient();
   const serperConfigured = !!process.env.SERPER_API_KEY;
 
   // Pre-compute date range (needed by the trend query below)
@@ -437,7 +437,7 @@ export async function spyDomain(
   domain: string,
   market?: Market,
 ): Promise<SpyResult[]> {
-  const supabase = await createClient();
+  const supabase = createServiceClient();
   const cleanDomain = domain.replace('www.', '').toLowerCase().replace(/\/$/, '');
 
   // Fetch recent snapshots
@@ -504,7 +504,7 @@ export async function triggerCompetitorScan(
   market?: Market,
   category?: string,
 ): Promise<{ scanned: number; newAlerts: number; remaining: number }> {
-  const supabase = await createClient();
+  const supabase = createServiceClient();
 
   // Fetch active tracked keywords, ordered by least recently scanned first
   let query = supabase
@@ -564,7 +564,7 @@ export async function triggerCompetitorScan(
 // ── Seed Keywords ───────────────────────────────────────────
 
 export async function seedCompetitorKeywords(): Promise<{ seeded: number }> {
-  const supabase = await createClient();
+  const supabase = createServiceClient();
 
   const rows = COMPETITOR_KEYWORDS.map((k) => ({
     keyword: k.keyword,
@@ -590,7 +590,7 @@ export async function seedCompetitorKeywords(): Promise<{ seeded: number }> {
 export async function dismissAlert(
   alertId: string,
 ): Promise<{ success: boolean }> {
-  const supabase = await createClient();
+  const supabase = createServiceClient();
 
   const { error } = await supabase
     .from('competitor_alerts')
@@ -603,7 +603,7 @@ export async function dismissAlert(
 export async function boostFromAlert(
   alertId: string,
 ): Promise<{ success: boolean; error?: string }> {
-  const supabase = await createClient();
+  const supabase = createServiceClient();
 
   // Fetch alert
   const { data: alert } = await supabase
@@ -639,7 +639,7 @@ export async function addManualKeyword(
   market: Market,
   category: string,
 ): Promise<{ success: boolean }> {
-  const supabase = await createClient();
+  const supabase = createServiceClient();
 
   const { error } = await supabase
     .from('competitor_tracked_keywords')
@@ -663,7 +663,7 @@ export async function addManualKeyword(
 // ── Alert Detection (internal) ──────────────────────────────
 
 async function detectAlerts(market?: Market): Promise<number> {
-  const supabase = await createClient();
+  const supabase = createServiceClient();
   let newAlerts = 0;
 
   // Fetch snapshots: we need the 2 most recent per keyword+market to detect changes

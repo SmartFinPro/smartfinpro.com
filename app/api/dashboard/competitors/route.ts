@@ -67,8 +67,8 @@ export async function POST(request: NextRequest) {
         const serperKeyLength = process.env.SERPER_API_KEY?.length ?? 0;
 
         // Try to count tracked keywords
-        const { createClient } = await import('@/lib/supabase/server');
-        const supabase = await createClient();
+        const { createServiceClient } = await import('@/lib/supabase/server');
+        const supabase = createServiceClient();
         const { count: trackedCount, error: trackedErr } = await supabase
           .from('competitor_tracked_keywords')
           .select('id', { count: 'exact', head: true });
