@@ -61,6 +61,31 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(result);
       }
 
+      case 'check': {
+        // Diagnostic: check if Serper API key is configured and DB tables exist
+        const hasSerper = !!process.env.SERPER_API_KEY;
+        const serperKeyLength = process.env.SERPER_API_KEY?.length ?? 0;
+
+        // Try to count tracked keywords
+        const { createClient } = await import('@/lib/supabase/server');
+        const supabase = await createClient();
+        const { count: trackedCount, error: trackedErr } = await supabase
+          .from('competitor_tracked_keywords')
+          .select('id', { count: 'exact', head: true });
+        const { count: snapshotCount, error: snapshotErr } = await supabase
+          .from('competitor_serp_snapshots')
+          .select('id', { count: 'exact', head: true });
+
+        return NextResponse.json({
+          serperConfigured: hasSerper,
+          serperKeyLength,
+          trackedKeywords: trackedCount ?? 0,
+          trackedError: trackedErr?.message ?? null,
+          snapshots: snapshotCount ?? 0,
+          snapshotError: snapshotErr?.message ?? null,
+        });
+      }
+
       default:
         return NextResponse.json({ error: `Unknown action: ${action}` }, { status: 400 });
     }
