@@ -406,7 +406,7 @@ export async function proxy(request: NextRequest) {
     // ── Step 3: Homepage → served by app/(marketing)/page.tsx directly ──
     const segments = pathname.split('/').filter(Boolean);
     if (segments.length === 0) {
-      return withGeoCookie(request, NextResponse.next());
+      return withGeoCookie(request, NextResponse.next(), cookieSecure);
     }
 
     const firstSegment = segments[0];
@@ -418,7 +418,7 @@ export async function proxy(request: NextRequest) {
 
     // ── Step 5: Valid market prefix → allow through + set geo cookie ──
     if (MARKETS.has(firstSegment)) {
-      return withGeoCookie(request, NextResponse.next());
+      return withGeoCookie(request, NextResponse.next(), cookieSecure);
     }
 
     // ── Step 6: Legacy US clean URLs → 301 redirect to /us/... ──
@@ -427,7 +427,7 @@ export async function proxy(request: NextRequest) {
     }
 
     // ── Step 7: Everything else → allow through + set geo cookie ──
-    return withGeoCookie(request, NextResponse.next());
+    return withGeoCookie(request, NextResponse.next(), cookieSecure);
   } catch (error) {
     const msg = error instanceof Error ? error.message : 'Unknown middleware error';
     console.error(`[middleware] fallback for pathname="${pathname}":`, msg);
@@ -870,7 +870,7 @@ function dashboardLoginPage(
 // Sets `sfp-geo` cookie from Cloudflare/Vercel geo-IP headers.
 // Client components read this cookie to show geo-personalized CTAs
 // without breaking SSG (no server-side headers() call in page components).
-function withGeoCookie(request: NextRequest, response: NextResponse): NextResponse {
+function withGeoCookie(request: NextRequest, response: NextResponse, cookieSecure: boolean): NextResponse {
   // Skip if cookie is already set (avoids re-setting on every request)
   if (request.cookies.get(GEO_COOKIE_NAME)?.value) return response;
 
