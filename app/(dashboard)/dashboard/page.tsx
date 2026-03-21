@@ -12,6 +12,7 @@ import {
 import { getDashboardStats, getGlobalMarketIntelligence, TimeRange, TimeComparison, ActionItem, GlobalMarketIntelligence } from '@/lib/actions/dashboard';
 import { getLowPerformancePages, getPerformanceAlertStats } from '@/lib/actions/performance-alerts';
 import { loadFxRates } from '@/lib/fx-rates';
+import { getDeployStats } from '@/lib/actions/deploy-logs';
 import { ClicksChart } from '@/components/dashboard/clicks-chart';
 import { RecentClicksLive } from '@/components/dashboard/recent-clicks-live';
 import { TopLinksLive } from '@/components/dashboard/top-links-live';
@@ -30,6 +31,7 @@ import { SystemIntegrityWidget } from '@/components/dashboard/system-integrity-w
 import { WebVitalsWidget } from '@/components/dashboard/web-vitals-widget';
 import { RevenueAttributionWidget } from '@/components/dashboard/revenue-attribution-widget';
 import { AuditStatusWidget } from '@/components/dashboard/audit-status-widget';
+import { DeployStatusWidget } from '@/components/dashboard/deploy-status-widget';
 import { WidgetErrorBoundary } from '@/components/dashboard/widget-error-boundary';
 import Link from 'next/link';
 
@@ -169,11 +171,12 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   await loadFxRates();
 
   // SF2: All 4 queries start in parallel — stats uses withTimeoutAndFlag to surface timeout in UI
-  const [statsResult, lowPerformancePages, performanceAlertStats, globalMarkets] = await Promise.all([
+  const [statsResult, lowPerformancePages, performanceAlertStats, globalMarkets, deployStats] = await Promise.all([
     withTimeoutAndFlag(getDashboardStats(range), QUERY_TIMEOUT, emptyStats),
     withTimeout(getLowPerformancePages(), QUERY_TIMEOUT, []),
     withTimeout(getPerformanceAlertStats(), QUERY_TIMEOUT, emptyAlertStats),
     withTimeout(getGlobalMarketIntelligence(range), QUERY_TIMEOUT, emptyMarkets),
+    withTimeout(getDeployStats(10), QUERY_TIMEOUT, { totalDeploys: 0, successCount: 0, failedCount: 0, rollbackCount: 0, successRate: 0, avgDuration: 0, lastDeploy: null, recentDeploys: [] }),
   ]);
   const { data: stats, timedOut: statsTimedOut } = statsResult;
 
@@ -329,6 +332,27 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             {/* S2S Postback Dedup Audit Status */}
             <WidgetErrorBoundary label="Audit Status" minHeight="h-24">
               <AuditStatusWidget />
+            </WidgetErrorBoundary>
+          </div>
+        </div>
+
+        {/* Deploy Status */}
+        <div className={`${card} mb-8`}>
+          <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-2">
+            <span className="text-sm font-semibold text-slate-900">Deploy History</span>
+            {deployStats.lastDeploy && (
+              <span className={`ml-auto inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${
+                deployStats.lastDeploy.status === 'success'
+                  ? 'bg-emerald-50 text-emerald-700'
+                  : 'bg-red-50 text-red-700'
+              }`}>
+                {deployStats.lastDeploy.status === 'success' ? '✅' : '❌'} Last deploy: {deployStats.lastDeploy.status}
+              </span>
+            )}
+          </div>
+          <div className="p-4">
+            <WidgetErrorBoundary label="Deploy Status" minHeight="h-32">
+              <DeployStatusWidget stats={deployStats} />
             </WidgetErrorBoundary>
           </div>
         </div>
