@@ -1,10 +1,11 @@
 // app/api/dashboard/submit-indexing/route.ts
-// Submits all sitemap URLs to Google Indexing API for fast crawling.
+// Submits sitemap URLs to Google Indexing API — skips already-submitted URLs.
 // Protected by proxy.ts (same session auth as all /api/dashboard/* routes).
 // Google Indexing API quota: 200 URL notifications per day.
 
 import { NextRequest, NextResponse } from 'next/server';
 import { submitBatchForIndexing } from '@/lib/seo/indexing';
+import { createClient } from '@/lib/supabase/server';
 
 const DAILY_QUOTA = 200; // Google Indexing API hard limit
 
@@ -16,7 +17,7 @@ export async function POST(req: NextRequest) {
   const port = process.env.PORT ?? '3000';
   const sitemapUrl = `http://localhost:${port}/sitemap.xml`;
 
-  let urls: string[] = [];
+  let allUrls: string[] = [];
 
   try {
     const res = await fetch(sitemapUrl, {
@@ -35,7 +36,7 @@ export async function POST(req: NextRequest) {
     // Parse all <loc> entries — exclude internal/dashboard/login URLs
     const matches = [...xml.matchAll(/<loc>(.*?)<\/loc>/g)];
     const EXCLUDED = ['/dashboard', '/api/', '/login', '/_next', '/go/'];
-    urls = matches
+    allUrls = matches
       .map((m) => m[1].trim())
       .filter((u) => u && !EXCLUDED.some((ex) => u.includes(ex)));
   } catch (err) {
@@ -45,24 +46,84 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  if (urls.length === 0) {
+  if (allUrls.length === 0) {
     return NextResponse.json({ error: 'No URLs found in sitemap' }, { status: 400 });
   }
 
-  // Respect daily quota — submit first `limit` URLs (priority order from sitemap)
-  const batch = urls.slice(0, limit);
-  const skipped = urls.length - batch.length;
+  // ── Check which URLs were already successfully submitted ──────────
+  const supabase = await createClient();
+  let alreadySubmittedUrls: Set<string> = new Set();
+
+  try {
+    const { data: logs } = await supabase
+      .from('indexing_log')
+      .select('url')
+      .eq('status', 'success')
+      .order('submitted_at', { ascending: false });
+
+    if (logs && logs.length > 0) {
+      alreadySubmittedUrls = new Set(logs.map((l) => l.url));
+    }
+  } catch {
+    // If table doesn't exist or query fails, proceed without filtering
+    console.warn('[Indexing] Could not query indexing_log — submitting all URLs');
+  }
+
+  // Filter out already-submitted URLs
+  const pendingUrls = allUrls.filter((u) => !alreadySubmittedUrls.has(u));
+  const alreadyDone = allUrls.length - pendingUrls.length;
+
+  // If all URLs are already submitted
+  if (pendingUrls.length === 0) {
+    return NextResponse.json({
+      total: 0,
+      succeeded: 0,
+      failed: 0,
+      results: [],
+      totalInSitemap: allUrls.length,
+      alreadySubmitted: alreadyDone,
+      submitted: 0,
+      remaining: 0,
+      skipped: 0,
+      quotaNote: null,
+      allDone: true,
+      message: `Alle ${allUrls.length} URLs wurden bereits erfolgreich eingereicht. Keine ausstehenden URLs.`,
+    });
+  }
+
+  // Respect daily quota — submit first `limit` pending URLs
+  const batch = pendingUrls.slice(0, limit);
+  const remaining = pendingUrls.length - batch.length;
 
   const result = await submitBatchForIndexing(batch, 'URL_UPDATED');
 
+  // ── Log successful submissions to indexing_log ──────────────────
+  const successfulResults = result.results.filter((r) => r.status === 'success');
+  if (successfulResults.length > 0) {
+    try {
+      const rows = successfulResults.map((r) => ({
+        url: r.url,
+        status: r.status,
+        message: r.message,
+        submitted_at: r.timestamp,
+      }));
+      await supabase.from('indexing_log').insert(rows);
+    } catch {
+      console.warn('[Indexing] Could not log results to indexing_log');
+    }
+  }
+
   return NextResponse.json({
     ...result,
-    totalInSitemap: urls.length,
+    totalInSitemap: allUrls.length,
+    alreadySubmitted: alreadyDone,
     submitted: batch.length,
-    skipped,
+    remaining,
+    skipped: remaining,
+    allDone: false,
     quotaNote:
-      skipped > 0
-        ? `${skipped} URLs übersprungen (Google-Tageslimit: ${DAILY_QUOTA}). Morgen erneut triggern.`
+      remaining > 0
+        ? `${remaining} URLs verbleibend (Google-Tageslimit: ${DAILY_QUOTA}). Morgen erneut einreichen.`
         : null,
   });
 }
