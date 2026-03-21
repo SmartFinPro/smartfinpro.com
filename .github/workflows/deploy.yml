@@ -71,6 +71,7 @@ jobs:
           GSC_PRIVATE_KEY=${{ secrets.GSC_PRIVATE_KEY }}
           GSC_SITE_URL=${{ secrets.GSC_SITE_URL }}
           GOOGLE_INDEXING_JSON=${{ secrets.GOOGLE_INDEXING_JSON }}
+          RESEND_WEBHOOK_SECRET=${{ secrets.RESEND_WEBHOOK_SECRET }}
           EOF
           sed -i 's/^[[:space:]]*//' .next/standalone/.env
           echo "✅ .env written ($(wc -l < .next/standalone/.env) lines)"
@@ -164,23 +165,33 @@ jobs:
       - name: Log deploy failure to dashboard
         if: steps.healthcheck.outcome == 'failure'
         continue-on-error: true
+        env:
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
         run: |
           CRON_SECRET=$(grep -oP '^CRON_SECRET=\K.*' .next/standalone/.env | tr -d ' ')
           SITE_URL=$(grep -oP '^NEXT_PUBLIC_SITE_URL=\K.*' .next/standalone/.env | tr -d ' ')
+          PAYLOAD=$(jq -nc \
+            --arg sha "${{ github.sha }}" \
+            --arg msg "$COMMIT_MSG" \
+            --arg branch "${{ github.ref_name }}" \
+            --arg actor "${{ github.actor }}" \
+            --arg run_url "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            --argjson run_id ${{ github.run_id }} \
+            '{
+              commit_sha: $sha,
+              commit_message: ($msg | split("\n") | first | .[0:200]),
+              branch: $branch,
+              actor: $actor,
+              status: "rolled_back",
+              health_check: false,
+              rollback: true,
+              run_id: $run_id,
+              run_url: $run_url
+            }')
           curl -sf -X POST "${SITE_URL}/api/webhooks/github-deploy" \
             -H "Authorization: Bearer ${CRON_SECRET}" \
             -H "Content-Type: application/json" \
-            -d '{
-              "commit_sha": "${{ github.sha }}",
-              "commit_message": "${{ github.event.head_commit.message }}",
-              "branch": "${{ github.ref_name }}",
-              "actor": "${{ github.actor }}",
-              "status": "rolled_back",
-              "health_check": false,
-              "rollback": true,
-              "run_id": ${{ github.run_id }},
-              "run_url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-            }' || echo "⚠️ Dashboard webhook failed (non-critical)"
+            -d "$PAYLOAD" || echo "⚠️ Dashboard webhook failed (non-critical)"
 
       # ── 14. Workflow als fehlgeschlagen markieren ─────────────
       - name: Fail workflow after rollback
@@ -191,21 +202,32 @@ jobs:
       - name: Log deploy success to dashboard
         if: steps.healthcheck.outcome == 'success'
         continue-on-error: true
+        env:
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
         run: |
           CRON_SECRET=$(grep -oP '^CRON_SECRET=\K.*' .next/standalone/.env | tr -d ' ')
           SITE_URL=$(grep -oP '^NEXT_PUBLIC_SITE_URL=\K.*' .next/standalone/.env | tr -d ' ')
-          ELAPSED=$(( $(date +%s) - ${{ github.event.repository.pushed_at || 0 }} ))
+          PAYLOAD=$(jq -nc \
+            --arg sha "${{ github.sha }}" \
+            --arg msg "$COMMIT_MSG" \
+            --arg branch "${{ github.ref_name }}" \
+            --arg actor "${{ github.actor }}" \
+            --arg run_url "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            --argjson run_id ${{ github.run_id }} \
+            --argjson elapsed ${SECONDS:-0} \
+            '{
+              commit_sha: $sha,
+              commit_message: ($msg | split("\n") | first | .[0:200]),
+              branch: $branch,
+              actor: $actor,
+              status: "success",
+              health_check: true,
+              rollback: false,
+              duration_s: $elapsed,
+              run_id: $run_id,
+              run_url: $run_url
+            }')
           curl -sf -X POST "${SITE_URL}/api/webhooks/github-deploy" \
             -H "Authorization: Bearer ${CRON_SECRET}" \
             -H "Content-Type: application/json" \
-            -d '{
-              "commit_sha": "${{ github.sha }}",
-              "commit_message": "${{ github.event.head_commit.message }}",
-              "branch": "${{ github.ref_name }}",
-              "actor": "${{ github.actor }}",
-              "status": "success",
-              "health_check": true,
-              "rollback": false,
-              "run_id": ${{ github.run_id }},
-              "run_url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-            }' || echo "⚠️ Dashboard webhook failed (non-critical)"
+            -d "$PAYLOAD" || echo "⚠️ Dashboard webhook failed (non-critical)"

@@ -8,6 +8,7 @@ import {
   ExternalLink,
   GitCommit,
   User,
+  Timer,
 } from 'lucide-react';
 import type { DeployStats, DeployLog } from '@/lib/actions/deploy-logs';
 
@@ -45,6 +46,14 @@ function timeAgo(dateStr: string): string {
   return `${days}d ago`;
 }
 
+function formatDuration(seconds: number | null): string {
+  if (!seconds || seconds <= 0) return '—';
+  if (seconds < 60) return `${seconds}s`;
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return secs > 0 ? `${mins}m ${secs}s` : `${mins}m`;
+}
+
 // ── Main Widget ────────────────────────────────────────────────
 
 interface DeployStatusWidgetProps {
@@ -64,7 +73,7 @@ export function DeployStatusWidget({ stats }: DeployStatusWidgetProps) {
   return (
     <div className="space-y-4">
       {/* Summary Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
         <div className="bg-slate-50 rounded-lg p-3 text-center">
           <p className="text-xl font-semibold text-slate-900 tabular-nums">{stats.totalDeploys}</p>
           <p className="text-xs text-slate-500">Total Deploys</p>
@@ -78,6 +87,12 @@ export function DeployStatusWidget({ stats }: DeployStatusWidgetProps) {
             {stats.rollbackCount}
           </p>
           <p className="text-xs text-slate-500">Rollbacks</p>
+        </div>
+        <div className="bg-blue-50 rounded-lg p-3 text-center">
+          <p className="text-xl font-semibold text-blue-700 tabular-nums">
+            {formatDuration(stats.avgDuration)}
+          </p>
+          <p className="text-xs text-blue-600">Avg Duration</p>
         </div>
         <div className="bg-slate-50 rounded-lg p-3 text-center">
           <p className="text-xl font-semibold text-slate-900 tabular-nums">
@@ -95,6 +110,7 @@ export function DeployStatusWidget({ stats }: DeployStatusWidgetProps) {
               <th className="text-left py-2 px-3 font-medium text-slate-500 text-xs uppercase tracking-wider">Status</th>
               <th className="text-left py-2 px-3 font-medium text-slate-500 text-xs uppercase tracking-wider">Commit</th>
               <th className="text-left py-2 px-3 font-medium text-slate-500 text-xs uppercase tracking-wider">Author</th>
+              <th className="text-right py-2 px-3 font-medium text-slate-500 text-xs uppercase tracking-wider">Duration</th>
               <th className="text-right py-2 px-3 font-medium text-slate-500 text-xs uppercase tracking-wider">When</th>
               <th className="text-center py-2 px-3 font-medium text-slate-500 text-xs uppercase tracking-wider">Link</th>
             </tr>
@@ -124,6 +140,14 @@ export function DeployStatusWidget({ stats }: DeployStatusWidgetProps) {
                       {deploy.actor}
                     </span>
                   )}
+                </td>
+                <td className="py-2 px-3 text-right text-xs text-slate-400 whitespace-nowrap">
+                  {deploy.duration_s ? (
+                    <span className="inline-flex items-center gap-1">
+                      <Timer className="h-3 w-3" />
+                      {formatDuration(deploy.duration_s)}
+                    </span>
+                  ) : '—'}
                 </td>
                 <td className="py-2 px-3 text-right text-xs text-slate-400 whitespace-nowrap">
                   {timeAgo(deploy.deployed_at)}
