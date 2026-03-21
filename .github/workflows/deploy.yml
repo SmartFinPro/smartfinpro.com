@@ -67,6 +67,10 @@ jobs:
           SERPER_API_KEY=${{ secrets.SERPER_API_KEY }}
           DASHBOARD_SECRET=${{ secrets.DASHBOARD_SECRET }}
           DASHBOARD_TOTP_SECRET=${{ secrets.DASHBOARD_TOTP_SECRET }}
+          GSC_CLIENT_EMAIL=${{ secrets.GSC_CLIENT_EMAIL }}
+          GSC_PRIVATE_KEY=${{ secrets.GSC_PRIVATE_KEY }}
+          GSC_SITE_URL=${{ secrets.GSC_SITE_URL }}
+          GOOGLE_INDEXING_JSON=${{ secrets.GOOGLE_INDEXING_JSON }}
           EOF
           echo "✅ .env written ($(wc -l < .next/standalone/.env) lines)"
 

@@ -259,6 +259,42 @@ if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
 - [ ] **FCA-Labels** (UK) — auf allen UK-Seiten zu Finanzprodukten
 - [ ] **ASIC-Labels** (AU) — auf allen AU-Seiten zu Finanzprodukten
 
+### 🚨 VPS-Sicherheitsregeln (KRITISCH — Downtime-Prävention)
+
+> **Hintergrund:** Die Site war am 21.03.2026 ~20 Minuten down, weil direkt auf dem VPS
+> `git reset --hard` und `npm run build` ausgeführt wurden. Der Build löschte
+> `.next/standalone/server.js` bevor er fehlschlug → PM2 Crash-Loop → 503.
+
+**Deployment-Regel: IMMER über GitHub Actions**
+- Code-Änderungen deployen = Push auf `main` → GitHub Actions Build & Deploy (#65+)
+- GitHub Actions baut mit 3GB RAM, kopiert via rsync auf VPS, restartet PM2, macht Health Check
+- Workflow: `.github/workflows/deploy.yml`
+
+**VERBOTEN auf dem VPS:**
+- [ ] ❌ **NIEMALS `npm run build` auf dem VPS** — nicht genug RAM, zerstört `.next/standalone/`
+- [ ] ❌ **NIEMALS `git reset --hard` auf dem VPS** — zerstört Build-Artefakte
+- [ ] ❌ **NIEMALS `git pull` auf dem VPS** — erzeugt Merge-Konflikte, Code-Drift
+- [ ] ❌ **NIEMALS `git stash/checkout/rebase` auf dem VPS** — GitHub Actions ist der einzige Weg
+- [ ] ❌ **NIEMALS `.next/` Ordner auf dem VPS löschen oder modifizieren**
+
+**ERLAUBT auf dem VPS (nur kleine Aktionen):**
+- [ ] ✅ **`.env.local` editieren** — Runtime-Env-Variablen hinzufügen/ändern
+- [ ] ✅ **`pm2 restart --update-env`** — nach Env-Änderungen
+- [ ] ✅ **`pm2 logs` / `pm2 status`** — Monitoring & Debugging
+- [ ] ✅ **`curl` für API-Tests** — Endpoints testen
+- [ ] ✅ **Logs lesen** — `tail`, `cat` auf Log-Dateien
+
+**Env-Variablen richtig setzen:**
+- **Build-Zeit-Variablen** (`NEXT_PUBLIC_*`): In GitHub Secrets + `deploy.yml` Step 5b
+- **Runtime-Variablen** (z.B. `GSC_*`): In VPS `.env.local` + `pm2 restart --update-env`
+- **Neue Secrets für beides**: Erst GitHub Secrets, dann `deploy.yml` ergänzen, dann pushen
+
+**VPS-Pfade (Cloudways):**
+- App-Root: `/home/master/applications/brvnvntpcj/public_html`
+- Env-Datei: `/home/master/applications/brvnvntpcj/public_html/.env.local`
+- Standalone: `/home/master/applications/brvnvntpcj/public_html/.next/standalone/`
+- PM2-Config: `ecosystem.config.js` (APP_ROOT = `brvnvntpcj`, NICHT `smartfinpro`)
+
 ---
 
 ## 📝 Ausgabe-Format (jede Antwort)
