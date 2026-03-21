@@ -162,15 +162,24 @@ jobs:
       # ── 13. Telegram Alert bei Deploy-Fehler ─────────────────
       - name: Telegram alert on failure
         if: steps.healthcheck.outcome == 'failure'
+        env:
+          TG_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TG_CHAT: ${{ secrets.TELEGRAM_CHAT_ID }}
+          GH_SHA: ${{ github.sha }}
+          GH_ACTOR: ${{ github.actor }}
+          GH_RUN_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
-          curl -sf -X POST \
-            "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
-            -H "Content-Type: application/json" \
-            -d "{
-              \"chat_id\": \"${{ secrets.TELEGRAM_CHAT_ID }}\",
-              \"parse_mode\": \"HTML\",
-              \"text\": \"🔴 <b>DEPLOY FAILED — AUTO-ROLLBACK</b>\n\nHealth check failed after deploy.\nPrevious version restored automatically.\n\n📋 Commit: <code>${{ github.sha }}</code>\n👤 Author: ${{ github.actor }}\n🔗 <a href=\\\"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\\\">View Run</a>\"
-            }"
+          curl -sf -X POST "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" \
+            -d chat_id="${TG_CHAT}" \
+            -d parse_mode="HTML" \
+            -d text="🔴 <b>DEPLOY FAILED — AUTO-ROLLBACK</b>
+
+          Health check failed after deploy.
+          Previous version restored automatically.
+
+          📋 Commit: <code>${GH_SHA:0:7}</code>
+          👤 Author: ${GH_ACTOR}
+          🔗 <a href=\"${GH_RUN_URL}\">View Run</a>"
 
       # ── 14. Workflow als fehlgeschlagen markieren ─────────────
       - name: Fail workflow after rollback
@@ -180,12 +189,19 @@ jobs:
       # ── 15. Telegram Erfolgs-Benachrichtigung ────────────────
       - name: Telegram deploy success
         if: steps.healthcheck.outcome == 'success'
+        continue-on-error: true
+        env:
+          TG_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TG_CHAT: ${{ secrets.TELEGRAM_CHAT_ID }}
+          GH_SHA: ${{ github.sha }}
+          GH_ACTOR: ${{ github.actor }}
         run: |
-          curl -sf -X POST \
-            "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
-            -H "Content-Type: application/json" \
-            -d "{
-              \"chat_id\": \"${{ secrets.TELEGRAM_CHAT_ID }}\",
-              \"parse_mode\": \"HTML\",
-              \"text\": \"✅ <b>DEPLOY SUCCESSFUL</b>\n\nSmartFinPro.com updated and healthy.\n\n📋 Commit: <code>${{ github.sha }}</code>\n👤 Author: ${{ github.actor }}\"
-            }"
+          curl -sf -X POST "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" \
+            -d chat_id="${TG_CHAT}" \
+            -d parse_mode="HTML" \
+            -d text="✅ <b>DEPLOY SUCCESSFUL</b>
+
+          SmartFinPro.com updated and healthy.
+
+          📋 Commit: <code>${GH_SHA:0:7}</code>
+          👤 Author: ${GH_ACTOR}"
