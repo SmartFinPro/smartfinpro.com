@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState, useCallback, useRef, useEffect } from 'react';
+import { ComposableMap, Geographies, Geography, createCoordinates } from '@vnedyalk0v/react19-simple-maps';
 import type { GeoStat } from '@/lib/actions/dashboard';
 import { MAP_COLORS } from '@/lib/constants/brand-colors';
 
@@ -21,31 +22,23 @@ interface TooltipData {
   y: number;
 }
 
-// ── Country Paths (simplified SVG) ──────────────────────────────
+// ── ISO 3166-1 Numeric → Alpha-2 Mapper ────────────────────────
+// world-atlas uses numeric IDs; our GeoStats use alpha-2 codes
 
-const countryPaths: Record<string, { path: string; cx: number; cy: number }> = {
-  US: { path: 'M55,95 L130,95 L130,130 L55,130 Z', cx: 92, cy: 112 },
-  CA: { path: 'M55,55 L140,55 L140,95 L55,95 Z', cx: 97, cy: 75 },
-  MX: { path: 'M55,130 L100,130 L100,155 L55,155 Z', cx: 77, cy: 142 },
-  BR: { path: 'M130,165 L180,165 L180,220 L130,220 Z', cx: 155, cy: 192 },
-  GB: { path: 'M245,80 L260,80 L260,95 L245,95 Z', cx: 252, cy: 87 },
-  DE: { path: 'M270,85 L290,85 L290,105 L270,105 Z', cx: 280, cy: 95 },
-  FR: { path: 'M250,95 L275,95 L275,120 L250,120 Z', cx: 262, cy: 107 },
-  ES: { path: 'M240,110 L265,110 L265,130 L240,130 Z', cx: 252, cy: 120 },
-  IT: { path: 'M280,105 L300,105 L300,135 L280,135 Z', cx: 290, cy: 120 },
-  NL: { path: 'M265,78 L280,78 L280,88 L265,88 Z', cx: 272, cy: 83 },
-  PL: { path: 'M295,80 L320,80 L320,100 L295,100 Z', cx: 307, cy: 90 },
-  SE: { path: 'M285,45 L305,45 L305,75 L285,75 Z', cx: 295, cy: 60 },
-  NO: { path: 'M270,35 L290,35 L290,65 L270,65 Z', cx: 280, cy: 50 },
-  RU: { path: 'M320,40 L480,40 L480,110 L320,110 Z', cx: 400, cy: 75 },
-  CN: { path: 'M420,100 L500,100 L500,160 L420,160 Z', cx: 460, cy: 130 },
-  JP: { path: 'M510,105 L535,105 L535,140 L510,140 Z', cx: 522, cy: 122 },
-  KR: { path: 'M495,115 L515,115 L515,135 L495,135 Z', cx: 505, cy: 125 },
-  IN: { path: 'M400,135 L450,135 L450,190 L400,190 Z', cx: 425, cy: 162 },
-  AU: { path: 'M470,200 L550,200 L550,260 L470,260 Z', cx: 510, cy: 230 },
-  ZA: { path: 'M300,220 L340,220 L340,260 L300,260 Z', cx: 320, cy: 240 },
-  AE: { path: 'M365,145 L385,145 L385,160 L365,160 Z', cx: 375, cy: 152 },
-  SG: { path: 'M445,175 L460,175 L460,185 L445,185 Z', cx: 452, cy: 180 },
+const numericToAlpha2: Record<string, string> = {
+  '840': 'US', '826': 'GB', '124': 'CA', '036': 'AU',
+  '276': 'DE', '250': 'FR', '724': 'ES', '380': 'IT',
+  '528': 'NL', '076': 'BR', '356': 'IN', '392': 'JP',
+  '156': 'CN', '410': 'KR', '484': 'MX', '643': 'RU',
+  '710': 'ZA', '784': 'AE', '702': 'SG', '752': 'SE',
+  '578': 'NO', '616': 'PL', '056': 'BE', '040': 'AT',
+  '756': 'CH', '372': 'IE', '208': 'DK', '246': 'FI',
+  '554': 'NZ', '764': 'TH', '608': 'PH', '360': 'ID',
+  '458': 'MY', '704': 'VN', '818': 'EG', '566': 'NG',
+  '404': 'KE', '032': 'AR', '152': 'CL', '170': 'CO',
+  '604': 'PE', '792': 'TR', '682': 'SA', '376': 'IL',
+  '620': 'PT', '203': 'CZ', '348': 'HU', '642': 'RO',
+  '804': 'UA', '300': 'GR',
 };
 
 // ── Flag + Color Helpers ────────────────────────────────────────
@@ -61,16 +54,8 @@ function getFlag(code: string): string {
   return countryFlags[code] || '🌍';
 }
 
-const COLORS = {
-  muted: MAP_COLORS.muted,
-  land: MAP_COLORS.land,
-  border: MAP_COLORS.border,
-  primary: MAP_COLORS.activeDot,
-  text: MAP_COLORS.text,
-};
-
 function getHeatColor(percentage: number): string {
-  if (percentage === 0) return COLORS.muted;
+  if (percentage === 0) return MAP_COLORS.muted;
   return MAP_COLORS.scale[
     percentage < 5 ? 0 :
     percentage < 15 ? 1 :
@@ -79,32 +64,33 @@ function getHeatColor(percentage: number): string {
   ];
 }
 
+// ── TopoJSON (local, no CDN fetch) ──────────────────────────────
+
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const geoData = require('world-atlas/countries-110m.json');
+
 // ── Component ───────────────────────────────────────────────────
 
 export function WorldMap({ data, activeCountry, onCountryClick }: WorldMapProps) {
   const [tooltip, setTooltip] = useState<TooltipData | null>(null);
-  const svgRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // Build lookup map (handle UK→GB)
   const countryData = useMemo(() => {
     const map = new Map<string, GeoStat>();
     data.forEach((stat) => {
-      if (stat.country_code === 'XX') return; // Don't map Unknown
+      if (stat.country_code === 'XX') return;
       const code = stat.country_code === 'UK' ? 'GB' : stat.country_code;
       map.set(code, stat);
     });
     return map;
   }, [data]);
 
-  const maxClicks = useMemo(() => {
-    return Math.max(...data.filter(d => d.country_code !== 'XX').map(d => d.clicks), 1);
-  }, [data]);
-
   const hasFilter = activeCountry !== null && activeCountry !== undefined;
+  const activeCode = activeCountry === 'UK' ? 'GB' : activeCountry;
 
   const handleCountryClick = useCallback((code: string) => {
     if (!onCountryClick) return;
-    // Toggle: click same country again = clear
     const normalizedActive = activeCountry === 'UK' ? 'GB' : activeCountry;
     onCountryClick(normalizedActive === code ? null : code);
   }, [onCountryClick, activeCountry]);
@@ -114,6 +100,23 @@ export function WorldMap({ data, activeCountry, onCountryClick }: WorldMapProps)
       onCountryClick(null);
     }
   }, [onCountryClick, hasFilter]);
+
+  const handleMouseEnter = useCallback((evt: React.MouseEvent, code: string, stat: GeoStat) => {
+    const rect = containerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    setTooltip({
+      country: stat.country_name,
+      code: stat.country_code,
+      clicks: stat.clicks,
+      percentage: stat.percentage,
+      x: evt.clientX - rect.left,
+      y: evt.clientY - rect.top,
+    });
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    setTooltip(null);
+  }, []);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent, code: string) => {
     if (e.key === 'Enter' || e.key === ' ') {
@@ -125,32 +128,10 @@ export function WorldMap({ data, activeCountry, onCountryClick }: WorldMapProps)
     }
   }, [handleCountryClick, onCountryClick]);
 
-  // Tooltip position from SVG coordinates
-  const handleMouseMove = useCallback((e: React.MouseEvent<SVGElement>, code: string, stat: GeoStat) => {
-    if (!svgRef.current) return;
-    const rect = svgRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    setTooltip({
-      country: stat.country_name,
-      code: stat.country_code,
-      clicks: stat.clicks,
-      percentage: stat.percentage,
-      x,
-      y,
-    });
-  }, []);
-
-  const handleMouseLeave = useCallback(() => {
-    setTooltip(null);
-  }, []);
-
-  // Keyboard escape listener on the SVG
+  // Global Escape listener
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && hasFilter) {
-        onCountryClick?.(null);
-      }
+      if (e.key === 'Escape' && hasFilter) onCountryClick?.(null);
     };
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
@@ -164,108 +145,100 @@ export function WorldMap({ data, activeCountry, onCountryClick }: WorldMapProps)
     );
   }
 
-  // Determine active code for highlighting (normalize UK→GB)
-  const activeCode = activeCountry === 'UK' ? 'GB' : activeCountry;
-
   return (
-    <div className="relative" ref={svgRef}>
-      <svg
-        viewBox="0 0 600 300"
-        className="w-full h-auto"
-        style={{ maxHeight: '340px' }}
-        role="img"
-        aria-label="World map showing click distribution by country"
+    <div className="relative" ref={containerRef}>
+      <ComposableMap
+        projection="geoNaturalEarth1"
+        projectionConfig={{ scale: 140, center: createCoordinates(10, 5) }}
+        width={800}
+        height={420}
+        style={{ width: '100%', height: 'auto', maxHeight: '360px' }}
       >
-        {/* Ocean background — click to clear filter */}
+        {/* Background rect for click-to-clear */}
         <rect
-          width="600"
-          height="300"
+          width={800}
+          height={420}
           fill={MAP_COLORS.ocean}
-          rx="8"
           onClick={handleBackgroundClick}
           style={{ cursor: hasFilter ? 'pointer' : 'default' }}
         />
 
-        {/* Continent outlines */}
-        <g fill={COLORS.land} stroke={COLORS.border} strokeWidth="0.5" onClick={handleBackgroundClick}>
-          <path d="M40,50 Q60,40 100,45 L140,55 L145,95 L130,130 L100,155 L55,155 L50,130 L55,95 L40,70 Z" />
-          <path d="M100,155 L130,155 L150,165 L180,165 L185,200 L170,240 L140,260 L110,240 L105,200 L100,170 Z" />
-          <path d="M240,55 Q280,45 320,50 L330,80 L310,110 L270,120 L245,115 L235,90 L240,70 Z" />
-          <path d="M250,120 L310,115 L350,140 L360,180 L340,230 L300,260 L260,240 L250,200 L260,160 Z" />
-          <path d="M320,45 L500,35 L540,80 L530,130 L500,160 L450,190 L400,190 L370,160 L350,130 L330,100 L320,70 Z" />
-          <path d="M460,195 L550,195 L560,230 L540,265 L480,265 L465,240 Z" />
-        </g>
-
-        {/* Country paths with interaction */}
-        {Object.entries(countryPaths).map(([code, { path, cx, cy }]) => {
-          const stat = countryData.get(code);
-          const percentage = stat ? stat.percentage : 0;
-          const clicks = stat ? stat.clicks : 0;
-          const isActive = activeCode === code;
-          const isDimmed = hasFilter && !isActive;
-
-          return (
-            <g key={code}>
-              {/* Country shape */}
-              <path
-                d={path}
-                fill={getHeatColor(percentage)}
-                stroke={isActive ? '#1B4F8C' : 'transparent'}
-                strokeWidth={isActive ? 2 : 0}
-                className="transition-all duration-200"
-                style={{
-                  cursor: stat ? 'pointer' : 'default',
-                  opacity: isDimmed ? 0.35 : 1,
-                  filter: isActive ? 'brightness(1.1)' : 'none',
-                }}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (stat) handleCountryClick(code);
-                }}
-                onMouseMove={stat ? (e) => handleMouseMove(e, code, stat) : undefined}
-                onMouseLeave={stat ? handleMouseLeave : undefined}
-                onKeyDown={stat ? (e) => handleKeyDown(e, code) : undefined}
-                tabIndex={stat ? 0 : undefined}
-                role={stat ? 'button' : undefined}
-                aria-label={stat ? `${stat.country_name}: ${clicks} clicks (${percentage}%)` : undefined}
-              />
-              {/* Pulse dot for countries with data */}
-              {stat && clicks > 0 && (
-                <g style={{ opacity: isDimmed ? 0.3 : 1 }} className="transition-opacity duration-200">
-                  <circle
-                    cx={cx}
-                    cy={cy}
-                    r={Math.min(4 + (clicks / maxClicks) * 12, 16)}
-                    fill={COLORS.primary}
-                    opacity={0.35}
-                    className="animate-pulse"
+        <Geographies geography={geoData}>
+          {({ geographies }: { geographies: Array<{ rsmKey: string; id: string; properties: { name: string }; [key: string]: unknown }> }) =>
+            geographies.map((geo, idx) => {
+              const geoKey = geo.rsmKey || `geo-${geo.id}-${idx}`;
+              const alpha2 = numericToAlpha2[geo.id];
+              if (!alpha2) {
+                // Country not in our mapper — render as neutral land
+                return (
+                  <Geography
+                    key={geoKey}
+                    geography={geo}
+                    fill={MAP_COLORS.land}
+                    stroke={MAP_COLORS.border}
+                    strokeWidth={0.3}
+                    style={{
+                      default: { outline: 'none', opacity: hasFilter ? 0.3 : 1 },
+                      hover: { outline: 'none', opacity: hasFilter ? 0.4 : 1, fill: '#e8ecf1' },
+                      pressed: { outline: 'none' },
+                    }}
+                    onClick={(e: React.MouseEvent) => { e.stopPropagation(); handleBackgroundClick(); }}
                   />
-                  <circle cx={cx} cy={cy} r={3} fill={MAP_COLORS.dotCenter} />
-                </g>
-              )}
-            </g>
-          );
-        })}
+                );
+              }
 
-        {/* Legend */}
-        <g transform="translate(20, 260)">
-          <text x="0" y="0" fill={COLORS.text} fontSize="10">Click intensity:</text>
-          {MAP_COLORS.scale.map((color, i) => (
-            <rect key={i} x={80 + i * 25} y={-10} width="20" height="12" fill={color} rx="2" />
-          ))}
-          <text x="85" y="15" fill={COLORS.text} fontSize="8">Low</text>
-          <text x="175" y="15" fill={COLORS.text} fontSize="8">High</text>
-        </g>
-      </svg>
+              const stat = countryData.get(alpha2);
+              const isActive = activeCode === alpha2;
+              const isDimmed = hasFilter && !isActive;
+
+              return (
+                <Geography
+                  key={geoKey}
+                  geography={geo}
+                  fill={stat ? getHeatColor(stat.percentage) : MAP_COLORS.land}
+                  stroke={isActive ? '#1B4F8C' : MAP_COLORS.border}
+                  strokeWidth={isActive ? 1.5 : 0.3}
+                  style={{
+                    default: {
+                      outline: 'none',
+                      opacity: isDimmed ? 0.3 : 1,
+                      transition: 'all 200ms ease',
+                    },
+                    hover: {
+                      outline: 'none',
+                      opacity: 1,
+                      fill: stat ? getHeatColor(Math.min(stat.percentage + 10, 100)) : '#e8ecf1',
+                      cursor: stat ? 'pointer' : 'default',
+                      transition: 'all 150ms ease',
+                    },
+                    pressed: { outline: 'none' },
+                  }}
+                  onClick={(e: React.MouseEvent) => {
+                    e.stopPropagation();
+                    if (stat) handleCountryClick(alpha2);
+                    else handleBackgroundClick();
+                  }}
+                  onMouseEnter={stat ? (e: React.MouseEvent) => handleMouseEnter(e, alpha2, stat) : undefined}
+                  onMouseLeave={stat ? handleMouseLeave : undefined}
+                  onKeyDown={stat ? (e: React.KeyboardEvent) => handleKeyDown(e, alpha2) : undefined}
+                  tabIndex={stat ? 0 : -1}
+                  role={stat ? 'button' : undefined}
+                  aria-label={stat ? `${stat.country_name}: ${stat.clicks} clicks (${stat.percentage}%)` : undefined}
+                />
+              );
+            })
+          }
+        </Geographies>
+      </ComposableMap>
 
       {/* Hover Tooltip */}
       {tooltip && (
         <div
           className="absolute z-50 pointer-events-none bg-white border border-slate-200 shadow-lg rounded-lg p-3 text-xs"
           style={{
-            left: Math.min(tooltip.x + 12, (svgRef.current?.getBoundingClientRect().width ?? 400) - 160),
-            top: Math.max(tooltip.y - 60, 8),
-            minWidth: 140,
+            left: Math.min(tooltip.x + 12, (containerRef.current?.getBoundingClientRect().width ?? 400) - 170),
+            top: Math.max(tooltip.y - 70, 8),
+            minWidth: 150,
           }}
         >
           <div className="flex items-center gap-2 mb-2 pb-2 border-b border-slate-100">
@@ -286,14 +259,14 @@ export function WorldMap({ data, activeCountry, onCountryClick }: WorldMapProps)
             </div>
           </div>
           <div className="mt-2 pt-1.5 border-t border-slate-100 text-[10px] text-slate-400">
-            Click to filter table
+            Click to filter · Escape to clear
           </div>
         </div>
       )}
 
       {/* Top Countries Overlay */}
-      <div className="absolute top-2 right-2 bg-white/95 backdrop-blur-sm rounded-lg p-2 text-xs border border-slate-200 shadow-sm">
-        <div className="font-medium text-slate-900 mb-1">Top Countries</div>
+      <div className="absolute top-2 right-2 bg-white/95 backdrop-blur-sm rounded-lg p-2.5 text-xs border border-slate-200 shadow-sm">
+        <div className="font-medium text-slate-900 mb-1.5">Top Countries</div>
         {data
           .filter(s => s.country_code !== 'XX')
           .slice(0, 4)
@@ -309,11 +282,20 @@ export function WorldMap({ data, activeCountry, onCountryClick }: WorldMapProps)
                 }`}
               >
                 <span className="w-4">{getFlag(stat.country_code)}</span>
-                <span className="text-slate-500">{stat.country_code}</span>
+                <span className="text-slate-600 w-6">{stat.country_code}</span>
                 <span className="font-medium text-slate-900 ml-auto tabular-nums">{stat.clicks}</span>
               </button>
             );
           })}
+      </div>
+
+      {/* Legend */}
+      <div className="absolute bottom-3 left-3 flex items-center gap-1.5 text-[10px] text-slate-500">
+        <span>Click intensity:</span>
+        {MAP_COLORS.scale.map((color, i) => (
+          <div key={i} className="w-5 h-3 rounded-sm" style={{ background: color }} />
+        ))}
+        <span className="ml-0.5">Low → High</span>
       </div>
     </div>
   );
