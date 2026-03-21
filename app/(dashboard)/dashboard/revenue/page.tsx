@@ -9,9 +9,11 @@ import {
   ArrowUpRight,
   Target,
   Zap,
+  FileText,
 } from 'lucide-react';
-import { getAutoRevenueStats } from '@/lib/actions/revenue';
+import { getAutoRevenueStats, getRevenueByPage } from '@/lib/actions/revenue';
 import { RevenueByProductTable } from '@/components/dashboard/revenue-by-product';
+import { RevenueByPageTable } from '@/components/dashboard/revenue-by-page';
 import { RevenueByMarketGrid } from '@/components/dashboard/revenue-by-market';
 import { EPCTrendChart } from '@/components/dashboard/epc-trend-chart';
 import { RevenueChart } from '@/components/dashboard/revenue-chart';
@@ -79,7 +81,10 @@ function StatCard({
 }
 
 export default async function RevenuePage() {
-  const stats = await getAutoRevenueStats();
+  const [stats, pageStats] = await Promise.all([
+    getAutoRevenueStats(),
+    getRevenueByPage(),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -182,6 +187,24 @@ export default async function RevenuePage() {
           <WidgetErrorBoundary label="Revenue by Product" minHeight="h-64">
             <Suspense fallback={<Skeleton className="h-64" />}>
               <RevenueByProductTable products={stats.revenueByProduct} />
+            </Suspense>
+          </WidgetErrorBoundary>
+        </div>
+      </div>
+
+      {/* Revenue by Page */}
+      <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+        <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-2">
+          <FileText className="h-5 w-5 text-blue-500" />
+          <h3 className="font-semibold text-slate-900">Revenue by Page</h3>
+          <span className="text-xs text-slate-400 ml-auto">
+            {pageStats.totalPages} pages tracked
+          </span>
+        </div>
+        <div className="p-4">
+          <WidgetErrorBoundary label="Revenue by Page" minHeight="h-64">
+            <Suspense fallback={<Skeleton className="h-64" />}>
+              <RevenueByPageTable pages={pageStats.pages} />
             </Suspense>
           </WidgetErrorBoundary>
         </div>
