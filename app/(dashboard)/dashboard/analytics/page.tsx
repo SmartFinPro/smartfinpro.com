@@ -25,6 +25,7 @@ import { UTMCampaignsTable } from '@/components/dashboard/utm-campaigns-table';
 import { ReferrersList } from '@/components/dashboard/referrers-list';
 import { SiloFilterDropdown } from '@/components/dashboard/silo-filter-dropdown';
 import { WidgetErrorBoundary } from '@/components/dashboard/widget-error-boundary';
+import { GSCOverview } from '@/components/dashboard/gsc-overview';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -77,6 +78,24 @@ export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps
             </Suspense>
           </WidgetErrorBoundary>
         </div>
+      </div>
+
+      {/* Google Search Console — Real Search Data */}
+      <WidgetErrorBoundary label="Google Search Console" minHeight="h-32">
+        <Suspense fallback={<div className="dashboard-card p-12 flex items-center justify-center"><div className="h-6 w-6 animate-spin rounded-full border-2 border-slate-300 border-t-slate-600" /><span className="ml-3 text-slate-500">GSC-Daten laden…</span></div>}>
+          <GSCOverview />
+        </Suspense>
+      </WidgetErrorBoundary>
+
+      {/* Divider */}
+      <div className="border-t border-slate-200 pt-2">
+        <h2 className="text-lg font-semibold text-slate-800 flex items-center gap-2">
+          <BarChart3 className="h-5 w-5 text-slate-400" />
+          On-Site Analytics
+          <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: '#fef3c7', color: '#92400e' }}>
+            Eigenes Tracking
+          </span>
+        </h2>
       </div>
 
       {/* Overview Stats */}
