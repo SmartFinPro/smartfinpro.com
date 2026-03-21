@@ -218,6 +218,15 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           comparisonLabel={comparisonLabels[range]}
         />
 
+        {/* Geo Intelligence — Hero Section: Interactive Map + Synchronized Click Details */}
+        <div className="mb-8">
+          <WidgetErrorBoundary label="Geo Intelligence" minHeight="h-96">
+            <Suspense fallback={<Skeleton className="h-96" />}>
+              <GeoIntelligence geoStats={stats.geoStats} recentClicks={stats.recentClicks} />
+            </Suspense>
+          </WidgetErrorBoundary>
+        </div>
+
         {/* Action Items */}
         {stats.actionItems.length > 0 && (
           <div className={`${card} mb-8`}>
@@ -363,15 +372,6 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             </div>
           </div>
         )}
-
-        {/* Geo Intelligence — Interactive Map + Synchronized Click Details */}
-        <div className="mb-8">
-          <WidgetErrorBoundary label="Geo Intelligence" minHeight="h-96">
-            <Suspense fallback={<Skeleton className="h-96" />}>
-              <GeoIntelligence geoStats={stats.geoStats} recentClicks={stats.recentClicks} />
-            </Suspense>
-          </WidgetErrorBoundary>
-        </div>
 
         {/* Links, Pages, Devices, Activity */}
         <div className="grid gap-6 lg:grid-cols-4 mb-8">

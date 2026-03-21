@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useCallback } from 'react';
-import { Globe, MapPin, AlertTriangle, X } from 'lucide-react';
+import { Globe, MapPin, AlertTriangle, X, TrendingUp } from 'lucide-react';
 import type { GeoStat, ClickData } from '@/lib/actions/dashboard';
 import { WorldMap } from './world-map';
 import { ClickDetailsTable } from './click-details-table';
@@ -38,13 +38,14 @@ export function GeoIntelligence({ geoStats, recentClicks }: GeoIntelligenceProps
     const realCountries = geoStats.filter(s => s.country_code !== 'XX');
     const unknownStat = geoStats.find(s => s.country_code === 'XX');
     const totalClicks = geoStats.reduce((sum, s) => sum + s.clicks, 0);
-    const topCountry = realCountries[0] || null; // Already sorted desc by clicks
+    const topCountry = realCountries[0] || null;
 
     const unknownClicks = unknownStat?.clicks || 0;
     const unknownPct = totalClicks > 0 ? Math.round((unknownClicks / totalClicks) * 100) : 0;
 
     return {
       totalCountries: realCountries.length,
+      realCountries,
       topCountry,
       unknownClicks,
       unknownPct,
@@ -53,16 +54,12 @@ export function GeoIntelligence({ geoStats, recentClicks }: GeoIntelligenceProps
     };
   }, [geoStats]);
 
-  // Map → filter bridge: WorldMap passes country code
+  // Map → filter bridge
   const handleMapClick = useCallback((code: string | null) => {
-    if (code === null) {
-      setFilter('all');
-    } else {
-      setFilter(`country:${code}`);
-    }
+    setFilter(code === null ? 'all' : `country:${code}`);
   }, []);
 
-  // Table → filter bridge: ClickDetailsTable passes GeoFilter
+  // Table → filter bridge
   const handleTableFilter = useCallback((f: GeoFilter) => {
     setFilter(f);
   }, []);
@@ -118,117 +115,158 @@ export function GeoIntelligence({ geoStats, recentClicks }: GeoIntelligenceProps
               <p className="text-[11px] text-slate-500">Click distribution and traffic origin analysis</p>
             </div>
           </div>
-          {/* Active filter pill */}
-          {filterDisplayName && (
-            <span
-              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium text-white"
-              style={{ background: filter === 'unknown' ? '#D97706' : 'var(--sfp-navy)' }}
-            >
-              {filterDisplayName}
-              <button
-                onClick={() => setFilter('all')}
-                className="hover:bg-white/20 rounded-full p-0.5 transition-colors"
-                aria-label="Clear filter"
+          <div className="flex items-center gap-3">
+            {/* Active filter pill */}
+            {filterDisplayName && (
+              <span
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium text-white"
+                style={{ background: filter === 'unknown' ? '#D97706' : 'var(--sfp-navy)' }}
               >
-                <X className="h-3 w-3" />
-              </button>
-            </span>
-          )}
+                {filterDisplayName}
+                <button
+                  onClick={() => setFilter('all')}
+                  className="hover:bg-white/20 rounded-full p-0.5 transition-colors"
+                  aria-label="Clear filter"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </span>
+            )}
+            {/* KPI badges inline */}
+            <div className="hidden lg:flex items-center gap-4 text-xs">
+              <span className="text-slate-500">
+                <span className="font-bold text-slate-900 tabular-nums">{metrics.totalCountries}</span> countries
+              </span>
+              <span className="text-slate-300">|</span>
+              <span className="text-slate-500">
+                <span className="font-bold text-slate-900 tabular-nums">{metrics.totalClicks.toLocaleString()}</span> clicks
+              </span>
+              {metrics.unknownClicks > 0 && (
+                <>
+                  <span className="text-slate-300">|</span>
+                  <span className={metrics.highUnknown ? 'text-amber-600 font-medium' : 'text-slate-500'}>
+                    <span className="font-bold tabular-nums">{metrics.unknownPct}%</span> unknown
+                  </span>
+                </>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* KPI Row */}
-      <div className="grid grid-cols-3 gap-px bg-slate-100 border-b border-slate-100">
-        {/* Total Countries */}
-        <div className="bg-white p-4 text-center">
-          <p className="text-[11px] font-medium text-slate-500 uppercase tracking-wider mb-1">Countries</p>
-          <p className="text-xl font-bold text-slate-900 tabular-nums">{metrics.totalCountries}</p>
-          <p className="text-[10px] text-slate-400 mt-0.5">with tracked clicks</p>
-        </div>
-        {/* Top Market */}
-        <div className="bg-white p-4 text-center">
-          <p className="text-[11px] font-medium text-slate-500 uppercase tracking-wider mb-1">Top Market</p>
-          {metrics.topCountry ? (
-            <>
-              <p className="text-xl font-bold text-slate-900 tabular-nums">
-                {getFlag(metrics.topCountry.country_code)} {metrics.topCountry.country_code}
-              </p>
-              <p className="text-[10px] text-slate-400 mt-0.5">
-                {metrics.topCountry.clicks.toLocaleString()} clicks ({metrics.topCountry.percentage}%)
-              </p>
-            </>
-          ) : (
-            <p className="text-xl font-bold text-slate-400">—</p>
-          )}
-        </div>
-        {/* Unknown Traffic */}
-        <div className={`bg-white p-4 text-center ${metrics.highUnknown ? 'ring-1 ring-inset ring-amber-200' : ''}`}>
-          <p className="text-[11px] font-medium text-slate-500 uppercase tracking-wider mb-1">Unknown</p>
-          <p className={`text-xl font-bold tabular-nums ${metrics.highUnknown ? 'text-amber-600' : 'text-slate-900'}`}>
-            {metrics.unknownPct}%
-          </p>
-          <p className="text-[10px] text-slate-400 mt-0.5">
-            {metrics.unknownClicks.toLocaleString()} unmapped click{metrics.unknownClicks !== 1 ? 's' : ''}
-          </p>
-        </div>
+      {/* Hero Map — full width */}
+      <div className="px-6 pt-5 pb-3">
+        <WorldMap
+          data={geoStats}
+          activeCountry={activeCountryForMap}
+          onCountryClick={handleMapClick}
+        />
       </div>
 
-      {/* Main Content: Map + Table */}
-      <div className="grid lg:grid-cols-3 gap-0 divide-x divide-slate-100">
-        {/* Map Panel */}
-        <div className="lg:col-span-1 p-4">
-          <WorldMap
-            data={geoStats}
-            activeCountry={activeCountryForMap}
-            onCountryClick={handleMapClick}
-          />
+      {/* Unknown Warning Banner (only when high) */}
+      {metrics.highUnknown && (
+        <div className="mx-6 mb-3">
+          <button
+            onClick={() => setFilter(filter === 'unknown' ? 'all' : 'unknown')}
+            className={`w-full rounded-lg p-3 text-left transition-all ${
+              filter === 'unknown'
+                ? 'bg-amber-100 border-2 border-amber-400'
+                : 'bg-amber-50 border border-amber-200 hover:border-amber-300'
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="h-3.5 w-3.5 text-amber-500 shrink-0" />
+              <span className="text-xs font-semibold text-amber-700">
+                High Unmapped Traffic: {metrics.unknownClicks.toLocaleString()} clicks ({metrics.unknownPct}%)
+              </span>
+              <span className="text-[10px] text-amber-600 ml-auto">
+                Check geo-IP headers and proxy configuration
+              </span>
+            </div>
+          </button>
+        </div>
+      )}
 
-          {/* Unknown Bucket */}
-          {metrics.unknownClicks > 0 && (
-            <button
-              onClick={() => setFilter(filter === 'unknown' ? 'all' : 'unknown')}
-              className={`mt-3 w-full rounded-lg p-3 text-left transition-all ${
-                filter === 'unknown'
-                  ? 'bg-amber-100 border-2 border-amber-400'
-                  : metrics.highUnknown
-                    ? 'bg-amber-50 border border-amber-200 hover:border-amber-300'
+      {/* Bottom Panel: Top Countries + Click Details */}
+      <div className="border-t border-slate-100">
+        <div className="grid lg:grid-cols-5 gap-0 divide-y lg:divide-y-0 lg:divide-x divide-slate-100">
+          {/* Left: Top Countries Summary + Unknown Bucket */}
+          <div className="lg:col-span-2 p-5">
+            <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
+              Top Countries
+            </h4>
+            <div className="space-y-2">
+              {metrics.realCountries.slice(0, 6).map((stat, i) => {
+                const code = stat.country_code === 'UK' ? 'GB' : stat.country_code;
+                const isActive = activeCountryForMap === code;
+                const barWidth = metrics.totalClicks > 0
+                  ? Math.max((stat.clicks / metrics.totalClicks) * 100, 3)
+                  : 0;
+                return (
+                  <button
+                    key={stat.country_code}
+                    onClick={() => handleMapClick(isActive ? null : code)}
+                    className={`flex items-center gap-3 w-full text-left px-2 py-1.5 rounded-lg transition-all ${
+                      isActive
+                        ? 'bg-slate-100 ring-1 ring-slate-300'
+                        : 'hover:bg-slate-50'
+                    }`}
+                  >
+                    <span className="text-xs font-bold text-slate-400 w-4 tabular-nums">
+                      {i + 1}
+                    </span>
+                    <span className="text-base">{getFlag(stat.country_code)}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs font-semibold text-slate-800">{stat.country_name}</span>
+                        <span className="text-xs font-bold text-slate-900 tabular-nums">
+                          {stat.clicks.toLocaleString()}
+                        </span>
+                      </div>
+                      <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                        <div
+                          className="h-full rounded-full transition-all duration-500"
+                          style={{ width: `${barWidth}%`, background: 'var(--sfp-navy)' }}
+                        />
+                      </div>
+                    </div>
+                    <span className="text-[10px] text-slate-400 tabular-nums w-8 text-right">
+                      {stat.percentage}%
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Unknown Bucket (compact, below countries) */}
+            {metrics.unknownClicks > 0 && !metrics.highUnknown && (
+              <button
+                onClick={() => setFilter(filter === 'unknown' ? 'all' : 'unknown')}
+                className={`mt-3 w-full rounded-lg p-2.5 text-left transition-all ${
+                  filter === 'unknown'
+                    ? 'bg-amber-100 border-2 border-amber-400'
                     : 'bg-slate-50 border border-slate-200 hover:border-slate-300'
-              }`}
-            >
-              <div className="flex items-center gap-2 mb-1">
-                {metrics.highUnknown ? (
-                  <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
-                ) : (
+                }`}
+              >
+                <div className="flex items-center gap-2">
                   <MapPin className="h-3.5 w-3.5 text-slate-400" />
-                )}
-                <span className={`text-xs font-semibold ${metrics.highUnknown ? 'text-amber-700' : 'text-slate-700'}`}>
-                  Unmapped Traffic
-                </span>
-                <span className={`ml-auto text-xs font-bold tabular-nums ${metrics.highUnknown ? 'text-amber-700' : 'text-slate-700'}`}>
-                  {metrics.unknownClicks.toLocaleString()} ({metrics.unknownPct}%)
-                </span>
-              </div>
-              {metrics.highUnknown && (
-                <p className="text-[10px] text-amber-600 mt-1 leading-relaxed">
-                  High unknown rate — check geo-IP headers and Cloudflare proxy configuration.
-                </p>
-              )}
-              {!metrics.highUnknown && metrics.unknownPct > 0 && (
-                <p className="text-[10px] text-slate-400 mt-1">
-                  Click to filter unknown traffic
-                </p>
-              )}
-            </button>
-          )}
-        </div>
+                  <span className="text-xs font-medium text-slate-600">Unknown</span>
+                  <span className="ml-auto text-xs font-bold tabular-nums text-slate-600">
+                    {metrics.unknownClicks.toLocaleString()} ({metrics.unknownPct}%)
+                  </span>
+                </div>
+              </button>
+            )}
+          </div>
 
-        {/* Click Details Panel */}
-        <div className="lg:col-span-2 p-4 max-h-[500px] overflow-y-auto">
-          <ClickDetailsTable
-            clicks={recentClicks}
-            activeFilter={filter}
-            onFilterChange={handleTableFilter}
-          />
+          {/* Right: Click Details Table */}
+          <div className="lg:col-span-3 p-4 max-h-[420px] overflow-y-auto">
+            <ClickDetailsTable
+              clicks={recentClicks}
+              activeFilter={filter}
+              onFilterChange={handleTableFilter}
+            />
+          </div>
         </div>
       </div>
     </div>

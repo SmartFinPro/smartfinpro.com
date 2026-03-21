@@ -172,7 +172,7 @@ export function WorldMap({ data, activeCountry, onCountryClick }: WorldMapProps)
       <svg
         viewBox="0 0 600 300"
         className="w-full h-auto"
-        style={{ maxHeight: '240px' }}
+        style={{ maxHeight: '340px' }}
         role="img"
         aria-label="World map showing click distribution by country"
       >
