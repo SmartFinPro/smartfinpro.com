@@ -87,7 +87,22 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
 
-      # ── 8. Rsync standalone → VPS ─────────────────────────────
+      # ── 8. Backup current standalone (Self-Healing) ─────────
+      - name: Backup current standalone
+        run: |
+          ssh -i ~/.ssh/deploy_key \
+            -o StrictHostKeyChecking=no \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
+            "cd /home/master/applications/brvnvntpcj/public_html && \
+             rm -rf .next/standalone-backup && \
+             if [ -d .next/standalone ]; then \
+               cp -a .next/standalone .next/standalone-backup && \
+               echo '✅ Backup created'; \
+             else \
+               echo '⚠️ No existing standalone to backup'; \
+             fi"
+
+      # ── 9. Rsync standalone → VPS ─────────────────────────────
       - name: Deploy standalone to VPS
         run: |
           rsync -avz --delete --no-perms --no-owner --no-group \
@@ -96,7 +111,7 @@ jobs:
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/home/master/applications/brvnvntpcj/public_html/.next/standalone/ \
           || RSYNC_EXIT=$?; [ "${RSYNC_EXIT:-0}" -eq 23 ] && echo "⚠️ rsync code 23 (minor permission issues) — continuing" || exit ${RSYNC_EXIT:-0}
 
-      # ── 9. PM2 Restart ────────────────────────────────────────
+      # ── 10. PM2 Restart ───────────────────────────────────────
       - name: Restart PM2
         run: |
           ssh -i ~/.ssh/deploy_key \
@@ -104,10 +119,73 @@ jobs:
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
             "export PM2=/home/master/.npm-global/bin/pm2 && \$PM2 restart SmartFinPro-Live --update-env && \$PM2 save"
 
-      # ── 10. Health Check ──────────────────────────────────────
+      # ── 11. Health Check (3 Versuche, je 10s) ────────────────
       - name: Health Check
+        id: healthcheck
+        continue-on-error: true
         run: |
           ssh -i ~/.ssh/deploy_key \
             -o StrictHostKeyChecking=no \
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
-            "sleep 5 && curl -sf -o /dev/null -w '%{http_code}' http://localhost:3000/ | grep -q '200' && echo '✅ Health check passed' || (echo '❌ Health check failed' && exit 1)"
+            'for i in 1 2 3; do
+              sleep 10
+              STATUS=$(curl -sf -o /dev/null -w "%{http_code}" http://localhost:3000/ 2>/dev/null || echo "000")
+              echo "Attempt $i: HTTP $STATUS"
+              if [ "$STATUS" = "200" ]; then
+                echo "✅ Health check passed"
+                exit 0
+              fi
+            done
+            echo "❌ Health check failed after 3 attempts"
+            exit 1'
+
+      # ── 12. Auto-Rollback bei Fehler ─────────────────────────
+      - name: Rollback on failure
+        if: steps.healthcheck.outcome == 'failure'
+        run: |
+          echo "🔄 Rolling back to previous version..."
+          ssh -i ~/.ssh/deploy_key \
+            -o StrictHostKeyChecking=no \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
+            "cd /home/master/applications/brvnvntpcj/public_html && \
+             if [ -d .next/standalone-backup ]; then \
+               rm -rf .next/standalone && \
+               mv .next/standalone-backup .next/standalone && \
+               export PM2=/home/master/.npm-global/bin/pm2 && \
+               \$PM2 restart SmartFinPro-Live --update-env && \
+               \$PM2 save && \
+               echo '✅ Rollback complete, PM2 restarted'; \
+             else \
+               echo '❌ No backup found, cannot rollback'; \
+             fi"
+
+      # ── 13. Telegram Alert bei Deploy-Fehler ─────────────────
+      - name: Telegram alert on failure
+        if: steps.healthcheck.outcome == 'failure'
+        run: |
+          curl -sf -X POST \
+            "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"chat_id\": \"${{ secrets.TELEGRAM_CHAT_ID }}\",
+              \"parse_mode\": \"HTML\",
+              \"text\": \"🔴 <b>DEPLOY FAILED — AUTO-ROLLBACK</b>\n\nHealth check failed after deploy.\nPrevious version restored automatically.\n\n📋 Commit: <code>${{ github.sha }}</code>\n👤 Author: ${{ github.actor }}\n🔗 <a href=\\\"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\\\">View Run</a>\"
+            }"
+
+      # ── 14. Workflow als fehlgeschlagen markieren ─────────────
+      - name: Fail workflow after rollback
+        if: steps.healthcheck.outcome == 'failure'
+        run: exit 1
+
+      # ── 15. Telegram Erfolgs-Benachrichtigung ────────────────
+      - name: Telegram deploy success
+        if: steps.healthcheck.outcome == 'success'
+        run: |
+          curl -sf -X POST \
+            "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"chat_id\": \"${{ secrets.TELEGRAM_CHAT_ID }}\",
+              \"parse_mode\": \"HTML\",
+              \"text\": \"✅ <b>DEPLOY SUCCESSFUL</b>\n\nSmartFinPro.com updated and healthy.\n\n📋 Commit: <code>${{ github.sha }}</code>\n👤 Author: ${{ github.actor }}\"
+            }"

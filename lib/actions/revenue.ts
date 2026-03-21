@@ -836,3 +836,230 @@ export async function getAutoRevenueStats(): Promise<AutoRevenueStats> {
     conversionsByMonth,
   };
 }
+
+// ============================================================
+// REVENUE ATTRIBUTION PER PAGE
+// ============================================================
+// Shows which pages generate the most revenue — enables
+// data-driven CTA optimization and content prioritization.
+// ============================================================
+
+export interface RevenueByPage {
+  pageSlug: string;
+  totalClicks: number;
+  totalConversions: number;
+  approvedRevenue: number;
+  pendingRevenue: number;
+  conversionRate: number;
+  epc: number; // earnings per click
+  topPartner: string;
+  trend: 'up' | 'down' | 'neutral';
+  trendChange: number;
+}
+
+export interface RevenueByPageStats {
+  pages: RevenueByPage[];
+  totalPages: number;
+  totalRevenue: number;
+  avgEPC: number;
+  topPage: string;
+}
+
+export async function getRevenueByPage(days: number = 30): Promise<RevenueByPageStats> {
+  await loadFxRates();
+  const supabase = createServiceClient();
+  const now = new Date();
+  const since = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+  const previousStart = new Date(now.getTime() - days * 2 * 24 * 60 * 60 * 1000);
+
+  // Fetch clicks with page_slug (current + previous period for trends)
+  const { data: clicksData } = await supabase
+    .from('link_clicks')
+    .select('id, link_id, page_slug, click_id, clicked_at')
+    .gte('clicked_at', previousStart.toISOString())
+    .not('page_slug', 'is', null);
+
+  // Fetch all approved + pending conversions
+  const { data: conversionsData } = await supabase
+    .from('conversions')
+    .select(`
+      id,
+      link_id,
+      click_id,
+      commission_earned,
+      currency,
+      status,
+      converted_at
+    `)
+    .in('status', ['approved', 'pending'])
+    .gte('converted_at', previousStart.toISOString());
+
+  // Fetch affiliate links for partner names
+  const { data: linksData } = await supabase
+    .from('affiliate_links')
+    .select('id, slug, partner_name');
+
+  interface PageClickRecord {
+    id: string;
+    link_id: string;
+    page_slug: string;
+    click_id: string | null;
+    clicked_at: string;
+  }
+  interface PageConversionRecord {
+    id: string;
+    link_id: string | null;
+    click_id: string | null;
+    commission_earned: number;
+    currency: string;
+    status: string;
+    converted_at: string;
+  }
+  interface PageLinkRecord {
+    id: string;
+    slug: string;
+    partner_name: string;
+  }
+
+  const clicks = (clicksData || []) as PageClickRecord[];
+  const conversions = (conversionsData || []) as PageConversionRecord[];
+  const links = (linksData || []) as PageLinkRecord[];
+  const linksMap = new Map(links.map(l => [l.id, l]));
+
+  // Build click_id → page_slug mapping
+  const clickToPage = new Map<string, string>();
+  clicks.forEach(c => {
+    if (c.click_id && c.page_slug) {
+      clickToPage.set(c.click_id, c.page_slug);
+    }
+  });
+
+  // Aggregate by page_slug
+  const pageMap = new Map<string, {
+    clicks: number;
+    previousClicks: number;
+    conversions: number;
+    previousConversions: number;
+    approvedRevenue: number;
+    pendingRevenue: number;
+    previousRevenue: number;
+    partnerCounts: Map<string, number>;
+  }>();
+
+  // Count clicks per page (current vs previous period)
+  clicks.forEach(c => {
+    if (!c.page_slug) return;
+    const clickDate = new Date(c.clicked_at);
+    const isCurrent = clickDate >= since;
+
+    if (!pageMap.has(c.page_slug)) {
+      pageMap.set(c.page_slug, {
+        clicks: 0,
+        previousClicks: 0,
+        conversions: 0,
+        previousConversions: 0,
+        approvedRevenue: 0,
+        pendingRevenue: 0,
+        previousRevenue: 0,
+        partnerCounts: new Map(),
+      });
+    }
+    const entry = pageMap.get(c.page_slug)!;
+    if (isCurrent) {
+      entry.clicks++;
+    } else {
+      entry.previousClicks++;
+    }
+
+    // Track partner frequency
+    const link = linksMap.get(c.link_id);
+    if (link) {
+      entry.partnerCounts.set(
+        link.partner_name,
+        (entry.partnerCounts.get(link.partner_name) || 0) + 1
+      );
+    }
+  });
+
+  // Attribute conversions to pages via click_id
+  conversions.forEach(conv => {
+    const pageSlug = conv.click_id ? clickToPage.get(conv.click_id) : null;
+    if (!pageSlug || !pageMap.has(pageSlug)) return;
+
+    const entry = pageMap.get(pageSlug)!;
+    const convDate = new Date(conv.converted_at);
+    const isCurrent = convDate >= since;
+    const revenueUSD = toUSD(conv.commission_earned || 0, conv.currency);
+
+    if (isCurrent) {
+      entry.conversions++;
+      if (conv.status === 'approved') {
+        entry.approvedRevenue += revenueUSD;
+      } else {
+        entry.pendingRevenue += revenueUSD;
+      }
+    } else {
+      entry.previousConversions++;
+      entry.previousRevenue += revenueUSD;
+    }
+  });
+
+  // Build result array
+  const pages: RevenueByPage[] = [];
+  let totalRevenue = 0;
+
+  pageMap.forEach((data, pageSlug) => {
+    // Only include pages from the current period
+    if (data.clicks === 0) return;
+
+    const revenue = data.approvedRevenue + data.pendingRevenue;
+    totalRevenue += revenue;
+
+    const trendChange = data.previousRevenue > 0
+      ? Math.round(((revenue - data.previousRevenue) / data.previousRevenue) * 100)
+      : revenue > 0 ? 100 : 0;
+
+    // Find top partner for this page
+    let topPartner = '—';
+    let maxCount = 0;
+    data.partnerCounts.forEach((count, partner) => {
+      if (count > maxCount) {
+        maxCount = count;
+        topPartner = partner;
+      }
+    });
+
+    pages.push({
+      pageSlug,
+      totalClicks: data.clicks,
+      totalConversions: data.conversions,
+      approvedRevenue: parseFloat(data.approvedRevenue.toFixed(2)),
+      pendingRevenue: parseFloat(data.pendingRevenue.toFixed(2)),
+      conversionRate: data.clicks > 0
+        ? parseFloat(((data.conversions / data.clicks) * 100).toFixed(2))
+        : 0,
+      epc: data.clicks > 0
+        ? parseFloat((revenue / data.clicks).toFixed(2))
+        : 0,
+      topPartner,
+      trend: trendChange > 0 ? 'up' : trendChange < 0 ? 'down' : 'neutral',
+      trendChange: Math.abs(trendChange),
+    });
+  });
+
+  // Sort by revenue descending
+  pages.sort((a, b) => (b.approvedRevenue + b.pendingRevenue) - (a.approvedRevenue + a.pendingRevenue));
+
+  const totalPages = pages.length;
+  const totalClicks = pages.reduce((sum, p) => sum + p.totalClicks, 0);
+  const avgEPC = totalClicks > 0 ? parseFloat((totalRevenue / totalClicks).toFixed(2)) : 0;
+  const topPage = pages.length > 0 ? pages[0].pageSlug : '—';
+
+  return {
+    pages,
+    totalPages,
+    totalRevenue: parseFloat(totalRevenue.toFixed(2)),
+    avgEPC,
+    topPage,
+  };
+}
