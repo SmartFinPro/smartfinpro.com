@@ -53,7 +53,7 @@ jobs:
       # ── 5b. Write production .env into standalone ──────────────
       - name: Write production .env
         run: |
-          cat > .next/standalone/.env << 'EOF'
+          cat > .next/standalone/.env <<'EOF'
           NEXT_PUBLIC_SITE_URL=${{ secrets.NEXT_PUBLIC_SITE_URL }}
           NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
@@ -72,6 +72,7 @@ jobs:
           GSC_SITE_URL=${{ secrets.GSC_SITE_URL }}
           GOOGLE_INDEXING_JSON=${{ secrets.GOOGLE_INDEXING_JSON }}
           EOF
+          sed -i 's/^[[:space:]]*//' .next/standalone/.env
           echo "✅ .env written ($(wc -l < .next/standalone/.env) lines)"
 
       # ── 6. Inject Critical CSS ────────────────────────────────
