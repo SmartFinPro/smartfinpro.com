@@ -1,14 +1,21 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Globe, ExternalLink, Clock, Filter, ChevronDown } from 'lucide-react';
+import React, { useState, useMemo, useCallback } from 'react';
+import { Globe, ExternalLink, Clock, Filter, X } from 'lucide-react';
 import type { ClickData } from '@/lib/actions/dashboard';
+
+// ── Types ──────────────────────────────────────────────────────
+
+type GeoFilter = 'all' | `country:${string}` | 'unknown';
 
 interface ClickDetailsTableProps {
   clicks: ClickData[];
+  activeFilter?: GeoFilter;
+  onFilterChange?: (filter: GeoFilter) => void;
 }
 
-// Country flags
+// ── Helpers ────────────────────────────────────────────────────
+
 const countryFlags: Record<string, string> = {
   US: '🇺🇸', CA: '🇨🇦', GB: '🇬🇧', UK: '🇬🇧', DE: '🇩🇪', FR: '🇫🇷',
   ES: '🇪🇸', IT: '🇮🇹', NL: '🇳🇱', AU: '🇦🇺', JP: '🇯🇵', CN: '🇨🇳',
@@ -24,7 +31,6 @@ function formatTime(dateString: string): string {
   const date = new Date(dateString);
   const now = new Date();
   const diff = now.getTime() - date.getTime();
-
   const minutes = Math.floor(diff / 60000);
   const hours = Math.floor(diff / 3600000);
   const days = Math.floor(diff / 86400000);
@@ -37,18 +43,77 @@ function formatTime(dateString: string): string {
 }
 
 function formatDateTime(dateString: string): string {
-  const date = new Date(dateString);
-  return date.toLocaleString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
+  return new Date(dateString).toLocaleString('en-US', {
+    month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
   });
 }
 
-export function ClickDetailsTable({ clicks }: ClickDetailsTableProps) {
-  const [filter, setFilter] = useState<string>('all');
+function getCountryName(code: string): string {
+  const names: Record<string, string> = {
+    US: 'United States', GB: 'United Kingdom', UK: 'United Kingdom',
+    CA: 'Canada', AU: 'Australia', DE: 'Germany', FR: 'France',
+    XX: 'Unknown',
+  };
+  return names[code] || code;
+}
+
+// ── Component ──────────────────────────────────────────────────
+
+export function ClickDetailsTable({ clicks, activeFilter, onFilterChange }: ClickDetailsTableProps) {
+  const [internalFilter, setInternalFilter] = useState<GeoFilter>('all');
   const [expanded, setExpanded] = useState<string | null>(null);
+
+  // Use external filter if controlled, otherwise internal
+  const filter = activeFilter !== undefined ? activeFilter : internalFilter;
+
+  const setFilter = useCallback((f: GeoFilter) => {
+    if (onFilterChange) {
+      onFilterChange(f);
+    } else {
+      setInternalFilter(f);
+    }
+  }, [onFilterChange]);
+
+  // Country stats for chips
+  const countryStats = useMemo(() => {
+    const stats: Record<string, { count: number; name: string }> = {};
+    clicks.forEach((click) => {
+      const key = click.country_code;
+      if (!stats[key]) stats[key] = { count: 0, name: click.country_name };
+      stats[key].count++;
+    });
+    return stats;
+  }, [clicks]);
+
+  // Sorted unique country codes (XX separated)
+  const countryCodes = useMemo(() => {
+    const codes = Object.keys(countryStats).filter(c => c !== 'XX').sort();
+    return codes;
+  }, [countryStats]);
+
+  const hasUnknown = !!countryStats['XX'];
+
+  // Apply filter
+  const filteredClicks = useMemo(() => {
+    if (filter === 'all') return clicks;
+    if (filter === 'unknown') return clicks.filter(c => c.country_code === 'XX');
+    if (filter.startsWith('country:')) {
+      const code = filter.slice(8);
+      return clicks.filter(c => c.country_code === code || (code === 'GB' && c.country_code === 'UK'));
+    }
+    return clicks;
+  }, [clicks, filter]);
+
+  // Active filter display name
+  const activeFilterName = useMemo(() => {
+    if (filter === 'all') return null;
+    if (filter === 'unknown') return 'Unknown';
+    if (filter.startsWith('country:')) {
+      const code = filter.slice(8);
+      return `${getFlag(code)} ${getCountryName(code)}`;
+    }
+    return null;
+  }, [filter]);
 
   if (!clicks || clicks.length === 0) {
     return (
@@ -58,188 +123,221 @@ export function ClickDetailsTable({ clicks }: ClickDetailsTableProps) {
     );
   }
 
-  // Get unique countries for filter
-  const uniqueCountries = [...new Set(clicks.map(c => c.country_code))].sort();
-
-  // Filter clicks
-  const filteredClicks = filter === 'all'
-    ? clicks
-    : clicks.filter(c => c.country_code === filter);
-
-  // Group by country for summary
-  const countryStats = clicks.reduce((acc, click) => {
-    const key = click.country_code;
-    if (!acc[key]) {
-      acc[key] = { count: 0, name: click.country_name };
-    }
-    acc[key].count++;
-    return acc;
-  }, {} as Record<string, { count: number; name: string }>);
-
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {/* Filter Bar */}
       <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
-        <div className="flex items-center gap-1.5 text-sm text-slate-500">
-          <Filter className="h-4 w-4" />
+        <div className="flex items-center gap-1.5 text-xs text-slate-500 shrink-0">
+          <Filter className="h-3.5 w-3.5" />
           <span>Filter:</span>
         </div>
         <div className="flex flex-wrap gap-1.5">
+          {/* All */}
           <button
             onClick={() => setFilter('all')}
-            className={`px-2 py-1 text-xs rounded-md transition-colors ${
+            className={`px-2.5 py-1 text-xs rounded-md transition-colors ${
               filter === 'all'
-                ? 'bg-slate-900 text-white'
-                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                ? 'text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
             }`}
+            style={filter === 'all' ? { background: 'var(--sfp-navy)' } : undefined}
           >
             All ({clicks.length})
           </button>
-          {uniqueCountries.map(code => (
+          {/* Country chips */}
+          {countryCodes.map(code => {
+            const isActive = filter === `country:${code}`;
+            return (
+              <button
+                key={code}
+                onClick={() => setFilter(isActive ? 'all' : `country:${code}`)}
+                className={`px-2 py-1 text-xs rounded-md transition-colors flex items-center gap-1 ${
+                  isActive
+                    ? 'text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+                style={isActive ? { background: 'var(--sfp-navy)' } : undefined}
+              >
+                {getFlag(code)} {code} ({countryStats[code]?.count || 0})
+              </button>
+            );
+          })}
+          {/* Unknown chip */}
+          {hasUnknown && (
             <button
-              key={code}
-              onClick={() => setFilter(code)}
+              onClick={() => setFilter(filter === 'unknown' ? 'all' : 'unknown')}
               className={`px-2 py-1 text-xs rounded-md transition-colors flex items-center gap-1 ${
-                filter === code
-                  ? 'bg-slate-900 text-white'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                filter === 'unknown'
+                  ? 'bg-amber-500 text-white'
+                  : 'bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100'
               }`}
             >
-              {getFlag(code)} {code} ({countryStats[code]?.count || 0})
+              🌍 Unknown ({countryStats['XX']?.count || 0})
             </button>
-          ))}
+          )}
         </div>
       </div>
 
-      {/* Click Table */}
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-slate-200">
-              <th className="text-left py-2 px-3 font-medium text-slate-500 text-xs uppercase tracking-wider">Time</th>
-              <th className="text-left py-2 px-3 font-medium text-slate-500 text-xs uppercase tracking-wider">Country</th>
-              <th className="text-left py-2 px-3 font-medium text-slate-500 text-xs uppercase tracking-wider">Product</th>
-              <th className="text-left py-2 px-3 font-medium text-slate-500 text-xs uppercase tracking-wider">Source</th>
-              <th className="text-left py-2 px-3 font-medium text-slate-500 text-xs uppercase tracking-wider">Referrer Domain</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredClicks.map((click) => (
-              <React.Fragment key={click.id}>
-                <tr
-                  className="border-b border-slate-50 hover:bg-slate-50 cursor-pointer transition-colors"
-                  onClick={() => setExpanded(expanded === click.id ? null : click.id)}
-                >
-                  <td className="py-2.5 px-3">
-                    <div className="flex items-center gap-1.5">
-                      <Clock className="h-3.5 w-3.5 text-slate-400" />
-                      <span className="text-slate-600" title={formatDateTime(click.clicked_at)}>
-                        {formatTime(click.clicked_at)}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="py-2.5 px-3">
-                    <div className="flex items-center gap-2">
-                      <span className="text-base">{getFlag(click.country_code)}</span>
-                      <div>
-                        <span className="font-medium text-slate-900">{click.country_code}</span>
-                        <span className="text-slate-400 ml-1 text-xs hidden sm:inline">
-                          {click.country_name}
+      {/* Active Filter Pill */}
+      {activeFilterName && (
+        <div className="flex items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium text-white"
+                style={{ background: filter === 'unknown' ? '#F59E0B' : 'var(--sfp-navy)' }}>
+            {activeFilterName}
+            <button
+              onClick={() => setFilter('all')}
+              className="ml-0.5 hover:bg-white/20 rounded-full p-0.5 transition-colors"
+              aria-label="Clear filter"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </span>
+          <span className="text-[11px] text-slate-400">
+            {filteredClicks.length} click{filteredClicks.length !== 1 ? 's' : ''}
+          </span>
+        </div>
+      )}
+
+      {/* Table or Empty State */}
+      {filteredClicks.length === 0 ? (
+        <div className="text-center py-8">
+          <p className="text-sm text-slate-500 mb-2">
+            No clicks from {activeFilterName || 'this filter'}
+          </p>
+          <button
+            onClick={() => setFilter('all')}
+            className="text-xs font-medium px-3 py-1.5 rounded-md transition-colors hover:bg-slate-100"
+            style={{ color: 'var(--sfp-navy)' }}
+          >
+            Clear filter
+          </button>
+        </div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-slate-200">
+                <th className="text-left py-2 px-3 font-medium text-slate-500 text-xs uppercase tracking-wider">Time</th>
+                <th className="text-left py-2 px-3 font-medium text-slate-500 text-xs uppercase tracking-wider">Country</th>
+                <th className="text-left py-2 px-3 font-medium text-slate-500 text-xs uppercase tracking-wider">Product</th>
+                <th className="text-left py-2 px-3 font-medium text-slate-500 text-xs uppercase tracking-wider">Source</th>
+                <th className="text-left py-2 px-3 font-medium text-slate-500 text-xs uppercase tracking-wider">Referrer</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredClicks.map((click) => (
+                <React.Fragment key={click.id}>
+                  <tr
+                    className={`border-b border-slate-50 hover:bg-slate-50 cursor-pointer transition-colors ${
+                      click.country_code === 'XX' ? 'bg-amber-50/30' : ''
+                    }`}
+                    onClick={() => setExpanded(expanded === click.id ? null : click.id)}
+                  >
+                    <td className="py-2.5 px-3">
+                      <div className="flex items-center gap-1.5">
+                        <Clock className="h-3.5 w-3.5 text-slate-400" />
+                        <span className="text-slate-600" title={formatDateTime(click.clicked_at)}>
+                          {formatTime(click.clicked_at)}
                         </span>
                       </div>
-                    </div>
-                  </td>
-                  <td className="py-2.5 px-3">
-                    <span className="font-medium text-slate-800">{click.partner_name}</span>
-                    <span className="text-slate-400 text-xs ml-1">/{click.slug}</span>
-                  </td>
-                  <td className="py-2.5 px-3">
-                    {click.source_page ? (
-                      <span className="text-emerald-600 text-xs bg-emerald-50 px-1.5 py-0.5 rounded">
-                        {click.source_page.length > 25
-                          ? click.source_page.slice(0, 25) + '...'
-                          : click.source_page}
-                      </span>
-                    ) : click.utm_source ? (
-                      <span className="text-blue-600 text-xs bg-blue-50 px-1.5 py-0.5 rounded">
-                        {click.utm_source}
-                      </span>
-                    ) : (
-                      <span className="text-slate-400 text-xs">Direct</span>
-                    )}
-                  </td>
-                  <td className="py-2.5 px-3">
-                    {click.referrer_domain ? (
-                      <div className="flex items-center gap-1.5">
-                        <Globe className="h-3.5 w-3.5 text-slate-400" />
-                        <span className="text-slate-600">{click.referrer_domain}</span>
-                        {click.referrer && !click.referrer_domain.includes('smartfinpro') && (
-                          <a
-                            href={click.referrer}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-slate-400 hover:text-slate-600"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <ExternalLink className="h-3 w-3" />
-                          </a>
-                        )}
-                      </div>
-                    ) : (
-                      <span className="text-slate-400 text-xs">—</span>
-                    )}
-                  </td>
-                </tr>
-                {/* Expanded Details Row */}
-                {expanded === click.id && (
-                  <tr className="bg-slate-50">
-                    <td colSpan={5} className="py-3 px-4">
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
+                    </td>
+                    <td className="py-2.5 px-3">
+                      <div className="flex items-center gap-2">
+                        <span className="text-base">{getFlag(click.country_code)}</span>
                         <div>
-                          <span className="text-slate-500 block mb-1">Full Time</span>
-                          <span className="text-slate-900 font-medium">{formatDateTime(click.clicked_at)}</span>
-                        </div>
-                        <div>
-                          <span className="text-slate-500 block mb-1">Country</span>
-                          <span className="text-slate-900 font-medium">{click.country_name} ({click.country_code})</span>
-                        </div>
-                        <div>
-                          <span className="text-slate-500 block mb-1">UTM Source</span>
-                          <span className="text-slate-900 font-medium">{click.utm_source || '—'}</span>
-                        </div>
-                        <div>
-                          <span className="text-slate-500 block mb-1">Full Referrer</span>
-                          <span className="text-slate-900 font-medium break-all">
-                            {click.referrer ? (
-                              <a
-                                href={click.referrer}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-600 hover:underline"
-                              >
-                                {click.referrer.length > 60 ? click.referrer.slice(0, 60) + '...' : click.referrer}
-                              </a>
-                            ) : '—'}
+                          <span className="font-medium text-slate-900">{click.country_code}</span>
+                          <span className="text-slate-400 ml-1 text-xs hidden sm:inline">
+                            {click.country_name}
                           </span>
                         </div>
                       </div>
                     </td>
+                    <td className="py-2.5 px-3">
+                      <span className="font-medium text-slate-800">{click.partner_name}</span>
+                      <span className="text-slate-400 text-xs ml-1">/{click.slug}</span>
+                    </td>
+                    <td className="py-2.5 px-3">
+                      {click.source_page ? (
+                        <span className="text-emerald-600 text-xs bg-emerald-50 px-1.5 py-0.5 rounded">
+                          {click.source_page.length > 25
+                            ? click.source_page.slice(0, 25) + '...'
+                            : click.source_page}
+                        </span>
+                      ) : click.utm_source ? (
+                        <span className="text-blue-600 text-xs bg-blue-50 px-1.5 py-0.5 rounded">
+                          {click.utm_source}
+                        </span>
+                      ) : (
+                        <span className="text-slate-400 text-xs">Direct</span>
+                      )}
+                    </td>
+                    <td className="py-2.5 px-3">
+                      {click.referrer_domain ? (
+                        <div className="flex items-center gap-1.5">
+                          <Globe className="h-3.5 w-3.5 text-slate-400" />
+                          <span className="text-slate-600">{click.referrer_domain}</span>
+                          {click.referrer && !click.referrer_domain.includes('smartfinpro') && (
+                            <a
+                              href={click.referrer}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-slate-400 hover:text-slate-600"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <ExternalLink className="h-3 w-3" />
+                            </a>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-slate-400 text-xs">—</span>
+                      )}
+                    </td>
                   </tr>
-                )}
-              </React.Fragment>
-            ))}
-          </tbody>
-        </table>
-      </div>
+                  {/* Expanded Details */}
+                  {expanded === click.id && (
+                    <tr className="bg-slate-50">
+                      <td colSpan={5} className="py-3 px-4">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
+                          <div>
+                            <span className="text-slate-500 block mb-1">Full Time</span>
+                            <span className="text-slate-900 font-medium">{formatDateTime(click.clicked_at)}</span>
+                          </div>
+                          <div>
+                            <span className="text-slate-500 block mb-1">Country</span>
+                            <span className="text-slate-900 font-medium">{click.country_name} ({click.country_code})</span>
+                          </div>
+                          <div>
+                            <span className="text-slate-500 block mb-1">UTM Source</span>
+                            <span className="text-slate-900 font-medium">{click.utm_source || '—'}</span>
+                          </div>
+                          <div>
+                            <span className="text-slate-500 block mb-1">Full Referrer</span>
+                            <span className="text-slate-900 font-medium break-all">
+                              {click.referrer ? (
+                                <a
+                                  href={click.referrer}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-blue-600 hover:underline"
+                                >
+                                  {click.referrer.length > 60 ? click.referrer.slice(0, 60) + '...' : click.referrer}
+                                </a>
+                              ) : '—'}
+                            </span>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {/* Summary */}
       <div className="flex items-center justify-between pt-3 border-t border-slate-100 text-xs text-slate-500">
-        <span>
-          Showing {filteredClicks.length} of {clicks.length} clicks
-        </span>
-        <span>
-          {Object.keys(countryStats).length} countries
-        </span>
+        <span>Showing {filteredClicks.length} of {clicks.length} clicks</span>
+        <span>{Object.keys(countryStats).filter(c => c !== 'XX').length} countries</span>
       </div>
     </div>
   );

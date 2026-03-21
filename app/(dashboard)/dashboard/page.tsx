@@ -23,8 +23,7 @@ import { ProblemArticles } from '@/components/dashboard/problem-articles';
 import { PerformanceAlerts } from '@/components/dashboard/performance-alerts';
 import { MarketHealthGrid } from '@/components/dashboard/market-health-grid';
 import { MarketOpportunities } from '@/components/dashboard/market-opportunities';
-import { WorldMap } from '@/components/dashboard/world-map';
-import { ClickDetailsTable } from '@/components/dashboard/click-details-table';
+import { GeoIntelligence } from '@/components/dashboard/geo-intelligence';
 import { SystemIntegrityWidget } from '@/components/dashboard/system-integrity-widget';
 import { WebVitalsWidget } from '@/components/dashboard/web-vitals-widget';
 import { RevenueAttributionWidget } from '@/components/dashboard/revenue-attribution-widget';
@@ -365,36 +364,13 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           </div>
         )}
 
-        {/* Geographic Distribution + Click Details */}
-        <div className="grid gap-6 lg:grid-cols-3 mb-8">
-          {/* World Map */}
-          <div className={card}>
-            <div className="px-6 py-4 border-b border-slate-100">
-              <h3 className="text-sm font-semibold text-slate-900">Geographic Distribution</h3>
-            </div>
-            <div className="p-6">
-              <WidgetErrorBoundary label="World Map" minHeight="h-48">
-                <Suspense fallback={<Skeleton className="h-48" />}>
-                  <WorldMap data={stats.geoStats} />
-                </Suspense>
-              </WidgetErrorBoundary>
-            </div>
-          </div>
-
-          {/* Click Details Table */}
-          <div className={`${card} lg:col-span-2`}>
-            <div className="px-6 py-4 border-b border-slate-100">
-              <h3 className="text-sm font-semibold text-slate-900">Click Details</h3>
-              <p className="text-xs text-slate-500 mt-0.5">Country, referrer domain, and source page for each click</p>
-            </div>
-            <div className="p-4 max-h-[400px] overflow-y-auto">
-              <WidgetErrorBoundary label="Click Details" minHeight="h-48">
-                <Suspense fallback={<Skeleton className="h-48" />}>
-                  <ClickDetailsTable clicks={stats.recentClicks} />
-                </Suspense>
-              </WidgetErrorBoundary>
-            </div>
-          </div>
+        {/* Geo Intelligence — Interactive Map + Synchronized Click Details */}
+        <div className="mb-8">
+          <WidgetErrorBoundary label="Geo Intelligence" minHeight="h-96">
+            <Suspense fallback={<Skeleton className="h-96" />}>
+              <GeoIntelligence geoStats={stats.geoStats} recentClicks={stats.recentClicks} />
+            </Suspense>
+          </WidgetErrorBoundary>
         </div>
 
         {/* Links, Pages, Devices, Activity */}

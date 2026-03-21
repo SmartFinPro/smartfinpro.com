@@ -563,8 +563,8 @@ async function _getDashboardStats(range: TimeRange = '24h'): Promise<DashboardSt
       clicks: count,
       percentage: totalClicksInRange > 0 ? Math.round((count / totalClicksInRange) * 100) : 0,
     }))
-    .sort((a, b) => b.clicks - a.clicks)
-    .slice(0, 10);
+    .sort((a, b) => b.clicks - a.clicks);
+    // No slice — return all countries; component handles display logic
 
   // Build page stats
   const topPages: PageStat[] = Array.from(pageMap.entries())
