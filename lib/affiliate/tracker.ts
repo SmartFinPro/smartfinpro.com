@@ -58,11 +58,20 @@ export function parseUTMParams(url: string): UTMParams {
 }
 
 /**
- * Get country code from request headers (Vercel geolocation)
+ * Get country code from request headers.
+ * Supports: Cloudflare (CF-IPCountry), Vercel (x-vercel-ip-country),
+ * and Next.js middleware (x-geo-country) as fallbacks.
  */
 export async function getCountryCode(): Promise<string> {
   const headersList = await headers();
-  return headersList.get('x-vercel-ip-country') || 'XX';
+  const code =
+    headersList.get('cf-ipcountry') ||          // Cloudflare (production)
+    headersList.get('x-vercel-ip-country') ||    // Vercel (fallback)
+    headersList.get('x-geo-country') ||          // Custom middleware
+    'XX';
+  // Normalize: uppercase, treat "XX" and "T1" (Tor) as unknown
+  const normalized = code.toUpperCase();
+  return (normalized === 'T1' || normalized === '') ? 'XX' : normalized;
 }
 
 // ── Fraud Detection ──────────────────────────────────────────────────────────
