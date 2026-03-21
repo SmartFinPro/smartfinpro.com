@@ -27,8 +27,8 @@ const path = require('path');
 // ============================================================
 // PATHS — Cloudways standard directory structure
 // ============================================================
-const APP_ROOT = '/home/master/applications/smartfinpro/public_html';
-const LOG_DIR  = '/home/master/applications/smartfinpro/logs';
+const APP_ROOT = '/home/master/applications/brvnvntpcj/public_html';
+const LOG_DIR  = '/home/master/applications/brvnvntpcj/logs';
 
 module.exports = {
   apps: [
