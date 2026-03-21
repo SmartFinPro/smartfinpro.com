@@ -1,7 +1,5 @@
 import { Suspense } from 'react';
 import {
-  ArrowUpRight,
-  ArrowDownRight,
   ChevronRight,
   AlertTriangle,
   Lightbulb,
@@ -9,7 +7,7 @@ import {
   AlertCircle,
   Globe,
 } from 'lucide-react';
-import { getDashboardStats, getGlobalMarketIntelligence, TimeRange, TimeComparison, ActionItem, GlobalMarketIntelligence } from '@/lib/actions/dashboard';
+import { getDashboardStats, getGlobalMarketIntelligence, TimeRange, ActionItem, GlobalMarketIntelligence } from '@/lib/actions/dashboard';
 import { getLowPerformancePages, getPerformanceAlertStats } from '@/lib/actions/performance-alerts';
 import { loadFxRates } from '@/lib/fx-rates';
 import { getDeployStats } from '@/lib/actions/deploy-logs';
@@ -32,6 +30,7 @@ import { WebVitalsWidget } from '@/components/dashboard/web-vitals-widget';
 import { RevenueAttributionWidget } from '@/components/dashboard/revenue-attribution-widget';
 import { AuditStatusWidget } from '@/components/dashboard/audit-status-widget';
 import { DeployStatusWidget } from '@/components/dashboard/deploy-status-widget';
+import { ExecutiveOverview } from '@/components/dashboard/executive-overview';
 import { WidgetErrorBoundary } from '@/components/dashboard/widget-error-boundary';
 import Link from 'next/link';
 
@@ -93,21 +92,6 @@ const card = 'bg-white border border-slate-200 rounded-lg shadow-sm';
 // Skeleton loader
 function Skeleton({ className = '' }: { className?: string }) {
   return <div className={`bg-slate-100 animate-pulse rounded ${className}`} />;
-}
-
-// Simple trend indicator
-function TrendIndicator({ comparison, label }: { comparison: TimeComparison; label: string }) {
-  if (comparison.trend === 'neutral' || comparison.change === 0) {
-    return <span className="text-sm text-slate-400">No change vs {label}</span>;
-  }
-
-  const isUp = comparison.trend === 'up';
-  return (
-    <span className={`inline-flex items-center gap-1 text-sm ${isUp ? 'text-green-600' : 'text-red-600'}`}>
-      {isUp ? <ArrowUpRight className="h-4 w-4" /> : <ArrowDownRight className="h-4 w-4" />}
-      {comparison.change}% vs {label}
-    </span>
-  );
 }
 
 // Action item row
@@ -194,28 +178,13 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     'all': 'previous',
   };
 
-  // Formatters
-  const formatNumber = (n: number) => n.toLocaleString('en-US');
-  const formatCurrency = (n: number) => new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 2,
-  }).format(n);
-
-  const epc = stats.totalClicks > 0 ? (stats.totalRevenue / stats.totalClicks).toFixed(2) : '0.00';
 
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="max-w-7xl mx-auto px-6 py-8">
 
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-2xl font-semibold text-slate-900">Dashboard</h1>
-            <p className="text-sm text-slate-500 mt-1">
-              Overview for {rangeLabels[range]}
-            </p>
-          </div>
+        {/* Time Range Selector (positioned top-right) */}
+        <div className="flex justify-end mb-4">
           <Suspense fallback={<Skeleton className="h-10 w-32" />}>
             <TimeRangeSelector />
           </Suspense>
@@ -229,60 +198,26 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           </div>
         )}
 
-        {/* Stats Grid - 4 columns */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {/* Revenue */}
-          <div className={card}>
-            <div className="p-6">
-              <p className="text-sm font-medium text-slate-500 mb-1">Revenue</p>
-              <p className="text-3xl font-semibold text-slate-900 tabular-nums">
-                {formatCurrency(stats.revenueInRange)}
-              </p>
-              <div className="mt-2">
-                <TrendIndicator comparison={stats.revenueComparison} label={comparisonLabels[range]} />
-              </div>
-            </div>
-          </div>
-
-          {/* Clicks */}
-          <div className={card}>
-            <div className="p-6">
-              <p className="text-sm font-medium text-slate-500 mb-1">Clicks</p>
-              <p className="text-3xl font-semibold text-slate-900 tabular-nums">
-                {formatNumber(stats.totalClicksInRange)}
-              </p>
-              <div className="mt-2">
-                <TrendIndicator comparison={stats.clicksComparison} label={comparisonLabels[range]} />
-              </div>
-            </div>
-          </div>
-
-          {/* Leads */}
-          <div className={card}>
-            <div className="p-6">
-              <p className="text-sm font-medium text-slate-500 mb-1">Leads</p>
-              <p className="text-3xl font-semibold text-slate-900 tabular-nums">
-                {formatNumber(stats.leadsInRange)}
-              </p>
-              <div className="mt-2">
-                <TrendIndicator comparison={stats.leadsComparison} label={comparisonLabels[range]} />
-              </div>
-            </div>
-          </div>
-
-          {/* EPC */}
-          <div className={card}>
-            <div className="p-6">
-              <p className="text-sm font-medium text-slate-500 mb-1">Earnings Per Click</p>
-              <p className="text-3xl font-semibold text-slate-900 tabular-nums">
-                ${epc}
-              </p>
-              <div className="mt-2">
-                <span className="text-sm text-slate-400">Average across all links</span>
-              </div>
-            </div>
-          </div>
-        </div>
+        {/* Executive Overview — Premium Hero Section */}
+        <ExecutiveOverview
+          stats={{
+            revenueInRange: stats.revenueInRange,
+            totalClicksInRange: stats.totalClicksInRange,
+            leadsInRange: stats.leadsInRange,
+            totalRevenue: stats.totalRevenue,
+            totalClicks: stats.totalClicks,
+            revenueComparison: stats.revenueComparison,
+            clicksComparison: stats.clicksComparison,
+            leadsComparison: stats.leadsComparison,
+            conversionRate: stats.conversionRate,
+            clicksOverTime: stats.clicksOverTime,
+          }}
+          globalMarkets={globalMarkets}
+          deployStats={deployStats}
+          alertStats={performanceAlertStats}
+          range={range}
+          comparisonLabel={comparisonLabels[range]}
+        />
 
         {/* Action Items */}
         {stats.actionItems.length > 0 && (
