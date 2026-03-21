@@ -1,5 +1,6 @@
 // app/(dashboard)/dashboard/content/hub/page.tsx — SEO Health & Content Hub
 import Link from 'next/link';
+import { Suspense } from 'react';
 import {
   FileSearch,
   RefreshCw,
@@ -14,13 +15,17 @@ import {
   Link2,
   Star,
   Archive,
+  Clock,
 } from 'lucide-react';
 import { getContentHubData } from '@/lib/actions/content-hub';
 import { getCtaPartnersForPages } from '@/lib/actions/page-cta-partners';
 import { getAffiliateLinksService } from '@/lib/actions/affiliate-links';
+import { getContentFreshnessStats } from '@/lib/actions/content-freshness';
 import { ContentHubTableBody } from '@/components/dashboard/content-hub-table-body';
 import { ContentHubRefreshButton } from '@/components/dashboard/content-hub-refresh-button';
 import { BacklinkImportButton } from '@/components/dashboard/backlink-import-button';
+import { ContentFreshnessWidget } from '@/components/dashboard/content-freshness-widget';
+import { WidgetErrorBoundary } from '@/components/dashboard/widget-error-boundary';
 import type { ContentHubRow, HealthStatus } from '@/lib/actions/content-hub';
 
 export const dynamic = 'force-dynamic';
@@ -197,9 +202,10 @@ export default async function ContentHubPage({ searchParams }: ContentHubPagePro
   const hasAnyFilter = seoFilter !== 'all' || qualityFilter !== 'all' || statusFilter !== 'all' || cpsFilter !== 'all';
 
   // Parallel data loading
-  const [{ rows: allRows, stats }, affiliateResult] = await Promise.all([
+  const [{ rows: allRows, stats }, affiliateResult, freshnessStats] = await Promise.all([
     getContentHubData(false),
     getAffiliateLinksService(),
+    getContentFreshnessStats(),
   ]);
 
   // Apply all filters (AND logic)
@@ -524,6 +530,22 @@ export default async function ContentHubPage({ searchParams }: ContentHubPagePro
           </Link>
         </div>
       )}
+
+      {/* Content Freshness */}
+      <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+        <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-2">
+          <Clock className="h-5 w-5 text-amber-500" />
+          <h3 className="font-semibold text-slate-900">Content Freshness</h3>
+          <span className="text-xs text-slate-400 ml-auto">
+            Updated daily by freshness-check cron
+          </span>
+        </div>
+        <div className="p-5">
+          <WidgetErrorBoundary label="Content Freshness" minHeight="h-48">
+            <ContentFreshnessWidget stats={freshnessStats} />
+          </WidgetErrorBoundary>
+        </div>
+      </div>
 
       {/* Table (batch bar + table rendered by client component to avoid <div> inside <table> hydration error) */}
       <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
