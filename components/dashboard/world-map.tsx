@@ -11,6 +11,7 @@ interface WorldMapProps {
   data: GeoStat[];
   activeCountry?: string | null;
   onCountryClick?: (code: string | null) => void;
+  metricLabel?: string;
 }
 
 interface TooltipData {
@@ -71,7 +72,7 @@ const geoData = require('world-atlas/countries-110m.json');
 
 // ── Component ───────────────────────────────────────────────────
 
-export function WorldMap({ data, activeCountry, onCountryClick }: WorldMapProps) {
+export function WorldMap({ data, activeCountry, onCountryClick, metricLabel = 'clicks' }: WorldMapProps) {
   const [tooltip, setTooltip] = useState<TooltipData | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -223,7 +224,7 @@ export function WorldMap({ data, activeCountry, onCountryClick }: WorldMapProps)
                   onKeyDown={stat ? (e: React.KeyboardEvent) => handleKeyDown(e, alpha2) : undefined}
                   tabIndex={stat ? 0 : -1}
                   role={stat ? 'button' : undefined}
-                  aria-label={stat ? `${stat.country_name}: ${stat.clicks} clicks (${stat.percentage}%)` : undefined}
+                  aria-label={stat ? `${stat.country_name}: ${stat.clicks} ${metricLabel} (${stat.percentage}%)` : undefined}
                 />
               );
             })
@@ -250,7 +251,7 @@ export function WorldMap({ data, activeCountry, onCountryClick }: WorldMapProps)
           </div>
           <div className="space-y-1">
             <div className="flex justify-between">
-              <span className="text-slate-500">Clicks</span>
+              <span className="text-slate-500 capitalize">{metricLabel}</span>
               <span className="font-semibold text-slate-900 tabular-nums">{tooltip.clicks.toLocaleString()}</span>
             </div>
             <div className="flex justify-between">

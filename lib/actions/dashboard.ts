@@ -93,6 +93,11 @@ export interface DashboardStats {
   revenueInRange: number;
   // NEW: Leads count
   leadsInRange: number;
+  // NEW: Geo Intelligence — visitors & conversions
+  visitorGeoStats: GeoStat[];
+  recentVisitors: VisitorData[];
+  conversionGeoStats: GeoStat[];
+  recentConversions: ConversionData[];
 }
 
 export interface FunnelData {
@@ -147,6 +152,29 @@ export interface GeoStat {
   country_name: string;
   clicks: number;
   percentage: number;
+}
+
+export interface VisitorData {
+  id: string;
+  page_path: string;
+  page_title: string | null;
+  country_code: string;
+  country_name: string;
+  viewed_at: string;
+  referrer_domain: string | null;
+  time_on_page: number | null;
+  scroll_depth: number | null;
+}
+
+export interface ConversionData {
+  id: string;
+  product_name: string | null;
+  country_code: string;
+  country_name: string;
+  converted_at: string;
+  commission_earned: number;
+  currency: string;
+  status: string;
 }
 
 export interface PageStat {
@@ -436,6 +464,8 @@ async function _getDashboardStats(range: TimeRange = '24h'): Promise<DashboardSt
     currConversionsResult,
     currLeadsResult,
     prevLeadsResult,
+    visitorViewsResult,
+    conversionRowsResult,
   ] = await Promise.all([
     // 1. Clicks in selected range (ordered newest-first)
     clicksQuery.order('clicked_at', { ascending: false }),
@@ -499,6 +529,26 @@ async function _getDashboardStats(range: TimeRange = '24h'): Promise<DashboardSt
           .gte('created_at', previousPeriod.start.toISOString())
           .lt('created_at', previousPeriod.end.toISOString())
       : noop,
+    // 14. Page views with country for visitor geo stats
+    (() => {
+      let q = supabase
+        .from('page_views')
+        .select('id, session_id, page_path, page_title, country_code, viewed_at, referrer_domain, time_on_page, scroll_depth')
+        .order('viewed_at', { ascending: false })
+        .limit(5000);
+      if (rangeStart) q = q.gte('viewed_at', rangeStart.toISOString());
+      return q;
+    })(),
+    // 15. Conversions with click country for conversion geo stats
+    (() => {
+      let q = supabase
+        .from('conversions')
+        .select('id, click_id, product_name, commission_earned, currency, status, converted_at')
+        .order('converted_at', { ascending: false })
+        .limit(1000);
+      if (rangeStart) q = q.gte('converted_at', rangeStart.toISOString());
+      return q;
+    })(),
   ]);
 
   // ── Extract typed results ─────────────────────────────────────────────────
@@ -946,6 +996,100 @@ async function _getDashboardStats(range: TimeRange = '24h'): Promise<DashboardSt
     conversionPotential: leads.length > 0 ? Math.round((highQualityCount / leads.length) * 100) : 0,
   };
 
+  // ============================================================
+  // VISITOR GEO STATS (from page_views)
+  // ============================================================
+  type VisitorViewRecord = {
+    id: string;
+    session_id: string | null;
+    page_path: string;
+    page_title: string | null;
+    country_code: string | null;
+    viewed_at: string;
+    referrer_domain: string | null;
+    time_on_page: number | null;
+    scroll_depth: number | null;
+  };
+  const visitorViews = safeData(visitorViewsResult) as VisitorViewRecord[];
+
+  const visitorGeoMap = new Map<string, number>();
+  visitorViews.forEach((v) => {
+    const country = v.country_code || 'XX';
+    visitorGeoMap.set(country, (visitorGeoMap.get(country) || 0) + 1);
+  });
+
+  const totalVisitorViews = visitorViews.length;
+  const visitorGeoStats: GeoStat[] = Array.from(visitorGeoMap.entries())
+    .map(([code, count]) => ({
+      country_code: code,
+      country_name: getCountryName(code),
+      clicks: count, // reuse 'clicks' field for count (WorldMap expects this)
+      percentage: totalVisitorViews > 0 ? Math.round((count / totalVisitorViews) * 100) : 0,
+    }))
+    .sort((a, b) => b.clicks - a.clicks);
+
+  const recentVisitors: VisitorData[] = visitorViews.slice(0, 20).map((v) => ({
+    id: v.id,
+    page_path: v.page_path,
+    page_title: v.page_title,
+    country_code: v.country_code || 'XX',
+    country_name: getCountryName(v.country_code || 'XX'),
+    viewed_at: v.viewed_at,
+    referrer_domain: v.referrer_domain,
+    time_on_page: v.time_on_page,
+    scroll_depth: v.scroll_depth,
+  }));
+
+  // ============================================================
+  // CONVERSION GEO STATS (from conversions + link_clicks country)
+  // ============================================================
+  type ConversionRow = {
+    id: string;
+    click_id: string | null;
+    product_name: string | null;
+    commission_earned: number;
+    currency: string;
+    status: string;
+    converted_at: string;
+  };
+  const conversionRows = safeData(conversionRowsResult) as ConversionRow[];
+
+  // Build click_id → country_code lookup from already-fetched clicks
+  const clickCountryMap = new Map<string, string>();
+  clicks.forEach((c) => {
+    if (c.id) clickCountryMap.set(c.id, c.country_code || 'XX');
+  });
+
+  const convGeoMap = new Map<string, number>();
+  conversionRows.forEach((conv) => {
+    const country = (conv.click_id && clickCountryMap.get(conv.click_id)) || 'XX';
+    convGeoMap.set(country, (convGeoMap.get(country) || 0) + 1);
+  });
+
+  const totalConvCount = conversionRows.length;
+  const conversionGeoStats: GeoStat[] = Array.from(convGeoMap.entries())
+    .map(([code, count]) => ({
+      country_code: code,
+      country_name: getCountryName(code),
+      clicks: count,
+      percentage: totalConvCount > 0 ? Math.round((count / totalConvCount) * 100) : 0,
+    }))
+    .sort((a, b) => b.clicks - a.clicks);
+
+  const recentConversions: ConversionData[] = conversionRows.slice(0, 20).map((conv) => {
+    const country = (conv.click_id && clickCountryMap.get(conv.click_id)) || 'XX';
+    return {
+      id: conv.id,
+      product_name: conv.product_name,
+      country_code: country,
+      country_name: getCountryName(country),
+      converted_at: conv.converted_at,
+      commission_earned: conv.commission_earned,
+      currency: conv.currency || 'USD',
+      status: conv.status,
+    };
+  });
+
   return {
     totalClicks,
     totalClicksInRange,
@@ -969,6 +1113,10 @@ async function _getDashboardStats(range: TimeRange = '24h'): Promise<DashboardSt
     leadQuality,
     revenueInRange,
     leadsInRange,
+    visitorGeoStats,
+    recentVisitors,
+    conversionGeoStats,
+    recentConversions,
   };
 }
 

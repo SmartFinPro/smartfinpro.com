@@ -145,6 +145,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     leadsComparison: { current: 0, previous: 0, change: 0, trend: 'neutral' as const },
     actionItems: [], leadQuality: { totalLeads: 0, avgEngagementScore: 0, highQualityLeads: 0, conversionPotential: 0 },
     revenueInRange: 0, leadsInRange: 0,
+    visitorGeoStats: [], recentVisitors: [], conversionGeoStats: [], recentConversions: [],
   };
 
   const emptyAlertStats = { totalLowPerformancePages: 0, criticalPages: 0, warningPages: 0, potentialLostRevenue: 0 };
@@ -222,7 +223,14 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         <div className="mb-8">
           <WidgetErrorBoundary label="Geo Intelligence" minHeight="h-96">
             <Suspense fallback={<Skeleton className="h-96" />}>
-              <GeoIntelligence geoStats={stats.geoStats} recentClicks={stats.recentClicks} />
+              <GeoIntelligence
+                geoStats={stats.geoStats}
+                recentClicks={stats.recentClicks}
+                visitorGeoStats={stats.visitorGeoStats}
+                recentVisitors={stats.recentVisitors}
+                conversionGeoStats={stats.conversionGeoStats}
+                recentConversions={stats.recentConversions}
+              />
             </Suspense>
           </WidgetErrorBoundary>
         </div>

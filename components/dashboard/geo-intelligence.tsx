@@ -1,18 +1,23 @@
 'use client';
 
 import { useState, useMemo, useCallback } from 'react';
-import { Globe, MapPin, AlertTriangle, X, TrendingUp } from 'lucide-react';
-import type { GeoStat, ClickData } from '@/lib/actions/dashboard';
+import { Globe, MapPin, AlertTriangle, X, Eye, MousePointerClick, DollarSign } from 'lucide-react';
+import type { GeoStat, ClickData, VisitorData, ConversionData } from '@/lib/actions/dashboard';
 import { WorldMap } from './world-map';
 import { ClickDetailsTable } from './click-details-table';
 
 // ── Filter Type ────────────────────────────────────────────────
 
 type GeoFilter = 'all' | `country:${string}` | 'unknown';
+type DataSource = 'visitors' | 'clicks' | 'conversions';
 
 interface GeoIntelligenceProps {
   geoStats: GeoStat[];
   recentClicks: ClickData[];
+  visitorGeoStats: GeoStat[];
+  recentVisitors: VisitorData[];
+  conversionGeoStats: GeoStat[];
+  recentConversions: ConversionData[];
 }
 
 // ── Country flag helper ────────────────────────────────────────
@@ -28,16 +33,67 @@ function getFlag(code: string): string {
   return flags[code] || '🌍';
 }
 
+// ── Data source config ─────────────────────────────────────────
+
+const DATA_SOURCE_CONFIG: Record<DataSource, {
+  label: string;
+  metricLabel: string;
+  subtitle: string;
+  icon: typeof Eye;
+  emptyText: string;
+}> = {
+  visitors: {
+    label: 'Visitors',
+    metricLabel: 'visitors',
+    subtitle: 'Page view distribution by country',
+    icon: Eye,
+    emptyText: 'No visitor data yet. Page views will appear once tracking is active.',
+  },
+  clicks: {
+    label: 'Clicks',
+    metricLabel: 'clicks',
+    subtitle: 'Affiliate click distribution by country',
+    icon: MousePointerClick,
+    emptyText: 'No click data yet. Clicks will appear once visitors interact with your links.',
+  },
+  conversions: {
+    label: 'Conversions',
+    metricLabel: 'conversions',
+    subtitle: 'Conversion distribution by country',
+    icon: DollarSign,
+    emptyText: 'No conversion data yet. Conversions will appear once affiliate sales are tracked.',
+  },
+};
+
 // ── Component ──────────────────────────────────────────────────
 
-export function GeoIntelligence({ geoStats, recentClicks }: GeoIntelligenceProps) {
+export function GeoIntelligence({
+  geoStats,
+  recentClicks,
+  visitorGeoStats,
+  recentVisitors,
+  conversionGeoStats,
+  recentConversions,
+}: GeoIntelligenceProps) {
   const [filter, setFilter] = useState<GeoFilter>('all');
+  const [dataSource, setDataSource] = useState<DataSource>('visitors');
+
+  // Select active data based on data source
+  const activeGeoStats = useMemo(() => {
+    switch (dataSource) {
+      case 'visitors': return visitorGeoStats;
+      case 'clicks': return geoStats;
+      case 'conversions': return conversionGeoStats;
+    }
+  }, [dataSource, geoStats, visitorGeoStats, conversionGeoStats]);
+
+  const config = DATA_SOURCE_CONFIG[dataSource];
 
   // Computed metrics
   const metrics = useMemo(() => {
-    const realCountries = geoStats.filter(s => s.country_code !== 'XX');
-    const unknownStat = geoStats.find(s => s.country_code === 'XX');
-    const totalClicks = geoStats.reduce((sum, s) => sum + s.clicks, 0);
+    const realCountries = activeGeoStats.filter(s => s.country_code !== 'XX');
+    const unknownStat = activeGeoStats.find(s => s.country_code === 'XX');
+    const totalClicks = activeGeoStats.reduce((sum, s) => sum + s.clicks, 0);
     const topCountry = realCountries[0] || null;
 
     const unknownClicks = unknownStat?.clicks || 0;
@@ -52,7 +108,7 @@ export function GeoIntelligence({ geoStats, recentClicks }: GeoIntelligenceProps
       totalClicks,
       highUnknown: unknownPct > 30,
     };
-  }, [geoStats]);
+  }, [activeGeoStats]);
 
   // Map → filter bridge
   const handleMapClick = useCallback((code: string | null) => {
@@ -76,14 +132,22 @@ export function GeoIntelligence({ geoStats, recentClicks }: GeoIntelligenceProps
     if (filter === 'unknown') return 'Unknown Traffic';
     if (filter.startsWith('country:')) {
       const code = filter.slice(8);
-      const stat = geoStats.find(s => s.country_code === code || (code === 'GB' && s.country_code === 'UK'));
+      const stat = activeGeoStats.find(s => s.country_code === code || (code === 'GB' && s.country_code === 'UK'));
       return stat ? `${getFlag(code)} ${stat.country_name}` : code;
     }
     return null;
-  }, [filter, geoStats]);
+  }, [filter, activeGeoStats]);
 
-  // Empty state
-  if (!geoStats || geoStats.length === 0) {
+  // Reset filter when switching data source
+  const handleDataSourceChange = useCallback((ds: DataSource) => {
+    setDataSource(ds);
+    setFilter('all');
+  }, []);
+
+  // Check if ANY data source has data (for overall empty state)
+  const hasAnyData = geoStats.length > 0 || visitorGeoStats.length > 0 || conversionGeoStats.length > 0;
+
+  if (!hasAnyData) {
     return (
       <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
         <div className="h-1" style={{ background: 'linear-gradient(90deg, var(--sfp-navy) 0%, var(--sfp-gold) 100%)' }} />
@@ -92,7 +156,7 @@ export function GeoIntelligence({ geoStats, recentClicks }: GeoIntelligenceProps
             <Globe className="h-6 w-6 text-slate-400" />
           </div>
           <p className="text-sm font-medium text-slate-600 mb-1">No geographic data yet</p>
-          <p className="text-xs text-slate-400">Click data will appear here once visitors interact with your links.</p>
+          <p className="text-xs text-slate-400">Data will appear here once visitors browse your site.</p>
         </div>
       </div>
     );
@@ -105,17 +169,41 @@ export function GeoIntelligence({ geoStats, recentClicks }: GeoIntelligenceProps
 
       {/* Header */}
       <div className="px-6 py-4 border-b border-slate-100">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-3">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'var(--sfp-sky)' }}>
               <Globe className="h-4 w-4" style={{ color: 'var(--sfp-navy)' }} />
             </div>
             <div>
               <h3 className="text-sm font-semibold text-slate-900">Geographic Intelligence</h3>
-              <p className="text-[11px] text-slate-500">Click distribution and traffic origin analysis</p>
+              <p className="text-[11px] text-slate-500">{config.subtitle}</p>
             </div>
           </div>
+
           <div className="flex items-center gap-3">
+            {/* Data Source Toggle */}
+            <div className="flex rounded-lg border border-slate-200 overflow-hidden">
+              {(Object.keys(DATA_SOURCE_CONFIG) as DataSource[]).map((ds) => {
+                const isActive = dataSource === ds;
+                const Icon = DATA_SOURCE_CONFIG[ds].icon;
+                return (
+                  <button
+                    key={ds}
+                    onClick={() => handleDataSourceChange(ds)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-colors ${
+                      isActive
+                        ? 'text-white'
+                        : 'text-slate-600 hover:bg-slate-50'
+                    }`}
+                    style={isActive ? { background: 'var(--sfp-navy)' } : undefined}
+                  >
+                    <Icon className="h-3.5 w-3.5" />
+                    {DATA_SOURCE_CONFIG[ds].label}
+                  </button>
+                );
+              })}
+            </div>
+
             {/* Active filter pill */}
             {filterDisplayName && (
               <span
@@ -132,6 +220,7 @@ export function GeoIntelligence({ geoStats, recentClicks }: GeoIntelligenceProps
                 </button>
               </span>
             )}
+
             {/* KPI badges inline */}
             <div className="hidden lg:flex items-center gap-4 text-xs">
               <span className="text-slate-500">
@@ -139,7 +228,7 @@ export function GeoIntelligence({ geoStats, recentClicks }: GeoIntelligenceProps
               </span>
               <span className="text-slate-300">|</span>
               <span className="text-slate-500">
-                <span className="font-bold text-slate-900 tabular-nums">{metrics.totalClicks.toLocaleString()}</span> clicks
+                <span className="font-bold text-slate-900 tabular-nums">{metrics.totalClicks.toLocaleString()}</span> {config.metricLabel}
               </span>
               {metrics.unknownClicks > 0 && (
                 <>
@@ -155,13 +244,20 @@ export function GeoIntelligence({ geoStats, recentClicks }: GeoIntelligenceProps
       </div>
 
       {/* Hero Map — full width */}
-      <div className="px-6 pt-5 pb-3">
-        <WorldMap
-          data={geoStats}
-          activeCountry={activeCountryForMap}
-          onCountryClick={handleMapClick}
-        />
-      </div>
+      {activeGeoStats.length > 0 ? (
+        <div className="px-6 pt-5 pb-3">
+          <WorldMap
+            data={activeGeoStats}
+            activeCountry={activeCountryForMap}
+            onCountryClick={handleMapClick}
+            metricLabel={config.metricLabel}
+          />
+        </div>
+      ) : (
+        <div className="flex flex-col items-center justify-center py-12 text-center">
+          <p className="text-sm text-slate-500">{config.emptyText}</p>
+        </div>
+      )}
 
       {/* Unknown Warning Banner (only when high) */}
       {metrics.highUnknown && (
@@ -177,7 +273,7 @@ export function GeoIntelligence({ geoStats, recentClicks }: GeoIntelligenceProps
             <div className="flex items-center gap-2">
               <AlertTriangle className="h-3.5 w-3.5 text-amber-500 shrink-0" />
               <span className="text-xs font-semibold text-amber-700">
-                High Unmapped Traffic: {metrics.unknownClicks.toLocaleString()} clicks ({metrics.unknownPct}%)
+                High Unmapped Traffic: {metrics.unknownClicks.toLocaleString()} {config.metricLabel} ({metrics.unknownPct}%)
               </span>
               <span className="text-[10px] text-amber-600 ml-auto">
                 Check geo-IP headers and proxy configuration
@@ -187,7 +283,7 @@ export function GeoIntelligence({ geoStats, recentClicks }: GeoIntelligenceProps
         </div>
       )}
 
-      {/* Bottom Panel: Top Countries + Click Details */}
+      {/* Bottom Panel: Top Countries + Details */}
       <div className="border-t border-slate-100">
         <div className="grid lg:grid-cols-5 gap-0 divide-y lg:divide-y-0 lg:divide-x divide-slate-100">
           {/* Left: Top Countries Summary + Unknown Bucket */}
@@ -259,10 +355,13 @@ export function GeoIntelligence({ geoStats, recentClicks }: GeoIntelligenceProps
             )}
           </div>
 
-          {/* Right: Click Details Table */}
+          {/* Right: Details Table */}
           <div className="lg:col-span-3 p-4 max-h-[420px] overflow-y-auto">
             <ClickDetailsTable
               clicks={recentClicks}
+              visitors={recentVisitors}
+              conversions={recentConversions}
+              dataSource={dataSource}
               activeFilter={filter}
               onFilterChange={handleTableFilter}
             />
