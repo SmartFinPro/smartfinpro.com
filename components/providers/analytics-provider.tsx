@@ -1,8 +1,7 @@
 'use client';
 
-import { Suspense, useState, useEffect } from 'react';
+import { Suspense } from 'react';
 import { useAnalytics } from '@/lib/hooks/use-analytics';
-import { getCookieConsent, type CookieConsentValue } from '@/components/marketing/cookie-consent';
 
 // ============================================================
 // Analytics Provider Inner Component
@@ -22,6 +21,9 @@ function AnalyticsTrackerInner() {
 // ============================================================
 // Analytics Provider
 // ============================================================
+// Privacy-safe first-party analytics — no cookies, no PII, hashed IPs,
+// sessionStorage only. Runs without cookie consent (same model as
+// Plausible/Fathom). Justified under GDPR Art. 6(1)(f) legitimate interest.
 
 interface AnalyticsProviderProps {
   children: React.ReactNode;
@@ -33,29 +35,9 @@ export function AnalyticsProvider({ children, enabled = true }: AnalyticsProvide
   const isEnabled =
     enabled && process.env.NEXT_PUBLIC_ENABLE_ANALYTICS !== 'false';
 
-  // Track cookie consent state — only enable analytics when user accepts all cookies
-  const [consent, setConsent] = useState<CookieConsentValue>(null);
-
-  useEffect(() => {
-    // Check consent on mount
-    setConsent(getCookieConsent());
-
-    // Listen for consent changes when user interacts with the banner
-    function handleConsentUpdate() {
-      setConsent(getCookieConsent());
-    }
-
-    window.addEventListener('cookie-consent-updated', handleConsentUpdate);
-    return () => {
-      window.removeEventListener('cookie-consent-updated', handleConsentUpdate);
-    };
-  }, []);
-
-  const analyticsAllowed = isEnabled && consent === 'all';
-
   return (
     <>
-      {analyticsAllowed && (
+      {isEnabled && (
         <Suspense fallback={null}>
           <AnalyticsTrackerInner />
         </Suspense>
