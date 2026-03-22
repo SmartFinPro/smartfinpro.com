@@ -68,13 +68,13 @@ export const MAP_COLORS = {
   border:   '#94a3b8',   // Ländergrenzen (slate-400, deutlich sichtbar)
   muted:    '#e2e8f0',   // Nicht zugeordnete Länder (slate-200)
   text:     '#64748b',   // Legendentext (slate-500)
-  // Heatmap-Skala: Emerald-100 → Emerald-500 (original, bewährt)
+  // Heatmap-Skala: Emerald-300 → Emerald-700 (kräftig, gut sichtbar auf weißen Ländern)
   scale: [
-    '#d1fae5',   // Stufe 1 (0–5%)   — emerald-100
-    '#a7f3d0',   // Stufe 2 (5–15%)  — emerald-200
-    '#6ee7b7',   // Stufe 3 (15–30%) — emerald-300
-    '#34d399',   // Stufe 4 (30–50%) — emerald-400
-    '#10b981',   // Stufe 5 (50%+)   — emerald-500
+    '#6ee7b7',   // Stufe 1 (0–5%)   — emerald-300
+    '#34d399',   // Stufe 2 (5–15%)  — emerald-400
+    '#10b981',   // Stufe 3 (15–30%) — emerald-500
+    '#059669',   // Stufe 4 (30–50%) — emerald-600
+    '#047857',   // Stufe 5 (50%+)   — emerald-700
   ] as const,
   activeDot: '#10b981',  // emerald-500 — Klick-Indikator-Punkt
   dotCenter: '#ffffff',

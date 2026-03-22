@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState, useCallback, useRef, useEffect } from 'react';
-import { ComposableMap, Geographies, Geography, createCoordinates } from '@vnedyalk0v/react19-simple-maps';
+import { ComposableMap, Geographies, Geography, ZoomableGroup, createCoordinates } from '@vnedyalk0v/react19-simple-maps';
 import type { GeoStat } from '@/lib/actions/dashboard';
 import { MAP_COLORS } from '@/lib/constants/brand-colors';
 
@@ -74,6 +74,7 @@ const geoData = require('world-atlas/countries-110m.json');
 
 export function WorldMap({ data, activeCountry, onCountryClick, metricLabel = 'clicks' }: WorldMapProps) {
   const [tooltip, setTooltip] = useState<TooltipData | null>(null);
+  const [zoom, setZoom] = useState(1);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Build lookup map (handle UK→GB)
@@ -155,15 +156,16 @@ export function WorldMap({ data, activeCountry, onCountryClick, metricLabel = 'c
         height={420}
         style={{ width: '100%', height: 'auto', maxHeight: '360px' }}
       >
-        {/* Background rect for click-to-clear */}
-        <rect
-          width={800}
-          height={420}
-          fill={MAP_COLORS.ocean}
-          onClick={handleBackgroundClick}
-          style={{ cursor: hasFilter ? 'pointer' : 'default' }}
-        />
+        {/* Background rect for ocean color */}
+        <rect width={800} height={420} fill={MAP_COLORS.ocean} />
 
+        <ZoomableGroup
+          zoom={zoom}
+          onMoveEnd={(position) => setZoom(position.zoom)}
+          minZoom={1}
+          maxZoom={8}
+          center={createCoordinates(10, 5)}
+        >
         <Geographies geography={geoData}>
           {({ geographies }: { geographies: Array<{ rsmKey: string; id: string; properties: { name: string }; [key: string]: unknown }> }) =>
             geographies.map((geo, idx) => {
@@ -230,7 +232,35 @@ export function WorldMap({ data, activeCountry, onCountryClick, metricLabel = 'c
             })
           }
         </Geographies>
+        </ZoomableGroup>
       </ComposableMap>
+
+      {/* Zoom Controls */}
+      <div className="absolute bottom-3 right-3 flex flex-col gap-1">
+        <button
+          onClick={() => setZoom(z => Math.min(z * 1.5, 8))}
+          className="w-7 h-7 rounded bg-white border border-slate-200 shadow-sm flex items-center justify-center text-slate-600 hover:bg-slate-50 text-sm font-bold"
+          aria-label="Zoom in"
+        >
+          +
+        </button>
+        <button
+          onClick={() => setZoom(z => Math.max(z / 1.5, 1))}
+          className="w-7 h-7 rounded bg-white border border-slate-200 shadow-sm flex items-center justify-center text-slate-600 hover:bg-slate-50 text-sm font-bold"
+          aria-label="Zoom out"
+        >
+          −
+        </button>
+        {zoom > 1.1 && (
+          <button
+            onClick={() => setZoom(1)}
+            className="w-7 h-7 rounded bg-white border border-slate-200 shadow-sm flex items-center justify-center text-slate-500 hover:bg-slate-50 text-[10px]"
+            aria-label="Reset zoom"
+          >
+            ↺
+          </button>
+        )}
+      </div>
 
       {/* Hover Tooltip */}
       {tooltip && (
