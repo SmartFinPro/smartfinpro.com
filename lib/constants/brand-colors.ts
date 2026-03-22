@@ -63,9 +63,9 @@ export const DASHBOARD_CHART = {
 // ── World Map Color Scale (LOCKED — bestehende Optik beibehalten) ──
 // Emerald-Heatmap (100→500): bewusste Designentscheidung, nicht ändern
 export const MAP_COLORS = {
-  ocean:    '#f0f9ff',   // Ozean-Hintergrund (sky-50)
-  land:     '#f1f5f9',   // Länderflächen (slate-100, unmapped)
-  border:   '#cbd5e1',   // Ländergrenzen (slate-300)
+  ocean:    '#dbeafe',   // Ozean-Hintergrund (blue-100, sichtbarer Kontrast)
+  land:     '#f8fafc',   // Länderflächen (slate-50, hell aber erkennbar)
+  border:   '#94a3b8',   // Ländergrenzen (slate-400, deutlich sichtbar)
   muted:    '#e2e8f0',   // Nicht zugeordnete Länder (slate-200)
   text:     '#64748b',   // Legendentext (slate-500)
   // Heatmap-Skala: Emerald-100 → Emerald-500 (original, bewährt)
