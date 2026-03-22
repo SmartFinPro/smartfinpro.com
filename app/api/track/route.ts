@@ -62,8 +62,10 @@ export async function POST(request: NextRequest) {
     const userAgent = request.headers.get('user-agent') || '';
     const ipHash = crypto.createHash('sha256').update(ip).digest('hex').slice(0, 16);
 
-    // Get geo data from Vercel headers
-    const countryCode = request.headers.get('x-vercel-ip-country') || 'XX';
+    // Get geo data from Cloudflare headers (primary) or Vercel headers (fallback)
+    const countryCode = request.headers.get('cf-ipcountry')
+      || request.headers.get('x-vercel-ip-country')
+      || 'XX';
     const region = request.headers.get('x-vercel-ip-country-region') || null;
     const city = request.headers.get('x-vercel-ip-city') || null;
 
