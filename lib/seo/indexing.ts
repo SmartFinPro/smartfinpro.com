@@ -95,16 +95,26 @@ async function getIndexingAccessToken(): Promise<string> {
 // ── Core API Functions ──────────────────────────────────────
 
 /**
- * Submit a single URL to Google Indexing API.
- * Action: URL_UPDATED (default) or URL_DELETED.
+ * Submit a single URL to Google Indexing API (gets its own token).
+ * For batch submissions, use submitBatchForIndexing() instead — it reuses the token.
  */
 export async function submitUrlForIndexing(
   url: string,
   action: 'URL_UPDATED' | 'URL_DELETED' = 'URL_UPDATED'
 ): Promise<IndexingResult> {
-  try {
-    const token = await getIndexingAccessToken();
+  const token = await getIndexingAccessToken();
+  return submitUrlWithToken(url, action, token);
+}
 
+/**
+ * Submit a single URL using a pre-fetched access token.
+ */
+async function submitUrlWithToken(
+  url: string,
+  action: 'URL_UPDATED' | 'URL_DELETED',
+  token: string
+): Promise<IndexingResult> {
+  try {
     const res = await fetch(
       'https://indexing.googleapis.com/v3/urlNotifications:publish',
       {
@@ -149,7 +159,8 @@ export async function submitUrlForIndexing(
 
 /**
  * Submit multiple URLs to Google Indexing API in batch.
- * Processes requests sequentially to avoid rate limits (200 requests/day/URL).
+ * Gets one access token and reuses it for all URLs.
+ * Stops early on quota exhaustion to avoid wasting requests.
  */
 export async function submitBatchForIndexing(
   urls: string[],
@@ -157,11 +168,52 @@ export async function submitBatchForIndexing(
 ): Promise<BatchIndexingResult> {
   const results: IndexingResult[] = [];
 
+  // Get token ONCE and reuse for all URLs
+  let token: string;
+  try {
+    token = await getIndexingAccessToken();
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'Token fetch failed';
+    return {
+      total: urls.length,
+      succeeded: 0,
+      failed: urls.length,
+      results: urls.map((url) => ({
+        url,
+        status: 'error' as const,
+        message: msg,
+        timestamp: new Date().toISOString(),
+      })),
+    };
+  }
+
+  let consecutiveErrors = 0;
+
   for (const url of urls) {
-    const result = await submitUrlForIndexing(url, action);
+    const result = await submitUrlWithToken(url, action, token);
     results.push(result);
 
-    // Add delay to avoid rate limiting (max 600 requests/min)
+    // Stop early on quota exhaustion (don't waste remaining requests)
+    if (result.status === 'error' && result.message.includes('Quota exceeded')) {
+      consecutiveErrors++;
+      if (consecutiveErrors >= 3) {
+        // Mark remaining URLs as skipped
+        const remaining = urls.slice(results.length);
+        for (const skippedUrl of remaining) {
+          results.push({
+            url: skippedUrl,
+            status: 'error',
+            message: 'Skipped — daily quota exhausted',
+            timestamp: new Date().toISOString(),
+          });
+        }
+        break;
+      }
+    } else {
+      consecutiveErrors = 0;
+    }
+
+    // Small delay between requests to stay within per-minute rate limit
     await new Promise((resolve) => setTimeout(resolve, 150));
   }
 

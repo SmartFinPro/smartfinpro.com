@@ -36,8 +36,25 @@ export async function POST(req: NextRequest) {
     // Parse all <loc> entries — exclude internal/dashboard/login URLs
     const matches = [...xml.matchAll(/<loc>(.*?)<\/loc>/g)];
     const EXCLUDED = ['/dashboard', '/api/', '/login', '/_next', '/go/'];
+
+    // Ensure URLs use the production domain (sitemap may contain localhost URLs in dev)
+    const prodBase = 'https://smartfinpro.com';
+
     allUrls = matches
-      .map((m) => m[1].trim())
+      .map((m) => {
+        let url = m[1].trim();
+        // Replace any localhost or non-production base with the real domain
+        if (url && !url.startsWith(prodBase)) {
+          try {
+            const parsed = new URL(url);
+            url = `${prodBase}${parsed.pathname}`;
+          } catch {
+            // If URL parsing fails, skip this entry
+            return '';
+          }
+        }
+        return url;
+      })
       .filter((u) => u && !EXCLUDED.some((ex) => u.includes(ex)));
   } catch (err) {
     return NextResponse.json(
