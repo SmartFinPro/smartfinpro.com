@@ -20,8 +20,8 @@ on:
         description: "Eigener Prompt (nur wenn 'custom' gewählt)"
         required: false
         type: string
-      notify_telegram:
-        description: "Report via Telegram senden?"
+      notify_email:
+        description: "Report per E-Mail an info@smartfinpro.com senden?"
         required: false
         type: boolean
         default: true
