@@ -137,6 +137,26 @@ export async function seedMoneyKeywords(): Promise<number> {
 
 // ── Main data fetcher ───────────────────────────────────────
 
+function mapStoredRow(row: Record<string, unknown>): RankingKeyword {
+  return {
+    id: (row.id as string) || crypto.randomUUID(),
+    keyword: row.keyword as string,
+    page: (row.page as string) || '',
+    market: (row.market as Market) || 'us',
+    currentPosition: (row.current_position as number) || 0,
+    previousPosition: (row.previous_position as number | null) ?? null,
+    positionDelta: row.previous_position
+      ? Math.round(
+          ((row.previous_position as number) - (row.current_position as number)) * 10,
+        ) / 10
+      : null,
+    clicks: (row.clicks as number) || 0,
+    impressions: (row.impressions as number) || 0,
+    ctr: (row.ctr as number) || 0,
+    lastUpdated: (row.tracked_at as string) || new Date().toISOString(),
+  };
+}
+
 export async function getRankingData(options?: {
   market?: Market;
   days?: number;
@@ -146,57 +166,67 @@ export async function getRankingData(options?: {
   const market = options?.market;
   const days = options?.days || 7;
 
-  // Try Supabase first (cached daily snapshots)
   const supabase = await createClient();
-  let query = supabase
-    .from('keyword_tracking')
-    .select('*')
-    .order('current_position', { ascending: true })
-    .limit(200);
 
-  if (market) {
-    query = query.eq('market', market);
+  // Helper: build & run the keyword_tracking query
+  async function fetchStored() {
+    let q = supabase
+      .from('keyword_tracking')
+      .select('*')
+      .order('current_position', { ascending: true })
+      .limit(200);
+    if (market) q = q.eq('market', market);
+    return safeData(await q);
   }
 
-  const stored = safeData(await query);
+  let stored = await fetchStored();
+
+  // Auto-seed MONEY_KEYWORDS if table is completely empty
+  if (stored.length === 0) {
+    await seedMoneyKeywords();
+    stored = await fetchStored();
+  }
 
   let keywords: RankingKeyword[];
 
   if (stored.length > 0) {
-    keywords = stored.map((row: Record<string, unknown>) => ({
-      id: (row.id as string) || crypto.randomUUID(),
-      keyword: row.keyword as string,
-      page: (row.page as string) || '',
-      market: (row.market as Market) || 'us',
-      currentPosition: (row.current_position as number) || 0,
-      previousPosition: (row.previous_position as number | null) ?? null,
-      positionDelta: row.previous_position
-        ? Math.round(
-            ((row.previous_position as number) - (row.current_position as number)) * 10,
-          ) / 10
-        : null,
-      clicks: (row.clicks as number) || 0,
-      impressions: (row.impressions as number) || 0,
-      ctr: (row.ctr as number) || 0,
-      lastUpdated: (row.tracked_at as string) || new Date().toISOString(),
-    }));
+    // Use DB data (seeded placeholders or real GSC-synced data)
+    keywords = stored.map(mapStoredRow);
   } else if (gscConfigured) {
+    // Seeding failed — try live GSC
     const gscKeywords = await getTopKeywords({ days, limit: 100, market });
-    keywords = gscKeywords.map((kw: KeywordData) => ({
-      id: crypto.randomUUID(),
-      keyword: kw.keyword,
-      page: kw.page,
-      market: (kw.market || 'us') as Market,
-      currentPosition: kw.position,
-      previousPosition: null,
-      positionDelta: null,
-      clicks: kw.clicks,
-      impressions: kw.impressions,
-      ctr: kw.ctr,
-      lastUpdated: new Date().toISOString(),
-    }));
+    if (gscKeywords.length > 0) {
+      keywords = gscKeywords.map((kw: KeywordData) => ({
+        id: crypto.randomUUID(),
+        keyword: kw.keyword,
+        page: kw.page,
+        market: (kw.market || 'us') as Market,
+        currentPosition: kw.position,
+        previousPosition: null,
+        positionDelta: null,
+        clicks: kw.clicks,
+        impressions: kw.impressions,
+        ctr: kw.ctr,
+        lastUpdated: new Date().toISOString(),
+      }));
+    } else {
+      // GSC configured but no data yet (site too new) — show seed keywords as placeholders
+      keywords = MONEY_KEYWORDS.map((kw) => ({
+        id: crypto.randomUUID(),
+        keyword: kw.keyword,
+        page: kw.page,
+        market: kw.market,
+        currentPosition: 0,
+        previousPosition: null,
+        positionDelta: null,
+        clicks: 0,
+        impressions: 0,
+        ctr: 0,
+        lastUpdated: new Date().toISOString(),
+      }));
+    }
   } else {
-    // Return seed keywords as placeholders (position 0 = unchecked)
+    // No GSC, no DB data — show seed keywords as placeholders
     keywords = MONEY_KEYWORDS.map((kw) => ({
       id: crypto.randomUUID(),
       keyword: kw.keyword,
@@ -212,7 +242,8 @@ export async function getRankingData(options?: {
     }));
   }
 
-  const stats = calculateStats(keywords.filter((k) => k.currentPosition > 0));
+  // Stats: count ALL tracked keywords; compute positions/clicks only for those with real data
+  const stats = calculateStats(keywords);
 
   let trend: PositionTrend[] = [];
   if (keywords.length > 0 && gscConfigured) {
@@ -493,18 +524,22 @@ function calculateStats(keywords: RankingKeyword[]): RankingStats {
     };
   }
 
-  const positions = keywords.map((k) => k.currentPosition);
+  // Only compute position-based stats for keywords with real rankings (position > 0)
+  const ranked = keywords.filter((k) => k.currentPosition > 0);
+
   const avgPosition =
-    Math.round(
-      (positions.reduce((a, b) => a + b, 0) / positions.length) * 10,
-    ) / 10;
+    ranked.length > 0
+      ? Math.round(
+          (ranked.reduce((a, k) => a + k.currentPosition, 0) / ranked.length) * 10,
+        ) / 10
+      : 0;
 
   return {
-    totalKeywords: keywords.length,
+    totalKeywords: keywords.length, // ALL tracked keywords, including unchecked (position=0)
     avgPosition,
-    top3Keywords: keywords.filter((k) => k.currentPosition <= 3).length,
-    top10Keywords: keywords.filter((k) => k.currentPosition <= 10).length,
-    top20Keywords: keywords.filter((k) => k.currentPosition <= 20).length,
+    top3Keywords: ranked.filter((k) => k.currentPosition <= 3).length,
+    top10Keywords: ranked.filter((k) => k.currentPosition <= 10).length,
+    top20Keywords: ranked.filter((k) => k.currentPosition <= 20).length,
     totalClicks: keywords.reduce((a, k) => a + k.clicks, 0),
     totalImpressions: keywords.reduce((a, k) => a + k.impressions, 0),
   };

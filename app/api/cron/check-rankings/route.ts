@@ -44,10 +44,10 @@ export async function GET(request: NextRequest) {
 
     // 1. Fetch keywords currently ranked outside top 20
     const { data: poorRankings, error: rankingError } = await supabase
-      .from('keyword_rankings')
-      .select('id, keyword, market, position, page, clicks, ctr')
-      .or('position.gt.20,position.is.null') // Include both: >20 and unranked
-      .order('position', { ascending: true, nullsFirst: false });
+      .from('keyword_tracking')
+      .select('id, keyword, market, current_position, page, clicks, ctr')
+      .or('current_position.gt.20,current_position.is.null') // Include both: >20 and unranked
+      .order('current_position', { ascending: true, nullsFirst: false });
 
     if (rankingError) {
       throw new Error(`Failed to fetch rankings: ${rankingError.message}`);
@@ -107,7 +107,7 @@ export async function GET(request: NextRequest) {
           market: article.market,
           category: article.category,
           keyword,
-          reason: `Ranking check: keyword dropped outside top 20 (${article.totalClicks} clicks)`,
+          reason: `Ranking check: keyword outside top 20 (${article.totalClicks} clicks)`,
           status: 'needs-update',
         });
       }
