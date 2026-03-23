@@ -1,0 +1,74 @@
+name: 🔧 Claude — Bug Fix & Audit
+
+on:
+  workflow_dispatch:
+    inputs:
+      task:
+        description: "Was soll gefixed/auditiert werden?"
+        required: true
+        type: string
+      scope:
+        description: "Umfang der Änderungen"
+        required: false
+        type: choice
+        options:
+          - fix-only       # Nur Bug fixen, direkt auf main committen
+          - audit-only     # Nur analysieren, KEIN Commit (Report in Logs)
+          - fix-with-pr    # Fix als Pull Request (für größere Änderungen)
+        default: fix-only
+
+jobs:
+  claude-fix:
+    name: Fix & Audit via Claude Code
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Claude Code — Fix / Audit
+        uses: anthropics/claude-code-action@beta
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            Du bist Senior-Entwickler für SmartFinPro.com.
+            Modus: ${{ github.event.inputs.scope }}
+
+            AUFGABE: ${{ github.event.inputs.task }}
+
+            Regeln je nach Modus:
+            - fix-only: Direkt fixen, minimale chirurgische Änderungen, kein Refactoring
+            - audit-only: Nur analysieren und Report ausgeben, KEINE Dateien ändern
+            - fix-with-pr: Fix auf neuem Branch, dann PR erstellen
+
+            Sicherheitsregeln:
+            - Keine Gesamt-Refactorings — nur gezielte Änderungen
+            - 'use client' nur wenn wirklich nötig (State/Events/Browser-APIs)
+            - Server Actions NICHT direkt in Client Components importieren
+            - VPS niemals direkt ansprechen (kein SSH, kein scp)
+            - Nach Fixes: git commit mit erklärender Message
+          claude_args: "--max-turns 20"
+
+      - name: Änderungen committen (fix-only)
+        if: ${{ github.event.inputs.scope == 'fix-only' }}
+        run: |
+          git config user.name "Claude Code Bot"
+          git config user.email "claude@smartfinpro.com"
+          if [ -n "$(git status --porcelain)" ]; then
+            git add -A
+            git commit -m "fix(claude): auto-fix via workflow_dispatch" || true
+            git push origin main
+            echo "✅ Fix gepusht — Deploy startet automatisch"
+          else
+            echo "ℹ️ Keine Änderungen notwendig"
+          fi

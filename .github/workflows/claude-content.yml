@@ -1,0 +1,85 @@
+name: 🤖 Claude — Content Generator
+
+on:
+  workflow_dispatch:
+    inputs:
+      prompt:
+        description: "Was soll Claude generieren? (MDX-Review, Frontmatter-Fix, Affiliate-Link...)"
+        required: true
+        type: string
+      market:
+        description: "Markt (optional)"
+        required: false
+        type: choice
+        options:
+          - alle
+          - us
+          - uk
+          - ca
+          - au
+        default: alle
+      category:
+        description: "Kategorie (optional)"
+        required: false
+        type: choice
+        options:
+          - alle
+          - forex
+          - trading
+          - ai-tools
+          - cybersecurity
+          - personal-finance
+          - business-banking
+        default: alle
+
+jobs:
+  claude-content:
+    name: Content via Claude Code
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Claude Code — Content generieren
+        uses: anthropics/claude-code-action@beta
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            Du bist Senior-Entwickler für SmartFinPro.com (Next.js 16, Tailwind v4, Supabase).
+            Markt-Filter: ${{ github.event.inputs.market }}
+            Kategorie-Filter: ${{ github.event.inputs.category }}
+
+            AUFGABE: ${{ github.event.inputs.prompt }}
+
+            Wichtige Regeln:
+            - MDX Pflicht-Frontmatter: title, description, date, author, market, category, affiliate_link, affiliate_provider, cpa_value, schema.rating, schema.review_count
+            - Affiliate-Links immer als /go/[slug]/ Pattern (nie direkte URLs)
+            - Helles Design: var(--sfp-navy), var(--sfp-gold), var(--sfp-green)
+            - Tailwind v4 Syntax (kein tailwind.config.js)
+            - HTML-Kommentare in MDX: immer {/* */} statt <!-- -->
+            - Nach Änderungen: git add + git commit mit beschreibender Message
+          claude_args: "--max-turns 15"
+
+      - name: Auto-Deploy nach Content-Änderungen
+        run: |
+          git config user.name "Claude Code Bot"
+          git config user.email "claude@smartfinpro.com"
+          if [ -n "$(git status --porcelain)" ]; then
+            git add -A
+            git commit -m "content(claude): auto-generated via workflow_dispatch" || true
+            git push origin main
+            echo "✅ Änderungen gepusht — Deploy startet automatisch"
+          else
+            echo "ℹ️ Keine Änderungen — kein Deploy nötig"
+          fi

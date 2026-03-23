@@ -1,0 +1,115 @@
+name: 📊 Claude — Report & Analyse
+
+on:
+  # Manuell auslösen (iPhone/iPad/Browser)
+  workflow_dispatch:
+    inputs:
+      report_type:
+        description: "Report-Typ"
+        required: true
+        type: choice
+        options:
+          - weekly-performance      # Top Reviews, Revenue, Rankings
+          - content-audit           # Fehlende Frontmatter, Broken Links
+          - competitor-snapshot     # SERP-Positionen vs. Konkurrenten
+          - affiliate-audit         # Fehlende/inaktive Affiliate-Links
+          - seo-health-check        # Hreflang, Schema, Meta-Tags
+          - custom                  # Eigener Prompt unten
+        default: weekly-performance
+      custom_prompt:
+        description: "Eigener Prompt (nur wenn 'custom' gewählt)"
+        required: false
+        type: string
+      notify_telegram:
+        description: "Report via Telegram senden?"
+        required: false
+        type: boolean
+        default: true
+
+  # Automatisch jeden Montag 7:00 Uhr (Weekly Report)
+  schedule:
+    - cron: "0 7 * * 1"
+
+jobs:
+  claude-report:
+    name: Report via Claude Code
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Report-Typ bestimmen
+        id: report
+        run: |
+          REPORT_TYPE="${{ github.event.inputs.report_type || 'weekly-performance' }}"
+          CUSTOM="${{ github.event.inputs.custom_prompt }}"
+
+          case "$REPORT_TYPE" in
+            weekly-performance)
+              PROMPT="Erstelle einen vollständigen Weekly Performance Report für SmartFinPro.com:
+              1. Top 10 Reviews nach Pageviews (letzte 7 Tage) aus analytics Tabelle
+              2. Revenue diese Woche vs. letzte Woche (revenue Tabelle)
+              3. Neue Keywords unter Top 20 (keyword_tracking Tabelle)
+              4. Conversion Rate pro Markt (conversions Tabelle)
+              5. Offene Probleme (cron_logs mit status=error)
+              Formatiere als übersichtliche Zusammenfassung."
+              ;;
+            content-audit)
+              PROMPT="Führe einen vollständigen Content-Audit durch:
+              1. Prüfe alle MDX-Dateien in content/ auf fehlende Pflicht-Frontmatter-Felder (title, description, market, category, affiliate_link)
+              2. Finde MDX-Dateien ohne ReviewSchema oder FaqSchema
+              3. Liste alle /go/[slug] Links die nicht in affiliate_links Tabelle existieren
+              4. Zähle Reviews pro Markt und Kategorie
+              Ausgabe als strukturierte Liste."
+              ;;
+            competitor-snapshot)
+              PROMPT="Erstelle einen Competitor Intelligence Snapshot:
+              1. Lese aktuelle Daten aus competitors Tabelle (CPS Scores)
+              2. Vergleiche unsere Rankings vs. Konkurrenten aus keyword_tracking
+              3. Identifiziere Keywords wo Konkurrenten Top 3 sind, wir aber nicht
+              4. Empfehle die 5 wichtigsten Content-Lücken die wir schließen sollten
+              Formatiere als priorisierte To-Do Liste."
+              ;;
+            affiliate-audit)
+              PROMPT="Prüfe alle Affiliate-Links auf SmartFinPro:
+              1. Lese alle Einträge aus affiliate_links Tabelle
+              2. Finde is_active=false Links die noch in MDX-Dateien referenziert werden
+              3. Finde MDX-Dateien mit affiliate_link im Frontmatter aber keinem Eintrag in DB
+              4. Liste Links ohne cpa_value (cpa_value=0 oder null)
+              Ausgabe: Priorisierte Fix-Liste mit geschätztem Revenue-Impact."
+              ;;
+            seo-health-check)
+              PROMPT="Führe einen SEO Health Check durch:
+              1. Prüfe ob alle market/category Kombinationen hreflang-Tags haben (lib/hreflang.ts)
+              2. Finde MDX-Reviews ohne AggregateRating Schema
+              3. Prüfe ob alle 4 Märkte in sitemap.ts korrekt registriert sind
+              4. Finde Seiten mit title länger als 60 Zeichen oder description länger als 160 Zeichen
+              5. Prüfe FCA-Labels auf allen UK-Seiten, ASIC auf allen AU-Seiten
+              Ausgabe: SEO-Score pro Bereich + Fix-Empfehlungen."
+              ;;
+            custom)
+              PROMPT="$CUSTOM"
+              ;;
+          esac
+
+          echo "prompt<<EOF" >> $GITHUB_OUTPUT
+          echo "$PROMPT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Claude Code — Report generieren
+        uses: anthropics/claude-code-action@beta
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            Du bist Senior-Analyst für SmartFinPro.com.
+            WICHTIG: Dieser Report ist NUR LESEND. Ändere KEINE Dateien und mache KEINEN Commit.
+
+            ${{ steps.report.outputs.prompt }}
+
+            Antworte auf Deutsch mit strukturiertem Markdown-Report.
+            Halte den Report prägnant — maximal 500 Wörter.
+          claude_args: "--max-turns 10"
