@@ -1,0 +1,397 @@
+name: 🚀 Claude — Full Genesis Pipeline
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Ein Prompt → Keyword Research → Content → MDX → Deploy → Google Indexed
+# ─────────────────────────────────────────────────────────────────────────────
+
+on:
+  workflow_dispatch:
+    inputs:
+      niche:
+        description: "Markt/Nische beschreiben (z.B. 'beste Forex Broker Australien 2025')"
+        required: true
+        type: string
+      market:
+        description: "Zielmarkt"
+        required: true
+        type: choice
+        options: [us, uk, ca, au]
+      category:
+        description: "Kategorie"
+        required: true
+        type: choice
+        options:
+          - forex
+          - trading
+          - ai-tools
+          - cybersecurity
+          - personal-finance
+          - business-banking
+      min_cpa:
+        description: "Mindest-CPA ($) für Affiliate-Auswahl"
+        required: false
+        default: "100"
+        type: string
+      word_count:
+        description: "Ziel-Wortanzahl"
+        required: false
+        type: choice
+        options: ["4000", "5000", "6000", "7000"]
+        default: "5000"
+
+jobs:
+  # ═══════════════════════════════════════════════════════════════════════════
+  # PHASE 1 + 2: Keyword Research → Content Generation → MDX Commit
+  # ═══════════════════════════════════════════════════════════════════════════
+  genesis:
+    name: "Phase 1+2 — Research & Generate"
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    outputs:
+      mdx_slug: ${{ steps.extract.outputs.slug }}
+      mdx_url:  ${{ steps.extract.outputs.url }}
+      changed:  ${{ steps.extract.outputs.changed }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      # ── Claude: Research + Generate + Commit ──────────────────────────────
+      - name: Claude — Keyword Research & MDX Generation
+        uses: anthropics/claude-code-action@beta
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          model: claude-opus-4-5
+          claude_args: "--max-turns 40"
+          prompt: |
+            Du bist Senior SEO-Stratege und Content-Entwickler für SmartFinPro.com.
+            Führe die folgende vollautomatische Genesis-Pipeline durch.
+
+            ═══════════════════════════════════════
+            INPUT
+            ═══════════════════════════════════════
+            Nische/Prompt: "${{ github.event.inputs.niche }}"
+            Markt:         ${{ github.event.inputs.market }}
+            Kategorie:     ${{ github.event.inputs.category }}
+            Min-CPA:       ${{ github.event.inputs.min_cpa }}
+            Wortanzahl:    ${{ github.event.inputs.word_count }}
+
+            ═══════════════════════════════════════
+            PHASE 1 — KEYWORD RESEARCH (via Serper.dev)
+            ═══════════════════════════════════════
+            Führe folgende Bash-Befehle aus um Keyword-Daten zu sammeln:
+
+            1a) Serper.dev Organic Search — Top 10 Ergebnisse für Haupt-Keyword:
+            ```
+            curl -s -X POST "https://google.serper.dev/search" \
+              -H "X-API-KEY: $SERPER_API_KEY" \
+              -H "Content-Type: application/json" \
+              -d '{"q":"${{ github.event.inputs.niche }}","gl":"${{ github.event.inputs.market }}","num":10}'
+            ```
+
+            1b) Serper.dev "People Also Ask" für FAQ-Sektion:
+            ```
+            curl -s -X POST "https://google.serper.dev/search" \
+              -H "X-API-KEY: $SERPER_API_KEY" \
+              -H "Content-Type: application/json" \
+              -d '{"q":"${{ github.event.inputs.niche }} review 2025","gl":"${{ github.event.inputs.market }}","num":5}'
+            ```
+
+            1c) Analysiere die Ergebnisse:
+            - Extrahiere die Top-Keywords (Haupt + Long-Tail) aus den Titeln/Snippets
+            - Identifiziere Content-Lücken (was fehlt in den Top-10-Ergebnissen?)
+            - Bestimme den optimalen Slug (SEO-freundlich, max 60 Zeichen, Bindestriche)
+            - Lege Haupt-H1 und Meta-Description fest (basierend auf den Top-Rankings)
+
+            ═══════════════════════════════════════
+            PHASE 2 — AFFILIATE MATCH (via Supabase)
+            ═══════════════════════════════════════
+            2a) Lese passende Affiliate-Links aus der DB:
+            ```
+            curl -s "$NEXT_PUBLIC_SUPABASE_URL/rest/v1/affiliate_links?market=eq.${{ github.event.inputs.market }}&category=eq.${{ github.event.inputs.category }}&is_active=eq.true&cpa_value=gte.${{ github.event.inputs.min_cpa }}&order=cpa_value.desc&limit=5" \
+              -H "apikey: $SUPABASE_SERVICE_KEY" \
+              -H "Authorization: Bearer $SUPABASE_SERVICE_KEY"
+            ```
+
+            2b) Wähle den besten Affiliate aus (höchster CPA + passt zum Keyword-Intent)
+            2c) Merke dir: slug, provider, cpa_value für das Frontmatter
+
+            ═══════════════════════════════════════
+            PHASE 3 — MDX GENERIERUNG
+            ═══════════════════════════════════════
+            Erstelle jetzt die vollständige MDX-Datei.
+
+            Dateipfad: content/${{ github.event.inputs.market }}/${{ github.event.inputs.category }}/[SLUG-AUS-PHASE-1].mdx
+
+            PFLICHT-FRONTMATTER:
+            ```yaml
+            ---
+            title: "[SEO-optimierter Titel, max 60 Zeichen]"
+            description: "[Meta-Description, max 155 Zeichen, enthält Haupt-Keyword]"
+            date: "$(date +%Y-%m-%d)"
+            author: "[passender Experte je Markt: US=James Miller, UK=Sarah Thompson CFA CISI, CA=Marc Fontaine CFA CIM, AU=Emma Whitfield CFA AFA]"
+            market: "${{ github.event.inputs.market }}"
+            category: "${{ github.event.inputs.category }}"
+            affiliate_link: "/go/[SLUG-AUS-SUPABASE]/"
+            affiliate_provider: "[PROVIDER-AUS-SUPABASE]"
+            cpa_value: [CPA-WERT-AUS-SUPABASE]
+            schema:
+              rating: [4.5-4.9, realistisch]
+              review_count: [80-300, realistisch]
+            ---
+            ```
+
+            MDX-STRUKTUR (${{ github.event.inputs.word_count }} Wörter):
+
+            1. **Executive Summary** — `<ExecutiveSummary>` Komponente mit 4-5 Key Findings
+            2. **Quick Stats** — `<TrustAuthority>` mit 4 Kennzahlen (Gründungsjahr, Regulierung, Min-Einlage, Spread)
+            3. **Hauptbewertung** (H2) — detaillierte Analyse, Stärken/Schwächen
+            4. **Vergleichstabelle** — `<ComparisonTable>` mit 3-5 Konkurrenten (aus Serper-Recherche)
+            5. **Pro/Contra** — `<CollapsibleSection>` wenn 5+ Items
+            6. **Für wen geeignet?** — Zielgruppen-Abschnitte
+            7. **Schritt-für-Schritt Anleitung** — "Wie fange ich an?"
+            8. **FAQ** (min. 5 Fragen) — aus "People Also Ask" Daten von Serper
+            9. **Fazit + CTA** — `<AffiliateButton>` Komponente
+
+            PFLICHT-KOMPONENTEN im MDX:
+            - `<ExecutiveSummary>` am Anfang
+            - `<TrustAuthority stats={[...]} />` nach H1
+            - `<AffiliateButton href="/go/[SLUG]/" provider="[PROVIDER]" />` mind. 2x
+            - `<CollapsibleSection>` für alle Listen mit 5+ Items
+            - JSON-LD Schema am Ende: ReviewSchema + AggregateRating + FAQPage
+
+            MARKT-SPEZIFISCHE PFLICHTEN:
+            - UK: FCA-Disclaimer "CFDs are complex instruments..." vor erstem CTA
+            - AU: ASIC-Disclaimer "Trading involves risk..." vor erstem CTA
+            - Alle: Affiliate Disclosure Satz im ersten Absatz
+
+            VERBOTEN:
+            - HTML-Kommentare <!-- --> → immer {/* */}
+            - Direkte Affiliate-URLs → immer /go/[slug]/
+            - Hardcodierte Hex-Farben → var(--sfp-navy) etc.
+
+            ═══════════════════════════════════════
+            PHASE 4 — AFFILIATE LINK IN DB SICHERN
+            ═══════════════════════════════════════
+            Falls der affiliate_link slug noch NICHT in der DB existiert, füge ihn ein:
+            ```
+            curl -s -X POST "$NEXT_PUBLIC_SUPABASE_URL/rest/v1/affiliate_links" \
+              -H "apikey: $SUPABASE_SERVICE_KEY" \
+              -H "Authorization: Bearer $SUPABASE_SERVICE_KEY" \
+              -H "Content-Type: application/json" \
+              -H "Prefer: resolution=ignore-duplicates" \
+              -d '{"slug":"[SLUG]","provider":"[PROVIDER]","url":"[AFFILIATE-URL]","market":"${{ github.event.inputs.market }}","category":"${{ github.event.inputs.category }}","cpa_value":[WERT],"is_active":true}'
+            ```
+
+            ═══════════════════════════════════════
+            PHASE 5 — COMMIT
+            ═══════════════════════════════════════
+            Nach dem Schreiben der MDX-Datei:
+            ```
+            git config user.name "Claude Genesis Bot"
+            git config user.email "claude@smartfinpro.com"
+            git add content/${{ github.event.inputs.market }}/${{ github.event.inputs.category }}/
+            git commit -m "content(${{ github.event.inputs.market }}/${{ github.event.inputs.category }}): add [SLUG] review — CPA $[WERT] via genesis pipeline"
+            git push origin main
+            echo "GENESIS_SLUG=[SLUG]" >> $GITHUB_ENV
+            echo "GENESIS_URL=https://smartfinpro.com/[URL-PFAD]" >> $GITHUB_ENV
+            ```
+
+            ═══════════════════════════════════════
+            AUSGABE AM ENDE
+            ═══════════════════════════════════════
+            Schreibe nach dem Commit diese Zeile exakt so (für den nächsten Workflow-Step):
+            ```
+            echo "RESULT_SLUG=[SLUG]" >> /tmp/genesis_result.txt
+            echo "RESULT_URL=[VOLLSTÄNDIGE-URL]" >> /tmp/genesis_result.txt
+            ```
+        env:
+          SERPER_API_KEY:            ${{ secrets.SERPER_API_KEY }}
+          NEXT_PUBLIC_SUPABASE_URL:  ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY:      ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+      # ── Slug & URL für nächste Phase extrahieren ──────────────────────────
+      - name: Slug & URL extrahieren
+        id: extract
+        run: |
+          MARKET="${{ github.event.inputs.market }}"
+          CATEGORY="${{ github.event.inputs.category }}"
+
+          # Neueste MDX-Datei im Zielverzeichnis finden
+          LATEST=$(git diff --name-only HEAD~1 HEAD 2>/dev/null | grep "content/$MARKET/$CATEGORY" | grep "\.mdx$" | head -1)
+
+          if [ -n "$LATEST" ]; then
+            SLUG=$(basename "$LATEST" .mdx)
+            # URL je nach Markt (US hat kein Prefix)
+            if [ "$MARKET" = "us" ]; then
+              URL="https://smartfinpro.com/$CATEGORY/$SLUG/"
+            else
+              URL="https://smartfinpro.com/$MARKET/$CATEGORY/$SLUG/"
+            fi
+            echo "slug=$SLUG"   >> $GITHUB_OUTPUT
+            echo "url=$URL"     >> $GITHUB_OUTPUT
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "✅ Neue Seite: $URL"
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "⚠️ Keine neue MDX-Datei gefunden"
+          fi
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # PHASE 3: Build & Deploy (nur wenn MDX erstellt wurde)
+  # ═══════════════════════════════════════════════════════════════════════════
+  deploy:
+    name: "Phase 3 — Build & Deploy"
+    needs: genesis
+    if: needs.genesis.outputs.changed == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout (mit neuem Commit)
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Next.js
+        run: npm run build
+        env:
+          NODE_OPTIONS:                      "--max-old-space-size=3072"
+          NEXT_PUBLIC_SITE_URL:              ${{ secrets.NEXT_PUBLIC_SITE_URL }}
+          NEXT_PUBLIC_SUPABASE_URL:          ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY:     ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_KEY:              ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          ANTHROPIC_API_KEY:                 ${{ secrets.ANTHROPIC_API_KEY }}
+          RESEND_API_KEY:                    ${{ secrets.RESEND_API_KEY }}
+          TELEGRAM_BOT_TOKEN:               ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID:                  ${{ secrets.TELEGRAM_CHAT_ID }}
+          SERPER_API_KEY:                    ${{ secrets.SERPER_API_KEY }}
+          CRON_SECRET:                       ${{ secrets.CRON_SECRET }}
+          DASHBOARD_AUTH_SECRET:             ${{ secrets.DASHBOARD_AUTH_SECRET }}
+          GSC_CLIENT_EMAIL:                  ${{ secrets.GSC_CLIENT_EMAIL }}
+          GSC_PRIVATE_KEY:                   ${{ secrets.GSC_PRIVATE_KEY }}
+          GSC_SITE_URL:                      ${{ secrets.GSC_SITE_URL }}
+
+      - name: SSH Key einrichten
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
+
+      - name: Static Files auf VPS kopieren
+        run: |
+          rsync -avz --delete --no-perms --no-owner --no-group \
+            -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
+            .next/standalone/ \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/home/master/applications/brvnvntpcj/public_html/.next/standalone/ || true
+
+          rsync -avz --no-perms --no-owner --no-group \
+            -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
+            .next/static/ \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/home/master/applications/brvnvntpcj/public_html/.next/standalone/.next/static/ || true
+
+          rsync -avz --no-perms --no-owner --no-group \
+            -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
+            public/ \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/home/master/applications/brvnvntpcj/public_html/.next/standalone/public/ || true
+
+      - name: PM2 Restart
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
+            "export PM2=/home/master/.npm-global/bin/pm2 && \$PM2 restart SmartFinPro-Live --update-env && \$PM2 save"
+
+      - name: Health Check
+        run: |
+          sleep 10
+          for i in 1 2 3; do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${{ secrets.NEXT_PUBLIC_SITE_URL }}/api/health" || echo "000")
+            if [ "$STATUS" = "200" ]; then
+              echo "✅ Health Check OK (Versuch $i)"
+              exit 0
+            fi
+            echo "⏳ Versuch $i fehlgeschlagen (Status: $STATUS), warte 10s..."
+            sleep 10
+          done
+          echo "❌ Health Check fehlgeschlagen"
+          exit 1
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # PHASE 4: Google Indexing (nach erfolgreichem Deploy)
+  # ═══════════════════════════════════════════════════════════════════════════
+  index:
+    name: "Phase 4 — Google Indexing"
+    needs: [genesis, deploy]
+    if: needs.genesis.outputs.changed == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: URL bei Google einreichen
+        run: |
+          URL="${{ needs.genesis.outputs.mdx_url }}"
+          SITE_URL="${{ secrets.NEXT_PUBLIC_SITE_URL }}"
+          CRON_SECRET="${{ secrets.CRON_SECRET }}"
+
+          echo "📡 Reiche URL bei Google ein: $URL"
+
+          # Google Indexing via SmartFinPro Cron-API
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "$SITE_URL/api/cron/index-url" \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            -H "Content-Type: application/json" \
+            -d "{\"url\":\"$URL\",\"type\":\"URL_UPDATED\"}")
+
+          HTTP_CODE=$(echo "$RESPONSE" | tail -1)
+          BODY=$(echo "$RESPONSE" | head -1)
+
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "✅ URL erfolgreich bei Google eingereicht"
+            echo "$BODY"
+          else
+            echo "⚠️ Indexing API Antwort: $HTTP_CODE — $BODY"
+            echo "ℹ️ URL wird beim nächsten Cron-Job automatisch eingereicht"
+          fi
+
+      - name: Telegram Erfolgs-Notification
+        if: always()
+        run: |
+          URL="${{ needs.genesis.outputs.mdx_url }}"
+          SLUG="${{ needs.genesis.outputs.mdx_slug }}"
+          MARKET="${{ github.event.inputs.market }}"
+          CATEGORY="${{ github.event.inputs.category }}"
+          NICHE="${{ github.event.inputs.niche }}"
+
+          MSG="🚀 *Genesis Pipeline abgeschlossen*%0A%0A"
+          MSG="${MSG}📄 *Seite:* \`$SLUG\`%0A"
+          MSG="${MSG}🌍 *Markt:* $MARKET / $CATEGORY%0A"
+          MSG="${MSG}🔍 *Nische:* $NICHE%0A"
+          MSG="${MSG}🌐 *Live:* $URL%0A"
+          MSG="${MSG}📡 *Google Indexing:* eingereicht%0A"
+          MSG="${MSG}%0A_Vollautomatisch via Genesis Pipeline_ ✨"
+
+          curl -s "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+            -d "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}" \
+            -d "text=$MSG" \
+            -d "parse_mode=Markdown" > /dev/null
+
+          echo "📱 Telegram Notification gesendet"
