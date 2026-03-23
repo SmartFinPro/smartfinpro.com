@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
     inputs:
       niche:
-        description: "Markt/Nische beschreiben (z.B. 'beste Forex Broker Australien 2025')"
+        description: "Markt/Nische (z.B. 'beste Forex Broker Australien 2025')"
         required: true
         type: string
       market:
@@ -27,6 +27,21 @@ on:
           - cybersecurity
           - personal-finance
           - business-banking
+      target_keywords:
+        description: "🎯 Top-Keywords vom Scout (kommagetrennt, z.B. 'best forex broker australia, pepperstone review, ic markets au')"
+        required: false
+        type: string
+        default: ""
+      competitor_urls:
+        description: "🔍 Konkurrenz-URLs zum Schlagen (kommagetrennt, vom Scout geliefert)"
+        required: false
+        type: string
+        default: ""
+      scout_cpa:
+        description: "💰 CPA vom Scout vorgeschlagen ($)"
+        required: false
+        type: string
+        default: ""
       min_cpa:
         description: "Mindest-CPA ($) für Affiliate-Auswahl"
         required: false
@@ -80,16 +95,23 @@ jobs:
             ═══════════════════════════════════════
             INPUT
             ═══════════════════════════════════════
-            Nische/Prompt: "${{ github.event.inputs.niche }}"
-            Markt:         ${{ github.event.inputs.market }}
-            Kategorie:     ${{ github.event.inputs.category }}
-            Min-CPA:       ${{ github.event.inputs.min_cpa }}
-            Wortanzahl:    ${{ github.event.inputs.word_count }}
+            Nische/Prompt:    "${{ github.event.inputs.niche }}"
+            Markt:            ${{ github.event.inputs.market }}
+            Kategorie:        ${{ github.event.inputs.category }}
+            Min-CPA:          ${{ github.event.inputs.min_cpa }}
+            Wortanzahl:       ${{ github.event.inputs.word_count }}
+            Scout-Keywords:   "${{ github.event.inputs.target_keywords }}"
+            Scout-Konkurrenz: "${{ github.event.inputs.competitor_urls }}"
+            Scout-CPA:        "${{ github.event.inputs.scout_cpa }}"
 
             ═══════════════════════════════════════
             PHASE 1 — KEYWORD RESEARCH (via Serper.dev)
             ═══════════════════════════════════════
-            Führe folgende Bash-Befehle aus um Keyword-Daten zu sammeln:
+            WICHTIG: Wenn "Scout-Keywords" NICHT leer ist, überspringe die manuelle
+            Keyword-Suche und nutze diese Keywords direkt als Basis — sie wurden bereits
+            vom Nischen-Scout analysiert und sind für hohe Conversion optimiert.
+
+            Falls Scout-Keywords leer → führe manuelle Recherche durch:
 
             1a) Serper.dev Organic Search — Top 10 Ergebnisse für Haupt-Keyword:
             ```

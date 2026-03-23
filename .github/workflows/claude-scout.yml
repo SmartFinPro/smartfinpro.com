@@ -1,0 +1,277 @@
+name: 🔍 Claude — Nischen-Scout
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Findet vollautomatisch die profitabelsten Nischen + Top-Converting-Keywords
+# + Konkurrenz-Schwächen → liefert vorausgefüllte Genesis Pipeline Links
+# ─────────────────────────────────────────────────────────────────────────────
+
+on:
+  # Manuell starten (iPhone/iPad)
+  workflow_dispatch:
+    inputs:
+      markets:
+        description: "Welche Märkte analysieren?"
+        required: false
+        type: choice
+        options:
+          - alle          # us + uk + ca + au
+          - us
+          - uk
+          - ca
+          - au
+        default: alle
+      min_cpa:
+        description: "Mindest-CPA für Opportunities ($)"
+        required: false
+        default: "100"
+        type: string
+      top_n:
+        description: "Wie viele Top-Opportunities liefern?"
+        required: false
+        type: choice
+        options: ["3", "5", "10"]
+        default: "5"
+
+  # Automatisch jeden Montag + Donnerstag 06:00 UTC
+  schedule:
+    - cron: "0 6 * * 1,4"
+
+jobs:
+  scout:
+    name: "Nischen-Scout — Analyse & Ranking"
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Claude — Scout Analyse
+        uses: anthropics/claude-code-action@beta
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          model: claude-opus-4-5
+          claude_args: "--max-turns 50"
+          prompt: |
+            Du bist Senior SEO-Stratege und Affiliate-Analyst für SmartFinPro.com.
+            Führe eine vollständige Markt- und Nischenanalyse durch.
+
+            ═══════════════════════════════════════
+            KONFIGURATION
+            ═══════════════════════════════════════
+            Märkte:   ${{ github.event.inputs.markets || 'alle' }}
+            Min-CPA:  ${{ github.event.inputs.min_cpa || '100' }}
+            Top-N:    ${{ github.event.inputs.top_n || '5' }}
+
+            Märkte wenn "alle": us, uk, ca, au
+
+            ═══════════════════════════════════════
+            SCHRITT 1 — AFFILIATE OPPORTUNITIES AUS SUPABASE
+            ═══════════════════════════════════════
+            Hole alle aktiven Affiliate-Links mit hohem CPA die noch KEIN MDX-Review haben:
+
+            ```bash
+            curl -s "$NEXT_PUBLIC_SUPABASE_URL/rest/v1/affiliate_links?is_active=eq.true&cpa_value=gte.${{ github.event.inputs.min_cpa || '100' }}&order=cpa_value.desc&limit=30" \
+              -H "apikey: $SUPABASE_SERVICE_KEY" \
+              -H "Authorization: Bearer $SUPABASE_SERVICE_KEY"
+            ```
+
+            Prüfe für jeden Link ob bereits eine MDX-Datei existiert:
+            ```bash
+            ls content/us/ content/uk/ content/ca/ content/au/ 2>/dev/null | grep -r "SLUG" || echo "kein Review"
+            ```
+
+            Erstelle eine Liste: Provider | Markt | Kategorie | CPA | Hat Review (ja/nein)
+            → Behalte nur Einträge mit "Hat Review = nein" — das sind deine Opportunities.
+
+            ═══════════════════════════════════════
+            SCHRITT 2 — KEYWORD ANALYSE (via Serper.dev)
+            ═══════════════════════════════════════
+            Für jede Top-Opportunity (max. 8): Analysiere Keyword-Potential und Konkurrenz.
+
+            2a) Suche nach Haupt-Keyword (z.B. "pepperstone review australia"):
+            ```bash
+            curl -s -X POST "https://google.serper.dev/search" \
+              -H "X-API-KEY: $SERPER_API_KEY" \
+              -H "Content-Type: application/json" \
+              -d "{\"q\":\"[PROVIDER] review [MARKT] 2025\",\"gl\":\"[MARKT-CODE]\",\"num\":10}"
+            ```
+
+            2b) Suche nach High-Converting Keywords (mit Kaufintent):
+            ```bash
+            curl -s -X POST "https://google.serper.dev/search" \
+              -H "X-API-KEY: $SERPER_API_KEY" \
+              -H "Content-Type: application/json" \
+              -d "{\"q\":\"best [KATEGORIE] [MARKT] 2025\",\"gl\":\"[MARKT-CODE]\",\"num\":10}"
+            ```
+
+            2c) Analysiere für jede Opportunity die Top-10-Ergebnisse:
+            KONKURRENZ-SCORE (1-10, niedriger = leichter zu schlagen):
+            - Sind Ergebnisse von schwachen Domains (kein .gov/.edu/Wikipedia)?
+            - Sind Titel-Tags veraltet (2022, 2023)?
+            - Sind Snippets dünn (<150 Zeichen)?
+            - Fehlen strukturierte Daten (kein "Rated X/5" in Snippet)?
+            → Je mehr JA, desto niedriger der Konkurrenz-Score = leichter zu ranken
+
+            CONVERSION-SCORE (1-10, höher = besser):
+            - Haupt-Keyword hat klaren Kaufintent? ("best", "review", "vs", "top")
+            - CPA × geschätztes Suchvolumen (basierend auf Konkurrenz-Dichte)
+            - Ist Markt unterversorgt mit deutschsprachigem/lokalen Content?
+
+            ═══════════════════════════════════════
+            SCHRITT 3 — OPPORTUNITY SCORING
+            ═══════════════════════════════════════
+            Berechne für jede Opportunity einen GESAMT-SCORE:
+
+            GESAMT = (CPA/100 × 3) + (Conversion-Score × 2) + (10 - Konkurrenz-Score × 2) + Quick-Win-Bonus
+
+            Quick-Win-Bonus (+2): Keyword bereits auf Pos. 11-30 in keyword_tracking Tabelle
+            ```bash
+            curl -s "$NEXT_PUBLIC_SUPABASE_URL/rest/v1/keyword_tracking?keyword=ilike.*[KEYWORD]*&current_position=gte.11&current_position=lte.30" \
+              -H "apikey: $SUPABASE_SERVICE_KEY" \
+              -H "Authorization: Bearer $SUPABASE_SERVICE_KEY"
+            ```
+
+            Sortiere alle Opportunities nach GESAMT-SCORE absteigend.
+            Behalte die Top-${{ github.event.inputs.top_n || '5' }}.
+
+            ═══════════════════════════════════════
+            SCHRITT 4 — TOP KEYWORDS PRO OPPORTUNITY
+            ═══════════════════════════════════════
+            Für jede Top-Opportunity: Ermittle die 5 besten High-Converting Keywords:
+
+            KEYWORD-TYPEN (alle suchen via Serper.dev):
+            1. Primary (Haupt): "[provider] review [markt]" — höchstes Volumen
+            2. Comparison: "[provider] vs [konkurrent]" — hoher Kaufintent
+            3. Best-of: "best [kategorie] broker [markt] 2025" — breite Reichweite
+            4. Feature: "[provider] [feature] [markt]" — z.B. "pepperstone spreads australia"
+            5. Long-tail: "is [provider] safe [markt]" — konvertiert stark
+
+            Für jeden Keyword-Typ: Prüfe ob Top-10-Konkurrenz schwach ist (wie in Schritt 2).
+
+            ═══════════════════════════════════════
+            SCHRITT 5 — AUSGABE STRUKTURIEREN
+            ═══════════════════════════════════════
+            Schreibe die Ergebnisse in eine Datei für den nächsten Step:
+
+            ```bash
+            cat > /tmp/scout_results.json << 'JSONEOF'
+            {
+              "generated_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+              "opportunities": [
+                {
+                  "rank": 1,
+                  "provider": "PROVIDER_NAME",
+                  "market": "au",
+                  "category": "forex",
+                  "slug": "AFFILIATE_SLUG",
+                  "cpa": 400,
+                  "gesamt_score": 8.5,
+                  "konkurrenz_score": 3,
+                  "conversion_score": 9,
+                  "keywords": {
+                    "primary": "pepperstone review australia",
+                    "comparison": "pepperstone vs ic markets",
+                    "best_of": "best forex broker australia 2025",
+                    "feature": "pepperstone spreads australia",
+                    "long_tail": "is pepperstone safe australia"
+                  },
+                  "top_keywords_csv": "pepperstone review australia, pepperstone vs ic markets, best forex broker australia 2025, pepperstone spreads australia, is pepperstone safe australia",
+                  "competitors": [
+                    {"url": "https://competitor1.com/pepperstone-review", "weakness": "Artikel von 2022, kein Schema"},
+                    {"url": "https://competitor2.com/pepperstone", "weakness": "Dünner Content, <500 Wörter"},
+                    {"url": "https://competitor3.com/pepperstone-au", "weakness": "Kein FAS Disclaimer"}
+                  ],
+                  "competitor_urls_csv": "https://competitor1.com/pepperstone-review, https://competitor2.com/pepperstone",
+                  "niche_prompt": "pepperstone review australia 2025 — beste Forex Broker",
+                  "why_now": "Konkurrenz-Artikel veraltet, CPA $400, Quick-Win möglich"
+                }
+              ]
+            }
+            JSONEOF
+            echo "Scout-Ergebnisse gespeichert"
+            cat /tmp/scout_results.json
+            ```
+        env:
+          SERPER_API_KEY:           ${{ secrets.SERPER_API_KEY }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY:     ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+      # ── E-Mail mit vorausgefüllten Genesis-Links ──────────────────────────
+      - name: Scout-Report per E-Mail
+        if: always()
+        run: |
+          REPO="${{ github.repository }}"
+          RUN_URL="https://github.com/$REPO/actions/runs/${{ github.run_id }}"
+          GENESIS_BASE="https://github.com/$REPO/actions/workflows/claude-genesis.yml"
+          DATE=$(date +"%d.%m.%Y %H:%M UTC")
+
+          # Baue E-Mail HTML mit den Top-Opportunities
+          # (Scout-Ergebnisse aus Claude's Output parsen)
+          SCOUT_FILE="/tmp/scout_results.json"
+
+          if [ -f "$SCOUT_FILE" ]; then
+            # Extrahiere Top-3 für die E-Mail
+            OPPS=$(cat "$SCOUT_FILE" | python3 -c "
+          import json, sys, urllib.parse
+
+          data = json.load(sys.stdin)
+          opps = data.get('opportunities', [])[:3]
+          html = ''
+
+          for i, o in enumerate(opps, 1):
+              score = o.get('gesamt_score', 0)
+              provider = o.get('provider', '')
+              market = o.get('market', '')
+              category = o.get('category', '')
+              cpa = o.get('cpa', 0)
+              niche = o.get('niche_prompt', '')
+              keywords = o.get('top_keywords_csv', '')
+              competitors = o.get('competitor_urls_csv', '')
+              why = o.get('why_now', '')
+              scout_cpa = str(cpa)
+
+              badge = ['🥇','🥈','🥉'][i-1]
+              color = ['#1A6B3A','#1B4F8C','#F5A623'][i-1]
+
+              html += f'''
+          <div style=\"margin:24px 0;padding:20px;border:2px solid {color};border-radius:12px;background:#fafafa\">
+            <h3 style=\"margin:0 0 12px;color:{color}\">{badge} #{i} — {provider} ({market.upper()}/{category}) — Score: {score}/10</h3>
+            <table style=\"width:100%;border-collapse:collapse;font-size:14px\">
+              <tr><td style=\"padding:4px 12px 4px 0;color:#555;width:140px\">💰 CPA</td><td><strong>\${cpa}</strong></td></tr>
+              <tr><td style=\"padding:4px 12px 4px 0;color:#555\">🎯 Keywords</td><td style=\"font-family:monospace;font-size:12px\">{keywords}</td></tr>
+              <tr><td style=\"padding:4px 12px 4px 0;color:#555\">⚡ Warum jetzt</td><td>{why}</td></tr>
+            </table>
+            <div style=\"margin-top:16px;padding:12px;background:#E8F0FB;border-radius:8px\">
+              <p style=\"margin:0 0 8px;font-size:13px;color:#1B4F8C\"><strong>📋 Genesis Pipeline starten — diese Werte kopieren:</strong></p>
+              <table style=\"font-size:12px;font-family:monospace\">
+                <tr><td style=\"padding:2px 12px 2px 0;color:#555\">Nische:</td><td>{niche}</td></tr>
+                <tr><td style=\"padding:2px 12px 2px 0;color:#555\">Markt:</td><td>{market}</td></tr>
+                <tr><td style=\"padding:2px 12px 2px 0;color:#555\">Kategorie:</td><td>{category}</td></tr>
+                <tr><td style=\"padding:2px 12px 2px 0;color:#555\">Keywords:</td><td>{keywords}</td></tr>
+                <tr><td style=\"padding:2px 12px 2px 0;color:#555\">Konkurrenz:</td><td>{competitors}</td></tr>
+                <tr><td style=\"padding:2px 12px 2px 0;color:#555\">Scout-CPA:</td><td>\${scout_cpa}</td></tr>
+              </table>
+            </div>
+          </div>'''
+
+          print(html)
+          " 2>/dev/null || echo "<p>Scout-Ergebnisse werden im <a href='$RUN_URL'>GitHub Log</a> angezeigt.</p>")
+          else
+            OPPS="<p>Keine strukturierten Ergebnisse — Details im <a href='$RUN_URL'>GitHub Log</a>.</p>"
+          fi
+
+          # Resend E-Mail senden
+          curl -s -X POST "https://api.resend.com/emails" \
+            -H "Authorization: Bearer ${{ secrets.RESEND_API_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"from\": \"SmartFinPro Scout <noreply@smartfinpro.com>\",
+              \"to\": [\"info@smartfinpro.com\"],
+              \"subject\": \"🔍 Scout-Report: Top Nischen-Opportunities — $DATE\",
+              \"html\": \"<div style='font-family:sans-serif;max-width:700px;margin:0 auto'><div style='background:linear-gradient(90deg,#1B4F8C,#F5A623);height:4px;border-radius:2px'></div><h1 style='color:#1B4F8C;margin-top:24px'>🔍 Nischen-Scout Report</h1><p style='color:#555'>Generiert: $DATE — <a href='$RUN_URL'>GitHub Log ansehen</a></p><hr style='border:none;border-top:1px solid #eee;margin:20px 0'><h2 style='color:#1A1A2E'>Top Opportunities diese Woche</h2><p style='color:#555;font-size:14px'>Die Werte aus den blauen Boxen direkt in die <a href='$GENESIS_BASE' style='color:#1B4F8C'>Genesis Pipeline</a> kopieren und starten.</p>$OPPS<hr style='border:none;border-top:1px solid #eee;margin:20px 0'><p style='color:#888;font-size:12px'>SmartFinPro Nischen-Scout — läuft automatisch Mo + Do 06:00 UTC</p></div>\"
+            }" > /dev/null
+
+          echo "📧 Scout-Report an info@smartfinpro.com gesendet"
