@@ -40,6 +40,7 @@ jobs:
         uses: anthropics/claude-code-action@beta
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          model: claude-sonnet-4-5   # Schnell + präzise für Bug-Fixes
           prompt: |
             Du bist Senior-Entwickler für SmartFinPro.com.
             Modus: ${{ github.event.inputs.scope }}
