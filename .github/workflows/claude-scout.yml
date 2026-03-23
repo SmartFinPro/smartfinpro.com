@@ -32,9 +32,9 @@ on:
         options: ["3", "5", "10"]
         default: "5"
 
-  # Automatisch jeden Montag + Donnerstag 06:00 UTC
+  # Automatisch jeden Montag 06:00 UTC
   schedule:
-    - cron: "0 6 * * 1,4"
+    - cron: "0 6 * * 1"
 
 jobs:
   scout:
