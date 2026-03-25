@@ -245,13 +245,23 @@ export async function GET(
   // (request.url on VPS resolves to http://0.0.0.0:3000 — never use it for redirects)
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://smartfinpro.com';
 
+  // All affiliate redirects must never be cached by CDN or browser.
+  // Cloudflare ignores Cache-Control on redirects unless explicitly set.
+  const noCacheHeaders = {
+    'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+    'CDN-Cache-Control': 'no-store',
+    'Cloudflare-CDN-Cache-Control': 'no-store',
+    'Pragma': 'no-cache',
+    'Expires': '0',
+  };
+
   if (!destinationUrl) {
     // If tracker fails but registry has the link, use registry fallback
     if (registryLink && isAllowedRedirect(registryLink.destination_url)) {
-      return NextResponse.redirect(registryLink.destination_url, 307);
+      return NextResponse.redirect(registryLink.destination_url, { status: 307, headers: noCacheHeaders });
     }
     // Link not found or blocked — redirect to homepage
-    return NextResponse.redirect(new URL('/', siteUrl));
+    return NextResponse.redirect(new URL('/', siteUrl), { status: 307, headers: noCacheHeaders });
   }
 
   // Validate destination against whitelist
@@ -261,9 +271,9 @@ export async function GET(
       slug,
       ip,
     });
-    return NextResponse.redirect(new URL('/', siteUrl));
+    return NextResponse.redirect(new URL('/', siteUrl), { status: 307, headers: noCacheHeaders });
   }
 
-  // Use 307 Temporary Redirect to preserve SEO
-  return NextResponse.redirect(destinationUrl, 307);
+  // Use 307 Temporary Redirect — never cached
+  return NextResponse.redirect(destinationUrl, { status: 307, headers: noCacheHeaders });
 }

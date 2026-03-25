@@ -276,6 +276,39 @@ const nextConfig: NextConfig = {
       },
 
       // ============================================================
+      // Affiliate Redirect Routes — NEVER cache
+      // /go/[slug] redirects to partner URLs. These MUST NOT be
+      // cached by Cloudflare or any CDN — the destination URL can
+      // change (DB update) and stale cached redirects point to wrong
+      // destinations (e.g. 0.0.0.0:3000 fallback gets cached).
+      // ============================================================
+      {
+        source: '/go/:slug*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'no-store, no-cache, must-revalidate, proxy-revalidate',
+          },
+          {
+            key: 'CDN-Cache-Control',
+            value: 'no-store',
+          },
+          {
+            key: 'Cloudflare-CDN-Cache-Control',
+            value: 'no-store',
+          },
+          {
+            key: 'Pragma',
+            value: 'no-cache',
+          },
+          {
+            key: 'Expires',
+            value: '0',
+          },
+        ],
+      },
+
+      // ============================================================
       // API Routes - No Caching, Security Headers
       // Pragma + Expires für HTTP/1.0 Proxy-Kompatibilität
       // (ältere Corporate Proxies, IE11).
