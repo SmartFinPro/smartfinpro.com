@@ -17,9 +17,11 @@ export async function GET(request: NextRequest) {
   // ── Step 1: Check env configuration ─────────────────────────
   const clientEmail = process.env.GSC_CLIENT_EMAIL;
   const privateKeyRaw = process.env.GSC_PRIVATE_KEY;
-  const siteUrl = process.env.GSC_SITE_URL;
+  // siteUrl hardcoded — must match GSC property exactly (no www).
+  // Same value as url-inspection.ts — env var intentionally ignored.
+  const siteUrl = 'https://smartfinpro.com/';
 
-  const configured = !!(clientEmail && privateKeyRaw && siteUrl);
+  const configured = !!(clientEmail && privateKeyRaw);
 
   if (!configured) {
     return NextResponse.json({

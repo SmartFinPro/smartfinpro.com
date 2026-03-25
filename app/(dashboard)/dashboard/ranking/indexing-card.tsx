@@ -139,7 +139,11 @@ export function IndexingCard() {
       const res = await fetch('/api/dashboard/check-indexing-status');
       if (res.status === 401) { window.location.reload(); return; }
       const ct = res.headers.get('content-type') ?? '';
-      if (!ct.includes('application/json')) { window.location.reload(); return; }
+      if (!ct.includes('application/json')) {
+        setInspectError(`Ungültige API-Antwort (HTTP ${res.status}, kein JSON). Seite neu laden und erneut versuchen.`);
+        setInspectState('error');
+        return;
+      }
 
       const data = await res.json();
 
