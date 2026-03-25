@@ -114,6 +114,25 @@ jobs:
           || RSYNC_EXIT=$?; [ "${RSYNC_EXIT:-0}" -eq 23 ] && echo "⚠️ rsync code 23 (minor permission issues) — continuing" || exit ${RSYNC_EXIT:-0}
 
       # ── 10. PM2 Restart ───────────────────────────────────────
+      # ── 10a. Sync runtime env vars to VPS .env.local ─────────
+      # PM2 cwd=APP_ROOT → Next.js reads .env.local from app root (not standalone dir).
+      # We must keep .env.local in sync for runtime vars that live only on VPS.
+      - name: Sync runtime env to VPS .env.local
+        run: |
+          ssh -i ~/.ssh/deploy_key \
+            -o StrictHostKeyChecking=no \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
+            "ENV_FILE=/home/master/applications/brvnvntpcj/public_html/.env.local
+             update_env() { local key=\$1 val=\$2
+               if grep -q \"^\${key}=\" \"\$ENV_FILE\" 2>/dev/null; then
+                 sed -i \"s|^\${key}=.*|\${key}=\${val}|\" \"\$ENV_FILE\"
+               else
+                 echo \"\${key}=\${val}\" >> \"\$ENV_FILE\"
+               fi
+             }
+             update_env GSC_SITE_URL '${{ secrets.GSC_SITE_URL }}'
+             echo '✅ .env.local synced'"
+
       - name: Restart PM2
         run: |
           ssh -i ~/.ssh/deploy_key \
