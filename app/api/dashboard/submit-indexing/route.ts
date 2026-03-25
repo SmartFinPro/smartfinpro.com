@@ -5,7 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { submitBatchForIndexing } from '@/lib/seo/indexing';
-import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/server';
 
 const DAILY_QUOTA = 200; // Google Indexing API hard limit
 
@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
   }
 
   // ── Check which URLs were already successfully submitted ──────────
-  const supabase = await createClient();
+  const supabase = createServiceClient();
   let alreadySubmittedUrls: Set<string> = new Set();
 
   try {
