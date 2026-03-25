@@ -82,6 +82,10 @@ module.exports = {
         NEXT_PUBLIC_SITE_URL: 'https://smartfinpro.com',
         NEXT_PUBLIC_BASE_URL: 'https://smartfinpro.com',
 
+        // ── GSC / URL Inspection API ──
+        // Not a secret — must match exactly how property is registered in GSC.
+        GSC_SITE_URL: 'https://smartfinpro.com/',
+
         // ── Analytics ──
         PLAUSIBLE_DOMAIN: 'smartfinpro.com',
 
