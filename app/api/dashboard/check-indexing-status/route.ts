@@ -8,7 +8,7 @@ import { NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
 import { inspectBatchUrls } from '@/lib/seo/url-inspection';
 
-const CHECK_LIMIT = 200; // Max URLs to check per request (API: 2000/day)
+const CHECK_LIMIT = 30; // Max URLs per request (30 × ~500ms ≈ 15s, safe under Cloudflare 100s timeout)
 const CACHE_HOURS = 24;  // Re-check after this many hours
 
 export async function GET() {
@@ -66,9 +66,22 @@ export async function GET() {
     const firstError = results.results.find((r) => r.status === 'error');
     if (firstError) errorSample = firstError.verdict;
 
-    // Update DB — skip error results (do NOT persist API errors as real status)
+    // Update DB — for errors: set indexed_checked_at (skip in next batch) but keep indexed_status NULL
     for (const r of results.results) {
-      if (r.status === 'error') continue;  // API error → never write to DB
+      if (r.status === 'error') {
+        apiErrors++;
+        // Set indexed_checked_at so this URL is excluded from needsCheck next batch
+        // but keep indexed_status as NULL (= unchecked, not false not_indexed)
+        const errEntry = needsCheck.find((l) => l.url === r.url);
+        if (errEntry) {
+          await supabase
+            .from('indexing_log')
+            .update({ indexed_checked_at: new Date().toISOString() })
+            .eq('id', errEntry.id);
+          errEntry.indexed_checked_at = new Date().toISOString();
+        }
+        continue;
+      }
 
       const logEntry = needsCheck.find((l) => l.url === r.url);
       if (logEntry) {

@@ -81,6 +81,7 @@ async function getInspectionAccessToken(): Promise<string> {
       grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
       assertion: jwt,
     }),
+    signal: AbortSignal.timeout(10_000), // 10s timeout for token exchange
   });
 
   if (!res.ok) {
@@ -119,6 +120,7 @@ export async function inspectUrl(
           inspectionUrl: url,
           siteUrl,
         }),
+        signal: AbortSignal.timeout(10_000), // 10s timeout per URL inspection
       }
     );
 

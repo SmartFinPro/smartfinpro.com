@@ -128,47 +128,81 @@ export function IndexingCard() {
     }
   }
 
-  // ── Inspect handler ────────────────────────────────────────
+  // ── Inspect handler (auto-continue batches) ───────────────
   async function handleInspect() {
     if (inspectState === 'running') return;
     setInspectState('running');
     setInspectResult(null);
     setInspectError(null);
 
+    let batchCount = 0;
+    const MAX_BATCHES = 8; // 8 × 30 = 240 URLs max
+    let prevUnchecked = Infinity;
+
     try {
-      const res = await fetch('/api/dashboard/check-indexing-status');
-      if (res.status === 401) { window.location.reload(); return; }
-      const ct = res.headers.get('content-type') ?? '';
-      if (!ct.includes('application/json')) {
-        setInspectError(`Ungültige API-Antwort (HTTP ${res.status}, kein JSON). Seite neu laden und erneut versuchen.`);
-        setInspectState('error');
-        return;
+      while (batchCount < MAX_BATCHES) {
+        batchCount++;
+        const res = await fetch('/api/dashboard/check-indexing-status');
+
+        // Auth + Content-Type checks
+        if (res.status === 401) { window.location.reload(); return; }
+        const ct = res.headers.get('content-type') ?? '';
+        if (!ct.includes('application/json')) {
+          setInspectError(`Ungültige API-Antwort (HTTP ${res.status}, kein JSON). Seite neu laden und erneut versuchen.`);
+          setInspectState('error');
+          return;
+        }
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          setInspectError(data.error ?? `HTTP ${res.status}`);
+          setInspectState('error');
+          return;
+        }
+
+        const unchecked = data.unchecked ?? 0;
+
+        // Progress-Guard: if unchecked doesn't decrease → stop (avoid infinite loop)
+        if (unchecked >= prevUnchecked && batchCount > 1) {
+          break;
+        }
+        prevUnchecked = unchecked;
+
+        // Update intermediate results (UI re-renders with progress)
+        setInspectResult({
+          totalSubmitted: data.totalSubmitted ?? 0,
+          indexed: data.indexed ?? 0,
+          notIndexed: data.notIndexed ?? 0,
+          unchecked,
+          errors: data.errors ?? 0,
+          dbErrors: data.dbErrors ?? 0,
+          checkedNow: data.checkedNow ?? 0,
+          cachedResults: data.cachedResults ?? 0,
+          errorSample: data.errorSample ?? null,
+        });
+
+        // Update persistent status
+        setStatus((prev) =>
+          prev
+            ? {
+                ...prev,
+                indexed: data.indexed ?? 0,
+                notIndexed: data.notIndexed ?? 0,
+                errors: data.errors ?? 0,
+                unchecked,
+                lastCheckedAt: new Date().toISOString(),
+              }
+            : prev
+        );
+
+        // No unchecked left → done
+        if (unchecked === 0) break;
+        // Nothing new checked this batch (all cached) → done
+        if ((data.checkedNow ?? 0) === 0) break;
       }
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        setInspectError(data.error ?? `HTTP ${res.status}`);
-        setInspectState('error');
-        return;
-      }
-
-      setInspectResult(data);
       setInspectState('done');
-
-      // Update persistent status with inspection counts
-      setStatus((prev) =>
-        prev
-          ? {
-              ...prev,
-              indexed: data.indexed,
-              notIndexed: data.notIndexed,
-              errors: data.errors ?? 0,
-              unchecked: data.unchecked,
-              lastCheckedAt: new Date().toISOString(),
-            }
-          : prev
-      );
     } catch (err) {
       setInspectError(err instanceof Error ? err.message : 'Netzwerkfehler');
       setInspectState('error');
@@ -372,15 +406,28 @@ export function IndexingCard() {
           </div>
         )}
 
-        {/* Inspect running state */}
+        {/* Inspect running state with progress bar */}
         {inspectState === 'running' && (
           <div className="mt-3 rounded-xl p-4" style={{ background: 'var(--sfp-sky)' }}>
             <div className="flex items-center gap-2">
               <Loader2 className="h-4 w-4 animate-spin" style={{ color: 'var(--sfp-navy)' }} />
               <p className="text-sm text-slate-600">
-                Indexierungsstatus wird bei Google geprüft… Das kann 20–40 Sekunden dauern.
+                {inspectResult && inspectResult.totalSubmitted > 0
+                  ? `${inspectResult.totalSubmitted - (inspectResult.unchecked ?? 0)} von ${inspectResult.totalSubmitted} URLs geprüft…`
+                  : 'Indexierungsstatus wird bei Google geprüft…'}
               </p>
             </div>
+            {inspectResult && inspectResult.totalSubmitted > 0 && (
+              <div className="mt-2 h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--sfp-gray)' }}>
+                <div
+                  className="h-full rounded-full transition-all duration-500"
+                  style={{
+                    background: 'var(--sfp-navy)',
+                    width: `${Math.round(((inspectResult.totalSubmitted - (inspectResult.unchecked ?? 0)) / inspectResult.totalSubmitted) * 100)}%`,
+                  }}
+                />
+              </div>
+            )}
           </div>
         )}
 
