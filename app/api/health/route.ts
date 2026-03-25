@@ -87,7 +87,6 @@ export async function GET(request: NextRequest): Promise<NextResponse<HealthStat
     'SUPABASE_SERVICE_KEY',
     'CRON_SECRET',
     'RESEND_API_KEY',
-    'TELEGRAM_BOT_TOKEN',
   ];
   const missingEnvs = requiredEnvs.filter((k) => !process.env[k] || process.env[k]?.startsWith('your-'));
 

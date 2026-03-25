@@ -28,8 +28,7 @@ export async function sendTelegramAlert(message: string): Promise<TelegramResult
   const chatId = process.env.TELEGRAM_CHAT_ID;
 
   if (!botToken || !chatId) {
-    console.warn('[Telegram] Missing TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID');
-    return { success: false, error: 'Telegram credentials not configured' };
+    return { success: false, error: 'Telegram not configured' };
   }
 
   try {
@@ -72,8 +71,7 @@ export async function sendTelegramWithKeyboard(
   const chatId = process.env.TELEGRAM_CHAT_ID;
 
   if (!botToken || !chatId) {
-    console.warn('[Telegram] Missing TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID');
-    return { success: false, error: 'Telegram credentials not configured' };
+    return { success: false, error: 'Telegram not configured' };
   }
 
   try {

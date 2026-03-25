@@ -38,8 +38,6 @@ jobs:
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
           SERPER_API_KEY: ${{ secrets.SERPER_API_KEY }}
           GOOGLE_INDEXING_JSON: ${{ secrets.GOOGLE_INDEXING_JSON }}
@@ -61,8 +59,6 @@ jobs:
           ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY }}
           RESEND_API_KEY=${{ secrets.RESEND_API_KEY }}
           RESEND_FROM_EMAIL=${{ secrets.RESEND_FROM_EMAIL }}
-          TELEGRAM_BOT_TOKEN=${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID=${{ secrets.TELEGRAM_CHAT_ID }}
           CRON_SECRET=${{ secrets.CRON_SECRET }}
           SERPER_API_KEY=${{ secrets.SERPER_API_KEY }}
           DASHBOARD_SECRET=${{ secrets.DASHBOARD_SECRET }}
