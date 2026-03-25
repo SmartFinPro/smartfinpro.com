@@ -226,7 +226,7 @@ export async function inspectBatchUrls(
 /**
  * Check if URL Inspection API is configured (same creds as GSC).
  */
-export function isInspectionApiConfigured(): boolean {
+export async function isInspectionApiConfigured(): Promise<boolean> {
   return !!(
     process.env.GSC_CLIENT_EMAIL &&
     process.env.GSC_PRIVATE_KEY &&
