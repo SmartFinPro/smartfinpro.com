@@ -1,12 +1,14 @@
 'use client';
 
 // app/(dashboard)/dashboard/ranking/indexing-card.tsx
-// Triggers Google Indexing API submission — only for URLs not yet submitted.
+// Google Indexing API card — submit URLs + check real indexing status.
 
-import { useState } from 'react';
-import { Zap, Loader2, CheckCircle2, XCircle, AlertTriangle, ExternalLink, CircleDot } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Zap, Loader2, CheckCircle2, XCircle, AlertTriangle, ExternalLink, RefreshCw, Search } from 'lucide-react';
 
-interface Result {
+// ── Types ────────────────────────────────────────────────────
+
+interface SubmitResult {
   total: number;
   succeeded: number;
   failed: number;
@@ -21,19 +23,70 @@ interface Result {
   results: Array<{ url: string; status: 'success' | 'error'; message: string }>;
 }
 
-type State = 'idle' | 'running' | 'done' | 'error';
+interface PersistentStatus {
+  totalInSitemap: number;
+  alreadySubmitted: number;
+  remaining: number;
+  indexed: number;
+  notIndexed: number;
+  unchecked: number;
+  lastCheckedAt: string | null;
+}
+
+interface InspectionResult {
+  totalSubmitted: number;
+  indexed: number;
+  notIndexed: number;
+  unchecked: number;
+  checkedNow: number;
+  cachedResults: number;
+}
+
+type SubmitState = 'idle' | 'running' | 'done' | 'error';
+type InspectState = 'idle' | 'running' | 'done' | 'error';
+
+// ── Component ────────────────────────────────────────────────
 
 export function IndexingCard() {
-  const [state, setState] = useState<State>('idle');
-  const [result, setResult] = useState<Result | null>(null);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  // Persistent status (loaded on mount)
+  const [status, setStatus] = useState<PersistentStatus | null>(null);
+  const [statusLoading, setStatusLoading] = useState(true);
+
+  // Submit state
+  const [submitState, setSubmitState] = useState<SubmitState>('idle');
+  const [submitResult, setSubmitResult] = useState<SubmitResult | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [showDetails, setShowDetails] = useState(false);
 
+  // Inspection state
+  const [inspectState, setInspectState] = useState<InspectState>('idle');
+  const [inspectResult, setInspectResult] = useState<InspectionResult | null>(null);
+  const [inspectError, setInspectError] = useState<string | null>(null);
+
+  // ── Load persistent status on mount ────────────────────────
+  useEffect(() => {
+    async function loadStatus() {
+      try {
+        const res = await fetch('/api/dashboard/indexing-status');
+        if (res.ok) {
+          const data = await res.json();
+          setStatus(data);
+        }
+      } catch {
+        // Silent fail — card will show idle state
+      } finally {
+        setStatusLoading(false);
+      }
+    }
+    loadStatus();
+  }, []);
+
+  // ── Submit handler ─────────────────────────────────────────
   async function handleSubmit() {
-    if (state === 'running') return;
-    setState('running');
-    setResult(null);
-    setErrorMsg(null);
+    if (submitState === 'running') return;
+    setSubmitState('running');
+    setSubmitResult(null);
+    setSubmitError(null);
 
     try {
       const res = await fetch('/api/dashboard/submit-indexing', {
@@ -43,22 +96,83 @@ export function IndexingCard() {
       });
 
       const data = await res.json();
-
       if (!res.ok) {
-        setErrorMsg(data.error ?? `HTTP ${res.status}`);
-        setState('error');
+        setSubmitError(data.error ?? `HTTP ${res.status}`);
+        setSubmitState('error');
         return;
       }
 
-      setResult(data);
-      setState('done');
+      setSubmitResult(data);
+      setSubmitState('done');
+
+      // Update persistent status with new counts
+      setStatus((prev) =>
+        prev
+          ? {
+              ...prev,
+              alreadySubmitted: prev.alreadySubmitted + (data.succeeded ?? 0),
+              remaining: data.remaining ?? 0,
+            }
+          : prev
+      );
     } catch (err) {
-      setErrorMsg(err instanceof Error ? err.message : 'Netzwerkfehler');
-      setState('error');
+      setSubmitError(err instanceof Error ? err.message : 'Netzwerkfehler');
+      setSubmitState('error');
     }
   }
 
-  const failedUrls = result?.results.filter((r) => r.status === 'error') ?? [];
+  // ── Inspect handler ────────────────────────────────────────
+  async function handleInspect() {
+    if (inspectState === 'running') return;
+    setInspectState('running');
+    setInspectResult(null);
+    setInspectError(null);
+
+    try {
+      const res = await fetch('/api/dashboard/check-indexing-status');
+      const data = await res.json();
+
+      if (!res.ok) {
+        setInspectError(data.error ?? `HTTP ${res.status}`);
+        setInspectState('error');
+        return;
+      }
+
+      setInspectResult(data);
+      setInspectState('done');
+
+      // Update persistent status with inspection counts
+      setStatus((prev) =>
+        prev
+          ? {
+              ...prev,
+              indexed: data.indexed,
+              notIndexed: data.notIndexed,
+              unchecked: data.unchecked,
+              lastCheckedAt: new Date().toISOString(),
+            }
+          : prev
+      );
+    } catch (err) {
+      setInspectError(err instanceof Error ? err.message : 'Netzwerkfehler');
+      setInspectState('error');
+    }
+  }
+
+  const failedUrls = submitResult?.results.filter((r) => r.status === 'error') ?? [];
+
+  // Determine displayed values
+  const totalInSitemap = submitResult?.totalInSitemap ?? status?.totalInSitemap ?? 0;
+  const alreadySubmitted = submitResult?.alreadySubmitted ?? status?.alreadySubmitted ?? 0;
+  const remaining = submitResult?.remaining ?? status?.remaining ?? 0;
+  const hasSubmitted = alreadySubmitted > 0;
+  const allDone = submitResult?.allDone || (remaining === 0 && alreadySubmitted > 0);
+
+  // Inspection counts
+  const indexed = inspectResult?.indexed ?? status?.indexed ?? 0;
+  const notIndexed = inspectResult?.notIndexed ?? status?.notIndexed ?? 0;
+  const unchecked = inspectResult?.unchecked ?? status?.unchecked ?? 0;
+  const hasInspectionData = indexed > 0 || notIndexed > 0 || inspectResult !== null;
 
   return (
     <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
@@ -86,37 +200,102 @@ export function IndexingCard() {
             </div>
           </div>
 
-          <button
-            onClick={handleSubmit}
-            disabled={state === 'running' || (state === 'done' && result?.allDone)}
-            className="flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold text-white transition-all disabled:opacity-60"
-            style={{
-              background:
-                state === 'done' && result?.allDone
-                  ? 'var(--sfp-green)'
-                  : state === 'done'
-                    ? 'var(--sfp-navy)'
-                    : state === 'error'
-                      ? 'var(--sfp-red)'
-                      : 'var(--sfp-navy)',
-            }}
-          >
-            {state === 'running' && <Loader2 className="h-4 w-4 animate-spin" />}
-            {state === 'done' && result?.allDone && <CheckCircle2 className="h-4 w-4" />}
-            {state === 'done' && !result?.allDone && <Zap className="h-4 w-4" />}
-            {state === 'error' && <XCircle className="h-4 w-4" />}
-            {state === 'idle' && <Zap className="h-4 w-4" />}
+          {/* Buttons */}
+          <div className="flex items-center gap-2">
+            {/* Inspect button */}
+            {hasSubmitted && (
+              <button
+                onClick={handleInspect}
+                disabled={inspectState === 'running'}
+                className="flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold transition-all border"
+                style={{
+                  borderColor: 'var(--sfp-navy)',
+                  color: inspectState === 'done' ? 'var(--sfp-green)' : 'var(--sfp-navy)',
+                  background: inspectState === 'done' ? '#f0fdf4' : 'white',
+                }}
+              >
+                {inspectState === 'running' ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Search className="h-3.5 w-3.5" />
+                )}
+                {inspectState === 'running' ? 'Wird geprüft…' : 'Status prüfen'}
+              </button>
+            )}
 
-            {state === 'idle' && 'Jetzt einreichen'}
-            {state === 'running' && 'Wird eingereicht…'}
-            {state === 'done' && result?.allDone && 'Alle eingereicht'}
-            {state === 'done' && !result?.allDone && 'Verbleibende einreichen'}
-            {state === 'error' && 'Nochmal versuchen'}
-          </button>
+            {/* Submit button */}
+            <button
+              onClick={handleSubmit}
+              disabled={submitState === 'running' || allDone}
+              className="flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold text-white transition-all disabled:opacity-60"
+              style={{
+                background: allDone
+                  ? 'var(--sfp-green)'
+                  : submitState === 'error'
+                    ? 'var(--sfp-red)'
+                    : 'var(--sfp-navy)',
+              }}
+            >
+              {submitState === 'running' && <Loader2 className="h-4 w-4 animate-spin" />}
+              {allDone && <CheckCircle2 className="h-4 w-4" />}
+              {submitState === 'done' && !allDone && <Zap className="h-4 w-4" />}
+              {submitState === 'error' && <XCircle className="h-4 w-4" />}
+              {submitState === 'idle' && !allDone && <Zap className="h-4 w-4" />}
+
+              {submitState === 'running' && 'Wird eingereicht…'}
+              {submitState === 'idle' && !allDone && remaining > 0 && hasSubmitted && 'Verbleibende einreichen'}
+              {submitState === 'idle' && !allDone && (!hasSubmitted || remaining === 0) && 'Jetzt einreichen'}
+              {allDone && 'Alle eingereicht'}
+              {submitState === 'done' && !allDone && 'Verbleibende einreichen'}
+              {submitState === 'error' && 'Nochmal versuchen'}
+            </button>
+          </div>
         </div>
 
-        {/* Info pills */}
-        {state === 'idle' && (
+        {/* Loading skeleton */}
+        {statusLoading && (
+          <div className="mt-4 grid grid-cols-3 gap-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-16 rounded-xl animate-pulse" style={{ background: 'var(--sfp-gray)' }} />
+            ))}
+          </div>
+        )}
+
+        {/* Stats row 1: Submission status (always visible after load) */}
+        {!statusLoading && (totalInSitemap > 0 || submitResult) && (
+          <div className="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-3">
+            <StatPill label="In Sitemap" value={totalInSitemap} color="slate" />
+            <StatPill label="Bereits eingereicht" value={alreadySubmitted} color="navy" />
+            <StatPill label="Verbleibend" value={remaining} color={remaining > 0 ? 'amber' : 'green'} />
+          </div>
+        )}
+
+        {/* Stats row 2: Submission result (after submit) */}
+        {submitState === 'done' && submitResult && (
+          <div className="mt-3 grid grid-cols-2 gap-3">
+            <StatPill label="Jetzt eingereicht" value={submitResult.succeeded} color="green" />
+            <StatPill label="Fehlgeschlagen" value={submitResult.failed} color={submitResult.failed > 0 ? 'red' : 'green'} />
+          </div>
+        )}
+
+        {/* Stats row 3: Indexing status (after inspection or from cache) */}
+        {hasInspectionData && (
+          <div className="mt-3 grid grid-cols-3 gap-3">
+            <StatPill label="Indexiert" value={indexed} color="green" />
+            <StatPill label="Nicht indexiert" value={notIndexed} color={notIndexed > 0 ? 'red' : 'green'} />
+            <StatPill label="Nicht geprüft" value={unchecked} color={unchecked > 0 ? 'amber' : 'green'} />
+          </div>
+        )}
+
+        {/* Last checked timestamp */}
+        {status?.lastCheckedAt && (
+          <p className="mt-2 text-xs text-slate-400">
+            Indexierung zuletzt geprüft: {new Date(status.lastCheckedAt).toLocaleString('de-DE')}
+          </p>
+        )}
+
+        {/* Info pills (idle, no data yet) */}
+        {submitState === 'idle' && !hasSubmitted && !statusLoading && (
           <div className="mt-4 flex flex-wrap gap-2">
             <span className="rounded-full px-3 py-1 text-xs font-medium" style={{ background: 'var(--sfp-sky)', color: 'var(--sfp-navy)' }}>
               Max. 200 URLs/Tag (Google-Limit)
@@ -131,7 +310,7 @@ export function IndexingCard() {
         )}
 
         {/* Running state */}
-        {state === 'running' && (
+        {submitState === 'running' && (
           <div className="mt-4 rounded-xl p-4" style={{ background: 'var(--sfp-sky)' }}>
             <p className="text-sm text-slate-600">
               Nur ausstehende URLs werden eingereicht… Das dauert ca. 30–60 Sekunden.
@@ -139,87 +318,108 @@ export function IndexingCard() {
           </div>
         )}
 
-        {/* Error state */}
-        {state === 'error' && errorMsg && (
+        {/* Inspect running state */}
+        {inspectState === 'running' && (
+          <div className="mt-3 rounded-xl p-4" style={{ background: 'var(--sfp-sky)' }}>
+            <div className="flex items-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin" style={{ color: 'var(--sfp-navy)' }} />
+              <p className="text-sm text-slate-600">
+                Indexierungsstatus wird bei Google geprüft… Das kann 20–40 Sekunden dauern.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Inspect done note */}
+        {inspectState === 'done' && inspectResult && (
+          <div className="mt-3 flex items-start gap-2 rounded-xl border border-green-200 bg-green-50 p-3">
+            <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-green-600" />
+            <p className="text-xs text-green-700">
+              <strong>{inspectResult.checkedNow} URLs</strong> bei Google geprüft
+              {inspectResult.cachedResults > 0 && `, ${inspectResult.cachedResults} aus Cache`}.
+              {' '}<strong>{inspectResult.indexed} von {inspectResult.totalSubmitted}</strong> sind indexiert.
+            </p>
+          </div>
+        )}
+
+        {/* Submit error */}
+        {submitState === 'error' && submitError && (
           <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-4">
             <div className="flex items-center gap-2 text-red-700">
               <XCircle className="h-4 w-4 flex-shrink-0" />
               <span className="text-sm font-medium">Fehler</span>
             </div>
-            <p className="mt-1 text-sm text-red-600">{errorMsg}</p>
+            <p className="mt-1 text-sm text-red-600">{submitError}</p>
           </div>
         )}
 
-        {/* Success state */}
-        {state === 'done' && result && (
-          <div className="mt-4 space-y-3">
-            {/* Stats row */}
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
-              <StatPill label="In Sitemap" value={result.totalInSitemap} color="slate" />
-              <StatPill label="Bereits eingereicht" value={result.alreadySubmitted} color="navy" icon="check" />
-              <StatPill label="Jetzt eingereicht" value={result.succeeded} color="green" />
-              <StatPill label="Fehlgeschlagen" value={result.failed} color={result.failed > 0 ? 'red' : 'green'} />
-              <StatPill label="Verbleibend" value={result.remaining} color={result.remaining > 0 ? 'amber' : 'green'} />
+        {/* Inspect error */}
+        {inspectState === 'error' && inspectError && (
+          <div className="mt-3 rounded-xl border border-red-200 bg-red-50 p-4">
+            <div className="flex items-center gap-2 text-red-700">
+              <XCircle className="h-4 w-4 flex-shrink-0" />
+              <span className="text-sm font-medium">Status-Check Fehler</span>
             </div>
+            <p className="mt-1 text-sm text-red-600">{inspectError}</p>
+          </div>
+        )}
 
-            {/* All done message */}
-            {result.allDone && (
-              <div className="flex items-start gap-2 rounded-xl border border-green-200 bg-green-50 p-3">
-                <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-green-600" />
-                <p className="text-xs text-green-700">
-                  <strong>Alle {result.totalInSitemap} URLs</strong> wurden bereits erfolgreich bei Google eingereicht. Keine ausstehenden URLs.
-                </p>
-              </div>
-            )}
+        {/* Quota warning */}
+        {submitResult?.quotaNote && (
+          <div className="mt-3 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3">
+            <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-600" />
+            <p className="text-xs text-amber-700">{submitResult.quotaNote}</p>
+          </div>
+        )}
 
-            {/* Quota warning — remaining URLs */}
-            {result.quotaNote && (
-              <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3">
-                <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-600" />
-                <p className="text-xs text-amber-700">{result.quotaNote}</p>
-              </div>
-            )}
+        {/* Success note */}
+        {submitResult && submitResult.succeeded > 0 && (
+          <div className="mt-3 flex items-start gap-2 rounded-xl border border-green-200 bg-green-50 p-3">
+            <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-green-600" />
+            <p className="text-xs text-green-700">
+              <strong>{submitResult.succeeded} neue URLs</strong> erfolgreich bei Google eingereicht. Google crawlt diese Seiten jetzt priorisiert — Indexierung typischerweise innerhalb von Stunden bis 1–2 Tagen sichtbar in GSC.
+            </p>
+          </div>
+        )}
 
-            {/* Success note */}
-            {result.succeeded > 0 && (
-              <div className="flex items-start gap-2 rounded-xl border border-green-200 bg-green-50 p-3">
-                <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-green-600" />
-                <p className="text-xs text-green-700">
-                  <strong>{result.succeeded} neue URLs</strong> erfolgreich bei Google eingereicht. Google crawlt diese Seiten jetzt priorisiert — Indexierung typischerweise innerhalb von Stunden bis 1–2 Tagen sichtbar in GSC.
-                </p>
-              </div>
-            )}
+        {/* All done */}
+        {allDone && submitState !== 'done' && (
+          <div className="mt-3 flex items-start gap-2 rounded-xl border border-green-200 bg-green-50 p-3">
+            <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-green-600" />
+            <p className="text-xs text-green-700">
+              <strong>Alle {totalInSitemap} URLs</strong> wurden bereits erfolgreich bei Google eingereicht. Keine ausstehenden URLs.
+            </p>
+          </div>
+        )}
 
-            {/* Failed URLs details */}
-            {failedUrls.length > 0 && (
-              <div>
-                <button
-                  onClick={() => setShowDetails(!showDetails)}
-                  className="text-xs text-slate-500 underline underline-offset-2"
-                >
-                  {showDetails ? 'Details ausblenden' : `${failedUrls.length} fehlgeschlagene URLs anzeigen`}
-                </button>
-                {showDetails && (
-                  <div className="mt-2 max-h-48 overflow-y-auto rounded-xl border border-red-100 bg-red-50 p-3 space-y-1">
-                    {failedUrls.map((r) => (
-                      <div key={r.url} className="flex items-start gap-2 text-xs">
-                        <XCircle className="mt-0.5 h-3 w-3 flex-shrink-0 text-red-500" />
-                        <div>
-                          <a
-                            href={r.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="font-mono text-red-700 hover:underline flex items-center gap-1"
-                          >
-                            {r.url.replace('https://smartfinpro.com', '')}
-                            <ExternalLink className="h-2.5 w-2.5" />
-                          </a>
-                          <span className="text-red-500">{r.message}</span>
-                        </div>
-                      </div>
-                    ))}
+        {/* Failed URLs details */}
+        {failedUrls.length > 0 && (
+          <div className="mt-3">
+            <button
+              onClick={() => setShowDetails(!showDetails)}
+              className="text-xs text-slate-500 underline underline-offset-2"
+            >
+              {showDetails ? 'Details ausblenden' : `${failedUrls.length} fehlgeschlagene URLs anzeigen`}
+            </button>
+            {showDetails && (
+              <div className="mt-2 max-h-48 overflow-y-auto rounded-xl border border-red-100 bg-red-50 p-3 space-y-1">
+                {failedUrls.map((r) => (
+                  <div key={r.url} className="flex items-start gap-2 text-xs">
+                    <XCircle className="mt-0.5 h-3 w-3 flex-shrink-0 text-red-500" />
+                    <div>
+                      <a
+                        href={r.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-mono text-red-700 hover:underline flex items-center gap-1"
+                      >
+                        {r.url.replace('https://smartfinpro.com', '')}
+                        <ExternalLink className="h-2.5 w-2.5" />
+                      </a>
+                      <span className="text-red-500">{r.message}</span>
+                    </div>
                   </div>
-                )}
+                ))}
               </div>
             )}
           </div>
@@ -229,16 +429,16 @@ export function IndexingCard() {
   );
 }
 
+// ── StatPill ─────────────────────────────────────────────────
+
 function StatPill({
   label,
   value,
   color,
-  icon,
 }: {
   label: string;
   value: number;
   color: 'slate' | 'navy' | 'green' | 'red' | 'amber';
-  icon?: 'check';
 }) {
   const styles: Record<string, { bg: string; text: string }> = {
     slate: { bg: 'var(--sfp-gray)', text: '#64748b' },
@@ -250,10 +450,7 @@ function StatPill({
   const s = styles[color];
 
   return (
-    <div
-      className="rounded-xl p-3 text-center"
-      style={{ background: s.bg }}
-    >
+    <div className="rounded-xl p-3 text-center" style={{ background: s.bg }}>
       <div className="text-xl font-bold tabular-nums" style={{ color: s.text }}>
         {value}
       </div>
