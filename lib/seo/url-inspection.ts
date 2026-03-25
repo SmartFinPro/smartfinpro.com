@@ -120,7 +120,7 @@ export async function inspectUrl(
           inspectionUrl: url,
           siteUrl,
         }),
-        signal: AbortSignal.timeout(10_000), // 10s timeout per URL inspection
+        signal: AbortSignal.timeout(3_000), // 3s timeout per URL (30×3s=90s worst case; global 80s budget stops earlier)
       }
     );
 
@@ -196,8 +196,15 @@ export async function inspectBatchUrls(
   }
 
   let consecutiveQuotaErrors = 0;
+  const GLOBAL_BUDGET_MS = 80_000; // 80s budget — stop before Cloudflare's 100s timeout
+  const batchStart = Date.now();
 
   for (const url of batch) {
+    // Global time budget check — return partial results rather than hit Cloudflare 524
+    if (Date.now() - batchStart > GLOBAL_BUDGET_MS) {
+      break;
+    }
+
     try {
       const result = await inspectUrl(url, token);
       results.push(result);

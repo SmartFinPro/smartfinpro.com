@@ -67,9 +67,9 @@ export async function GET() {
     if (firstError) errorSample = firstError.verdict;
 
     // Update DB — for errors: set indexed_checked_at (skip in next batch) but keep indexed_status NULL
+    // Note: apiErrors already set from results.errors above — do NOT increment again here
     for (const r of results.results) {
       if (r.status === 'error') {
-        apiErrors++;
         // Set indexed_checked_at so this URL is excluded from needsCheck next batch
         // but keep indexed_status as NULL (= unchecked, not false not_indexed)
         const errEntry = needsCheck.find((l) => l.url === r.url);
