@@ -15,6 +15,7 @@ export default function robots(): MetadataRoute.Robots {
             '/go/',
             '/_next/',
             '/private/',
+            '/sfp-mk-*',
           ],
         },
         {
