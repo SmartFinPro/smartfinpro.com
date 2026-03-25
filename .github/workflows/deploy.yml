@@ -130,7 +130,8 @@ jobs:
                  echo \"\${key}=\${val}\" >> \"\$ENV_FILE\"
                fi
              }
-             update_env GSC_SITE_URL '${{ secrets.GSC_SITE_URL }}'
+             update_env GSC_SITE_URL 'https://smartfinpro.com/'
+             grep GSC_SITE_URL \"\$ENV_FILE\"
              echo '✅ .env.local synced'"
 
       - name: Restart PM2
