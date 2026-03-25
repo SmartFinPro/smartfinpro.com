@@ -102,8 +102,9 @@ export async function inspectUrl(
   token: string
 ): Promise<InspectionResult> {
   // GSC_SITE_URL must match the property exactly as registered in Search Console.
-  // Not a secret — hardcoded as fallback to prevent misconfiguration.
-  const siteUrl = process.env.GSC_SITE_URL || 'https://smartfinpro.com/';
+  // Hardcoded to avoid misconfiguration via env var (e.g. wrong www-prefix).
+  // The env var is intentionally ignored — siteUrl is not a secret.
+  const siteUrl = 'https://smartfinpro.com/';
 
   try {
     const res = await fetch(
@@ -233,9 +234,6 @@ export async function inspectBatchUrls(
  * Check if URL Inspection API is configured (same creds as GSC).
  */
 export async function isInspectionApiConfigured(): Promise<boolean> {
-  return !!(
-    process.env.GSC_CLIENT_EMAIL &&
-    process.env.GSC_PRIVATE_KEY &&
-    process.env.GSC_SITE_URL
-  );
+  // GSC_SITE_URL is hardcoded — only credentials need to be configured.
+  return !!(process.env.GSC_CLIENT_EMAIL && process.env.GSC_PRIVATE_KEY);
 }
