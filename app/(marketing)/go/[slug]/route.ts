@@ -241,13 +241,17 @@ export async function GET(
   // Track the click (logs to Supabase with UTM, geo, subid)
   const destinationUrl = await trackClick(slug);
 
+  // Safe fallback URL — uses NEXT_PUBLIC_SITE_URL to avoid 0.0.0.0:3000 on VPS
+  // (request.url on VPS resolves to http://0.0.0.0:3000 — never use it for redirects)
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://smartfinpro.com';
+
   if (!destinationUrl) {
     // If tracker fails but registry has the link, use registry fallback
     if (registryLink && isAllowedRedirect(registryLink.destination_url)) {
       return NextResponse.redirect(registryLink.destination_url, 307);
     }
     // Link not found or blocked — redirect to homepage
-    return NextResponse.redirect(new URL('/', request.url));
+    return NextResponse.redirect(new URL('/', siteUrl));
   }
 
   // Validate destination against whitelist
@@ -257,7 +261,7 @@ export async function GET(
       slug,
       ip,
     });
-    return NextResponse.redirect(new URL('/', request.url));
+    return NextResponse.redirect(new URL('/', siteUrl));
   }
 
   // Use 307 Temporary Redirect to preserve SEO
