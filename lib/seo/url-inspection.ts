@@ -101,10 +101,9 @@ export async function inspectUrl(
   url: string,
   token: string
 ): Promise<InspectionResult> {
-  const siteUrl = process.env.GSC_SITE_URL;
-  if (!siteUrl) {
-    throw new Error('GSC_SITE_URL is not configured');
-  }
+  // GSC_SITE_URL must match the property exactly as registered in Search Console.
+  // Not a secret — hardcoded as fallback to prevent misconfiguration.
+  const siteUrl = process.env.GSC_SITE_URL || 'https://smartfinpro.com/';
 
   try {
     const res = await fetch(
