@@ -21,7 +21,7 @@ import 'server-only';
 
 export interface InspectionResult {
   url: string;
-  status: 'indexed' | 'not_indexed';
+  status: 'indexed' | 'not_indexed' | 'error';
   coverageState: string;
   verdict: string;
 }
@@ -30,6 +30,7 @@ export interface BatchInspectionResult {
   total: number;
   indexed: number;
   notIndexed: number;
+  errors: number;
   checked: number;
   results: InspectionResult[];
 }
@@ -100,7 +101,10 @@ export async function inspectUrl(
   url: string,
   token: string
 ): Promise<InspectionResult> {
-  const siteUrl = process.env.GSC_SITE_URL || 'https://smartfinpro.com';
+  const siteUrl = process.env.GSC_SITE_URL;
+  if (!siteUrl) {
+    throw new Error('GSC_SITE_URL is not configured');
+  }
 
   try {
     const res = await fetch(
@@ -127,7 +131,7 @@ export async function inspectUrl(
       }
       return {
         url,
-        status: 'not_indexed',
+        status: 'error',
         coverageState: 'ERROR',
         verdict: msg,
       };
@@ -150,7 +154,7 @@ export async function inspectUrl(
     }
     return {
       url,
-      status: 'not_indexed',
+      status: 'error',
       coverageState: 'ERROR',
       verdict: err instanceof Error ? err.message : 'Unknown error',
     };
@@ -173,17 +177,19 @@ export async function inspectBatchUrls(
     token = await getInspectionAccessToken();
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Token fetch failed';
+    const errorResults = batch.map((url) => ({
+      url,
+      status: 'error' as const,
+      coverageState: 'ERROR',
+      verdict: msg,
+    }));
     return {
       total: batch.length,
       indexed: 0,
       notIndexed: 0,
+      errors: errorResults.length,
       checked: 0,
-      results: batch.map((url) => ({
-        url,
-        status: 'not_indexed' as const,
-        coverageState: 'ERROR',
-        verdict: msg,
-      })),
+      results: errorResults,
     };
   }
 
@@ -204,7 +210,7 @@ export async function inspectBatchUrls(
       }
       results.push({
         url,
-        status: 'not_indexed',
+        status: 'error',
         coverageState: 'ERROR',
         verdict: err instanceof Error ? err.message : 'Unknown error',
       });
@@ -218,6 +224,7 @@ export async function inspectBatchUrls(
     total: batch.length,
     indexed: results.filter((r) => r.status === 'indexed').length,
     notIndexed: results.filter((r) => r.status === 'not_indexed').length,
+    errors: results.filter((r) => r.status === 'error').length,
     checked: results.length,
     results,
   };

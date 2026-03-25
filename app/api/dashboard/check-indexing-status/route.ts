@@ -2,6 +2,7 @@
 // Checks actual Google indexing status for submitted URLs via URL Inspection API.
 // Updates indexing_log with indexed_status + indexed_checked_at.
 // Caches results: only re-checks URLs not checked in the last 24 hours.
+// Protected by proxy.ts API auth gate (JSON 401 if unauthenticated).
 
 import { NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
@@ -14,14 +15,14 @@ export async function GET() {
   const supabase = createServiceClient();
 
   // Load all successfully submitted URLs
-  const { data: logs, error } = await supabase
+  const { data: logs, error: dbQueryError } = await supabase
     .from('indexing_log')
     .select('id, url, indexed_status, indexed_checked_at')
     .eq('status', 'success');
 
-  if (error) {
+  if (dbQueryError) {
     return NextResponse.json(
-      { error: `DB query failed: ${error.message}` },
+      { error: `DB query failed: ${dbQueryError.message}` },
       { status: 500 },
     );
   }
@@ -32,8 +33,11 @@ export async function GET() {
       indexed: 0,
       notIndexed: 0,
       unchecked: 0,
+      errors: 0,
+      dbErrors: 0,
       checkedNow: 0,
       cachedResults: 0,
+      errorSample: null,
     });
   }
 
@@ -49,16 +53,26 @@ export async function GET() {
   // Check URLs that need it (respect daily limit)
   const urlsToCheck = needsCheck.slice(0, CHECK_LIMIT).map((l) => l.url);
   let checkedNow = 0;
+  let apiErrors = 0;
+  let dbErrors = 0;
+  let errorSample: string | null = null;
 
   if (urlsToCheck.length > 0) {
     const results = await inspectBatchUrls(urlsToCheck, CHECK_LIMIT);
     checkedNow = results.checked;
+    apiErrors = results.errors;
 
-    // Update DB with results
+    // Capture first error message for diagnostics
+    const firstError = results.results.find((r) => r.status === 'error');
+    if (firstError) errorSample = firstError.verdict;
+
+    // Update DB — skip error results (do NOT persist API errors as real status)
     for (const r of results.results) {
+      if (r.status === 'error') continue;  // API error → never write to DB
+
       const logEntry = needsCheck.find((l) => l.url === r.url);
       if (logEntry) {
-        await supabase
+        const { error: updateError } = await supabase
           .from('indexing_log')
           .update({
             indexed_status: r.status,
@@ -66,14 +80,19 @@ export async function GET() {
           })
           .eq('id', logEntry.id);
 
-        // Update local reference for final count
-        logEntry.indexed_status = r.status;
-        logEntry.indexed_checked_at = new Date().toISOString();
+        if (updateError) {
+          dbErrors++;
+        } else {
+          // Update in-memory reference for final count calculation
+          logEntry.indexed_status = r.status;
+          logEntry.indexed_checked_at = new Date().toISOString();
+        }
       }
     }
   }
 
   // Calculate final counts from all logs (cached + freshly checked)
+  // Note: needsCheck entries that had API errors retain their previous indexed_status
   const allLogs = [...cached, ...needsCheck];
   const indexed = allLogs.filter((l) => l.indexed_status === 'indexed').length;
   const notIndexed = allLogs.filter((l) => l.indexed_status === 'not_indexed').length;
@@ -84,7 +103,10 @@ export async function GET() {
     indexed,
     notIndexed,
     unchecked,
+    errors: apiErrors,
+    dbErrors,
     checkedNow,
     cachedResults: cached.length,
+    errorSample,
   });
 }

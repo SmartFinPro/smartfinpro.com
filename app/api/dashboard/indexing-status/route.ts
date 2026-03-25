@@ -53,19 +53,27 @@ export async function GET() {
   // Query indexing_log for counts
   const supabase = createServiceClient();
 
-  const { data: logs } = await supabase
+  const { data: logs, error: dbError } = await supabase
     .from('indexing_log')
     .select('url, status, indexed_status, indexed_checked_at')
     .eq('status', 'success');
+
+  if (dbError) {
+    return NextResponse.json(
+      { error: `DB query failed: ${dbError.message}` },
+      { status: 500 },
+    );
+  }
 
   const submittedUrls = new Set((logs ?? []).map((l) => l.url));
   const alreadySubmitted = submittedUrls.size;
   const remaining = Math.max(0, allUrls.length - alreadySubmitted);
 
-  // Count indexed status
+  // Count indexed status (including 'error' status for consistency)
   const indexed = (logs ?? []).filter((l) => l.indexed_status === 'indexed').length;
   const notIndexed = (logs ?? []).filter((l) => l.indexed_status === 'not_indexed').length;
-  const unchecked = alreadySubmitted - indexed - notIndexed;
+  const errors = (logs ?? []).filter((l) => l.indexed_status === 'error').length;
+  const unchecked = alreadySubmitted - indexed - notIndexed - errors;
 
   // Find most recent check timestamp
   const checkedLogs = (logs ?? []).filter((l) => l.indexed_checked_at);
@@ -82,6 +90,7 @@ export async function GET() {
     remaining,
     indexed,
     notIndexed,
+    errors,
     unchecked,
     lastCheckedAt,
   });

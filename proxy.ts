@@ -238,6 +238,46 @@ export async function proxy(request: NextRequest) {
   const { domain: cookieDomain, secure: cookieSecure } = getCookieConfig(request);
 
   try {
+    // ── API Dashboard Auth Gate ──────────────────────────────────
+    // Protects /api/dashboard/* with session cookie check.
+    // Returns JSON 401 — never HTML (API routes must return JSON).
+    // NOTE: Must be checked BEFORE PROTECTED_PREFIXES skip (/api would bypass auth).
+    if (pathname.startsWith('/api/dashboard')) {
+      const dashSecret = process.env.DASHBOARD_SECRET;
+      const authDisabled =
+        process.env.NODE_ENV !== 'production' &&
+        process.env.DASHBOARD_AUTH_DISABLED === 'true';
+
+      if (authDisabled) return NextResponse.next();
+
+      if (!dashSecret) {
+        return NextResponse.json({ error: 'Dashboard not configured' }, { status: 503 });
+      }
+
+      const expectedToken = await createSessionToken(dashSecret);
+      const candidates = getDashboardCookieCandidates(request);
+      const isAuthed = candidates.some(
+        (value) =>
+          timingSafeCompare(value, expectedToken) ||
+          timingSafeCompare(value, dashSecret),
+      );
+
+      if (!isAuthed) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
+
+      // ✅ Authenticated — refresh sliding session cookie
+      const response = NextResponse.next();
+      response.cookies.set('sfp-dash-auth', expectedToken, {
+        httpOnly: true,
+        secure: cookieSecure,
+        sameSite: 'lax',
+        maxAge: SESSION_MAX_AGE,
+        path: '/',
+      });
+      return response;
+    }
+
     // ── Dashboard Auth Gate ──────────────────────────────────────
     // Protects /dashboard/* with DASHBOARD_SECRET cookie check.
     // Login via POST form — secret never appears in URL or browser history.

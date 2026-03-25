@@ -29,6 +29,7 @@ interface PersistentStatus {
   remaining: number;
   indexed: number;
   notIndexed: number;
+  errors: number;
   unchecked: number;
   lastCheckedAt: string | null;
 }
@@ -38,8 +39,11 @@ interface InspectionResult {
   indexed: number;
   notIndexed: number;
   unchecked: number;
+  errors: number;
+  dbErrors: number;
   checkedNow: number;
   cachedResults: number;
+  errorSample: string | null;
 }
 
 type SubmitState = 'idle' | 'running' | 'done' | 'error';
@@ -68,6 +72,9 @@ export function IndexingCard() {
     async function loadStatus() {
       try {
         const res = await fetch('/api/dashboard/indexing-status');
+        if (res.status === 401) { window.location.reload(); return; }
+        const ct = res.headers.get('content-type') ?? '';
+        if (!ct.includes('application/json')) { window.location.reload(); return; }
         if (res.ok) {
           const data = await res.json();
           setStatus(data);
@@ -130,6 +137,10 @@ export function IndexingCard() {
 
     try {
       const res = await fetch('/api/dashboard/check-indexing-status');
+      if (res.status === 401) { window.location.reload(); return; }
+      const ct = res.headers.get('content-type') ?? '';
+      if (!ct.includes('application/json')) { window.location.reload(); return; }
+
       const data = await res.json();
 
       if (!res.ok) {
@@ -148,6 +159,7 @@ export function IndexingCard() {
               ...prev,
               indexed: data.indexed,
               notIndexed: data.notIndexed,
+              errors: data.errors ?? 0,
               unchecked: data.unchecked,
               lastCheckedAt: new Date().toISOString(),
             }
@@ -171,8 +183,10 @@ export function IndexingCard() {
   // Inspection counts
   const indexed = inspectResult?.indexed ?? status?.indexed ?? 0;
   const notIndexed = inspectResult?.notIndexed ?? status?.notIndexed ?? 0;
+  const inspectErrors = inspectResult?.errors ?? status?.errors ?? 0;
   const unchecked = inspectResult?.unchecked ?? status?.unchecked ?? 0;
-  const hasInspectionData = indexed > 0 || notIndexed > 0 || inspectResult !== null;
+  const hasInspectionData = indexed > 0 || notIndexed > 0 || inspectErrors > 0 || inspectResult !== null;
+  const errorSample = inspectResult?.errorSample ?? null;
 
   return (
     <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
@@ -280,10 +294,46 @@ export function IndexingCard() {
 
         {/* Stats row 3: Indexing status (after inspection or from cache) */}
         {hasInspectionData && (
-          <div className="mt-3 grid grid-cols-3 gap-3">
+          <div className={`mt-3 grid gap-3 ${inspectErrors > 0 ? 'grid-cols-4' : 'grid-cols-3'}`}>
             <StatPill label="Indexiert" value={indexed} color="green" />
             <StatPill label="Nicht indexiert" value={notIndexed} color={notIndexed > 0 ? 'red' : 'green'} />
+            {inspectErrors > 0 && (
+              <StatPill label="API-Fehler" value={inspectErrors} color="amber" />
+            )}
             <StatPill label="Nicht geprüft" value={unchecked} color={unchecked > 0 ? 'amber' : 'green'} />
+          </div>
+        )}
+
+        {/* API error warning (GSC credentials / config issue) */}
+        {inspectErrors > 0 && (
+          <div className="mt-3 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3">
+            <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-600" />
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-medium text-amber-800">
+                {inspectErrors} URL{inspectErrors !== 1 ? 's' : ''} konnten nicht geprüft werden (API-Fehler)
+              </p>
+              {errorSample && (
+                <p className="mt-0.5 text-xs text-amber-700 font-mono truncate">{errorSample}</p>
+              )}
+              <p className="mt-1 text-xs text-amber-600">
+                GSC-Credentials prüfen: <code className="font-mono">GSC_CLIENT_EMAIL</code>, <code className="font-mono">GSC_PRIVATE_KEY</code>, <code className="font-mono">GSC_SITE_URL</code> in <code className="font-mono">.env.local</code> auf dem VPS.
+              </p>
+              <button
+                onClick={async () => {
+                  try {
+                    const res = await fetch('/api/dashboard/test-inspection');
+                    if (res.status === 401) { window.location.reload(); return; }
+                    const data = await res.json();
+                    alert(JSON.stringify(data, null, 2));
+                  } catch (e) {
+                    alert('Diagnose fehlgeschlagen: ' + (e instanceof Error ? e.message : String(e)));
+                  }
+                }}
+                className="mt-1.5 text-xs text-amber-700 underline underline-offset-2 hover:text-amber-900"
+              >
+                Diagnose ausführen →
+              </button>
+            </div>
           </div>
         )}
 
@@ -331,7 +381,7 @@ export function IndexingCard() {
         )}
 
         {/* Inspect done note */}
-        {inspectState === 'done' && inspectResult && (
+        {inspectState === 'done' && inspectResult && inspectResult.errors === 0 && (
           <div className="mt-3 flex items-start gap-2 rounded-xl border border-green-200 bg-green-50 p-3">
             <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-green-600" />
             <p className="text-xs text-green-700">
