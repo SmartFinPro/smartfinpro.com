@@ -109,6 +109,19 @@ jobs:
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/home/master/applications/brvnvntpcj/public_html/.next/standalone/ \
           || RSYNC_EXIT=$?; [ "${RSYNC_EXIT:-0}" -eq 23 ] && echo "⚠️ rsync code 23 (minor permission issues) — continuing" || exit ${RSYNC_EXIT:-0}
 
+      # ── 9b. Sync content directory to VPS ─────────────────────
+      # Uses --no-delete: preserves files written by Genesis Hub directly on VPS.
+      # New/updated MDX files from git are synced TO VPS. VPS-only Genesis Hub
+      # files are never overwritten. This ensures git-committed content reaches
+      # APP_ROOT/content/ for dynamic runtime serving (process.cwd()/content/).
+      - name: Sync content to VPS
+        run: |
+          rsync -avz --no-perms --no-owner --no-group \
+            -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
+            content/ \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/home/master/applications/brvnvntpcj/public_html/content/ \
+          || RSYNC_EXIT=$?; [ "${RSYNC_EXIT:-0}" -eq 23 ] && echo "⚠️ rsync code 23 (minor permission issues) — continuing" || exit ${RSYNC_EXIT:-0}
+
       # ── 10. PM2 Restart ───────────────────────────────────────
       # ── 10a. Sync runtime env vars to VPS .env.local ─────────
       # PM2 cwd=APP_ROOT → Next.js reads .env.local from app root (not standalone dir).
