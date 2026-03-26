@@ -186,6 +186,13 @@ jobs:
             echo "❌ Health check failed after 3 attempts"
             exit 1'
 
+      # ── 11b. Smoke Test — 15 Critical URLs ───────────────────
+      - name: Smoke Test
+        id: smoketest
+        if: steps.healthcheck.outcome == 'success'
+        continue-on-error: true
+        run: node scripts/smoke-test.mjs ${{ secrets.NEXT_PUBLIC_SITE_URL }}
+
       # ── 12. Auto-Rollback bei Fehler ─────────────────────────
       - name: Rollback on failure
         if: steps.healthcheck.outcome == 'failure'

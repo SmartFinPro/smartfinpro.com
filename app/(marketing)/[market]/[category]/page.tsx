@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { serializeMDX } from '@/lib/mdx/serialize';
+import type { MDXRemoteSerializeResult } from '@/lib/mdx/types';
 import Link from 'next/link';
 import { getPillarContent, getContentByMarketAndCategory } from '@/lib/mdx';
 import { SafeMDX } from '@/components/content/SafeMDX';
@@ -159,7 +160,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
   // Pass frontmatter as scope so MDX can reference frontmatter.faqs, etc.
   // gray-matter already stripped the YAML block from pillarContent.content,
   // so parseFrontmatter: true would find nothing — we inject it manually here.
-  let mdxSource = null;
+  let mdxSource: MDXRemoteSerializeResult | null = null;
   if (pillarContent) {
     try {
       mdxSource = await serializeMDX(pillarContent.content, { frontmatter: pillarContent.meta });

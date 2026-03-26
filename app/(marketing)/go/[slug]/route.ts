@@ -192,6 +192,16 @@ export async function GET(
   request: Request,
   { params }: { params: Promise<{ slug: string }> }
 ) {
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://smartfinpro.com';
+  const noCacheHeaders = {
+    'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+    'CDN-Cache-Control': 'no-store',
+    'Cloudflare-CDN-Cache-Control': 'no-store',
+    'Pragma': 'no-cache',
+    'Expires': '0',
+  };
+
+  try {
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
   const ua = request.headers.get('user-agent');
 
@@ -241,20 +251,6 @@ export async function GET(
   // Track the click (logs to Supabase with UTM, geo, subid)
   const destinationUrl = await trackClick(slug);
 
-  // Safe fallback URL — uses NEXT_PUBLIC_SITE_URL to avoid 0.0.0.0:3000 on VPS
-  // (request.url on VPS resolves to http://0.0.0.0:3000 — never use it for redirects)
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://smartfinpro.com';
-
-  // All affiliate redirects must never be cached by CDN or browser.
-  // Cloudflare ignores Cache-Control on redirects unless explicitly set.
-  const noCacheHeaders = {
-    'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
-    'CDN-Cache-Control': 'no-store',
-    'Cloudflare-CDN-Cache-Control': 'no-store',
-    'Pragma': 'no-cache',
-    'Expires': '0',
-  };
-
   if (!destinationUrl) {
     // If tracker fails but registry has the link, use registry fallback
     if (registryLink && isAllowedRedirect(registryLink.destination_url)) {
@@ -276,4 +272,14 @@ export async function GET(
 
   // Use 307 Temporary Redirect — never cached
   return NextResponse.redirect(destinationUrl, { status: 307, headers: noCacheHeaders });
+
+  } catch (err) {
+    // ── Safety net: any unhandled error (DB timeout, crash) → safe redirect ──
+    // Prevents HTTP 500 from reaching Googlebot or users. Logs for debugging.
+    logger.error('[affiliate] Unhandled error in go/[slug] — falling back to homepage', {
+      error: err instanceof Error ? err.message : String(err),
+      url: request.url,
+    });
+    return NextResponse.redirect(new URL('/', siteUrl), { status: 307, headers: noCacheHeaders });
+  }
 }

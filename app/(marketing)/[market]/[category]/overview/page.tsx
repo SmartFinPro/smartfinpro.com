@@ -8,6 +8,8 @@ import {
   Category,
   marketConfig,
   categoryConfig,
+  markets,
+  marketCategories,
 } from '@/lib/i18n/config';
 import { generateAlternates, getCanonicalUrl } from '@/lib/seo/hreflang';
 import { overviewContent } from '@/lib/data/overview-content';
@@ -43,7 +45,13 @@ export async function generateMetadata({ params }: OverviewPageProps): Promise<M
   const description = content?.introText?.slice(0, 160) || `Comprehensive market analysis and industry insights for ${categoryInfo.name.toLowerCase()}.`;
 
   const canonicalUrl = getCanonicalUrl(market as Market, `/${category}/overview`);
-  const alternates = generateAlternates(`/${category}/overview`);
+  // Only emit hreflang for markets that actually have this category AND have overview content
+  const availableMarkets = markets.filter(
+    (m) =>
+      marketCategories[m as Market].includes(category as Category) &&
+      !!overviewContent[category]
+  );
+  const alternates = generateAlternates(`/${category}/overview`, availableMarkets);
 
   return {
     title: `${title} | SmartFinPro`,

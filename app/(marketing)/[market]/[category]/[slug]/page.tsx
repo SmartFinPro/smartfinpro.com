@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 import { notFound, redirect } from 'next/navigation';
 import { serializeMDX } from '@/lib/mdx/serialize';
-import { getContentBySlug, getAllContentSlugs, getRelatedContent, getContentByMarketAndCategory } from '@/lib/mdx';
+import { getContentBySlug, getAllContentSlugs, getRelatedContent, getContentByMarketAndCategory, getCrossCategoryContent } from '@/lib/mdx';
 import { isValidMarket, isValidCategory, Market, Category, marketConfig, markets, marketCategories } from '@/lib/i18n/config';
 import { generateAlternates, getCanonicalUrl } from '@/lib/seo/hreflang';
 import { cache } from 'react';
@@ -156,12 +156,14 @@ export default async function ContentPage({ params }: ContentPageProps) {
       notFound();
     }
 
-    const [relatedArticles, expert, allCategoryContent, ctaPartners] = await Promise.all([
+    const [relatedArticles, expert, allCategoryContent, ctaPartners, crossCategoryContent] = await Promise.all([
       getRelatedContent(market as Market, category as Category, slug, 3),
       getMarketExpert(market, category),
       getContentByMarketAndCategory(market as Market, category as Category),
       // URL format must match dashboard: US = no prefix, others = /market prefix
       getEnrichedCtaPartners(`${market === 'us' ? '' : `/${market}`}/${category}/${slug}`),
+      // Cross-category content for "Related Topics" section (Topical Authority signal)
+      getCrossCategoryContent(market as Market, category as Category, 3),
     ]);
 
     // Filter sibling reviews (exclude current + index pages)
@@ -190,6 +192,7 @@ export default async function ContentPage({ params }: ContentPageProps) {
           mdxSource={mdxSource}
           relatedArticles={relatedArticles}
           siblingReviews={siblingReviews}
+          crossCategoryContent={crossCategoryContent}
           market={market as Market}
           category={category as Category}
           slug={slug}
@@ -237,12 +240,14 @@ export default async function ContentPage({ params }: ContentPageProps) {
     notFound();
   }
 
-  const [relatedArticles, expert, allCategoryContent, ctaPartners] = await Promise.all([
+  const [relatedArticles, expert, allCategoryContent, ctaPartners, crossCategoryContent] = await Promise.all([
     getRelatedContent(market as Market, category as Category, slug, 3),
     getMarketExpert(market, category),
     getContentByMarketAndCategory(market as Market, category as Category),
     // URL format must match dashboard: US = no prefix, others = /market prefix
     getEnrichedCtaPartners(`${market === 'us' ? '' : `/${market}`}/${category}/${slug}`),
+    // Cross-category content for "Related Topics" section (Topical Authority signal)
+    getCrossCategoryContent(market as Market, category as Category, 3),
   ]);
 
   // Filter sibling reviews (exclude current + index pages)
@@ -271,6 +276,7 @@ export default async function ContentPage({ params }: ContentPageProps) {
         mdxSource={mdxSource}
         relatedArticles={relatedArticles}
         siblingReviews={siblingReviews}
+        crossCategoryContent={crossCategoryContent}
         market={market as Market}
         category={category as Category}
         slug={slug}

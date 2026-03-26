@@ -4,6 +4,8 @@ import { join } from 'path';
 import { getAllContent } from '@/lib/mdx';
 import { markets, marketCategories, Market } from '@/lib/i18n/config';
 import { brokerSlugs } from '@/lib/data/broker-reviews';
+// Categories that have actual overview content (must stay in sync with lib/data/overview-content.ts)
+const overviewCategories = new Set(['remortgaging', 'savings', 'superannuation', 'housing']);
 import { pillarHeroImages, reviewImages } from '@/lib/images/asset-registry';
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://smartfinpro.com';
@@ -232,7 +234,27 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
 
     // ============================================================
-    // 8. STATIC PAGES — Priority 0.5-0.6
+    // 8. OVERVIEW PAGES — Priority 0.75
+    // Linked from sidebar navigation but previously missing from sitemap
+    // ("Gecrawlt – nicht indexiert" root cause). Only include pages that
+    // have actual overviewContent AND belong to a valid market/category.
+    // ============================================================
+
+    for (const market of markets) {
+      const cats = marketCategories[market as Market] || [];
+      for (const category of cats) {
+        if (!overviewCategories.has(category)) continue;
+        entries.push({
+          url: marketUrl(market, `/${category}/overview`),
+          lastModified: pillarLastMod.get(`${market}/${category}`) || now,
+          changeFrequency: 'monthly',
+          priority: 0.75,
+        });
+      }
+    }
+
+    // ============================================================
+    // 10. STATIC PAGES — Priority 0.5-0.6
     // ============================================================
 
     for (const path of staticPages) {

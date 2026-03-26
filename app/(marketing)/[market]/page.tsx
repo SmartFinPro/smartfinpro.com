@@ -157,18 +157,21 @@ export default async function MarketHomePage({ params, searchParams }: MarketPag
     if (cat) categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
   }
 
-  // Editor's Picks — top 3 rated reviews (different categories preferred)
-  const seenCategories = new Set<string>();
+  // Editor's Picks — top 6 rated reviews (different categories preferred)
+  // 6 picks (up from 3) = stronger Hub→Leaf signal from homepage to leaf review pages.
+  // Diversity filter: max 2 per category to ensure broad coverage across 6 categories.
+  const categoryPickCount = new Map<string, number>();
   const editorsPicks = allReviews
     .filter((item) => item.meta.rating && item.meta.rating >= 4.0)
     .sort((a, b) => (b.meta.rating || 0) - (a.meta.rating || 0))
     .filter((item) => {
-      // Prefer diversity — one per category
-      if (seenCategories.has(item.meta.category)) return false;
-      seenCategories.add(item.meta.category);
+      // Allow max 2 per category (ensures diversity across 6 picks)
+      const count = categoryPickCount.get(item.meta.category) || 0;
+      if (count >= 2) return false;
+      categoryPickCount.set(item.meta.category, count + 1);
       return true;
     })
-    .slice(0, 3)
+    .slice(0, 6)
     .map((item) => ({
       title: item.meta.seoTitle || item.meta.title,
       description: item.meta.description,

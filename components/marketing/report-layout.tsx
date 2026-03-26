@@ -89,6 +89,8 @@ interface ReportLayoutProps {
   ctaPartners?: EnrichedCtaPartner[];
   /** URL slug (e.g. "etoro-review") — used to resolve review-specific hero image */
   slug?: string;
+  /** Cross-category content for "Related Topics" section — Topical Authority + cross-silo links */
+  crossCategoryContent?: ContentItem[];
 }
 
 function looksLikeRole(text: string): boolean {
@@ -113,6 +115,7 @@ export function ReportLayout({
   mdxSource,
   relatedArticles,
   siblingReviews,
+  crossCategoryContent,
   expert,
   market,
   category,
@@ -820,6 +823,43 @@ export function ReportLayout({
                 </div>
               );
             })()}
+
+            {/* Cross-Category "Related Topics" — Topical Authority cross-silo links */}
+            {crossCategoryContent && crossCategoryContent.length > 0 && (
+              <div className="mt-10 pt-8 border-t border-[rgba(27,79,140,0.25)]">
+                <h3 className="text-lg font-black tracking-tight mb-4" style={{ color: 'var(--sfp-ink)' }}>
+                  Related Topics
+                </h3>
+                <div className="grid sm:grid-cols-3 gap-3">
+                  {crossCategoryContent.map((item) => {
+                    const catName = (item.meta.category as string)?.replace(/-/g, ' ')
+                      .replace(/\b\w/g, (c) => c.toUpperCase());
+                    return (
+                      <Link
+                        key={`cross-${item.slug}`}
+                        href={`${marketPrefix}/${item.meta.category}/${item.slug}`}
+                        className="group flex flex-col rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-[0_1px_3px_rgba(0,0,0,0.04)] hover:shadow-md hover:border-[var(--sfp-navy)] transition-all duration-200"
+                      >
+                        <span className="text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: 'var(--sfp-navy)' }}>
+                          {catName}
+                        </span>
+                        <p className="text-sm font-semibold leading-snug group-hover:text-[var(--sfp-navy)] transition-colors line-clamp-2" style={{ color: 'var(--sfp-ink)' }}>
+                          {item.meta.seoTitle || item.meta.title}
+                        </p>
+                        {item.meta.rating && (
+                          <span className="mt-2 text-xs font-medium" style={{ color: 'var(--sfp-slate)' }}>
+                            ★ {item.meta.rating.toFixed(1)}
+                          </span>
+                        )}
+                        <span className="mt-2 text-xs font-semibold flex items-center gap-1" style={{ color: 'var(--sfp-navy)' }}>
+                          Read review →
+                        </span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             {/* Sibling Reviews — "More Reports in {Category}" */}
             {siblingReviews && siblingReviews.length > 0 && (
