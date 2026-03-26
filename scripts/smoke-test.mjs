@@ -12,14 +12,21 @@
  * Exit code 0 = all checks passed. Exit code 1 = at least one failure.
  *
  * Usage:
- *   node scripts/smoke-test.mjs [BASE_URL]
- *   BASE_URL defaults to NEXT_PUBLIC_SITE_URL env var or https://smartfinpro.com
+ *   node scripts/smoke-test.mjs [BASE_URL] [CANONICAL_BASE]
  *
- * Integrated into deploy.yml as Step 11b (gates rollback on failure).
+ *   BASE_URL       — where to fetch pages from (default: NEXT_PUBLIC_SITE_URL)
+ *   CANONICAL_BASE — expected canonical origin for host comparison (default: BASE_URL)
+ *                    Use this when fetching from localhost but canonicals point to prod:
+ *                    node scripts/smoke-test.mjs http://localhost:3000 https://smartfinpro.com
+ *
+ * Integrated into deploy.yml:
+ *   Step 11b — CDN smoke test (BASE_URL = prod URL)
+ *   Step 11c — Origin smoke test via SSH (BASE_URL = localhost, CANONICAL_BASE = prod URL)
  */
 
 const BASE_URL = (process.argv[2] || process.env.NEXT_PUBLIC_SITE_URL || 'https://smartfinpro.com')
   .replace(/\/$/, '');
+const CANONICAL_BASE = (process.argv[3] || BASE_URL).replace(/\/$/, '');
 
 // ── URL list ─────────────────────────────────────────────────────────────────
 // tier: 'full'  → all 5 checks
@@ -103,7 +110,7 @@ function checkCanonical(html, expectedPath) {
   const canonical = match[1];
   try {
     const parsedCanonical = new URL(canonical);
-    const parsedBase      = new URL(BASE_URL);
+    const parsedBase      = new URL(CANONICAL_BASE);
 
     // 1. Must be HTTPS
     if (parsedCanonical.protocol !== 'https:') {
@@ -229,6 +236,9 @@ async function run() {
 
   console.log(`\n${BOLD}🔥 SmartFinPro Post-Deploy Smoke Test${RESET}`);
   console.log(`   Target:  ${BOLD}${BASE_URL}${RESET}`);
+  if (CANONICAL_BASE !== BASE_URL) {
+    console.log(`   Canon:   ${BOLD}${CANONICAL_BASE}${RESET} (override)`);
+  }
   console.log(`   URLs:    ${CRITICAL_URLS.length} pages (${fullCount} full · ${basicCount} basic)`);
   console.log(`   Timeout: ${TIMEOUT_MS}ms per request\n`);
   console.log('─'.repeat(60));

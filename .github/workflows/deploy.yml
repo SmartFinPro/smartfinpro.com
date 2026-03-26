@@ -194,9 +194,10 @@ jobs:
         if: steps.healthcheck.outcome == 'success'
         run: node scripts/smoke-test.mjs ${{ secrets.NEXT_PUBLIC_SITE_URL }}
 
-      # ── 11c. Origin Smoke Test — full SEO checks via SSH (bypasses Cloudflare) ──
-      # Runs against http://localhost:3000 on the VPS — no CDN bot-challenge.
-      # Checks: HTTP 200, canonical host+path exact, no noindex, JSON-LD, title.
+      # ── 11c. Origin Smoke Test — bypasses Cloudflare via SSH → localhost ────
+      # Reuses the same smoke-test.mjs script (identical tier logic, checks, URLs).
+      # Second arg overrides canonical host comparison: fetches from localhost:3000
+      # but validates canonicals against the production hostname.
       # Currently continue-on-error (observational). Remove after 2-3 stable deploys
       # to promote to hard gate alongside CDN smoke test.
       - name: Origin Smoke Test (via SSH)
@@ -204,75 +205,14 @@ jobs:
         if: steps.healthcheck.outcome == 'success'
         continue-on-error: true
         run: |
+          scp -i ~/.ssh/deploy_key \
+            -o StrictHostKeyChecking=no \
+            scripts/smoke-test.mjs \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/tmp/sfp-smoke-test.mjs
           ssh -i ~/.ssh/deploy_key \
             -o StrictHostKeyChecking=no \
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
-            'ORIGIN="http://localhost:3000"
-             CANONICAL_HOST="smartfinpro.com"
-             URLS="/us /us/trading /us/ai-tools /us/trading/etoro-review /tools/trading-cost-calculator /affiliate-disclosure"
-             FAILED=0
-             WARNED=0
-
-             for path in $URLS; do
-               STATUS=$(curl -sf -o /tmp/sfp_smoke -w "%{http_code}" "${ORIGIN}${path}" 2>/dev/null || echo "000")
-               ERRS=""
-
-               # 1. HTTP 200
-               if [ "$STATUS" != "200" ]; then
-                 ERRS="${ERRS} status=HTTP_${STATUS}"
-               fi
-
-               if [ "$STATUS" = "200" ]; then
-                 # 2. Canonical: tag present + host match + path match
-                 CANON=$(grep -oiP "rel=[\"'"'"']canonical[\"'"'"'][^>]*href=[\"'"'"']\K[^\"'"'"']+" /tmp/sfp_smoke 2>/dev/null \
-                      || grep -oiP "href=[\"'"'"']\K[^\"'"'"']+(?=[\"'"'"'][^>]*rel=[\"'"'"']canonical)" /tmp/sfp_smoke 2>/dev/null)
-                 if [ -z "$CANON" ]; then
-                   ERRS="${ERRS} canonical=missing"
-                 else
-                   # Check host
-                   CANON_HOST=$(echo "$CANON" | sed -n "s|https\?://\([^/]*\).*|\1|p")
-                   if [ "$CANON_HOST" != "$CANONICAL_HOST" ]; then
-                     ERRS="${ERRS} canonical_host=${CANON_HOST}_want_${CANONICAL_HOST}"
-                   fi
-                   # Check path
-                   CANON_PATH=$(echo "$CANON" | sed -n "s|https\?://[^/]*\(/.*\)|\1|p" | sed "s|/$||")
-                   EXPECTED_PATH=$(echo "$path" | sed "s|/$||")
-                   [ -z "$CANON_PATH" ] && CANON_PATH="/"
-                   [ -z "$EXPECTED_PATH" ] && EXPECTED_PATH="/"
-                   if [ "$CANON_PATH" != "$EXPECTED_PATH" ]; then
-                     ERRS="${ERRS} canonical_path=${CANON_PATH}_want_${EXPECTED_PATH}"
-                   fi
-                 fi
-
-                 # 3. No noindex
-                 if grep -qi "noindex" /tmp/sfp_smoke 2>/dev/null; then
-                   ERRS="${ERRS} noindex=found"
-                 fi
-
-                 # 4. JSON-LD schema present
-                 if ! grep -qi "application/ld+json" /tmp/sfp_smoke 2>/dev/null; then
-                   ERRS="${ERRS} jsonld=missing"
-                 fi
-
-                 # 5. Title present
-                 if ! grep -qi "<title>" /tmp/sfp_smoke 2>/dev/null; then
-                   ERRS="${ERRS} title=missing"
-                 fi
-               fi
-
-               if [ -n "$ERRS" ]; then
-                 echo "❌ ORIGIN FAIL ${path}:${ERRS}"
-                 FAILED=$((FAILED+1))
-               else
-                 echo "✅ ORIGIN PASS ${path}"
-               fi
-             done
-
-             rm -f /tmp/sfp_smoke
-             TOTAL=$(echo $URLS | wc -w | tr -d " ")
-             echo "────────────────────────────────────────"
-             echo "Origin smoke: ${FAILED} failed / ${TOTAL} total"
-             [ "$FAILED" -eq 0 ]'
+            "node /tmp/sfp-smoke-test.mjs http://localhost:3000 ${{ secrets.NEXT_PUBLIC_SITE_URL }}; EXIT=\$?; rm -f /tmp/sfp-smoke-test.mjs; exit \$EXIT"
 
       # ── 12. Auto-Rollback bei Fehler ─────────────────────────
       # always() ensures this runs even if a prior step crashed (not just 'failure' outcome).
