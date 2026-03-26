@@ -132,6 +132,8 @@ jobs:
             -o StrictHostKeyChecking=no \
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
             "ENV_FILE=/home/master/applications/brvnvntpcj/public_html/.env.local
+             STANDALONE_ENV=/home/master/applications/brvnvntpcj/public_html/.next/standalone/.env
+
              update_env() { local key=\$1 val=\$2
                if grep -q \"^\${key}=\" \"\$ENV_FILE\" 2>/dev/null; then
                  sed -i \"s|^\${key}=.*|\${key}=\${val}|\" \"\$ENV_FILE\"
@@ -139,9 +141,23 @@ jobs:
                  echo \"\${key}=\${val}\" >> \"\$ENV_FILE\"
                fi
              }
-             update_env GSC_SITE_URL 'https://smartfinpro.com/'
-             grep GSC_SITE_URL \"\$ENV_FILE\"
-             echo '✅ .env.local synced'"
+
+             # Sync all runtime vars from standalone .env to .env.local
+             # This ensures vars written by Step 5b reach PM2's working directory
+             for KEY in GSC_CLIENT_EMAIL GSC_SITE_URL GOOGLE_INDEXING_JSON RESEND_WEBHOOK_SECRET; do
+               VAL=\$(grep \"^\${KEY}=\" \"\$STANDALONE_ENV\" 2>/dev/null | head -1 | cut -d= -f2-)
+               if [ -n \"\$VAL\" ]; then
+                 update_env \"\$KEY\" \"\$VAL\"
+               fi
+             done
+
+             # GSC_PRIVATE_KEY needs special handling (multiline PEM)
+             # Remove old key and copy fresh from standalone .env
+             sed -i '/^GSC_PRIVATE_KEY=/d' \"\$ENV_FILE\" 2>/dev/null
+             grep '^GSC_PRIVATE_KEY=' \"\$STANDALONE_ENV\" >> \"\$ENV_FILE\" 2>/dev/null
+
+             echo '✅ .env.local synced with all runtime vars'
+             grep -c '=' \"\$ENV_FILE\" | xargs -I{} echo '   {} vars in .env.local'"
 
       - name: Restart PM2
         run: |
