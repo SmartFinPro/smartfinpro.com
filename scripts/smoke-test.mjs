@@ -32,9 +32,10 @@ const CRITICAL_URLS = [
   { path: '/au',  tier: 'full' },
 
   // Category hub / pillar pages
-  // Note: '/us/trading' is basic over CDN (Cloudflare may JS-challenge "trading" keyword
-  // from GH Actions IPs). The origin smoke test (Step 11c) runs FULL checks via SSH→localhost.
-  { path: '/us/trading',          tier: 'basic' },
+  // /us/trading is EXCLUDED from CDN test — Cloudflare Bot Fight Mode serves a JS
+  // interstitial (no <title>) to GH Actions datacenter IPs for the "trading" keyword.
+  // It is fully covered by the origin smoke test (Step 11c, SSH→localhost:3000).
+  { path: '/us/personal-finance', tier: 'full'  },
   { path: '/us/ai-tools',         tier: 'full'  },
   { path: '/uk/personal-finance', tier: 'full'  },
   { path: '/au/superannuation',   tier: 'full'  },
