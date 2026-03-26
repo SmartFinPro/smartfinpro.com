@@ -187,15 +187,17 @@ jobs:
             exit 1'
 
       # ── 11b. Smoke Test — 15 Critical URLs ───────────────────
+      # Gate: failure triggers rollback (same as health check failure).
+      # continue-on-error is intentionally NOT set so the outcome is 'failure'.
       - name: Smoke Test
         id: smoketest
         if: steps.healthcheck.outcome == 'success'
-        continue-on-error: true
         run: node scripts/smoke-test.mjs ${{ secrets.NEXT_PUBLIC_SITE_URL }}
 
       # ── 12. Auto-Rollback bei Fehler ─────────────────────────
+      # Triggers on: health check failure OR smoke test failure
       - name: Rollback on failure
-        if: steps.healthcheck.outcome == 'failure'
+        if: steps.healthcheck.outcome == 'failure' || steps.smoketest.outcome == 'failure'
         run: |
           echo "🔄 Rolling back to previous version..."
           ssh -i ~/.ssh/deploy_key \
@@ -215,7 +217,7 @@ jobs:
 
       # ── 13. Log failed deploy to dashboard ───────────────────
       - name: Log deploy failure to dashboard
-        if: steps.healthcheck.outcome == 'failure'
+        if: steps.healthcheck.outcome == 'failure' || steps.smoketest.outcome == 'failure'
         continue-on-error: true
         env:
           COMMIT_MSG: ${{ github.event.head_commit.message }}
@@ -247,12 +249,12 @@ jobs:
 
       # ── 14. Workflow als fehlgeschlagen markieren ─────────────
       - name: Fail workflow after rollback
-        if: steps.healthcheck.outcome == 'failure'
+        if: steps.healthcheck.outcome == 'failure' || steps.smoketest.outcome == 'failure'
         run: exit 1
 
       # ── 15. Log successful deploy to dashboard ──────────────
       - name: Log deploy success to dashboard
-        if: steps.healthcheck.outcome == 'success'
+        if: steps.healthcheck.outcome == 'success' && steps.smoketest.outcome == 'success'
         continue-on-error: true
         env:
           COMMIT_MSG: ${{ github.event.head_commit.message }}

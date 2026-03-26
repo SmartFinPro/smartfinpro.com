@@ -84,9 +84,24 @@ function checkCanonical(html, expectedPath) {
   if (!match) return { ok: false, detail: 'Missing canonical tag' };
   const canonical = match[1];
   try {
-    const url = new URL(canonical);
-    if (!canonical.startsWith('https://')) {
+    const parsedCanonical = new URL(canonical);
+    const parsedBase = new URL(BASE_URL);
+
+    // Must be HTTPS
+    if (parsedCanonical.protocol !== 'https:') {
       return { ok: false, detail: `Canonical not HTTPS: ${canonical}` };
+    }
+    // Host must match the deployment base (no cross-domain canonicals)
+    if (parsedCanonical.hostname !== parsedBase.hostname) {
+      return { ok: false, detail: `Canonical host mismatch: got ${parsedCanonical.hostname}, want ${parsedBase.hostname}` };
+    }
+    // Path must match the expected path (no silent redirects to wrong page)
+    // US market: /us prefix maps to / on the live site
+    const normalizedExpected = expectedPath === '/us' ? '/' : expectedPath.replace(/^\/us\//, '/');
+    const canonicalPath = parsedCanonical.pathname.replace(/\/$/, '') || '/';
+    const expectedNorm = normalizedExpected.replace(/\/$/, '') || '/';
+    if (canonicalPath !== expectedNorm) {
+      return { ok: false, detail: `Canonical path mismatch: got ${canonicalPath}, want ${expectedNorm}` };
     }
     return { ok: true, detail: canonical };
   } catch {
