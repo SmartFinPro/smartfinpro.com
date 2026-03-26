@@ -138,6 +138,12 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
         new Date(a.meta.modifiedDate || a.meta.publishDate).getTime()
     );
 
+  // Top rated reviews for Hub→Leaf featured section (sorted by rating desc, top 5)
+  const topRatedReviews = [...allReviews]
+    .filter((r) => r.meta.rating && r.meta.rating >= 4.0)
+    .sort((a, b) => (b.meta.rating || 0) - (a.meta.rating || 0))
+    .slice(0, 5);
+
   // Pagination
   const totalPages = Math.max(1, Math.ceil(allReviews.length / REPORTS_PER_PAGE));
   const safePage = Math.min(currentPage, totalPages);
@@ -254,6 +260,80 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
           />
         </div>
       </div>
+
+      {/* ═══════════════════════════════════════════════════════════════
+          1c. TOP RATED REVIEWS — Hub→Leaf Featured Links
+          Shows top 5 highest-rated reviews as prominent cards.
+          Primary crawl signal: direct Hub→Leaf links for Google.
+      ═══════════════════════════════════════════════════════════════ */}
+      {topRatedReviews.length >= 2 && (
+        <section className="bg-white border-b border-gray-100">
+          <div className="mx-auto px-6 py-10" style={{ maxWidth: '1200px' }}>
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-2">
+                <Star className="h-5 w-5" style={{ color: '#F5A623', fill: '#F5A623' }} />
+                <h2 className="text-xl font-black tracking-tight" style={{ color: 'var(--sfp-ink)' }}>
+                  Top Rated {categoryInfo.name}
+                </h2>
+              </div>
+              <Link
+                href={`#reports`}
+                className="text-sm font-medium flex items-center gap-1 hover:underline"
+                style={{ color: 'var(--sfp-navy)' }}
+              >
+                View all {allReviews.length} reviews <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            </div>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+              {topRatedReviews.map((item) => {
+                const href = `/${market}/${category}/${item.slug}`;
+                return (
+                  <Link
+                    key={item.slug}
+                    href={href}
+                    className="group flex flex-col rounded-2xl border border-[#E2E8F0] bg-white p-4 hover:border-[var(--sfp-navy)] hover:shadow-md transition-all duration-200"
+                    style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}
+                  >
+                    {/* Rating badge */}
+                    <div className="flex items-center gap-1.5 mb-3">
+                      <span
+                        className="inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full"
+                        style={{ background: 'var(--sfp-sky)', color: 'var(--sfp-navy)' }}
+                      >
+                        <Star className="h-3 w-3" style={{ fill: '#F5A623', color: '#F5A623' }} />
+                        {item.meta.rating?.toFixed(1)}
+                      </span>
+                      {item.meta.featured && (
+                        <span
+                          className="inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full"
+                          style={{ background: 'var(--sfp-gold)', color: '#fff' }}
+                        >
+                          <CheckCircle className="h-3 w-3" />
+                          Top Pick
+                        </span>
+                      )}
+                    </div>
+                    {/* Title */}
+                    <p className="text-sm font-bold leading-snug flex-1 group-hover:text-[var(--sfp-navy)] transition-colors" style={{ color: 'var(--sfp-ink)' }}>
+                      {item.meta.seoTitle || item.meta.title}
+                    </p>
+                    {/* Description snippet */}
+                    {item.meta.description && (
+                      <p className="text-xs mt-2 line-clamp-2" style={{ color: 'var(--sfp-slate)' }}>
+                        {item.meta.description}
+                      </p>
+                    )}
+                    {/* CTA */}
+                    <div className="mt-3 flex items-center gap-1 text-xs font-semibold" style={{ color: 'var(--sfp-navy)' }}>
+                      Read review <ArrowRight className="h-3 w-3 group-hover:translate-x-0.5 transition-transform" />
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ═══════════════════════════════════════════════════════════════
           2. TWO-COLUMN LAYOUT (Sidebar LEFT + Report Feed RIGHT)

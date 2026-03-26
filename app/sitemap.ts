@@ -85,6 +85,32 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const now = new Date();
 
     // ============================================================
+    // 0. PRE-LOAD ALL CONTENT — used for real lastmod signals
+    // ============================================================
+
+    const allContent = await getAllContent();
+
+    // Build a map: "market/category" → most recent real content date
+    // Used to give pillar pages accurate lastmod without calling getPillarContent()
+    const pillarLastMod = new Map<string, Date>();
+    for (const content of allContent) {
+      if (content.slug === 'index') continue;
+      const m = content.meta.market || 'us';
+      const c = content.meta.category;
+      if (!c) continue;
+      const contentDate = content.meta.modifiedDate
+        ? new Date(content.meta.modifiedDate)
+        : content.meta.publishDate
+          ? new Date(content.meta.publishDate)
+          : now;
+      const key = `${m}/${c}`;
+      const existing = pillarLastMod.get(key);
+      if (!existing || contentDate > existing) {
+        pillarLastMod.set(key, contentDate);
+      }
+    }
+
+    // ============================================================
     // 1. MARKET HOMEPAGES — Priority 1.0/0.9
     // ============================================================
 
@@ -99,15 +125,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     // ============================================================
     // 2. PILLAR PAGES (Category Pages) — Priority 0.9
+    // Uses real lastmod from most recently updated content in category.
+    // Avoids artificial date inflation that harms crawl credibility.
     // ============================================================
 
     for (const market of markets) {
       const cats = marketCategories[market as Market] || [];
       for (const category of cats) {
         const heroAsset = pillarHeroImages[market]?.[category];
+        const realLastMod = pillarLastMod.get(`${market}/${category}`) || now;
         entries.push({
           url: marketUrl(market, `/${category}`),
-          lastModified: now,
+          lastModified: realLastMod,
           changeFrequency: 'weekly',
           priority: 0.9,
           ...(heroAsset && { images: [`${BASE_URL}${heroAsset.src}`] }),
@@ -136,8 +165,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // ============================================================
     // 4. CONTENT PAGES (MDX Reviews & Articles) — Priority 0.7-0.8
     // ============================================================
-
-    const allContent = await getAllContent();
 
     for (const content of allContent) {
       if (content.slug === 'index') continue;
