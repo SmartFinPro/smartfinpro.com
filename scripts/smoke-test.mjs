@@ -32,8 +32,8 @@ const CRITICAL_URLS = [
   { path: '/au',  tier: 'full' },
 
   // Category hub / pillar pages
-  // Note: '/us/trading' uses basic — Cloudflare bot-challenge for "trading"
-  // keyword may return 200+JS interstitial from GH Actions IPs. Investigate separately.
+  // Note: '/us/trading' is basic over CDN (Cloudflare may JS-challenge "trading" keyword
+  // from GH Actions IPs). The origin smoke test (Step 11c) runs FULL checks via SSH→localhost.
   { path: '/us/trading',          tier: 'basic' },
   { path: '/us/ai-tools',         tier: 'full'  },
   { path: '/uk/personal-finance', tier: 'full'  },
@@ -42,7 +42,9 @@ const CRITICAL_URLS = [
 
   // Individual review pages (leaf pages — most likely to break on bad deploy)
   { path: '/us/trading/etoro-review',         tier: 'full' },
-  { path: '/uk/trading/etoro-review',         tier: 'full' }, // valid UK eToro review
+  // UK eToro review: slug is 'etoro-review' (not 'etoro-review-uk').
+  // The -uk suffix is used inconsistently (nordvpn, marcus) but not for eToro.
+  { path: '/uk/trading/etoro-review',         tier: 'full' },
   { path: '/us/cybersecurity/nordvpn-review', tier: 'full' },
 
   // Tool pages — no canonical tag by design (no generateMetadata canonical set)

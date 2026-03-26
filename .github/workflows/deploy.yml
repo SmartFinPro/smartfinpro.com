@@ -194,10 +194,54 @@ jobs:
         if: steps.healthcheck.outcome == 'success'
         run: node scripts/smoke-test.mjs ${{ secrets.NEXT_PUBLIC_SITE_URL }}
 
+      # ── 11c. Origin Smoke Test — full SEO checks via SSH (bypasses Cloudflare) ──
+      # Runs the same smoke-test.mjs against http://localhost:3000 on the VPS.
+      # All URLs get FULL checks because there's no CDN bot-challenge at origin.
+      # This catches canonical/schema regressions that CDN-basic-tier would miss.
+      - name: Origin Smoke Test (via SSH)
+        id: origin_smoketest
+        if: steps.healthcheck.outcome == 'success'
+        continue-on-error: true
+        run: |
+          ssh -i ~/.ssh/deploy_key \
+            -o StrictHostKeyChecking=no \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
+            'URLS="/us /us/trading /us/ai-tools /us/trading/etoro-review /tools/trading-cost-calculator /affiliate-disclosure"
+             FAILED=0
+             for path in $URLS; do
+               STATUS=$(curl -sf -o /tmp/smoke_body -w "%{http_code}" "http://localhost:3000${path}" 2>/dev/null || echo "000")
+               if [ "$STATUS" != "200" ]; then
+                 echo "❌ ORIGIN FAIL ${path}: HTTP ${STATUS}"
+                 FAILED=$((FAILED+1))
+                 continue
+               fi
+               # Check canonical present
+               if ! grep -qi "rel=.canonical." /tmp/smoke_body 2>/dev/null; then
+                 echo "⚠️  ORIGIN WARN ${path}: missing canonical tag"
+               fi
+               # Check no noindex
+               if grep -qi "noindex" /tmp/smoke_body 2>/dev/null; then
+                 echo "❌ ORIGIN FAIL ${path}: contains noindex"
+                 FAILED=$((FAILED+1))
+                 continue
+               fi
+               # Check title present
+               if ! grep -qi "<title>" /tmp/smoke_body 2>/dev/null; then
+                 echo "❌ ORIGIN FAIL ${path}: missing title"
+                 FAILED=$((FAILED+1))
+                 continue
+               fi
+               echo "✅ ORIGIN PASS ${path}"
+             done
+             rm -f /tmp/smoke_body
+             echo "Origin smoke: $FAILED failures out of $(echo $URLS | wc -w) URLs"
+             [ "$FAILED" -eq 0 ]'
+
       # ── 12. Auto-Rollback bei Fehler ─────────────────────────
-      # Triggers on: health check failure OR smoke test failure
+      # always() ensures this runs even if a prior step crashed (not just 'failure' outcome).
+      # Without always(), GitHub Actions skips subsequent steps after an unhandled step error.
       - name: Rollback on failure
-        if: steps.healthcheck.outcome == 'failure' || steps.smoketest.outcome == 'failure'
+        if: ${{ always() && (steps.healthcheck.outcome == 'failure' || steps.smoketest.outcome == 'failure') }}
         run: |
           echo "🔄 Rolling back to previous version..."
           ssh -i ~/.ssh/deploy_key \
@@ -217,7 +261,7 @@ jobs:
 
       # ── 13. Log failed deploy to dashboard ───────────────────
       - name: Log deploy failure to dashboard
-        if: steps.healthcheck.outcome == 'failure' || steps.smoketest.outcome == 'failure'
+        if: ${{ always() && (steps.healthcheck.outcome == 'failure' || steps.smoketest.outcome == 'failure') }}
         continue-on-error: true
         env:
           COMMIT_MSG: ${{ github.event.head_commit.message }}
@@ -249,7 +293,7 @@ jobs:
 
       # ── 14. Workflow als fehlgeschlagen markieren ─────────────
       - name: Fail workflow after rollback
-        if: steps.healthcheck.outcome == 'failure' || steps.smoketest.outcome == 'failure'
+        if: ${{ always() && (steps.healthcheck.outcome == 'failure' || steps.smoketest.outcome == 'failure') }}
         run: exit 1
 
       # ── 15. Log successful deploy to dashboard ──────────────
