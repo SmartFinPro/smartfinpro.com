@@ -166,19 +166,19 @@ export default async function ContentPage({ params }: ContentPageProps) {
       getCrossCategoryContent(market as Market, category as Category, 3),
     ]);
 
-    // Sibling reviews: exclude current + index, require rating + quality threshold.
-    // Sorted by quality score DESC so "More Reviews" shows strongest content first.
-    // Starvation fallback: if quality gate yields fewer than QUALITY_FALLBACK_MIN,
-    // include all rated siblings (sorted by score) so small categories always have links.
-    const siblingsBase = allCategoryContent.filter(
-      item => item.slug !== slug && item.slug !== 'index' && item.meta.rating
-    );
-    const siblingsFiltered = siblingsBase
-      .filter(item => computeQualityScore(item) >= QUALITY_SCORE_THRESHOLD)
+    // Sibling reviews: exclude current + index, sorted by quality score DESC.
+    // Primary path: requires rating + quality threshold (strongest crawl signal).
+    // Starvation fallback: if <QUALITY_FALLBACK_MIN qualify, use ALL siblings
+    // (including unrated) sorted by score — ensures link coverage even in small
+    // or newly-seeded categories where most articles lack a rating yet.
+    const allSiblings = allCategoryContent
+      .filter(item => item.slug !== slug && item.slug !== 'index')
       .sort((a, b) => computeQualityScore(b) - computeQualityScore(a));
+    const siblingsFiltered = allSiblings
+      .filter(item => item.meta.rating && computeQualityScore(item) >= QUALITY_SCORE_THRESHOLD);
     const siblingReviews = siblingsFiltered.length >= QUALITY_FALLBACK_MIN
       ? siblingsFiltered
-      : [...siblingsBase].sort((a, b) => computeQualityScore(b) - computeQualityScore(a));
+      : allSiblings;
 
     // P4: Re-sort ctaPartners by Expected Value if sufficient data exists
     let rankedPartners = ctaPartners;
