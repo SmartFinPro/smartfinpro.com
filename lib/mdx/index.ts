@@ -94,6 +94,53 @@ export interface ContentItem {
 }
 
 /**
+ * Compute a quality score (0–100) for internal linking prioritization.
+ * Used to sort and gate reviews in Pillar pages and "More Reviews" sections.
+ *
+ * Signals (weighted):
+ *   40 pts — Word count (E-E-A-T depth signal)
+ *   30 pts — Recency / freshness
+ *   20 pts — Rating present + value
+ *   10 pts — ReviewCount present (social proof)
+ *
+ * Score >= QUALITY_SCORE_THRESHOLD = indexing-worthy, included in internal links.
+ * Score < threshold = thin/stale content, excluded from navigation (still crawlable).
+ */
+export function computeQualityScore(item: ContentItem): number {
+  let score = 0;
+
+  // 1. Word count — depth/E-E-A-T signal (40 pts max)
+  const words = item.readingTime.words;
+  if (words >= 3000)      score += 40;
+  else if (words >= 1500) score += 25;
+  else if (words >= 800)  score += 10;
+  // < 800: 0 pts — genuine thin content
+
+  // 2. Recency — freshness signal (30 pts max)
+  const dateStr = item.meta.modifiedDate || item.meta.publishDate;
+  const ageMonths = dateStr
+    ? (Date.now() - new Date(dateStr).getTime()) / (1000 * 60 * 60 * 24 * 30)
+    : 99;
+  if (ageMonths <= 3)       score += 30;
+  else if (ageMonths <= 6)  score += 20;
+  else if (ageMonths <= 12) score += 10;
+  // > 12 months: 0 pts
+
+  // 3. Rating (20 pts max)
+  if (item.meta.rating) {
+    score += Math.min(20, Math.round((item.meta.rating / 5) * 20));
+  }
+
+  // 4. ReviewCount (10 pts)
+  if (item.meta.reviewCount && item.meta.reviewCount > 0) score += 10;
+
+  return score;
+}
+
+/** Minimum quality score for inclusion in internal link sections (Pillar + siblingReviews) */
+export const QUALITY_SCORE_THRESHOLD = 20;
+
+/**
  * Get all content files from a specific market/category
  */
 export async function getContentByMarketAndCategory(

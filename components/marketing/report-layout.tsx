@@ -864,11 +864,20 @@ export function ReportLayout({
             {/* Sibling Reviews — "More Reports in {Category}" */}
             {siblingReviews && siblingReviews.length > 0 && (
               <div className="mt-12 pt-10 border-t border-[rgba(27,79,140,0.25)]">
+                {/* Pillar Backlink — reciprocal Hub←Leaf signal, dofollow SSR */}
+                <Link
+                  href={`${marketPrefix}/${category}`}
+                  className="inline-flex items-center gap-1.5 text-sm font-semibold mb-5 hover:underline"
+                  style={{ color: 'var(--sfp-navy)' }}
+                >
+                  <span aria-hidden="true">←</span>
+                  All {categoryName} Reviews
+                </Link>
                 <h3 className="text-xl font-black tracking-tight mb-6" style={{ color: 'var(--sfp-ink)' }}>
                   More {categoryName} Reviews
                 </h3>
                 <div className="space-y-4">
-                  {siblingReviews.slice(0, 5).map((item) => (
+                  {siblingReviews.slice(0, 8).map((item) => (
                     <Link
                       key={item.slug}
                       href={`${marketPrefix}/${category}/${item.slug}`}

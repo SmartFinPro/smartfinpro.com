@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 import { notFound, redirect } from 'next/navigation';
 import { serializeMDX } from '@/lib/mdx/serialize';
-import { getContentBySlug, getAllContentSlugs, getRelatedContent, getContentByMarketAndCategory, getCrossCategoryContent } from '@/lib/mdx';
+import { getContentBySlug, getAllContentSlugs, getRelatedContent, getContentByMarketAndCategory, getCrossCategoryContent, computeQualityScore, QUALITY_SCORE_THRESHOLD } from '@/lib/mdx';
 import { isValidMarket, isValidCategory, Market, Category, marketConfig, markets, marketCategories } from '@/lib/i18n/config';
 import { generateAlternates, getCanonicalUrl } from '@/lib/seo/hreflang';
 import { cache } from 'react';
@@ -166,9 +166,16 @@ export default async function ContentPage({ params }: ContentPageProps) {
       getCrossCategoryContent(market as Market, category as Category, 3),
     ]);
 
-    // Filter sibling reviews (exclude current + index pages)
+    // Sibling reviews: exclude current + index, require rating + quality threshold.
+    // Sorted by quality score DESC so "More Reviews" shows strongest content first.
     const siblingReviews = allCategoryContent
-      .filter(item => item.slug !== slug && item.slug !== 'index' && item.meta.rating);
+      .filter(item =>
+        item.slug !== slug &&
+        item.slug !== 'index' &&
+        item.meta.rating &&
+        computeQualityScore(item) >= QUALITY_SCORE_THRESHOLD
+      )
+      .sort((a, b) => computeQualityScore(b) - computeQualityScore(a));
 
     // P4: Re-sort ctaPartners by Expected Value if sufficient data exists
     let rankedPartners = ctaPartners;

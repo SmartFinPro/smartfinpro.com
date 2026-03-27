@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import { serializeMDX } from '@/lib/mdx/serialize';
 import type { MDXRemoteSerializeResult } from '@/lib/mdx/types';
 import Link from 'next/link';
-import { getPillarContent, getContentByMarketAndCategory } from '@/lib/mdx';
+import { getPillarContent, getContentByMarketAndCategory, computeQualityScore, QUALITY_SCORE_THRESHOLD } from '@/lib/mdx';
 import { SafeMDX } from '@/components/content/SafeMDX';
 import {
   isValidMarket,
@@ -130,14 +130,20 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
     ? expertResult.value
     : { name: 'SmartFinPro Team', role: 'Editorial Team', bio: null, image_url: null, linkedin_url: null, credentials: ['Expert Reviewer'] as string[], market_slug: market as Market, category: (category as Category) || null, id: '', verified: true, created_at: '', updated_at: '' };
 
-  // Filter reviews (exclude pillar index pages)
+  // Filter reviews: exclude pillar index + thin/stale content below quality threshold.
+  // Sorted by quality score DESC (best reviews first), then recency as tiebreaker.
+  // avgRating uses allContent (before this filter) to avoid skewing the metric.
   const allReviews = allContent
     .filter((item) => item.slug !== 'index')
-    .sort(
-      (a, b) =>
+    .filter((item) => computeQualityScore(item) >= QUALITY_SCORE_THRESHOLD)
+    .sort((a, b) => {
+      const scoreDiff = computeQualityScore(b) - computeQualityScore(a);
+      if (scoreDiff !== 0) return scoreDiff;
+      return (
         new Date(b.meta.modifiedDate || b.meta.publishDate).getTime() -
         new Date(a.meta.modifiedDate || a.meta.publishDate).getTime()
-    );
+      );
+    });
 
   // Top rated reviews for Hub→Leaf featured section (sorted by rating desc, top 5)
   const topRatedReviews = [...allReviews]
