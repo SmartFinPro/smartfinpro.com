@@ -861,18 +861,23 @@ export function ReportLayout({
               </div>
             )}
 
+            {/* Pillar Backlink — always rendered, regardless of siblingReviews count.
+                Reciprocal Hub←Leaf crawl signal: every review links back to its pillar.
+                Dofollow, SSR-rendered Next.js Link, descriptive anchor text. */}
+            <div className="mt-10 pt-8 border-t border-[rgba(27,79,140,0.15)]">
+              <Link
+                href={`${marketPrefix}/${category}`}
+                className="inline-flex items-center gap-1.5 text-sm font-semibold hover:underline"
+                style={{ color: 'var(--sfp-navy)' }}
+              >
+                <span aria-hidden="true">←</span>
+                All {categoryName} Reviews
+              </Link>
+            </div>
+
             {/* Sibling Reviews — "More Reports in {Category}" */}
             {siblingReviews && siblingReviews.length > 0 && (
-              <div className="mt-12 pt-10 border-t border-[rgba(27,79,140,0.25)]">
-                {/* Pillar Backlink — reciprocal Hub←Leaf signal, dofollow SSR */}
-                <Link
-                  href={`${marketPrefix}/${category}`}
-                  className="inline-flex items-center gap-1.5 text-sm font-semibold mb-5 hover:underline"
-                  style={{ color: 'var(--sfp-navy)' }}
-                >
-                  <span aria-hidden="true">←</span>
-                  All {categoryName} Reviews
-                </Link>
+              <div className="mt-6 pt-6 border-t border-[rgba(27,79,140,0.25)]">
                 <h3 className="text-xl font-black tracking-tight mb-6" style={{ color: 'var(--sfp-ink)' }}>
                   More {categoryName} Reviews
                 </h3>

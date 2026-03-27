@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 import { notFound, redirect } from 'next/navigation';
 import { serializeMDX } from '@/lib/mdx/serialize';
-import { getContentBySlug, getAllContentSlugs, getRelatedContent, getContentByMarketAndCategory, getCrossCategoryContent, computeQualityScore, QUALITY_SCORE_THRESHOLD } from '@/lib/mdx';
+import { getContentBySlug, getAllContentSlugs, getRelatedContent, getContentByMarketAndCategory, getCrossCategoryContent, computeQualityScore, QUALITY_SCORE_THRESHOLD, QUALITY_FALLBACK_MIN } from '@/lib/mdx';
 import { isValidMarket, isValidCategory, Market, Category, marketConfig, markets, marketCategories } from '@/lib/i18n/config';
 import { generateAlternates, getCanonicalUrl } from '@/lib/seo/hreflang';
 import { cache } from 'react';
@@ -168,14 +168,17 @@ export default async function ContentPage({ params }: ContentPageProps) {
 
     // Sibling reviews: exclude current + index, require rating + quality threshold.
     // Sorted by quality score DESC so "More Reviews" shows strongest content first.
-    const siblingReviews = allCategoryContent
-      .filter(item =>
-        item.slug !== slug &&
-        item.slug !== 'index' &&
-        item.meta.rating &&
-        computeQualityScore(item) >= QUALITY_SCORE_THRESHOLD
-      )
+    // Starvation fallback: if quality gate yields fewer than QUALITY_FALLBACK_MIN,
+    // include all rated siblings (sorted by score) so small categories always have links.
+    const siblingsBase = allCategoryContent.filter(
+      item => item.slug !== slug && item.slug !== 'index' && item.meta.rating
+    );
+    const siblingsFiltered = siblingsBase
+      .filter(item => computeQualityScore(item) >= QUALITY_SCORE_THRESHOLD)
       .sort((a, b) => computeQualityScore(b) - computeQualityScore(a));
+    const siblingReviews = siblingsFiltered.length >= QUALITY_FALLBACK_MIN
+      ? siblingsFiltered
+      : [...siblingsBase].sort((a, b) => computeQualityScore(b) - computeQualityScore(a));
 
     // P4: Re-sort ctaPartners by Expected Value if sufficient data exists
     let rankedPartners = ctaPartners;

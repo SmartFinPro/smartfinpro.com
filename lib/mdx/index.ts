@@ -141,6 +141,14 @@ export function computeQualityScore(item: ContentItem): number {
 export const QUALITY_SCORE_THRESHOLD = 20;
 
 /**
+ * Starvation fallback: if a category has fewer than this many reviews after quality
+ * filtering, fall back to ALL reviews sorted by score. Ensures every category page
+ * and every review page always has minimum internal link coverage — even small or
+ * newly-seeded categories with few high-scoring articles.
+ */
+export const QUALITY_FALLBACK_MIN = 8;
+
+/**
  * Get all content files from a specific market/category
  */
 export async function getContentByMarketAndCategory(

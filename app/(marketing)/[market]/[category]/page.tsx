@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import { serializeMDX } from '@/lib/mdx/serialize';
 import type { MDXRemoteSerializeResult } from '@/lib/mdx/types';
 import Link from 'next/link';
-import { getPillarContent, getContentByMarketAndCategory, computeQualityScore, QUALITY_SCORE_THRESHOLD } from '@/lib/mdx';
+import { getPillarContent, getContentByMarketAndCategory, computeQualityScore, QUALITY_SCORE_THRESHOLD, QUALITY_FALLBACK_MIN } from '@/lib/mdx';
 import { SafeMDX } from '@/components/content/SafeMDX';
 import {
   isValidMarket,
@@ -130,20 +130,28 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
     ? expertResult.value
     : { name: 'SmartFinPro Team', role: 'Editorial Team', bio: null, image_url: null, linkedin_url: null, credentials: ['Expert Reviewer'] as string[], market_slug: market as Market, category: (category as Category) || null, id: '', verified: true, created_at: '', updated_at: '' };
 
-  // Filter reviews: exclude pillar index + thin/stale content below quality threshold.
-  // Sorted by quality score DESC (best reviews first), then recency as tiebreaker.
-  // avgRating uses allContent (before this filter) to avoid skewing the metric.
-  const allReviews = allContent
-    .filter((item) => item.slug !== 'index')
+  // Quality sort helper (reused below to avoid multiple inline calls)
+  const qualitySort = (a: (typeof allContent)[0], b: (typeof allContent)[0]) => {
+    const scoreDiff = computeQualityScore(b) - computeQualityScore(a);
+    if (scoreDiff !== 0) return scoreDiff;
+    return (
+      new Date(b.meta.modifiedDate || b.meta.publishDate).getTime() -
+      new Date(a.meta.modifiedDate || a.meta.publishDate).getTime()
+    );
+  };
+
+  // Base: exclude pillar index, sort by quality DESC then date DESC.
+  const nonIndexContent = allContent.filter((item) => item.slug !== 'index');
+  const qualityFiltered = nonIndexContent
     .filter((item) => computeQualityScore(item) >= QUALITY_SCORE_THRESHOLD)
-    .sort((a, b) => {
-      const scoreDiff = computeQualityScore(b) - computeQualityScore(a);
-      if (scoreDiff !== 0) return scoreDiff;
-      return (
-        new Date(b.meta.modifiedDate || b.meta.publishDate).getTime() -
-        new Date(a.meta.modifiedDate || a.meta.publishDate).getTime()
-      );
-    });
+    .sort(qualitySort);
+
+  // Starvation fallback: if the quality gate leaves fewer than QUALITY_FALLBACK_MIN
+  // reviews, fall back to ALL non-index content sorted by quality score. Prevents
+  // small/new categories from showing an empty list.
+  const allReviews = qualityFiltered.length >= QUALITY_FALLBACK_MIN
+    ? qualityFiltered
+    : [...nonIndexContent].sort(qualitySort);
 
   // Top rated reviews for Hub→Leaf featured section (sorted by rating desc, top 5)
   const topRatedReviews = [...allReviews]
@@ -156,8 +164,9 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
   const safePage = Math.min(currentPage, totalPages);
   const reviews = allReviews.slice((safePage - 1) * REPORTS_PER_PAGE, safePage * REPORTS_PER_PAGE);
 
-  // Compute average rating (across ALL reviews, not just current page)
-  const ratedReviews = allReviews.filter((r) => r.meta.rating);
+  // avgRating uses allContent (pre-filter) so quality gating doesn't skew the metric.
+  // FIX: was incorrectly using allReviews (quality-filtered) in previous version.
+  const ratedReviews = allContent.filter((r) => r.meta.rating);
   const avgRating = ratedReviews.length > 0
     ? (ratedReviews.reduce((sum, r) => sum + (r.meta.rating || 0), 0) / ratedReviews.length).toFixed(1)
     : null;
