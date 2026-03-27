@@ -173,7 +173,13 @@ export default async function ContentPage({ params }: ContentPageProps) {
     // or newly-seeded categories where most articles lack a rating yet.
     const allSiblings = allCategoryContent
       .filter(item => item.slug !== slug && item.slug !== 'index')
-      .sort((a, b) => computeQualityScore(b) - computeQualityScore(a));
+      .sort((a, b) => {
+        const scoreDiff = computeQualityScore(b) - computeQualityScore(a);
+        if (scoreDiff !== 0) return scoreDiff;
+        // Secondary: modifiedDate DESC for deterministic ordering on equal scores
+        return new Date(b.meta.modifiedDate || b.meta.publishDate || 0).getTime()
+             - new Date(a.meta.modifiedDate || a.meta.publishDate || 0).getTime();
+      });
     const siblingsFiltered = allSiblings
       .filter(item => item.meta.rating && computeQualityScore(item) >= QUALITY_SCORE_THRESHOLD);
     const siblingReviews = siblingsFiltered.length >= QUALITY_FALLBACK_MIN
