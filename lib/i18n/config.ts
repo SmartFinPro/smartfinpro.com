@@ -101,6 +101,7 @@ export const marketCategories: Record<Market, Category[]> = {
     'business-banking',
     'tax-efficient-investing',
     'housing',
+    'gold-investing',
   ],
   au: [
     'ai-tools',

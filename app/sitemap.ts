@@ -57,6 +57,7 @@ const siloPages: Record<string, string[]> = {
   ca: [
     '/tax-efficient-investing',
     '/housing',
+    '/gold-investing',
   ],
 };
 

@@ -252,6 +252,11 @@ export async function submitNewSiloUrlsForIndexing(): Promise<BatchIndexingResul
     // CA Tax-Efficient Investing & Housing
     `${baseUrl}/ca/tax-efficient-investing`,
     `${baseUrl}/ca/housing`,
+
+    // CA + US Gold Investing (Silver Gold Bull — neu 2026-03-29)
+    `${baseUrl}/ca/gold-investing`,
+    `${baseUrl}/ca/gold-investing/silver-gold-bull-review`,
+    `${baseUrl}/us/gold-investing/silver-gold-bull-review`,
   ];
 
   console.log(`[Indexing API] Submitting ${newSiloUrls.length} new silo URLs...`);

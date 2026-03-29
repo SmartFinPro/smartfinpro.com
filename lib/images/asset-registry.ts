@@ -397,6 +397,12 @@ export const pillarHeroImages: Record<string, Record<string, ImageAsset>> = {
       freepikQuery: 'canada tax investing portfolio rrsp tfsa professional clean editorial',
       status: 'optimized',
     },
+    'gold-investing': {
+      src: '/images/content/ca/gold-investing/hero.webp',
+      alt: 'Gold bullion bars and coins — precious metals investing in Canada 2026',
+      freepikQuery: 'gold bullion bars coins precious metals investing canada professional clean editorial',
+      status: 'optimized',
+    },
   },
   au: {
     trading: {

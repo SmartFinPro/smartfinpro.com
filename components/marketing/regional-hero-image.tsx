@@ -12,7 +12,9 @@ interface RegionalHeroImageProps {
   className?: string;
 }
 
-const heroConfig: Record<string, Record<string, { gradient: string; label: string; icon: string }>> = {
+type HeroEntry = { gradient: string; label: string; icon: string; aspectRatio?: string };
+
+const heroConfig: Record<string, Record<string, HeroEntry>> = {
   us: {
     trading: { gradient: 'from-blue-50 via-white to-blue-50', label: 'Wall Street Trading', icon: '📈' },
     'personal-finance': { gradient: 'from-green-50 via-white to-teal-50', label: 'Personal Finance', icon: '💳' },
@@ -20,7 +22,7 @@ const heroConfig: Record<string, Record<string, { gradient: string; label: strin
     cybersecurity: { gradient: 'from-red-50 via-white to-orange-50', label: 'Cybersecurity', icon: '🔒' },
     'business-banking': { gradient: 'from-amber-50 via-white to-yellow-50', label: 'Business Banking', icon: '🏦' },
     forex: { gradient: 'from-sky-50 via-white to-blue-50', label: 'Forex Trading', icon: '💱' },
-    'gold-investing': { gradient: 'from-amber-50 via-white to-yellow-50', label: 'Gold Investing', icon: '🥇' },
+    'gold-investing': { gradient: 'from-amber-50 via-white to-yellow-50', label: 'Gold Investing', icon: '🥇', aspectRatio: '3/2' },
     'credit-score': { gradient: 'from-green-50 via-white to-emerald-50', label: 'Credit Score', icon: '📊' },
     'credit-repair': { gradient: 'from-orange-50 via-white to-amber-50', label: 'Credit Repair', icon: '🔧' },
     'debt-relief': { gradient: 'from-teal-50 via-white to-green-50', label: 'Debt Relief', icon: '💚' },
@@ -45,6 +47,7 @@ const heroConfig: Record<string, Record<string, { gradient: string; label: strin
     housing: { gradient: 'from-sky-50 via-white to-teal-50', label: 'Canadian Housing & Mortgage', icon: '🏠' },
     trading: { gradient: 'from-blue-50 via-white to-blue-50', label: 'Canadian Trading', icon: '📊' },
     'tax-efficient-investing': { gradient: 'from-green-50 via-white to-emerald-50', label: 'Tax-Efficient Investing', icon: '🍁' },
+    'gold-investing': { gradient: 'from-amber-50 via-white to-yellow-50', label: 'Gold Investing Canada', icon: '🥇', aspectRatio: '3/2' },
   },
   au: {
     trading: { gradient: 'from-blue-50 via-white to-blue-50', label: 'ASX Trading', icon: '📈' },
@@ -53,16 +56,17 @@ const heroConfig: Record<string, Record<string, { gradient: string; label: strin
     'ai-tools': { gradient: 'from-blue-50 via-white to-sky-50', label: 'AI Tools', icon: '🤖' },
     cybersecurity: { gradient: 'from-red-50 via-white to-orange-50', label: 'Cybersecurity', icon: '🔒' },
     'business-banking': { gradient: 'from-amber-50 via-white to-yellow-50', label: 'AU Business Banking', icon: '🏦' },
-    'gold-investing': { gradient: 'from-amber-50 via-white to-yellow-50', label: 'AU Gold Investing', icon: '🥇' },
+    'gold-investing': { gradient: 'from-amber-50 via-white to-yellow-50', label: 'AU Gold Investing', icon: '🥇', aspectRatio: '3/2' },
     savings: { gradient: 'from-green-50 via-white to-teal-50', label: 'AU Savings Accounts', icon: '🏦' },
     superannuation: { gradient: 'from-sky-50 via-white to-blue-50', label: 'Australian Superannuation', icon: '🦘' },
   },
 };
 
-function GradientFallback({ config, className }: { config: { gradient: string; label: string; icon: string }; className: string }) {
+function GradientFallback({ config, className }: { config: HeroEntry; className: string }) {
+  const aspectRatio = config.aspectRatio ?? '21/9';
   return (
     <div className={`relative overflow-hidden rounded-2xl border border-gray-200 ${className}`}>
-      <div className={`relative aspect-[21/9] bg-gradient-to-br ${config.gradient}`}>
+      <div className={`relative bg-gradient-to-br ${config.gradient}`} style={{ aspectRatio }}>
         {/* Decorative mesh grid */}
         <div className="absolute inset-0 opacity-5" style={{
           backgroundImage: 'linear-gradient(rgba(27,79,140,0.15) 1px, transparent 1px), linear-gradient(90deg, rgba(27,79,140,0.15) 1px, transparent 1px)',
@@ -106,10 +110,12 @@ export function RegionalHeroImage({ market, category, slug, className = '' }: Re
     : `${slug || category} — Hero`;
 
   // Show image if we have a source and it hasn't errored
+  const aspectRatio = config.aspectRatio ?? '21/9';
+
   if (resolvedSrc && !imgError) {
     return (
       <div className={`relative overflow-hidden rounded-2xl border border-gray-200 ${className}`}>
-        <div className="relative aspect-[21/9]">
+        <div className="relative" style={{ aspectRatio }}>
           <Image
             src={resolvedSrc}
             alt={resolvedAlt}

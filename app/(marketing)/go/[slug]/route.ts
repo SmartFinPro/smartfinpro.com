@@ -155,7 +155,7 @@ const ALLOWED_HOSTS = new Set([
   'www.awin1.com',
   'commission-junction.com',
   'www.cj.com',
-  // CJ tracking domains (jdoqocy, dpbolvw, tkqlhce, anrdoezrs are all CJ sub-networks)
+  // CJ tracking domains (jdoqocy, dpbolvw, tkqlhce, anrdoezrs, kqzyfj are all CJ sub-networks)
   'www.jdoqocy.com',
   'jdoqocy.com',
   'www.dpbolvw.net',
@@ -164,6 +164,8 @@ const ALLOWED_HOSTS = new Set([
   'tkqlhce.com',
   'www.anrdoezrs.net',
   'anrdoezrs.net',
+  'www.kqzyfj.com',
+  'kqzyfj.com',
   'track.flexoffers.com',
 ]);
 
