@@ -8,7 +8,9 @@ import { NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
 import { inspectBatchUrls } from '@/lib/seo/url-inspection';
 
-const CHECK_LIMIT = 30; // Max URLs per request (30 × ~500ms ≈ 15s, safe under Cloudflare 100s timeout)
+export const maxDuration = 60; // Explicit 60s limit — parallel inspection: 50 URLs × 1.5s / 3 concurrency ≈ 27s
+
+const CHECK_LIMIT = 50; // Max URLs per request — with 3-parallel inspection: 50 URLs ≈ 27s, well within 60s
 const CACHE_HOURS = 24;  // Re-check after this many hours
 
 export async function GET() {
@@ -66,20 +68,25 @@ export async function GET() {
     const firstError = results.results.find((r) => r.status === 'error');
     if (firstError) errorSample = firstError.verdict;
 
-    // Update DB — for errors: set indexed_checked_at (skip in next batch) but keep indexed_status NULL
+    // Update DB — for errors: only mark as checked for real errors (quota, 404, auth).
+    // Timeout errors ("aborted"/"timeout") are NOT marked — they retry on next batch.
     // Note: apiErrors already set from results.errors above — do NOT increment again here
     for (const r of results.results) {
       if (r.status === 'error') {
-        // Set indexed_checked_at so this URL is excluded from needsCheck next batch
-        // but keep indexed_status as NULL (= unchecked, not false not_indexed)
+        const isTimeoutError =
+          r.verdict.includes('aborted') ||
+          r.verdict.toLowerCase().includes('timeout');
+
         const errEntry = needsCheck.find((l) => l.url === r.url);
-        if (errEntry) {
+        if (errEntry && !isTimeoutError) {
+          // Real error (quota, auth, 4xx) → mark as checked, skip for 24h
           await supabase
             .from('indexing_log')
             .update({ indexed_checked_at: new Date().toISOString() })
             .eq('id', errEntry.id);
           errEntry.indexed_checked_at = new Date().toISOString();
         }
+        // Timeout: do NOT set indexed_checked_at — URL stays in needsCheck for next batch ✓
         continue;
       }
 

@@ -136,7 +136,7 @@ export function IndexingCard() {
     setInspectError(null);
 
     let batchCount = 0;
-    const MAX_BATCHES = 8; // 8 × 30 = 240 URLs max
+    const MAX_BATCHES = 6; // 6 × 50 = 300 URLs max (parallel inspection: 50/batch ≈ 27s each)
     let prevUnchecked = Infinity;
 
     try {
@@ -342,7 +342,7 @@ export function IndexingCard() {
           </div>
         )}
 
-        {/* API error warning (GSC credentials / config issue) */}
+        {/* API error warning — distinguish timeout (transient) from credential errors */}
         {inspectErrors > 0 && (
           <div className="mt-3 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3">
             <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-600" />
@@ -353,9 +353,15 @@ export function IndexingCard() {
               {errorSample && (
                 <p className="mt-0.5 text-xs text-amber-700 font-mono truncate">{errorSample}</p>
               )}
-              <p className="mt-1 text-xs text-amber-600">
-                GSC-Credentials prüfen: <code className="font-mono">GSC_CLIENT_EMAIL</code>, <code className="font-mono">GSC_PRIVATE_KEY</code>, <code className="font-mono">GSC_SITE_URL</code> in <code className="font-mono">.env.local</code> auf dem VPS.
-              </p>
+              {errorSample && (errorSample.includes('aborted') || errorSample.toLowerCase().includes('timeout')) ? (
+                <p className="mt-1 text-xs text-amber-600">
+                  Google-API-Timeout — diese URLs werden beim nächsten Prüflauf automatisch wiederholt.
+                </p>
+              ) : (
+                <p className="mt-1 text-xs text-amber-600">
+                  GSC-Credentials prüfen: <code className="font-mono">GSC_CLIENT_EMAIL</code>, <code className="font-mono">GSC_PRIVATE_KEY</code>, <code className="font-mono">GSC_SITE_URL</code> in <code className="font-mono">.env.local</code> auf dem VPS.
+                </p>
+              )}
               <button
                 onClick={async () => {
                   try {

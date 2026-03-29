@@ -120,7 +120,7 @@ export async function inspectUrl(
           inspectionUrl: url,
           siteUrl,
         }),
-        signal: AbortSignal.timeout(3_000), // 3s timeout per URL (30×3s=90s worst case; global 80s budget stops earlier)
+        signal: AbortSignal.timeout(1_500), // 1.5s per URL — GSC typically responds in <500ms; 1.5s covers stragglers
       }
     );
 
@@ -196,37 +196,48 @@ export async function inspectBatchUrls(
   }
 
   let consecutiveQuotaErrors = 0;
-  const GLOBAL_BUDGET_MS = 80_000; // 80s budget — stop before Cloudflare's 100s timeout
+  const CONCURRENCY = 3;            // Process 3 URLs in parallel — safe under 600/min rate limit
+  const GLOBAL_BUDGET_MS = 55_000;  // 55s budget — parallel groups of 3 × 1.5s → ~27s for 50 URLs
   const batchStart = Date.now();
 
-  for (const url of batch) {
-    // Global time budget check — return partial results rather than hit Cloudflare 524
+  for (let i = 0; i < batch.length; i += CONCURRENCY) {
+    // Global time budget — return partial results rather than hit Cloudflare 100s cut
     if (Date.now() - batchStart > GLOBAL_BUDGET_MS) {
       break;
     }
 
-    try {
-      const result = await inspectUrl(url, token);
-      results.push(result);
-      consecutiveQuotaErrors = 0;
-    } catch (err) {
-      // Quota exceeded — stop early
-      if (err instanceof Error && err.message.startsWith('Quota')) {
-        consecutiveQuotaErrors++;
-        if (consecutiveQuotaErrors >= 2) {
-          break;
+    const chunk = batch.slice(i, i + CONCURRENCY);
+    const settled = await Promise.allSettled(chunk.map((url) => inspectUrl(url, token)));
+
+    for (let j = 0; j < settled.length; j++) {
+      const outcome = settled[j];
+      const url = chunk[j];
+
+      if (outcome.status === 'fulfilled') {
+        results.push(outcome.value);
+        consecutiveQuotaErrors = 0;
+      } else {
+        const errMsg = outcome.reason instanceof Error ? outcome.reason.message : 'Unknown error';
+        const isQuota = errMsg.startsWith('Quota');
+        if (isQuota) {
+          consecutiveQuotaErrors++;
         }
+        results.push({
+          url,
+          status: 'error',
+          coverageState: 'ERROR',
+          verdict: errMsg,
+        });
       }
-      results.push({
-        url,
-        status: 'error',
-        coverageState: 'ERROR',
-        verdict: err instanceof Error ? err.message : 'Unknown error',
-      });
     }
 
-    // 100ms delay between requests (rate limit: ~600/min)
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    // Stop on quota exhaustion
+    if (consecutiveQuotaErrors >= 2) {
+      break;
+    }
+
+    // 50ms delay between groups (rate limit: ~600/min; 3 concurrent → ~3600/min headroom)
+    await new Promise((resolve) => setTimeout(resolve, 50));
   }
 
   return {
