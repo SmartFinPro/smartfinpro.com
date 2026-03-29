@@ -120,7 +120,7 @@ export async function inspectUrl(
           inspectionUrl: url,
           siteUrl,
         }),
-        signal: AbortSignal.timeout(2_500), // 2.5s per URL — GSC often <500ms but some URLs take 1-2s; 2.5s avoids false timeouts
+        signal: AbortSignal.timeout(5_000), // 5s per URL — GSC docs say "responses can take several seconds"; 5s covers all cases
       }
     );
 

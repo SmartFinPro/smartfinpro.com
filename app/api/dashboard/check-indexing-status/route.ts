@@ -10,7 +10,7 @@ import { inspectBatchUrls } from '@/lib/seo/url-inspection';
 
 export const maxDuration = 90; // 90s limit — 2-parallel × 2.5s timeout → ~65s for 50 URLs, safe margin
 
-const CHECK_LIMIT = 50; // Max URLs per request — with 2-parallel inspection: 50 URLs ≈ 65s, within 90s limit
+const CHECK_LIMIT = 25; // Max URLs per request — with 2-parallel × 5s timeout: 13 groups × 5.1s ≈ 66s, within 90s
 const CACHE_HOURS = 24;  // Re-check after this many hours
 
 export async function GET() {

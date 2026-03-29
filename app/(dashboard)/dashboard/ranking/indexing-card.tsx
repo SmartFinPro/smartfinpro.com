@@ -136,7 +136,7 @@ export function IndexingCard() {
     setInspectError(null);
 
     let batchCount = 0;
-    const MAX_BATCHES = 6; // 6 × 50 = 300 URLs max (parallel inspection: 50/batch ≈ 27s each)
+    const MAX_BATCHES = 12; // 12 × 25 = 300 URLs max (2-parallel × 5s timeout: 25/batch ≈ 66s each)
     let prevUnchecked = Infinity;
 
     try {
