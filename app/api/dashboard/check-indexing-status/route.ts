@@ -8,9 +8,9 @@ import { NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
 import { inspectBatchUrls } from '@/lib/seo/url-inspection';
 
-export const maxDuration = 60; // Explicit 60s limit — parallel inspection: 50 URLs × 1.5s / 3 concurrency ≈ 27s
+export const maxDuration = 90; // 90s limit — 2-parallel × 2.5s timeout → ~65s for 50 URLs, safe margin
 
-const CHECK_LIMIT = 50; // Max URLs per request — with 3-parallel inspection: 50 URLs ≈ 27s, well within 60s
+const CHECK_LIMIT = 50; // Max URLs per request — with 2-parallel inspection: 50 URLs ≈ 65s, within 90s limit
 const CACHE_HOURS = 24;  // Re-check after this many hours
 
 export async function GET() {

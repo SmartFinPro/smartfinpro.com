@@ -120,7 +120,7 @@ export async function inspectUrl(
           inspectionUrl: url,
           siteUrl,
         }),
-        signal: AbortSignal.timeout(1_500), // 1.5s per URL — GSC typically responds in <500ms; 1.5s covers stragglers
+        signal: AbortSignal.timeout(2_500), // 2.5s per URL — GSC often <500ms but some URLs take 1-2s; 2.5s avoids false timeouts
       }
     );
 
@@ -196,8 +196,8 @@ export async function inspectBatchUrls(
   }
 
   let consecutiveQuotaErrors = 0;
-  const CONCURRENCY = 3;            // Process 3 URLs in parallel — safe under 600/min rate limit
-  const GLOBAL_BUDGET_MS = 55_000;  // 55s budget — parallel groups of 3 × 1.5s → ~27s for 50 URLs
+  const CONCURRENCY = 2;            // 2 parallel — less aggressive than 3, avoids Google rate-limit throttling
+  const GLOBAL_BUDGET_MS = 70_000;  // 70s budget — 2 parallel × 2.5s timeout → ~65s for 50 URLs, safe under Cloudflare 100s
   const batchStart = Date.now();
 
   for (let i = 0; i < batch.length; i += CONCURRENCY) {
@@ -236,8 +236,8 @@ export async function inspectBatchUrls(
       break;
     }
 
-    // 50ms delay between groups (rate limit: ~600/min; 3 concurrent → ~3600/min headroom)
-    await new Promise((resolve) => setTimeout(resolve, 50));
+    // 100ms delay between groups (rate limit: ~600/min; 2 concurrent = safe headroom)
+    await new Promise((resolve) => setTimeout(resolve, 100));
   }
 
   return {
