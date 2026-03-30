@@ -86,7 +86,7 @@ jobs:
         uses: anthropics/claude-code-action@beta
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          model: claude-opus-4-5
+          model: claude-opus-4-6
           claude_args: "--max-turns 40"
           prompt: |
             Du bist Senior SEO-Stratege und Content-Entwickler für SmartFinPro.com.

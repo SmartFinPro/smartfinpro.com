@@ -55,7 +55,7 @@ jobs:
         uses: anthropics/claude-code-action@beta
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          model: claude-opus-4-5   # Bestes Modell für Content-Generierung
+          model: claude-opus-4-6   # Bestes Modell für Content-Generierung
           prompt: |
             Du bist Senior-Entwickler für SmartFinPro.com (Next.js 16, Tailwind v4, Supabase).
             Markt-Filter: ${{ github.event.inputs.market }}
