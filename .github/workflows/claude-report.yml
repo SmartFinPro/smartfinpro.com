@@ -104,8 +104,8 @@ jobs:
         uses: anthropics/claude-code-action@beta
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          model: claude-sonnet-4-5   # Schnell + günstig für Reports
-          prompt: |
+          model: claude-sonnet-4-6
+          direct_prompt: |
             Du bist Senior-Analyst für SmartFinPro.com.
             WICHTIG: Dieser Report ist NUR LESEND. Ändere KEINE Dateien und mache KEINEN Commit.
 

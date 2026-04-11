@@ -242,9 +242,9 @@ jobs:
         continue-on-error: true
         env:
           COMMIT_MSG: ${{ github.event.head_commit.message }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          SITE_URL: https://smartfinpro.com
         run: |
-          CRON_SECRET=$(grep -oP '^CRON_SECRET=\K.*' .next/standalone/.env | tr -d ' ')
-          SITE_URL=$(grep -oP '^NEXT_PUBLIC_SITE_URL=\K.*' .next/standalone/.env | tr -d ' ')
           PAYLOAD=$(jq -nc \
             --arg sha "${{ github.sha }}" \
             --arg msg "$COMMIT_MSG" \
@@ -292,9 +292,9 @@ jobs:
         continue-on-error: true
         env:
           COMMIT_MSG: ${{ github.event.head_commit.message }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          SITE_URL: https://smartfinpro.com
         run: |
-          CRON_SECRET=$(grep -oP '^CRON_SECRET=\K.*' .next/standalone/.env | tr -d ' ')
-          SITE_URL=$(grep -oP '^NEXT_PUBLIC_SITE_URL=\K.*' .next/standalone/.env | tr -d ' ')
           PAYLOAD=$(jq -nc \
             --arg sha "${{ github.sha }}" \
             --arg msg "$COMMIT_MSG" \
