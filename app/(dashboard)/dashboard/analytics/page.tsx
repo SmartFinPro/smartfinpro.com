@@ -26,6 +26,8 @@ import { ReferrersList } from '@/components/dashboard/referrers-list';
 import { SiloFilterDropdown } from '@/components/dashboard/silo-filter-dropdown';
 import { WidgetErrorBoundary } from '@/components/dashboard/widget-error-boundary';
 import { GSCOverview } from '@/components/dashboard/gsc-overview';
+import { LiveDashboardBar } from '@/components/dashboard/live-dashboard-bar';
+import { LiveClicksFeed } from '@/components/dashboard/live-clicks-feed';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -58,6 +60,9 @@ export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps
 
   return (
     <div className="space-y-6">
+      {/* Live Stats Bar — real-time active visitors, today's PVs + clicks */}
+      <LiveDashboardBar />
+
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -184,15 +189,18 @@ export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps
         </div>
       </div>
 
-      {/* Traffic Chart */}
-      <div className="dashboard-card overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-2">
-          <BarChart3 className="h-5 w-5 text-slate-400" />
-          <h3 className="font-semibold text-slate-800">Traffic Over Time</h3>
+      {/* Traffic Chart + Live Clicks Feed */}
+      <div className="grid gap-4 lg:grid-cols-3">
+        <div className="dashboard-card overflow-hidden lg:col-span-2">
+          <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-2">
+            <BarChart3 className="h-5 w-5 text-slate-400" />
+            <h3 className="font-semibold text-slate-800">Traffic Over Time</h3>
+          </div>
+          <div className="p-6">
+            <TrafficChart data={stats.pageViewsOverTime} />
+          </div>
         </div>
-        <div className="p-6">
-          <TrafficChart data={stats.pageViewsOverTime} />
-        </div>
+        <LiveClicksFeed />
       </div>
 
       {/* Traffic Sources + Referrers */}
