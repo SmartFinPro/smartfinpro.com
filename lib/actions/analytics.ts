@@ -1,6 +1,7 @@
 'use server';
 
 import 'server-only';
+import { unstable_cache } from 'next/cache';
 import { logger } from '@/lib/logging';
 
 import { createServiceClient } from '@/lib/supabase/server';
@@ -135,22 +136,22 @@ function categorizeTrafficSource(referrer: string | null, utmSource: string | nu
 // Main Analytics Function
 // ============================================================
 
-export async function getAnalyticsStats(range: TimeRange = '7d'): Promise<AnalyticsStats> {
+async function fetchAnalyticsStats(range: TimeRange): Promise<AnalyticsStats> {
   const supabase = createServiceClient();
   const now = new Date();
   const rangeStart = getTimeRangeStart(range);
 
   // Fetch page views — explicit columns (avoid fetching large user_agent/referrer text)
-  // Limit to 20K rows max to prevent VPS memory issues
+  // Limit to 5K rows max to prevent VPS memory issues (20K was over-fetching)
   let pageViewsQuery = supabase
     .from('page_views')
-    .select('id, page_path, article_slug, page_title, market, viewed_at, scroll_depth, time_on_page, referrer, utm_source, utm_medium, utm_campaign, country_code, device_type, browser');
+    .select('id, session_id, page_path, article_slug, page_title, market, viewed_at, scroll_depth, time_on_page, referrer, referrer_domain, utm_source, utm_medium, utm_campaign, country_code, device_type, browser, os');
 
   if (rangeStart) {
     pageViewsQuery = pageViewsQuery.gte('viewed_at', rangeStart.toISOString());
   }
 
-  const { data: pageViewsData } = await pageViewsQuery.order('viewed_at', { ascending: false }).limit(20000);
+  const { data: pageViewsData } = await pageViewsQuery.order('viewed_at', { ascending: false }).limit(5000);
   const pageViews = (pageViewsData || []) as PageView[];
 
   // Fetch link clicks for conversion tracking — limit to 20K
@@ -162,7 +163,7 @@ export async function getAnalyticsStats(range: TimeRange = '7d'): Promise<Analyt
     clicksQuery = clicksQuery.gte('clicked_at', rangeStart.toISOString());
   }
 
-  const { data: clicksData, error: clicksError } = await clicksQuery.limit(20000);
+  const { data: clicksData, error: clicksError } = await clicksQuery.limit(5000);
   if (clicksError) {
     logger.error('link_clicks query error:', clicksError.message);
   }
@@ -441,6 +442,16 @@ export async function getAnalyticsStats(range: TimeRange = '7d'): Promise<Analyt
     referrers,
     pageViewsOverTime,
   };
+}
+
+const cachedAnalyticsStats = unstable_cache(
+  fetchAnalyticsStats,
+  ['analytics-stats'],
+  { revalidate: 300 } // Cache for 5 minutes — reduces TTFB on repeated dashboard loads
+);
+
+export async function getAnalyticsStats(range: TimeRange = '7d'): Promise<AnalyticsStats> {
+  return cachedAnalyticsStats(range);
 }
 
 function buildPageViewTimeSeries(
