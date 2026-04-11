@@ -39,6 +39,11 @@ export async function generateMetadata({ params }: OverviewPageProps): Promise<M
     return {};
   }
 
+  // Category must be valid for this specific market
+  if (!marketCategories[market as Market].includes(category as Category)) {
+    return {};
+  }
+
   const content = overviewContent[category];
   const categoryInfo = categoryConfig[category as Category];
   const title = content?.pageTitle || `${categoryInfo.name} Market Overview | SmartFinPro`;
@@ -73,6 +78,11 @@ export default async function OverviewPage({ params }: OverviewPageProps) {
   const { market, category } = await params;
 
   if (!isValidMarket(market) || !isValidCategory(category)) {
+    notFound();
+  }
+
+  // Category must be valid for this specific market (e.g. remortgaging is UK-only)
+  if (!marketCategories[market as Market].includes(category as Category)) {
     notFound();
   }
 
