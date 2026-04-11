@@ -498,6 +498,22 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+
+  // ============================================================
+  // Redirects — canonical URL enforcement
+  // /us is rendered by [market]/page.tsx but the US canonical is /.
+  // Google flagged it as duplicate (GSC 2026-04-11). 301 ensures
+  // link equity flows to / and removes it from the index.
+  // ============================================================
+  async redirects() {
+    return [
+      {
+        source: '/us',
+        destination: '/',
+        permanent: true,
+      },
+    ];
+  },
 };
 
 // ============================================================
