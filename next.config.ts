@@ -561,6 +561,171 @@ const nextConfig: NextConfig = {
         destination: '/tools/credit-score-simulator',
         permanent: true,
       },
+
+      // ── AU-only categories crawled with /us/ prefix ───────────────────────
+      {
+        source: '/us/superannuation/:slug*',
+        destination: '/au/superannuation/:slug*',
+        permanent: true,
+      },
+
+      // ── UK-only categories crawled with /us/ prefix ───────────────────────
+      {
+        source: '/us/remortgaging/:slug*',
+        destination: '/uk/remortgaging/:slug*',
+        permanent: true,
+      },
+      {
+        source: '/us/cost-of-living/:slug*',
+        destination: '/uk/cost-of-living/:slug*',
+        permanent: true,
+      },
+
+      // ── CA-only categories crawled with /us/ prefix ───────────────────────
+      {
+        source: '/us/housing/:slug*',
+        destination: '/ca/housing/:slug*',
+        permanent: true,
+      },
+      {
+        source: '/us/tax-efficient-investing/:slug*',
+        destination: '/ca/tax-efficient-investing/:slug*',
+        permanent: true,
+      },
+
+      // ── UK categories crawled without market prefix ───────────────────────
+      {
+        source: '/savings',
+        destination: '/uk/savings',
+        permanent: true,
+      },
+      {
+        source: '/remortgaging',
+        destination: '/uk/remortgaging',
+        permanent: true,
+      },
+      {
+        source: '/cost-of-living',
+        destination: '/uk/cost-of-living',
+        permanent: true,
+      },
+
+      // ── Individual wrong-market: AU content at /us/ path ─────────────────
+      {
+        source: '/us/gold-investing/ainslie-bullion-review',
+        destination: '/au/gold-investing/ainslie-bullion-review',
+        permanent: true,
+      },
+      {
+        source: '/us/gold-investing/how-to-buy-gold-australia',
+        destination: '/au/gold-investing/how-to-buy-gold-australia',
+        permanent: true,
+      },
+      {
+        source: '/us/personal-finance/commbank-home-loan-review',
+        destination: '/au/personal-finance/commbank-home-loan-review',
+        permanent: true,
+      },
+      {
+        source: '/us/personal-finance/anz-home-loan-review',
+        destination: '/au/personal-finance/anz-home-loan-review',
+        permanent: true,
+      },
+      {
+        source: '/us/personal-finance/ubank-home-loan-review',
+        destination: '/au/personal-finance/ubank-home-loan-review',
+        permanent: true,
+      },
+
+      // ── Individual wrong-market: UK content at /us/ path ─────────────────
+      {
+        source: '/us/personal-finance/marcus-uk-review',
+        destination: '/uk/personal-finance/marcus-uk-review',
+        permanent: true,
+      },
+      {
+        source: '/us/personal-finance/barclays-personal-loan-review',
+        destination: '/uk/personal-finance/barclays-personal-loan-review',
+        permanent: true,
+      },
+      {
+        source: '/us/personal-finance/hargreaves-lansdown-isa-review',
+        destination: '/uk/personal-finance/hargreaves-lansdown-isa-review',
+        permanent: true,
+      },
+      {
+        source: '/us/personal-finance/vanguard-isa-review',
+        destination: '/uk/personal-finance/vanguard-isa-review',
+        permanent: true,
+      },
+      {
+        source: '/us/personal-finance/trading-212-isa-review',
+        destination: '/uk/personal-finance/trading-212-isa-review',
+        permanent: true,
+      },
+      {
+        source: '/us/business-banking/tide-review',
+        destination: '/uk/business-banking/tide-review',
+        permanent: true,
+      },
+      {
+        source: '/us/cybersecurity/nordvpn-review-uk-2026-best-vpn-for-investors',
+        destination: '/uk/cybersecurity/nordvpn-review-uk-2026-best-vpn-for-investors',
+        permanent: true,
+      },
+
+      // ── Individual wrong-market: CA content at /us/ path ─────────────────
+      {
+        source: '/us/personal-finance/wealthsimple-tax',
+        destination: '/ca/personal-finance/wealthsimple-tax',
+        permanent: true,
+      },
+      {
+        source: '/us/forex/questrade-review',
+        destination: '/ca/forex/questrade-review',
+        permanent: true,
+      },
+
+      // ── Forex reviews that belong to UK or AU ────────────────────────────
+      {
+        source: '/us/forex/cmc-markets-review',
+        destination: '/uk/forex/cmc-markets-review',
+        permanent: true,
+      },
+      {
+        source: '/us/forex/pepperstone-review',
+        destination: '/au/forex/pepperstone-review',
+        permanent: true,
+      },
+      {
+        source: '/us/forex/interactive-brokers-review',
+        destination: '/ca/forex/interactive-brokers-review',
+        permanent: true,
+      },
+
+      // ── Trading comparisons that belong to UK ────────────────────────────
+      {
+        source: '/us/trading/ig-vs-plus500-vs-etoro',
+        destination: '/uk/trading/ig-vs-plus500-vs-etoro',
+        permanent: true,
+      },
+
+      // ── Savings reviews wrong-market ─────────────────────────────────────
+      {
+        source: '/us/savings/marcus-review',
+        destination: '/uk/savings/marcus-review',
+        permanent: true,
+      },
+      {
+        source: '/us/savings/chip-review',
+        destination: '/uk/savings/chip-review',
+        permanent: true,
+      },
+      {
+        source: '/us/savings/ing-savings-maximiser-review',
+        destination: '/au/savings/ing-savings-maximiser-review',
+        permanent: true,
+      },
     ];
   },
 };
