@@ -507,9 +507,58 @@ const nextConfig: NextConfig = {
   // ============================================================
   async redirects() {
     return [
+      // ── US market canonical (no prefix) ──────────────────────────────────
       {
         source: '/us',
         destination: '/',
+        permanent: true,
+      },
+
+      // ── Wrong-market content: AU reviews linked with /us/ prefix ─────────
+      // Google crawled these via hreflang from AU pages. Redirect to correct market.
+      {
+        source: '/us/gold-investing/perth-mint-review',
+        destination: '/au/gold-investing/perth-mint-review',
+        permanent: true,
+      },
+      {
+        source: '/us/personal-finance/nab-home-loan-review',
+        destination: '/au/personal-finance/nab-home-loan-review',
+        permanent: true,
+      },
+      {
+        source: '/us/personal-finance/athena-home-loans-review',
+        destination: '/au/personal-finance/athena-home-loans-review',
+        permanent: true,
+      },
+
+      // ── Wrong-market content: UK reviews linked with /us/ prefix ─────────
+      {
+        source: '/us/business-banking/starling-business-review',
+        destination: '/uk/business-banking/starling-business-review',
+        permanent: true,
+      },
+
+      // ── Wrong-market: UK savings content at /us/ path ────────────────────
+      // "savings" is not a US category; redirect to UK equivalent.
+      {
+        source: '/us/savings/:slug*',
+        destination: '/uk/savings/:slug*',
+        permanent: true,
+      },
+
+      // ── Global tools linked with market prefix in hreflang ───────────────
+      // debt-payoff-calculator and credit-score-simulator are global (/tools/).
+      // Some tool page.tsx files incorrectly pointed hreflang at market-prefixed
+      // versions. Redirect as fallback in case any external links remain.
+      {
+        source: '/:market(uk|ca|au)/tools/debt-payoff-calculator',
+        destination: '/tools/debt-payoff-calculator',
+        permanent: true,
+      },
+      {
+        source: '/:market(uk|ca|au)/tools/credit-score-simulator',
+        destination: '/tools/credit-score-simulator',
         permanent: true,
       },
     ];

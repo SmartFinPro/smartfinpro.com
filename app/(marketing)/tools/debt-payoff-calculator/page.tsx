@@ -12,9 +12,9 @@ export const metadata: Metadata = {
     canonical: 'https://smartfinpro.com/tools/debt-payoff-calculator',
     languages: {
       'en-US': 'https://smartfinpro.com/tools/debt-payoff-calculator',
-      'en-GB': 'https://smartfinpro.com/uk/tools/debt-payoff-calculator',
-      'en-CA': 'https://smartfinpro.com/ca/tools/debt-payoff-calculator',
-      'en-AU': 'https://smartfinpro.com/au/tools/debt-payoff-calculator',
+      'en-GB': 'https://smartfinpro.com/tools/debt-payoff-calculator',
+      'en-CA': 'https://smartfinpro.com/tools/debt-payoff-calculator',
+      'en-AU': 'https://smartfinpro.com/tools/debt-payoff-calculator',
     },
   },
   openGraph: {
