@@ -33,7 +33,8 @@ const CANONICAL_BASE = (process.argv[3] || BASE_URL).replace(/\/$/, '');
 // tier: 'basic' → status + noindex + title only (no canonical/schema required)
 const CRITICAL_URLS = [
   // Market homepages
-  { path: '/us',  tier: 'full' },
+  // /us permanently redirects to / — test the canonical US homepage directly
+  { path: '/',    tier: 'full' },
   { path: '/uk',  tier: 'full' },
   { path: '/ca',  tier: 'full' },
   { path: '/au',  tier: 'full' },
