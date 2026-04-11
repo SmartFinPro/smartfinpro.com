@@ -38,6 +38,7 @@ if (!TOKEN || !ZONE) {
 const DEFAULT_URLS = [
   'https://smartfinpro.com/',
   'https://smartfinpro.com',
+  'https://smartfinpro.com/us',   // redirects to / — purge prevents stale 200 cache
   'https://smartfinpro.com/uk/',
   'https://smartfinpro.com/uk',
   'https://smartfinpro.com/ca/',
