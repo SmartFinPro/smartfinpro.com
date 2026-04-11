@@ -1,0 +1,173 @@
+name: ⏰ Cron Jobs
+
+# Triggers all API cron endpoints on their intended schedules.
+# This replaces the missing Cloudways OS-level cron configuration.
+#
+# Schedules (UTC):
+#   Hourly  — spike-monitor, sync-conversions, ev-refresh, perf-governance
+#   Daily   — update-fx-rates, seo-drift, check-links, sync-competitors,
+#             freshness-check, check-rankings, affiliate-scout, send-emails,
+#             daily-strategy, backlink-post, backlink-scout, backlink-verify,
+#             sync-revenue, auto-genesis
+#   Weekly  — weekly-report (Mon 07:00 UTC)
+
+on:
+  schedule:
+    - cron: '5 * * * *'    # hourly batch — :05 past the hour
+    - cron: '0 2 * * *'    # daily batch  — 02:00 UTC
+    - cron: '0 7 * * 1'    # weekly batch — Mon 07:00 UTC
+  workflow_dispatch:
+    inputs:
+      job:
+        description: 'Single job to run (leave empty = all)'
+        required: false
+        default: ''
+
+env:
+  SITE_URL: https://smartfinpro.com
+  CRON_SECRET: ${{ secrets.CRON_SECRET }}
+
+jobs:
+  # ─── Hourly jobs ──────────────────────────────────────────────────────────
+  hourly:
+    name: Hourly Jobs
+    runs-on: ubuntu-latest
+    if: |
+      github.event.schedule == '5 * * * *' ||
+      github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Spike Monitor
+        run: |
+          echo "▶ spike-monitor"
+          curl -sf --max-time 20 "$SITE_URL/api/cron/spike-monitor" \
+            -H "Authorization: Bearer $CRON_SECRET" || echo "⚠ spike-monitor failed (non-blocking)"
+
+      - name: Sync Conversions
+        run: |
+          echo "▶ sync-conversions"
+          curl -sf --max-time 20 -X POST "$SITE_URL/api/cron/sync-conversions" \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            -H "Content-Type: application/json" || echo "⚠ sync-conversions failed (non-blocking)"
+
+      - name: EV Refresh
+        run: |
+          echo "▶ ev-refresh"
+          curl -sf --max-time 20 -X POST "$SITE_URL/api/cron/ev-refresh" \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            -H "Content-Type: application/json" || echo "⚠ ev-refresh failed (non-blocking)"
+
+      - name: Perf Governance
+        run: |
+          echo "▶ perf-governance"
+          curl -sf --max-time 20 "$SITE_URL/api/cron/perf-governance" \
+            -H "Authorization: Bearer $CRON_SECRET" || echo "⚠ perf-governance failed (non-blocking)"
+
+  # ─── Daily jobs ───────────────────────────────────────────────────────────
+  daily:
+    name: Daily Jobs
+    runs-on: ubuntu-latest
+    if: |
+      github.event.schedule == '0 2 * * *' ||
+      github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Update FX Rates
+        run: |
+          echo "▶ update-fx-rates"
+          curl -sf --max-time 30 -X POST "$SITE_URL/api/cron/update-fx-rates" \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            -H "Content-Type: application/json" || echo "⚠ update-fx-rates failed"
+
+      - name: SEO Drift Check
+        run: |
+          echo "▶ seo-drift"
+          curl -sf --max-time 30 "$SITE_URL/api/cron/seo-drift" \
+            -H "Authorization: Bearer $CRON_SECRET" || echo "⚠ seo-drift failed"
+
+      - name: Affiliate Link Health
+        run: |
+          echo "▶ check-links"
+          curl -sf --max-time 60 "$SITE_URL/api/cron/check-links" \
+            -H "Authorization: Bearer $CRON_SECRET" || echo "⚠ check-links failed"
+
+      - name: Sync Competitors
+        run: |
+          echo "▶ sync-competitors"
+          curl -sf --max-time 60 "$SITE_URL/api/cron/sync-competitors" \
+            -H "Authorization: Bearer $CRON_SECRET" || echo "⚠ sync-competitors failed"
+
+      - name: Freshness Check
+        run: |
+          echo "▶ freshness-check"
+          curl -sf --max-time 60 "$SITE_URL/api/cron/freshness-check" \
+            -H "Authorization: Bearer $CRON_SECRET" || echo "⚠ freshness-check failed"
+
+      - name: Check Rankings
+        run: |
+          echo "▶ check-rankings"
+          curl -sf --max-time 60 "$SITE_URL/api/cron/check-rankings" \
+            -H "Authorization: Bearer $CRON_SECRET" || echo "⚠ check-rankings failed"
+
+      - name: Affiliate Scout
+        run: |
+          echo "▶ affiliate-scout"
+          curl -sf --max-time 60 "$SITE_URL/api/cron/affiliate-scout" \
+            -H "Authorization: Bearer $CRON_SECRET" || echo "⚠ affiliate-scout failed"
+
+      - name: Auto Genesis
+        run: |
+          echo "▶ auto-genesis"
+          curl -sf --max-time 30 "$SITE_URL/api/cron/auto-genesis" \
+            -H "Authorization: Bearer $CRON_SECRET" || echo "⚠ auto-genesis failed"
+
+      - name: Send Emails
+        run: |
+          echo "▶ send-emails"
+          curl -sf --max-time 30 -X POST "$SITE_URL/api/cron/send-emails" \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            -H "Content-Type: application/json" || echo "⚠ send-emails failed"
+
+      - name: Sync Revenue
+        run: |
+          echo "▶ sync-revenue"
+          curl -sf --max-time 30 -X POST "$SITE_URL/api/cron/sync-revenue" \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            -H "Content-Type: application/json" || echo "⚠ sync-revenue failed (networks may not be configured)"
+
+      - name: Daily Strategy Digest
+        run: |
+          echo "▶ daily-strategy"
+          curl -sf --max-time 60 "$SITE_URL/api/cron/daily-strategy" \
+            -H "Authorization: Bearer $CRON_SECRET" || echo "⚠ daily-strategy failed"
+
+      - name: Backlink Post
+        run: |
+          echo "▶ backlink-post"
+          curl -sf --max-time 30 "$SITE_URL/api/cron/backlink-post" \
+            -H "Authorization: Bearer $CRON_SECRET" || echo "⚠ backlink-post failed"
+
+      - name: Backlink Scout
+        run: |
+          echo "▶ backlink-scout"
+          curl -sf --max-time 30 "$SITE_URL/api/cron/backlink-scout" \
+            -H "Authorization: Bearer $CRON_SECRET" || echo "⚠ backlink-scout failed"
+
+      - name: Backlink Verify
+        run: |
+          echo "▶ backlink-verify"
+          curl -sf --max-time 30 "$SITE_URL/api/cron/backlink-verify" \
+            -H "Authorization: Bearer $CRON_SECRET" || echo "⚠ backlink-verify failed"
+
+  # ─── Weekly jobs ──────────────────────────────────────────────────────────
+  weekly:
+    name: Weekly Report
+    runs-on: ubuntu-latest
+    if: |
+      github.event.schedule == '0 7 * * 1' ||
+      github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Weekly Report
+        run: |
+          echo "▶ weekly-report"
+          curl -sf --max-time 60 -X POST "$SITE_URL/api/cron/weekly-report" \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            -H "Content-Type: application/json" || echo "⚠ weekly-report failed"
