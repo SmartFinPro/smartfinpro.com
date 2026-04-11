@@ -127,7 +127,7 @@ function SidebarContent({ pathname, badges, onNavigate }: SidebarContentProps) {
     <>
       {/* Logo */}
       <div className="flex items-center gap-2 px-6 pt-6 pb-4">
-        <div className="w-8 h-8 rounded-lg bg-violet-600 flex items-center justify-center">
+        <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'var(--sfp-navy)' }}>
           <span className="text-white font-bold text-sm">SF</span>
         </div>
         <Link href="/dashboard" className="text-xl font-bold text-slate-800" onClick={onNavigate}>
@@ -153,14 +153,14 @@ function SidebarContent({ pathname, badges, onNavigate }: SidebarContentProps) {
                     className={cn(
                       'nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] transition-all',
                       active
-                        ? 'bg-violet-50 text-violet-700 font-semibold'
+                        ? 'font-semibold text-[#1B4F8C] bg-[#E8F0FB]'
                         : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700 font-medium',
                     )}
                   >
                     <link.icon
                       className={cn(
                         'h-4 w-4 shrink-0',
-                        active ? 'text-violet-500' : 'text-slate-400',
+                        active ? 'text-[#1B4F8C]' : 'text-slate-400',
                       )}
                     />
                     <span className="truncate flex-1">{link.name}</span>
@@ -298,7 +298,7 @@ export default function DashboardLayout({
               <Menu className="h-5 w-5" />
             </button>
             <Link href="/dashboard" className="text-base font-bold text-slate-800">
-              Smart<span className="text-violet-600">Fin</span>Pro
+              Smart<span style={{ color: 'var(--sfp-navy)' }}>Fin</span>Pro
             </Link>
           </div>
 
@@ -306,19 +306,19 @@ export default function DashboardLayout({
 
           <div className="flex items-center gap-3">
             {/* Account Selector */}
-            <button className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-slate-100 transition-colors">
+            <button aria-label="Account selector" className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-slate-100 transition-colors">
               <div className="w-2 h-2 rounded-full bg-emerald-500" />
               <span className="text-sm font-medium text-slate-700">SmartFinPro Analytics</span>
               <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
             </button>
 
             {/* Notifications */}
-            <button className="relative p-2 rounded-lg hover:bg-slate-100 transition-colors">
-              <Bell className="h-4.5 w-4.5 text-slate-500" />
+            <button aria-label="Notifications" className="relative p-2 rounded-lg hover:bg-slate-100 transition-colors">
+              <Bell className="h-4 w-4 text-slate-500" />
             </button>
 
             {/* User Avatar */}
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: 'var(--sfp-navy)' }}>
               <span className="text-white font-medium text-xs">CB</span>
             </div>
           </div>

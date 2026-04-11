@@ -255,13 +255,31 @@ export function ExecutiveOverview({
               Platform Intelligence · {rangeLabels[range]}
             </p>
           </div>
-          <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-100">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-pulse absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
-            </span>
-            <span className="text-[11px] font-medium text-emerald-700">All Systems Operational</span>
-          </div>
+          {hasCritical ? (
+            <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-red-50 border border-red-100">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-pulse absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
+              </span>
+              <span className="text-[11px] font-medium text-red-700">{alertCount} Critical Issue{alertCount !== 1 ? 's' : ''}</span>
+            </div>
+          ) : !deployOk ? (
+            <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-amber-50 border border-amber-100">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-pulse absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500" />
+              </span>
+              <span className="text-[11px] font-medium text-amber-700">Deploy Warning</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-100">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-pulse absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+              </span>
+              <span className="text-[11px] font-medium text-emerald-700">All Systems Operational</span>
+            </div>
+          )}
         </div>
 
         {/* ── KPI Cards ───────────────────────────────────────── */}

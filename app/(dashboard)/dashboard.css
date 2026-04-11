@@ -10,8 +10,8 @@
   --dash-border: #e2e8f0;
   --dash-text: #1e293b;
   --dash-text-muted: #64748b;
-  --dash-primary: #7c3aed;
-  --dash-primary-light: #ede9fe;
+  --dash-primary: #1B4F8C;
+  --dash-primary-light: #E8F0FB;
   --dash-secondary: #0f172a;
   --dash-accent-blue: #00d4ff;
   --dash-accent-mint: #a78bfa;
@@ -19,7 +19,7 @@
   --dash-danger: #ef4444;
 
   /* Override shadcn defaults for light dashboard */
-  --primary: #7c3aed;
+  --primary: #1B4F8C;
   --primary-foreground: #ffffff;
   --muted: #f1f5f9;
   --muted-foreground: #64748b;
@@ -99,8 +99,8 @@
 }
 
 .dashboard-stat .stat-icon.purple {
-  background: #ede9fe;
-  color: #7c3aed;
+  background: #E8F0FB;
+  color: #1B4F8C;
 }
 
 .dashboard-stat .stat-icon.amber {

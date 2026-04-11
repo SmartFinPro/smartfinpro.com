@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
   const cookie = request.cookies.get('sfp-dash-auth')?.value;
   const authHeader = request.headers.get('authorization');
   const isAuthed =
-    (cookie && isValidDashboardSessionValue(cookie)) ||
+    (cookie && isValidDashboardSessionValue(cookie, process.env.DASHBOARD_SECRET)) ||
     authHeader === `Bearer ${process.env.CRON_SECRET}`;
 
   if (!isAuthed) {
