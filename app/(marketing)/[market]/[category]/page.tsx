@@ -65,8 +65,11 @@ interface CategoryPageProps {
 
 export async function generateMetadata({
   params,
+  searchParams,
 }: CategoryPageProps): Promise<Metadata> {
   const { market, category } = await params;
+  const sp = await searchParams;
+  const currentPage = Math.max(1, parseInt(sp.page || '1', 10) || 1);
 
   if (!isValidMarket(market) || !isValidCategory(category)) {
     return {};
@@ -91,6 +94,9 @@ export async function generateMetadata({
   return {
     title,
     description,
+    // Paginated pages (?page=2+) must not be indexed — canonical already points to the
+    // base category URL, and noindex removes them from GSC's "Alternative with correct canonical" report.
+    ...(currentPage > 1 && { robots: { index: false, follow: true } }),
     alternates: {
       canonical: canonicalUrl,
       languages: alternates,

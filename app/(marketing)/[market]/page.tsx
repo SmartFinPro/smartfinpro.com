@@ -94,8 +94,11 @@ interface MarketPageProps {
 
 export async function generateMetadata({
   params,
+  searchParams,
 }: MarketPageProps): Promise<Metadata> {
   const { market } = await params;
+  const sp = await searchParams;
+  const currentPage = Math.max(1, parseInt(sp.page || '1', 10) || 1);
 
   if (!isValidMarket(market)) {
     return {};
@@ -107,6 +110,10 @@ export async function generateMetadata({
   // US gets the primary brand title, other markets get localized titles
   const isUS = market === 'us';
 
+  // US canonical is / (no market prefix) — avoids canonical chain via /us redirect.
+  // Other markets use /{market} as canonical.
+  const canonicalBase = isUS ? '/' : `/${market}`;
+
   return {
     title: isUS
       ? 'SmartFinPro - Financial Intelligence for Modern Professionals'
@@ -114,8 +121,11 @@ export async function generateMetadata({
     description: isUS
       ? 'Discover AI-powered tools, cybersecurity solutions, and financial products for modern professionals. Expert reviews, comparisons, and guides across 4 global markets.'
       : `Discover AI-powered tools, cybersecurity solutions, and financial products for ${config.name} professionals. ${marketCategories[market as Market].length} market sectors with expert reviews.`,
+    // Paginated pages (?page=2+) must not be indexed — canonical already points to the
+    // base page, and noindex removes them from GSC's "Alternative with correct canonical" report.
+    ...(currentPage > 1 && { robots: { index: false, follow: true } }),
     alternates: {
-      canonical: `/${market}`,
+      canonical: canonicalBase,
       languages: alternates,
     },
     openGraph: {
