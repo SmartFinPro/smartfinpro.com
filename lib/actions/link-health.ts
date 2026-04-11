@@ -2,7 +2,7 @@
 
 import 'server-only';
 
-import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/server';
 import { invalidateRegistry, loadRegistry } from '@/lib/affiliate/link-registry';
 import type { LinkHealthResult } from '@/types';
 
@@ -83,7 +83,7 @@ export async function runHealthChecks(): Promise<{
   }
 
   // Persist results to Supabase
-  const supabase = await createClient();
+  const supabase = createServiceClient();
 
   for (const result of results) {
     const healthStatus = result.healthy
@@ -115,7 +115,7 @@ export async function runHealthChecks(): Promise<{
  * Check a single link by ID (for on-demand checks from dashboard)
  */
 export async function checkLinkHealth(linkId: string): Promise<LinkHealthResult | null> {
-  const supabase = await createClient();
+  const supabase = createServiceClient();
 
   const { data: link, error } = await supabase
     .from('affiliate_links')
@@ -232,7 +232,7 @@ export async function bulkReplaceParam(
   oldValue: string,
   newValue: string
 ): Promise<{ updated: number; errors: string[] }> {
-  const supabase = await createClient();
+  const supabase = createServiceClient();
   const links = await loadRegistry();
 
   let updated = 0;
