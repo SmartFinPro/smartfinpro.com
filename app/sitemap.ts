@@ -1,9 +1,6 @@
 import { MetadataRoute } from 'next';
-import { existsSync } from 'fs';
-import { join } from 'path';
 import { getAllContent } from '@/lib/mdx';
 import { markets, marketCategories, Market } from '@/lib/i18n/config';
-import { brokerSlugs } from '@/lib/data/broker-reviews';
 // Categories that have actual overview content (must stay in sync with lib/data/overview-content.ts)
 const overviewCategories = new Set(['remortgaging', 'savings', 'superannuation', 'housing']);
 import { pillarHeroImages, reviewImages } from '@/lib/images/asset-registry';
@@ -22,9 +19,10 @@ const toolPages = [
   '/au/tools/au-mortgage-calculator',
   '/uk/tools/isa-tax-savings-calculator',
   '/tools/credit-card-rewards-calculator',
-  '/tools/debt-payoff-calculator',
-  '/uk/tools/remortgage-calculator',
-  '/tools/credit-score-simulator',
+  // Excluded: "Coming Soon" placeholder tools — no real content yet
+  // '/tools/debt-payoff-calculator',
+  // '/uk/tools/remortgage-calculator',
+  // '/tools/credit-score-simulator',
   '/au/tools/superannuation-calculator',
   '/ca/tools/tfsa-rrsp-calculator',
   '/tools/gold-roi-calculator',
@@ -148,22 +146,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
 
     // ============================================================
-    // 3. BROKER REVIEW PAGES — Priority 0.8
+    // 3. BROKER REVIEW PAGES — EXCLUDED FROM SITEMAP
+    // Template-generated pages with noindex (thin content on new YMYL domain).
+    // Re-add once pages have substantial market-specific editorial content.
     // ============================================================
-
-    for (const market of markets) {
-      for (const broker of brokerSlugs) {
-        const brokerLogoPath = `/images/brokers/${broker}.svg`;
-        const logoExists = existsSync(join(process.cwd(), 'public', brokerLogoPath));
-        entries.push({
-          url: marketUrl(market, `/reviews/${broker}`),
-          lastModified: now,
-          changeFrequency: 'weekly',
-          priority: 0.8,
-          ...(logoExists && { images: [`${BASE_URL}${brokerLogoPath}`] }),
-        });
-      }
-    }
 
     // ============================================================
     // 4. CONTENT PAGES (MDX Reviews & Articles) — Priority 0.7-0.8

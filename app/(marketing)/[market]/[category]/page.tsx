@@ -91,12 +91,17 @@ export async function generateMetadata({
   );
   const alternates = generateAlternates(`/${category}`, availableMarkets);
 
+  // Check if this category has any real content (non-index MDX files).
+  // Empty categories showing "Reports Coming Soon" are thin content — noindex them.
+  const contentItems = await getContentByMarketAndCategory(market as Market, category as Category);
+  const hasRealContent = contentItems && contentItems.filter((item) => item.slug !== 'index').length > 0;
+
   return {
     title,
     description,
-    // Paginated pages (?page=2+) must not be indexed — canonical already points to the
-    // base category URL, and noindex removes them from GSC's "Alternative with correct canonical" report.
-    ...(currentPage > 1 && { robots: { index: false, follow: true } }),
+    // noindex for: 1) paginated pages (?page=2+) — canonical points to base URL
+    // 2) empty categories with no reviews — thin "Coming Soon" pages hurt domain quality
+    ...((currentPage > 1 || !hasRealContent) && { robots: { index: false, follow: true } }),
     alternates: {
       canonical: canonicalUrl,
       languages: alternates,

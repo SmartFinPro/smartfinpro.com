@@ -114,6 +114,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return {
     title: review.seo.title,
     description: review.seo.description,
+    // noindex: template-generated broker pages with minimal unique content per market.
+    // These are thin content that dilutes domain authority on a new YMYL site.
+    // Remove noindex once pages have substantial market-specific editorial content.
+    robots: { index: false, follow: true },
     alternates: {
       canonical: `${prefix}/reviews/${broker}`,
       languages: Object.fromEntries(

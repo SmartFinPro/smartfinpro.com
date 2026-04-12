@@ -8,6 +8,8 @@ export const metadata: Metadata = {
   title: 'Remortgage Calculator UK 2026 | Calculate Interest Savings',
   description:
     'Use our free remortgage calculator to see if remortgaging your home will save you money. Compare rates, calculate savings, and find the best remortgage deal for your situation.',
+  // noindex: "Coming Soon" placeholder — remove once fully built
+  robots: { index: false, follow: true },
   alternates: {
     canonical: 'https://smartfinpro.com/uk/tools/remortgage-calculator',
     languages: {

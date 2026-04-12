@@ -8,6 +8,8 @@ export const metadata: Metadata = {
   title: 'Credit Score Simulator 2026 | See How Actions Affect Your Score',
   description:
     'Simulate how different financial actions affect your credit score. Understand what helps and hurts your score, and see the impact of paying down debt, on-time payments, and credit inquiries.',
+  // noindex: "Coming Soon" placeholder — remove once fully built
+  robots: { index: false, follow: true },
   alternates: {
     canonical: 'https://smartfinpro.com/tools/credit-score-simulator',
     languages: {

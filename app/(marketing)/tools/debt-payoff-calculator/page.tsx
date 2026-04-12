@@ -8,6 +8,8 @@ export const metadata: Metadata = {
   title: 'Debt Payoff Calculator 2026 | Free Debt Paydown Timeline Tool',
   description:
     'Calculate how long it will take to pay off your debt. Free debt payoff calculator shows payment schedules, total interest, and strategies to become debt-free faster.',
+  // noindex: "Coming Soon" placeholder — remove once fully built
+  robots: { index: false, follow: true },
   alternates: {
     canonical: 'https://smartfinpro.com/tools/debt-payoff-calculator',
     languages: {
