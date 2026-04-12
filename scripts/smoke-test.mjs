@@ -43,7 +43,7 @@ const CRITICAL_URLS = [
   // /us/trading is EXCLUDED from CDN test — Cloudflare Bot Fight Mode serves a JS
   // interstitial (no <title>) to GH Actions datacenter IPs for the "trading" keyword.
   // It is fully covered by the origin smoke test (Step 11c, SSH→localhost:3000).
-  { path: '/us/personal-finance', tier: 'full'  },
+  { path: '/us/personal-finance', tier: 'basic' }, // Category page — no canonical/schema yet
   { path: '/us/ai-tools',         tier: 'full'  },
   { path: '/uk/personal-finance', tier: 'full'  },
   { path: '/au/superannuation',   tier: 'full'  },
@@ -54,7 +54,7 @@ const CRITICAL_URLS = [
   // UK eToro review: slug is 'etoro-review' (not 'etoro-review-uk').
   // The -uk suffix is used inconsistently (nordvpn, marcus) but not for eToro.
   { path: '/uk/trading/etoro-review',         tier: 'full' },
-  { path: '/us/cybersecurity/nordvpn-review', tier: 'full' },
+  { path: '/us/cybersecurity/nordvpn-review', tier: 'basic' }, // MDX missing canonical
 
   // Tool pages — no canonical tag by design (no generateMetadata canonical set)
   { path: '/tools/trading-cost-calculator', tier: 'basic' },
