@@ -34,7 +34,7 @@ import { StickyFooterCTA } from '@/components/marketing/sticky-footer-cta';
 import { SafeMDX } from '@/components/content/SafeMDX';
 import { TrustBlockTracker } from '@/components/marketing/trust-block-tracker';
 import { MiniQuiz } from '@/components/marketing/mini-quiz';
-import { generateReviewSchema, generatePersonSchema, generateArticleSchema } from '@/lib/seo/schema';
+import { generateReviewSchema, generatePersonSchema, generateArticleSchema, generateBreadcrumbSchema } from '@/lib/seo/schema';
 import { categoryConfig } from '@/lib/i18n/config';
 import type { Market, Category } from '@/lib/i18n/config';
 import { buildBreadcrumbs } from '@/lib/breadcrumbs';
@@ -238,7 +238,7 @@ export function ReportLayout({
               publishDate: review.publishDate,
               modifiedDate: review.modifiedDate,
               author: review.author || 'SmartFinPro Editorial Team',
-              url: `https://smartfinpro.com/${market === 'us' ? '' : `${market}/`}${category}/${review.productName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}`,
+              url: `https://smartfinpro.com/${market === 'us' ? '' : `${market}/`}${category}/${slug || review.productName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}`,
               // Phase 1 GEO — Fact-Checker Integration
               ...(showExpertCards && reviewerName && {
                 reviewedBy: reviewerName,
@@ -279,6 +279,19 @@ export function ReportLayout({
           }}
         />
       )}
+
+      {/* Schema.org JSON-LD — BreadcrumbList for navigation rich snippets */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(generateBreadcrumbSchema(
+            buildBreadcrumbs(market, category, review.title, slug).map(item => ({
+              name: item.label,
+              url: `https://smartfinpro.com${item.href || ''}`,
+            }))
+          )),
+        }}
+      />
 
       {/* ═══════════════════════════════════════════════════════════════
           1. REPORT HERO SECTION
