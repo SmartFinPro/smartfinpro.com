@@ -6,7 +6,7 @@ import { createServiceClient } from '@/lib/supabase/server';
 import { logger } from '@/lib/logging';
 import { withRetry } from '@/lib/utils/retry';
 import { createClaudeMessage } from '@/lib/claude/client';
-import { sendTelegramAlert } from '@/lib/alerts/telegram';
+import { sendAutonomousNotification } from '@/lib/actions/autonomous-notify';
 import { computeContentHealthScores } from '@/lib/actions/content-health';
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -599,7 +599,7 @@ export async function runInsightEngine(): Promise<InsightEngineResult> {
     const synthesis = await runClaudeSynthesis(allInsights, supabase);
     const aiSynthesisSucceeded = synthesis.success;
 
-    // ── Send Telegram Summary ──
+    // ── Send Email Summary ──
     const summaryLines = [
       '📊 <b>Insight Engine — Weekly Report</b>',
       '',
@@ -637,7 +637,7 @@ export async function runInsightEngine(): Promise<InsightEngineResult> {
 
     summaryLines.push('', `⏱ Duration: ${((Date.now() - startTime) / 1000).toFixed(1)}s`);
 
-    await sendTelegramAlert(summaryLines.join('\n'));
+    await sendAutonomousNotification('Insight Engine Weekly Report', summaryLines.join('\n'));
 
     // ── Finalize audit ──
     const moduleResults = {
@@ -676,8 +676,9 @@ export async function runInsightEngine(): Promise<InsightEngineResult> {
 
     await finishAudit(supabase, auditId, 'error', startTime, 0, msg);
 
-    await sendTelegramAlert(
-      `🚨 <b>Insight Engine FAILED</b>\n\nError: ${msg}\nDuration: ${((Date.now() - startTime) / 1000).toFixed(1)}s`,
+    await sendAutonomousNotification(
+      'Insight Engine FAILED',
+      `Error: ${msg}\nDuration: ${((Date.now() - startTime) / 1000).toFixed(1)}s`,
     );
 
     return {

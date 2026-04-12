@@ -3,7 +3,7 @@ import { NextRequest } from 'next/server';
 import { createHash } from 'crypto';
 import { createServiceClient } from '@/lib/supabase/server';
 import { logger } from '@/lib/logging';
-import { sendTelegramAlert } from '@/lib/alerts/telegram';
+import { sendAutonomousNotification } from '@/lib/actions/autonomous-notify';
 
 export const dynamic = 'force-dynamic';
 
@@ -106,9 +106,9 @@ export async function POST(request: NextRequest) {
         .eq('id', action.insight_id);
     }
 
-    // ── Notify via Telegram ──
-    await sendTelegramAlert(
-      `↩️ <b>Action Undone</b>\n\n` +
+    // ── Notify via Email ──
+    await sendAutonomousNotification(
+      'Action Undone',
       `Action: ${action.description}\n` +
       `Type: ${action.action_type}\n` +
       `Slug: ${action.slug ?? 'n/a'}\n` +

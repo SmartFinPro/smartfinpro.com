@@ -4,7 +4,7 @@ import 'server-only';
 
 import { createServiceClient } from '@/lib/supabase/server';
 import { logger } from '@/lib/logging';
-import { sendTelegramAlert } from '@/lib/alerts/telegram';
+import { sendAutonomousNotification } from '@/lib/actions/autonomous-notify';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
@@ -570,11 +570,11 @@ async function adjustThresholds(
 
       adjusted++;
 
-      await sendTelegramAlert(
-        `📊 <b>Threshold Adjustment</b>\n\n` +
+      await sendAutonomousNotification(
+        'Threshold Adjustment',
         `Action: ${actionType}\n` +
         `Market: ${learning.market ?? 'global'}\n` +
-        `Tier: ${currentTier} → ${newTier} (${newTier > currentTier ? '⬆️ escalated' : '⬇️ de-escalated'})\n` +
+        `Tier: ${currentTier} → ${newTier} (${newTier > currentTier ? 'escalated' : 'de-escalated'})\n` +
         `Success rate: ${Math.round(successRate * 100)}% (${sampleSize} samples)`,
       );
     }
@@ -791,7 +791,7 @@ export async function runFeedbackLoop(): Promise<FeedbackLoopResult> {
     // ── Step 5: Generate memory/learnings.md ──
     await generateLearningsMd(supabase);
 
-    // ── Step 6: Send Telegram summary ──
+    // ── Step 6: Send Email summary ──
     if (actionsMeasured > 0 || learningsUpdated > 0) {
       const lines = [
         `📈 <b>Feedback Loop — Daily Report</b>`,
@@ -807,7 +807,7 @@ export async function runFeedbackLoop(): Promise<FeedbackLoopResult> {
         `⏱ Duration: ${((Date.now() - startTime) / 1000).toFixed(1)}s`,
       ].filter(Boolean);
 
-      await sendTelegramAlert(lines.join('\n'));
+      await sendAutonomousNotification('Feedback Loop Daily Report', lines.join('\n'));
     }
 
     // ── Finalize ──
@@ -846,8 +846,9 @@ export async function runFeedbackLoop(): Promise<FeedbackLoopResult> {
     logger.error('[feedback-loop] Fatal error', { error: msg });
 
     await finishAudit(supabase, auditId, 'error', startTime, 0, msg);
-    await sendTelegramAlert(
-      `🚨 <b>Feedback Loop FAILED</b>\n\nError: ${msg}\nDuration: ${((Date.now() - startTime) / 1000).toFixed(1)}s`,
+    await sendAutonomousNotification(
+      'Feedback Loop FAILED',
+      `Error: ${msg}\nDuration: ${((Date.now() - startTime) / 1000).toFixed(1)}s`,
     );
 
     return {

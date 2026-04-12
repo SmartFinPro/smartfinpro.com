@@ -5,7 +5,7 @@ import 'server-only';
 import { createHash, randomUUID } from 'crypto';
 import { createServiceClient } from '@/lib/supabase/server';
 import { logger } from '@/lib/logging';
-import { sendTelegramAlert } from '@/lib/alerts/telegram';
+import { sendAutonomousNotification } from '@/lib/actions/autonomous-notify';
 import { triggerFreshnessBoost } from '@/lib/actions/content-overrides';
 import { computeOfferEV } from '@/lib/actions/offer-ev';
 
@@ -855,7 +855,7 @@ export async function runAutoExecutor(): Promise<AutoExecutorResult> {
       tierBreakdown[insight.risk_tier] = (tierBreakdown[insight.risk_tier] ?? 0) + 1;
       totalRevenue += insight.expected_revenue_impact;
 
-      // Build summary line for Telegram
+      // Build summary line for notification
       const simPrefix = settings.simulationMode ? '🔬 ' : '';
       const undoSuffix =
         undoRawToken && !settings.simulationMode
@@ -866,7 +866,7 @@ export async function runAutoExecutor(): Promise<AutoExecutorResult> {
       );
     }
 
-    // ── Send Telegram Summary ──
+    // ── Send Email Summary ──
     if (actionsExecuted > 0 || actionsSkipped > 0) {
       const mode = settings.simulationMode ? '🔬 SIMULATION' : '🤖 LIVE';
       const lines = [
@@ -883,7 +883,7 @@ export async function runAutoExecutor(): Promise<AutoExecutorResult> {
         `⏱ Duration: ${((Date.now() - startTime) / 1000).toFixed(1)}s`,
       ].filter(Boolean);
 
-      await sendTelegramAlert(lines.join('\n'));
+      await sendAutonomousNotification('Auto-Executor Daily Report', lines.join('\n'));
     }
 
     // ── Finalize ──
@@ -917,8 +917,9 @@ export async function runAutoExecutor(): Promise<AutoExecutorResult> {
     logger.error('[auto-executor] Fatal error', { error: msg });
 
     await finishAudit(supabase, auditId, 'error', startTime, 0, msg);
-    await sendTelegramAlert(
-      `🚨 <b>Auto-Executor FAILED</b>\n\nError: ${msg}\nDuration: ${((Date.now() - startTime) / 1000).toFixed(1)}s`,
+    await sendAutonomousNotification(
+      'Auto-Executor FAILED',
+      `Error: ${msg}\nDuration: ${((Date.now() - startTime) / 1000).toFixed(1)}s`,
     );
 
     return {
