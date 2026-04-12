@@ -11,6 +11,7 @@ import {
 } from 'recharts';
 import type { TimeSeriesData } from '@/lib/actions/dashboard';
 import { DASHBOARD_CHART, CHART_NEUTRAL } from '@/lib/constants/brand-colors';
+import { WidgetErrorBoundary } from '@/components/dashboard/widget-error-boundary';
 
 interface ClicksChartProps {
   data: TimeSeriesData[];
@@ -33,9 +34,11 @@ const CHART_COLORS = {
 export function ClicksChart({ data }: ClicksChartProps) {
   if (!data || data.length === 0) {
     return (
-      <div className="h-[200px] flex items-center justify-center text-slate-600 text-sm">
-        No click data yet.
-      </div>
+      <WidgetErrorBoundary label="Clicks Chart" minHeight="h-64">
+        <div className="h-[200px] flex items-center justify-center text-slate-600 text-sm">
+          No click data yet.
+        </div>
+      </WidgetErrorBoundary>
     );
   }
 
@@ -43,13 +46,16 @@ export function ClicksChart({ data }: ClicksChartProps) {
 
   if (!hasClicks) {
     return (
-      <div className="h-[200px] flex items-center justify-center text-slate-600 text-sm">
-        No clicks in this period.
-      </div>
+      <WidgetErrorBoundary label="Clicks Chart" minHeight="h-64">
+        <div className="h-[200px] flex items-center justify-center text-slate-600 text-sm">
+          No clicks in this period.
+        </div>
+      </WidgetErrorBoundary>
     );
   }
 
   return (
+    <WidgetErrorBoundary label="Clicks Chart" minHeight="h-64">
     <ResponsiveContainer width="100%" height={200}>
       <AreaChart
         data={data}
@@ -105,5 +111,6 @@ export function ClicksChart({ data }: ClicksChartProps) {
         />
       </AreaChart>
     </ResponsiveContainer>
+    </WidgetErrorBoundary>
   );
 }

@@ -2,6 +2,7 @@
 
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import type { RevenueByPage } from '@/lib/actions/revenue';
+import { WidgetErrorBoundary } from '@/components/dashboard/widget-error-boundary';
 
 interface RevenueByPageProps {
   pages: RevenueByPage[];
@@ -42,9 +43,11 @@ function getMarketBadge(slug: string): { label: string; color: string } | null {
 export function RevenueByPageTable({ pages }: RevenueByPageProps) {
   if (!pages || pages.length === 0) {
     return (
-      <div className="py-8 text-center text-slate-500 text-sm">
-        No page revenue data yet. Revenue attribution will appear as clicks and conversions are tracked.
-      </div>
+      <WidgetErrorBoundary label="Revenue by Page" minHeight="h-48">
+        <div className="py-8 text-center text-slate-500 text-sm">
+          No page revenue data yet. Revenue attribution will appear as clicks and conversions are tracked.
+        </div>
+      </WidgetErrorBoundary>
     );
   }
 
@@ -52,6 +55,7 @@ export function RevenueByPageTable({ pages }: RevenueByPageProps) {
   const topPages = pages.slice(0, 15);
 
   return (
+    <WidgetErrorBoundary label="Revenue by Page" minHeight="h-48">
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
@@ -154,5 +158,6 @@ export function RevenueByPageTable({ pages }: RevenueByPageProps) {
         </tbody>
       </table>
     </div>
+    </WidgetErrorBoundary>
   );
 }

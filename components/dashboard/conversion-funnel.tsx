@@ -11,6 +11,7 @@ import {
   XCircle,
 } from 'lucide-react';
 import type { FunnelStage } from '@/lib/actions/funnel';
+import { WidgetErrorBoundary } from '@/components/dashboard/widget-error-boundary';
 
 // ── Stage config ─────────────────────────────────────────────────────────────
 
@@ -226,13 +227,16 @@ interface OfferEVTableProps {
 export function OfferEVTable({ offers }: OfferEVTableProps) {
   if (offers.length === 0) {
     return (
-      <div className="rounded-2xl border border-gray-200 bg-white p-6 text-center">
-        <p className="text-sm text-slate-500">No offer data yet.</p>
-      </div>
+      <WidgetErrorBoundary label="Offer EV Table" minHeight="h-48">
+        <div className="rounded-2xl border border-gray-200 bg-white p-6 text-center">
+          <p className="text-sm text-slate-500">No offer data yet.</p>
+        </div>
+      </WidgetErrorBoundary>
     );
   }
 
   return (
+    <WidgetErrorBoundary label="Offer EV Table" minHeight="h-48">
     <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
       <div className="p-4 border-b border-gray-100">
         <h3 className="text-sm font-semibold text-slate-900">Offer Expected Value</h3>
@@ -291,6 +295,7 @@ export function OfferEVTable({ offers }: OfferEVTableProps) {
         </table>
       </div>
     </div>
+    </WidgetErrorBoundary>
   );
 }
 
@@ -323,13 +328,16 @@ const EVENT_ICONS: Record<string, { icon: React.ComponentType<{ className?: stri
 export function RecentEventsFeed({ events }: RecentEventsFeedProps) {
   if (events.length === 0) {
     return (
-      <div className="rounded-2xl border border-gray-200 bg-white p-6 text-center">
-        <p className="text-sm text-slate-500">No events received yet.</p>
-      </div>
+      <WidgetErrorBoundary label="Recent Events Feed" minHeight="h-48">
+        <div className="rounded-2xl border border-gray-200 bg-white p-6 text-center">
+          <p className="text-sm text-slate-500">No events received yet.</p>
+        </div>
+      </WidgetErrorBoundary>
     );
   }
 
   return (
+    <WidgetErrorBoundary label="Recent Events Feed" minHeight="h-48">
     <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
       <div className="p-4 border-b border-gray-100">
         <h3 className="text-sm font-semibold text-slate-900">Recent Events</h3>
@@ -365,6 +373,7 @@ export function RecentEventsFeed({ events }: RecentEventsFeedProps) {
         })}
       </div>
     </div>
+    </WidgetErrorBoundary>
   );
 }
 

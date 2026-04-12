@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Users, Eye, MousePointerClick, RefreshCw, Wifi } from 'lucide-react';
 import type { LiveStatsResponse } from '@/app/api/dashboard/live-stats/route';
+import { WidgetErrorBoundary } from '@/components/dashboard/widget-error-boundary';
 
 const REFRESH_INTERVAL_MS = 30_000; // 30 seconds
 
@@ -74,6 +75,7 @@ export function LiveDashboardBar() {
   const pulse = data?.activeNow && data.activeNow > 0;
 
   return (
+    <WidgetErrorBoundary label="Live Dashboard Bar" minHeight="h-16">
     <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 flex items-center gap-6 flex-wrap shadow-sm">
       {/* Live indicator */}
       <div className="flex items-center gap-2 shrink-0">
@@ -145,5 +147,6 @@ export function LiveDashboardBar() {
         </button>
       </div>
     </div>
+    </WidgetErrorBoundary>
   );
 }

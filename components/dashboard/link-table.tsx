@@ -19,6 +19,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { toast } from 'sonner';
+import { WidgetErrorBoundary } from '@/components/dashboard/widget-error-boundary';
 
 // Mock data for development
 const mockLinks = [
@@ -110,6 +111,7 @@ export function LinkTable() {
   };
 
   return (
+    <WidgetErrorBoundary label="Link Table" minHeight="h-48">
     <Table>
       <TableHeader>
         <TableRow>
@@ -197,5 +199,6 @@ export function LinkTable() {
         ))}
       </TableBody>
     </Table>
+    </WidgetErrorBoundary>
   );
 }

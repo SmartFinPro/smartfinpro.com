@@ -32,6 +32,7 @@ import {
   Legend,
 } from 'recharts';
 import { DASHBOARD_CHART, CHART_NEUTRAL, BRAND } from '@/lib/constants/brand-colors';
+import { WidgetErrorBoundary } from '@/components/dashboard/widget-error-boundary';
 
 // ── Types ──────────────────────────────────────────────────
 
@@ -117,6 +118,7 @@ export function GSCOverview() {
   // ── Not configured state ────────────────────────────────
   if (!loading && data && !data.configured) {
     return (
+      <WidgetErrorBoundary label="GSC Overview" minHeight="h-48">
       <div className="dashboard-card p-8">
         <div className="flex items-start gap-4">
           <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-amber-50">
@@ -147,22 +149,26 @@ export function GSCOverview() {
           </div>
         </div>
       </div>
+      </WidgetErrorBoundary>
     );
   }
 
   // ── Loading state ───────────────────────────────────────
   if (loading) {
     return (
+      <WidgetErrorBoundary label="GSC Overview" minHeight="h-48">
       <div className="dashboard-card p-12 flex items-center justify-center">
         <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
         <span className="ml-3 text-slate-500">GSC-Daten werden geladen…</span>
       </div>
+      </WidgetErrorBoundary>
     );
   }
 
   // ── Error state ─────────────────────────────────────────
   if (data?.error) {
     return (
+      <WidgetErrorBoundary label="GSC Overview" minHeight="h-48">
       <div className="dashboard-card p-6">
         <div className="flex items-center gap-3 text-amber-600">
           <AlertTriangle className="h-5 w-5" />
@@ -178,6 +184,7 @@ export function GSCOverview() {
           Erneut versuchen
         </button>
       </div>
+      </WidgetErrorBoundary>
     );
   }
 
@@ -191,6 +198,7 @@ export function GSCOverview() {
   };
 
   return (
+    <WidgetErrorBoundary label="GSC Overview" minHeight="h-48">
     <div className="space-y-4">
       {/* Section Header */}
       <div className="flex items-center justify-between">
@@ -530,6 +538,7 @@ export function GSCOverview() {
         </div>
       )}
     </div>
+    </WidgetErrorBoundary>
   );
 }
 

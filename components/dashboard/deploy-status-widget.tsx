@@ -11,6 +11,7 @@ import {
   Timer,
 } from 'lucide-react';
 import type { DeployStats, DeployLog } from '@/lib/actions/deploy-logs';
+import { WidgetErrorBoundary } from '@/components/dashboard/widget-error-boundary';
 
 // ── Status Badge ───────────────────────────────────────────────
 
@@ -63,14 +64,17 @@ interface DeployStatusWidgetProps {
 export function DeployStatusWidget({ stats }: DeployStatusWidgetProps) {
   if (stats.totalDeploys === 0) {
     return (
-      <div className="py-6 text-center text-slate-500 text-sm">
-        <GitCommit className="h-8 w-8 mx-auto text-slate-300 mb-2" />
-        No deploy data yet. Deploy history will appear after the next GitHub Actions deploy.
-      </div>
+      <WidgetErrorBoundary label="Deploy Status" minHeight="h-32">
+        <div className="py-6 text-center text-slate-500 text-sm">
+          <GitCommit className="h-8 w-8 mx-auto text-slate-300 mb-2" />
+          No deploy data yet. Deploy history will appear after the next GitHub Actions deploy.
+        </div>
+      </WidgetErrorBoundary>
     );
   }
 
   return (
+    <WidgetErrorBoundary label="Deploy Status" minHeight="h-32">
     <div className="space-y-4">
       {/* Summary Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
@@ -170,5 +174,6 @@ export function DeployStatusWidget({ stats }: DeployStatusWidgetProps) {
         </table>
       </div>
     </div>
+    </WidgetErrorBoundary>
   );
 }

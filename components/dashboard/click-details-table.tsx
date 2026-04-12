@@ -3,6 +3,7 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { Globe, ExternalLink, Clock, Filter, X, Eye, DollarSign } from 'lucide-react';
 import type { ClickData, VisitorData, ConversionData } from '@/lib/actions/dashboard';
+import { WidgetErrorBoundary } from '@/components/dashboard/widget-error-boundary';
 
 // ── Types ──────────────────────────────────────────────────────
 
@@ -165,13 +166,16 @@ export function ClickDetailsTable({
 
   if (allRows.length === 0) {
     return (
-      <div className="text-center py-8 text-slate-500 text-sm">
-        No {metricLabel} data available yet.
-      </div>
+      <WidgetErrorBoundary label="Click Details Table" minHeight="h-48">
+        <div className="text-center py-8 text-slate-500 text-sm">
+          No {metricLabel} data available yet.
+        </div>
+      </WidgetErrorBoundary>
     );
   }
 
   return (
+    <WidgetErrorBoundary label="Click Details Table" minHeight="h-48">
     <div className="space-y-3">
       {/* Filter Bar */}
       <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
@@ -275,6 +279,7 @@ export function ClickDetailsTable({
         <span>{countryCodes.length} countries</span>
       </div>
     </div>
+    </WidgetErrorBoundary>
   );
 }
 

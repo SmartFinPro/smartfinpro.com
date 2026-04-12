@@ -2,6 +2,7 @@
 
 import { TrendingUp, TrendingDown, Minus, ExternalLink } from 'lucide-react';
 import type { RevenueByProduct } from '@/lib/actions/revenue';
+import { WidgetErrorBoundary } from '@/components/dashboard/widget-error-boundary';
 
 interface RevenueByProductProps {
   products: RevenueByProduct[];
@@ -29,13 +30,16 @@ function TrendBadge({ trend, change }: { trend: 'up' | 'down' | 'neutral'; chang
 export function RevenueByProductTable({ products }: RevenueByProductProps) {
   if (!products || products.length === 0) {
     return (
-      <div className="py-8 text-center text-slate-500 text-sm">
-        No product revenue data yet. Revenue will appear as conversions are tracked.
-      </div>
+      <WidgetErrorBoundary label="Revenue by Product" minHeight="h-48">
+        <div className="py-8 text-center text-slate-500 text-sm">
+          No product revenue data yet. Revenue will appear as conversions are tracked.
+        </div>
+      </WidgetErrorBoundary>
     );
   }
 
   return (
+    <WidgetErrorBoundary label="Revenue by Product" minHeight="h-48">
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
@@ -109,5 +113,6 @@ export function RevenueByProductTable({ products }: RevenueByProductProps) {
         </tbody>
       </table>
     </div>
+    </WidgetErrorBoundary>
   );
 }

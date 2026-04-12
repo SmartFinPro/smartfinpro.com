@@ -16,6 +16,7 @@ import {
   Rocket,
   Star,
 } from 'lucide-react';
+import { WidgetErrorBoundary } from '@/components/dashboard/widget-error-boundary';
 
 export interface Opportunity {
   id: string;
@@ -86,6 +87,7 @@ export function OpportunityCard({ opportunity: opp, onStatusChange }: Opportunit
   }
 
   return (
+    <WidgetErrorBoundary label="Opportunity Card" minHeight="h-32">
     <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
       {/* Gradient accent bar */}
       <div style={{ height: 4, background: 'linear-gradient(90deg, var(--sfp-navy) 0%, var(--sfp-gold) 100%)' }} />
@@ -247,5 +249,6 @@ export function OpportunityCard({ opportunity: opp, onStatusChange }: Opportunit
         )}
       </div>
     </div>
+    </WidgetErrorBoundary>
   );
 }

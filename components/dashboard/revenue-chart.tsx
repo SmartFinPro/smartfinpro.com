@@ -10,6 +10,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { DASHBOARD_CHART, CHART_NEUTRAL } from '@/lib/constants/brand-colors';
+import { WidgetErrorBoundary } from '@/components/dashboard/widget-error-boundary';
 
 interface RevenueChartProps {
   data: { month: string; revenue: number; count: number }[];
@@ -30,9 +31,11 @@ const CHART_COLORS = {
 export function RevenueChart({ data }: RevenueChartProps) {
   if (!data || data.length === 0) {
     return (
-      <div className="h-[250px] flex items-center justify-center text-slate-500 text-sm">
-        No revenue data yet. Conversions will populate this chart.
-      </div>
+      <WidgetErrorBoundary label="Revenue Chart" minHeight="h-64">
+        <div className="h-[250px] flex items-center justify-center text-slate-500 text-sm">
+          No revenue data yet. Conversions will populate this chart.
+        </div>
+      </WidgetErrorBoundary>
     );
   }
 
@@ -44,6 +47,7 @@ export function RevenueChart({ data }: RevenueChartProps) {
   }));
 
   return (
+    <WidgetErrorBoundary label="Revenue Chart" minHeight="h-64">
     <ResponsiveContainer width="100%" height={250}>
       <BarChart data={chartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
         <CartesianGrid
@@ -90,6 +94,7 @@ export function RevenueChart({ data }: RevenueChartProps) {
         />
       </BarChart>
     </ResponsiveContainer>
+    </WidgetErrorBoundary>
   );
 }
 

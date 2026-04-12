@@ -4,7 +4,7 @@ import 'server-only';
 import * as Sentry from '@sentry/nextjs';
 import { logger } from '@/lib/logging';
 
-import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/server';
 import { boostAndDeploy } from '@/lib/actions/content-overrides';
 import { extractDomain, AUTHORITY_DOMAINS } from '@/lib/seo/competitor-keywords';
 import type { Market, Category } from '@/lib/i18n/config';
@@ -720,7 +720,7 @@ export async function generateAndPublishPage(
 
     // Step 8: Update draft status in Supabase if a draft exists
     try {
-      const supabase = await createClient();
+      const supabase = createServiceClient();
       await supabase
         .from('keyword_gap_drafts')
         .update({ status: 'published', published_at: new Date().toISOString() })

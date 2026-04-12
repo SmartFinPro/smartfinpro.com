@@ -6,6 +6,7 @@
 import Link from 'next/link';
 import { createServiceClient } from '@/lib/supabase/server';
 import { DollarSign, ArrowRight, TrendingUp, FileText } from 'lucide-react';
+import { WidgetErrorBoundary } from '@/components/dashboard/widget-error-boundary';
 
 interface PageRevenueStat {
   pagePath: string;
@@ -116,6 +117,7 @@ export async function RevenueAttributionWidget() {
   const totalAttributed = pages.reduce((s, p) => s + p.attributedRevenue, 0);
 
   return (
+    <WidgetErrorBoundary label="Revenue Attribution" minHeight="h-48">
     <div className="bg-white border border-slate-200 rounded-lg shadow-sm">
       {/* Header */}
       <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
@@ -221,5 +223,6 @@ export async function RevenueAttributionWidget() {
         )}
       </div>
     </div>
+    </WidgetErrorBoundary>
   );
 }

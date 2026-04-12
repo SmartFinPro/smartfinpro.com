@@ -29,6 +29,7 @@ import { HardDeleteDialog } from './hard-delete-dialog';
 import type { ContentHubRow, HealthStatus, ContentQuality } from '@/lib/actions/content-hub';
 import type { PartnerOption } from './cta-partner-select';
 import type { PartnerAssignmentConfig } from '@/lib/types/page-cta';
+import { WidgetErrorBoundary } from '@/components/dashboard/widget-error-boundary';
 
 const BacklinkDetailDialog = dynamic(
   () => import('./backlink-detail-dialog'),
@@ -301,6 +302,7 @@ export function ContentHubTableBody({
   }, [siteUrl, copyToClipboard]);
 
   return (
+    <WidgetErrorBoundary label="Content Hub Table" minHeight="h-64">
     <>
     {/* ── Batch Action Bar (OUTSIDE <table> to avoid hydration error) ── */}
     {selectedUrls.size > 0 && (
@@ -697,5 +699,6 @@ export function ContentHubTableBody({
       />
     )}
     </>
+    </WidgetErrorBoundary>
   );
 }

@@ -12,6 +12,7 @@ import {
 } from 'recharts';
 import type { TimeSeriesPageView } from '@/lib/actions/analytics';
 import { DASHBOARD_CHART, CHART_NEUTRAL } from '@/lib/constants/brand-colors';
+import { WidgetErrorBoundary } from '@/components/dashboard/widget-error-boundary';
 
 // AP-03 Phase 3 — Farben aus brand-colors.ts (Single Source of Truth)
 // Originale Optik beibehalten: Emerald (pageViews) + Blue (sessions)
@@ -27,13 +28,16 @@ interface TrafficChartProps {
 export function TrafficChart({ data }: TrafficChartProps) {
   if (!data || data.length === 0) {
     return (
-      <div className="h-[300px] flex items-center justify-center text-slate-400">
-        No traffic data available
-      </div>
+      <WidgetErrorBoundary label="Traffic Chart" minHeight="h-64">
+        <div className="h-[300px] flex items-center justify-center text-slate-400">
+          No traffic data available
+        </div>
+      </WidgetErrorBoundary>
     );
   }
 
   return (
+    <WidgetErrorBoundary label="Traffic Chart" minHeight="h-64">
     <ResponsiveContainer width="100%" height={300}>
       <AreaChart data={data} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
         <defs>
@@ -93,5 +97,6 @@ export function TrafficChart({ data }: TrafficChartProps) {
         />
       </AreaChart>
     </ResponsiveContainer>
+    </WidgetErrorBoundary>
   );
 }

@@ -26,6 +26,16 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Verify generated indexes not manually edited
+        run: |
+          for f in $(git diff --name-only origin/main...HEAD -- 'memory/generated/*.json' 2>/dev/null || true); do
+            if [ -f "$f" ] && ! grep -q '"_do_not_edit": true' "$f"; then
+              echo "ERROR: $f was manually edited (missing _do_not_edit marker). Use npm run refresh:agent-context instead."
+              exit 1
+            fi
+          done
+          echo "✅ memory/generated/ files are machine-generated"
+
       - name: Check client/server imports
         run: npm run check:imports
 

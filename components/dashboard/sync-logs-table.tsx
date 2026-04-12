@@ -3,6 +3,7 @@
 import { CheckCircle, XCircle, Clock, RefreshCw, Webhook } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import type { SyncLog } from '@/lib/actions/connectors';
+import { WidgetErrorBoundary } from '@/components/dashboard/widget-error-boundary';
 
 interface SyncLogsTableProps {
   logs: SyncLog[];
@@ -23,13 +24,16 @@ const syncTypeLabels = {
 export function SyncLogsTable({ logs }: SyncLogsTableProps) {
   if (!logs || logs.length === 0) {
     return (
-      <div className="py-8 text-center text-muted-foreground">
-        No sync history yet. Configure a connector and run a sync to see activity here.
-      </div>
+      <WidgetErrorBoundary label="Sync Logs Table" minHeight="h-32">
+        <div className="py-8 text-center text-muted-foreground">
+          No sync history yet. Configure a connector and run a sync to see activity here.
+        </div>
+      </WidgetErrorBoundary>
     );
   }
 
   return (
+    <WidgetErrorBoundary label="Sync Logs Table" minHeight="h-32">
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
@@ -128,5 +132,6 @@ export function SyncLogsTable({ logs }: SyncLogsTableProps) {
         </tbody>
       </table>
     </div>
+    </WidgetErrorBoundary>
   );
 }

@@ -2,6 +2,7 @@
 
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import type { DeviceStats } from '@/lib/actions/dashboard';
+import { WidgetErrorBoundary } from '@/components/dashboard/widget-error-boundary';
 
 interface DeviceChartProps {
   data: DeviceStats;
@@ -19,9 +20,11 @@ export function DeviceChart({ data }: DeviceChartProps) {
 
   if (total === 0) {
     return (
-      <div className="h-[200px] flex items-center justify-center text-slate-400">
-        No device data yet.
-      </div>
+      <WidgetErrorBoundary label="Device Chart" minHeight="h-64">
+        <div className="h-[200px] flex items-center justify-center text-slate-400">
+          No device data yet.
+        </div>
+      </WidgetErrorBoundary>
     );
   }
 
@@ -32,6 +35,7 @@ export function DeviceChart({ data }: DeviceChartProps) {
   ].filter((d) => d.value > 0);
 
   return (
+    <WidgetErrorBoundary label="Device Chart" minHeight="h-64">
     <div className="space-y-4">
       <ResponsiveContainer width="100%" height={180}>
         <PieChart>
@@ -95,5 +99,6 @@ export function DeviceChart({ data }: DeviceChartProps) {
         )}
       </div>
     </div>
+    </WidgetErrorBoundary>
   );
 }

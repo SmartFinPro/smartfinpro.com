@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { MousePointerClick, Monitor, Smartphone, Tablet, Laptop } from 'lucide-react';
 import type { LiveClick, LiveStatsResponse } from '@/app/api/dashboard/live-stats/route';
+import { WidgetErrorBoundary } from '@/components/dashboard/widget-error-boundary';
 
 const REFRESH_INTERVAL_MS = 10_000; // 10 seconds
 
@@ -149,6 +150,7 @@ export function LiveClicksFeed() {
   }, [fetchClicks, fetchWithDiff]);
 
   return (
+    <WidgetErrorBoundary label="Live Clicks Feed" minHeight="h-48">
     <div className="dashboard-card overflow-hidden">
       <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -197,5 +199,6 @@ export function LiveClicksFeed() {
         )}
       </div>
     </div>
+    </WidgetErrorBoundary>
   );
 }

@@ -2,6 +2,7 @@
 
 import { Target, TrendingUp } from 'lucide-react';
 import type { UTMStats } from '@/lib/actions/analytics';
+import { WidgetErrorBoundary } from '@/components/dashboard/widget-error-boundary';
 
 interface UTMCampaignsTableProps {
   data: UTMStats[];
@@ -16,15 +17,18 @@ function getConversionColor(rate: number): string {
 export function UTMCampaignsTable({ data }: UTMCampaignsTableProps) {
   if (!data || data.length === 0) {
     return (
-      <div className="text-center py-8 text-slate-400">
-        <Target className="h-8 w-8 mx-auto mb-2 opacity-50" />
-        <p>No UTM campaign data available</p>
-        <p className="text-xs mt-1">Add utm_campaign parameters to your links</p>
-      </div>
+      <WidgetErrorBoundary label="UTM Campaigns Table" minHeight="h-32">
+        <div className="text-center py-8 text-slate-400">
+          <Target className="h-8 w-8 mx-auto mb-2 opacity-50" />
+          <p>No UTM campaign data available</p>
+          <p className="text-xs mt-1">Add utm_campaign parameters to your links</p>
+        </div>
+      </WidgetErrorBoundary>
     );
   }
 
   return (
+    <WidgetErrorBoundary label="UTM Campaigns Table" minHeight="h-32">
     <div className="space-y-3">
       {data.map((campaign) => (
         <div
@@ -67,5 +71,6 @@ export function UTMCampaignsTable({ data }: UTMCampaignsTableProps) {
         </div>
       ))}
     </div>
+    </WidgetErrorBoundary>
   );
 }

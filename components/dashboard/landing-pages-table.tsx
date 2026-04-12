@@ -2,6 +2,7 @@
 
 import { ArrowUpRight, Clock, ScrollText, MousePointer } from 'lucide-react';
 import type { LandingPageStat } from '@/lib/actions/analytics';
+import { WidgetErrorBoundary } from '@/components/dashboard/widget-error-boundary';
 
 interface LandingPagesTableProps {
   data: LandingPageStat[];
@@ -29,13 +30,16 @@ function getBounceColor(rate: number): string {
 export function LandingPagesTable({ data }: LandingPagesTableProps) {
   if (!data || data.length === 0) {
     return (
-      <div className="text-center py-8 text-slate-400">
-        No landing page data available
-      </div>
+      <WidgetErrorBoundary label="Landing Pages Table" minHeight="h-48">
+        <div className="text-center py-8 text-slate-400">
+          No landing page data available
+        </div>
+      </WidgetErrorBoundary>
     );
   }
 
   return (
+    <WidgetErrorBoundary label="Landing Pages Table" minHeight="h-48">
     <div className="overflow-x-auto">
       <table className="w-full">
         <thead>
@@ -120,5 +124,6 @@ export function LandingPagesTable({ data }: LandingPagesTableProps) {
         </tbody>
       </table>
     </div>
+    </WidgetErrorBoundary>
   );
 }

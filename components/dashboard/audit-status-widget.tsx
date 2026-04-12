@@ -29,6 +29,7 @@ import {
 import { readLatestAuditReport, isReportCertified } from '@/lib/audit/read-report';
 import { BLOCKED_REF_COUNT } from '@/lib/audit/constants';
 import { AuditVerifyButton } from './audit-verify-button';
+import { WidgetErrorBoundary } from '@/components/dashboard/widget-error-boundary';
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
@@ -97,30 +98,32 @@ export function AuditStatusWidget() {
   // ── NOT AUDITED state ─────────────────────────────────────────────────────
   if (!isAudited) {
     return (
-      <div className="rounded-xl border border-rose-200 bg-rose-50/80 p-4">
-        {/* Header */}
-        <div className="flex items-center gap-2 mb-3">
-          <div className="w-7 h-7 rounded-lg bg-rose-100 flex items-center justify-center flex-shrink-0">
-            <Ban className="h-3.5 w-3.5 text-rose-600" />
+      <WidgetErrorBoundary label="Audit Status" minHeight="h-32">
+        <div className="rounded-xl border border-rose-200 bg-rose-50/80 p-4">
+          {/* Header */}
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-7 h-7 rounded-lg bg-rose-100 flex items-center justify-center flex-shrink-0">
+              <Ban className="h-3.5 w-3.5 text-rose-600" />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-rose-900 leading-none">S2S Dedup Audit</p>
+              <p className="text-[10px] text-rose-600 mt-0.5">Postback Dedup System</p>
+            </div>
           </div>
-          <div>
-            <p className="text-xs font-bold text-rose-900 leading-none">S2S Dedup Audit</p>
-            <p className="text-[10px] text-rose-600 mt-0.5">Postback Dedup System</p>
-          </div>
-        </div>
 
-        {/* Warning */}
-        <div className="flex items-start gap-2 bg-rose-100 border border-rose-200 rounded-lg p-3 mb-3">
-          <AlertTriangle className="h-4 w-4 text-rose-600 flex-shrink-0 mt-0.5" />
-          <div>
-            <p className="text-xs font-bold text-rose-900">SYSTEM NICHT AUDITIERT</p>
-            <p className="text-[11px] text-rose-700 mt-0.5">{notAuditedReason}</p>
+          {/* Warning */}
+          <div className="flex items-start gap-2 bg-rose-100 border border-rose-200 rounded-lg p-3 mb-3">
+            <AlertTriangle className="h-4 w-4 text-rose-600 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-xs font-bold text-rose-900">SYSTEM NICHT AUDITIERT</p>
+              <p className="text-[11px] text-rose-700 mt-0.5">{notAuditedReason}</p>
+            </div>
           </div>
-        </div>
 
-        {/* Verify button (Client Component island) */}
-        <AuditVerifyButton />
-      </div>
+          {/* Verify button (Client Component island) */}
+          <AuditVerifyButton />
+        </div>
+      </WidgetErrorBoundary>
     );
   }
 
@@ -148,6 +151,7 @@ export function AuditStatusWidget() {
   const gateLabel = `${gateChecks}/2`;
 
   return (
+    <WidgetErrorBoundary label="Audit Status" minHeight="h-32">
     <div
       className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden"
     >
@@ -235,5 +239,6 @@ export function AuditStatusWidget() {
         <AuditVerifyButton />
       </div>
     </div>
+    </WidgetErrorBoundary>
   );
 }

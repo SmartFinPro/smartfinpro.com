@@ -11,6 +11,7 @@ import {
   ReferenceLine,
 } from 'recharts';
 import type { EPCTrendData } from '@/lib/actions/revenue';
+import { WidgetErrorBoundary } from '@/components/dashboard/widget-error-boundary';
 
 interface EPCTrendChartProps {
   data: EPCTrendData[];
@@ -32,13 +33,16 @@ const CHART_COLORS = {
 export function EPCTrendChart({ data, globalEPC }: EPCTrendChartProps) {
   if (!data || data.length === 0) {
     return (
-      <div className="h-[200px] flex items-center justify-center text-slate-500 text-sm">
-        No EPC data yet.
-      </div>
+      <WidgetErrorBoundary label="EPC Trend Chart" minHeight="h-64">
+        <div className="h-[200px] flex items-center justify-center text-slate-500 text-sm">
+          No EPC data yet.
+        </div>
+      </WidgetErrorBoundary>
     );
   }
 
   return (
+    <WidgetErrorBoundary label="EPC Trend Chart" minHeight="h-64">
     <ResponsiveContainer width="100%" height={200}>
       <AreaChart
         data={data}
@@ -111,5 +115,6 @@ export function EPCTrendChart({ data, globalEPC }: EPCTrendChartProps) {
         />
       </AreaChart>
     </ResponsiveContainer>
+    </WidgetErrorBoundary>
   );
 }

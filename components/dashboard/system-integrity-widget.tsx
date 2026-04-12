@@ -26,6 +26,7 @@ import {
   Server,
   Lock,
 } from 'lucide-react';
+import { WidgetErrorBoundary } from '@/components/dashboard/widget-error-boundary';
 
 // ── Types ──────────────────────────────────────────────────────
 
@@ -289,6 +290,7 @@ export function SystemIntegrityWidget() {
   }, []);
 
   return (
+    <WidgetErrorBoundary label="System Integrity" minHeight="h-64">
     <div
       className="rounded-xl border border-slate-200/80 shadow-sm overflow-hidden backdrop-blur-md"
       style={{ background: 'rgba(255, 255, 255, 0.70)' }}
@@ -445,5 +447,6 @@ export function SystemIntegrityWidget() {
         </div>
       </div>
     </div>
+    </WidgetErrorBoundary>
   );
 }

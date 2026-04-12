@@ -23,6 +23,7 @@ import {
 import Link from 'next/link';
 import type { TimeComparison, TimeRange, TimeSeriesData, GlobalMarketIntelligence, MarketPerformance } from '@/lib/actions/dashboard';
 import type { DeployStats } from '@/lib/actions/deploy-logs';
+import { WidgetErrorBoundary } from '@/components/dashboard/widget-error-boundary';
 
 // ── Types ──────────────────────────────────────────────────────
 
@@ -240,6 +241,7 @@ export function ExecutiveOverview({
   };
 
   return (
+    <WidgetErrorBoundary label="Executive Overview" minHeight="h-64">
     <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden mb-8">
       {/* Gradient accent bar */}
       <div className="h-1" style={{ background: 'linear-gradient(90deg, var(--sfp-navy) 0%, var(--sfp-gold) 100%)' }} />
@@ -440,5 +442,6 @@ export function ExecutiveOverview({
         </div>
       </div>
     </div>
+    </WidgetErrorBoundary>
   );
 }

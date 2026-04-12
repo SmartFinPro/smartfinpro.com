@@ -2,6 +2,7 @@
 
 import { Clock, AlertTriangle, CheckCircle2, Timer, RefreshCw } from 'lucide-react';
 import type { FreshnessStats, FreshnessRow } from '@/lib/actions/content-freshness';
+import { WidgetErrorBoundary } from '@/components/dashboard/widget-error-boundary';
 
 // ── Freshness Bar ──────────────────────────────────────────────
 
@@ -221,10 +222,12 @@ interface ContentFreshnessWidgetProps {
 export function ContentFreshnessWidget({ stats }: ContentFreshnessWidgetProps) {
   if (stats.totalArticles === 0) {
     return (
-      <div className="py-8 text-center text-slate-500 text-sm">
-        <RefreshCw className="h-8 w-8 mx-auto text-slate-300 mb-2" />
-        No freshness data yet. The freshness-check cron job will populate this automatically.
-      </div>
+      <WidgetErrorBoundary label="Content Freshness" minHeight="h-48">
+        <div className="py-8 text-center text-slate-500 text-sm">
+          <RefreshCw className="h-8 w-8 mx-auto text-slate-300 mb-2" />
+          No freshness data yet. The freshness-check cron job will populate this automatically.
+        </div>
+      </WidgetErrorBoundary>
     );
   }
 
@@ -233,6 +236,7 @@ export function ContentFreshnessWidget({ stats }: ContentFreshnessWidgetProps) {
     : 0;
 
   return (
+    <WidgetErrorBoundary label="Content Freshness" minHeight="h-48">
     <div className="space-y-6">
       {/* Summary Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
@@ -298,5 +302,6 @@ export function ContentFreshnessWidget({ stats }: ContentFreshnessWidgetProps) {
         <StaleArticlesTable articles={stats.staleArticles} />
       </div>
     </div>
+    </WidgetErrorBoundary>
   );
 }

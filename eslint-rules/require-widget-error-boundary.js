@@ -50,6 +50,34 @@ module.exports = {
     }
 
     /**
+     * Walk the component body collecting returned JSX nodes.
+     * Stops at nested function boundaries (arrow fns, callbacks) so that
+     * `items.map(item => { return <li/> })` doesn't overwrite the outer return.
+     */
+    function collectTopLevelJsxReturns(n, results) {
+      if (!n || typeof n !== 'object') return;
+      // Don't descend into nested function bodies — they are not this component's returns
+      if (
+        n.type === 'ArrowFunctionExpression' ||
+        n.type === 'FunctionExpression' ||
+        n.type === 'FunctionDeclaration'
+      ) return;
+      if (
+        n.type === 'ReturnStatement' &&
+        n.argument &&
+        (n.argument.type === 'JSXElement' || n.argument.type === 'JSXFragment')
+      ) {
+        results.push(n.argument);
+      }
+      for (const key of Object.keys(n)) {
+        if (key === 'parent') continue;
+        const child = n[key];
+        if (Array.isArray(child)) child.forEach(c => collectTopLevelJsxReturns(c, results));
+        else if (child && typeof child === 'object' && child.type) collectTopLevelJsxReturns(child, results);
+      }
+    }
+
+    /**
      * Check if a JSX element or its descendants includes WidgetErrorBoundary.
      */
     function hasErrorBoundary(node) {
@@ -98,39 +126,21 @@ module.exports = {
         const isDashboardWidget = /Widget|Chart|Feed|Table|Card|Overview|Bar$/.test(funcName);
         if (!isDashboardWidget) return;
 
-        // Find returned JSX
+        // Find returned JSX — only top-level returns, not inside nested callbacks
         const body = funcNode.body;
         if (!body) return;
 
-        // Walk the body looking for return statements with JSX
-        let returnedJsx = null;
-        function walkBody(n) {
-          if (!n || typeof n !== 'object') return;
-          if (n.type === 'ReturnStatement' && n.argument) {
-            if (
-              n.argument.type === 'JSXElement' ||
-              n.argument.type === 'JSXFragment'
-            ) {
-              returnedJsx = n.argument;
-            }
-          }
-          for (const key of Object.keys(n)) {
-            if (key === 'parent') continue;
-            const child = n[key];
-            if (Array.isArray(child)) child.forEach(walkBody);
-            else if (child && typeof child === 'object' && child.type) walkBody(child);
-          }
-        }
-
-        // For arrow functions with expression body
+        let jsxReturns = [];
+        // For arrow functions with expression body (implicit return)
         if (body.type === 'JSXElement' || body.type === 'JSXFragment') {
-          returnedJsx = body;
+          jsxReturns = [body];
         } else {
-          walkBody(body);
+          collectTopLevelJsxReturns(body, jsxReturns);
         }
 
-        if (!returnedJsx) return;
-        if (hasErrorBoundary(returnedJsx)) return;
+        if (jsxReturns.length === 0) return;
+        // All top-level JSX returns must be wrapped (handles early-return patterns)
+        if (jsxReturns.every(hasErrorBoundary)) return;
 
         context.report({
           node,

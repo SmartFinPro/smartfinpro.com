@@ -5,6 +5,7 @@
 import Link from 'next/link';
 import { createServiceClient } from '@/lib/supabase/server';
 import { Activity, ArrowRight, CheckCircle, AlertTriangle, XCircle } from 'lucide-react';
+import { WidgetErrorBoundary } from '@/components/dashboard/widget-error-boundary';
 
 type Rating = 'good' | 'needs-improvement' | 'poor';
 
@@ -102,6 +103,7 @@ export async function WebVitalsWidget() {
   const overallStatus: Rating = poorCount > 0 ? 'poor' : warnCount > 0 ? 'needs-improvement' : 'good';
 
   return (
+    <WidgetErrorBoundary label="Web Vitals" minHeight="h-48">
     <div className="bg-white border border-slate-200 rounded-lg shadow-sm">
       <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
@@ -190,5 +192,6 @@ export async function WebVitalsWidget() {
         )}
       </div>
     </div>
+    </WidgetErrorBoundary>
   );
 }
