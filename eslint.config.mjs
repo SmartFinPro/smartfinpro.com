@@ -29,15 +29,17 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
   ]),
 
-  // ── SmartFinPro Custom Rules (Phase 1: warn — Phase 2: error after cleanup) ──
+  // ── SmartFinPro Custom Rules ──────────────────────────────────────────────────
+  // Phase 2: no-raw-mdx-serialize + require-service-client → error (cleanup done)
+  // Phase 1 still: require-widget-error-boundary → warn (26 violations pending)
   {
     plugins: { sfp: sfpRulesPlugin },
     rules: {
-      // Prevents _missingMdxReference crash in production
-      "sfp/no-raw-mdx-serialize": "warn",
-      // Prevents silent auth failures in server-only contexts
-      "sfp/require-service-client": "warn",
-      // Prevents cascade failures in dashboard
+      // Prevents _missingMdxReference crash in production — HARD ERROR
+      "sfp/no-raw-mdx-serialize": "error",
+      // Prevents silent auth failures in server-only contexts — HARD ERROR
+      "sfp/require-service-client": "error",
+      // Prevents cascade failures in dashboard — warn until all widgets wrapped
       "sfp/require-widget-error-boundary": "warn",
     },
   },

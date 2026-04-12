@@ -5,7 +5,7 @@ import * as Sentry from '@sentry/nextjs';
 import { logger } from '@/lib/logging';
 
 import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache';
-import { createClient, createServiceClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/server';
 import type { AffiliateLink } from '@/types';
 
 // ── Auto-Sync Helper ────────────────────────────────────────
@@ -82,7 +82,7 @@ async function deactivateInAffiliateRates(partnerName: string, market?: string |
 
 export async function getAffiliateLinks() {
   try {
-    const supabase = await createClient();
+    const supabase = createServiceClient();
 
     const { data, error } = await supabase
       .from('affiliate_links')
@@ -137,7 +137,7 @@ export async function getAffiliateLinksService() {
 }
 
 export async function getAffiliateLink(id: string) {
-  const supabase = await createClient();
+  const supabase = createServiceClient();
 
   const { data, error } = await supabase
     .from('affiliate_links')
@@ -156,7 +156,7 @@ export async function getAffiliateLink(id: string) {
 export async function createAffiliateLink(
   link: Omit<AffiliateLink, 'id' | 'created_at'>
 ) {
-  const supabase = await createClient();
+  const supabase = createServiceClient();
 
   const { data, error } = await supabase
     .from('affiliate_links')
@@ -190,7 +190,7 @@ export async function updateAffiliateLink(
   id: string,
   updates: Partial<AffiliateLink>
 ) {
-  const supabase = await createClient();
+  const supabase = createServiceClient();
 
   const { data, error } = await supabase
     .from('affiliate_links')
@@ -223,7 +223,7 @@ export async function updateAffiliateLink(
 }
 
 export async function deleteAffiliateLink(id: string) {
-  const supabase = await createClient();
+  const supabase = createServiceClient();
 
   // Fetch link details before deleting (needed for affiliate_rates deactivation)
   const { data: linkData } = await supabase
@@ -259,7 +259,7 @@ export async function toggleAffiliateLinkStatus(id: string, active: boolean) {
 
 // Analytics helpers
 export async function getLinkClickStats(linkId: string, days: number = 30) {
-  const supabase = await createClient();
+  const supabase = createServiceClient();
 
   const startDate = new Date();
   startDate.setDate(startDate.getDate() - days);
@@ -318,7 +318,7 @@ export async function getLinkClickStats(linkId: string, days: number = 30) {
 }
 
 export async function getDashboardStats() {
-  const supabase = await createClient();
+  const supabase = createServiceClient();
 
   // Get total clicks
   const { count: totalClicks } = await supabase

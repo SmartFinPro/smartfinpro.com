@@ -3,7 +3,7 @@
 'use server';
 
 import 'server-only';
-import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/server';
 import { createClaudeMessage } from '@/lib/claude/client';
 import { sendTelegramAlert } from '@/lib/alerts/telegram';
 import { marketCompliancePrompts } from '@/lib/claude/market-compliance-prompts';
@@ -113,7 +113,7 @@ export async function scanBacklinkOpportunities(
   targetUrl: string,
   category?: string,
 ): Promise<{ found: number; saved: number }> {
-  const supabase = await createClient();
+  const supabase = createServiceClient();
   const queries = buildBacklinkSearchQueries(keyword);
 
   const allResults: Array<{ title: string; link: string; snippet: string }> = [];
@@ -270,7 +270,7 @@ Write a helpful, genuinely useful response for this thread that naturally mentio
 export async function postBacklinkOpportunity(
   opportunity: BacklinkOpportunity,
 ): Promise<{ success: boolean; placementUrl?: string; error?: string }> {
-  const supabase = await createClient();
+  const supabase = createServiceClient();
 
   // Generate content first
   const generated = await generateBacklinkContent(opportunity);
@@ -397,7 +397,7 @@ export async function runBacklinkScout(): Promise<{
   found: number;
   saved: number;
 }> {
-  const supabase = await createClient();
+  const supabase = createServiceClient();
 
   // Load active campaigns
   const { data: campaigns } = await supabase
@@ -453,7 +453,7 @@ export async function runBacklinkPost(): Promise<{
   failed: number;
   queued: number;
 }> {
-  const supabase = await createClient();
+  const supabase = createServiceClient();
   const dailyLimit = parseInt(process.env.BACKLINKS_DAILY_LIMIT ?? '10', 10);
 
   // Get best pending opportunities (sorted by score desc)
@@ -513,7 +513,7 @@ export async function runBacklinkVerify(): Promise<{
   live: number;
   lost: number;
 }> {
-  const supabase = await createClient();
+  const supabase = createServiceClient();
 
   const { data: placements } = await supabase
     .from('backlink_placements')
@@ -591,7 +591,7 @@ export async function getBacklinkDashboardData(): Promise<{
   opportunities: BacklinkOpportunity[];
   campaigns: BacklinkCampaign[];
 }> {
-  const supabase = await createClient();
+  const supabase = createServiceClient();
   const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
   const [placementsRes, pendingRes, campaignsRes] = await Promise.all([

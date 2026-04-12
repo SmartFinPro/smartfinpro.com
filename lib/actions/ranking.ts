@@ -4,7 +4,7 @@ import 'server-only';
 import * as Sentry from '@sentry/nextjs';
 import { logger } from '@/lib/logging';
 
-import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/server';
 import {
   getTopKeywords,
   getKeywordTrend,
@@ -110,7 +110,7 @@ function safeData<T>(result: SupabaseResult<T>): T[] {
  * Returns the count of newly seeded keywords.
  */
 export async function seedMoneyKeywords(): Promise<number> {
-  const supabase = await createClient();
+  const supabase = createServiceClient();
   let seeded = 0;
 
   for (const kw of MONEY_KEYWORDS) {
@@ -166,7 +166,7 @@ export async function getRankingData(options?: {
   const market = options?.market;
   const days = options?.days || 7;
 
-  const supabase = await createClient();
+  const supabase = createServiceClient();
 
   // Helper: build & run the keyword_tracking query
   async function fetchStored() {
@@ -314,7 +314,7 @@ export async function getRealtimeRanking(
   // Persist to Supabase
   let savedToDb = false;
   if (ownPosition !== null) {
-    const supabase = await createClient();
+    const supabase = createServiceClient();
 
     // Get previous position first
     const prevQuery = supabase
@@ -452,7 +452,7 @@ export async function syncKeywordTracking(): Promise<{
     return { synced: 0, errors: 0 };
   }
 
-  const supabase = await createClient();
+  const supabase = createServiceClient();
   const keywords = await getTopKeywords({ days: 3, limit: 200 });
 
   const prevQuery = supabase

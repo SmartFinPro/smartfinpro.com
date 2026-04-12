@@ -34,6 +34,9 @@ module.exports = {
     return {
       ImportDeclaration(node) {
         const source = node.source.value;
+        // Skip the wrapper file itself — it must import serialize() to wrap it
+        const filename = context.getFilename();
+        if (filename.includes('lib/mdx/serialize')) return;
         if (source === 'next-mdx-remote/serialize') {
           // Check if 'serialize' is in the imported specifiers
           const hasSerialize = node.specifiers.some(

@@ -4,7 +4,7 @@ import 'server-only';
 import * as Sentry from '@sentry/nextjs';
 import { logger } from '@/lib/logging';
 
-import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/server';
 import {
   COMPETITOR_KEYWORDS,
   calculateCPS,
@@ -128,7 +128,7 @@ async function fetchSerp(keyword: string, market: Market): Promise<SerperRespons
 // ── Scan Limit Management ────────────────────────────────────
 
 async function getScanLimit(): Promise<ScanLimitInfo> {
-  const supabase = await createClient();
+  const supabase = createServiceClient();
   const today = new Date().toISOString().split('T')[0];
 
   const result = await supabase
@@ -151,7 +151,7 @@ async function getScanLimit(): Promise<ScanLimitInfo> {
 }
 
 async function incrementScanCount(count: number): Promise<void> {
-  const supabase = await createClient();
+  const supabase = createServiceClient();
   const today = new Date().toISOString().split('T')[0];
 
   // Upsert: create row for today or increment existing
@@ -321,7 +321,7 @@ async function analyzeGapKeyword(
 
   // Persist to Supabase
   try {
-    const supabase = await createClient();
+    const supabase = createServiceClient();
 
     await supabase.from('keyword_gap_results').upsert(
       {
@@ -378,7 +378,7 @@ export async function analyzeKeywordGap(
   const cleanDomain = competitorDomain.replace('www.', '').toLowerCase().replace(/\/$/, '');
 
   // Get all tracked keywords for this market
-  const supabase = await createClient();
+  const supabase = createServiceClient();
   const trackedResult = await supabase
     .from('competitor_tracked_keywords')
     .select('keyword, market, category')
@@ -428,7 +428,7 @@ export async function getGapDashboardData(
   competitorDomain?: string,
   market?: Market,
 ): Promise<GapDashboardData> {
-  const supabase = await createClient();
+  const supabase = createServiceClient();
   const serperConfigured = !!process.env.SERPER_API_KEY;
 
   // Fetch gap results
@@ -630,7 +630,7 @@ TODO: Answer — 50-100 words
 
   // Persist draft
   try {
-    const supabase = await createClient();
+    const supabase = createServiceClient();
 
     const opportunityScore = competitorDomain ? 70 : 50; // Placeholder
 
@@ -701,7 +701,7 @@ export async function bridgeTheGap(
 export async function discardDraft(
   draftId: string,
 ): Promise<{ success: boolean }> {
-  const supabase = await createClient();
+  const supabase = createServiceClient();
 
   const { error } = await supabase
     .from('keyword_gap_drafts')
@@ -714,7 +714,7 @@ export async function discardDraft(
 // ── Get Analyzed Competitors ─────────────────────────────────
 
 export async function getAnalyzedCompetitors(): Promise<string[]> {
-  const supabase = await createClient();
+  const supabase = createServiceClient();
 
   const result = await supabase
     .from('keyword_gap_results')

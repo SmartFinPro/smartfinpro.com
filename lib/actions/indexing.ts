@@ -17,7 +17,7 @@ import {
   type IndexingResult,
   type BatchIndexingResult,
 } from '@/lib/seo/indexing';
-import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/server';
 
 // ── Server Actions ──────────────────────────────────────────
 
@@ -56,7 +56,7 @@ export async function indexMarketUrls(
  * Get all content URLs from database and submit for indexing.
  */
 export async function indexAllContentUrls(): Promise<BatchIndexingResult> {
-  const supabase = await createClient();
+  const supabase = createServiceClient();
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://smartfinpro.com';
 
   const { data: content, error } = await supabase
@@ -86,7 +86,7 @@ export async function indexAllContentUrls(): Promise<BatchIndexingResult> {
  * Log indexing result to database for tracking.
  */
 export async function logIndexingResult(result: IndexingResult): Promise<void> {
-  const supabase = await createClient();
+  const supabase = createServiceClient();
 
   await supabase.from('indexing_log').insert({
     url: result.url,

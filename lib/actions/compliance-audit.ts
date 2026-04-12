@@ -2,7 +2,7 @@
 
 import 'server-only';
 
-import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/server';
 import type { Market, Category, AffiliateLink } from '@/types';
 
 // ── Types ───────────────────────────────────────────────────
@@ -46,7 +46,7 @@ export interface AuditIssue {
  * 5. Link is active
  */
 export async function runComplianceAudit(): Promise<AuditResult> {
-  const supabase = await createClient();
+  const supabase = createServiceClient();
 
   const { data: links, error } = await supabase
     .from('affiliate_links')
@@ -203,7 +203,7 @@ export async function runComplianceAudit(): Promise<AuditResult> {
 export async function getLinkDistribution(): Promise<
   Record<Market, Record<Category, number>>
 > {
-  const supabase = await createClient();
+  const supabase = createServiceClient();
 
   const { data: links, error } = await supabase
     .from('affiliate_links')
