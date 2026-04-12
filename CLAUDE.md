@@ -75,8 +75,8 @@ smartfinpro.com/au/                  → Australien
 | MDX-Reviews | 108+ (4.000–7.000 Wörter) |
 | React Components | 130+ |
 | Server Actions | 47 Module (`lib/actions/*.ts`) |
-| API Routes | 95+ Endpoints (inkl. 22 Cron-Routes) |
-| Cron Jobs | 22 aktiv |
+| API Routes | 95+ Endpoints (inkl. 23 Cron-Routes) |
+| Cron Jobs | 23 aktiv |
 | DB-Tabellen | 35+ |
 | Interaktive Tools | 9 |
 | Geschätzte LOC | ~50.000+ |
@@ -244,6 +244,7 @@ schema:
 | `backlink-verify` | `/api/cron/backlink-verify` | Backlink-Status verifizieren |
 | `check-links` | `/api/cron/check-links` | Affiliate-Link Health-Check |
 | `check-rankings` | `/api/cron/check-rankings` | GSC Ranking-Updates holen |
+| `sync-rankings` | `/api/cron/sync-rankings` | Keyword-Seed (120+) + GSC-Sync (tägl. 03:30) |
 | `ev-refresh` | `/api/cron/ev-refresh` | Expected-Value Cache aktualisieren |
 | `freshness-check` | `/api/cron/freshness-check` | Content-Freshness Audit |
 | `perf-governance` | `/api/cron/perf-governance` | Performance-Budget durchsetzen |
