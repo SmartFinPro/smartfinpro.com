@@ -15,6 +15,7 @@ import {
 } from '@/lib/seo/google-search-console';
 import type { Market } from '@/types';
 import { MONEY_KEYWORDS } from '@/lib/seo/money-keywords';
+import { COMPETITOR_KEYWORDS } from '@/lib/seo/competitor-keywords';
 
 // ── Types ────────────────────────────────────────────────────
 
@@ -133,6 +134,128 @@ export async function seedMoneyKeywords(): Promise<number> {
   }
 
   return seeded;
+}
+
+// ── Bulk-seed competitor keywords into keyword_tracking ─────
+
+/**
+ * Category → landing page URL mapping per market.
+ * Used to assign the correct target page to each competitor keyword.
+ */
+const CATEGORY_PAGE_MAP: Record<string, Record<string, string>> = {
+  us: {
+    trading: '/us/trading',
+    forex: '/us/forex',
+    'personal-finance': '/us/personal-finance',
+    'business-banking': '/us/business-banking',
+    'ai-tools': '/us/ai-tools',
+    cybersecurity: '/us/cybersecurity',
+    'credit-repair': '/us/credit-repair',
+    'debt-relief': '/us/debt-relief',
+    'credit-score': '/us/credit-score',
+  },
+  uk: {
+    trading: '/uk/trading',
+    forex: '/uk/forex',
+    'personal-finance': '/uk/personal-finance',
+    'business-banking': '/uk/business-banking',
+    'ai-tools': '/uk/ai-tools',
+    cybersecurity: '/uk/cybersecurity',
+    remortgaging: '/uk/remortgaging',
+    'cost-of-living': '/uk/cost-of-living',
+    savings: '/uk/savings',
+  },
+  ca: {
+    trading: '/ca/trading',
+    forex: '/ca/forex',
+    'personal-finance': '/ca/personal-finance',
+    'business-banking': '/ca/business-banking',
+    'ai-tools': '/ca/ai-tools',
+    'tax-efficient-investing': '/ca/tax-efficient-investing',
+    housing: '/ca/housing',
+    'gold-investing': '/ca/gold-investing',
+  },
+  au: {
+    trading: '/au/trading',
+    forex: '/au/forex',
+    'personal-finance': '/au/personal-finance',
+    'business-banking': '/au/business-banking',
+    'ai-tools': '/au/ai-tools',
+    superannuation: '/au/superannuation',
+    'gold-investing': '/au/gold-investing',
+    savings: '/au/savings',
+  },
+};
+
+/**
+ * Seeds top competitor keywords into keyword_tracking.
+ * Prioritizes: US market first (highest CPA), then UK/CA/AU.
+ * Max ~120 keywords to stay within Serper.dev rate limits.
+ * Uses UPSERT — safe to call repeatedly (idempotent).
+ */
+export async function seedCompetitorKeywords(limit = 120): Promise<{
+  seeded: number;
+  skipped: number;
+}> {
+  const supabase = createServiceClient();
+
+  // Priority: US > UK > AU > CA (by revenue potential)
+  const marketPriority: Market[] = ['us', 'uk', 'au', 'ca'];
+
+  // Select keywords: take proportionally from each market
+  const perMarket = Math.floor(limit / marketPriority.length);
+  const selected: typeof COMPETITOR_KEYWORDS = [];
+
+  for (const mkt of marketPriority) {
+    const marketKws = COMPETITOR_KEYWORDS.filter((k) => k.market === mkt);
+    // Take first N (already ordered by importance in the source file)
+    selected.push(...marketKws.slice(0, perMarket));
+  }
+
+  // Fill remaining slots with US keywords (highest value)
+  const remaining = limit - selected.length;
+  if (remaining > 0) {
+    const usKws = COMPETITOR_KEYWORDS.filter(
+      (k) => k.market === 'us' && !selected.some((s) => s.keyword === k.keyword && s.market === k.market),
+    );
+    selected.push(...usKws.slice(0, remaining));
+  }
+
+  let seeded = 0;
+  let skipped = 0;
+  const now = new Date().toISOString();
+
+  // Batch upsert in chunks of 50
+  const chunkSize = 50;
+  for (let i = 0; i < selected.length; i += chunkSize) {
+    const chunk = selected.slice(i, i + chunkSize);
+    const rows = chunk.map((kw) => ({
+      keyword: kw.keyword,
+      page: CATEGORY_PAGE_MAP[kw.market]?.[kw.category] || `/${kw.market}/${kw.category}`,
+      market: kw.market,
+      current_position: 0,
+      previous_position: null,
+      clicks: 0,
+      impressions: 0,
+      ctr: 0,
+      tracked_at: now,
+    }));
+
+    const { error, count } = await supabase
+      .from('keyword_tracking')
+      .upsert(rows, { onConflict: 'keyword,market', ignoreDuplicates: true })
+      .select('id');
+
+    if (error) {
+      logger.warn('[ranking] Bulk seed chunk error:', error.message);
+      skipped += chunk.length;
+    } else {
+      seeded += count ?? chunk.length;
+    }
+  }
+
+  logger.info(`[ranking] Competitor keywords seeded: ${seeded}, skipped: ${skipped}`);
+  return { seeded, skipped };
 }
 
 // ── Main data fetcher ───────────────────────────────────────
