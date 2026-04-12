@@ -74,12 +74,14 @@ smartfinpro.com/au/                  → Australien
 | Routen | 200+ |
 | MDX-Reviews | 108+ (4.000–7.000 Wörter) |
 | React Components | 130+ |
-| Server Actions | 29 Module |
-| API Routes | 15 Endpoints |
-| Cron Jobs | 7 |
+| Server Actions | 47 Module (`lib/actions/*.ts`) |
+| API Routes | 90+ Endpoints (inkl. 19 Cron-Routes) |
+| Cron Jobs | 19 aktiv |
 | DB-Tabellen | 30+ |
 | Interaktive Tools | 9 |
 | Geschätzte LOC | ~50.000+ |
+
+> ⚡ **Aktueller Stand:** `npm run refresh:agent-context` → erzeugt `memory/generated/api-routes.json`, `cron-index.json`, `lib-actions.json`
 
 ---
 
@@ -104,8 +106,10 @@ app/
 │   ├── genesis/page.tsx             # Content-Pipeline
 │   └── compliance/page.tsx          # Compliance Audit (FCA/ASIC/CIRO)
 ├── api/
-│   ├── cron/[job]/route.ts          # 7 Cron-Job Endpoints
-│   └── dashboard/*/route.ts         # 15 Dashboard API-Routen
+│   ├── cron/*/route.ts              # 19 Cron-Job Endpoints
+│   ├── dashboard/*/route.ts         # ~50 Dashboard API-Routen
+│   ├── genesis/*/route.ts           # ~20 Genesis-Pipeline Routen
+│   └── */route.ts                   # ~20 weitere Routen (track, bandit, webhooks, etc.)
 ├── globals.css                      # CSS-Variablen, globale Stile
 └── sitemap.ts                       # Dynamische Sitemap (alle Märkte)
 
@@ -128,9 +132,14 @@ components/
 └── tools/                           # 9 interaktive Rechner
 
 lib/
-├── supabase/                        # DB-Queries, Server Actions (29 Module)
-├── claude/                          # Anthropic API Integration
-├── tracking.ts                      # Click & Conversion Tracking
+├── actions/                         # 47 Server Actions ('use server' + 'server-only')
+├── supabase/server.ts               # createClient() (SSR) + createServiceClient() (Server-only)
+├── claude/client.ts                 # createClaudeMessage() — Retry + Timeout wrapper
+├── logging.ts                       # logger + logCron() — JSON für PM2
+├── utils/retry.ts                   # withRetry(fn, opts) — Backoff für externe APIs
+├── validation/index.ts              # validate(Schema, body) + Zod-Schemas
+├── auth/dashboard-session.ts        # isValidDashboardSessionValue(value, secret)
+├── mdx/serialize.ts                 # serializeMDX() — NICHT serialize() direkt!
 ├── hreflang.ts                      # Hreflang-Tag Generator
 └── indexing.ts                      # Google Indexing API
 
@@ -212,7 +221,7 @@ schema:
 
 ---
 
-## ⏰ Cron-Jobs (7 aktiv)
+## ⏰ Cron-Jobs (19 aktiv)
 
 | Job | Route | Funktion |
 |---|---|---|
@@ -223,12 +232,102 @@ schema:
 | `sync-revenue` | `/api/cron/sync-revenue` | Revenue Reconciliation |
 | `send-emails` | `/api/cron/send-emails` | Resend Nurture Sequences |
 | `weekly-report` | `/api/cron/weekly-report` | Performance Summary → Telegram + E-Mail |
+| `affiliate-scout` | `/api/cron/affiliate-scout` | Neue Affiliate-Programme entdecken |
+| `auto-genesis` | `/api/cron/auto-genesis` | Automatische Content-Generierung |
+| `backlink-post` | `/api/cron/backlink-post` | Backlinks auf Partner-Sites posten |
+| `backlink-scout` | `/api/cron/backlink-scout` | Backlink-Opportunities finden |
+| `backlink-verify` | `/api/cron/backlink-verify` | Backlink-Status verifizieren |
+| `check-links` | `/api/cron/check-links` | Affiliate-Link Health-Check |
+| `check-rankings` | `/api/cron/check-rankings` | GSC Ranking-Updates holen |
+| `ev-refresh` | `/api/cron/ev-refresh` | Expected-Value Cache aktualisieren |
+| `freshness-check` | `/api/cron/freshness-check` | Content-Freshness Audit |
+| `perf-governance` | `/api/cron/perf-governance` | Performance-Budget durchsetzen |
+| `seo-drift` | `/api/cron/seo-drift` | SEO Health Monitoring |
+| `update-fx-rates` | `/api/cron/update-fx-rates` | FX-Kurse für Revenue-Konvertierung |
 
 **Authentifizierung aller Cron-Routes:**
 ```typescript
 const authHeader = request.headers.get('Authorization');
 if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
   return new Response('Unauthorized', { status: 401 });
+}
+```
+
+---
+
+## 🔧 Reusable Utilities (IMMER zuerst prüfen — nicht neu bauen!)
+
+> Aktueller Stand der Routes/Actions: `npm run refresh:agent-context` → `memory/generated/`
+
+| Utility | Import | Wann nutzen |
+|---|---|---|
+| `createServiceClient()` | `@/lib/supabase/server` | Jeder DB-Zugriff in Server Actions + Cron (NICHT `createClient()`) |
+| `logger` | `@/lib/logging` | Alle Server-Logs — strukturiertes JSON für PM2-Aggregation |
+| `withRetry(fn, opts)` | `@/lib/utils/retry` | Externe API-Calls (Claude, Serper, Awin…) — Backoff built-in |
+| `validate(Schema, body)` | `@/lib/validation` | POST/PUT Routes — gibt `NextResponse` 400 zurück bei Fehler |
+| `serializeMDX(src, scope?)` | `@/lib/mdx/serialize` | MDX rendern — **NIEMALS `serialize()` direkt aus next-mdx-remote!** |
+| `createClaudeMessage(p, o)` | `@/lib/claude/client` | Anthropic API — Retry + 30s Timeout + Request-ID-Tracing built-in |
+| `WidgetErrorBoundary` | `@/components/dashboard/widget-error-boundary` | Jedes Dashboard-Widget wrappen — verhindert Cascade-Failures |
+| `isValidDashboardSessionValue(v, s)` | `@/lib/auth/dashboard-session` | Dashboard-Auth-Check — **2 Args**: `(cookieValue, DASHBOARD_SECRET)` |
+| `logCron({ job, status, duration_ms })` | `@/lib/logging` | Jede Cron-Route — Logging in `cron_logs` Tabelle |
+
+### Standard-Boilerplate-Pattern
+
+**Cron Route** (`app/api/cron/[name]/route.ts`):
+```typescript
+import { NextRequest } from 'next/server';
+import { logger, logCron } from '@/lib/logging';
+import { withRetry } from '@/lib/utils/retry';
+
+export async function GET(request: NextRequest) {
+  const start = Date.now();
+  const authHeader = request.headers.get('Authorization');
+  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    return new Response('Unauthorized', { status: 401 });
+  }
+  try {
+    // ... logic mit withRetry() für externe Calls
+    await logCron({ job: 'job-name', status: 'success', duration_ms: Date.now() - start });
+    return Response.json({ ok: true });
+  } catch (error) {
+    logger.error('Cron failed', error);
+    await logCron({ job: 'job-name', status: 'error', duration_ms: Date.now() - start, error: String(error) });
+    return Response.json({ ok: false }, { status: 500 });
+  }
+}
+```
+
+**Server Action** (`lib/actions/[name].ts`):
+```typescript
+'use server';
+import 'server-only';
+import { createServiceClient } from '@/lib/supabase/server';
+import { logger } from '@/lib/logging';
+
+export async function myAction(params: Params): Promise<{ success: boolean; data?: T; error?: string }> {
+  try {
+    const supabase = createServiceClient();
+    const { data, error } = await supabase.from('table').select('*');
+    if (error) { logger.error('Query failed', { error: error.message }); return { success: false, error: error.message }; }
+    return { success: true, data };
+  } catch (err) {
+    logger.error('Action failed', err);
+    return { success: false, error: 'Internal error' };
+  }
+}
+```
+
+**API Route POST** (`app/api/[name]/route.ts`):
+```typescript
+import { NextRequest, NextResponse } from 'next/server';
+import { validate, MySchema } from '@/lib/validation';
+import { logger } from '@/lib/logging';
+
+export async function POST(request: NextRequest) {
+  const result = validate(MySchema, await request.json());
+  if (!result.ok) return result.error; // NextResponse 400 already formed
+  const data = result.data;
+  // ... logic
 }
 ```
 

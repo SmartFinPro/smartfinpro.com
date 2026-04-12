@@ -24,5 +24,18 @@
       "Bash(git rm -r*dashboard*)",
       "Bash(git rm -r*supabase*)"
     ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "FILE=\"${file}\"; if echo \"$FILE\" | grep -qE '\\.(ts|tsx)$' && echo \"$FILE\" | grep -qE '(^|/)(app|components|lib)/'; then /opt/homebrew/bin/node scripts/check-client-server-imports-fast.mjs \"$FILE\" 2>&1 | head -8 || true; fi"
+          }
+        ]
+      }
+    ]
   }
 }

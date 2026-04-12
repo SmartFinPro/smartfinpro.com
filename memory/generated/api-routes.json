@@ -1,0 +1,656 @@
+{
+  "_generated": true,
+  "_command": "npm run refresh:agent-context",
+  "_do_not_edit": true,
+  "_generated_at": "2026-04-12T13:04:34.755Z",
+  "count": 91,
+  "routes": [
+    {
+      "path": "/api/ab-testing/impression",
+      "file": "app/api/ab-testing/impression/route.ts",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/ab-testing/winner",
+      "file": "app/api/ab-testing/winner/route.ts",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/affiliate-rates",
+      "file": "app/api/affiliate-rates/route.ts",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/archive-page/archive",
+      "file": "app/api/archive-page/archive/route.ts",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/archive-page/batch-notify",
+      "file": "app/api/archive-page/batch-notify/route.ts",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/archive-page/hard-delete",
+      "file": "app/api/archive-page/hard-delete/route.ts",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/archive-page/restore",
+      "file": "app/api/archive-page/restore/route.ts",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/audit/report",
+      "file": "app/api/audit/report/route.ts",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/audit/verify/start",
+      "file": "app/api/audit/verify/start/route.ts",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/audit/verify/status",
+      "file": "app/api/audit/verify/status/route.ts",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/auto-genesis/logs",
+      "file": "app/api/auto-genesis/logs/route.ts",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/backlinks",
+      "file": "app/api/backlinks/route.ts",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/bandit/feedback",
+      "file": "app/api/bandit/feedback/route.ts",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/bandit/select",
+      "file": "app/api/bandit/select/route.ts",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/bandit/stats",
+      "file": "app/api/bandit/stats/route.ts",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/contact",
+      "file": "app/api/contact/route.ts",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/dashboard/ab-testing",
+      "file": "app/api/dashboard/ab-testing/route.ts",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/dashboard/add-conversion",
+      "file": "app/api/dashboard/add-conversion/route.ts",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/dashboard/affiliate-links",
+      "file": "app/api/dashboard/affiliate-links/route.ts",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/dashboard/affiliate-scan",
+      "file": "app/api/dashboard/affiliate-scan/route.ts",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/dashboard/backlinks",
+      "file": "app/api/dashboard/backlinks/route.ts",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/dashboard/backlinks/credentials",
+      "file": "app/api/dashboard/backlinks/credentials/route.ts",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/dashboard/badges",
+      "file": "app/api/dashboard/badges/route.ts",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/dashboard/boost-deploy",
+      "file": "app/api/dashboard/boost-deploy/route.ts",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/dashboard/check-indexing-status",
+      "file": "app/api/dashboard/check-indexing-status/route.ts",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/dashboard/competitors",
+      "file": "app/api/dashboard/competitors/route.ts",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/dashboard/compliance-audit",
+      "file": "app/api/dashboard/compliance-audit/route.ts",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/dashboard/connectors",
+      "file": "app/api/dashboard/connectors/route.ts",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/dashboard/content-generator",
+      "file": "app/api/dashboard/content-generator/route.ts",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/dashboard/create-link",
+      "file": "app/api/dashboard/create-link/route.ts",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/dashboard/cta-heatmap",
+      "file": "app/api/dashboard/cta-heatmap/route.ts",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/dashboard/daily-strategy",
+      "file": "app/api/dashboard/daily-strategy/route.ts",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/dashboard/gap-analysis",
+      "file": "app/api/dashboard/gap-analysis/route.ts",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/dashboard/gsc-analytics",
+      "file": "app/api/dashboard/gsc-analytics/route.ts",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/dashboard/gsc-test",
+      "file": "app/api/dashboard/gsc-test/route.ts",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/dashboard/guardian",
+      "file": "app/api/dashboard/guardian/route.ts",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/dashboard/import-csv",
+      "file": "app/api/dashboard/import-csv/route.ts",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/dashboard/indexing-status",
+      "file": "app/api/dashboard/indexing-status/route.ts",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/dashboard/link-health",
+      "file": "app/api/dashboard/link-health/route.ts",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/dashboard/live-stats",
+      "file": "app/api/dashboard/live-stats/route.ts",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/dashboard/logout",
+      "file": "app/api/dashboard/logout/route.ts",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/dashboard/opportunities/[id]",
+      "file": "app/api/dashboard/opportunities/[id]/route.ts",
+      "methods": [
+        "PATCH"
+      ]
+    },
+    {
+      "path": "/api/dashboard/optimization-engine",
+      "file": "app/api/dashboard/optimization-engine/route.ts",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/dashboard/ranking",
+      "file": "app/api/dashboard/ranking/route.ts",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/dashboard/revenue-forecast",
+      "file": "app/api/dashboard/revenue-forecast/route.ts",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/dashboard/settings",
+      "file": "app/api/dashboard/settings/route.ts",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/dashboard/simulator",
+      "file": "app/api/dashboard/simulator/route.ts",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/dashboard/spike-monitor",
+      "file": "app/api/dashboard/spike-monitor/route.ts",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/dashboard/submit-indexing",
+      "file": "app/api/dashboard/submit-indexing/route.ts",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/dashboard/test-inspection",
+      "file": "app/api/dashboard/test-inspection/route.ts",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/dashboard/totp-setup",
+      "file": "app/api/dashboard/totp-setup/route.ts",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/dashboard/trigger-cron",
+      "file": "app/api/dashboard/trigger-cron/route.ts",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/dashboard/trigger-scan",
+      "file": "app/api/dashboard/trigger-scan/route.ts",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/genesis/affiliate-rates",
+      "file": "app/api/genesis/affiliate-rates/route.ts",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/genesis/alt-text",
+      "file": "app/api/genesis/alt-text/route.ts",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/genesis/auto-partner-preview",
+      "file": "app/api/genesis/auto-partner-preview/route.ts",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/genesis/check-research",
+      "file": "app/api/genesis/check-research/route.ts",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/genesis/create-template",
+      "file": "app/api/genesis/create-template/route.ts",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/genesis/delete",
+      "file": "app/api/genesis/delete/route.ts",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/genesis/detail",
+      "file": "app/api/genesis/detail/route.ts",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/genesis/distribute",
+      "file": "app/api/genesis/distribute/route.ts",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/genesis/edit-section",
+      "file": "app/api/genesis/edit-section/route.ts",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/genesis/generate",
+      "file": "app/api/genesis/generate/route.ts",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/genesis/index-url",
+      "file": "app/api/genesis/index-url/route.ts",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/genesis/insert-images",
+      "file": "app/api/genesis/insert-images/route.ts",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/genesis/magic-find",
+      "file": "app/api/genesis/magic-find/route.ts",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/genesis/process-images",
+      "file": "app/api/genesis/process-images/route.ts",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/genesis/progress",
+      "file": "app/api/genesis/progress/route.ts",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/genesis/reindex",
+      "file": "app/api/genesis/reindex/route.ts",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/genesis/update-content",
+      "file": "app/api/genesis/update-content/route.ts",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/health",
+      "file": "app/api/health/route.ts",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/hub-ab",
+      "file": "app/api/hub-ab/route.ts",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/hub-partners",
+      "file": "app/api/hub-partners/route.ts",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/mini-quiz-results",
+      "file": "app/api/mini-quiz-results/route.ts",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/page-cta-partners",
+      "file": "app/api/page-cta-partners/route.ts",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/postback",
+      "file": "app/api/postback/route.ts",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/pre-qual",
+      "file": "app/api/pre-qual/route.ts",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/refresh-content-hub",
+      "file": "app/api/refresh-content-hub/route.ts",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/revalidate",
+      "file": "app/api/revalidate/route.ts",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/subscribe",
+      "file": "app/api/subscribe/route.ts",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/telegram/webhook",
+      "file": "app/api/telegram/webhook/route.ts",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/track",
+      "file": "app/api/track/route.ts",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/track-cta",
+      "file": "app/api/track-cta/route.ts",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/trending-partners",
+      "file": "app/api/trending-partners/route.ts",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/web-vitals",
+      "file": "app/api/web-vitals/route.ts",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/webhooks/conversions",
+      "file": "app/api/webhooks/conversions/route.ts",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/webhooks/github-deploy",
+      "file": "app/api/webhooks/github-deploy/route.ts",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/webhooks/resend",
+      "file": "app/api/webhooks/resend/route.ts",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/widget/trust-badge",
+      "file": "app/api/widget/trust-badge/route.ts",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/xray/result/[resultId]",
+      "file": "app/api/xray/result/[resultId]/route.ts",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/xray/score",
+      "file": "app/api/xray/score/route.ts",
+      "methods": [
+        "POST"
+      ]
+    }
+  ]
+}

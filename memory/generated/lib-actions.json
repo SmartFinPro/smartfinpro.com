@@ -1,0 +1,714 @@
+{
+  "_generated": true,
+  "_command": "npm run refresh:agent-context",
+  "_do_not_edit": true,
+  "_generated_at": "2026-04-12T13:04:34.910Z",
+  "count": 45,
+  "modules": [
+    {
+      "name": "ab-testing",
+      "file": "lib/actions/ab-testing.ts",
+      "exports": [
+        "AbTestLiveView",
+        "AbTestStats",
+        "AbVariant",
+        "getAbTestLiveData",
+        "getHubWinner",
+        "logHubClick",
+        "logHubImpression",
+        "resetAbTest"
+      ],
+      "hasUseServer": true,
+      "hasServerOnly": true
+    },
+    {
+      "name": "affiliate-links",
+      "file": "lib/actions/affiliate-links.ts",
+      "exports": [
+        "createAffiliateLink",
+        "deleteAffiliateLink",
+        "getAffiliateLink",
+        "getAffiliateLinks",
+        "getAffiliateLinksService",
+        "getDashboardStats",
+        "getLinkClickStats",
+        "toggleAffiliateLinkStatus",
+        "updateAffiliateLink"
+      ],
+      "hasUseServer": true,
+      "hasServerOnly": true
+    },
+    {
+      "name": "analytics",
+      "file": "lib/actions/analytics.ts",
+      "exports": [
+        "AnalyticsOverview",
+        "AnalyticsStats",
+        "BrowserStat",
+        "LandingPageStat",
+        "OSStat",
+        "ReferrerStat",
+        "TimeSeriesPageView",
+        "TrafficSource",
+        "UTMStats",
+        "getAnalyticsStats"
+      ],
+      "hasUseServer": true,
+      "hasServerOnly": true
+    },
+    {
+      "name": "archived-pages",
+      "file": "lib/actions/archived-pages.ts",
+      "exports": [
+        "ArchivePageInput",
+        "ArchivedPage",
+        "archivePage",
+        "getArchivedPageMap",
+        "getArchivedPages",
+        "getArchivedRedirect",
+        "hardDeletePage",
+        "restorePage"
+      ],
+      "hasUseServer": true,
+      "hasServerOnly": true
+    },
+    {
+      "name": "auto-genesis",
+      "file": "lib/actions/auto-genesis.ts",
+      "exports": [
+        "runAutoGenesis"
+      ],
+      "hasUseServer": true,
+      "hasServerOnly": true
+    },
+    {
+      "name": "backlink-automation",
+      "file": "lib/actions/backlink-automation.ts",
+      "exports": [
+        "BacklinkCampaign",
+        "BacklinkOpportunity",
+        "BacklinkPlacement",
+        "generateBacklinkContent",
+        "getBacklinkDashboardData",
+        "postBacklinkOpportunity",
+        "runBacklinkPost",
+        "runBacklinkScout",
+        "runBacklinkVerify",
+        "scanBacklinkOpportunities"
+      ],
+      "hasUseServer": true,
+      "hasServerOnly": true
+    },
+    {
+      "name": "backlinks",
+      "file": "lib/actions/backlinks.ts",
+      "exports": [
+        "getBacklinksForPage",
+        "importBacklinksFromCSV",
+        "loadBacklinkCounts",
+        "scanInternalBacklinks"
+      ],
+      "hasUseServer": true,
+      "hasServerOnly": false
+    },
+    {
+      "name": "bandit",
+      "file": "lib/actions/bandit.ts",
+      "exports": [
+        "selectOffer",
+        "updatePosterior"
+      ],
+      "hasUseServer": true,
+      "hasServerOnly": false
+    },
+    {
+      "name": "competitors",
+      "file": "lib/actions/competitors.ts",
+      "exports": [
+        "CompetitorAlert",
+        "CompetitorDashboardData",
+        "CompetitorStats",
+        "CpsTrendPoint",
+        "HeatmapCell",
+        "OrganicResult",
+        "SerpSnapshot",
+        "SpyResult",
+        "addManualKeyword",
+        "analyzeKeyword",
+        "boostFromAlert",
+        "dismissAlert",
+        "getCompetitorData",
+        "seedCompetitorKeywords",
+        "spyDomain",
+        "triggerCompetitorScan"
+      ],
+      "hasUseServer": true,
+      "hasServerOnly": true
+    },
+    {
+      "name": "compliance-audit",
+      "file": "lib/actions/compliance-audit.ts",
+      "exports": [
+        "AuditDetail",
+        "AuditIssue",
+        "AuditResult",
+        "getLinkDistribution",
+        "runComplianceAudit"
+      ],
+      "hasUseServer": true,
+      "hasServerOnly": true
+    },
+    {
+      "name": "compliance-content",
+      "file": "lib/actions/compliance-content.ts",
+      "exports": [
+        "ContentComplianceIssue",
+        "ContentComplianceReport",
+        "ContentComplianceResult",
+        "runContentComplianceCheck"
+      ],
+      "hasUseServer": true,
+      "hasServerOnly": true
+    },
+    {
+      "name": "compliance-db",
+      "file": "lib/actions/compliance-db.ts",
+      "exports": [
+        "getAllComplianceOverrides",
+        "getComplianceLabelServer",
+        "invalidateComplianceCache",
+        "upsertComplianceOverride"
+      ],
+      "hasUseServer": true,
+      "hasServerOnly": false
+    },
+    {
+      "name": "connectors",
+      "file": "lib/actions/connectors.ts",
+      "exports": [
+        "ConnectorInfo",
+        "SyncLog",
+        "configureConnector",
+        "deleteConnectorConfig",
+        "fetchSyncLogs",
+        "getConnectorsWithStatus",
+        "getPostbackUrl",
+        "toggleConnector",
+        "triggerManualSync"
+      ],
+      "hasUseServer": true,
+      "hasServerOnly": true
+    },
+    {
+      "name": "content-freshness",
+      "file": "lib/actions/content-freshness.ts",
+      "exports": [
+        "FreshnessRow",
+        "FreshnessStats",
+        "getContentFreshnessStats"
+      ],
+      "hasUseServer": true,
+      "hasServerOnly": true
+    },
+    {
+      "name": "content-generator",
+      "file": "lib/actions/content-generator.ts",
+      "exports": [
+        "BriefSection",
+        "CompetitorHeading",
+        "CompetitorOutline",
+        "ContentBrief",
+        "GeneratePageResult",
+        "ImageRequirement",
+        "fetchTopCompetitorUrls",
+        "generateAIContentBrief",
+        "generateAndPublishPage",
+        "generateLongFormBriefWithAI",
+        "generateLongFormMdxContent",
+        "scrapeHeadings"
+      ],
+      "hasUseServer": true,
+      "hasServerOnly": true
+    },
+    {
+      "name": "content-hub",
+      "file": "lib/actions/content-hub.ts",
+      "exports": [
+        "ContentHubRow",
+        "ContentHubStats",
+        "ContentQuality",
+        "HealthStatus",
+        "SeoHealth",
+        "getContentHubData"
+      ],
+      "hasUseServer": true,
+      "hasServerOnly": true
+    },
+    {
+      "name": "content-overrides",
+      "file": "lib/actions/content-overrides.ts",
+      "exports": [
+        "BoostAndDeployResult",
+        "ContentOverride",
+        "DeployHookResult",
+        "FreshnessBoostResult",
+        "RevalidateResult",
+        "boostAndDeploy",
+        "getContentOverrideBySlug",
+        "getContentOverrides",
+        "removeFreshnessBoost",
+        "triggerDeployHook",
+        "triggerFreshnessBoost"
+      ],
+      "hasUseServer": true,
+      "hasServerOnly": true
+    },
+    {
+      "name": "cta-analytics",
+      "file": "lib/actions/cta-analytics.ts",
+      "exports": [
+        "EpcResult",
+        "HeatmapCell",
+        "HeatmapData",
+        "HeatmapTimeRange",
+        "PlacementPerformance",
+        "SlugCtrResult",
+        "getCtaHeatmapData",
+        "getCtaPerformance",
+        "getEpcByPage",
+        "getSlugCtr",
+        "getTopFlopPlacements",
+        "logCtaClick"
+      ],
+      "hasUseServer": true,
+      "hasServerOnly": false
+    },
+    {
+      "name": "daily-strategy",
+      "file": "lib/actions/daily-strategy.ts",
+      "exports": [
+        "DailyStrategyDigest",
+        "PlanningQueueItem",
+        "StrategyOption",
+        "analyzeAffiliateOpportunities",
+        "analyzeAndPlanNextDay",
+        "approveAndExecuteSingle",
+        "approvePlanAndExecute",
+        "executeStrategyOption",
+        "generateDailyStrategy",
+        "getPendingPlans",
+        "getPlanningQueueCount",
+        "rejectPlanItem"
+      ],
+      "hasUseServer": true,
+      "hasServerOnly": true
+    },
+    {
+      "name": "dashboard",
+      "file": "lib/actions/dashboard.ts",
+      "exports": [
+        "ActionItem",
+        "ClickData",
+        "ConversionData",
+        "DashboardStats",
+        "DeviceStats",
+        "FunnelData",
+        "GeoStat",
+        "GeoStatExtended",
+        "GlobalMarketIntelligence",
+        "LeadQualityData",
+        "MarketCode",
+        "MarketOpportunity",
+        "MarketPerformance",
+        "MarketSparklineData",
+        "PageStat",
+        "ProblemArticle",
+        "ScrollDepthStat",
+        "TimeComparison",
+        "TimeRange",
+        "TimeSeriesData",
+        "TopLink",
+        "VisitorData",
+        "getDashboardStats",
+        "getGlobalMarketIntelligence"
+      ],
+      "hasUseServer": true,
+      "hasServerOnly": true
+    },
+    {
+      "name": "deploy-logs",
+      "file": "lib/actions/deploy-logs.ts",
+      "exports": [
+        "DeployLog",
+        "DeployStats",
+        "getDeployStats"
+      ],
+      "hasUseServer": true,
+      "hasServerOnly": true
+    },
+    {
+      "name": "experts",
+      "file": "lib/actions/experts.ts",
+      "exports": [
+        "getMarketExpert"
+      ],
+      "hasUseServer": true,
+      "hasServerOnly": true
+    },
+    {
+      "name": "funnel",
+      "file": "lib/actions/funnel.ts",
+      "exports": [
+        "ClickLifecycle",
+        "FunnelStage",
+        "FunnelStats",
+        "OfferEV",
+        "RecentEvent",
+        "getClickLifecycle",
+        "getFunnelStats",
+        "getOfferExpectedValues",
+        "getRecentEvents"
+      ],
+      "hasUseServer": true,
+      "hasServerOnly": true
+    },
+    {
+      "name": "gap-analysis",
+      "file": "lib/actions/gap-analysis.ts",
+      "exports": [
+        "GapCategorySummary",
+        "GapDashboardData",
+        "GapDraft",
+        "GapResult",
+        "ScanLimitInfo",
+        "analyzeKeywordGap",
+        "bridgeTheGap",
+        "createShadowDraft",
+        "discardDraft",
+        "getAnalyzedCompetitors",
+        "getGapDashboardData"
+      ],
+      "hasUseServer": true,
+      "hasServerOnly": true
+    },
+    {
+      "name": "genesis",
+      "file": "lib/actions/genesis.ts",
+      "exports": [
+        "AffiliateMappingEntry",
+        "CreateReviewFromTemplateInput",
+        "GenerationProgress",
+        "GenesisRunState",
+        "HubPartner",
+        "ImageUpload",
+        "IndexingResult",
+        "KeywordSuggestion",
+        "ResearchResult",
+        "createReviewFromTemplate",
+        "deleteGenesisRun",
+        "distributeAndIndex",
+        "generateLongFormAsset",
+        "getAffiliateRatesForMarket",
+        "getAutoTemplatePartnerPreview",
+        "getGenesisRunProgress",
+        "getRecentRuns",
+        "getRunDetail",
+        "getTopPartnersForHub",
+        "instantIndexByRunId",
+        "magicFind",
+        "processAndInsertImages",
+        "requestInstantIndexing",
+        "updateGenesisContent"
+      ],
+      "hasUseServer": true,
+      "hasServerOnly": true
+    },
+    {
+      "name": "guardian",
+      "file": "lib/actions/guardian.ts",
+      "exports": [
+        "GuardianCheckResult",
+        "GuardianStatus",
+        "checkAllApiConnectivities",
+        "getGuardianStatus",
+        "sendTestNotification"
+      ],
+      "hasUseServer": true,
+      "hasServerOnly": true
+    },
+    {
+      "name": "indexing",
+      "file": "lib/actions/indexing.ts",
+      "exports": [
+        "indexAllContentUrls",
+        "indexMarketUrls",
+        "indexMultipleUrls",
+        "indexNewSiloUrls",
+        "indexSingleUrl",
+        "logIndexingResult"
+      ],
+      "hasUseServer": true,
+      "hasServerOnly": true
+    },
+    {
+      "name": "leads",
+      "file": "lib/actions/leads.ts",
+      "exports": [
+        "createLead",
+        "getLead",
+        "getLeadStats",
+        "getLeads",
+        "updateLeadScore",
+        "updateLeadStatus"
+      ],
+      "hasUseServer": true,
+      "hasServerOnly": true
+    },
+    {
+      "name": "link-health",
+      "file": "lib/actions/link-health.ts",
+      "exports": [
+        "bulkReplaceParam",
+        "checkLinkHealth",
+        "getOfferExpiryReport",
+        "runHealthChecks"
+      ],
+      "hasUseServer": true,
+      "hasServerOnly": true
+    },
+    {
+      "name": "newsletter",
+      "file": "lib/actions/newsletter.ts",
+      "exports": [
+        "subscribeToNewsletter",
+        "subscribeWithEmail",
+        "unsubscribe"
+      ],
+      "hasUseServer": true,
+      "hasServerOnly": false
+    },
+    {
+      "name": "offer-ev",
+      "file": "lib/actions/offer-ev.ts",
+      "exports": [
+        "computeOfferEV",
+        "rankOffersByEV"
+      ],
+      "hasUseServer": true,
+      "hasServerOnly": false
+    },
+    {
+      "name": "optimization-engine",
+      "file": "lib/actions/optimization-engine.ts",
+      "exports": [
+        "IntervalType",
+        "OptimizationTask",
+        "dismissOptimizationTask",
+        "executePageOptimization",
+        "getOptimizationCount",
+        "getOptimizationHistory",
+        "getPendingOptimizations",
+        "runOptimizationAnalysis"
+      ],
+      "hasUseServer": true,
+      "hasServerOnly": true
+    },
+    {
+      "name": "page-cta-partners",
+      "file": "lib/actions/page-cta-partners.ts",
+      "exports": [
+        "getCtaPartnersForPage",
+        "getCtaPartnersForPages",
+        "getEnrichedCtaPartners",
+        "setCtaPartnersForPage"
+      ],
+      "hasUseServer": true,
+      "hasServerOnly": true
+    },
+    {
+      "name": "perf-governance",
+      "file": "lib/actions/perf-governance.ts",
+      "exports": [
+        "runPerfGovernance"
+      ],
+      "hasUseServer": true,
+      "hasServerOnly": false
+    },
+    {
+      "name": "performance-alerts",
+      "file": "lib/actions/performance-alerts.ts",
+      "exports": [
+        "LowPerformancePage",
+        "PerformanceAlertStats",
+        "getLowPerformancePages",
+        "getPerformanceAlertStats",
+        "hasCriticalAlerts"
+      ],
+      "hasUseServer": true,
+      "hasServerOnly": true
+    },
+    {
+      "name": "quiz-analytics",
+      "file": "lib/actions/quiz-analytics.ts",
+      "exports": [
+        "getHighIntentEvents",
+        "getQuizAnalytics"
+      ],
+      "hasUseServer": true,
+      "hasServerOnly": true
+    },
+    {
+      "name": "ranking",
+      "file": "lib/actions/ranking.ts",
+      "exports": [
+        "RankingDashboardData",
+        "RankingKeyword",
+        "RankingStats",
+        "RealtimeRankingResult",
+        "SerpResult",
+        "WinnerLoser",
+        "fetchLiveSERP",
+        "getKeywordPositionTrend",
+        "getRankingData",
+        "getRealtimeRanking",
+        "seedMoneyKeywords",
+        "syncKeywordTracking"
+      ],
+      "hasUseServer": true,
+      "hasServerOnly": true
+    },
+    {
+      "name": "revenue-forecast",
+      "file": "lib/actions/revenue-forecast.ts",
+      "exports": [
+        "RevenueForecastBySlug",
+        "RevenueForecastSummary",
+        "SpikeRevenueEstimate",
+        "estimateSpikeRevenue",
+        "getRevenueForecast"
+      ],
+      "hasUseServer": true,
+      "hasServerOnly": true
+    },
+    {
+      "name": "revenue",
+      "file": "lib/actions/revenue.ts",
+      "exports": [
+        "AutoRevenueStats",
+        "CSVParseResult",
+        "ConversionRecord",
+        "EPCTrendData",
+        "RevenueByMarket",
+        "RevenueByPage",
+        "RevenueByPageStats",
+        "RevenueByProduct",
+        "RevenueStats",
+        "addConversion",
+        "deleteConversion",
+        "getAffiliateLinksForMapping",
+        "getAutoRevenueStats",
+        "getRevenueByPage",
+        "getRevenueStats",
+        "importConversionsFromCSV",
+        "updateConversionStatus"
+      ],
+      "hasUseServer": true,
+      "hasServerOnly": true
+    },
+    {
+      "name": "seo-drift",
+      "file": "lib/actions/seo-drift.ts",
+      "exports": [
+        "Baseline",
+        "BaselineEntry",
+        "DriftResult",
+        "FileScore",
+        "runSeoDriftCheck"
+      ],
+      "hasUseServer": false,
+      "hasServerOnly": false
+    },
+    {
+      "name": "settings",
+      "file": "lib/actions/settings.ts",
+      "exports": [
+        "BacklinkCredentials",
+        "ConnectionTestResult",
+        "SettingsKey",
+        "SystemSettings",
+        "getBacklinkCredentialStatus",
+        "getBacklinkCredentials",
+        "getBacklinkCredentialsRaw",
+        "getCredentialStatus",
+        "getSettings",
+        "globalReset",
+        "testAnthropicConnection",
+        "testGoogleIndexing",
+        "testMediumConnection",
+        "testRedditConnection",
+        "testSerperConnection",
+        "updateBacklinkCredentials",
+        "updateSettings"
+      ],
+      "hasUseServer": true,
+      "hasServerOnly": true
+    },
+    {
+      "name": "simulator",
+      "file": "lib/actions/simulator.ts",
+      "exports": [
+        "ClearResult",
+        "SimulationResult",
+        "SimulationStatus",
+        "clearSimulationData",
+        "getSimulationStatus",
+        "triggerFullSimulation"
+      ],
+      "hasUseServer": true,
+      "hasServerOnly": true
+    },
+    {
+      "name": "spike-monitor",
+      "file": "lib/actions/spike-monitor.ts",
+      "exports": [
+        "AlertSettings",
+        "AutoPilotAction",
+        "SpikeAlert",
+        "SpikeMonitorResult",
+        "getAlertSettings",
+        "runSpikeMonitor",
+        "toggleMarketAlert",
+        "updateCtrThreshold"
+      ],
+      "hasUseServer": true,
+      "hasServerOnly": true
+    },
+    {
+      "name": "tracking",
+      "file": "lib/actions/tracking.ts",
+      "exports": [
+        "trackClick",
+        "trackEvent",
+        "trackPageView",
+        "updatePageView"
+      ],
+      "hasUseServer": true,
+      "hasServerOnly": true
+    },
+    {
+      "name": "weekly-report",
+      "file": "lib/actions/weekly-report.ts",
+      "exports": [
+        "WeeklyReportResult",
+        "generateWeeklyReport"
+      ],
+      "hasUseServer": true,
+      "hasServerOnly": true
+    }
+  ],
+  "warnings": {
+    "missing_use_server": [
+      "seo-drift"
+    ]
+  }
+}
