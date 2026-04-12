@@ -75,9 +75,9 @@ smartfinpro.com/au/                  → Australien
 | MDX-Reviews | 108+ (4.000–7.000 Wörter) |
 | React Components | 130+ |
 | Server Actions | 47 Module (`lib/actions/*.ts`) |
-| API Routes | 90+ Endpoints (inkl. 19 Cron-Routes) |
-| Cron Jobs | 19 aktiv |
-| DB-Tabellen | 30+ |
+| API Routes | 95+ Endpoints (inkl. 22 Cron-Routes) |
+| Cron Jobs | 22 aktiv |
+| DB-Tabellen | 35+ |
 | Interaktive Tools | 9 |
 | Geschätzte LOC | ~50.000+ |
 
@@ -179,6 +179,11 @@ tailwind.css                         # Tailwind v4 Theme (NICHT tailwind.config.
 | `system_settings` | Config | key, value — API Keys, Feature Flags, Thresholds |
 | `notifications` | Alerts | id, type, message, channel, sent_at, status |
 | `compliance_checks` | Legal | id, page_slug, market, has_disclosure, has_fca_label |
+| `content_health_scores` | Autonomous | slug, market, health_score (computed), ranking/freshness/engagement/conversion/competitor scores |
+| `insights` | Autonomous | dedupe_key, insight_type, risk_tier, priority_score (computed), status, expected_revenue_impact |
+| `autonomous_actions` | Autonomous | dedupe_key, action_type, risk_tier, outcome, undo_token_hash, rollback_payload |
+| `learnings` | Autonomous | dedupe_key, category, learning, confidence, sample_size |
+| `cron_run_audit` | Autonomous | job_name, status, duration_ms, processed_count, metadata |
 
 > ⚠️ **Neue Tabellen immer via Migration:** `supabase/migrations/YYYYMMDDHHMMSS_name.sql`
 
@@ -221,7 +226,7 @@ schema:
 
 ---
 
-## ⏰ Cron-Jobs (19 aktiv)
+## ⏰ Cron-Jobs (22 aktiv)
 
 | Job | Route | Funktion |
 |---|---|---|
@@ -244,6 +249,9 @@ schema:
 | `perf-governance` | `/api/cron/perf-governance` | Performance-Budget durchsetzen |
 | `seo-drift` | `/api/cron/seo-drift` | SEO Health Monitoring |
 | `update-fx-rates` | `/api/cron/update-fx-rates` | FX-Kurse für Revenue-Konvertierung |
+| `insight-engine` | `/api/cron/insight-engine` | Wöchentl. Kreuz-Analyse → priorisierte Insights (So 04:00) |
+| `auto-executor` | `/api/cron/auto-executor` | Risk-tiered autonome Action-Execution (tägl. 05:00) |
+| `feedback-loop` | `/api/cron/feedback-loop` | Outcome-Messung + Learnings + Threshold-Anpassung (tägl. 22:00) |
 
 **Authentifizierung aller Cron-Routes:**
 ```typescript

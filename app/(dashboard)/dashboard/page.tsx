@@ -31,6 +31,7 @@ import { AuditStatusWidget } from '@/components/dashboard/audit-status-widget';
 import { DeployStatusWidget } from '@/components/dashboard/deploy-status-widget';
 import { ExecutiveOverview } from '@/components/dashboard/executive-overview';
 import { WidgetErrorBoundary } from '@/components/dashboard/widget-error-boundary';
+import { AutonomousActionsWidget } from '@/components/dashboard/autonomous-actions-widget';
 import Link from 'next/link';
 
 export const dynamic = 'force-dynamic';
@@ -259,6 +260,15 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             </WidgetErrorBoundary>
           </div>
         )}
+
+        {/* Autonomous System Widget */}
+        <div className="mb-8">
+          <WidgetErrorBoundary label="Autonomous System" minHeight="h-32">
+            <Suspense fallback={<Skeleton className="h-32" />}>
+              <AutonomousActionsWidget />
+            </Suspense>
+          </WidgetErrorBoundary>
+        </div>
 
         {/* System Integrity + CWV + Revenue Attribution + Audit — 3-column grid */}
         <div className="grid gap-6 lg:grid-cols-3 mb-8">
