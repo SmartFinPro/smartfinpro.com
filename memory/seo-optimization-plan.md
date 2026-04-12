@@ -25,7 +25,7 @@
 - [x] Sitemap bereinigt (Broker + Coming-Soon entfernt)
 - [x] Keyword-Tracking von 10 → 120+ erweitert
 - [x] sync-rankings Cron erstellt (täglich 3:30 AM UTC)
-- [ ] VPS crontab: sync-rankings eintragen (SSH nötig — siehe Crontab-Einträge unten)
+- [x] Cron-Scheduling: sync-rankings + 3 autonome Crons in `.github/workflows/cron-jobs.yml` eingetragen
 - [ ] Sitemap in GSC neu einreichen (GSC → Sitemaps → smartfinpro.com/sitemap.xml)
 - [x] noindex auf Live-Site verifiziert (4/4 Stichproben: etoro-us, etoro-uk, ibkr-ca, debt-payoff — alle noindex,follow)
 - [ ] Baseline-KPIs aus GSC erfassen (Dashboard → Ranking → Screenshot machen)
@@ -114,20 +114,15 @@
 - **Freitag:** Backlink-/Index-Status
 - **Sonntag:** Go/No-Go Entscheidung
 
-## Crontab-Einträge (VPS — manuell eintragen via SSH)
-```bash
-# sync-rankings — Daily 3:30 AM UTC (seed keywords + GSC sync)
-30 3 * * * curl -sf -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/cron/sync-rankings >> /home/master/applications/brvnvntpcj/public_html/logs/cron.log 2>&1
+## Cron-Scheduling (GitHub Actions — `.github/workflows/cron-jobs.yml`)
+Alle Crons laufen über GitHub Actions, NICHT über VPS-Crontab (VPS-Sicherheitsregeln!).
 
-# insight-engine — Sunday 4:00 AM UTC (weekly cross-analysis)
-0 4 * * 0 curl -sf -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/cron/insight-engine >> /home/master/applications/brvnvntpcj/public_html/logs/cron.log 2>&1
-
-# auto-executor — Daily 5:00 AM UTC (risk-tiered action execution)
-0 5 * * * curl -sf -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/cron/auto-executor >> /home/master/applications/brvnvntpcj/public_html/logs/cron.log 2>&1
-
-# feedback-loop — Daily 22:00 UTC (outcome measurement + learnings)
-0 22 * * * curl -sf -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/cron/feedback-loop >> /home/master/applications/brvnvntpcj/public_html/logs/cron.log 2>&1
-```
+| Cron | Schedule | Job |
+|------|----------|-----|
+| `sync-rankings` | Daily 02:00 UTC (im daily batch) | Keyword-Seed + GSC-Sync |
+| `auto-executor` | Daily 05:00 UTC | Risk-tiered Action-Execution |
+| `feedback-loop` | Daily 22:00 UTC | Outcome-Messung + Learnings |
+| `insight-engine` | Sonntag 04:00 UTC | Wöchentliche Kreuz-Analyse |
 
 ## Backlink-Credentials einrichten (Phase 3 Vorbereitung)
 

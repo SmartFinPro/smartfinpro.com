@@ -6,15 +6,19 @@ name: ⏰ Cron Jobs
 # Schedules (UTC):
 #   Hourly  — spike-monitor, sync-conversions, ev-refresh, perf-governance
 #   Daily   — update-fx-rates, seo-drift, check-links, sync-competitors,
-#             freshness-check, check-rankings, affiliate-scout, send-emails,
-#             daily-strategy, backlink-post, backlink-scout, backlink-verify,
-#             sync-revenue, auto-genesis
-#   Weekly  — weekly-report (Mon 07:00 UTC)
+#             freshness-check, check-rankings, sync-rankings, affiliate-scout,
+#             send-emails, daily-strategy, backlink-post, backlink-scout,
+#             backlink-verify, sync-revenue, auto-genesis,
+#             auto-executor (05:00), feedback-loop (22:00)
+#   Weekly  — weekly-report (Mon 07:00), insight-engine (Sun 04:00)
 
 on:
   schedule:
     - cron: '5 * * * *'    # hourly batch — :05 past the hour
     - cron: '0 2 * * *'    # daily batch  — 02:00 UTC
+    - cron: '0 5 * * *'    # auto-executor — 05:00 UTC
+    - cron: '0 22 * * *'   # feedback-loop — 22:00 UTC
+    - cron: '0 4 * * 0'    # insight-engine — Sun 04:00 UTC
     - cron: '0 7 * * 1'    # weekly batch — Mon 07:00 UTC
   workflow_dispatch:
     inputs:
@@ -156,6 +160,54 @@ jobs:
           echo "▶ backlink-verify"
           curl -sf --max-time 30 "$SITE_URL/api/cron/backlink-verify" \
             -H "Authorization: Bearer $CRON_SECRET" || echo "⚠ backlink-verify failed"
+
+      - name: Sync Rankings (keyword seed + GSC sync)
+        run: |
+          echo "▶ sync-rankings"
+          curl -sf --max-time 60 "$SITE_URL/api/cron/sync-rankings" \
+            -H "Authorization: Bearer $CRON_SECRET" || echo "⚠ sync-rankings failed"
+
+  # ─── Auto-Executor (daily 05:00 UTC) ─────────────────────────────────────
+  auto-executor:
+    name: Auto-Executor
+    runs-on: ubuntu-latest
+    if: |
+      github.event.schedule == '0 5 * * *' ||
+      github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Auto-Executor (risk-tiered actions)
+        run: |
+          echo "▶ auto-executor"
+          curl -sf --max-time 120 "$SITE_URL/api/cron/auto-executor" \
+            -H "Authorization: Bearer $CRON_SECRET" || echo "⚠ auto-executor failed"
+
+  # ─── Feedback Loop (daily 22:00 UTC) ─────────────────────────────────────
+  feedback-loop:
+    name: Feedback Loop
+    runs-on: ubuntu-latest
+    if: |
+      github.event.schedule == '0 22 * * *' ||
+      github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Feedback Loop (outcome measurement + learnings)
+        run: |
+          echo "▶ feedback-loop"
+          curl -sf --max-time 120 "$SITE_URL/api/cron/feedback-loop" \
+            -H "Authorization: Bearer $CRON_SECRET" || echo "⚠ feedback-loop failed"
+
+  # ─── Insight Engine (Sunday 04:00 UTC) ───────────────────────────────────
+  insight-engine:
+    name: Insight Engine
+    runs-on: ubuntu-latest
+    if: |
+      github.event.schedule == '0 4 * * 0' ||
+      github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Insight Engine (weekly cross-analysis)
+        run: |
+          echo "▶ insight-engine"
+          curl -sf --max-time 120 "$SITE_URL/api/cron/insight-engine" \
+            -H "Authorization: Bearer $CRON_SECRET" || echo "⚠ insight-engine failed"
 
   # ─── Weekly jobs ──────────────────────────────────────────────────────────
   weekly:
