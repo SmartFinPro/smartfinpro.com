@@ -57,6 +57,10 @@ jobs:
           model: claude-opus-4-6
           mode: agent
           max_turns: 50
+          claude_env: |
+            NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+            SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+            SERPER_API_KEY=${{ secrets.SERPER_API_KEY }}
           direct_prompt: |
             Du bist Senior SEO-Stratege und Affiliate-Analyst für SmartFinPro.com.
             Führe eine vollständige Markt- und Nischenanalyse durch.

@@ -117,3 +117,6 @@ jobs:
             Antworte auf Deutsch mit strukturiertem Markdown-Report.
             Halte den Report prägnant — maximal 500 Wörter.
           max_turns: 10
+          claude_env: |
+            NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+            SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}

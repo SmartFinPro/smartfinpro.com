@@ -91,6 +91,10 @@ jobs:
           model: claude-opus-4-6
           mode: agent
           max_turns: 40
+          claude_env: |
+            NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+            SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+            SERPER_API_KEY=${{ secrets.SERPER_API_KEY }}
           direct_prompt: |
             Du bist Senior SEO-Stratege und Content-Entwickler für SmartFinPro.com.
             Führe die folgende vollautomatische Genesis-Pipeline durch.

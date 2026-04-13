@@ -74,6 +74,9 @@ jobs:
             - HTML-Kommentare in MDX: immer {/* */} statt <!-- -->
             - Nach Änderungen: git add + git commit mit beschreibender Message
           max_turns: 15
+          claude_env: |
+            NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+            SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 
       - name: Auto-Deploy nach Content-Änderungen
         run: |
