@@ -116,7 +116,7 @@ jobs:
             ${{ steps.report.outputs.prompt }}
 
             WICHTIG:
-            - Schreibe den fertigen Report als Markdown in die Datei /tmp/report.md
+            - Schreibe den fertigen Report als Markdown in die Datei report-output.md
             - Nutze curl um Daten direkt aus Supabase zu holen (REST API):
               curl -s "$NEXT_PUBLIC_SUPABASE_URL/rest/v1/TABELLE?select=*&limit=10" \
                 -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
@@ -137,8 +137,8 @@ jobs:
           RUN_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
           # Report aus Datei lesen (von Claude geschrieben)
-          if [ -f /tmp/report.md ]; then
-            REPORT_MD=$(cat /tmp/report.md)
+          if [ -f report-output.md ]; then
+            REPORT_MD=$(cat report-output.md)
           else
             REPORT_MD="Report-Datei nicht gefunden. Details im [GitHub Log]($RUN_URL)."
           fi
@@ -149,7 +149,7 @@ jobs:
           # JSON-safe escapen via python
           BODY_JSON=$(python3 -c "
           import json, sys
-          report = open('/tmp/report.md').read() if __import__('os').path.exists('/tmp/report.md') else 'Report nicht verfügbar.'
+          report = open('report-output.md').read() if __import__('os').path.exists('report-output.md') else 'Report nicht verfügbar.'
           html_body = f\"\"\"<div style='font-family:sans-serif;max-width:700px;margin:0 auto'>
           <div style='background:linear-gradient(90deg,#1B4F8C,#F5A623);height:4px;border-radius:2px'></div>
           <h1 style='color:#1B4F8C;margin-top:24px'>📊 SmartFinPro Report</h1>
