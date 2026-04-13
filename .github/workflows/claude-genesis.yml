@@ -89,6 +89,7 @@ jobs:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           model: claude-opus-4-6
+          mode: agent
           max_turns: 40
           direct_prompt: |
             Du bist Senior SEO-Stratege und Content-Entwickler für SmartFinPro.com.

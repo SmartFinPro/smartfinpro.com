@@ -107,6 +107,7 @@ jobs:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           model: claude-sonnet-4-6
+          mode: agent
           direct_prompt: |
             Du bist Senior-Analyst für SmartFinPro.com.
             WICHTIG: Dieser Report ist NUR LESEND. Ändere KEINE Dateien und mache KEINEN Commit.

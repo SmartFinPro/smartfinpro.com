@@ -55,6 +55,7 @@ jobs:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           model: claude-opus-4-6
+          mode: agent
           max_turns: 50
           direct_prompt: |
             Du bist Senior SEO-Stratege und Affiliate-Analyst für SmartFinPro.com.
