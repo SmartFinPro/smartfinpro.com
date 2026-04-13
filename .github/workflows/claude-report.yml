@@ -115,16 +115,16 @@ jobs:
 
             ${{ steps.report.outputs.prompt }}
 
-            WICHTIG:
-            - Schreibe den fertigen Report als Markdown in die Datei report-output.md
-            - Nutze curl um Daten direkt aus Supabase zu holen (REST API):
-              curl -s "$NEXT_PUBLIC_SUPABASE_URL/rest/v1/TABELLE?select=*&limit=10" \
-                -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
-                -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY"
-            - Halte den Report prägnant — maximal 500 Wörter
-            - Antworte auf Deutsch
-            - KEINE Dateien im Repo ändern, KEIN git commit
-          max_turns: 10
+            ABLAUF (strikt einhalten!):
+            1. Hole ALLE Daten in EINEM Bash-Befehl per curl aus Supabase REST API:
+               curl -s "$NEXT_PUBLIC_SUPABASE_URL/rest/v1/TABELLE?select=FELDER&limit=10&order=FELD.desc" \
+                 -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
+                 -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY"
+            2. Schreibe den FERTIGEN Report mit dem Write-Tool in die Datei report-output.md
+               Das ist PFLICHT — ohne diese Datei wird keine E-Mail gesendet!
+            3. Antworte auf Deutsch, maximal 500 Wörter
+            4. KEINE Dateien im Repo ändern, KEIN git commit
+          max_turns: 15
           claude_env: |
             NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
             SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
