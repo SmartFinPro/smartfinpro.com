@@ -59,6 +59,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           model: claude-opus-4-6
           mode: agent
+          allowed_tools: "Bash,Edit,MultiEdit,Read,Write,Glob,Grep,LS"
           direct_prompt: |
             Du bist Senior-Entwickler für SmartFinPro.com (Next.js 16, Tailwind v4, Supabase).
             Markt-Filter: ${{ github.event.inputs.market }}

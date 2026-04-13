@@ -56,6 +56,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           model: claude-opus-4-6
           mode: agent
+          allowed_tools: "Bash,Read,Write,Glob,Grep,LS"
           max_turns: 50
           claude_env: |
             NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
