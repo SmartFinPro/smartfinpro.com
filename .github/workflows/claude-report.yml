@@ -102,6 +102,7 @@ jobs:
           echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Claude Code — Report generieren
+        id: claude
         uses: anthropics/claude-code-action@beta
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -120,3 +121,27 @@ jobs:
           claude_env: |
             NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
             SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+      - name: Report per E-Mail senden
+        if: ${{ github.event.inputs.notify_email != 'false' }}
+        run: |
+          DATE=$(date +"%d.%m.%Y %H:%M UTC")
+          REPORT_TYPE="${{ github.event.inputs.report_type || 'weekly-performance' }}"
+          RUN_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+          # Claude output als HTML aufbereiten (Markdown → einfaches HTML)
+          RESULT='${{ steps.claude.outputs.result }}'
+          # Escape für JSON
+          RESULT_HTML=$(echo "$RESULT" | sed 's/$/\\n/g' | tr -d '\n' | sed 's/"/\\"/g' | sed 's/\\n/<br>/g' | sed 's/^## /<h3>/g' | sed 's/^# /<h2>/g')
+
+          curl -s -X POST "https://api.resend.com/emails" \
+            -H "Authorization: Bearer ${{ secrets.RESEND_API_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"from\": \"SmartFinPro Reports <noreply@smartfinpro.com>\",
+              \"to\": [\"info@smartfinpro.com\"],
+              \"subject\": \"📊 ${REPORT_TYPE} Report — ${DATE}\",
+              \"html\": \"<div style='font-family:sans-serif;max-width:700px;margin:0 auto'><div style='background:linear-gradient(90deg,#1B4F8C,#F5A623);height:4px;border-radius:2px'></div><h1 style='color:#1B4F8C;margin-top:24px'>📊 SmartFinPro Report</h1><p style='color:#555'>Typ: ${REPORT_TYPE} | ${DATE}</p><p style='color:#555;font-size:13px'><a href='${RUN_URL}'>GitHub Log ansehen</a></p><hr style='border:none;border-top:1px solid #eee;margin:20px 0'><div style='font-size:14px;line-height:1.7;color:#1A1A2E'>${RESULT_HTML}</div><hr style='border:none;border-top:1px solid #eee;margin:20px 0'><p style='color:#888;font-size:12px'>SmartFinPro Report — automatisch generiert via Claude Code</p></div>\"
+            }" > /dev/null
+
+          echo "📧 Report an info@smartfinpro.com gesendet"
