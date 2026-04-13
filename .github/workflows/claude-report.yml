@@ -131,55 +131,130 @@ jobs:
 
       - name: Report per E-Mail senden
         if: ${{ github.event.inputs.notify_email != 'false' }}
+        env:
+          REPORT_TYPE: ${{ github.event.inputs.report_type || 'weekly-performance' }}
+          RUN_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
         run: |
-          DATE=$(date +"%d.%m.%Y %H:%M UTC")
-          REPORT_TYPE="${{ github.event.inputs.report_type || 'weekly-performance' }}"
-          RUN_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          export DATE_STR=$(date +"%d.%m.%Y %H:%M UTC")
 
-          # Report aus Datei lesen (von Claude geschrieben)
-          if [ -f report-output.md ]; then
-            REPORT_MD=$(cat report-output.md)
-          else
-            REPORT_MD="Report-Datei nicht gefunden. Details im [GitHub Log]($RUN_URL)."
-          fi
+          python3 << 'PYEOF'
+          import json, re, os, urllib.request
 
-          # Markdown → HTML (einfache Konvertierung)
-          REPORT_HTML=$(echo "$REPORT_MD" | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g' | sed 's/^### \(.*\)/<h3>\1<\/h3>/; s/^## \(.*\)/<h2>\1<\/h2>/; s/^# \(.*\)/<h1>\1<\/h1>/' | sed 's/\*\*\([^*]*\)\*\*/<strong>\1<\/strong>/g' | sed '/^$/s/$/\n<br>/' | tr '\n' ' ')
+          report_type = os.environ.get("REPORT_TYPE", "weekly-performance")
+          date_str = os.environ.get("DATE_STR", "")
+          run_url = os.environ.get("RUN_URL", "")
+          resend_key = os.environ.get("RESEND_API_KEY", "")
 
-          # JSON-safe escapen via python
-          BODY_JSON=$(python3 -c "
-          import json, sys
-          report = open('report-output.md').read() if __import__('os').path.exists('report-output.md') else 'Report nicht verfügbar.'
-          html_body = f\"\"\"<div style='font-family:sans-serif;max-width:700px;margin:0 auto'>
-          <div style='background:linear-gradient(90deg,#1B4F8C,#F5A623);height:4px;border-radius:2px'></div>
-          <h1 style='color:#1B4F8C;margin-top:24px'>📊 SmartFinPro Report</h1>
-          <p style='color:#555'>Typ: $REPORT_TYPE | $DATE</p>
-          <p style='color:#555;font-size:13px'><a href='$RUN_URL'>GitHub Log ansehen</a></p>
-          <hr style='border:none;border-top:1px solid #eee;margin:20px 0'>
-          <pre style='font-size:14px;line-height:1.7;color:#1A1A2E;white-space:pre-wrap;font-family:sans-serif'>{report}</pre>
-          <hr style='border:none;border-top:1px solid #eee;margin:20px 0'>
-          <p style='color:#888;font-size:12px'>SmartFinPro Report — automatisch generiert via Claude Code</p>
-          </div>\"\"\"
-          print(json.dumps({
-            'from': 'SmartFinPro Reports <onboarding@resend.dev>',
-            'to': ['christian33nrw@gmail.com'],
-            'subject': f'📊 $REPORT_TYPE Report — $DATE',
-            'html': html_body
-          }))
-          ")
+          md = open('report-output.md').read() if os.path.exists('report-output.md') else 'Report nicht verfügbar.'
 
-          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "https://api.resend.com/emails" \
-            -H "Authorization: Bearer ${{ secrets.RESEND_API_KEY }}" \
-            -H "Content-Type: application/json" \
-            -d "$BODY_JSON")
+          # ── Markdown → styled HTML ──
+          lines = md.split('\n')
+          html_lines = []
+          in_table = False
+          table_row = 0
 
-          HTTP_CODE=$(echo "$RESPONSE" | tail -1)
-          BODY=$(echo "$RESPONSE" | head -1)
-          echo "Resend Response: HTTP $HTTP_CODE — $BODY"
+          for line in lines:
+              s = line.strip()
 
-          if [ "$HTTP_CODE" = "200" ]; then
-            echo "📧 Report an info@smartfinpro.com gesendet"
-          else
-            echo "❌ E-Mail-Versand fehlgeschlagen: HTTP $HTTP_CODE"
-            exit 1
-          fi
+              # Tables
+              if '|' in s and s.startswith('|'):
+                  cells = [c.strip() for c in s.split('|')[1:-1]]
+                  if all(set(c) <= set('- :') for c in cells):
+                      continue
+                  if not in_table:
+                      in_table = True
+                      table_row = 0
+                      html_lines.append('<table style="width:100%;border-collapse:collapse;margin:16px 0;font-size:13px;border-radius:8px;overflow:hidden">')
+                  tag = 'th' if table_row == 0 else 'td'
+                  if table_row == 0:
+                      bg = 'background:#1B4F8C;color:white;font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:0.5px;'
+                  else:
+                      bg = f'background:{"#F8FAFC" if table_row % 2 == 0 else "white"};'
+                  row_html = '<tr>' + ''.join(
+                      f'<{tag} style="padding:10px 14px;text-align:left;border-bottom:1px solid #E8F0FB;{bg}">{c}</{tag}>'
+                      for c in cells
+                  ) + '</tr>'
+                  html_lines.append(row_html)
+                  table_row += 1
+                  continue
+              elif in_table:
+                  in_table = False
+                  html_lines.append('</table>')
+
+              # Headers
+              if s.startswith('# '):
+                  html_lines.append(f'<h1 style="color:#1B4F8C;font-size:20px;margin:28px 0 12px;border-bottom:3px solid #F5A623;padding-bottom:8px">{s[2:]}</h1>')
+              elif s.startswith('## '):
+                  num = re.match(r'(\d+\.)', s[3:])
+                  badge = f'<span style="display:inline-block;background:#F5A623;color:white;border-radius:50%;width:24px;height:24px;text-align:center;line-height:24px;font-size:13px;font-weight:700;margin-right:8px">{num.group(1)[:-1]}</span>' if num else ''
+                  title = re.sub(r'^\d+\.\s*', '', s[3:])
+                  html_lines.append(f'<h2 style="color:#1B4F8C;font-size:17px;margin:28px 0 10px;padding:12px 16px;background:#E8F0FB;border-radius:8px;border-left:4px solid #1B4F8C">{badge}{title}</h2>')
+              elif s.startswith('### '):
+                  html_lines.append(f'<h3 style="color:#1A1A2E;font-size:15px;margin:16px 0 8px">{s[4:]}</h3>')
+              # Blockquotes (warnings/info)
+              elif s.startswith('> '):
+                  text = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', s[2:])
+                  is_warn = any(w in text for w in ['Hinweis', 'Action', 'Keine Daten', 'prüfen', 'fehlt'])
+                  bg = '#FFF8E7' if is_warn else '#E8F0FB'
+                  border = '#F5A623' if is_warn else '#1B4F8C'
+                  icon = '⚠️' if is_warn else 'ℹ️'
+                  html_lines.append(f'<div style="border-left:4px solid {border};background:{bg};padding:12px 16px;margin:12px 0;border-radius:0 8px 8px 0;font-size:13px;color:#1A1A2E">{icon} {text}</div>')
+              elif s.startswith('---'):
+                  pass  # skip, sections handle their own spacing
+              elif s == '':
+                  pass
+              else:
+                  text = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', s)
+                  text = re.sub(r'`(.+?)`', r'<code style="background:#E8F0FB;padding:2px 6px;border-radius:4px;font-size:12px;color:#1B4F8C">\1</code>', text)
+                  # Status badges
+                  text = text.replace('✅', '<span style="color:#1A6B3A">✅</span>')
+                  text = text.replace('❌', '<span style="color:#D64045">❌</span>')
+                  text = text.replace('🔴', '<span style="display:inline-block;width:10px;height:10px;background:#D64045;border-radius:50%;margin-right:6px"></span>')
+                  text = text.replace('🟡', '<span style="display:inline-block;width:10px;height:10px;background:#F5A623;border-radius:50%;margin-right:6px"></span>')
+                  text = text.replace('🟢', '<span style="display:inline-block;width:10px;height:10px;background:#1A6B3A;border-radius:50%;margin-right:6px"></span>')
+                  html_lines.append(f'<p style="font-size:14px;line-height:1.7;color:#1A1A2E;margin:5px 0">{text}</p>')
+
+          if in_table:
+              html_lines.append('</table>')
+
+          body_content = '\n'.join(html_lines)
+          rt_title = report_type.replace('-', ' ').title()
+
+          html = f"""<!DOCTYPE html><html><head><meta charset="utf-8"></head>
+          <body style="margin:0;padding:0;background:#F2F4F8;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">
+          <div style="max-width:680px;margin:20px auto;background:white;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(27,79,140,0.1)">
+            <div style="background:linear-gradient(135deg,#1B4F8C 0%,#163D6E 100%);padding:36px 40px 32px">
+              <table style="width:100%"><tr>
+                <td><h1 style="margin:0;color:white;font-size:26px;font-weight:700">📊 SmartFinPro</h1></td>
+                <td style="text-align:right"><span style="background:rgba(245,166,35,0.2);color:#F5A623;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600">LIVE DATA</span></td>
+              </tr></table>
+              <p style="margin:10px 0 0;color:#F5A623;font-size:18px;font-weight:600">{rt_title} Report</p>
+              <p style="margin:6px 0 0;color:rgba(255,255,255,0.6);font-size:13px">{date_str}</p>
+            </div>
+            <div style="padding:32px 40px">{body_content}</div>
+            <div style="background:#F8FAFC;padding:20px 40px;border-top:1px solid #E8F0FB">
+              <table style="width:100%"><tr>
+                <td><a href="{run_url}" style="color:#1B4F8C;text-decoration:none;font-size:12px">GitHub Log →</a></td>
+                <td style="text-align:right;font-size:11px;color:#888">SmartFinPro.com · Claude Code</td>
+              </tr></table>
+            </div>
+          </div></body></html>"""
+
+          payload = json.dumps({
+              'from': 'SmartFinPro Reports <onboarding@resend.dev>',
+              'to': ['christian33nrw@gmail.com'],
+              'subject': f'\U0001f4ca {rt_title} Report \u2014 {date_str}',
+              'html': html
+          }).encode()
+
+          req = urllib.request.Request('https://api.resend.com/emails',
+              data=payload,
+              headers={'Authorization': f'Bearer {resend_key}', 'Content-Type': 'application/json'})
+          try:
+              resp = urllib.request.urlopen(req)
+              print(f"📧 Report gesendet — HTTP {resp.status}")
+          except urllib.error.HTTPError as e:
+              print(f"❌ Fehler: HTTP {e.code} — {e.read().decode()}")
+              raise SystemExit(1)
+          PYEOF
