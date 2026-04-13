@@ -275,7 +275,7 @@ jobs:
             -H "Authorization: Bearer ${{ secrets.RESEND_API_KEY }}" \
             -H "Content-Type: application/json" \
             -d "{
-              \"from\": \"SmartFinPro Scout <noreply@smartfinpro.com>\",
+              \"from\": \"SmartFinPro Scout <hello@smartfinpro.com>\",
               \"to\": [\"info@smartfinpro.com\"],
               \"subject\": \"🔍 Scout-Report: Top Nischen-Opportunities — $DATE\",
               \"html\": \"<div style='font-family:sans-serif;max-width:700px;margin:0 auto'><div style='background:linear-gradient(90deg,#1B4F8C,#F5A623);height:4px;border-radius:2px'></div><h1 style='color:#1B4F8C;margin-top:24px'>🔍 Nischen-Scout Report</h1><p style='color:#555'>Generiert: $DATE — <a href='$RUN_URL'>GitHub Log ansehen</a></p><hr style='border:none;border-top:1px solid #eee;margin:20px 0'><h2 style='color:#1A1A2E'>Top Opportunities diese Woche</h2><p style='color:#555;font-size:14px'>Die Werte aus den blauen Boxen direkt in die <a href='$GENESIS_BASE' style='color:#1B4F8C'>Genesis Pipeline</a> kopieren und starten.</p>$OPPS<hr style='border:none;border-top:1px solid #eee;margin:20px 0'><p style='color:#888;font-size:12px'>SmartFinPro Nischen-Scout — läuft automatisch Mo + Do 06:00 UTC</p></div>\"

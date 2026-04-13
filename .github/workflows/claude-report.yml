@@ -160,7 +160,7 @@ jobs:
           <p style='color:#888;font-size:12px'>SmartFinPro Report — automatisch generiert via Claude Code</p>
           </div>\"\"\"
           print(json.dumps({
-            'from': 'SmartFinPro Reports <noreply@smartfinpro.com>',
+            'from': 'SmartFinPro Reports <hello@smartfinpro.com>',
             'to': ['info@smartfinpro.com'],
             'subject': f'📊 $REPORT_TYPE Report — $DATE',
             'html': html_body

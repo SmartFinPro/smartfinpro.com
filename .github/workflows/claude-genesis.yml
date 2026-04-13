@@ -415,7 +415,7 @@ jobs:
             -H "Authorization: Bearer ${{ secrets.RESEND_API_KEY }}" \
             -H "Content-Type: application/json" \
             -d "{
-              \"from\": \"SmartFinPro Genesis <noreply@smartfinpro.com>\",
+              \"from\": \"SmartFinPro Genesis <hello@smartfinpro.com>\",
               \"to\": [\"info@smartfinpro.com\"],
               \"subject\": \"🚀 Neue Seite live: $SLUG ($MARKET/$CATEGORY)\",
               \"html\": \"<h2>Genesis Pipeline abgeschlossen ✅</h2><table style='border-collapse:collapse;font-family:sans-serif;font-size:15px'><tr><td style='padding:8px 16px 8px 0;color:#555'>📄 Seite</td><td style='padding:8px 0'><strong>$SLUG</strong></td></tr><tr><td style='padding:8px 16px 8px 0;color:#555'>🌍 Markt</td><td style='padding:8px 0'>$MARKET / $CATEGORY</td></tr><tr><td style='padding:8px 16px 8px 0;color:#555'>🔍 Nische</td><td style='padding:8px 0'>$NICHE</td></tr><tr><td style='padding:8px 16px 8px 0;color:#555'>🌐 Live-URL</td><td style='padding:8px 0'><a href='$URL' style='color:#1B4F8C'>$URL</a></td></tr><tr><td style='padding:8px 16px 8px 0;color:#555'>📡 Google</td><td style='padding:8px 0'>Indexing eingereicht</td></tr><tr><td style='padding:8px 16px 8px 0;color:#555'>🔗 GitHub Run</td><td style='padding:8px 0'><a href='$RUN_URL' style='color:#1B4F8C'>Workflow Log ansehen</a></td></tr></table><p style='margin-top:24px;color:#888;font-size:13px'>Vollautomatisch generiert via SmartFinPro Genesis Pipeline</p>\"
