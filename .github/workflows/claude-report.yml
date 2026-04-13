@@ -111,12 +111,18 @@ jobs:
           mode: agent
           direct_prompt: |
             Du bist Senior-Analyst für SmartFinPro.com.
-            WICHTIG: Dieser Report ist NUR LESEND. Ändere KEINE Dateien und mache KEINEN Commit.
 
             ${{ steps.report.outputs.prompt }}
 
-            Antworte auf Deutsch mit strukturiertem Markdown-Report.
-            Halte den Report prägnant — maximal 500 Wörter.
+            WICHTIG:
+            - Schreibe den fertigen Report als Markdown in die Datei /tmp/report.md
+            - Nutze curl um Daten direkt aus Supabase zu holen (REST API):
+              curl -s "$NEXT_PUBLIC_SUPABASE_URL/rest/v1/TABELLE?select=*&limit=10" \
+                -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
+                -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY"
+            - Halte den Report prägnant — maximal 500 Wörter
+            - Antworte auf Deutsch
+            - KEINE Dateien im Repo ändern, KEIN git commit
           max_turns: 10
           claude_env: |
             NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
@@ -129,19 +135,50 @@ jobs:
           REPORT_TYPE="${{ github.event.inputs.report_type || 'weekly-performance' }}"
           RUN_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
-          # Claude output als HTML aufbereiten (Markdown → einfaches HTML)
-          RESULT='${{ steps.claude.outputs.result }}'
-          # Escape für JSON
-          RESULT_HTML=$(echo "$RESULT" | sed 's/$/\\n/g' | tr -d '\n' | sed 's/"/\\"/g' | sed 's/\\n/<br>/g' | sed 's/^## /<h3>/g' | sed 's/^# /<h2>/g')
+          # Report aus Datei lesen (von Claude geschrieben)
+          if [ -f /tmp/report.md ]; then
+            REPORT_MD=$(cat /tmp/report.md)
+          else
+            REPORT_MD="Report-Datei nicht gefunden. Details im [GitHub Log]($RUN_URL)."
+          fi
 
-          curl -s -X POST "https://api.resend.com/emails" \
+          # Markdown → HTML (einfache Konvertierung)
+          REPORT_HTML=$(echo "$REPORT_MD" | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g' | sed 's/^### \(.*\)/<h3>\1<\/h3>/; s/^## \(.*\)/<h2>\1<\/h2>/; s/^# \(.*\)/<h1>\1<\/h1>/' | sed 's/\*\*\([^*]*\)\*\*/<strong>\1<\/strong>/g' | sed '/^$/s/$/\n<br>/' | tr '\n' ' ')
+
+          # JSON-safe escapen via python
+          BODY_JSON=$(python3 -c "
+          import json, sys
+          report = open('/tmp/report.md').read() if __import__('os').path.exists('/tmp/report.md') else 'Report nicht verfügbar.'
+          html_body = f\"\"\"<div style='font-family:sans-serif;max-width:700px;margin:0 auto'>
+          <div style='background:linear-gradient(90deg,#1B4F8C,#F5A623);height:4px;border-radius:2px'></div>
+          <h1 style='color:#1B4F8C;margin-top:24px'>📊 SmartFinPro Report</h1>
+          <p style='color:#555'>Typ: $REPORT_TYPE | $DATE</p>
+          <p style='color:#555;font-size:13px'><a href='$RUN_URL'>GitHub Log ansehen</a></p>
+          <hr style='border:none;border-top:1px solid #eee;margin:20px 0'>
+          <pre style='font-size:14px;line-height:1.7;color:#1A1A2E;white-space:pre-wrap;font-family:sans-serif'>{report}</pre>
+          <hr style='border:none;border-top:1px solid #eee;margin:20px 0'>
+          <p style='color:#888;font-size:12px'>SmartFinPro Report — automatisch generiert via Claude Code</p>
+          </div>\"\"\"
+          print(json.dumps({
+            'from': 'SmartFinPro Reports <noreply@smartfinpro.com>',
+            'to': ['info@smartfinpro.com'],
+            'subject': f'📊 $REPORT_TYPE Report — $DATE',
+            'html': html_body
+          }))
+          ")
+
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "https://api.resend.com/emails" \
             -H "Authorization: Bearer ${{ secrets.RESEND_API_KEY }}" \
             -H "Content-Type: application/json" \
-            -d "{
-              \"from\": \"SmartFinPro Reports <noreply@smartfinpro.com>\",
-              \"to\": [\"info@smartfinpro.com\"],
-              \"subject\": \"📊 ${REPORT_TYPE} Report — ${DATE}\",
-              \"html\": \"<div style='font-family:sans-serif;max-width:700px;margin:0 auto'><div style='background:linear-gradient(90deg,#1B4F8C,#F5A623);height:4px;border-radius:2px'></div><h1 style='color:#1B4F8C;margin-top:24px'>📊 SmartFinPro Report</h1><p style='color:#555'>Typ: ${REPORT_TYPE} | ${DATE}</p><p style='color:#555;font-size:13px'><a href='${RUN_URL}'>GitHub Log ansehen</a></p><hr style='border:none;border-top:1px solid #eee;margin:20px 0'><div style='font-size:14px;line-height:1.7;color:#1A1A2E'>${RESULT_HTML}</div><hr style='border:none;border-top:1px solid #eee;margin:20px 0'><p style='color:#888;font-size:12px'>SmartFinPro Report — automatisch generiert via Claude Code</p></div>\"
-            }" > /dev/null
+            -d "$BODY_JSON")
 
-          echo "📧 Report an info@smartfinpro.com gesendet"
+          HTTP_CODE=$(echo "$RESPONSE" | tail -1)
+          BODY=$(echo "$RESPONSE" | head -1)
+          echo "Resend Response: HTTP $HTTP_CODE — $BODY"
+
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "📧 Report an info@smartfinpro.com gesendet"
+          else
+            echo "❌ E-Mail-Versand fehlgeschlagen: HTTP $HTTP_CODE"
+            exit 1
+          fi
