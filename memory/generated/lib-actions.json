@@ -2,8 +2,8 @@
   "_generated": true,
   "_command": "npm run refresh:agent-context",
   "_do_not_edit": true,
-  "_generated_at": "2026-04-12T13:04:34.910Z",
-  "count": 45,
+  "_generated_at": "2026-04-13T19:01:16.562Z",
+  "count": 50,
   "modules": [
     {
       "name": "ab-testing",
@@ -73,10 +73,29 @@
       "hasServerOnly": true
     },
     {
+      "name": "auto-executor",
+      "file": "lib/actions/auto-executor.ts",
+      "exports": [
+        "AutoExecutorResult",
+        "runAutoExecutor"
+      ],
+      "hasUseServer": true,
+      "hasServerOnly": true
+    },
+    {
       "name": "auto-genesis",
       "file": "lib/actions/auto-genesis.ts",
       "exports": [
         "runAutoGenesis"
+      ],
+      "hasUseServer": true,
+      "hasServerOnly": true
+    },
+    {
+      "name": "autonomous-notify",
+      "file": "lib/actions/autonomous-notify.ts",
+      "exports": [
+        "sendAutonomousNotification"
       ],
       "hasUseServer": true,
       "hasServerOnly": true
@@ -231,6 +250,17 @@
       "hasServerOnly": true
     },
     {
+      "name": "content-health",
+      "file": "lib/actions/content-health.ts",
+      "exports": [
+        "ContentHealthResult",
+        "ContentHealthScore",
+        "computeContentHealthScores"
+      ],
+      "hasUseServer": true,
+      "hasServerOnly": true
+    },
+    {
       "name": "content-hub",
       "file": "lib/actions/content-hub.ts",
       "exports": [
@@ -356,6 +386,16 @@
       "hasServerOnly": true
     },
     {
+      "name": "feedback-loop",
+      "file": "lib/actions/feedback-loop.ts",
+      "exports": [
+        "FeedbackLoopResult",
+        "runFeedbackLoop"
+      ],
+      "hasUseServer": true,
+      "hasServerOnly": true
+    },
+    {
       "name": "funnel",
       "file": "lib/actions/funnel.ts",
       "exports": [
@@ -446,6 +486,16 @@
         "indexNewSiloUrls",
         "indexSingleUrl",
         "logIndexingResult"
+      ],
+      "hasUseServer": true,
+      "hasServerOnly": true
+    },
+    {
+      "name": "insight-engine",
+      "file": "lib/actions/insight-engine.ts",
+      "exports": [
+        "InsightEngineResult",
+        "runInsightEngine"
       ],
       "hasUseServer": true,
       "hasServerOnly": true
@@ -571,6 +621,7 @@
         "getKeywordPositionTrend",
         "getRankingData",
         "getRealtimeRanking",
+        "seedCompetitorKeywords",
         "seedMoneyKeywords",
         "syncKeywordTracking"
       ],

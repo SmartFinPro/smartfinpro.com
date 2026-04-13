@@ -74,7 +74,7 @@ smartfinpro.com/au/                  → Australien
 | Routen | 200+ |
 | MDX-Reviews | 108+ (4.000–7.000 Wörter) |
 | React Components | 130+ |
-| Server Actions | 47 Module (`lib/actions/*.ts`) |
+| Server Actions | 50 Module (`lib/actions/*.ts`) |
 | API Routes | 95+ Endpoints (inkl. 23 Cron-Routes) |
 | Cron Jobs | 23 aktiv |
 | DB-Tabellen | 35+ |
@@ -226,7 +226,7 @@ schema:
 
 ---
 
-## ⏰ Cron-Jobs (22 aktiv)
+## ⏰ Cron-Jobs (23 aktiv)
 
 | Job | Route | Funktion |
 |---|---|---|

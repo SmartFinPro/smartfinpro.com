@@ -2,13 +2,20 @@
   "_generated": true,
   "_command": "npm run refresh:agent-context",
   "_do_not_edit": true,
-  "_generated_at": "2026-04-12T13:04:34.832Z",
-  "count": 19,
+  "_generated_at": "2026-04-13T19:01:16.481Z",
+  "count": 23,
   "jobs": [
     {
       "name": "affiliate-scout",
       "route": "/api/cron/affiliate-scout",
       "file": "app/api/cron/affiliate-scout/route.ts",
+      "hasAuth": true,
+      "hasLogCron": true
+    },
+    {
+      "name": "auto-executor",
+      "route": "/api/cron/auto-executor",
+      "file": "app/api/cron/auto-executor/route.ts",
       "hasAuth": true,
       "hasLogCron": true
     },
@@ -69,9 +76,23 @@
       "hasLogCron": true
     },
     {
+      "name": "feedback-loop",
+      "route": "/api/cron/feedback-loop",
+      "file": "app/api/cron/feedback-loop/route.ts",
+      "hasAuth": true,
+      "hasLogCron": true
+    },
+    {
       "name": "freshness-check",
       "route": "/api/cron/freshness-check",
       "file": "app/api/cron/freshness-check/route.ts",
+      "hasAuth": true,
+      "hasLogCron": true
+    },
+    {
+      "name": "insight-engine",
+      "route": "/api/cron/insight-engine",
+      "file": "app/api/cron/insight-engine/route.ts",
       "hasAuth": true,
       "hasLogCron": true
     },
@@ -114,6 +135,13 @@
       "name": "sync-conversions",
       "route": "/api/cron/sync-conversions",
       "file": "app/api/cron/sync-conversions/route.ts",
+      "hasAuth": true,
+      "hasLogCron": true
+    },
+    {
+      "name": "sync-rankings",
+      "route": "/api/cron/sync-rankings",
+      "file": "app/api/cron/sync-rankings/route.ts",
       "hasAuth": true,
       "hasLogCron": true
     },
