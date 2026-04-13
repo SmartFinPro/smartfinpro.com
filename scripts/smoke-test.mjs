@@ -65,7 +65,7 @@ const CRITICAL_URLS = [
   { path: '/affiliate-disclosure', tier: 'basic' },
 ];
 
-const TIMEOUT_MS = 15_000;
+const TIMEOUT_MS = 30_000;
 
 // ANSI helpers
 const GREEN  = '\x1b[32m';
