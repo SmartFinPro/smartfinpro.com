@@ -25,6 +25,7 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+      id-token: write
 
     steps:
       - name: Checkout
@@ -58,7 +59,7 @@ jobs:
             - Server Actions NICHT direkt in Client Components importieren
             - VPS niemals direkt ansprechen (kein SSH, kein scp)
             - Nach Fixes: git commit mit erklärender Message
-          claude_args: "--max-turns 20"
+          max_turns: 20
 
       - name: Änderungen committen (fix-only)
         if: ${{ github.event.inputs.scope == 'fix-only' }}

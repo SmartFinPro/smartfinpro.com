@@ -64,6 +64,7 @@ jobs:
     timeout-minutes: 30
     permissions:
       contents: write
+      id-token: write
     outputs:
       mdx_slug: ${{ steps.extract.outputs.slug }}
       mdx_url:  ${{ steps.extract.outputs.url }}
@@ -87,7 +88,7 @@ jobs:
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           model: claude-opus-4-6
-          claude_args: "--max-turns 40"
+          max_turns: 40
           direct_prompt: |
             Du bist Senior SEO-Stratege und Content-Entwickler für SmartFinPro.com.
             Führe die folgende vollautomatische Genesis-Pipeline durch.

@@ -43,6 +43,7 @@ jobs:
     timeout-minutes: 25
     permissions:
       contents: read
+      id-token: write
 
     steps:
       - name: Checkout
@@ -53,7 +54,7 @@ jobs:
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           model: claude-opus-4-6
-          claude_args: "--max-turns 50"
+          max_turns: 50
           direct_prompt: |
             Du bist Senior SEO-Stratege und Affiliate-Analyst für SmartFinPro.com.
             Führe eine vollständige Markt- und Nischenanalyse durch.

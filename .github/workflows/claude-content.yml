@@ -40,6 +40,7 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+      id-token: write
 
     steps:
       - name: Checkout
@@ -70,7 +71,7 @@ jobs:
             - Tailwind v4 Syntax (kein tailwind.config.js)
             - HTML-Kommentare in MDX: immer {/* */} statt <!-- -->
             - Nach Änderungen: git add + git commit mit beschreibender Message
-          claude_args: "--max-turns 15"
+          max_turns: 15
 
       - name: Auto-Deploy nach Content-Änderungen
         run: |

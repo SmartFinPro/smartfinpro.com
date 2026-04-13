@@ -37,6 +37,7 @@ jobs:
     timeout-minutes: 20
     permissions:
       contents: read
+      id-token: write
 
     steps:
       - name: Checkout
@@ -113,4 +114,4 @@ jobs:
 
             Antworte auf Deutsch mit strukturiertem Markdown-Report.
             Halte den Report prägnant — maximal 500 Wörter.
-          claude_args: "--max-turns 10"
+          max_turns: 10
