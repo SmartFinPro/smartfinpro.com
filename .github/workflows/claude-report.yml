@@ -161,7 +161,7 @@ jobs:
           </div>\"\"\"
           print(json.dumps({
             'from': 'SmartFinPro Reports <onboarding@resend.dev>',
-            'to': ['info@smartfinpro.com'],
+            'to': ['christian33nrw@gmail.com'],
             'subject': f'📊 $REPORT_TYPE Report — $DATE',
             'html': html_body
           }))
