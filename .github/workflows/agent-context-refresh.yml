@@ -18,6 +18,8 @@ jobs:
   refresh:
     name: Refresh agent-context indexes
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout
