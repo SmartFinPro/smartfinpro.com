@@ -2,8 +2,8 @@
   "_generated": true,
   "_command": "npm run refresh:agent-context",
   "_do_not_edit": true,
-  "_generated_at": "2026-04-17T05:23:22.472Z",
-  "count": 50,
+  "_generated_at": "2026-04-17T20:31:54.544Z",
+  "count": 51,
   "modules": [
     {
       "name": "ab-testing",
@@ -522,6 +522,16 @@
         "checkLinkHealth",
         "getOfferExpiryReport",
         "runHealthChecks"
+      ],
+      "hasUseServer": true,
+      "hasServerOnly": true
+    },
+    {
+      "name": "money-leak-stats",
+      "file": "lib/actions/money-leak-stats.ts",
+      "exports": [
+        "MoneyLeakStats",
+        "getMoneyLeakStats"
       ],
       "hasUseServer": true,
       "hasServerOnly": true

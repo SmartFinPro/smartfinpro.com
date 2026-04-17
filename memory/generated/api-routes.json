@@ -2,8 +2,8 @@
   "_generated": true,
   "_command": "npm run refresh:agent-context",
   "_do_not_edit": true,
-  "_generated_at": "2026-04-17T05:23:22.384Z",
-  "count": 94,
+  "_generated_at": "2026-04-17T20:31:54.452Z",
+  "count": 96,
   "routes": [
     {
       "path": "/api/ab-testing/impression",
@@ -598,6 +598,20 @@
     {
       "path": "/api/telegram/webhook",
       "file": "app/api/telegram/webhook/route.ts",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/tools/money-leak/scan",
+      "file": "app/api/tools/money-leak/scan/route.ts",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/tools/money-leak/unlock",
+      "file": "app/api/tools/money-leak/unlock/route.ts",
       "methods": [
         "POST"
       ]
