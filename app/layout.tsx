@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { headers } from 'next/headers';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import Toaster from '@/components/ui/sonner';
@@ -77,13 +78,24 @@ export const metadata: Metadata = {
   // verification: { google: 'ACTUAL-CODE-HERE' },
 };
 
-export default function RootLayout({
+// Silo (market) is injected by proxy.ts middleware as an x-sfp-silo request header.
+// Reading it here lets us render <html data-silo="..."> server-side, avoiding the
+// inline detection script that triggered React 19's "script tag while rendering
+// React component" dev warning. Falls back to 'us' if header missing (e.g. static).
+async function readSilo(): Promise<'us' | 'uk' | 'ca' | 'au'> {
+  const h = await headers();
+  const v = h.get('x-sfp-silo');
+  return v === 'uk' || v === 'ca' || v === 'au' ? v : 'us';
+}
+
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const silo = await readSilo();
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" data-silo={silo} suppressHydrationWarning>
       <head>
         {/* Preconnect to image CDN for faster LCP */}
         <link rel="preconnect" href="https://images.smartfinpro.com" crossOrigin="anonymous" />
@@ -94,13 +106,6 @@ export default function RootLayout({
         )}
         {/* Preconnect to analytics */}
         <link rel="dns-prefetch" href="https://plausible.io" />
-        {/* Inline silo detection — sets html[data-silo] immediately (no body mutation = no hydration mismatch).
-            CSS uses html[data-silo="uk"] selectors. SiloClassProvider adds body.silo-* after hydration for JS consumers. */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `(function(){var p=window.location.pathname;var m=p.startsWith('/uk')?'uk':p.startsWith('/ca')?'ca':p.startsWith('/au')?'au':'us';document.documentElement.dataset.silo=m})();`,
-          }}
-        />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{

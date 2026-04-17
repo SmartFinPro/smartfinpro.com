@@ -209,6 +209,30 @@ function clearAttempts(ip: string): void {
 }
 
 // ============================================================
+// SILO HEADER INJECTION
+// Compute market from pathname and forward as x-sfp-silo request header
+// so the root layout (app/layout.tsx) can render <html data-silo="..."> via
+// headers() — eliminates the inline silo-detection script that triggered
+// React 19 "script tag while rendering React component" dev warnings.
+// ============================================================
+
+type Silo = 'us' | 'uk' | 'ca' | 'au';
+
+function computeSilo(pathname: string): Silo {
+  if (pathname.startsWith('/uk')) return 'uk';
+  if (pathname.startsWith('/ca')) return 'ca';
+  if (pathname.startsWith('/au')) return 'au';
+  return 'us';
+}
+
+/** NextResponse.next() with x-sfp-silo injected into the forwarded request headers. */
+function nextWithSilo(request: NextRequest, silo: Silo): NextResponse {
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set('x-sfp-silo', silo);
+  return NextResponse.next({ request: { headers: requestHeaders } });
+}
+
+// ============================================================
 // MAIN MIDDLEWARE
 // ============================================================
 
@@ -236,6 +260,7 @@ function getCookieConfig(request: NextRequest): { domain?: string; secure: boole
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const { domain: cookieDomain, secure: cookieSecure } = getCookieConfig(request);
+  const silo = computeSilo(pathname);
 
   try {
     // ── API Dashboard Auth Gate ──────────────────────────────────
@@ -437,7 +462,7 @@ export async function proxy(request: NextRequest) {
 
     // ── Step 1: Skip system paths & protected route prefixes ──
     for (const prefix of PROTECTED_PREFIXES) {
-      if (pathname.startsWith(prefix)) return NextResponse.next();
+      if (pathname.startsWith(prefix)) return nextWithSilo(request, silo);
     }
 
     // ── Step 2: Skip static files (images, fonts, etc.) ──
@@ -446,19 +471,19 @@ export async function proxy(request: NextRequest) {
     // ── Step 3: Homepage → served by app/(marketing)/page.tsx directly ──
     const segments = pathname.split('/').filter(Boolean);
     if (segments.length === 0) {
-      return withGeoCookie(request, NextResponse.next(), cookieSecure);
+      return withGeoCookie(request, nextWithSilo(request, silo), cookieSecure);
     }
 
     const firstSegment = segments[0];
 
     // ── Step 4: Skip exact protected pages ──
     if (PROTECTED_EXACT.has(pathname) || PROTECTED_EXACT.has(`/${firstSegment}`)) {
-      return NextResponse.next();
+      return nextWithSilo(request, silo);
     }
 
     // ── Step 5: Valid market prefix → allow through + set geo cookie ──
     if (MARKETS.has(firstSegment)) {
-      return withGeoCookie(request, NextResponse.next(), cookieSecure);
+      return withGeoCookie(request, nextWithSilo(request, silo), cookieSecure);
     }
 
     // ── Step 6: Legacy US clean URLs → 301 redirect to /us/... ──
@@ -467,11 +492,11 @@ export async function proxy(request: NextRequest) {
     }
 
     // ── Step 7: Everything else → allow through + set geo cookie ──
-    return withGeoCookie(request, NextResponse.next(), cookieSecure);
+    return withGeoCookie(request, nextWithSilo(request, silo), cookieSecure);
   } catch (error) {
     const msg = error instanceof Error ? error.message : 'Unknown middleware error';
     console.error(`[middleware] fallback for pathname="${pathname}":`, msg);
-    return NextResponse.next();
+    return nextWithSilo(request, silo);
   }
 }
 

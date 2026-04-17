@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
-import { Calculator, CreditCard, DollarSign, Scale, TrendingUp, ArrowRight, Sparkles, Target, BarChart3, Home, PiggyBank } from 'lucide-react';
+import { Calculator, CreditCard, DollarSign, Scale, TrendingUp, ArrowRight, Sparkles, Target, BarChart3, Home, PiggyBank, Droplet } from 'lucide-react';
 
 export const metadata: Metadata = {
   title: 'Free Financial Tools & Calculators | SmartFinPro',
@@ -12,6 +12,14 @@ export const metadata: Metadata = {
 };
 
 const tools = [
+  {
+    title: 'Money Leak Scanner',
+    description: 'Drag sliders to find how much your household is overpaying across banking fees, subscriptions, credit-card interest, insurance, investing, and FX. Live results, no sign-up.',
+    icon: Droplet,
+    href: '/tools/money-leak-scanner',
+    category: 'Personal Finance',
+    badge: 'New',
+  },
   {
     title: 'Broker Finder Quiz',
     description: 'Answer 5 quick questions and get personalized broker recommendations with match scores. Find your perfect trading platform in under a minute.',

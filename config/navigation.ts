@@ -100,19 +100,24 @@ export const globalToolLinks: NavLink[] = [
 
 /** Market-specific tools — only shown in the matching market's footer */
 const marketToolLinks: Record<Market, NavLink[]> = {
-  us: [],
+  us: [
+    { label: 'Money Leak Scanner', href: '/tools/money-leak-scanner' },
+  ],
   uk: [
     { label: 'ISA Tax Savings Calculator', href: '/uk/tools/isa-tax-savings-calculator' },
     { label: 'Remortgage Calculator', href: '/uk/tools/remortgage-calculator' },
+    { label: 'Money Leak Scanner', href: '/uk/tools/money-leak-scanner' },
   ],
   ca: [
     { label: 'TFSA/RRSP Calculator', href: '/ca/tools/tfsa-rrsp-calculator' },
     { label: 'Fee Savings Calculator', href: '/ca/tools/wealthsimple-calculator' },
     { label: 'Mortgage Affordability Calculator', href: '/ca/tools/ca-mortgage-affordability-calculator' },
+    { label: 'Money Leak Scanner', href: '/ca/tools/money-leak-scanner' },
   ],
   au: [
     { label: 'Superannuation Calculator', href: '/au/tools/superannuation-calculator' },
     { label: 'Mortgage Calculator', href: '/au/tools/au-mortgage-calculator' },
+    { label: 'Money Leak Scanner', href: '/au/tools/money-leak-scanner' },
   ],
 };
 

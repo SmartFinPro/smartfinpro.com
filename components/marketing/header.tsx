@@ -25,6 +25,7 @@ import {
   Home,
   PiggyBank,
   Landmark,
+  Droplet,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -94,6 +95,10 @@ const allToolCards: ToolCard[] = [
   { name: 'ISA Tax Savings Calculator', description: 'See your ISA tax shield over time', href: '/uk/tools/isa-tax-savings-calculator', icon: PiggyBank, badge: 'New', markets: ['uk'] },
   { name: 'Rewards Calculator', description: 'Find your best credit card by spend', href: '/tools/credit-card-rewards-calculator', icon: CreditCard, badge: 'New', markets: 'all' },
   { name: 'Broker Comparison', description: 'Side-by-side broker comparison', href: '/tools/broker-comparison', icon: Scale, badge: null, markets: 'all' },
+  { name: 'Money Leak Scanner', description: 'Find where your household is overpaying in 60s', href: '/tools/money-leak-scanner', icon: Droplet, badge: 'New', markets: ['us'] },
+  { name: 'Money Leak Scanner', description: 'Find where your household is overpaying in 60s', href: '/uk/tools/money-leak-scanner', icon: Droplet, badge: 'New', markets: ['uk'] },
+  { name: 'Money Leak Scanner', description: 'Find where your household is overpaying in 60s', href: '/ca/tools/money-leak-scanner', icon: Droplet, badge: 'New', markets: ['ca'] },
+  { name: 'Money Leak Scanner', description: 'Find where your household is overpaying in 60s', href: '/au/tools/money-leak-scanner', icon: Droplet, badge: 'New', markets: ['au'] },
 ];
 
 /** Return only the tool cards relevant to the given market silo. */

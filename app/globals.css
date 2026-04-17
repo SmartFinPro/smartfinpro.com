@@ -890,3 +890,55 @@ html[data-silo="ca"], body.silo-ca { --sfp-silo-tint: #FFE5E5; }
   .newsletter-form-responsive input,
   .newsletter-form-responsive button { width: 100%; }
 }
+
+/* ============================================================
+   SFP Range Input (Money Leak Scanner live calculator)
+   Gold thumb with navy border on hover + focus-visible ring.
+   ============================================================ */
+.sfp-range {
+  height: 8px;
+  border-radius: 9999px;
+  outline: none;
+}
+.sfp-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 9999px;
+  background: var(--sfp-gold);
+  border: 3px solid #ffffff;
+  box-shadow: 0 1px 3px rgba(16, 24, 40, 0.15), 0 0 0 1px rgba(27, 79, 140, 0.15);
+  cursor: pointer;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+.sfp-range::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 9999px;
+  background: var(--sfp-gold);
+  border: 3px solid #ffffff;
+  box-shadow: 0 1px 3px rgba(16, 24, 40, 0.15), 0 0 0 1px rgba(27, 79, 140, 0.15);
+  cursor: pointer;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+.sfp-range:hover::-webkit-slider-thumb {
+  transform: scale(1.1);
+  box-shadow: 0 2px 6px rgba(16, 24, 40, 0.2), 0 0 0 1px var(--sfp-navy);
+}
+.sfp-range:hover::-moz-range-thumb {
+  transform: scale(1.1);
+  box-shadow: 0 2px 6px rgba(16, 24, 40, 0.2), 0 0 0 1px var(--sfp-navy);
+}
+.sfp-range:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 3px rgba(245, 166, 35, 0.45);
+}
+.sfp-range:focus-visible::-moz-range-thumb {
+  box-shadow: 0 0 0 3px rgba(245, 166, 35, 0.45);
+}
+@media (prefers-reduced-motion: reduce) {
+  .sfp-range::-webkit-slider-thumb,
+  .sfp-range::-moz-range-thumb { transition: none; }
+  .sfp-range:hover::-webkit-slider-thumb,
+  .sfp-range:hover::-moz-range-thumb { transform: none; }
+}
