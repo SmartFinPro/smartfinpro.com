@@ -32,6 +32,7 @@ import {
   X,
   HeartPulse,
   Bot,
+  Droplet,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 // Server action imports removed — loaded dynamically in useEffect to prevent
@@ -92,6 +93,7 @@ const SIDEBAR_GROUPS: NavGroup[] = [
       { name: 'Opportunities', href: '/dashboard/opportunities', icon: Telescope, badgeKey: 'opportunities' },
       { name: 'A/B Testing', href: '/dashboard/ab-testing', icon: FlaskConical },
       { name: 'Quiz Analytics', href: '/dashboard/quiz', icon: Sparkles },
+      { name: 'Money Leak Scanner', href: '/dashboard/tools/money-leak', icon: Droplet },
     ],
   },
   {

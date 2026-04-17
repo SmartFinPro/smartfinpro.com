@@ -99,6 +99,42 @@ export const XRayScoreSchema = z.object({
 });
 export type XRayScorePayload = z.infer<typeof XRayScoreSchema>;
 
+/** POST /api/tools/money-leak/scan */
+export const MoneyLeakScanSchema = z.object({
+  sessionId: z.string().min(8).max(128),
+  market: z.enum(VALID_MARKETS),
+  currency: z.enum(['USD', 'GBP', 'CAD', 'AUD']),
+  monthlyIncome: z.number().finite().min(0).max(10_000_000),
+  expenses: z.object({
+    banking: z.number().finite().min(0).max(100_000),
+    subscriptions: z.number().finite().min(0).max(100_000),
+    creditCardInterest: z.number().finite().min(0).max(100_000),
+    insurance: z.number().finite().min(0).max(100_000),
+    investing: z.number().finite().min(0).max(100_000),
+    forex: z.number().finite().min(0).max(100_000),
+  }),
+  lifestyle: z.object({
+    hasMultipleBankAccounts: z.boolean(),
+    usesRoboAdvisor: z.boolean(),
+    refinancedRecently: z.boolean(),
+    comparesInsuranceAnnually: z.boolean(),
+    investsRegularly: z.boolean(),
+  }),
+});
+export type MoneyLeakScanPayload = z.infer<typeof MoneyLeakScanSchema>;
+
+/** POST /api/tools/money-leak/unlock */
+export const MoneyLeakUnlockSchema = z.object({
+  scanId: z.string().uuid('scanId must be a valid UUID'),
+  email: z
+    .string()
+    .email('Invalid email address')
+    .max(254)
+    .transform((e) => e.toLowerCase().trim()),
+  consent: z.boolean().refine((v) => v === true, 'Consent required'),
+});
+export type MoneyLeakUnlockPayload = z.infer<typeof MoneyLeakUnlockSchema>;
+
 /** Market code guard for cron params */
 export function assertValidMarket(market: string): market is Market {
   return (VALID_MARKETS as readonly string[]).includes(market);

@@ -27,6 +27,10 @@ const toolPages = [
   '/ca/tools/tfsa-rrsp-calculator',
   '/tools/gold-roi-calculator',
   '/ca/tools/ca-mortgage-affordability-calculator',
+  '/tools/money-leak-scanner',
+  '/uk/tools/money-leak-scanner',
+  '/ca/tools/money-leak-scanner',
+  '/au/tools/money-leak-scanner',
 ];
 
 // Cross-market hub pages (not market-prefixed)

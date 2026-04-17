@@ -1,7 +1,7 @@
 // app/(marketing)/au/tools/page.tsx
 import { Metadata } from 'next';
 import Link from 'next/link';
-import { Calculator, Home, TrendingUp, ArrowRight, Sparkles } from 'lucide-react';
+import { Calculator, Home, TrendingUp, ArrowRight, Sparkles, Droplet } from 'lucide-react';
 
 export const metadata: Metadata = {
   title: 'Free Australian Financial Tools & Calculators | SmartFinPro',
@@ -17,6 +17,13 @@ export const metadata: Metadata = {
 };
 
 const tools = [
+  {
+    title: 'Money Leak Scanner',
+    description: 'Find how much your household is overpaying across banking fees, subscriptions, credit cards, insurance, investing and FX — live, in 60 seconds.',
+    icon: Droplet,
+    href: '/au/tools/money-leak-scanner',
+    badge: 'New',
+  },
   {
     title: 'Superannuation Calculator',
     description: 'Project your super balance at retirement. Model employer contributions, salary sacrifice, government co-contributions, and investment returns.',

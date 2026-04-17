@@ -1,7 +1,7 @@
 // app/(marketing)/uk/tools/page.tsx
 import { Metadata } from 'next';
 import Link from 'next/link';
-import { Calculator, PiggyBank, Home, ArrowRight, Sparkles } from 'lucide-react';
+import { Calculator, PiggyBank, Home, ArrowRight, Sparkles, Droplet } from 'lucide-react';
 
 export const metadata: Metadata = {
   title: 'Free UK Financial Tools & Calculators | SmartFinPro',
@@ -17,6 +17,13 @@ export const metadata: Metadata = {
 };
 
 const tools = [
+  {
+    title: 'Money Leak Scanner',
+    description: 'Find how much your household is overpaying across banking fees, subscriptions, credit cards, insurance, investing and FX — live, in 60 seconds.',
+    icon: Droplet,
+    href: '/uk/tools/money-leak-scanner',
+    badge: 'New',
+  },
   {
     title: 'ISA Tax Savings Calculator',
     description: 'See how much you could save in capital gains tax and dividend tax by investing inside a Stocks & Shares ISA vs a General Investment Account.',

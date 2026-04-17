@@ -1,7 +1,7 @@
 // app/(marketing)/ca/tools/page.tsx
 import { Metadata } from 'next';
 import Link from 'next/link';
-import { Calculator, DollarSign, Home, ArrowRight, Sparkles, PiggyBank } from 'lucide-react';
+import { Calculator, DollarSign, Home, ArrowRight, Sparkles, PiggyBank, Droplet } from 'lucide-react';
 
 export const metadata: Metadata = {
   title: 'Free Canadian Financial Tools & Calculators | SmartFinPro',
@@ -17,6 +17,13 @@ export const metadata: Metadata = {
 };
 
 const tools = [
+  {
+    title: 'Money Leak Scanner',
+    description: 'Find how much your household is overpaying across banking fees, subscriptions, credit cards, insurance, investing and FX — live, in 60 seconds.',
+    icon: Droplet,
+    href: '/ca/tools/money-leak-scanner',
+    badge: 'New',
+  },
   {
     title: 'TFSA vs RRSP Calculator',
     description: 'Compare TFSA and RRSP side by side. See which account maximises your after-tax retirement savings based on your income, tax bracket, and timeline.',
