@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
 import { syncConnector } from '@/lib/api/sync-service';
 import { logger, logCron } from '@/lib/logging';
+import { validateBearer } from '@/lib/security/timing-safe';
 
 /**
  * Scheduled sync endpoint for daily conversion synchronization.
@@ -14,15 +15,8 @@ import { logger, logCron } from '@/lib/logging';
  *   0 6 * * * curl -sf -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/cron/sync-conversions >> /home/master/applications/smartfinpro/logs/cron.log 2>&1
  */
 export async function GET(request: NextRequest) {
-  // Verify CRON_SECRET — only Bearer token auth (self-hosted)
-  const authHeader = request.headers.get('authorization');
-  const cronSecret = process.env.CRON_SECRET;
-
-  if (!cronSecret || cronSecret.startsWith('your-')) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  if (authHeader !== `Bearer ${cronSecret}`) {
+  // Verify CRON_SECRET (timing-safe)
+  if (!validateBearer(request.headers.get('authorization'), process.env.CRON_SECRET)) {
     logger.warn('[sync-conversions] Unauthorized cron attempt');
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -124,10 +118,7 @@ export async function GET(request: NextRequest) {
 
 // POST for manual trigger from dashboard
 export async function POST(request: NextRequest) {
-  const authHeader = request.headers.get('authorization');
-  const cronSecret = process.env.CRON_SECRET;
-
-  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
+  if (!validateBearer(request.headers.get('authorization'), process.env.CRON_SECRET)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

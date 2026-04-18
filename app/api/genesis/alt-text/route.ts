@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/logging';
 import sharp from 'sharp';
 import { createClaudeMessage } from '@/lib/claude/client';
+import { validateBearer } from '@/lib/security/timing-safe';
 
 export const runtime = 'nodejs';
 export const maxDuration = 30;
@@ -20,10 +21,8 @@ const MAX_VISION_DIMENSION = 2000;
  * Auth: Bearer CRON_SECRET or same-origin dashboard request
  */
 export async function POST(req: NextRequest) {
-  // Auth check — allow Bearer token OR same-origin requests (dashboard uploads)
+  // Auth check — timing-safe Bearer token OR same-origin requests (dashboard uploads)
   // Uses strict URL parsing to prevent host spoofing via referer.includes()
-  const authHeader = req.headers.get('authorization');
-  const cronSecret = process.env.CRON_SECRET;
   const referer = req.headers.get('referer') || '';
   const origin = req.headers.get('origin') || '';
   const host = req.headers.get('host') || '';
@@ -36,7 +35,8 @@ export async function POST(req: NextRequest) {
     }
   } catch { /* malformed URL → not same-origin */ }
 
-  if (!cronSecret || (authHeader !== `Bearer ${cronSecret}` && !isSameOrigin)) {
+  const hasValidBearer = validateBearer(req.headers.get('authorization'), process.env.CRON_SECRET);
+  if (!hasValidBearer && !isSameOrigin) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -57,11 +57,38 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
     }
 
+    // SECURITY (M-01): Reject oversized uploads / pixel bombs.
+    const MAX_INPUT_BYTES = 20 * 1024 * 1024;
+    const MAX_INPUT_PIXELS = 80_000_000;
+    if (file.size > MAX_INPUT_BYTES) {
+      return NextResponse.json(
+        { error: `Image too large (>${MAX_INPUT_BYTES} bytes)` },
+        { status: 413 },
+      );
+    }
+
     const rawBuffer = Buffer.from(await file.arrayBuffer());
+
+    // Hard-cap Sharp pixel budget to prevent decompression-bomb OOM.
+    const sharpInput = (buf: Buffer) => sharp(buf, {
+      limitInputPixels: MAX_INPUT_PIXELS,
+      sequentialRead: true,
+    });
 
     // Downscale if any dimension exceeds Anthropic Vision's 2000px limit
     let processedBuffer: Buffer = rawBuffer;
-    const metadata = await sharp(rawBuffer).metadata();
+    let metadata;
+    try {
+      metadata = await sharpInput(rawBuffer).metadata();
+    } catch (err) {
+      logger.warn('[alt-text] Sharp rejected input', {
+        error: err instanceof Error ? err.message : String(err),
+      });
+      return NextResponse.json(
+        { error: 'Invalid or oversized image' },
+        { status: 400 },
+      );
+    }
     const w = metadata.width || 0;
     const h = metadata.height || 0;
 
@@ -69,7 +96,7 @@ export async function POST(req: NextRequest) {
       const resizeOpts = w >= h
         ? { width: MAX_VISION_DIMENSION }
         : { height: MAX_VISION_DIMENSION };
-      processedBuffer = Buffer.from(await sharp(rawBuffer)
+      processedBuffer = Buffer.from(await sharpInput(rawBuffer)
         .resize({ ...resizeOpts, withoutEnlargement: true })
         .toBuffer());
     }

@@ -19,6 +19,7 @@ import matter from 'gray-matter';
 import { createServiceClient } from '@/lib/supabase/server';
 import { sendTelegramAlert } from '@/lib/alerts/telegram';
 import { logger, logCron } from '@/lib/logging';
+import { validateBearer } from '@/lib/security/timing-safe';
 
 const CONTENT_DIR = path.join(process.cwd(), 'content');
 const STALE_THRESHOLD_DAYS = 180; // 6 months
@@ -35,16 +36,41 @@ interface ScannedFile {
   needsReview: boolean;
 }
 
-/** Recursively collect .mdx files under a directory */
-function collectMdxFiles(dir: string): string[] {
+/**
+ * Recursively collect .mdx files under a directory.
+ *
+ * SECURITY (M-02): symlink-loop / traversal DoS mitigation.
+ *  - Skip symlink entries entirely (never follow).
+ *  - Track visited realpaths to break cycles even without symlinks
+ *    (e.g. bind mounts).
+ *  - Bound recursion depth at 10 to cap worst-case walk time.
+ */
+function collectMdxFiles(
+  dir: string,
+  visited: Set<string> = new Set(),
+  depth: number = 0,
+): string[] {
   const files: string[] = [];
+  const MAX_DEPTH = 10;
+  if (depth > MAX_DEPTH) return files;
   if (!fs.existsSync(dir)) return files;
+
+  // Resolve realpath to detect and break cycles (e.g. bind mounts).
+  let real: string;
+  try {
+    real = fs.realpathSync(dir);
+  } catch {
+    return files;
+  }
+  if (visited.has(real)) return files;
+  visited.add(real);
 
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     if (entry.name.startsWith('_')) continue; // skip _templates, _archived
+    if (entry.isSymbolicLink()) continue; // never follow symlinks (loop-safe)
     const full = path.join(dir, entry.name);
     if (entry.isDirectory()) {
-      files.push(...collectMdxFiles(full));
+      files.push(...collectMdxFiles(full, visited, depth + 1));
     } else if (entry.isFile() && entry.name.endsWith('.mdx')) {
       files.push(full);
     }
@@ -76,18 +102,9 @@ function slugFromPath(absolutePath: string): string {
 }
 
 export async function GET(request: NextRequest) {
-  // ── Auth ──────────────────────────────────────────────────────────────
-  const authHeader = request.headers.get('authorization');
-  const cronSecret = process.env.CRON_SECRET;
-
-  if (!cronSecret || cronSecret.startsWith('your-')) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
+  // ── Auth (timing-safe) ────────────────────────────────────────────────
   const isDev = process.env.NODE_ENV === 'development';
-  const isAuthenticated = authHeader === `Bearer ${cronSecret}`;
-
-  if (!isAuthenticated && !isDev) {
+  if (!isDev && !validateBearer(request.headers.get('authorization'), process.env.CRON_SECRET)) {
     logger.warn('[freshness-check] Unauthorized attempt', { ip: request.headers.get('x-forwarded-for') ?? 'unknown' });
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -147,14 +164,22 @@ export async function GET(request: NextRequest) {
     let newlyFlagged = 0;
     const errors: string[] = [];
 
-    for (const file of scanned) {
-      // Check if already flagged (to track newly vs already flagged)
-      const { data: existing } = await supabase
-        .from('content_freshness')
-        .select('id, needs_review, flagged_at')
-        .eq('file_path', file.filePath)
-        .maybeSingle();
+    // Batch fetch all existing records in one query (avoids N+1)
+    const filePaths = scanned.map((f) => f.filePath);
+    const { data: existingRows } = filePaths.length > 0
+      ? await supabase
+          .from('content_freshness')
+          .select('file_path, needs_review, flagged_at')
+          .in('file_path', filePaths)
+      : { data: [] };
 
+    const existingMap = new Map<string, { needs_review: boolean; flagged_at: string | null }>(
+      (existingRows ?? []).map((r) => [r.file_path, { needs_review: r.needs_review, flagged_at: r.flagged_at }]),
+    );
+
+    // Build upsert payload
+    const upsertRows = scanned.map((file) => {
+      const existing = existingMap.get(file.filePath);
       const wasAlreadyFlagged = existing?.needs_review === true;
       const flaggedAt = file.needsReview
         ? (wasAlreadyFlagged ? existing!.flagged_at : now)
@@ -164,25 +189,28 @@ export async function GET(request: NextRequest) {
         newlyFlagged++;
       }
 
+      return {
+        slug: file.slug,
+        market: file.market,
+        category: file.category,
+        file_path: file.filePath,
+        publish_date: file.publishDate ?? null,
+        modified_date: file.modifiedDate ?? null,
+        needs_review: file.needsReview,
+        flagged_at: flaggedAt,
+        updated_at: now,
+      };
+    });
+
+    // Batch upsert in chunks of 100 to stay within Supabase limits
+    const CHUNK_SIZE = 100;
+    for (let i = 0; i < upsertRows.length; i += CHUNK_SIZE) {
+      const chunk = upsertRows.slice(i, i + CHUNK_SIZE);
       const { error } = await supabase
         .from('content_freshness')
-        .upsert(
-          {
-            slug: file.slug,
-            market: file.market,
-            category: file.category,
-            file_path: file.filePath,
-            publish_date: file.publishDate ?? null,
-            modified_date: file.modifiedDate ?? null,
-            needs_review: file.needsReview,
-            flagged_at: flaggedAt,
-            updated_at: now,
-          },
-          { onConflict: 'file_path' }
-        );
-
+        .upsert(chunk, { onConflict: 'file_path' });
       if (error) {
-        errors.push(`${file.filePath}: ${error.message}`);
+        errors.push(`chunk ${i / CHUNK_SIZE}: ${error.message}`);
       }
     }
 
@@ -230,24 +258,6 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // ── Log to cron_logs ───────────────────────────────────────────────
-    try {
-      await supabase.from('cron_logs').insert({
-        job_name: 'freshness-check',
-        status: errors.length === 0 ? 'success' : 'partial',
-        duration_ms: durationMs,
-        metadata: {
-          scanned: scanned.length,
-          stale: staleCount,
-          newly_flagged: newlyFlagged,
-          alert_sent: alertSent,
-          errors: errors.length > 0 ? errors.slice(0, 5) : undefined,
-        },
-      });
-    } catch (logErr) {
-      logger.warn('[freshness-check] cron_logs insert failed', { error: logErr instanceof Error ? logErr.message : String(logErr) });
-    }
-
     logCron({ job: 'freshness-check', status: errors.length === 0 ? 'success' : 'error', duration_ms: durationMs, scanned: scanned.length, stale: staleCount, newly_flagged: newlyFlagged });
 
     return NextResponse.json({
@@ -264,15 +274,6 @@ export async function GET(request: NextRequest) {
     const msg = err instanceof Error ? err.message : 'Unknown error';
     const durationMs = Date.now() - startTime;
     logCron({ job: 'freshness-check', status: 'error', duration_ms: durationMs, error: msg });
-
-    try {
-      await supabase.from('cron_logs').insert({
-        job_name: 'freshness-check',
-        status: 'error',
-        duration_ms: durationMs,
-        error: msg,
-      });
-    } catch { /* non-critical */ }
 
     return NextResponse.json(
       { error: msg, timestamp: new Date().toISOString() },

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { runBacklinkPost } from '@/lib/actions/backlink-automation';
 import { logCron } from '@/lib/logging';
+import { validateBearer } from '@/lib/security/timing-safe';
 
 /**
  * Backlink Post — Automated Content Posting Cron Job
@@ -19,17 +20,10 @@ import { logCron } from '@/lib/logging';
  *   0 0,4,8,12,16,20 * * * curl -sf -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/cron/backlink-post >> /home/master/applications/smartfinpro/logs/cron.log 2>&1
  */
 export async function GET(request: NextRequest) {
-  const authHeader = request.headers.get('authorization');
-  const cronSecret = process.env.CRON_SECRET;
   const isDev = process.env.NODE_ENV === 'development';
 
-  if (!isDev) {
-    if (!cronSecret || cronSecret.startsWith('your-')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    if (authHeader !== `Bearer ${cronSecret}`) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+  if (!isDev && !validateBearer(request.headers.get('authorization'), process.env.CRON_SECRET)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   const startTime = Date.now();

@@ -18,8 +18,11 @@ export function isValidDashboardSessionValue(
   secret: string | undefined,
 ): boolean {
   if (!sessionValue || !secret) return false;
+  // SECURITY (Welle 3a): legacy plaintext-secret cookie fallback removed.
+  // Only HMAC-derived session tokens are accepted. Any existing legacy
+  // cookies will fail validation and be re-issued on next login via
+  // `createDashboardSessionToken()`.
   const hashed = createDashboardSessionToken(secret);
-  // Accept both: current HMAC cookie and legacy plaintext secret cookie.
-  return timingSafeCompare(sessionValue, hashed) || timingSafeCompare(sessionValue, secret);
+  return timingSafeCompare(sessionValue, hashed);
 }
 

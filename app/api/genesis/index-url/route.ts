@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/logging';
+import { validateBearer } from '@/lib/security/timing-safe';
 
 export const runtime = 'nodejs';
 export const maxDuration = 15;
@@ -20,10 +21,8 @@ export const maxDuration = 15;
 export async function POST(req: NextRequest) {
   const startTime = Date.now();
 
-  // Auth check — reject if CRON_SECRET is not set or token doesn't match
-  const authHeader = req.headers.get('authorization');
-  const cronSecret = process.env.CRON_SECRET;
-  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
+  // Auth check (timing-safe)
+  if (!validateBearer(req.headers.get('authorization'), process.env.CRON_SECRET)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

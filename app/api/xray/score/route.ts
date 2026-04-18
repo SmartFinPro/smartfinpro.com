@@ -8,8 +8,16 @@ import { computeFullXRay, type UserInputs } from '@/lib/xray/score-engine';
 import { findAlternatives } from '@/lib/xray/alternatives';
 import { createServiceClient } from '@/lib/supabase/server';
 import { randomUUID } from 'crypto';
+import { trackLimiter } from '@/lib/security/rate-limit';
+import { getClientIp } from '@/lib/security/client-ip';
 
 export async function POST(request: NextRequest) {
+  // Heavy scoring + multiple DB queries — protect against abuse
+  const ip = getClientIp(request);
+  if (!trackLimiter.check(ip)) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429, headers: { 'Retry-After': '60' } });
+  }
+
   try {
     const raw = await request.json();
     const parsed = validate(XRayScoreSchema, raw);

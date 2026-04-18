@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { runSeoDriftCheck } from '@/lib/actions/seo-drift';
 import { logger, logCron } from '@/lib/logging';
+import { validateBearer } from '@/lib/security/timing-safe';
 
 /**
  * SEO Drift Monitor — Cron Job
@@ -24,16 +25,9 @@ import { logger, logCron } from '@/lib/logging';
  *   curl -H "Authorization: Bearer $CRON_SECRET" https://smartfinpro.com/api/cron/seo-drift
  */
 export async function GET(request: NextRequest) {
-  // ── Auth ──────────────────────────────────────────────────────────────
-  const authHeader = request.headers.get('authorization');
-  const cronSecret = process.env.CRON_SECRET;
-  const isDev      = process.env.NODE_ENV === 'development';
-
-  if (!cronSecret || cronSecret.startsWith('your-')) {
-    return NextResponse.json({ error: 'CRON_SECRET not configured' }, { status: 500 });
-  }
-
-  if (authHeader !== `Bearer ${cronSecret}` && !isDev) {
+  // ── Auth (timing-safe) ────────────────────────────────────────────────
+  const isDev = process.env.NODE_ENV === 'development';
+  if (!isDev && !validateBearer(request.headers.get('authorization'), process.env.CRON_SECRET)) {
     logger.warn('[seo-drift] Unauthorized attempt', { ip: request.headers.get('x-forwarded-for') ?? 'unknown' });
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }

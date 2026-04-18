@@ -8,6 +8,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
 import { logger } from '@/lib/logging';
 import { randomUUID } from 'crypto';
+import { trackLimiter } from '@/lib/security/rate-limit';
+import { getClientIp } from '@/lib/security/client-ip';
 
 interface PreQualPayload {
   slug: string;
@@ -19,6 +21,12 @@ interface PreQualPayload {
 }
 
 export async function POST(request: NextRequest) {
+  // Rate limit to prevent lead-generation flooding / synthetic clickId spam
+  const ip = getClientIp(request);
+  if (!trackLimiter.check(ip)) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429, headers: { 'Retry-After': '60' } });
+  }
+
   try {
     const body = (await request.json()) as PreQualPayload;
 

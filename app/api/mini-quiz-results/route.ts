@@ -1,7 +1,9 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/logging';
 import { getLinksForMarketCategory, loadRegistry, getComplianceLabel } from '@/lib/affiliate/link-registry';
 import type { Market, Category } from '@/types';
+import { trackLimiter } from '@/lib/security/rate-limit';
+import { getClientIp } from '@/lib/security/client-ip';
 
 // ── Partner Profiles ─────────────────────────────────────────
 // Tags, features, and honesty lines for scoring + display
@@ -221,7 +223,13 @@ const PARTNER_PROFILES: Record<string, {
 
 // ── Route Handler ────────────────────────────────────────────
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  // Rate limit: quiz results are public and hit Supabase on every call
+  const ip = getClientIp(request);
+  if (!trackLimiter.check(ip)) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429, headers: { 'Retry-After': '60' } });
+  }
+
   try {
     const body = await request.json();
     const { market, category, tags } = body as {

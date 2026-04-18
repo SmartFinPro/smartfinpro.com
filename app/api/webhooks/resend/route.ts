@@ -14,6 +14,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/logging';
 import { createServiceClient } from '@/lib/supabase/server';
 import crypto from 'crypto';
+import { webhookLimiter } from '@/lib/security/rate-limit';
+import { getClientIp } from '@/lib/security/client-ip';
 
 type ResendWebhookEvent = {
   type:
@@ -36,32 +38,50 @@ type ResendWebhookEvent = {
   };
 };
 
-/** Verify Resend webhook signature (HMAC-SHA256) */
+/** Verify Resend webhook signature (HMAC-SHA256, timing-safe, length-guarded) */
 function verifySignature(rawBody: string, signature: string | null, secret: string): boolean {
   if (!signature) return false;
-  const expected = crypto.createHmac('sha256', secret).update(rawBody).digest('hex');
-  // Resend sends: "sha256=<hash>"
+  // Resend sends: "sha256=<hash>" (or plain hex for older formats)
   const provided = signature.startsWith('sha256=') ? signature.slice(7) : signature;
-  return crypto.timingSafeEqual(Buffer.from(expected, 'hex'), Buffer.from(provided, 'hex'));
+  // Hex must be 64 chars (SHA-256) — anything else is malformed
+  if (!/^[0-9a-fA-F]{64}$/.test(provided)) return false;
+  const expected = crypto.createHmac('sha256', secret).update(rawBody).digest('hex');
+  const expectedBuf = Buffer.from(expected, 'hex');
+  const providedBuf = Buffer.from(provided, 'hex');
+  if (expectedBuf.length !== providedBuf.length) return false;
+  return crypto.timingSafeEqual(expectedBuf, providedBuf);
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
+  // Rate limit before HMAC verification to blunt flood-based CPU exhaustion.
+  // Resend's webhook retries + signature verification are CPU-bound; bursts
+  // from a spoofed source IP would otherwise spike worker load.
+  const ip = getClientIp(request);
+  if (!webhookLimiter.check(ip)) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429, headers: { 'Retry-After': '60' } });
+  }
+
   const rawBody = await request.text();
   const secret = process.env.RESEND_WEBHOOK_SECRET;
 
-  // ── Signature verification ─────────────────────────────────────────────
-  if (secret) {
-    const signature = request.headers.get('svix-signature') ??
-                      request.headers.get('resend-signature');
-    if (!verifySignature(rawBody, signature, secret)) {
-      logger.warn('[resend-webhook] Invalid signature — rejecting');
-      return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
-    }
-  } else {
-    // Log warning in dev — in production always set RESEND_WEBHOOK_SECRET
-    if (process.env.NODE_ENV === 'production') {
-      logger.warn('[resend-webhook] RESEND_WEBHOOK_SECRET not set — skipping signature check');
-    }
+  // ── Signature verification (MANDATORY) ─────────────────────────────────
+  // Production refuses every unsigned request — no silent bypass.
+  if (!secret || secret.startsWith('your-')) {
+    logger.error('[resend-webhook] RESEND_WEBHOOK_SECRET not configured — rejecting all requests');
+    return NextResponse.json(
+      { error: 'Webhook not configured' },
+      { status: 503 },
+    );
+  }
+
+  const signature = request.headers.get('svix-signature') ??
+                    request.headers.get('resend-signature');
+  if (!verifySignature(rawBody, signature, secret)) {
+    logger.warn('[resend-webhook] Invalid or missing signature — rejecting', {
+      ip: request.headers.get('x-forwarded-for') ?? 'unknown',
+      hasSignature: !!signature,
+    });
+    return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
   }
 
   let event: ResendWebhookEvent;

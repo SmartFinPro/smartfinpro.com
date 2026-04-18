@@ -13,9 +13,14 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
   const limit: number = Math.min(body.limit ?? DAILY_QUOTA, DAILY_QUOTA);
 
-  // Fetch sitemap from localhost to avoid Cloudflare hairpin loop
-  const port = process.env.PORT ?? '3000';
-  const sitemapUrl = `http://localhost:${port}/sitemap.xml`;
+  // Fetch sitemap from localhost to avoid Cloudflare hairpin loop.
+  // SECURITY: validate PORT before URL construction to prevent SSRF overrides.
+  const rawPort = process.env.PORT ?? '3000';
+  const portNum = Number.parseInt(rawPort, 10);
+  const port = Number.isInteger(portNum) && portNum > 0 && portNum <= 65535
+    ? String(portNum)
+    : '3000';
+  const sitemapUrl = `http://127.0.0.1:${port}/sitemap.xml`;
 
   let allUrls: string[] = [];
 

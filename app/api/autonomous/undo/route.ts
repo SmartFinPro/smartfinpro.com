@@ -37,20 +37,24 @@ export async function POST(request: NextRequest) {
     const tokenHash = createHash('sha256').update(token).digest('hex');
 
     const supabase = createServiceClient();
+    const claimedAt = new Date().toISOString();
 
-    // Find the action with this token — must be unused and not expired
-    const { data: action, error: queryErr } = await supabase
+    // ── ATOMIC CLAIM: race-safe one-time token consumption ──
+    // Conditional UPDATE wins exactly once per token. Concurrent requests
+    // with the same token cannot both observe `undone_at IS NULL`.
+    const { data: action, error: claimErr } = await supabase
       .from('autonomous_actions')
-      .select('*')
+      .update({ undone_at: claimedAt })
       .eq('undo_token_hash', tokenHash)
       .is('undone_at', null)
-      .gt('undo_expires_at', new Date().toISOString())
+      .gt('undo_expires_at', claimedAt)
+      .select()
       .single();
 
-    if (queryErr || !action) {
-      logger.warn('[undo] Invalid token attempt', {
+    if (claimErr || !action) {
+      logger.warn('[undo] Invalid token attempt (race-safe claim failed)', {
         tokenPrefix: tokenHash.substring(0, 8),
-        error: queryErr?.message,
+        error: claimErr?.message,
       });
       return Response.json(
         { ok: false, error: 'Invalid, expired, or already used token' },
@@ -58,38 +62,54 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // ── Apply rollback ──
+    // ── Apply rollback (token is already claimed — at-most-once semantics) ──
     const rollbackResult = await applyRollback(action, supabase);
 
     if (!rollbackResult.success) {
-      logger.error('[undo] Rollback failed', {
+      logger.error('[undo] Rollback failed AFTER token consumption', {
         actionId: action.id,
         error: rollbackResult.error,
       });
+      // Token is consumed but rollback failed. Mark outcome as error so
+      // ops can manually resolve. Do NOT re-open the token — that would
+      // allow double-rollback on retry.
+      await supabase
+        .from('autonomous_actions')
+        .update({
+          outcome: 'negative',
+          outcome_metrics: {
+            undone: true,
+            undo_reason: 'manual_undo',
+            rollback_result: `FAILED: ${rollbackResult.error}`,
+            undone_at: claimedAt,
+            requires_manual_intervention: true,
+          },
+          measured_at: claimedAt,
+        })
+        .eq('id', action.id);
       return Response.json(
         { ok: false, error: `Rollback failed: ${rollbackResult.error}` },
         { status: 500 },
       );
     }
 
-    // ── Atomically invalidate token + update insight ──
+    // ── Finalize outcome metadata (token already consumed by atomic claim) ──
     const { error: updateErr } = await supabase
       .from('autonomous_actions')
       .update({
-        undone_at: new Date().toISOString(),
         outcome: 'negative', // Mark as negative since it needed to be undone
         outcome_metrics: {
           undone: true,
           undo_reason: 'manual_undo',
           rollback_result: rollbackResult.detail,
-          undone_at: new Date().toISOString(),
+          undone_at: claimedAt,
         },
-        measured_at: new Date().toISOString(),
+        measured_at: claimedAt,
       })
       .eq('id', action.id);
 
     if (updateErr) {
-      logger.error('[undo] Failed to invalidate token', { error: updateErr.message });
+      logger.error('[undo] Failed to finalize outcome metadata', { error: updateErr.message });
     }
 
     // Dismiss the linked insight

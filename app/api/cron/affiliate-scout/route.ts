@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
 import { analyzeOpportunity } from '@/lib/claude/opportunity-analyzer';
 import { logger, logCron } from '@/lib/logging';
+import { validateBearer, compareSecret } from '@/lib/security/timing-safe';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -152,14 +153,11 @@ async function sendTelegramAlert(message: string): Promise<void> {
 // ── Main handler ─────────────────────────────────────────────────────────────
 
 export async function GET(request: NextRequest) {
-  const authHeader  = request.headers.get('authorization');
-  const cronSecret  = process.env.CRON_SECRET;
-  const dashSecret  = process.env.DASHBOARD_SECRET;
-  const dashCookie  = request.cookies.get('sfp-dash-auth')?.value;
-
-  const validCron  = !!cronSecret && !cronSecret.startsWith('your-') && authHeader === `Bearer ${cronSecret}`;
+  // Timing-safe auth: Cron bearer OR Dashboard cookie
+  const validCron  = validateBearer(request.headers.get('authorization'), process.env.CRON_SECRET);
   const authBypass = process.env.DASHBOARD_AUTH_DISABLED === 'true';
-  const validDash  = !!dashSecret && dashCookie === dashSecret;
+  const dashCookie = request.cookies.get('sfp-dash-auth')?.value;
+  const validDash  = compareSecret(dashCookie, process.env.DASHBOARD_SECRET);
 
   if (!validCron && !authBypass && !validDash) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -333,12 +331,7 @@ export async function GET(request: NextRequest) {
 
     // ── 8. Log to cron_logs ──────────────────────────────────────────────────
     const duration = Date.now() - startTime;
-    await supabase.from('cron_logs').insert({
-      job_name:     'affiliate-scout',
-      status:       'success',
-      duration_ms:  duration,
-      executed_at:  new Date().toISOString(),
-    });
+    logCron({ job: 'affiliate-scout', status: 'success', duration_ms: duration, discovered, saved, skipped });
 
     // ── 9. Telegram notification (only if new opportunities found) ────────────
     if (saved > 0) {
@@ -363,17 +356,7 @@ export async function GET(request: NextRequest) {
     const msg = err instanceof Error ? err.message : 'Unknown error';
     const duration = Date.now() - startTime;
 
-    logCron({ job: 'affiliate-scout', status: 'error', duration_ms: Date.now() - startTime, error: msg });
-
-    try {
-      await supabase.from('cron_logs').insert({
-        job_name:    'affiliate-scout',
-        status:      'error',
-        duration_ms: duration,
-        error:       msg,
-        executed_at: new Date().toISOString(),
-      });
-    } catch { /* non-critical — don't shadow main error */ }
+    logCron({ job: 'affiliate-scout', status: 'error', duration_ms: duration, error: msg });
 
     await sendTelegramAlert(`❌ <b>Smart-Scan 2026 FEHLER</b>\n${msg}`);
 

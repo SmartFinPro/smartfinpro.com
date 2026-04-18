@@ -2,6 +2,7 @@
 import { NextRequest } from 'next/server';
 import { logger, logCron } from '@/lib/logging';
 import { runInsightEngine } from '@/lib/actions/insight-engine';
+import { validateBearer } from '@/lib/security/timing-safe';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 120; // 2 minutes max (5 modules + Claude synthesis)
@@ -23,9 +24,8 @@ export const maxDuration = 120; // 2 minutes max (5 modules + Claude synthesis)
 export async function GET(request: NextRequest) {
   const start = Date.now();
 
-  // ── Auth ──
-  const authHeader = request.headers.get('Authorization');
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  // ── Auth (timing-safe) ──
+  if (!validateBearer(request.headers.get('Authorization'), process.env.CRON_SECRET)) {
     return new Response('Unauthorized', { status: 401 });
   }
 

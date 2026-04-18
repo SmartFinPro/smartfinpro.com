@@ -8,20 +8,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { runPerfGovernance } from '@/lib/actions/perf-governance';
 import { logger, logCron } from '@/lib/logging';
+import { validateBearer } from '@/lib/security/timing-safe';
 
 export async function GET(request: NextRequest) {
-  // ── Auth ────────────────────────────────────────────────────────
-  const authHeader = request.headers.get('authorization');
-  const cronSecret = process.env.CRON_SECRET;
-
-  if (!cronSecret || cronSecret.startsWith('your-')) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
+  // ── Auth (timing-safe) ──────────────────────────────────────────
   const isDev = process.env.NODE_ENV === 'development';
-  const isAuthenticated = authHeader === `Bearer ${cronSecret}`;
-
-  if (!isAuthenticated && !isDev) {
+  if (!isDev && !validateBearer(request.headers.get('authorization'), process.env.CRON_SECRET)) {
     logger.warn('[perf-governance] Unauthorized attempt', {
       ip: request.headers.get('x-forwarded-for') ?? 'unknown',
     });

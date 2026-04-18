@@ -102,7 +102,7 @@ jobs:
       - name: Freshness Check
         run: |
           echo "▶ freshness-check"
-          curl -sf --max-time 60 "$SITE_URL/api/cron/freshness-check" \
+          curl -sf --max-time 120 "$SITE_URL/api/cron/freshness-check" \
             -H "Authorization: Bearer $CRON_SECRET" || echo "⚠ freshness-check failed"
 
       - name: Check Rankings

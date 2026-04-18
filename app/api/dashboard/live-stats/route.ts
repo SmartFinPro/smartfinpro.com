@@ -5,6 +5,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isValidDashboardSessionValue } from '@/lib/auth/dashboard-session';
 import { createServiceClient } from '@/lib/supabase/server';
+import { validateBearer } from '@/lib/security/timing-safe';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -47,12 +48,11 @@ function extractPagePath(referrer: string | null, landingPage: string | null): s
 }
 
 export async function GET(request: NextRequest) {
-  // ── Auth ──────────────────────────────────────────────────
+  // ── Auth (timing-safe) ────────────────────────────────────
   const cookie = request.cookies.get('sfp-dash-auth')?.value;
-  const authHeader = request.headers.get('authorization');
   const isAuthed =
     (cookie && isValidDashboardSessionValue(cookie, process.env.DASHBOARD_SECRET)) ||
-    authHeader === `Bearer ${process.env.CRON_SECRET}`;
+    validateBearer(request.headers.get('authorization'), process.env.CRON_SECRET);
 
   if (!isAuthed) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

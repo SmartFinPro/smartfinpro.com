@@ -3,6 +3,7 @@ import { logger } from '@/lib/logging';
 import sharp from 'sharp';
 import * as fs from 'fs';
 import * as path from 'path';
+import { validateBearer } from '@/lib/security/timing-safe';
 
 export const runtime = 'nodejs';
 export const maxDuration = 30;
@@ -29,10 +30,8 @@ const TARGET_WIDTH = 1200;
  * Auth: Bearer CRON_SECRET or same-origin dashboard request
  */
 export async function POST(req: NextRequest) {
-  // Auth check — allow Bearer token OR same-origin requests (dashboard uploads)
+  // Auth check — timing-safe Bearer token OR same-origin requests (dashboard uploads)
   // Uses strict URL parsing to prevent host spoofing via referer.includes()
-  const authHeader = req.headers.get('authorization');
-  const cronSecret = process.env.CRON_SECRET;
   const referer = req.headers.get('referer') || '';
   const origin = req.headers.get('origin') || '';
   const host = req.headers.get('host') || '';
@@ -45,7 +44,8 @@ export async function POST(req: NextRequest) {
     }
   } catch { /* malformed URL → not same-origin */ }
 
-  if (!cronSecret || (authHeader !== `Bearer ${cronSecret}` && !isSameOrigin)) {
+  const hasValidBearer = validateBearer(req.headers.get('authorization'), process.env.CRON_SECRET);
+  if (!hasValidBearer && !isSameOrigin) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -91,18 +91,51 @@ export async function POST(req: NextRequest) {
       position: string;
     }> = [];
 
+    // SECURITY (M-01): Reject pixel bombs / decompression DoS.
+    // Max bytes per uploaded file (20 MiB) and max pixel count (80 Mpx ~ 8000×10000).
+    const MAX_INPUT_BYTES = 20 * 1024 * 1024;
+    const MAX_INPUT_PIXELS = 80_000_000;
+
     // Process each file
     const files = formData.getAll('files') as File[];
     for (let i = 0; i < Math.min(files.length, 4); i++) {
       const file = files[i];
       if (!file || typeof file === 'string') continue;
 
+      if (file.size > MAX_INPUT_BYTES) {
+        logger.warn('[process-images] Rejected oversized upload', {
+          name: file.name, size: file.size,
+        });
+        return NextResponse.json(
+          { error: `Image too large (>${MAX_INPUT_BYTES} bytes)` },
+          { status: 413 },
+        );
+      }
+
       const buffer = Buffer.from(await file.arrayBuffer());
       const position = positions[i] || 'deep-content';
       const filename = `${position}.webp`;
 
+      // Hard-cap Sharp pixel budget to prevent decompression-bomb OOM.
+      const sharpInput = (buf: Buffer) => sharp(buf, {
+        limitInputPixels: MAX_INPUT_PIXELS,
+        sequentialRead: true,
+      });
+
       // Read original dimensions for logging
-      const origMeta = await sharp(buffer).metadata();
+      let origMeta;
+      try {
+        origMeta = await sharpInput(buffer).metadata();
+      } catch (err) {
+        logger.warn('[process-images] Sharp rejected input', {
+          name: file.name,
+          error: err instanceof Error ? err.message : String(err),
+        });
+        return NextResponse.json(
+          { error: 'Invalid or oversized image' },
+          { status: 400 },
+        );
+      }
       const origW = origMeta.width || 0;
       const origH = origMeta.height || 0;
 
@@ -113,7 +146,7 @@ export async function POST(req: NextRequest) {
       const targetW = Math.min(TARGET_WIDTH, MAX_DIMENSION);
       const targetH = MAX_DIMENSION;
 
-      const processed = await sharp(buffer)
+      const processed = await sharpInput(buffer)
         .resize({
           width: targetW,
           height: targetH,
@@ -123,7 +156,7 @@ export async function POST(req: NextRequest) {
         .webp({ quality: 80 })
         .toBuffer();
 
-      const metadata = await sharp(processed).metadata();
+      const metadata = await sharpInput(processed).metadata();
       const finalW = metadata.width || 0;
       const finalH = metadata.height || 0;
 

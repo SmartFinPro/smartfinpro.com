@@ -9,9 +9,11 @@ import { validate, SubscribeSchema } from '@/lib/validation';
 import { subscribeLimiter } from '@/lib/security/rate-limit';
 
 export async function POST(request: NextRequest) {
-  // Rate-limit: 5 subscribe attempts per IP per minute (email-bombing prevention)
+  // F-05: 5 subscribe attempts per IP per minute (email-bombing prevention).
+  // checkAsync() uses Upstash Redis when UPSTASH_REDIS_REST_URL is configured,
+  // else falls back to in-memory (safe — no fail-open).
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
-  if (!subscribeLimiter.check(ip)) {
+  if (!(await subscribeLimiter.checkAsync(ip))) {
     return NextResponse.json(
       { success: false, message: 'Too many requests. Please wait a moment.' },
       { status: 429, headers: { 'Retry-After': '60' } },

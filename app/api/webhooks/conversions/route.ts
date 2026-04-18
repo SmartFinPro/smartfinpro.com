@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import * as Sentry from '@sentry/nextjs';
 import { logger } from '@/lib/logging';
 import { processWebhook } from '@/lib/api/sync-service';
+import { webhookLimiter } from '@/lib/security/rate-limit';
+import { getClientIp } from '@/lib/security/client-ip';
 
 /**
  * Webhook endpoint for receiving conversion notifications from affiliate networks.
@@ -14,6 +16,12 @@ import { processWebhook } from '@/lib/api/sync-service';
  * etc.
  */
 export async function POST(request: NextRequest) {
+  // Rate-limit before signature verification to prevent HMAC-verification flood.
+  const ip = getClientIp(request);
+  if (!webhookLimiter.check(ip)) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429, headers: { 'Retry-After': '60' } });
+  }
+
   try {
     const connectorName = request.nextUrl.searchParams.get('connector');
 

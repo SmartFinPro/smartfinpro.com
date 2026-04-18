@@ -3,6 +3,7 @@ import { runHealthChecks } from '@/lib/actions/link-health';
 import { sendTelegramAlert } from '@/lib/alerts/telegram';
 import { createServiceClient } from '@/lib/supabase/server';
 import { logger, logCron } from '@/lib/logging';
+import { validateBearer } from '@/lib/security/timing-safe';
 
 /**
  * Link Health Monitor (Dead-Link Monitor) — Cron Job
@@ -21,18 +22,9 @@ import { logger, logCron } from '@/lib/logging';
  *   0 2 * * * curl -sf -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/cron/check-links >> /home/master/applications/smartfinpro/logs/cron.log 2>&1
  */
 export async function GET(request: NextRequest) {
-  // ── Auth ────────────────────────────────────────────────────────────────
-  const authHeader = request.headers.get('authorization');
-  const cronSecret = process.env.CRON_SECRET;
-
-  if (!cronSecret || cronSecret.startsWith('your-')) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
+  // ── Auth (timing-safe) ──────────────────────────────────────────────────
   const isDev = process.env.NODE_ENV === 'development';
-  const isAuthenticated = authHeader === `Bearer ${cronSecret}`;
-
-  if (!isAuthenticated && !isDev) {
+  if (!isDev && !validateBearer(request.headers.get('authorization'), process.env.CRON_SECRET)) {
     logger.warn('[check-links] Unauthorized attempt', { ip: request.headers.get('x-forwarded-for') ?? 'unknown' });
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -87,24 +79,7 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // ── Log to cron_logs ─────────────────────────────────────────────────
-    try {
-      const supabase = createServiceClient();
-      await supabase.from('cron_logs').insert({
-        job_name: 'check-links',
-        status: 'success',
-        duration_ms: durationMs,
-        metadata: {
-          healthy: result.healthy,
-          degraded: result.degraded,
-          dead: result.dead,
-          total: result.results.length,
-          alertSent,
-        },
-      });
-    } catch (logErr) {
-      logger.warn('[check-links] cron_logs insert failed', { error: logErr instanceof Error ? logErr.message : String(logErr) });
-    }
+    logCron({ job: 'check-links', status: 'success', duration_ms: durationMs, healthy: result.healthy, degraded: result.degraded, dead: result.dead, total: result.results.length });
 
     return NextResponse.json({
       success: true,
@@ -120,17 +95,6 @@ export async function GET(request: NextRequest) {
     const msg = err instanceof Error ? err.message : 'Unknown error';
     const durationMs = Date.now() - startTime;
     logCron({ job: 'check-links', status: 'error', duration_ms: durationMs, error: msg });
-
-    // Log failure to cron_logs
-    try {
-      const supabase = createServiceClient();
-      await supabase.from('cron_logs').insert({
-        job_name: 'check-links',
-        status: 'error',
-        duration_ms: durationMs,
-        error: msg,
-      });
-    } catch { /* non-critical */ }
 
     return NextResponse.json(
       { error: msg, timestamp: new Date().toISOString() },

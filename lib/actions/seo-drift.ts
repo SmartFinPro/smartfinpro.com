@@ -56,13 +56,33 @@ export interface DriftResult {
 }
 
 // ── File Walker ──────────────────────────────────────────────────────────
-function* walkMdx(dir: string): Generator<string> {
+// SECURITY (M-02): symlink-loop DoS mitigation.
+//  - Never follow symlinks.
+//  - Track visited realpaths to break cycles (bind mounts etc.).
+//  - Bound recursion depth.
+function* walkMdx(
+  dir: string,
+  visited: Set<string> = new Set(),
+  depth: number = 0,
+): Generator<string> {
+  const MAX_DEPTH = 10;
+  if (depth > MAX_DEPTH) return;
+  let real: string;
+  try {
+    real = fs.realpathSync(dir);
+  } catch {
+    return;
+  }
+  if (visited.has(real)) return;
+  visited.add(real);
+
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    if (entry.isSymbolicLink()) continue; // never follow symlinks
     const fullPath = path.join(dir, entry.name);
     if (entry.isDirectory()) {
       // Skip template and hidden directories
       if (entry.name.startsWith('_') || entry.name.startsWith('.')) continue;
-      yield* walkMdx(fullPath);
+      yield* walkMdx(fullPath, visited, depth + 1);
     } else if (
       entry.name.endsWith('.mdx') &&
       !entry.name.startsWith('_') &&
