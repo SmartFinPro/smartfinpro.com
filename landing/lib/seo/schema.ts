@@ -13,6 +13,8 @@ export function generateOrganizationSchema() {
       'https://twitter.com/smartfinpro',
       'https://linkedin.com/company/smartfinpro',
       'https://youtube.com/@smartfinpro',
+      'https://instagram.com/smartfinpro',
+      'https://facebook.com/smartfinpro',
     ],
     contactPoint: {
       '@type': 'ContactPoint',
