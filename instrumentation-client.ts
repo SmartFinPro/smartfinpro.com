@@ -15,6 +15,17 @@ Sentry.init({
   // 5% of sessions traced — enough for P75/P95 without cost explosion
   tracesSampleRate: 0.05,
 
+  // ── F-09: Limit trace propagation to our own origins ─────────────────
+  // Without this, Sentry adds sentry-trace + baggage headers to EVERY
+  // outbound fetch — including 3rd-party endpoints (Resend, Awin, Plausible),
+  // leaking internal trace IDs and potentially sensitive request metadata.
+  // Only attach trace headers to SmartFinPro itself (same-origin API calls).
+  tracePropagationTargets: [
+    'localhost',
+    /^\/(?!\/)/, // any relative URL starting with /
+    /^https:\/\/(www\.)?smartfinpro\.com/,
+  ],
+
   // ── Session Replay — disabled for privacy (financial platform) ───────
   replaysSessionSampleRate: 0,
   replaysOnErrorSampleRate: 0,

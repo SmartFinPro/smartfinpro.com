@@ -9,4 +9,9 @@ Sentry.init({
   environment: process.env.NODE_ENV ?? 'production',
   tracesSampleRate: 0.02,
   tunnel: '/monitoring',
+  // F-09: Limit trace header propagation to our own origin.
+  tracePropagationTargets: [
+    /^\/(?!\/)/,
+    /^https:\/\/(www\.)?smartfinpro\.com/,
+  ],
 });
