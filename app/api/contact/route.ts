@@ -3,6 +3,7 @@
 // Email addresses are NEVER exposed to the frontend
 
 import { NextRequest, NextResponse } from 'next/server';
+import { contactLimiter } from '@/lib/security/rate-limit';
 
 // Internal routing — never sent to client
 const CONTACT_ROUTES: Record<string, string> = {
@@ -11,20 +12,17 @@ const CONTACT_ROUTES: Record<string, string> = {
   partnerships: 'partnerships@smartfinpro.com',
 };
 
-// Simple in-memory rate limit (1 submission per IP per 5 min)
-const rateLimitMap = new Map<string, number>();
-const RATE_LIMIT_MS = 5 * 60 * 1000;
-
 export async function POST(request: NextRequest) {
   try {
-    // Rate limiting
+    // F-05: Shared rate limiter (in-memory + Upstash-ready).
+    // 3 submissions per IP per 5 minutes — allows genuine follow-ups,
+    // blocks abuse. Unbounded Map leak replaced with cleanup-on-read.
     const ip =
       request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
       request.headers.get('x-real-ip') ||
       'unknown';
 
-    const lastSubmit = rateLimitMap.get(ip);
-    if (lastSubmit && Date.now() - lastSubmit < RATE_LIMIT_MS) {
+    if (!(await contactLimiter.checkAsync(ip))) {
       return NextResponse.json(
         { error: 'Please wait a few minutes before submitting again.' },
         { status: 429 }
@@ -208,9 +206,6 @@ export async function POST(request: NextRequest) {
         html:    autoReplyHtml,
       }),
     }).catch((err) => console.error('[contact] auto-reply failed:', err));
-
-    // Record rate limit timestamp
-    rateLimitMap.set(ip, Date.now());
 
     return NextResponse.json({ success: true });
   } catch (err) {

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isGSCConfigured, getTopKeywords } from '@/lib/seo/google-search-console';
 import { isValidDashboardSessionValue } from '@/lib/auth/dashboard-session';
+import { compareSecret } from '@/lib/security/timing-safe';
 
 /**
  * GET /api/dashboard/gsc-test
@@ -21,11 +22,11 @@ export async function GET(request: NextRequest) {
   // Also accept Bearer token for programmatic access
   const bearerToken = request.headers
     .get('authorization')
-    ?.replace('Bearer ', '');
+    ?.replace(/^Bearer\s+/i, '');
 
   const isAuthed =
     isValidDashboardSessionValue(authCookie, dashSecret) ||
-    (dashSecret && bearerToken === dashSecret);
+    compareSecret(bearerToken, dashSecret);
 
   if (!isAuthed) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

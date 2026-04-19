@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { processNurtureSequence } from '@/lib/email/nurture-sequence';
 import { logger, logCron } from '@/lib/logging';
+import { validateBearer } from '@/lib/security/timing-safe';
 
 /**
  * Email Sequence Cron Job
@@ -15,15 +16,8 @@ import { logger, logCron } from '@/lib/logging';
  *   0 10 * * * curl -sf -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/cron/send-emails >> /home/master/applications/smartfinpro/logs/cron.log 2>&1
  */
 export async function GET(request: NextRequest) {
-  // Verify CRON_SECRET — only Bearer token auth (self-hosted)
-  const authHeader = request.headers.get('authorization');
-  const cronSecret = process.env.CRON_SECRET;
-
-  if (!cronSecret || cronSecret.startsWith('your-')) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  if (authHeader !== `Bearer ${cronSecret}`) {
+  // Verify CRON_SECRET (timing-safe)
+  if (!validateBearer(request.headers.get('authorization'), process.env.CRON_SECRET)) {
     logger.warn('[send-emails] Unauthorized cron attempt');
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }

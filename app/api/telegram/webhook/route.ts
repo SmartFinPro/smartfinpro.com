@@ -4,6 +4,7 @@ import { logger } from '@/lib/logging';
 import { answerCallbackQuery, editTelegramMessage } from '@/lib/alerts/telegram';
 import { executeStrategyOption, approvePlanAndExecute } from '@/lib/actions/daily-strategy';
 import type { StrategyOption } from '@/lib/actions/daily-strategy';
+import { compareSecret } from '@/lib/security/timing-safe';
 
 export const runtime = 'nodejs';
 export const maxDuration = 120; // Increased for sequential plan execution
@@ -26,11 +27,9 @@ export const maxDuration = 120; // Increased for sequential plan execution
  * Security: Validates via ?secret= query parameter matching CRON_SECRET.
  */
 export async function POST(request: NextRequest) {
-  // Verify webhook secret
+  // Verify webhook secret (timing-safe)
   const secret = request.nextUrl.searchParams.get('secret');
-  const cronSecret = process.env.CRON_SECRET;
-
-  if (!cronSecret || secret !== cronSecret) {
+  if (!compareSecret(secret, process.env.CRON_SECRET)) {
     return NextResponse.json({ ok: false }, { status: 401 });
   }
 

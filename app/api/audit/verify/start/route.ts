@@ -20,6 +20,7 @@ import path from 'path';
 import { tryAcquireLock, markFinished, PATHS } from '@/lib/audit/verify-status';
 import type { VerifyStartResponse, VerifyStartConflictResponse } from '@/lib/audit/verify-types';
 import { isValidDashboardSessionValue } from '@/lib/auth/dashboard-session';
+import { compareSecret } from '@/lib/security/timing-safe';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,9 +33,9 @@ function isAuthed(request: NextRequest): boolean {
   if (!dashSecret) return false;
 
   const cookie = request.cookies.get('sfp-dash-auth')?.value;
-  const bearer = request.headers.get('authorization')?.replace('Bearer ', '');
+  const bearer = request.headers.get('authorization')?.replace(/^Bearer\s+/i, '');
 
-  return isValidDashboardSessionValue(cookie, dashSecret) || bearer === dashSecret;
+  return isValidDashboardSessionValue(cookie, dashSecret) || compareSecret(bearer, dashSecret);
 }
 
 // ── POST handler ───────────────────────────────────────────────────────────────
@@ -68,13 +69,35 @@ export async function POST(request: NextRequest) {
   );
   const logStream = fs.createWriteStream(logFile, { flags: 'a' });
 
+  // ── Minimal, sanitized environment for spawned script ────────────────────
+  // Prevents injection/override of sensitive vars by request-crafted runtime
+  // state. Only forwards vars the audit script legitimately needs.
+  const SPAWN_ENV_WHITELIST = [
+    'PATH',
+    'HOME',
+    'LANG',
+    'LC_ALL',
+    'TZ',
+    'NODE_ENV',
+    'NEXT_PUBLIC_SITE_URL',
+    // Audit script specific — add here as needed, never wildcarded
+  ] as const;
+  const sanitizedEnv: NodeJS.ProcessEnv = {};
+  for (const key of SPAWN_ENV_WHITELIST) {
+    const val = process.env[key];
+    if (typeof val === 'string') sanitizedEnv[key] = val;
+  }
+  // PORT is never forwarded — prevents SSRF-style override of the audit's
+  // internal HTTP target. Hardcode a safe default if the script expects it.
+  sanitizedEnv.PATH = sanitizedEnv.PATH ?? '/usr/local/bin:/usr/bin:/bin';
+
   let child;
   try {
     child = spawn('bash', [scriptPath], {
       cwd: process.cwd(),
       stdio: ['ignore', 'pipe', 'pipe'],
       detached: true,
-      env: { ...process.env },
+      env: sanitizedEnv,
     });
   } catch (err) {
     logStream.end(); // P2: close fd on spawn failure

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateWeeklyReport } from '@/lib/actions/weekly-report';
 import { logger, logCron } from '@/lib/logging';
+import { validateBearer } from '@/lib/security/timing-safe';
 
 /**
  * Weekly Performance Report — Cron Job
@@ -19,19 +20,9 @@ import { logger, logCron } from '@/lib/logging';
  *   0 20 * * 0 curl -sf -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/cron/weekly-report >> /home/master/applications/smartfinpro/logs/cron.log 2>&1
  */
 export async function GET(request: NextRequest) {
-  // Verify CRON_SECRET
-  const authHeader = request.headers.get('authorization');
-  const cronSecret = process.env.CRON_SECRET;
-
-  if (!cronSecret || cronSecret.startsWith('your-')) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  // Allow dev bypass
+  // Verify CRON_SECRET (timing-safe)
   const isDev = process.env.NODE_ENV === 'development';
-  const isAuthenticated = authHeader === `Bearer ${cronSecret}`;
-
-  if (!isAuthenticated && !isDev) {
+  if (!isDev && !validateBearer(request.headers.get('authorization'), process.env.CRON_SECRET)) {
     logger.warn('[weekly-report] Unauthorized attempt', { ip: request.headers.get('x-forwarded-for') ?? 'unknown' });
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }

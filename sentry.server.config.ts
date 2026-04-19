@@ -15,6 +15,16 @@ Sentry.init({
   // ── Performance Tracing — low sample rate for server ─────────────────
   tracesSampleRate: 0.05,
 
+  // ── F-09: Limit trace propagation to our own origins + Supabase ──────
+  // Prevents leaking internal trace IDs to 3rd-party APIs (Resend, Awin,
+  // Serper, Anthropic). Supabase is intentionally included — it's our
+  // own backend and correlated traces are valuable for debugging.
+  tracePropagationTargets: [
+    /^\/(?!\/)/, // relative URLs
+    /^https:\/\/(www\.)?smartfinpro\.com/,
+    /^https:\/\/[a-z0-9-]+\.supabase\.co/,
+  ],
+
   // ── Tunnel route proxies all events through our origin ────────────────
   tunnel: '/monitoring',
 

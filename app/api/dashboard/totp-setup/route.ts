@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isValidDashboardSessionValue } from '@/lib/auth/dashboard-session';
+import { compareSecret } from '@/lib/security/timing-safe';
 
 /**
  * GET /api/dashboard/totp-setup
@@ -23,11 +24,11 @@ export async function GET(request: NextRequest) {
   // ── Auth check ─────────────────────────────────────────────────
   const dashSecret = process.env.DASHBOARD_SECRET;
   const authCookie = request.cookies.get('sfp-dash-auth')?.value;
-  const bearerToken = request.headers.get('authorization')?.replace('Bearer ', '');
+  const bearerToken = request.headers.get('authorization')?.replace(/^Bearer\s+/i, '');
 
   const isAuthed =
     isValidDashboardSessionValue(authCookie, dashSecret) ||
-    (dashSecret && bearerToken === dashSecret);
+    compareSecret(bearerToken, dashSecret);
 
   if (!isAuthed) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

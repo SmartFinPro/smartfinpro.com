@@ -9,26 +9,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { runAutoGenesis } from '@/lib/actions/auto-genesis';
 import { logger, logCron } from '@/lib/logging';
+import { validateBearer } from '@/lib/security/timing-safe';
 
 export const maxDuration = 300; // 5 minutes — enough for 3 briefs
 
 export async function GET(request: NextRequest) {
-  // ── Auth ────────────────────────────────────────────────────────
+  // ── Auth (timing-safe) ──────────────────────────────────────────
   const isDev = process.env.NODE_ENV === 'development';
-  const authHeader = request.headers.get('authorization');
-  const cronSecret = process.env.CRON_SECRET;
 
-  if (!isDev) {
-    // Production: strict CRON_SECRET check
-    if (!cronSecret || cronSecret.startsWith('your-')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    if (authHeader !== `Bearer ${cronSecret}`) {
-      logger.warn('[auto-genesis] Unauthorized attempt', {
-        ip: request.headers.get('x-forwarded-for') ?? 'unknown',
-      });
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+  if (!isDev && !validateBearer(request.headers.get('authorization'), process.env.CRON_SECRET)) {
+    logger.warn('[auto-genesis] Unauthorized attempt', {
+      ip: request.headers.get('x-forwarded-for') ?? 'unknown',
+    });
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {

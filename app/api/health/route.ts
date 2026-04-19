@@ -1,213 +1,60 @@
 // app/api/health/route.ts
-// Health & Readiness endpoint for load balancer + PM2 cluster monitoring.
+// PUBLIC Liveness endpoint — minimal payload, safe for load balancers and uptime monitors.
 //
-// GET /api/health          — full check (Supabase, env, cron freshness)
-// GET /api/health?quick=1  — liveness only (no DB call, instant response)
+// Responds with { status: 'ok' | 'down' } and HTTP 200/503 only.
+// No infrastructure details (no env, no cron names, no heap, no DB latency).
 //
-// PM2 ecosystem.config.js health check:
-//   "max_restarts": 10, "health_check_grace_period": 3000
-//
-// Crontab keepalive example:
-//   */5 * * * * curl -sf http://localhost:3000/api/health >> /dev/null
+// For full health diagnostics use GET /api/internal/health with Bearer token.
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
-import { sendTelegramAlert } from '@/lib/alerts/telegram';
-import { logger } from '@/lib/logging';
 
-interface HealthStatus {
-  status: 'ok' | 'degraded' | 'down';
-  version: string;
-  environment: string;
-  uptime: number;
+export const dynamic = 'force-dynamic';
+
+interface PublicHealthResponse {
+  status: 'ok' | 'down';
   timestamp: string;
-  checks: Record<string, CheckResult>;
 }
 
-interface CheckResult {
-  status: 'ok' | 'warn' | 'error';
-  latency_ms?: number;
-  message?: string;
-}
-
-const START_TIME = Date.now();
-
-// ── Outage Alert Cooldown ─────────────────────────────────────────────────────
-// Prevent alert spam — only fire once per 30 minutes even if health stays down.
-const ALERT_COOLDOWN_MS = 30 * 60 * 1000; // 30 minutes
-let lastOutageAlertAt = 0;
-
-export async function GET(request: NextRequest): Promise<NextResponse<HealthStatus>> {
-  // ── Optional token guard — prevents env-name leakage to unauthenticated callers
-  // Set HEALTH_TOKEN=<secret> in .env.local to enable.
-  // Call: GET /api/health  Authorization: Bearer <token>
-  // Without token: returns minimal ok response (no internal detail).
-  const healthToken = process.env.HEALTH_TOKEN;
-  if (healthToken) {
-    const provided = request.headers.get('authorization')?.replace(/^Bearer\s+/i, '');
-    if (provided !== healthToken) {
-      // Return minimal liveness response — no env names, no DB status, no heap
-      return NextResponse.json(
-        {
-          status: 'ok' as const,
-          version: '1.0.0',
-          environment: 'production',
-          uptime: 0,
-          timestamp: new Date().toISOString(),
-          checks: {},
-        },
-        { status: 200 },
-      );
-    }
-  }
-
-  const quick = request.nextUrl.searchParams.get('quick') === '1';
-  const timestamp = new Date().toISOString();
-  const uptime = Math.floor((Date.now() - START_TIME) / 1000);
-
-  // ── Quick liveness check (no external calls) ─────────────────────────────
-  if (quick) {
-    return NextResponse.json({
-      status: 'ok',
-      version: process.env.npm_package_version ?? '1.0.0',
-      environment: process.env.NODE_ENV ?? 'production',
-      uptime,
-      timestamp,
-      checks: { liveness: { status: 'ok' } },
-    });
-  }
-
-  // ── Full readiness check ─────────────────────────────────────────────────
-  const checks: Record<string, CheckResult> = {};
-  let overallStatus: HealthStatus['status'] = 'ok';
-
-  // ── 1. Environment variables ─────────────────────────────────────────────
-  const requiredEnvs = [
-    'NEXT_PUBLIC_SUPABASE_URL',
-    'SUPABASE_SERVICE_KEY',
-    'CRON_SECRET',
-    'RESEND_API_KEY',
-  ];
-  const missingEnvs = requiredEnvs.filter((k) => !process.env[k] || process.env[k]?.startsWith('your-'));
-
-  checks.env = missingEnvs.length === 0
-    ? { status: 'ok', message: `${requiredEnvs.length} required vars present` }
-    : { status: 'warn', message: `Missing: ${missingEnvs.join(', ')}` };
-
-  if (missingEnvs.length > 0) overallStatus = 'degraded';
-
-  // ── 2. Supabase connectivity ─────────────────────────────────────────────
-  const dbStart = Date.now();
+export async function GET(): Promise<NextResponse<PublicHealthResponse>> {
+  // Minimal liveness check — single DB ping, no detail leaked.
+  // SECURITY (H-05): bound the DB call with an AbortSignal so a hung backend
+  // cannot wedge every health probe into a long-running request and exhaust
+  // the connection pool or expose timing signals.
   try {
     const supabase = createServiceClient();
-    const { error } = await supabase.from('affiliate_links').select('id').limit(1);
-    const latency = Date.now() - dbStart;
+    const probe = supabase
+      .from('affiliate_links')
+      .select('id')
+      .limit(1)
+      .abortSignal(AbortSignal.timeout(3_000));
+    const { error } = await probe;
 
     if (error) {
-      checks.supabase = { status: 'error', latency_ms: latency, message: error.message };
-      overallStatus = 'down';
-    } else if (latency > 2000) {
-      checks.supabase = { status: 'warn', latency_ms: latency, message: 'Slow response (>2s)' };
-      if (overallStatus === 'ok') overallStatus = 'degraded';
-    } else {
-      checks.supabase = { status: 'ok', latency_ms: latency };
+      return NextResponse.json(
+        { status: 'down', timestamp: new Date().toISOString() },
+        {
+          status: 503,
+          headers: { 'Cache-Control': 'no-store' },
+        },
+      );
     }
-  } catch (err) {
-    checks.supabase = {
-      status: 'error',
-      latency_ms: Date.now() - dbStart,
-      message: err instanceof Error ? err.message : 'Connection failed',
-    };
-    overallStatus = 'down';
-  }
 
-  // ── 3. Last cron execution freshness ─────────────────────────────────────
-  try {
-    const supabase = createServiceClient();
-    const { data: lastRun } = await supabase
-      .from('cron_logs')
-      .select('job_name, executed_at')
-      .order('executed_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (lastRun) {
-      const ageMs = Date.now() - new Date(lastRun.executed_at).getTime();
-      const ageHours = Math.round(ageMs / 3600000);
-      checks.crons = {
-        status: ageHours < 25 ? 'ok' : 'warn',
-        message: `Last run: ${lastRun.job_name} (${ageHours}h ago)`,
-      };
-      if (ageHours >= 25 && overallStatus === 'ok') overallStatus = 'degraded';
-    } else {
-      checks.crons = { status: 'warn', message: 'No cron runs recorded yet' };
-    }
+    return NextResponse.json(
+      { status: 'ok', timestamp: new Date().toISOString() },
+      {
+        status: 200,
+        // 60s CDN cache to reduce DB load from frequent LB probes + DoS mitigation
+        headers: { 'Cache-Control': 'public, max-age=0, s-maxage=60' },
+      },
+    );
   } catch {
-    checks.crons = { status: 'warn', message: 'Could not query cron_logs' };
+    return NextResponse.json(
+      { status: 'down', timestamp: new Date().toISOString() },
+      {
+        status: 503,
+        headers: { 'Cache-Control': 'no-store' },
+      },
+    );
   }
-
-  // ── 4. Memory usage ──────────────────────────────────────────────────────
-  const memUsage = process.memoryUsage();
-  const heapMB = Math.round(memUsage.heapUsed / 1048576);
-  const heapTotalMB = Math.round(memUsage.heapTotal / 1048576);
-
-  checks.memory = {
-    status: heapMB > 500 ? 'warn' : 'ok',
-    message: `Heap: ${heapMB}MB / ${heapTotalMB}MB`,
-  };
-  if (heapMB > 800 && overallStatus === 'ok') overallStatus = 'degraded';
-
-  // ── 5. Supabase Outage Alert (Telegram) ──────────────────────────────────
-  // Fire once per 30 minutes to avoid alert spam during sustained outages.
-  if (overallStatus === 'down') {
-    logger.error('[health] Platform status DOWN', {
-      checks: Object.fromEntries(
-        Object.entries(checks).map(([k, v]) => [k, v.status + (v.message ? `: ${v.message}` : '')]),
-      ),
-    });
-
-    const now = Date.now();
-    if (now - lastOutageAlertAt > ALERT_COOLDOWN_MS) {
-      lastOutageAlertAt = now;
-
-      const failedChecks = Object.entries(checks)
-        .filter(([, v]) => v.status === 'error')
-        .map(([k, v]) => `  ❌ <b>${k}</b>: ${v.message ?? 'error'}`)
-        .join('\n');
-
-      const alertMsg = [
-        `🔴 <b>SMARTFIN OUTAGE DETECTED</b>`,
-        ``,
-        `Status: <b>DOWN</b> — platform may be unreachable`,
-        ``,
-        failedChecks || `  ❌ Unknown failure`,
-        ``,
-        `⏱️ Uptime: ${Math.floor(uptime / 60)}min | Heap: ${heapMB}MB`,
-        `<i>${timestamp}</i>`,
-        ``,
-        `<i>Next alert in 30 min if issue persists.</i>`,
-      ].join('\n');
-
-      // Fire-and-forget — don't block the health response
-      sendTelegramAlert(alertMsg).catch((err) => {
-        logger.error('[health] Telegram outage alert failed', {
-          error: err instanceof Error ? err.message : String(err),
-        });
-      });
-    }
-  }
-
-  const httpStatus = overallStatus === 'down' ? 503 : 200;
-
-  return NextResponse.json(
-    {
-      status: overallStatus,
-      version: process.env.npm_package_version ?? '1.0.0',
-      environment: process.env.NODE_ENV ?? 'production',
-      uptime,
-      timestamp,
-      checks,
-    },
-    { status: httpStatus },
-  );
 }

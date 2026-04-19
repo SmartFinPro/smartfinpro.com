@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
 import { logger } from '@/lib/logging';
+import { validateBearer } from '@/lib/security/timing-safe';
 
 interface DeployPayload {
   commit_sha: string;
@@ -23,11 +24,8 @@ interface DeployPayload {
 }
 
 export async function POST(request: NextRequest) {
-  // ── Auth ──────────────────────────────────────────────────────
-  const authHeader = request.headers.get('authorization');
-  const cronSecret = process.env.CRON_SECRET;
-
-  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
+  // ── Auth (timing-safe) ────────────────────────────────────────
+  if (!validateBearer(request.headers.get('authorization'), process.env.CRON_SECRET)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

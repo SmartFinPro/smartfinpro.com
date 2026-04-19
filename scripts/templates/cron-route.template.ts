@@ -2,6 +2,7 @@
 import { NextRequest } from 'next/server';
 import { logger, logCron } from '@/lib/logging';
 import { withRetry } from '@/lib/utils/retry';
+import { validateBearer } from '@/lib/security/timing-safe';
 // import { sendTelegramMessage } from '@/lib/telegram'; // optional alerts
 
 export const runtime = 'nodejs';
@@ -10,9 +11,8 @@ export const maxDuration = 60;
 export async function GET(request: NextRequest) {
   const start = Date.now();
 
-  // ── Auth ──────────────────────────────────────────────────
-  const authHeader = request.headers.get('Authorization');
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  // ── Auth (timing-safe) ────────────────────────────────────
+  if (!validateBearer(request.headers.get('Authorization'), process.env.CRON_SECRET)) {
     return new Response('Unauthorized', { status: 401 });
   }
 

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/logging';
 import { revalidatePath } from 'next/cache';
+import { validateBearer, compareSecret } from '@/lib/security/timing-safe';
 
 /**
  * On-Demand ISR Revalidation Endpoint
@@ -23,17 +24,12 @@ import { revalidatePath } from 'next/cache';
 function verifyCronSecret(request: NextRequest): boolean {
   const cronSecret = process.env.CRON_SECRET;
 
-  if (!cronSecret || cronSecret.startsWith('your-')) {
-    return false;
-  }
+  // Check Bearer token (timing-safe)
+  if (validateBearer(request.headers.get('authorization'), cronSecret)) return true;
 
-  // Check Bearer token (POST)
-  const authHeader = request.headers.get('authorization');
-  if (authHeader === `Bearer ${cronSecret}`) return true;
-
-  // Check query param (GET — for curl/deploy.sh usage)
+  // Check query param (timing-safe)
   const secret = request.nextUrl.searchParams.get('secret');
-  if (secret === cronSecret) return true;
+  if (compareSecret(secret, cronSecret)) return true;
 
   return false;
 }

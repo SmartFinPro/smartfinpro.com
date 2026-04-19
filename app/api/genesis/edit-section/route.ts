@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/logging';
 import { genesisApiLimiter } from '@/lib/security/rate-limit';
 import { createClaudeMessage } from '@/lib/claude/client';
+import { validateBearer } from '@/lib/security/timing-safe';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -37,9 +38,8 @@ export async function POST(req: NextRequest) {
     }
   } catch { /* malformed URL → not same-origin */ }
 
-  const cronSecret = process.env.CRON_SECRET;
-  const authHeader = req.headers.get('authorization');
-  if (!cronSecret || (authHeader !== `Bearer ${cronSecret}` && !isSameOrigin)) {
+  const hasValidBearer = validateBearer(req.headers.get('authorization'), process.env.CRON_SECRET);
+  if (!hasValidBearer && !isSameOrigin) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

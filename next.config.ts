@@ -109,6 +109,12 @@ const nextConfig: NextConfig = {
     // next-mdx-remote uses new Function() for client-side MDX evaluation.
     // Allow 'unsafe-eval' so MDX pages hydrate correctly.
     const unsafeEval = "'unsafe-eval'";
+
+    // CSP report endpoint (F-17). Configure CSP_REPORT_URI in .env.local to point
+    // at Sentry/report-uri.com/etc. If unset, the report-uri directive is omitted.
+    const cspReportUri = process.env.CSP_REPORT_URI?.trim();
+    const reportUri = cspReportUri ? `report-uri ${cspReportUri};` : '';
+
     const ContentSecurityPolicy = `
       default-src 'self';
       script-src 'self' 'unsafe-inline' ${unsafeEval} https://plausible.io https://www.googletagmanager.com https://www.google-analytics.com;
@@ -117,10 +123,11 @@ const nextConfig: NextConfig = {
       font-src 'self' https://fonts.gstatic.com data:;
       connect-src 'self' https://*.supabase.co wss://*.supabase.co https://plausible.io https://www.google-analytics.com https://api.resend.com https://*.partnerstack.com https://*.awin.com https://*.financeads.net https://o*.ingest.sentry.io;
       frame-src 'self';
-      frame-ancestors 'self';
+      frame-ancestors 'none';
       form-action 'self';
       base-uri 'self';
       object-src 'none';
+      ${reportUri}
       ${upgradeInsecure}
     `.replace(/\s{2,}/g, ' ').trim();
 
@@ -142,10 +149,13 @@ const nextConfig: NextConfig = {
         value: 'max-age=63072000; includeSubDomains; preload',
       },
 
-      // Prevent clickjacking - only allow framing from same origin
+      // Prevent clickjacking - deny all framing (F-10).
+      // CSP frame-ancestors 'none' is the modern equivalent; X-Frame-Options
+      // is retained for legacy browsers (IE/old Safari). DENY is stricter
+      // than SAMEORIGIN: no framing at all, even from our own domain.
       {
         key: 'X-Frame-Options',
-        value: 'SAMEORIGIN',
+        value: 'DENY',
       },
 
       // Prevent MIME type sniffing
@@ -154,10 +164,12 @@ const nextConfig: NextConfig = {
         value: 'nosniff',
       },
 
-      // Enable XSS filter in browsers (legacy, but still useful)
+      // F-06: X-XSS-Protection removed. Deprecated since Chrome 78/Edge,
+      // and in some legacy browsers the filter itself can introduce XSS.
+      // CSP is the modern defence; explicit "0" prevents any UA default.
       {
         key: 'X-XSS-Protection',
-        value: '1; mode=block',
+        value: '0',
       },
 
       // Control referrer information
@@ -166,10 +178,13 @@ const nextConfig: NextConfig = {
         value: 'strict-origin-when-cross-origin',
       },
 
-      // Permissions Policy - disable unnecessary browser features
+      // Permissions Policy - disable unnecessary browser features (F-19).
+      // Adds: browsing-topics (FLoC/Topics API), attribution-reporting
+      // (Private Ad Attribution), private-state-token-issuance/redemption
+      // (Trust Tokens), identity-credentials-get, idle-detection.
       {
         key: 'Permissions-Policy',
-        value: 'camera=(), microphone=(), geolocation=(), interest-cohort=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()',
+        value: 'camera=(), microphone=(), geolocation=(), interest-cohort=(), browsing-topics=(), attribution-reporting=(), private-state-token-issuance=(), private-state-token-redemption=(), identity-credentials-get=(), idle-detection=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()',
       },
 
       // Cross-Origin policies for additional isolation

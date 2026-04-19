@@ -5,6 +5,8 @@
 // Outputs newline-delimited JSON — compatible with PM2 log aggregation,
 // Cloudways log viewer and any JSON-aware log shipper (Loki, Datadog, etc.).
 //
+// logCron() also persists to the Supabase cron_logs table (fire-and-forget).
+//
 // Usage:
 //   import { logger } from '@/lib/logging';
 //   logger.info('Cron complete', { job: 'daily-strategy', duration_ms: 1200 });
@@ -78,14 +80,48 @@ export const logger = {
 
 // ── Convenience: structured cron log helper ───────────────────────────────
 // Used by cron routes to emit consistent job-level logs.
+// Also persists to Supabase cron_logs table (fire-and-forget — never throws).
 export interface CronLogContext {
   job:        string;
   status:     'success' | 'error' | 'partial' | 'skipped';
   duration_ms?: number;
+  error?:     string;
   [key: string]: unknown;
 }
 
 export function logCron(ctx: CronLogContext) {
   const level: LogLevel = ctx.status === 'error' ? 'error' : 'info';
   emit(level, `[cron] ${ctx.job} — ${ctx.status}`, ctx);
+
+  // Persist to DB — fire-and-forget, never blocks the caller
+  try {
+    const { createServiceClient } = require('@/lib/supabase/server') as {
+      createServiceClient: () => ReturnType<typeof import('@/lib/supabase/server').createServiceClient>;
+    };
+    const supabase = createServiceClient();
+
+    // Separate known columns from extra metadata fields
+    const { job, status, duration_ms, error, ...rest } = ctx;
+    const metadata = Object.keys(rest).length > 0 ? rest : undefined;
+
+    supabase
+      .from('cron_logs')
+      .insert({
+        job_name:    job,
+        status:      status === 'skipped' ? 'success' : status,
+        duration_ms: duration_ms ?? null,
+        error:       error ?? null,
+        metadata:    metadata ?? null,
+        executed_at: new Date().toISOString(),
+      })
+      .then(() => { /* no-op */ })
+      .catch((err: unknown) => {
+        // Log to stdout only — avoid infinite recursion
+        const msg = err instanceof Error ? err.message : String(err);
+        console.error(JSON.stringify({ level: 'error', ts: new Date().toISOString(), msg: `[logCron] DB insert failed for ${job}`, error: msg }));
+      });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error(JSON.stringify({ level: 'error', ts: new Date().toISOString(), msg: '[logCron] createServiceClient failed', error: msg }));
+  }
 }

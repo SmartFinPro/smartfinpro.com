@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { syncAllNetworks } from '@/lib/api/affiliate-networks';
 import { logger, logCron } from '@/lib/logging';
 import { sendTelegramAlert } from '@/lib/alerts/telegram';
+import { validateBearer } from '@/lib/security/timing-safe';
 
 /**
  * Revenue Sync Cron Job
@@ -17,15 +18,8 @@ import { sendTelegramAlert } from '@/lib/alerts/telegram';
  *   0 2 * * * curl -sf -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/cron/sync-revenue >> /home/master/applications/smartfinpro/logs/cron.log 2>&1
  */
 export async function GET(request: NextRequest) {
-  // Verify CRON_SECRET — only Bearer token auth (self-hosted)
-  const authHeader = request.headers.get('authorization');
-  const cronSecret = process.env.CRON_SECRET;
-
-  if (!cronSecret || cronSecret.startsWith('your-')) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  if (authHeader !== `Bearer ${cronSecret}`) {
+  // Verify CRON_SECRET (timing-safe)
+  if (!validateBearer(request.headers.get('authorization'), process.env.CRON_SECRET)) {
     logger.warn('[sync-revenue] Unauthorized cron attempt');
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }

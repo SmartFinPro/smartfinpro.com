@@ -6,9 +6,35 @@ import {
   getCtaPartnersForPage,
 } from '@/lib/actions/page-cta-partners';
 import type { PartnerAssignmentConfig } from '@/lib/types/page-cta';
+import { isValidDashboardSessionValue } from '@/lib/auth/dashboard-session';
+import { compareSecret } from '@/lib/security/timing-safe';
+import { trackLimiter } from '@/lib/security/rate-limit';
+import { getClientIp } from '@/lib/security/client-ip';
+
+/**
+ * SECURITY (Welle 3c): mutation endpoint — gate with dashboard session OR
+ * bearer DASHBOARD_SECRET. The route is not under /api/dashboard/* so
+ * proxy.ts does not gate it automatically.
+ */
+function isAuthed(request: NextRequest): boolean {
+  if (process.env.DASHBOARD_AUTH_DISABLED === 'true') return true;
+  const dashSecret = process.env.DASHBOARD_SECRET;
+  if (!dashSecret) return false;
+  const cookie = request.cookies.get('sfp-dash-auth')?.value;
+  const bearer = request.headers.get('authorization')?.replace(/^Bearer\s+/i, '');
+  return isValidDashboardSessionValue(cookie, dashSecret) || compareSecret(bearer, dashSecret);
+}
 
 // POST — Set all partners for a page
 export async function POST(request: NextRequest) {
+  if (!isAuthed(request)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  const ip = getClientIp(request);
+  if (!trackLimiter.check(ip)) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429, headers: { 'Retry-After': '60' } });
+  }
+
   try {
     const body = await request.json();
     let { pageUrl, partners } = body as {

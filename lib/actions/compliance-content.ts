@@ -117,13 +117,32 @@ function slugFromPath(absolutePath: string, market: string): string {
   return market === 'us' ? '/' + rest.join('/') : '/' + parts.join('/');
 }
 
-function collectMdxFiles(dir: string): string[] {
+// SECURITY (M-02): symlink-loop DoS mitigation.
+//  - Never follow symlinks.
+//  - Track visited realpaths to break directory cycles.
+//  - Bound recursion depth.
+function collectMdxFiles(
+  dir: string,
+  visited: Set<string> = new Set(),
+  depth: number = 0,
+): string[] {
   const files: string[] = [];
+  const MAX_DEPTH = 10;
+  if (depth > MAX_DEPTH) return files;
   if (!fs.existsSync(dir)) return files;
+  let real: string;
+  try {
+    real = fs.realpathSync(dir);
+  } catch {
+    return files;
+  }
+  if (visited.has(real)) return files;
+  visited.add(real);
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     if (entry.name.startsWith('_')) continue;
+    if (entry.isSymbolicLink()) continue; // never follow symlinks
     const full = path.join(dir, entry.name);
-    if (entry.isDirectory()) files.push(...collectMdxFiles(full));
+    if (entry.isDirectory()) files.push(...collectMdxFiles(full, visited, depth + 1));
     else if (entry.isFile() && entry.name.endsWith('.mdx')) files.push(full);
   }
   return files;

@@ -131,6 +131,7 @@ jobs:
 
       - name: Report per E-Mail senden
         if: ${{ github.event.inputs.notify_email != 'false' }}
+        continue-on-error: true
         env:
           REPORT_TYPE: ${{ github.event.inputs.report_type || 'weekly-performance' }}
           RUN_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
 import { sendTelegramAlert } from '@/lib/alerts/telegram';
 import { logger, logCron } from '@/lib/logging';
+import { validateBearer } from '@/lib/security/timing-safe';
 
 /**
  * Ranking Health Check — Cron Job
@@ -23,16 +24,8 @@ import { logger, logCron } from '@/lib/logging';
  *   0 4 * * * curl -sf -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/cron/check-rankings >> /home/master/applications/smartfinpro/logs/cron.log 2>&1
  */
 export async function GET(request: NextRequest) {
-  // Verify CRON_SECRET
-  const authHeader = request.headers.get('authorization');
-  const cronSecret = process.env.CRON_SECRET;
-
-  if (!cronSecret || cronSecret.startsWith('your-')) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const isAuthenticated = authHeader === `Bearer ${cronSecret}`;
-  if (!isAuthenticated) {
+  // Verify CRON_SECRET (timing-safe)
+  if (!validateBearer(request.headers.get('authorization'), process.env.CRON_SECRET)) {
     logger.warn('[check-rankings] Unauthorized attempt', { ip: request.headers.get('x-forwarded-for') ?? 'unknown' });
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -156,14 +149,6 @@ export async function GET(request: NextRequest) {
 
     const duration = Date.now() - startTime;
 
-    // 5. Log to cron_logs
-    await supabase.from('cron_logs').insert({
-      job_name: 'check-rankings',
-      status: 'completed',
-      duration_ms: duration,
-      executed_at: new Date().toISOString(),
-    });
-
     // 6. Send Telegram alert
     const message = formatRankingCheckAlert({
       keywordsFound: poorKeywords.length,
@@ -189,19 +174,8 @@ export async function GET(request: NextRequest) {
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Unknown error';
-    logCron({ job: 'check-rankings', status: 'error', duration_ms: Date.now() - startTime, error: msg });
-
     const duration = Date.now() - startTime;
-
-    // Log error to cron_logs
-    const supabase = createServiceClient();
-    await supabase.from('cron_logs').insert({
-      job_name: 'check-rankings',
-      status: 'failed',
-      error: msg,
-      duration_ms: duration,
-      executed_at: new Date().toISOString(),
-    });
+    logCron({ job: 'check-rankings', status: 'error', duration_ms: duration, error: msg });
 
     // Send error alert
     await sendTelegramAlert(

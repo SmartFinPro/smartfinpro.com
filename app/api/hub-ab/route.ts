@@ -3,6 +3,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getHubWinner, logHubImpression, logHubClick } from '@/lib/actions/ab-testing';
 import type { AbVariant } from '@/lib/actions/ab-testing';
+import { trackLimiter } from '@/lib/security/rate-limit';
+import { getClientIp } from '@/lib/security/client-ip';
 
 // GET — fetch hub winner (if test concluded)
 export async function GET(request: NextRequest) {
@@ -24,6 +26,11 @@ export async function GET(request: NextRequest) {
 
 // POST — log impression or click
 export async function POST(request: NextRequest) {
+  const ip = getClientIp(request);
+  if (!trackLimiter.check(ip)) {
+    return NextResponse.json({ ok: false }, { status: 429, headers: { 'Retry-After': '60' } });
+  }
+
   try {
     const body = await request.json();
     const { action, category, market, variant, sessionId, providerName } = body;

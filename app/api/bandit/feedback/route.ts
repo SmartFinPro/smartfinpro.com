@@ -6,6 +6,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { updatePosterior } from '@/lib/actions/bandit';
+import { trackLimiter } from '@/lib/security/rate-limit';
+import { getClientIp } from '@/lib/security/client-ip';
 
 const MARKETS = ['us', 'uk', 'ca', 'au'] as const;
 const CATEGORIES = [
@@ -30,6 +32,12 @@ const FeedbackSchema = z.object({
 });
 
 export async function POST(request: NextRequest) {
+  // Rate limit: posterior updates are database writes, protect against flooding
+  const ip = getClientIp(request);
+  if (!trackLimiter.check(ip)) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429, headers: { 'Retry-After': '60' } });
+  }
+
   try {
     const body = await request.json();
     const parsed = FeedbackSchema.safeParse(body);

@@ -14,6 +14,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { readVerifyStatus, isLockStale, writeVerifyStatus, PATHS } from '@/lib/audit/verify-status';
 import type { VerifyState, VerifyStatusResponse } from '@/lib/audit/verify-types';
 import { isValidDashboardSessionValue } from '@/lib/auth/dashboard-session';
+import { compareSecret } from '@/lib/security/timing-safe';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,9 +27,9 @@ function isAuthed(request: NextRequest): boolean {
   if (!dashSecret) return false;
 
   const cookie = request.cookies.get('sfp-dash-auth')?.value;
-  const bearer = request.headers.get('authorization')?.replace('Bearer ', '');
+  const bearer = request.headers.get('authorization')?.replace(/^Bearer\s+/i, '');
 
-  return isValidDashboardSessionValue(cookie, dashSecret) || bearer === dashSecret;
+  return isValidDashboardSessionValue(cookie, dashSecret) || compareSecret(bearer, dashSecret);
 }
 
 // ── GET handler ────────────────────────────────────────────────────────────────

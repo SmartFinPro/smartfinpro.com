@@ -3,6 +3,8 @@ import { logger } from '@/lib/logging';
 import { createServiceClient } from '@/lib/supabase/server';
 import crypto from 'crypto';
 import { validate, TrackCtaSchema } from '@/lib/validation';
+import { trackLimiter } from '@/lib/security/rate-limit';
+import { getClientIp } from '@/lib/security/client-ip';
 
 // ============================================================
 // CTA Click Tracking API Route
@@ -11,6 +13,16 @@ import { validate, TrackCtaSchema } from '@/lib/validation';
 // ============================================================
 
 export async function POST(request: NextRequest) {
+  // Rate limit: 120 req/min per IP — generous enough for rapid user interaction
+  // but blocks abusive click-flood / pixel-firing attempts.
+  const ip = getClientIp(request);
+  if (!trackLimiter.check(ip)) {
+    return NextResponse.json(
+      { success: false, message: 'Too many requests' },
+      { status: 429, headers: { 'Retry-After': '60' } },
+    );
+  }
+
   try {
     // Bail out early if Supabase is not configured
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {

@@ -43,8 +43,14 @@ export async function POST(req: NextRequest) {
   // Call the cron endpoint directly on the local process — bypasses Cloudflare
   // so there's no hairpin-loop through the CDN. PORT is set by PM2 (prod=3000)
   // and by the Next.js dev server (dev=3002 via launch.json).
-  const port    = process.env.PORT ?? '3000';
-  const baseUrl = `http://localhost:${port}`;
+  // SECURITY: PORT is process-level env; validate to a safe integer range
+  // before embedding in a URL to prevent SSRF-style overrides.
+  const rawPort = process.env.PORT ?? '3000';
+  const portNum = Number.parseInt(rawPort, 10);
+  const port    = Number.isInteger(portNum) && portNum > 0 && portNum <= 65535
+    ? String(portNum)
+    : '3000';
+  const baseUrl = `http://127.0.0.1:${port}`;
   const start = Date.now();
 
   try {
