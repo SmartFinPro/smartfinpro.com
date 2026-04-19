@@ -2,8 +2,8 @@
   "_generated": true,
   "_command": "npm run refresh:agent-context",
   "_do_not_edit": true,
-  "_generated_at": "2026-04-19T05:24:11.679Z",
-  "count": 96,
+  "_generated_at": "2026-04-19T14:48:18.216Z",
+  "count": 97,
   "routes": [
     {
       "path": "/api/ab-testing/impression",
@@ -540,6 +540,13 @@
     {
       "path": "/api/hub-partners",
       "file": "app/api/hub-partners/route.ts",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/internal/health",
+      "file": "app/api/internal/health/route.ts",
       "methods": [
         "GET"
       ]
