@@ -515,6 +515,22 @@ const nextConfig: NextConfig = {
   },
 
   // ============================================================
+  // Rewrites — static file serving for dot-prefixed paths
+  // Next.js App Router cannot host a ".well-known" folder (dot = private),
+  // and public/.well-known/* is shadowed by the [market]/[category] dynamic
+  // route before Next.js gets to serve static assets. Rewrite to a route
+  // handler that reads the file and returns it with the right headers.
+  // ============================================================
+  async rewrites() {
+    return [
+      {
+        source: '/.well-known/security.txt',
+        destination: '/api/security-txt',
+      },
+    ];
+  },
+
+  // ============================================================
   // Redirects — canonical URL enforcement
   // /us is rendered by [market]/page.tsx but the US canonical is /.
   // Google flagged it as duplicate (GSC 2026-04-11). 301 ensures
