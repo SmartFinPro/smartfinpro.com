@@ -30,21 +30,20 @@ const TARGET_WIDTH = 1200;
  * Auth: Bearer CRON_SECRET or same-origin dashboard request
  */
 export async function POST(req: NextRequest) {
-  // Auth check — timing-safe Bearer token OR same-origin requests (dashboard uploads)
-  // Uses strict URL parsing to prevent host spoofing via referer.includes()
-  const referer = req.headers.get('referer') || '';
-  const origin = req.headers.get('origin') || '';
-  const host = req.headers.get('host') || '';
-  let isSameOrigin = false;
-  try {
-    if (origin && host) {
-      isSameOrigin = new URL(origin).host === host;
-    } else if (referer && host) {
-      isSameOrigin = new URL(referer).host === host;
-    }
-  } catch { /* malformed URL → not same-origin */ }
-
+  // Auth check — timing-safe Bearer token OR same-origin dashboard request.
+  // Same-origin is validated against NEXT_PUBLIC_SITE_URL (server-side env var),
+  // NOT the client-controlled Host header, which any attacker can forge.
   const hasValidBearer = validateBearer(req.headers.get('authorization'), process.env.CRON_SECRET);
+
+  let isSameOrigin = false;
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || '';
+  const origin = req.headers.get('origin') || '';
+  if (siteUrl && origin) {
+    try {
+      isSameOrigin = new URL(origin).host === new URL(siteUrl).host;
+    } catch { /* malformed URL → not same-origin */ }
+  }
+
   if (!hasValidBearer && !isSameOrigin) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
