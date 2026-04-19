@@ -47,6 +47,7 @@ const DEFAULT_URLS = [
   'https://smartfinpro.com/au',
   'https://smartfinpro.com/sitemap.xml',
   'https://smartfinpro.com/robots.txt',
+  'https://smartfinpro.com/.well-known/security.txt',
 ];
 
 const args = process.argv.slice(2);
