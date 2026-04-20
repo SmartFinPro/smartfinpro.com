@@ -2,7 +2,14 @@
 // Scans <CONTENT_ROOT>/**/*.mdx for /go/<slug> references.
 
 import { readdirSync, readFileSync, statSync, type Dirent } from 'node:fs';
-import { resolve, relative, join } from 'node:path';
+import { resolve, relative, join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+// Resolve repo root regardless of CWD (server is spawned from scripts/mcp-server/
+// by Claude Code via npm --prefix). Walk up 3 levels from src/lib/ to repo root.
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const REPO_ROOT = resolve(__dirname, '..', '..', '..', '..');
+const DEFAULT_CONTENT_ROOT = resolve(REPO_ROOT, 'content');
 
 const GO_SLUG_REGEX = /\/go\/([a-z][a-z0-9-]{2,60})/g;
 const CACHE_TTL_MS = 60_000;
@@ -25,7 +32,7 @@ let cached: { key: string; result: WalkResult } | null = null;
  * with source file path. Results are cached for 60s.
  */
 export function walkContentForGoSlugs(contentRoot?: string): WalkResult {
-  const root = resolve(contentRoot ?? process.env.SFP_CONTENT_ROOT ?? './content');
+  const root = resolve(contentRoot ?? process.env.SFP_CONTENT_ROOT ?? DEFAULT_CONTENT_ROOT);
   const key = root;
   const now = Date.now();
   if (cached && cached.key === key && now - cached.result.computed_at < CACHE_TTL_MS) {
