@@ -79,8 +79,14 @@ const ALLOWED_HOSTS = new Set([
   'www.sofi.com',
   'relay.com',
   'www.relay.com',
+  // Relay's actual tenant domain (partner signup + affiliate landings)
+  'relayfi.com',
+  'www.relayfi.com',
   'mercury.com',
   'www.mercury.com',
+  // Novo (US SMB banking for Stripe/Shopify freelancers)
+  'novo.co',
+  'www.novo.co',
   'revolut.com',
   'www.revolut.com',
   'wise.com',
