@@ -1,5 +1,13 @@
 {
   "permissions": {
+    "allow": [
+      "mcp__smartfinpro__list_affiliate_links",
+      "mcp__smartfinpro__get_revenue_stats",
+      "mcp__smartfinpro__get_conversion_funnel",
+      "mcp__smartfinpro__get_content_health",
+      "mcp__smartfinpro__detect_schema_drift",
+      "mcp__smartfinpro__get_orphan_slugs"
+    ],
     "deny": [
       "Bash(rm*app/(dashboard)*)",
       "Bash(rm*app/\\(dashboard\\)*)",
