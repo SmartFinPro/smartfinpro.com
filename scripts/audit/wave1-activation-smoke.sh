@@ -24,7 +24,7 @@ for i in "${!SLUGS[@]}"; do
   RESP=$(curl -s -o /dev/null --max-redirs 0 \
     -w "%{http_code}|%{redirect_url}" \
     -H "User-Agent: Mozilla/5.0" \
-    "$BASE/go/$SLUG/")
+    "$BASE/go/$SLUG")
   CODE=${RESP%%|*}
   LOC=${RESP##*|}
 
