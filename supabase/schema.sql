@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS affiliate_links (
   slug VARCHAR(100) UNIQUE NOT NULL,
   partner_name VARCHAR(255) NOT NULL,
   destination_url TEXT NOT NULL,
-  category VARCHAR(50) CHECK (category IN ('ai-tools', 'cybersecurity', 'trading', 'forex', 'personal-finance', 'business-banking')),
+  category VARCHAR(50) CHECK (category IN ('ai-tools', 'cybersecurity', 'trading', 'forex', 'personal-finance', 'business-banking', 'credit-repair', 'credit-score', 'gold-investing')),
   market VARCHAR(10) CHECK (market IN ('us', 'uk', 'ca', 'au')),
   commission_type VARCHAR(20) CHECK (commission_type IN ('cpa', 'recurring', 'hybrid', 'revenue-share')),
   commission_value DECIMAL(10,2),

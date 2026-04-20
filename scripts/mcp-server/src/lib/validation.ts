@@ -2,7 +2,7 @@
 //
 // SOURCE OF TRUTH: supabase/schema.sql:16-30
 // Do NOT pull categories from lib/i18n/config.ts — that has 16 site categories
-// but the DB CHECK constraint is only 6 values. Mismatch would cause DB errors.
+// but the DB CHECK constraint is only 9 values. Mismatch would cause DB errors.
 
 import { z } from 'zod';
 
@@ -19,6 +19,9 @@ export const CATEGORIES = [
   'forex',
   'personal-finance',
   'business-banking',
+  'credit-repair',
+  'credit-score',
+  'gold-investing',
 ] as const;
 export const CategorySchema = z.enum(CATEGORIES);
 export type Category = (typeof CATEGORIES)[number];
