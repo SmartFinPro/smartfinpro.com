@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "smartfinpro": {
+      "command": "npm",
+      "args": ["--prefix", "./scripts/mcp-server", "run", "start", "--silent"]
+    }
+  }
+}

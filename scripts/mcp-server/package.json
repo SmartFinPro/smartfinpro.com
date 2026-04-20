@@ -1,0 +1,23 @@
+{
+  "name": "@smartfinpro/mcp-server",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Local MCP server exposing 7 tools (6 read + 1 write) for Claude Code. Supabase-backed, audit-logged.",
+  "scripts": {
+    "start": "tsx src/server.ts",
+    "dev": "tsx --watch src/server.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "@supabase/supabase-js": "^2.93.3",
+    "zod": "^4.3.6",
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3",
+    "@types/node": "^22.10.0"
+  }
+}
