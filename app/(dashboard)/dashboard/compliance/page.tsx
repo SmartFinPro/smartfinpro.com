@@ -1,12 +1,15 @@
 import { Shield } from 'lucide-react';
-import { getLinkDistribution } from '@/lib/actions/compliance-audit';
+import { getLatestAuditRun, getLinkDistribution } from '@/lib/actions/compliance-audit';
 import { ComplianceAudit } from '@/components/dashboard/compliance-audit';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export default async function ComplianceAuditPage() {
-  const linkDistribution = await getLinkDistribution();
+  const [linkDistribution, lastRun] = await Promise.all([
+    getLinkDistribution(),
+    getLatestAuditRun(),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -22,7 +25,7 @@ export default async function ComplianceAuditPage() {
       </div>
 
       {/* Compliance Audit Component */}
-      <ComplianceAudit linkDistribution={linkDistribution} />
+      <ComplianceAudit linkDistribution={linkDistribution} initialLastRun={lastRun} />
     </div>
   );
 }
