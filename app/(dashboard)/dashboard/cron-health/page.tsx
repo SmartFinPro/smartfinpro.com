@@ -1,6 +1,7 @@
 // app/(dashboard)/dashboard/cron-health/page.tsx
 import { createClient } from '@supabase/supabase-js';
 import { CheckCircle2, XCircle, AlertTriangle, Clock, RefreshCw } from 'lucide-react';
+import { getCronRuntimeState, normalizeCronStatus } from '@/lib/dashboard/cron-status';
 import { TriggerButton } from './trigger-button';
 
 // All 19 active cron jobs with expected max interval (minutes)
@@ -34,16 +35,6 @@ interface CronLog {
   executed_at: string;
 }
 
-function getStatus(log: CronLog | undefined, maxMinutes: number): 'green' | 'yellow' | 'red' | 'unknown' {
-  if (!log) return 'unknown';
-  const ageMinutes = (Date.now() - new Date(log.executed_at).getTime()) / 60000;
-  if (log.status === 'error') return 'red';
-  if (log.status === 'partial') return 'yellow';
-  if (ageMinutes > maxMinutes) return 'red';
-  if (ageMinutes > maxMinutes * 0.75) return 'yellow';
-  return 'green';
-}
-
 function formatAge(executedAt: string): string {
   const mins = Math.floor((Date.now() - new Date(executedAt).getTime()) / 60000);
   if (mins < 60) return `${mins}m ago`;
@@ -74,9 +65,13 @@ export default async function CronHealthPage() {
     }
   }
 
-  const healthy  = CRON_DEFINITIONS.filter(c => getStatus(latestByJob.get(c.name), c.maxMinutes) === 'green').length;
-  const warning  = CRON_DEFINITIONS.filter(c => getStatus(latestByJob.get(c.name), c.maxMinutes) === 'yellow').length;
-  const dead     = CRON_DEFINITIONS.filter(c => ['red', 'unknown'].includes(getStatus(latestByJob.get(c.name), c.maxMinutes))).length;
+  const healthy = CRON_DEFINITIONS.filter((c) => getCronRuntimeState(latestByJob.get(c.name), c.maxMinutes) === 'healthy').length;
+  const warning = CRON_DEFINITIONS.filter((c) => getCronRuntimeState(latestByJob.get(c.name), c.maxMinutes) === 'warning').length;
+  const stale = CRON_DEFINITIONS.filter((c) => getCronRuntimeState(latestByJob.get(c.name), c.maxMinutes) === 'stale').length;
+  const errorOrNeverRun = CRON_DEFINITIONS.filter((c) => {
+    const runtimeState = getCronRuntimeState(latestByJob.get(c.name), c.maxMinutes);
+    return runtimeState === 'error' || runtimeState === 'never-run';
+  }).length;
 
   return (
     <div className="space-y-6">
@@ -87,7 +82,7 @@ export default async function CronHealthPage() {
       </div>
 
       {/* Summary Tiles */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white rounded-xl border border-slate-200 p-4 flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center">
             <CheckCircle2 className="h-5 w-5 text-emerald-500" />
@@ -107,12 +102,21 @@ export default async function CronHealthPage() {
           </div>
         </div>
         <div className="bg-white rounded-xl border border-slate-200 p-4 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center">
+            <Clock className="h-5 w-5 text-slate-500" />
+          </div>
+          <div>
+            <div className="text-2xl font-bold text-slate-800">{stale}</div>
+            <div className="text-xs text-slate-500">Stale</div>
+          </div>
+        </div>
+        <div className="bg-white rounded-xl border border-slate-200 p-4 flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center">
             <XCircle className="h-5 w-5 text-red-500" />
           </div>
           <div>
-            <div className="text-2xl font-bold text-slate-800">{dead}</div>
-            <div className="text-xs text-slate-500">Not run yet / Error</div>
+            <div className="text-2xl font-bold text-slate-800">{errorOrNeverRun}</div>
+            <div className="text-xs text-slate-500">Error / Never run</div>
           </div>
         </div>
       </div>
@@ -126,16 +130,27 @@ export default async function CronHealthPage() {
         <div className="divide-y divide-slate-100">
           {CRON_DEFINITIONS.map((cron) => {
             const log = latestByJob.get(cron.name);
-            const status = getStatus(log, cron.maxMinutes);
+            const runtimeState = getCronRuntimeState(log, cron.maxMinutes);
+            const normalizedStatus = normalizeCronStatus(log?.status);
+            const statusText = log
+              ? `${normalizedStatus}${log.duration_ms ? ` · ${log.duration_ms}ms` : ''}`
+              : 'never run';
+            const statusClass =
+              runtimeState === 'healthy' ? 'text-emerald-500' :
+              runtimeState === 'warning' ? 'text-amber-500' :
+              runtimeState === 'stale' ? 'text-slate-500' :
+              runtimeState === 'error' ? 'text-red-500' :
+              'text-slate-400';
 
             return (
               <div key={cron.name} className="px-5 py-3 flex items-center gap-4">
                 {/* Status dot */}
                 <div className="shrink-0">
-                  {status === 'green'   && <CheckCircle2  className="h-4 w-4 text-emerald-500" />}
-                  {status === 'yellow'  && <AlertTriangle className="h-4 w-4 text-amber-500" />}
-                  {status === 'red'     && <XCircle       className="h-4 w-4 text-red-500" />}
-                  {status === 'unknown' && <Clock         className="h-4 w-4 text-slate-300" />}
+                  {runtimeState === 'healthy' && <CheckCircle2 className="h-4 w-4 text-emerald-500" />}
+                  {runtimeState === 'warning' && <AlertTriangle className="h-4 w-4 text-amber-500" />}
+                  {runtimeState === 'stale' && <Clock className="h-4 w-4 text-slate-500" />}
+                  {runtimeState === 'error' && <XCircle className="h-4 w-4 text-red-500" />}
+                  {runtimeState === 'never-run' && <Clock className="h-4 w-4 text-slate-300" />}
                 </div>
 
                 {/* Job name + schedule */}
@@ -149,14 +164,12 @@ export default async function CronHealthPage() {
                   {log ? (
                     <>
                       <div className="text-xs font-medium text-slate-600">{formatAge(log.executed_at)}</div>
-                      <div className={`text-[11px] ${
-                        log.status === 'success' ? 'text-emerald-500' :
-                        log.status === 'partial' ? 'text-amber-500' :
-                        log.status === 'error'   ? 'text-red-500' :
-                        log.status === 'skipped' ? 'text-slate-400' :
-                        'text-slate-400'
-                      }`} data-testid={`cron-status-${log.status}`}>
-                        {log.status}{log.duration_ms ? ` · ${log.duration_ms}ms` : ''}
+                      <div
+                        className={`text-[11px] ${statusClass}`}
+                        data-testid={`cron-status-${normalizedStatus}`}
+                        title={normalizedStatus !== log.status ? `Legacy status: ${log.status}` : undefined}
+                      >
+                        {statusText}
                       </div>
                     </>
                   ) : (

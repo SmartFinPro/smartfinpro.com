@@ -11,6 +11,7 @@ import { getDashboardStats, getGlobalMarketIntelligence, TimeRange, ActionItem, 
 import { getLowPerformancePages, getPerformanceAlertStats } from '@/lib/actions/performance-alerts';
 import { loadFxRates } from '@/lib/fx-rates';
 import { getDeployStats } from '@/lib/actions/deploy-logs';
+import { getCronRuntimeState, isSuccessfulCronStatus } from '@/lib/dashboard/cron-status';
 import { getWebVitalsP75LastNDays } from '@/lib/actions/web-vitals';
 import { createServiceClient } from '@/lib/supabase/server';
 import { ClicksChart } from '@/components/dashboard/clicks-chart';
@@ -48,7 +49,9 @@ interface CronHealthSummary {
   source: 'live' | 'empty';
   healthy: number;
   warning: number;
-  dead: number;
+  stale: number;
+  errors: number;
+  neverRun: number;
   totalJobs: number;
   lastObservedAt: string | null;
   lastSuccessfulAt: string | null;
@@ -131,16 +134,6 @@ function withTimeoutAndFlag<T>(
   });
 }
 
-function getCronLogHealth(log: { status: string; executed_at: string } | undefined, maxMinutes: number): 'green' | 'yellow' | 'red' | 'unknown' {
-  if (!log) return 'unknown';
-  const ageMinutes = (Date.now() - new Date(log.executed_at).getTime()) / 60000;
-  if (log.status === 'error') return 'red';
-  if (log.status === 'partial') return 'yellow';
-  if (ageMinutes > maxMinutes) return 'red';
-  if (ageMinutes > maxMinutes * 0.75) return 'yellow';
-  return 'green';
-}
-
 async function getCronHealthSummary(): Promise<CronHealthSummary> {
   const supabase = createServiceClient();
   const { data, error } = await supabase
@@ -154,7 +147,9 @@ async function getCronHealthSummary(): Promise<CronHealthSummary> {
       source: 'empty',
       healthy: 0,
       warning: 0,
-      dead: 0,
+      stale: 0,
+      errors: 0,
+      neverRun: DASHBOARD_CRON_DEFINITIONS.length,
       totalJobs: DASHBOARD_CRON_DEFINITIONS.length,
       lastObservedAt: null,
       lastSuccessfulAt: null,
@@ -168,17 +163,21 @@ async function getCronHealthSummary(): Promise<CronHealthSummary> {
     }
   }
 
-  const healthy = DASHBOARD_CRON_DEFINITIONS.filter((cron) => getCronLogHealth(latestByJob.get(cron.name), cron.maxMinutes) === 'green').length;
-  const warning = DASHBOARD_CRON_DEFINITIONS.filter((cron) => getCronLogHealth(latestByJob.get(cron.name), cron.maxMinutes) === 'yellow').length;
-  const dead = DASHBOARD_CRON_DEFINITIONS.filter((cron) => ['red', 'unknown'].includes(getCronLogHealth(latestByJob.get(cron.name), cron.maxMinutes))).length;
+  const healthy = DASHBOARD_CRON_DEFINITIONS.filter((cron) => getCronRuntimeState(latestByJob.get(cron.name), cron.maxMinutes) === 'healthy').length;
+  const warning = DASHBOARD_CRON_DEFINITIONS.filter((cron) => getCronRuntimeState(latestByJob.get(cron.name), cron.maxMinutes) === 'warning').length;
+  const stale = DASHBOARD_CRON_DEFINITIONS.filter((cron) => getCronRuntimeState(latestByJob.get(cron.name), cron.maxMinutes) === 'stale').length;
+  const errors = DASHBOARD_CRON_DEFINITIONS.filter((cron) => getCronRuntimeState(latestByJob.get(cron.name), cron.maxMinutes) === 'error').length;
+  const neverRun = DASHBOARD_CRON_DEFINITIONS.filter((cron) => getCronRuntimeState(latestByJob.get(cron.name), cron.maxMinutes) === 'never-run').length;
   const lastObservedAt = data[0]?.executed_at ?? null;
-  const lastSuccessfulAt = data.find((row) => row.status === 'success')?.executed_at ?? null;
+  const lastSuccessfulAt = data.find((row) => isSuccessfulCronStatus(row.status))?.executed_at ?? null;
 
   return {
     source: 'live',
     healthy,
     warning,
-    dead,
+    stale,
+    errors,
+    neverRun,
     totalJobs: DASHBOARD_CRON_DEFINITIONS.length,
     lastObservedAt,
     lastSuccessfulAt,
@@ -283,7 +282,9 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     source: 'empty',
     healthy: 0,
     warning: 0,
-    dead: 0,
+    stale: 0,
+    errors: 0,
+    neverRun: 0,
     totalJobs: DASHBOARD_CRON_DEFINITIONS.length,
     lastObservedAt: null,
     lastSuccessfulAt: null,

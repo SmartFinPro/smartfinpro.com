@@ -58,7 +58,9 @@ interface ExecutiveOverviewProps {
     source: 'live' | 'empty';
     healthy: number;
     warning: number;
-    dead: number;
+    stale: number;
+    errors: number;
+    neverRun: number;
     totalJobs: number;
     lastObservedAt: string | null;
     lastSuccessfulAt: string | null;
@@ -494,15 +496,18 @@ function computeDeployStatus(deployStats: DeployStats): SystemStatus {
 
 function computeCronStatus(cronHealth: ExecutiveOverviewProps['cronHealth']): SystemStatus {
   if (cronHealth.source === 'empty') return 'never-run';
-  if (cronHealth.dead > 0) return 'down';
+  if (cronHealth.errors > 0) return 'down';
+  if (cronHealth.stale > 0) return 'stale';
   if (cronHealth.warning > 0) return 'degraded';
+  if (cronHealth.neverRun === cronHealth.totalJobs) return 'never-run';
+  if (cronHealth.neverRun > 0) return 'degraded';
 
   const baseStatus = computeWidgetHealth({
     source: 'live',
     lastSuccessfulAt: cronHealth.lastSuccessfulAt ?? cronHealth.lastObservedAt,
     maxAgeMinutes: 24 * 60,
     errorState: null,
-    sampleSize: cronHealth.healthy + cronHealth.warning + cronHealth.dead,
+    sampleSize: cronHealth.healthy + cronHealth.warning + cronHealth.stale + cronHealth.errors + cronHealth.neverRun,
   });
 
   return baseStatus;
@@ -600,9 +605,10 @@ function getDeployDetail(deployStats: DeployStats, status: SystemStatus): string
 
 function getCronDetail(cronHealth: ExecutiveOverviewProps['cronHealth'], status: SystemStatus): string {
   if (status === 'never-run') return 'No cron logs yet';
-  if (status === 'stale') return 'Cron data stale';
-  if (cronHealth.dead > 0) return `${cronHealth.dead} failing`;
+  if (cronHealth.errors > 0) return `${cronHealth.errors} error${cronHealth.errors === 1 ? '' : 's'}`;
+  if (cronHealth.stale > 0) return `${cronHealth.stale} stale`;
   if (cronHealth.warning > 0) return `${cronHealth.warning} warning`;
+  if (cronHealth.neverRun > 0) return `${cronHealth.neverRun} never run`;
   return `${cronHealth.healthy}/${cronHealth.totalJobs} healthy`;
 }
 
