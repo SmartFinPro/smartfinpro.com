@@ -8,6 +8,8 @@
 import { createServiceClient } from '@/lib/supabase/server';
 import { getConnector, type ConversionData, type SyncResult } from './connectors';
 
+const STALE_SYNC_LOCK_MS = 60 * 60 * 1000;
+
 interface SyncLogEntry {
   id?: string;
   connector_name: string;
@@ -19,6 +21,21 @@ interface SyncLogEntry {
   started_at?: string;
   completed_at?: string;
   metadata?: Record<string, unknown>;
+}
+
+export interface RunAllResult {
+  succeeded: Array<{ connector: string; records: number }>;
+  failed: Array<{ connector: string; error: string }>;
+  totalRecords: number;
+  totalSkipped: number;
+  partialFailures: number;
+  results: Array<{
+    connector: string;
+    success: boolean;
+    records_synced: number;
+    records_skipped: number;
+    errors: string[];
+  }>;
 }
 
 /**
@@ -73,6 +90,28 @@ async function completeSyncLog(
       last_sync_status: result.status,
     })
     .eq('name', result.metadata?.connector_name);
+}
+
+async function acquireConnectorSyncLock(connectorName: string): Promise<boolean> {
+  const supabase = createServiceClient();
+  const staleThreshold = new Date(Date.now() - STALE_SYNC_LOCK_MS).toISOString();
+  const { data, error } = await supabase
+    .from('api_connectors')
+    .update({ sync_in_progress_at: new Date().toISOString() })
+    .eq('name', connectorName)
+    .or(`sync_in_progress_at.is.null,sync_in_progress_at.lt.${staleThreshold}`)
+    .select('name')
+    .single();
+
+  return !error && !!data;
+}
+
+async function releaseConnectorSyncLock(connectorName: string): Promise<void> {
+  const supabase = createServiceClient();
+  await supabase
+    .from('api_connectors')
+    .update({ sync_in_progress_at: null })
+    .eq('name', connectorName);
 }
 
 /**
@@ -303,6 +342,90 @@ export async function syncConnector(
   }
 
   return result;
+}
+
+export async function syncConnectorWithMutex(
+  connectorName: string,
+  syncType: 'manual' | 'scheduled' | 'webhook' = 'manual'
+): Promise<SyncResult> {
+  const lockAcquired = await acquireConnectorSyncLock(connectorName);
+  if (!lockAcquired) {
+    return {
+      success: false,
+      records_synced: 0,
+      records_skipped: 0,
+      errors: ['Sync already in progress (mutex locked)'],
+    };
+  }
+
+  try {
+    return await syncConnector(connectorName, syncType);
+  } finally {
+    await releaseConnectorSyncLock(connectorName);
+  }
+}
+
+export async function runAllConnectors(opts: {
+  trigger: 'manual' | 'scheduled' | 'webhook';
+}): Promise<RunAllResult> {
+  const supabase = createServiceClient();
+  const { data: connectors, error } = await supabase
+    .from('api_connectors')
+    .select('name')
+    .eq('is_enabled', true);
+
+  if (error || !connectors) {
+    throw new Error(`Failed to load connectors: ${error?.message ?? 'unknown error'}`);
+  }
+
+  const out: RunAllResult = {
+    succeeded: [],
+    failed: [],
+    totalRecords: 0,
+    totalSkipped: 0,
+    partialFailures: 0,
+    results: [],
+  };
+
+  for (const connector of connectors as Array<{ name: string }>) {
+    try {
+      const result = await syncConnectorWithMutex(connector.name, opts.trigger);
+
+      out.results.push({
+        connector: connector.name,
+        success: result.success,
+        records_synced: result.records_synced,
+        records_skipped: result.records_skipped,
+        errors: result.errors,
+      });
+
+      out.totalRecords += result.records_synced;
+      out.totalSkipped += result.records_skipped;
+
+      if (result.success) {
+        out.succeeded.push({ connector: connector.name, records: result.records_synced });
+      } else {
+        out.failed.push({
+          connector: connector.name,
+          error: result.errors.join(', ') || 'Sync failed',
+        });
+        out.partialFailures += 1;
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      out.results.push({
+        connector: connector.name,
+        success: false,
+        records_synced: 0,
+        records_skipped: 0,
+        errors: [message],
+      });
+      out.failed.push({ connector: connector.name, error: message });
+      out.partialFailures += 1;
+    }
+  }
+
+  return out;
 }
 
 /**

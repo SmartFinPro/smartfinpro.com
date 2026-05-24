@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { syncAllNetworks } from '@/lib/api/affiliate-networks';
+import { runAllConnectors } from '@/lib/api/sync-service';
 import { logger, logCron } from '@/lib/logging';
 import { sendTelegramAlert } from '@/lib/alerts/telegram';
 import { validateBearer } from '@/lib/security/timing-safe';
@@ -28,13 +28,28 @@ export async function GET(request: NextRequest) {
   const startTime = Date.now();
 
   try {
-    const result = await syncAllNetworks();
+    const result = await runAllConnectors({ trigger: 'scheduled' });
 
     const duration = Date.now() - startTime;
 
+    if (result.results.length === 0) {
+      logCron({
+        job: 'sync-revenue',
+        status: 'skipped',
+        duration_ms: duration,
+        error: 'No enabled connectors found',
+      });
+
+      return NextResponse.json({
+        success: false,
+        message: 'No enabled connectors found',
+        results: [],
+      });
+    }
+
     // Classify per-network results
-    const networksOk = result.results.filter((r) => r.success).map((r) => r.network);
-    const networksFailed = result.results.filter((r) => !r.success).map((r) => r.network);
+    const networksOk = result.succeeded.map((r) => r.connector);
+    const networksFailed = result.failed.map((r) => r.connector);
     const allFailed = networksOk.length === 0 && networksFailed.length > 0;
     const partialFailure = networksFailed.length > 0 && networksOk.length > 0;
 
@@ -45,8 +60,10 @@ export async function GET(request: NextRequest) {
       job: 'sync-revenue',
       status: cronStatus,
       duration_ms: duration,
-      created: result.totalCreated,
-      updated: result.totalUpdated,
+      records_synced: result.totalRecords,
+      records_skipped: result.totalSkipped,
+      connectors_succeeded: result.succeeded.length,
+      connectors_failed: result.failed.length,
       metadata: { networks_ok: networksOk, networks_failed: networksFailed },
     });
 
@@ -54,21 +71,21 @@ export async function GET(request: NextRequest) {
     if (partialFailure) {
       const failedDetails = result.results
         .filter((r) => !r.success)
-        .map((r) => `  • ${r.network}: ${r.errors.join(', ') || 'unknown error'}`)
+        .map((r) => `  • ${r.connector}: ${r.errors.join(', ') || 'unknown error'}`)
         .join('\n');
 
       await sendTelegramAlert(
         `<b>⚠️ REVENUE SYNC PARTIAL</b>\n\n` +
         `OK: ${networksOk.join(', ')}\n` +
         `FAILED:\n${failedDetails}\n\n` +
-        `Created: ${result.totalCreated} | Updated: ${result.totalUpdated}\n` +
+        `Synced: ${result.totalRecords} | Skipped: ${result.totalSkipped}\n` +
         `Duration: ${(duration / 1000).toFixed(1)}s`,
       );
     }
 
     if (allFailed) {
       const failedDetails = result.results
-        .map((r) => `  • ${r.network}: ${r.errors.join(', ') || 'unknown error'}`)
+        .map((r) => `  • ${r.connector}: ${r.errors.join(', ') || 'unknown error'}`)
         .join('\n');
 
       await sendTelegramAlert(
@@ -86,17 +103,16 @@ export async function GET(request: NextRequest) {
         : partialFailure
           ? `Revenue sync partial — ${networksFailed.join(', ')} failed`
           : 'Revenue sync completed',
-      totalCreated: result.totalCreated,
-      totalUpdated: result.totalUpdated,
+      totalSynced: result.totalRecords,
+      totalSkipped: result.totalSkipped,
       duration: `${duration}ms`,
       networks_ok: networksOk,
       networks_failed: networksFailed,
       results: result.results.map((r) => ({
-        network: r.network,
+        connector: r.connector,
         success: r.success,
-        created: r.recordsCreated,
-        updated: r.recordsUpdated,
-        skipped: r.recordsSkipped,
+        synced: r.records_synced,
+        skipped: r.records_skipped,
         errors: r.errors.length,
       })),
     };
