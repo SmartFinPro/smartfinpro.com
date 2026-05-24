@@ -24,7 +24,11 @@ export interface LiveStatsResponse {
   todayPageViews: number;
   todayClicks: number;
   recentClicks: LiveClick[];
+  source: 'live';
   fetchedAt: string;
+  errorState: string | null;
+  isEmpty: boolean;
+  feedBackfilledFromOlderWindow: boolean;
 }
 
 function extractMarketFromPath(path: string | null): string | null {
@@ -62,6 +66,7 @@ export async function GET(request: NextRequest) {
   const now = new Date();
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
   const fiveMinAgo = new Date(now.getTime() - 5 * 60 * 1000).toISOString();
+  const last24Hours = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
 
   // Run all queries in parallel
   const [activeSessions, todayPVs, todayClicksRes, recentClicksRes] = await Promise.all([
@@ -108,12 +113,49 @@ export async function GET(request: NextRequest) {
     };
   });
 
+  let errorState: string | null =
+    activeSessions.error || todayPVs.error || todayClicksRes.error || recentClicksRes.error
+      ? 'query-failed'
+      : null;
+
+  let feedBackfilledFromOlderWindow = false;
+  let effectiveRecentClicks = recentClicks;
+
+  if (!recentClicksRes.error && (todayClicksRes.count ?? 0) > 0 && recentClicks.length === 0) {
+    const { data: olderClicks, error: olderClicksError } = await supabase
+      .from('link_clicks')
+      .select('id, landing_page, referrer, device_type, clicked_at, utm_source')
+      .gte('clicked_at', last24Hours)
+      .order('clicked_at', { ascending: false });
+
+    if (olderClicksError) {
+      errorState = 'query-failed';
+    } else {
+      effectiveRecentClicks = (olderClicks || []).map((c) => {
+        const pagePath = extractPagePath(c.referrer, c.landing_page);
+        return {
+          id: c.id,
+          page_path: pagePath,
+          market: extractMarketFromPath(pagePath),
+          device_type: c.device_type,
+          clicked_at: c.clicked_at,
+          utm_source: c.utm_source,
+        };
+      });
+      feedBackfilledFromOlderWindow = true;
+    }
+  }
+
   const response: LiveStatsResponse = {
     activeNow: activeSessionIds.size,
     todayPageViews: todayPVs.count ?? 0,
     todayClicks: todayClicksRes.count ?? 0,
-    recentClicks,
+    recentClicks: effectiveRecentClicks,
+    source: 'live',
     fetchedAt: now.toISOString(),
+    errorState,
+    isEmpty: (todayClicksRes.count ?? 0) === 0,
+    feedBackfilledFromOlderWindow,
   };
 
   return NextResponse.json(response, {

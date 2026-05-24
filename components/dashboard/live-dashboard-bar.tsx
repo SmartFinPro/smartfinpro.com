@@ -36,6 +36,7 @@ export function LiveDashboardBar() {
   const [loading, setLoading] = useState(true);
   const [secondsAgo, setSecondsAgo] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
+  const [errorState, setErrorState] = useState<string | null>(null);
   const fetchedAtRef = useRef<Date | null>(null);
 
   const activeNow = useCountUp(data?.activeNow ?? 0);
@@ -46,13 +47,17 @@ export function LiveDashboardBar() {
     if (manual) setRefreshing(true);
     try {
       const res = await fetch('/api/dashboard/live-stats', { cache: 'no-store' });
-      if (!res.ok) return;
+      if (!res.ok) {
+        setErrorState('request-failed');
+        return;
+      }
       const json: LiveStatsResponse = await res.json();
       setData(json);
+      setErrorState(json.errorState);
       fetchedAtRef.current = new Date(json.fetchedAt);
       setSecondsAgo(0);
     } catch {
-      // silently ignore — stale data is fine
+      setErrorState('request-failed');
     } finally {
       setLoading(false);
       if (manual) setTimeout(() => setRefreshing(false), 500);
@@ -72,7 +77,7 @@ export function LiveDashboardBar() {
     };
   }, [fetchStats]);
 
-  const pulse = data?.activeNow && data.activeNow > 0;
+  const pulse = !errorState && data?.activeNow && data.activeNow > 0;
 
   return (
     <WidgetErrorBoundary label="Live Dashboard Bar" minHeight="h-16">
@@ -86,6 +91,11 @@ export function LiveDashboardBar() {
           <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${pulse ? 'bg-emerald-500' : 'bg-slate-300'}`} />
         </span>
         <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Live</span>
+        {errorState && (
+          <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 font-medium">
+            Delayed
+          </span>
+        )}
       </div>
 
       {/* Divider */}
@@ -136,7 +146,9 @@ export function LiveDashboardBar() {
       {/* Last updated + manual refresh */}
       <div className="flex items-center gap-2 text-xs text-slate-400 shrink-0">
         <Wifi className="h-3 w-3" />
-        <span>{loading ? 'Loading…' : `${secondsAgo}s ago`}</span>
+        <span>
+          {loading ? 'Loading…' : errorState ? 'Live data degraded' : `${secondsAgo}s ago`}
+        </span>
         <button
           onClick={() => fetchStats(true)}
           disabled={refreshing}

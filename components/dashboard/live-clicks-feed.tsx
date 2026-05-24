@@ -106,18 +106,25 @@ export function LiveClicksFeed() {
   const [clicks, setClicks] = useState<LiveClick[]>([]);
   const [loading, setLoading] = useState(true);
   const [total, setTotal] = useState(0);
+  const [errorState, setErrorState] = useState<string | null>(null);
+  const [feedBackfilled, setFeedBackfilled] = useState(false);
   const prevIdsRef = useRef<Set<string>>(new Set());
 
   const fetchClicks = useCallback(async () => {
     try {
       const res = await fetch('/api/dashboard/live-stats', { cache: 'no-store' });
-      if (!res.ok) return;
+      if (!res.ok) {
+        setErrorState('request-failed');
+        return;
+      }
       const json: LiveStatsResponse = await res.json();
       setClicks(json.recentClicks);
       setTotal(json.todayClicks);
+      setErrorState(json.errorState);
+      setFeedBackfilled(json.feedBackfilledFromOlderWindow);
       prevIdsRef.current = new Set(json.recentClicks.map((c) => c.id));
     } catch {
-      // silently ignore
+      setErrorState('request-failed');
     } finally {
       setLoading(false);
     }
@@ -130,16 +137,21 @@ export function LiveClicksFeed() {
     const oldIds = prevIdsRef.current;
     try {
       const res = await fetch('/api/dashboard/live-stats', { cache: 'no-store' });
-      if (!res.ok) return;
+      if (!res.ok) {
+        setErrorState('request-failed');
+        return;
+      }
       const json: LiveStatsResponse = await res.json();
       const freshIds = new Set(json.recentClicks.map((c) => c.id));
       const added = new Set([...freshIds].filter((id) => !oldIds.has(id)));
       setNewIds(added);
       setClicks(json.recentClicks);
       setTotal(json.todayClicks);
+      setErrorState(json.errorState);
+      setFeedBackfilled(json.feedBackfilledFromOlderWindow);
       prevIdsRef.current = freshIds;
     } catch {
-      // silently ignore
+      setErrorState('request-failed');
     }
   }, []);
 
@@ -174,6 +186,16 @@ export function LiveClicksFeed() {
 
       {/* Feed */}
       <div className="divide-y divide-slate-50">
+        {errorState && (
+          <div className="px-4 py-2 bg-amber-50 text-amber-800 text-xs">
+            Live feed temporarily unavailable — showing last available snapshot.
+          </div>
+        )}
+        {!errorState && feedBackfilled && clicks.length > 0 && (
+          <div className="px-4 py-2 bg-slate-50 text-slate-500 text-xs">
+            Recent feed backfilled from the last 24 hours.
+          </div>
+        )}
         {loading ? (
           // Skeleton
           Array.from({ length: 5 }).map((_, i) => (
@@ -186,11 +208,17 @@ export function LiveClicksFeed() {
               <div className="w-12 h-3 bg-slate-100 rounded animate-pulse" />
             </div>
           ))
-        ) : clicks.length === 0 ? (
+        ) : !errorState && clicks.length === 0 && total === 0 ? (
           <div className="px-4 py-8 text-center">
             <MousePointerClick className="h-8 w-8 text-slate-200 mx-auto mb-2" />
             <p className="text-sm text-slate-400">No clicks recorded yet</p>
             <p className="text-xs text-slate-300 mt-1">Clicks will appear here in real-time</p>
+          </div>
+        ) : !errorState && clicks.length === 0 && total > 0 ? (
+          <div className="px-4 py-8 text-center">
+            <MousePointerClick className="h-8 w-8 text-slate-200 mx-auto mb-2" />
+            <p className="text-sm text-slate-400">{total} clicks today, but none in the recent feed window.</p>
+            <p className="text-xs text-slate-300 mt-1">The feed will fill again as newer clicks arrive.</p>
           </div>
         ) : (
           clicks.map((click) => (
