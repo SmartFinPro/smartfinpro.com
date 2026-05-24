@@ -38,6 +38,7 @@ function getStatus(log: CronLog | undefined, maxMinutes: number): 'green' | 'yel
   if (!log) return 'unknown';
   const ageMinutes = (Date.now() - new Date(log.executed_at).getTime()) / 60000;
   if (log.status === 'error') return 'red';
+  if (log.status === 'partial') return 'yellow';
   if (ageMinutes > maxMinutes) return 'red';
   if (ageMinutes > maxMinutes * 0.75) return 'yellow';
   return 'green';
@@ -149,10 +150,12 @@ export default async function CronHealthPage() {
                     <>
                       <div className="text-xs font-medium text-slate-600">{formatAge(log.executed_at)}</div>
                       <div className={`text-[11px] ${
-                        log.status === 'completed' ? 'text-emerald-500' :
-                        log.status === 'error'     ? 'text-red-500' :
+                        log.status === 'success' ? 'text-emerald-500' :
+                        log.status === 'partial' ? 'text-amber-500' :
+                        log.status === 'error'   ? 'text-red-500' :
+                        log.status === 'skipped' ? 'text-slate-400' :
                         'text-slate-400'
-                      }`}>
+                      }`} data-testid={`cron-status-${log.status}`}>
                         {log.status}{log.duration_ms ? ` · ${log.duration_ms}ms` : ''}
                       </div>
                     </>
