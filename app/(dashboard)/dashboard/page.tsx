@@ -11,6 +11,7 @@ import { getDashboardStats, getGlobalMarketIntelligence, TimeRange, ActionItem, 
 import { getLowPerformancePages, getPerformanceAlertStats } from '@/lib/actions/performance-alerts';
 import { loadFxRates } from '@/lib/fx-rates';
 import { getDeployStats } from '@/lib/actions/deploy-logs';
+import { getWebVitalsP75LastNDays } from '@/lib/actions/web-vitals';
 import { createServiceClient } from '@/lib/supabase/server';
 import { ClicksChart } from '@/components/dashboard/clicks-chart';
 import { RecentClicksLive } from '@/components/dashboard/recent-clicks-live';
@@ -59,6 +60,9 @@ interface WebVitalsHealthSummary {
   poorCount: number;
   warningCount: number;
   lastRecordedAt: string | null;
+  lcpP75: number | null;
+  inpP75: number | null;
+  clsP75: number | null;
 }
 
 const DASHBOARD_CRON_DEFINITIONS = [
@@ -182,29 +186,30 @@ async function getCronHealthSummary(): Promise<CronHealthSummary> {
 }
 
 async function getWebVitalsHealthSummary(): Promise<WebVitalsHealthSummary> {
-  const supabase = createServiceClient();
-  const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-  const { data, error } = await supabase
-    .from('web_vitals')
-    .select('rating, recorded_at')
-    .gte('recorded_at', since);
+  const summary = await getWebVitalsP75LastNDays(7);
 
-  if (error || !data || data.length === 0) {
-    return { source: 'empty', sampleSize: 0, poorCount: 0, warningCount: 0, lastRecordedAt: null };
+  if (summary.sample_size === 0) {
+    return {
+      source: 'empty',
+      sampleSize: 0,
+      poorCount: 0,
+      warningCount: 0,
+      lastRecordedAt: null,
+      lcpP75: null,
+      inpP75: null,
+      clsP75: null,
+    };
   }
-
-  const poorCount = data.filter((row) => row.rating === 'poor').length;
-  const warningCount = data.filter((row) => row.rating === 'needs-improvement').length;
-  const lastRecordedAt = data
-    .map((row) => row.recorded_at)
-    .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())[0] ?? null;
 
   return {
     source: 'live',
-    sampleSize: data.length,
-    poorCount,
-    warningCount,
-    lastRecordedAt,
+    sampleSize: summary.sample_size,
+    poorCount: summary.poor_metrics,
+    warningCount: summary.warning_metrics,
+    lastRecordedAt: summary.last_recorded_at,
+    lcpP75: summary.lcp_p75,
+    inpP75: summary.inp_p75,
+    clsP75: summary.cls_p75,
   };
 }
 
@@ -283,7 +288,16 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     lastObservedAt: null,
     lastSuccessfulAt: null,
   };
-  const emptyWebVitalsHealth: WebVitalsHealthSummary = { source: 'empty', sampleSize: 0, poorCount: 0, warningCount: 0, lastRecordedAt: null };
+  const emptyWebVitalsHealth: WebVitalsHealthSummary = {
+    source: 'empty',
+    sampleSize: 0,
+    poorCount: 0,
+    warningCount: 0,
+    lastRecordedAt: null,
+    lcpP75: null,
+    inpP75: null,
+    clsP75: null,
+  };
 
   // SF4: Pre-warm FX cache so getDashboardStats uses dynamic rates (same as getGlobalMarketIntelligence)
   await loadFxRates();
