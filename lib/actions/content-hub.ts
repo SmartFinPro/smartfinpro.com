@@ -44,9 +44,13 @@ export interface ContentHubRow {
   httpHealth: HealthStatus;
   seoHealth: SeoHealth;
   contentQuality: ContentQuality;
+  lastUpdated: string | null;
   cpsScore: number | null;
+  cpsSource: 'live' | 'unavailable';
   backlinkCount: number | null;
   backlinkNew30d: number | null;
+  freshnessSource: 'live' | 'unavailable';
+  freshnessNeedsReview: boolean;
   indexStatus: string;
   type: 'mdx' | 'core';
   // Archive fields (optional — only populated when archive data exists)
@@ -274,6 +278,16 @@ function computeCoreQuality(seoTitle: string, description: string): ContentQuali
   };
 }
 
+function normalizeDateString(value: unknown): string | null {
+  if (!value) return null;
+  if (value instanceof Date && !Number.isNaN(value.getTime())) return value.toISOString();
+  if (typeof value === 'string') {
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
+  }
+  return null;
+}
+
 // ── CPS Score Loader (from Serper.dev competitor snapshots) ──────
 
 async function loadCpsScores(): Promise<Map<string, number>> {
@@ -337,6 +351,35 @@ async function loadCpsScores(): Promise<Map<string, number>> {
   return cpsMap;
 }
 
+interface FreshnessMeta {
+  updatedAt: string | null;
+  needsReview: boolean;
+}
+
+async function loadFreshnessMeta(): Promise<Map<string, FreshnessMeta>> {
+  const freshnessMap = new Map<string, FreshnessMeta>();
+
+  try {
+    const supabase = createServiceClient();
+    const { data, error } = await supabase
+      .from('content_freshness')
+      .select('file_path, updated_at, needs_review');
+
+    if (error || !data) return freshnessMap;
+
+    for (const row of data) {
+      freshnessMap.set(row.file_path, {
+        updatedAt: row.updated_at ?? null,
+        needsReview: row.needs_review === true,
+      });
+    }
+  } catch (err) {
+    logger.warn('[content-hub] Failed to load freshness metadata:', err);
+  }
+
+  return freshnessMap;
+}
+
 // ── URL Builder ────────────────────────────────────────────────
 
 function buildUrl(market: string, category: string, slug: string): string {
@@ -384,6 +427,10 @@ function scanMdxFiles(): ContentHubRow[] {
           const description = (fm.description as string) || '';
           const wordCount = content.split(/\s+/).filter(Boolean).length;
           const sizeKB = Math.round((stats.size / 1024) * 10) / 10;
+          const lastUpdated =
+            normalizeDateString(fm.modifiedDate) ??
+            normalizeDateString(fm.publishDate) ??
+            stats.mtime.toISOString();
 
           rows.push({
             url: buildUrl(market, category, slug),
@@ -399,9 +446,13 @@ function scanMdxFiles(): ContentHubRow[] {
             httpHealth: 'yellow',
             seoHealth: computeSeoHealth(seoTitle, description),
             contentQuality: computeContentQuality(content, wordCount),
+            lastUpdated,
             cpsScore: null,
+            cpsSource: 'unavailable',
             backlinkCount: null,
             backlinkNew30d: null,
+            freshnessSource: 'unavailable',
+            freshnessNeedsReview: false,
             indexStatus: 'Pending GSC Check',
             type: 'mdx',
           });
@@ -421,9 +472,13 @@ function scanMdxFiles(): ContentHubRow[] {
             httpHealth: 'red',
             seoHealth: computeSeoHealth(undefined, undefined),
             contentQuality: EMPTY_QUALITY,
+            lastUpdated: null,
             cpsScore: null,
+            cpsSource: 'unavailable',
             backlinkCount: null,
             backlinkNew30d: null,
+            freshnessSource: 'unavailable',
+            freshnessNeedsReview: false,
             indexStatus: 'Parse Error',
             type: 'mdx',
           });
@@ -450,6 +505,10 @@ function scanMdxFiles(): ContentHubRow[] {
         const description = (fm.description as string) || '';
         const wordCount = content.split(/\s+/).filter(Boolean).length;
         const sizeKB = Math.round((stats.size / 1024) * 10) / 10;
+        const lastUpdated =
+          normalizeDateString(fm.modifiedDate) ??
+          normalizeDateString(fm.publishDate) ??
+          stats.mtime.toISOString();
 
         rows.push({
           url: `/${slug}`,
@@ -465,9 +524,13 @@ function scanMdxFiles(): ContentHubRow[] {
           httpHealth: 'yellow',
           seoHealth: computeSeoHealth(seoTitle, description),
           contentQuality: computeContentQuality(content, wordCount),
+          lastUpdated,
           cpsScore: null,
+          cpsSource: 'unavailable',
           backlinkCount: null,
           backlinkNew30d: null,
+          freshnessSource: 'unavailable',
+          freshnessNeedsReview: false,
           indexStatus: 'Pending GSC Check',
           type: 'mdx',
         });
@@ -505,9 +568,13 @@ function getCoreRouteRows(): ContentHubRow[] {
       httpHealth: 'yellow' as HealthStatus,
       seoHealth: computeSeoHealth(route.seoTitle, route.description),
       contentQuality: computeCoreQuality(route.seoTitle, route.description),
+      lastUpdated: null,
       cpsScore: null,
+      cpsSource: 'unavailable' as const,
       backlinkCount: null,
       backlinkNew30d: null,
+      freshnessSource: 'unavailable' as const,
+      freshnessNeedsReview: false,
       indexStatus: 'Pending GSC Check',
       type: 'core' as const,
     };
@@ -565,8 +632,11 @@ export interface ContentHubStats {
   qualityGreen: number;
   qualityYellow: number;
   qualityRed: number;
-  avgCps: number;
+  avgCps: number | null;
   pagesWithCps: number;
+  cpsCoverage: number;
+  freshnessCoverage: number;
+  freshnessStaleCount: number;
   totalBacklinks: number;
   avgBacklinks: number;
   pagesWithBacklinks: number;
@@ -583,10 +653,13 @@ function computeStats(rows: ContentHubRow[]): ContentHubStats {
   const mdxRows = rows.filter((r) => r.type === 'mdx');
   const totalWords = mdxRows.reduce((sum, r) => sum + r.wordCount, 0);
   const totalQuality = mdxRows.reduce((sum, r) => sum + r.contentQuality.score, 0);
-  const cpsRows = rows.filter((r) => r.cpsScore !== null);
+  const cpsRows = mdxRows.filter((r) => r.cpsScore !== null && r.cpsSource === 'live');
   const totalCps = cpsRows.reduce((sum, r) => sum + (r.cpsScore || 0), 0);
   const blRows = rows.filter((r) => r.backlinkCount !== null && r.backlinkCount > 0);
   const totalBl = blRows.reduce((sum, r) => sum + (r.backlinkCount || 0), 0);
+  const freshnessRows = mdxRows.filter((r) => r.freshnessSource === 'live');
+  const cpsCoverage = mdxRows.length > 0 ? cpsRows.length / mdxRows.length : 0;
+  const freshnessCoverage = mdxRows.length > 0 ? freshnessRows.length / mdxRows.length : 0;
   const marketBreakdown: Record<string, number> = {};
 
   for (const row of rows) {
@@ -604,8 +677,11 @@ function computeStats(rows: ContentHubRow[]): ContentHubStats {
     qualityGreen: mdxRows.filter((r) => r.contentQuality.score >= 80).length,
     qualityYellow: mdxRows.filter((r) => r.contentQuality.score >= 50 && r.contentQuality.score < 80).length,
     qualityRed: mdxRows.filter((r) => r.contentQuality.score < 50).length,
-    avgCps: cpsRows.length > 0 ? Math.round(totalCps / cpsRows.length) : 0,
+    avgCps: cpsCoverage >= 0.5 && cpsRows.length > 0 ? Math.round(totalCps / cpsRows.length) : null,
     pagesWithCps: cpsRows.length,
+    cpsCoverage,
+    freshnessCoverage,
+    freshnessStaleCount: freshnessRows.filter((r) => r.freshnessNeedsReview).length,
     totalBacklinks: totalBl,
     avgBacklinks: blRows.length > 0 ? Math.round(totalBl / blRows.length) : 0,
     pagesWithBacklinks: blRows.length,
@@ -644,15 +720,28 @@ export const getContentHubData = unstable_cache(
     // Merge CPS scores from competitor snapshots (Serper.dev DB)
     try {
       const cpsScores = await loadCpsScores();
-      if (cpsScores.size > 0) {
-        for (const row of allRows) {
-          const urlPath = row.url.replace(/\/$/, '') || '/';
-          // Direct 1:1 match via target_url (page-specific Serper scan)
-          row.cpsScore = cpsScores.get(urlPath) ?? null;
-        }
+      for (const row of allRows) {
+        const urlPath = row.url.replace(/\/$/, '') || '/';
+        const cpsScore = cpsScores.get(urlPath) ?? null;
+        row.cpsScore = cpsScore;
+        row.cpsSource = cpsScore !== null ? 'live' : 'unavailable';
       }
     } catch {
       // CPS loading is optional — don't break the hub if it fails
+    }
+
+    // Merge freshness metadata from the existing content_freshness table
+    try {
+      const freshnessMeta = await loadFreshnessMeta();
+      for (const row of allRows) {
+        if (row.type !== 'mdx') continue;
+        const meta = freshnessMeta.get(row.filePath);
+        if (!meta) continue;
+        row.freshnessSource = 'live';
+        row.freshnessNeedsReview = meta.needsReview;
+      }
+    } catch {
+      // Freshness loading is optional — keep rows visible even without metadata
     }
 
     // Merge backlink counts from backlinks table
@@ -722,9 +811,13 @@ export const getContentHubData = unstable_cache(
               httpHealth: 'yellow' as HealthStatus,
               seoHealth: { titleStatus: 'red', titleLength: 0, descStatus: 'red', descLength: 0, overall: 'red' },
               contentQuality: { score: 0, wordScore: 0, structureScore: 0, linkScore: 0, componentScore: 0, breakdown: '—' },
+              lastUpdated: archived.archived_at,
               cpsScore: null,
+              cpsSource: 'unavailable',
               backlinkCount: null,
               backlinkNew30d: null,
+              freshnessSource: 'unavailable',
+              freshnessNeedsReview: false,
               indexStatus: 'Archived',
               type: 'mdx' as const,
               archiveStatus: 'archived',

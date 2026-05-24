@@ -118,7 +118,14 @@ function QualityBadge({ quality }: { quality: ContentQuality }) {
 
 function CpsBadge({ cps }: { cps: number | null }) {
   if (cps === null) {
-    return <span className="text-xs text-slate-300">—</span>;
+    return (
+      <span
+        className="inline-flex items-center justify-center px-2 py-0.5 text-[10px] font-medium rounded-md border bg-slate-50 text-slate-400 border-slate-200"
+        title="No competitor snapshot available for this page yet"
+      >
+        unavailable
+      </span>
+    );
   }
 
   const color =
@@ -455,6 +462,16 @@ export function ContentHubTableBody({
                   {isMdx && !isArchived && (
                     <span className="text-[11px] text-slate-400 truncate block">
                       {row.filePath}
+                    </span>
+                  )}
+                  {row.lastUpdated && (
+                    <span className="text-[10px] text-slate-400 truncate block">
+                      Updated {new Date(row.lastUpdated).toLocaleDateString('en-US')}
+                    </span>
+                  )}
+                  {isMdx && row.freshnessSource === 'unavailable' && (
+                    <span className="text-[10px] text-slate-400 truncate block">
+                      Freshness unavailable
                     </span>
                   )}
                   {isArchived && row.redirectTarget && (

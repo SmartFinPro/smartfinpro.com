@@ -142,6 +142,7 @@ function StatCard({
   iconBg,
   href,
   active,
+  sub,
 }: {
   label: string;
   value: string | number;
@@ -149,6 +150,7 @@ function StatCard({
   iconBg: string;
   href?: string;
   active?: boolean;
+  sub?: string;
 }) {
   const card = (
     <div
@@ -164,6 +166,7 @@ function StatCard({
         <div>
           <p className="text-sm text-slate-500">{label}</p>
           <p className="text-2xl font-semibold text-slate-900 mt-1 tabular-nums">{value}</p>
+          {sub && <p className="text-xs text-slate-400 mt-1">{sub}</p>}
         </div>
         <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${iconBg}`}>
           <Icon className="h-5 w-5" />
@@ -304,9 +307,10 @@ export default async function ContentHubPage({ searchParams }: ContentHubPagePro
         />
         <StatCard
           label="Avg CPS"
-          value={stats.pagesWithCps > 0 ? `${stats.avgCps}/100` : '—'}
+          value={stats.avgCps !== null ? `${stats.avgCps}/100` : '—'}
           icon={Zap}
           iconBg="bg-cyan-50 text-cyan-500"
+          sub={stats.avgCps !== null ? `${Math.round(stats.cpsCoverage * 100)}% coverage` : 'No competitor snapshots yet'}
         />
         <StatCard
           label="Backlinks"
@@ -537,7 +541,7 @@ export default async function ContentHubPage({ searchParams }: ContentHubPagePro
           <Clock className="h-5 w-5 text-amber-500" />
           <h3 className="font-semibold text-slate-900">Content Freshness</h3>
           <span className="text-xs text-slate-400 ml-auto">
-            Updated daily by freshness-check cron
+            {Math.round(stats.freshnessCoverage * 100)}% MDX coverage · {stats.freshnessStaleCount} stale · updated daily by freshness-check cron
           </span>
         </div>
         <div className="p-5">
