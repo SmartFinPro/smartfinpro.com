@@ -33,7 +33,10 @@ export default async function RankingPage() {
         initialWinners={data.winners}
         initialLosers={data.losers}
         gscConfigured={data.gscConfigured}
+        gscHasData={data.gscHasData}
         serperConfigured={data.serperConfigured}
+        initialSource={data.source}
+        initialLastSyncAt={data.lastSyncAt}
       />
     </div>
   );
