@@ -1,31 +1,9 @@
 // app/(dashboard)/dashboard/cron-health/page.tsx
 import { createClient } from '@supabase/supabase-js';
 import { CheckCircle2, XCircle, AlertTriangle, Clock, RefreshCw } from 'lucide-react';
+import { CRON_DEFINITIONS } from '@/lib/dashboard/cron-definitions';
 import { getCronRuntimeState, normalizeCronStatus } from '@/lib/dashboard/cron-status';
 import { TriggerButton } from './trigger-button';
-
-// All 19 active cron jobs with expected max interval (minutes)
-const CRON_DEFINITIONS = [
-  { name: 'spike-monitor',    label: 'Spike Monitor',         schedule: 'every 15 min',   maxMinutes: 30 },
-  { name: 'perf-governance',  label: 'Perf Governance',       schedule: 'every 30 min',   maxMinutes: 60 },
-  { name: 'auto-genesis',     label: 'Auto-Genesis',          schedule: 'every 30 min',   maxMinutes: 60 },
-  { name: 'ev-refresh',       label: 'EV Refresh',            schedule: 'hourly :30',     maxMinutes: 90 },
-  { name: 'sync-conversions', label: 'Sync Conversions',      schedule: 'hourly :00',     maxMinutes: 90 },
-  { name: 'update-fx-rates',  label: 'FX Rates',              schedule: 'daily 00:05',    maxMinutes: 1500 },
-  { name: 'seo-drift',        label: 'SEO Drift Check',       schedule: 'daily 01:00',    maxMinutes: 1500 },
-  { name: 'check-links',      label: 'Affiliate Link Health', schedule: 'daily 02:00',    maxMinutes: 1500 },
-  { name: 'sync-competitors', label: 'Sync Competitors',      schedule: 'daily 03:00',    maxMinutes: 1500 },
-  { name: 'sync-revenue',     label: 'Sync Revenue',          schedule: 'daily 04:00',    maxMinutes: 1500 },
-  { name: 'freshness-check',  label: 'Freshness Check',       schedule: 'daily 05:00',    maxMinutes: 1500 },
-  { name: 'check-rankings',   label: 'Check Rankings',        schedule: 'daily 06:00',    maxMinutes: 1500 },
-  { name: 'affiliate-scout',  label: 'Affiliate Scout',       schedule: 'daily 08:00',    maxMinutes: 1500 },
-  { name: 'send-emails',      label: 'Send Emails',           schedule: 'daily 09:00',    maxMinutes: 1500 },
-  { name: 'backlink-post',    label: 'Backlink Post',         schedule: 'daily 21:00',    maxMinutes: 1500 },
-  { name: 'daily-strategy',   label: 'Daily Strategy',        schedule: 'daily 20:00',    maxMinutes: 1500 },
-  { name: 'backlink-scout',   label: 'Backlink Scout',        schedule: 'daily 22:00',    maxMinutes: 1500 },
-  { name: 'backlink-verify',  label: 'Backlink Verify',       schedule: 'daily 23:00',    maxMinutes: 1500 },
-  { name: 'weekly-report',    label: 'Weekly Report',         schedule: 'Mon 07:00',      maxMinutes: 10080 },
-] as const;
 
 interface CronLog {
   job_name: string;
@@ -78,7 +56,7 @@ export default async function CronHealthPage() {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-slate-800">Cron Health</h1>
-        <p className="text-sm text-slate-500 mt-1">Live status of all 19 background jobs</p>
+        <p className="text-sm text-slate-500 mt-1">Live status of all {CRON_DEFINITIONS.length} scheduled background jobs</p>
       </div>
 
       {/* Summary Tiles */}

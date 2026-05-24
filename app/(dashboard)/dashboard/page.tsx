@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { getDashboardStats, getGlobalMarketIntelligence, TimeRange, ActionItem, GlobalMarketIntelligence } from '@/lib/actions/dashboard';
 import { getLowPerformancePages, getPerformanceAlertStats } from '@/lib/actions/performance-alerts';
+import { CRON_DEFINITIONS } from '@/lib/dashboard/cron-definitions';
 import { loadFxRates } from '@/lib/fx-rates';
 import { getDeployStats } from '@/lib/actions/deploy-logs';
 import { getCronRuntimeState, isSuccessfulCronStatus } from '@/lib/dashboard/cron-status';
@@ -67,28 +68,6 @@ interface WebVitalsHealthSummary {
   inpP75: number | null;
   clsP75: number | null;
 }
-
-const DASHBOARD_CRON_DEFINITIONS = [
-  { name: 'spike-monitor', maxMinutes: 30 },
-  { name: 'perf-governance', maxMinutes: 60 },
-  { name: 'auto-genesis', maxMinutes: 60 },
-  { name: 'ev-refresh', maxMinutes: 90 },
-  { name: 'sync-conversions', maxMinutes: 90 },
-  { name: 'update-fx-rates', maxMinutes: 1500 },
-  { name: 'seo-drift', maxMinutes: 1500 },
-  { name: 'check-links', maxMinutes: 1500 },
-  { name: 'sync-competitors', maxMinutes: 1500 },
-  { name: 'sync-revenue', maxMinutes: 1500 },
-  { name: 'freshness-check', maxMinutes: 1500 },
-  { name: 'check-rankings', maxMinutes: 1500 },
-  { name: 'affiliate-scout', maxMinutes: 1500 },
-  { name: 'send-emails', maxMinutes: 1500 },
-  { name: 'backlink-post', maxMinutes: 1500 },
-  { name: 'daily-strategy', maxMinutes: 1500 },
-  { name: 'backlink-scout', maxMinutes: 1500 },
-  { name: 'backlink-verify', maxMinutes: 1500 },
-  { name: 'weekly-report', maxMinutes: 10080 },
-] as const;
 
 // ── Timeout wrapper: prevents Supabase from hanging indefinitely ──
 function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> {
@@ -149,8 +128,8 @@ async function getCronHealthSummary(): Promise<CronHealthSummary> {
       warning: 0,
       stale: 0,
       errors: 0,
-      neverRun: DASHBOARD_CRON_DEFINITIONS.length,
-      totalJobs: DASHBOARD_CRON_DEFINITIONS.length,
+      neverRun: CRON_DEFINITIONS.length,
+      totalJobs: CRON_DEFINITIONS.length,
       lastObservedAt: null,
       lastSuccessfulAt: null,
     };
@@ -163,11 +142,11 @@ async function getCronHealthSummary(): Promise<CronHealthSummary> {
     }
   }
 
-  const healthy = DASHBOARD_CRON_DEFINITIONS.filter((cron) => getCronRuntimeState(latestByJob.get(cron.name), cron.maxMinutes) === 'healthy').length;
-  const warning = DASHBOARD_CRON_DEFINITIONS.filter((cron) => getCronRuntimeState(latestByJob.get(cron.name), cron.maxMinutes) === 'warning').length;
-  const stale = DASHBOARD_CRON_DEFINITIONS.filter((cron) => getCronRuntimeState(latestByJob.get(cron.name), cron.maxMinutes) === 'stale').length;
-  const errors = DASHBOARD_CRON_DEFINITIONS.filter((cron) => getCronRuntimeState(latestByJob.get(cron.name), cron.maxMinutes) === 'error').length;
-  const neverRun = DASHBOARD_CRON_DEFINITIONS.filter((cron) => getCronRuntimeState(latestByJob.get(cron.name), cron.maxMinutes) === 'never-run').length;
+  const healthy = CRON_DEFINITIONS.filter((cron) => getCronRuntimeState(latestByJob.get(cron.name), cron.maxMinutes) === 'healthy').length;
+  const warning = CRON_DEFINITIONS.filter((cron) => getCronRuntimeState(latestByJob.get(cron.name), cron.maxMinutes) === 'warning').length;
+  const stale = CRON_DEFINITIONS.filter((cron) => getCronRuntimeState(latestByJob.get(cron.name), cron.maxMinutes) === 'stale').length;
+  const errors = CRON_DEFINITIONS.filter((cron) => getCronRuntimeState(latestByJob.get(cron.name), cron.maxMinutes) === 'error').length;
+  const neverRun = CRON_DEFINITIONS.filter((cron) => getCronRuntimeState(latestByJob.get(cron.name), cron.maxMinutes) === 'never-run').length;
   const lastObservedAt = data[0]?.executed_at ?? null;
   const lastSuccessfulAt = data.find((row) => isSuccessfulCronStatus(row.status))?.executed_at ?? null;
 
@@ -178,7 +157,7 @@ async function getCronHealthSummary(): Promise<CronHealthSummary> {
     stale,
     errors,
     neverRun,
-    totalJobs: DASHBOARD_CRON_DEFINITIONS.length,
+    totalJobs: CRON_DEFINITIONS.length,
     lastObservedAt,
     lastSuccessfulAt,
   };
@@ -285,7 +264,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     stale: 0,
     errors: 0,
     neverRun: 0,
-    totalJobs: DASHBOARD_CRON_DEFINITIONS.length,
+    totalJobs: CRON_DEFINITIONS.length,
     lastObservedAt: null,
     lastSuccessfulAt: null,
   };

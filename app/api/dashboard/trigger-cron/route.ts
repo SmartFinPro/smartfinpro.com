@@ -4,34 +4,18 @@
 // Always logs to cron_logs so the Cron Health page picks up the run.
 
 import { NextRequest, NextResponse } from 'next/server';
+import { CRON_DEFINITIONS_BY_NAME, isKnownCronJob } from '@/lib/dashboard/cron-definitions';
 import { createServiceClient } from '@/lib/supabase/server';
-
-const ALLOWED_JOBS = [
-  'spike-monitor',
-  'perf-governance',
-  'auto-genesis',
-  'ev-refresh',
-  'sync-conversions',
-  'update-fx-rates',
-  'seo-drift',
-  'check-links',
-  'sync-competitors',
-  'sync-revenue',
-  'freshness-check',
-  'check-rankings',
-  'affiliate-scout',
-  'send-emails',
-  'backlink-post',
-  'daily-strategy',
-  'backlink-scout',
-  'backlink-verify',
-  'weekly-report',
-];
 
 export async function POST(req: NextRequest) {
   const { job } = await req.json();
 
-  if (!job || !ALLOWED_JOBS.includes(job)) {
+  if (!job || !isKnownCronJob(job)) {
+    return NextResponse.json({ error: 'Unknown job' }, { status: 400 });
+  }
+
+  const definition = CRON_DEFINITIONS_BY_NAME.get(job);
+  if (!definition) {
     return NextResponse.json({ error: 'Unknown job' }, { status: 400 });
   }
 
@@ -55,8 +39,11 @@ export async function POST(req: NextRequest) {
 
   try {
     const res = await fetch(`${baseUrl}/api/cron/${job}`, {
-      method: 'GET',
-      headers: { Authorization: `Bearer ${secret}` },
+      method: definition.requestMethod,
+      headers: {
+        Authorization: `Bearer ${secret}`,
+        ...(definition.requestMethod === 'POST' ? { 'Content-Type': 'application/json' } : {}),
+      },
       signal: AbortSignal.timeout(30_000),
     });
 
@@ -73,7 +60,11 @@ export async function POST(req: NextRequest) {
         status: res.ok ? 'success' : 'error',
         duration_ms: duration,
         error: res.ok ? null : `HTTP ${res.status}: ${body.slice(0, 200)}`,
-        metadata: { source: 'dashboard-trigger', httpStatus: res.status },
+        metadata: {
+          source: 'dashboard-trigger',
+          httpStatus: res.status,
+          requestMethod: definition.requestMethod,
+        },
         executed_at: new Date().toISOString(),
       });
       if (insertErr) logError = insertErr.message;

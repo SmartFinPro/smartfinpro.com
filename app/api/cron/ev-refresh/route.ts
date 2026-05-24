@@ -1,16 +1,14 @@
 // app/api/cron/ev-refresh/route.ts
-// P4: EV Refresh — Nightly rebuild of offer_ev_cache
+// P4: EV Refresh — scheduled hourly via GitHub Actions cron workflow
 //
-// Schedule: Daily 02:00 UTC (before perf-governance at 03:00)
-// Self-hosted crontab entry:
-//   0 2 * * * curl -sf -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/cron/ev-refresh >> /home/master/applications/smartfinpro/logs/cron.log 2>&1
+// Schedule: Hourly at :05 UTC (same batch as sync-conversions / perf-governance)
 
 import { NextRequest, NextResponse } from 'next/server';
 import { computeOfferEV } from '@/lib/actions/offer-ev';
 import { logger, logCron } from '@/lib/logging';
 import { validateBearer } from '@/lib/security/timing-safe';
 
-export async function GET(request: NextRequest) {
+async function handleRequest(request: NextRequest) {
   // ── Auth (timing-safe) ──────────────────────────────────────────
   const isDev = process.env.NODE_ENV === 'development';
   if (!isDev && !validateBearer(request.headers.get('authorization'), process.env.CRON_SECRET)) {
@@ -56,4 +54,12 @@ export async function GET(request: NextRequest) {
       { status: 500 },
     );
   }
+}
+
+export async function GET(request: NextRequest) {
+  return handleRequest(request);
+}
+
+export async function POST(request: NextRequest) {
+  return handleRequest(request);
 }
