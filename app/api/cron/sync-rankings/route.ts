@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
 
     const duration = Date.now() - start;
 
-    await logCron({
+    logCron({
       job: 'sync-rankings',
       status: 'success',
       duration_ms: duration,
@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
     logger.error('[sync-rankings] Cron failed', { error: msg });
-    await logCron({
+    logCron({
       job: 'sync-rankings',
       status: 'error',
       duration_ms: Date.now() - start,

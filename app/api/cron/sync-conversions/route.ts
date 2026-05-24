@@ -15,6 +15,8 @@ import { validateBearer } from '@/lib/security/timing-safe';
  *   0 6 * * * curl -sf -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/cron/sync-conversions >> /home/master/applications/smartfinpro/logs/cron.log 2>&1
  */
 export async function GET(request: NextRequest) {
+  const startTime = Date.now();
+
   // Verify CRON_SECRET (timing-safe)
   if (!validateBearer(request.headers.get('authorization'), process.env.CRON_SECRET)) {
     logger.warn('[sync-conversions] Unauthorized cron attempt');
@@ -38,6 +40,12 @@ export async function GET(request: NextRequest) {
       .eq('is_enabled', true);
 
     if (!connectors || connectors.length === 0) {
+      logCron({
+        job: 'sync-conversions',
+        status: 'skipped',
+        duration_ms: Date.now() - startTime,
+        error: 'No enabled connectors found',
+      });
       return NextResponse.json({
         message: 'No enabled connectors found',
         results: [],
@@ -100,7 +108,21 @@ export async function GET(request: NextRequest) {
     }
 
     const totalSynced = results.reduce((sum, r) => sum + r.records_synced, 0);
-    const allSuccessful = results.every((r) => r.success);
+    const totalSkipped = results.reduce((sum, r) => sum + r.records_skipped, 0);
+    const failedCount = results.filter((r) => !r.success).length;
+    const succeededCount = results.length - failedCount;
+    const allSuccessful = results.length > 0 && failedCount === 0;
+    const cronStatus = failedCount === 0 ? 'success' : succeededCount === 0 ? 'error' : 'partial';
+
+    logCron({
+      job: 'sync-conversions',
+      status: cronStatus,
+      duration_ms: Date.now() - startTime,
+      records_synced: totalSynced,
+      records_skipped: totalSkipped,
+      connectors_succeeded: succeededCount,
+      connectors_failed: failedCount,
+    });
 
     return NextResponse.json({
       success: allSuccessful,
@@ -108,7 +130,12 @@ export async function GET(request: NextRequest) {
       results,
     });
   } catch (error) {
-    logCron({ job: 'sync-conversions', status: 'error', error: error instanceof Error ? error.message : String(error) });
+    logCron({
+      job: 'sync-conversions',
+      status: 'error',
+      duration_ms: Date.now() - startTime,
+      error: error instanceof Error ? error.message : String(error),
+    });
     return NextResponse.json(
       { error: 'Sync failed', message: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
