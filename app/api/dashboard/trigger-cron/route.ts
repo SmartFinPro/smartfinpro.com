@@ -5,6 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { CRON_DEFINITIONS_BY_NAME, isKnownCronJob } from '@/lib/dashboard/cron-definitions';
+import { insertCronLogCompatible } from '@/lib/logging';
 import { createServiceClient } from '@/lib/supabase/server';
 
 export async function POST(req: NextRequest) {
@@ -55,7 +56,7 @@ export async function POST(req: NextRequest) {
     let logError: string | null = null;
     try {
       const supabase = createServiceClient();
-      const { error: insertErr } = await supabase.from('cron_logs').insert({
+      const { usedFallback, persistedStatus } = await insertCronLogCompatible(supabase, {
         job_name: job,
         status: res.ok ? 'success' : 'error',
         duration_ms: duration,
@@ -67,9 +68,15 @@ export async function POST(req: NextRequest) {
         },
         executed_at: new Date().toISOString(),
       });
-      if (insertErr) logError = insertErr.message;
+      if (usedFallback) {
+        logError = `compatibility fallback persisted as ${persistedStatus}`;
+      }
     } catch (e) {
-      logError = e instanceof Error ? e.message : 'unknown';
+      logError = e instanceof Error
+        ? e.message
+        : e && typeof e === 'object' && 'message' in e
+          ? String((e as { message?: unknown }).message)
+          : JSON.stringify(e);
     }
 
     return NextResponse.json({
@@ -86,7 +93,7 @@ export async function POST(req: NextRequest) {
     // Log failure to cron_logs too
     try {
       const supabase = createServiceClient();
-      await supabase.from('cron_logs').insert({
+      await insertCronLogCompatible(supabase, {
         job_name: job,
         status: 'error',
         duration_ms: duration,
