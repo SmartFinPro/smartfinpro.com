@@ -558,6 +558,7 @@ export default async function ContentHubPage({ searchParams }: ContentHubPagePro
           siteUrl={siteUrl}
           partnerAssignments={partnerAssignments}
           partnersByMarket={partnersByMarket}
+          hasActiveFilter={hasAnyFilter}
         />
 
         {/* Table Footer */}

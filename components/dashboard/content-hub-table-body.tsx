@@ -30,6 +30,7 @@ import type { ContentHubRow, HealthStatus, ContentQuality } from '@/lib/actions/
 import type { PartnerOption } from './cta-partner-select';
 import type { PartnerAssignmentConfig } from '@/lib/types/page-cta';
 import { WidgetErrorBoundary } from '@/components/dashboard/widget-error-boundary';
+import { WidgetEmpty } from '@/components/dashboard/widget-states';
 
 const BacklinkDetailDialog = dynamic(
   () => import('./backlink-detail-dialog'),
@@ -200,6 +201,8 @@ interface ContentHubTableBodyProps {
   siteUrl: string;
   partnerAssignments: Record<string, PartnerAssignmentConfig[]>;
   partnersByMarket: Record<string, PartnerOption[]>;
+  /** True when at least one filter is active — distinguishes "filter returned nothing" from "no data at all" */
+  hasActiveFilter?: boolean;
 }
 
 export function ContentHubTableBody({
@@ -207,6 +210,7 @@ export function ContentHubTableBody({
   siteUrl,
   partnerAssignments,
   partnersByMarket,
+  hasActiveFilter = false,
 }: ContentHubTableBodyProps) {
   const router = useRouter();
 
@@ -665,8 +669,20 @@ export function ContentHubTableBody({
       })}
       {rows.length === 0 && (
         <tr>
-          <td colSpan={14} className="px-4 py-12 text-center text-sm text-slate-400">
-            No pages match this filter.
+          <td colSpan={14}>
+            {hasActiveFilter ? (
+              <p className="px-4 py-12 text-center text-sm text-slate-400">
+                No pages match this filter.
+              </p>
+            ) : (
+              <div className="px-6 py-6">
+                <WidgetEmpty
+                  title="Noch keine Content-Daten"
+                  description="Sobald der freshness-check Cron läuft und content_health_scores befüllt sind, erscheinen hier deine Seiten."
+                  action={{ label: 'Cron-Status prüfen', href: '/dashboard' }}
+                />
+              </div>
+            )}
           </td>
         </tr>
       )}

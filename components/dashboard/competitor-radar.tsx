@@ -36,6 +36,7 @@ import {
   Minus,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { WidgetEmpty } from '@/components/dashboard/widget-states';
 import type { Market, Category } from '@/lib/i18n/config';
 import { marketCategories } from '@/lib/i18n/config';
 import type {
@@ -532,7 +533,7 @@ export function CompetitorRadar({ initialData }: CompetitorRadarProps) {
                             )}
                           </>
                         ) : available ? (
-                          <p className="text-[10px] text-slate-600">no data</p>
+                          <span className="text-[10px] text-slate-400">—</span>
                         ) : (
                           <p className="text-[10px] text-slate-400">N/A</p>
                         )}
@@ -693,10 +694,12 @@ export function CompetitorRadar({ initialData }: CompetitorRadarProps) {
             </table>
           </div>
         ) : (
-          <div className="py-16 text-center">
-            <Crosshair className="h-12 w-12 text-slate-300 mx-auto mb-4" />
-            <p className="text-sm text-slate-400 mb-1">No competitor data yet</p>
-            <p className="text-xs text-slate-600">Click &quot;Full Scan&quot; to analyze SERP landscapes</p>
+          <div className="p-6">
+            <WidgetEmpty
+              title="Noch keine Competitor-Daten"
+              description='Klicke "Full Scan" um SERP-Landscapes zu analysieren und Konkurrenten zu entdecken.'
+              icon={Crosshair}
+            />
           </div>
         )}
       </GlassCard>
@@ -851,9 +854,13 @@ export function CompetitorRadar({ initialData }: CompetitorRadarProps) {
               </div>
             )}
             {!spyLoading && spyResults && spyResults.length === 0 && (
-              <div className="py-8 text-center">
-                <Search className="h-8 w-8 text-slate-300 mx-auto mb-2" />
-                <p className="text-xs text-slate-500">No results. Run a Full Scan first to build data.</p>
+              <div className="px-4 py-4">
+                <WidgetEmpty
+                  title="Keine Ergebnisse"
+                  description="Serper.dev liefert für diese Domain keine Treffer. Starte zuerst einen Full Scan oder prüfe deine Serper-Credits."
+                  icon={Search}
+                  action={{ label: 'Einstellungen', href: '/dashboard/settings' }}
+                />
               </div>
             )}
             {!spyLoading && !spyResults && (

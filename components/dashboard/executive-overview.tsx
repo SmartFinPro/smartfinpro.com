@@ -24,6 +24,7 @@ import Link from 'next/link';
 import type { TimeComparison, TimeRange, TimeSeriesData, GlobalMarketIntelligence, MarketPerformance } from '@/lib/actions/dashboard';
 import type { DeployStats } from '@/lib/actions/deploy-logs';
 import { WidgetErrorBoundary } from '@/components/dashboard/widget-error-boundary';
+import { WidgetNotConfigured } from '@/components/dashboard/widget-states';
 import {
   computeWidgetHealth,
   STATUS_LABEL,
@@ -307,6 +308,21 @@ export function ExecutiveOverview({
             <span className={`text-[11px] font-medium ${overallPill.textClass}`}>{overallPill.label}</span>
           </div>
         </div>
+
+        {/* ── Bootstrap banner: only when ALL infrastructure subsystems have never run.
+             overallStatus === 'never-run' is too broad because revenueStatus can also
+             return 'never-run' for 0 clicks / 0 revenue on a running platform.
+             We gate on deploy + cron + webVitals all being 'never-run' instead. ── */}
+        {deployStatus === 'never-run' && cronStatus === 'never-run' && webVitalsStatus === 'never-run' && (
+          <div className="mb-7">
+            <WidgetNotConfigured
+              title="Platform noch nicht initialisiert"
+              description="Es sind noch keine Daten geflossen. Starte die Cron-Jobs damit das Dashboard befüllt wird."
+              testUrl="/dashboard"
+              testLabel="Zu Cron-Status"
+            />
+          </div>
+        )}
 
         {/* ── KPI Cards ───────────────────────────────────────── */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
