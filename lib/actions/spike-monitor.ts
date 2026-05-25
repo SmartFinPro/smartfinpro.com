@@ -502,6 +502,12 @@ export interface AlertSettings {
   ctrThreshold: number;
 }
 
+interface SpikeAlertSettingsRow {
+  market: string;
+  telegram_enabled?: boolean | null;
+  ctr_threshold?: number | null;
+}
+
 export async function getAlertSettings(): Promise<AlertSettings[]> {
   const supabase = createServiceClient();
 
@@ -521,7 +527,7 @@ export async function getAlertSettings(): Promise<AlertSettings[]> {
 
   const markets: Market[] = ['us', 'uk', 'ca', 'au'];
   const existing = new Map(
-    (data || []).map((r) => [r.market, { enabled: r.telegram_enabled, ctr: r.ctr_threshold }])
+    ((data || []) as SpikeAlertSettingsRow[]).map((r) => [r.market, { enabled: r.telegram_enabled, ctr: r.ctr_threshold }])
   );
 
   return markets.map((m) => ({
@@ -590,7 +596,7 @@ async function getCtrThresholds(
   const thresholds = new Map<Market, number>();
   if (error || !data) return thresholds;
 
-  for (const row of data) {
+  for (const row of data as SpikeAlertSettingsRow[]) {
     thresholds.set(row.market as Market, row.ctr_threshold ?? 5.0);
   }
   return thresholds;
@@ -609,5 +615,5 @@ async function getEnabledMarkets(
     .eq('telegram_enabled', true);
 
   if (error || !data) return [];
-  return data.map((r) => r.market as Market);
+  return (data as SpikeAlertSettingsRow[]).map((r) => r.market as Market);
 }

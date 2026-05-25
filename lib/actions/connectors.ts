@@ -51,14 +51,15 @@ export async function getConnectorsWithStatus(): Promise<ConnectorInfo[]> {
   ]);
 
   // Create map of latest log per connector
-  interface SyncLog {
+  interface SyncLogRow {
     connector_name: string;
     status: string;
     error_message: string | null;
     records_synced: number;
   }
   const latestLogMap = new Map<string, { status: string; error_message: string | null; records_synced: number }>();
-  (recentLogs || []).forEach((log: SyncLog) => {
+  const syncLogRows = (recentLogs || []) as SyncLogRow[];
+  syncLogRows.forEach((log) => {
     if (!latestLogMap.has(log.connector_name)) {
       latestLogMap.set(log.connector_name, {
         status: log.status,
@@ -78,7 +79,8 @@ export async function getConnectorsWithStatus(): Promise<ConnectorInfo[]> {
     last_sync_status?: string;
     error_message?: string;
   }
-  const dbMap = new Map((dbConnectors || []).map((c: DbConnector) => [c.name, c]));
+  const dbConnectorRows = (dbConnectors || []) as DbConnector[];
+  const dbMap = new Map(dbConnectorRows.map((c) => [c.name, c]));
 
   // Get base URL for webhook URLs
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://smartfinpro.com';

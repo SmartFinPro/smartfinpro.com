@@ -14,9 +14,13 @@ import { toUSD, loadFxRates, getFxRatesSnapshot, HARDCODED_FX } from '@/lib/fx-r
 // This prevents the dashboard from crashing if migrations haven't
 // been applied yet (e.g. page_views, leads, newsletter_subscribers).
 // ============================================================
-type SupabaseResult<T> = { data: T[] | null; count: number | null; error: { code?: string; message?: string } | null };
+type SupabaseResult = {
+  data: unknown[] | null;
+  count: number | null;
+  error: { code?: string; message?: string } | null;
+};
 
-function safeData<T>(result: SupabaseResult<T>): T[] {
+function safeData<T = Record<string, any>>(result: SupabaseResult): T[] {
   if (result.error) {
     // PGRST204 = table not found in schema cache — safe to ignore
     if (result.error.code === 'PGRST204' || result.error.message?.includes('schema cache')) {
@@ -25,10 +29,10 @@ function safeData<T>(result: SupabaseResult<T>): T[] {
     // Log unexpected errors but don't crash
     logger.warn('[dashboard] Query warning:', result.error.message);
   }
-  return result.data || [];
+  return (result.data as T[] | null) || [];
 }
 
-function safeCount(result: SupabaseResult<unknown>): number {
+function safeCount(result: SupabaseResult): number {
   if (result.error) return 0;
   return result.count || 0;
 }
@@ -1274,7 +1278,13 @@ export async function getGlobalMarketIntelligence(range: TimeRange = '7d'): Prom
   const previousClicks = (gmiPrevClicksResult.data || []) as { country_code: string | null }[];
   const conversions = ((gmiConversionsResult.data || []) as { link_id: string | null; commission_earned: number | null; currency?: string | null; status: string; converted_at: string }[]).filter(c => c.status === 'approved');
   const previousConversions = (gmiPrevConversionsResult.data || []) as { link_id: string | null; commission_earned: number | null; currency?: string | null }[];
-  const linksMap = new Map((gmiLinksResult.data || []).map(l => [l.id, l]));
+  const marketLinks = (gmiLinksResult.data || []) as Array<{
+    id: string;
+    slug: string | null;
+    partner_name: string;
+    category: string | null;
+  }>;
+  const linksMap = new Map(marketLinks.map((l) => [l.id, l]));
   const pageViews = safeData(gmiPageViewsResult);
 
   // Build market-specific data

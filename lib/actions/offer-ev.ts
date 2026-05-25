@@ -35,6 +35,25 @@ interface ComputeResult {
   insufficient: number;
 }
 
+interface OfferEvCacheRow {
+  link_id: string;
+  ev: number;
+  total_clicks: number;
+  approval_rate: number;
+  avg_payout: number;
+  reversal_rate: number;
+  compliance_score: number;
+  data_sufficient: boolean;
+}
+
+interface AffiliateLinkRow {
+  id: string;
+  slug: string;
+  partner_name: string;
+  market: string | null;
+  category: string | null;
+}
+
 // Minimum clicks for data to be considered sufficient
 const MIN_CLICKS = 50;
 
@@ -187,10 +206,12 @@ export async function rankOffersByEV(
     .in('id', linkIds)
     .eq('active', true);
 
-  const linkMap = new Map((links || []).map((l) => [l.id, l]));
+  const linkRows = (links || []) as AffiliateLinkRow[];
+  const linkMap = new Map(linkRows.map((l) => [l.id, l]));
 
   // Cross-market compliance adjustment
-  const ranked: OfferEV[] = evData
+  const evRows = (evData || []) as OfferEvCacheRow[];
+  const ranked: OfferEV[] = evRows
     .map((e) => {
       const link = linkMap.get(e.link_id);
       if (!link) return null;

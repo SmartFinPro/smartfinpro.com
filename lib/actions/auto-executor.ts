@@ -318,7 +318,7 @@ async function handleRetrainBandit(
   try {
     const result = await computeOfferEV();
     return {
-      success: result.success,
+      success: true,
       actionType: 'retrain_bandit',
       description: `Retrained bandit: EV cache refreshed (${result.computed} offers)`,
       payload: { computed: result.computed, reason: insight.title },

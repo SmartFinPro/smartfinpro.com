@@ -8,6 +8,7 @@
  * - Impact (Various)
  */
 
+import { createServiceClient } from '@/lib/supabase/server';
 import { runAllConnectors } from './sync-service';
 
 // ============================================================
