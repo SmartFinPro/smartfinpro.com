@@ -106,8 +106,8 @@ function getPrimaryCronLogStatus(status: CronLogContext['status']): string {
   return status === 'skipped' ? 'success' : status;
 }
 
-function getLegacyCronLogStatus(status: string): string {
-  return status === 'error' ? 'error' : 'completed';
+function getLegacyCronLogStatus(_status: string): string {
+  return 'completed';
 }
 
 function formatUnknownError(err: unknown): string {

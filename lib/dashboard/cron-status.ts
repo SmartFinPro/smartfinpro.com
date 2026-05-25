@@ -4,6 +4,9 @@ export type CronRuntimeState = 'healthy' | 'warning' | 'stale' | 'error' | 'neve
 export interface CronLogLike {
   status: string;
   executed_at: string;
+  metadata?: {
+    canonicalStatus?: string | null;
+  } | null;
 }
 
 export function normalizeCronStatus(status: string | null | undefined): CanonicalCronStatus {
@@ -15,13 +18,23 @@ export function normalizeCronStatus(status: string | null | undefined): Canonica
   return 'unknown';
 }
 
+export function getResolvedCronStatus(
+  log: Pick<CronLogLike, 'status' | 'metadata'> | undefined,
+): CanonicalCronStatus {
+  const canonicalStatus = log?.metadata?.canonicalStatus;
+  if (canonicalStatus) {
+    return normalizeCronStatus(canonicalStatus);
+  }
+  return normalizeCronStatus(log?.status);
+}
+
 export function getCronRuntimeState(
   log: CronLogLike | undefined,
   maxMinutes: number,
 ): CronRuntimeState {
   if (!log) return 'never-run';
 
-  const normalizedStatus = normalizeCronStatus(log.status);
+  const normalizedStatus = getResolvedCronStatus(log);
   const ageMinutes = (Date.now() - new Date(log.executed_at).getTime()) / 60000;
 
   if (normalizedStatus === 'error') return 'error';
@@ -33,4 +46,10 @@ export function getCronRuntimeState(
 
 export function isSuccessfulCronStatus(status: string | null | undefined): boolean {
   return normalizeCronStatus(status) === 'success';
+}
+
+export function isSuccessfulCronLog(
+  log: Pick<CronLogLike, 'status' | 'metadata'> | undefined,
+): boolean {
+  return getResolvedCronStatus(log) === 'success';
 }

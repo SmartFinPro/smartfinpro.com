@@ -2,12 +2,15 @@
 import { createClient } from '@supabase/supabase-js';
 import { CheckCircle2, XCircle, AlertTriangle, Clock, RefreshCw } from 'lucide-react';
 import { CRON_DEFINITIONS } from '@/lib/dashboard/cron-definitions';
-import { getCronRuntimeState, normalizeCronStatus } from '@/lib/dashboard/cron-status';
+import { getCronRuntimeState, getResolvedCronStatus } from '@/lib/dashboard/cron-status';
 import { TriggerButton } from './trigger-button';
 
 interface CronLog {
   job_name: string;
   status: string;
+  metadata?: {
+    canonicalStatus?: string | null;
+  } | null;
   duration_ms: number | null;
   error: string | null;
   executed_at: string;
@@ -31,7 +34,7 @@ export default async function CronHealthPage() {
   // Fetch latest run for each job in one query
   const { data } = await supabase
     .from('cron_logs')
-    .select('job_name, status, duration_ms, error, executed_at')
+    .select('job_name, status, metadata, duration_ms, error, executed_at')
     .order('executed_at', { ascending: false })
     .limit(200);
 
@@ -109,7 +112,7 @@ export default async function CronHealthPage() {
           {CRON_DEFINITIONS.map((cron) => {
             const log = latestByJob.get(cron.name);
             const runtimeState = getCronRuntimeState(log, cron.maxMinutes);
-            const normalizedStatus = normalizeCronStatus(log?.status);
+            const normalizedStatus = getResolvedCronStatus(log);
             const statusText = log
               ? `${normalizedStatus}${log.duration_ms ? ` · ${log.duration_ms}ms` : ''}`
               : 'never run';
@@ -145,7 +148,7 @@ export default async function CronHealthPage() {
                       <div
                         className={`text-[11px] ${statusClass}`}
                         data-testid={`cron-status-${normalizedStatus}`}
-                        title={normalizedStatus !== log.status ? `Legacy status: ${log.status}` : undefined}
+                        title={normalizedStatus !== log.status ? `Stored status: ${log.status}` : undefined}
                       >
                         {statusText}
                       </div>

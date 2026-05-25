@@ -5,6 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { CRON_DEFINITIONS_BY_NAME, isKnownCronJob } from '@/lib/dashboard/cron-definitions';
+import { inferTriggeredCronLogOutcome } from '@/lib/dashboard/trigger-cron-status';
 import { insertCronLogCompatible } from '@/lib/logging';
 import { createServiceClient } from '@/lib/supabase/server';
 
@@ -50,6 +51,10 @@ export async function POST(req: NextRequest) {
 
     const body = await res.text().catch(() => '');
     const duration = Date.now() - start;
+    const logOutcome = inferTriggeredCronLogOutcome({
+      httpStatus: res.status,
+      bodyText: body,
+    });
 
     // Always log to cron_logs — most cron jobs don't log themselves,
     // so without this the Cron Health page would always show "never run".
@@ -58,9 +63,9 @@ export async function POST(req: NextRequest) {
       const supabase = createServiceClient();
       const { usedFallback, persistedStatus } = await insertCronLogCompatible(supabase, {
         job_name: job,
-        status: res.ok ? 'success' : 'error',
+        status: logOutcome.status,
         duration_ms: duration,
-        error: res.ok ? null : `HTTP ${res.status}: ${body.slice(0, 200)}`,
+        error: logOutcome.error,
         metadata: {
           source: 'dashboard-trigger',
           httpStatus: res.status,

@@ -24,20 +24,28 @@ export async function GET(request: NextRequest) {
     const startTime = Date.now();
     const result = await triggerCompetitorScan();
     const duration = ((Date.now() - startTime) / 1000).toFixed(1);
+    const cronStatus = result.failed > 0
+      ? result.scanned > 0 ? 'partial' : 'error'
+      : 'success';
 
     logCron({
-      job: 'sync-competitors', status: 'success',
+      job: 'sync-competitors', status: cronStatus,
       duration_ms: Math.round(parseFloat(duration) * 1000),
-      scanned: result.scanned, new_alerts: result.newAlerts,
+      scanned: result.scanned,
+      failed: result.failed,
+      new_alerts: result.newAlerts,
+      error: result.failed > 0 ? `${result.failed} keyword scans failed` : undefined,
     });
 
     return NextResponse.json({
-      success: true,
+      success: cronStatus === 'success',
+      partial: cronStatus === 'partial',
       scanned: result.scanned,
+      failed: result.failed,
       newAlerts: result.newAlerts,
       duration: `${duration}s`,
       timestamp: new Date().toISOString(),
-    });
+    }, { status: cronStatus === 'error' ? 500 : cronStatus === 'partial' ? 207 : 200 });
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Unknown error';
     logCron({ job: 'sync-competitors', status: 'error', error: msg });

@@ -46,6 +46,7 @@ export async function GET(request: NextRequest) {
       seeded: seedResult.seeded,
       synced: syncResult.synced,
       errors: syncResult.errors,
+      skipped_markets: syncResult.skippedUnsupportedMarkets,
     });
 
     return Response.json({
@@ -54,6 +55,7 @@ export async function GET(request: NextRequest) {
       skipped: seedResult.skipped,
       gsc_synced: syncResult.synced,
       gsc_errors: syncResult.errors,
+      gsc_skipped_unsupported_markets: syncResult.skippedUnsupportedMarkets,
       duration_ms: duration,
     });
   } catch (error) {

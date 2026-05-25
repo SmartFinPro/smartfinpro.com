@@ -12,7 +12,7 @@ import { getLowPerformancePages, getPerformanceAlertStats } from '@/lib/actions/
 import { CRON_DEFINITIONS } from '@/lib/dashboard/cron-definitions';
 import { loadFxRates } from '@/lib/fx-rates';
 import { getDeployStats } from '@/lib/actions/deploy-logs';
-import { getCronRuntimeState, isSuccessfulCronStatus } from '@/lib/dashboard/cron-status';
+import { getCronRuntimeState, isSuccessfulCronLog } from '@/lib/dashboard/cron-status';
 import { getWebVitalsP75LastNDays } from '@/lib/actions/web-vitals';
 import { createServiceClient } from '@/lib/supabase/server';
 import { ClicksChart } from '@/components/dashboard/clicks-chart';
@@ -117,7 +117,7 @@ async function getCronHealthSummary(): Promise<CronHealthSummary> {
   const supabase = createServiceClient();
   const { data, error } = await supabase
     .from('cron_logs')
-    .select('job_name, status, executed_at')
+    .select('job_name, status, metadata, executed_at')
     .order('executed_at', { ascending: false })
     .limit(200);
 
@@ -135,7 +135,7 @@ async function getCronHealthSummary(): Promise<CronHealthSummary> {
     };
   }
 
-  const latestByJob = new Map<string, { status: string; executed_at: string }>();
+  const latestByJob = new Map<string, { status: string; executed_at: string; metadata?: { canonicalStatus?: string | null } | null }>();
   for (const row of data) {
     if (!latestByJob.has(row.job_name)) {
       latestByJob.set(row.job_name, row);
@@ -148,7 +148,7 @@ async function getCronHealthSummary(): Promise<CronHealthSummary> {
   const errors = CRON_DEFINITIONS.filter((cron) => getCronRuntimeState(latestByJob.get(cron.name), cron.maxMinutes) === 'error').length;
   const neverRun = CRON_DEFINITIONS.filter((cron) => getCronRuntimeState(latestByJob.get(cron.name), cron.maxMinutes) === 'never-run').length;
   const lastObservedAt = data[0]?.executed_at ?? null;
-  const lastSuccessfulAt = data.find((row) => isSuccessfulCronStatus(row.status))?.executed_at ?? null;
+  const lastSuccessfulAt = data.find((row) => isSuccessfulCronLog(row))?.executed_at ?? null;
 
   return {
     source: 'live',

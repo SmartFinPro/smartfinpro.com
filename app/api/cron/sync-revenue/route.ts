@@ -35,16 +35,17 @@ export async function GET(request: NextRequest) {
     if (result.results.length === 0) {
       logCron({
         job: 'sync-revenue',
-        status: 'skipped',
+        status: 'partial',
         duration_ms: duration,
         error: 'No enabled connectors found',
       });
 
       return NextResponse.json({
         success: false,
+        partial: true,
         message: 'No enabled connectors found',
         results: [],
-      });
+      }, { status: 207 });
     }
 
     // Classify per-network results

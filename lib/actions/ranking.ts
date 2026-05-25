@@ -107,6 +107,29 @@ function safeData<T>(result: SupabaseResult<T>): T[] {
   return result.data || [];
 }
 
+export function normalizeKeywordTrackingPosition(value: unknown): number {
+  const numericValue =
+    typeof value === 'number'
+      ? value
+      : typeof value === 'string'
+        ? Number(value)
+        : Number.NaN;
+
+  if (!Number.isFinite(numericValue) || numericValue <= 0) return 0;
+  return Math.round(numericValue);
+}
+
+function normalizeOptionalKeywordTrackingPosition(value: unknown): number | null {
+  if (value == null) return null;
+  return normalizeKeywordTrackingPosition(value);
+}
+
+const SUPPORTED_RANKING_MARKETS: Market[] = ['us', 'uk', 'ca', 'au'];
+
+function isSupportedRankingMarket(value: string): value is Market {
+  return SUPPORTED_RANKING_MARKETS.includes(value as Market);
+}
+
 // ── Seed initial keywords into Supabase ─────────────────────
 
 /**
@@ -615,9 +638,10 @@ async function fetchLiveSERPInternal(
 export async function syncKeywordTracking(): Promise<{
   synced: number;
   errors: number;
+  skippedUnsupportedMarkets: number;
 }> {
   if (!isGSCConfigured()) {
-    return { synced: 0, errors: 0 };
+    return { synced: 0, errors: 0, skippedUnsupportedMarkets: 0 };
   }
 
   const supabase = createServiceClient();
@@ -633,14 +657,26 @@ export async function syncKeywordTracking(): Promise<{
     const r = row as Record<string, unknown>;
     prevMap.set(
       `${r.keyword}__${r.market}`,
-      r.current_position as number,
+      normalizeKeywordTrackingPosition(r.current_position),
     );
   }
 
   let synced = 0;
   let errors = 0;
+  let skippedUnsupportedMarkets = 0;
 
   for (const kw of keywords) {
+    if (!isSupportedRankingMarket(kw.market)) {
+      skippedUnsupportedMarkets++;
+      if (skippedUnsupportedMarkets <= 3) {
+        logger.warn('[ranking] Skipping unsupported GSC market', {
+          keyword: kw.keyword,
+          market: kw.market,
+        });
+      }
+      continue;
+    }
+
     const prevPos = prevMap.get(`${kw.keyword}__${kw.market}`) ?? null;
 
     const { error } = await supabase.from('keyword_tracking').upsert(
@@ -648,8 +684,10 @@ export async function syncKeywordTracking(): Promise<{
         keyword: kw.keyword,
         page: kw.page,
         market: kw.market,
-        current_position: kw.position,
-        previous_position: prevPos,
+        // keyword_tracking currently stores whole-number ranks; round GSC averages
+        // before persistence so daily syncs do not fail on values like 79.5.
+        current_position: normalizeKeywordTrackingPosition(kw.position),
+        previous_position: normalizeOptionalKeywordTrackingPosition(prevPos),
         clicks: kw.clicks,
         impressions: kw.impressions,
         ctr: kw.ctr,
@@ -666,7 +704,7 @@ export async function syncKeywordTracking(): Promise<{
     }
   }
 
-  return { synced, errors };
+  return { synced, errors, skippedUnsupportedMarkets };
 }
 
 // ── Helpers ─────────────────────────────────────────────────

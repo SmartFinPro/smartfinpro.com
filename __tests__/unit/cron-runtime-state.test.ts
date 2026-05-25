@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   getCronRuntimeState,
+  getResolvedCronStatus,
   isSuccessfulCronStatus,
   normalizeCronStatus,
 } from '@/lib/dashboard/cron-status';
@@ -15,6 +16,15 @@ describe('normalizeCronStatus', () => {
     expect(normalizeCronStatus('partial')).toBe('partial');
     expect(normalizeCronStatus('error')).toBe('error');
     expect(normalizeCronStatus('skipped')).toBe('skipped');
+  });
+
+  it('prefers metadata canonicalStatus over legacy stored status', () => {
+    expect(
+      getResolvedCronStatus({
+        status: 'completed',
+        metadata: { canonicalStatus: 'partial' },
+      }),
+    ).toBe('partial');
   });
 });
 
@@ -31,6 +41,20 @@ describe('getCronRuntimeState', () => {
   it('returns error for explicit error status', () => {
     const now = new Date().toISOString();
     expect(getCronRuntimeState({ status: 'error', executed_at: now }, 60)).toBe('error');
+  });
+
+  it('returns warning when compat metadata says partial even if stored status is completed', () => {
+    const now = new Date().toISOString();
+    expect(
+      getCronRuntimeState(
+        {
+          status: 'completed',
+          metadata: { canonicalStatus: 'partial' },
+          executed_at: now,
+        },
+        60,
+      ),
+    ).toBe('warning');
   });
 });
 
