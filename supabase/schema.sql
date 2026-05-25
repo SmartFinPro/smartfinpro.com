@@ -22,21 +22,27 @@ CREATE TABLE IF NOT EXISTS affiliate_links (
   market VARCHAR(10) CHECK (market IN ('us', 'uk', 'ca', 'au')),
   commission_type VARCHAR(20) CHECK (commission_type IN ('cpa', 'recurring', 'hybrid', 'revenue-share')),
   commission_value DECIMAL(10,2),
-  commission_currency VARCHAR(3) DEFAULT 'USD',
-  cookie_days INTEGER DEFAULT 30,
-  network VARCHAR(50),
-  network_link_id VARCHAR(255),
-  description TEXT,
+  -- NOTE: columns below (commission_currency..updated_at) are in schema.sql but NOT yet in live DB
+  -- commission_currency VARCHAR(3) DEFAULT 'USD',
+  -- cookie_days INTEGER DEFAULT 30,
+  -- network VARCHAR(50),
+  -- network_link_id VARCHAR(255),
+  -- description TEXT,
   active BOOLEAN DEFAULT true,
   created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+  -- Live DB extra columns (added via migrations, not in original schema.sql):
+  health_status VARCHAR(20) DEFAULT 'unknown',
+  last_health_check TIMESTAMPTZ
+  -- updated_at TIMESTAMPTZ DEFAULT NOW()  -- not in live DB
 );
 
 -- Click Tracking Table
+-- NOTE: Live DB diverges significantly from this schema. See detect_schema_drift output.
+-- Columns in schema.sql but NOT in live DB: session_id, utm_term, region, city, device_type, browser, os, referrer_domain, landing_page, ip_hash
+-- Columns in live DB but NOT here: click_id (VARCHAR), ip_address (VARCHAR), is_suspicious (BOOLEAN), fraud_reason (TEXT)
 CREATE TABLE IF NOT EXISTS link_clicks (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   link_id UUID REFERENCES affiliate_links(id) ON DELETE CASCADE,
-  session_id VARCHAR(64),
   clicked_at TIMESTAMPTZ DEFAULT NOW(),
 
   -- UTM Parameters
@@ -44,35 +50,33 @@ CREATE TABLE IF NOT EXISTS link_clicks (
   utm_medium VARCHAR(100),
   utm_campaign VARCHAR(255),
   utm_content VARCHAR(255),
-  utm_term VARCHAR(255),
 
-  -- Geographic & Device Info
+  -- Geographic Info
   country_code VARCHAR(2) DEFAULT 'XX',
-  region VARCHAR(100),
-  city VARCHAR(100),
-  device_type VARCHAR(20) CHECK (device_type IN ('desktop', 'mobile', 'tablet', 'unknown')),
-  browser VARCHAR(50),
-  os VARCHAR(50),
 
   -- Referral Info
   referrer TEXT,
-  referrer_domain VARCHAR(255),
-  landing_page TEXT,
 
   -- Raw Data
   user_agent TEXT,
-  ip_hash VARCHAR(64),  -- Hashed for privacy
 
   -- Attribution
   page_slug VARCHAR(255),
-  button_id VARCHAR(100)
+  button_id VARCHAR(100),
+
+  -- Live DB extra columns (added via migrations):
+  click_id VARCHAR(255),
+  ip_address VARCHAR(45),
+  is_suspicious BOOLEAN DEFAULT false,
+  fraud_reason TEXT
 );
 
 -- Conversions Table
+-- NOTE: Live DB missing: click_id FK, approved_at, transaction_value, notes, created_at
+-- (These were in schema.sql but not migrated to live DB)
 CREATE TABLE IF NOT EXISTS conversions (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   link_id UUID REFERENCES affiliate_links(id) ON DELETE SET NULL,
-  click_id UUID REFERENCES link_clicks(id) ON DELETE SET NULL,
 
   converted_at TIMESTAMPTZ DEFAULT NOW(),
   commission_earned DECIMAL(10,2) NOT NULL,
@@ -85,14 +89,10 @@ CREATE TABLE IF NOT EXISTS conversions (
 
   -- Status Tracking
   status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected', 'reversed')),
-  approved_at TIMESTAMPTZ,
 
   -- Additional Info
   product_name VARCHAR(255),
-  transaction_value DECIMAL(10,2),
-  notes TEXT,
 
-  created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -101,35 +101,25 @@ CREATE TABLE IF NOT EXISTS conversions (
 -- ============================================================
 
 -- Email Subscribers Table
+-- NOTE: Live DB has minimal columns. Many schema.sql columns not in live DB.
+-- Live DB has: id, email, lead_magnet, market, subscribed_at, unsubscribed_at, user_agent, referrer, confirmed (BOOLEAN)
+-- Schema.sql had: source, status, confirmed_at, preferences, tags, ip_address, email_provider_id, created_at, updated_at
 CREATE TABLE IF NOT EXISTS subscribers (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   email VARCHAR(255) UNIQUE NOT NULL,
 
   -- Subscription Details
   lead_magnet VARCHAR(100),
-  source VARCHAR(100),
   market VARCHAR(10) DEFAULT 'us' CHECK (market IN ('us', 'uk', 'ca', 'au')),
 
-  -- Status
-  status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'confirmed', 'unsubscribed', 'bounced', 'complained')),
+  -- Status (live DB uses BOOLEAN `confirmed` instead of VARCHAR `status`)
+  confirmed BOOLEAN DEFAULT false,
   subscribed_at TIMESTAMPTZ DEFAULT NOW(),
-  confirmed_at TIMESTAMPTZ,
   unsubscribed_at TIMESTAMPTZ,
 
-  -- Preferences
-  preferences JSONB DEFAULT '{}',
-  tags TEXT[] DEFAULT '{}',
-
   -- Tracking
-  ip_address VARCHAR(45),
   user_agent TEXT,
-  referrer TEXT,
-
-  -- Email Provider
-  email_provider_id VARCHAR(255),
-
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+  referrer TEXT
 );
 
 -- Leads Table (for more detailed lead capture)
@@ -145,6 +135,7 @@ CREATE TABLE IF NOT EXISTS leads (
 
   -- Lead Source
   source VARCHAR(100) NOT NULL,
+  source_page TEXT,   -- live DB extra column (missing from original schema.sql)
   source_url TEXT,
   campaign VARCHAR(255),
   market VARCHAR(10) DEFAULT 'us' CHECK (market IN ('us', 'uk', 'ca', 'au')),
@@ -214,7 +205,10 @@ CREATE TABLE IF NOT EXISTS page_views (
 
   -- User Agent
   user_agent TEXT,
-  ip_hash VARCHAR(64)
+  ip_hash VARCHAR(64),
+
+  -- Live DB extra column (added via migration, missing from original schema.sql):
+  lang VARCHAR(10)
 );
 
 -- Custom Events Table
@@ -251,39 +245,18 @@ CREATE TABLE IF NOT EXISTS analytics_events (
 -- ============================================================
 
 -- Admin Users (links to Supabase Auth)
-CREATE TABLE IF NOT EXISTS admin_users (
-  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-  email VARCHAR(255) NOT NULL,
-  role VARCHAR(20) DEFAULT 'editor' CHECK (role IN ('admin', 'editor', 'viewer')),
-  permissions JSONB DEFAULT '{}',
-  last_login TIMESTAMPTZ,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
+-- NOTE: admin_users table does NOT exist in live DB (all columns missing per schema drift audit 2026-05-25).
+-- Live auth is handled via Supabase Auth + dashboard cookie session (DASHBOARD_SECRET).
+-- Keeping definition here as future reference only — do not reference in queries.
+-- CREATE TABLE IF NOT EXISTS admin_users ( ... );
 
--- Settings Table
-CREATE TABLE IF NOT EXISTS settings (
-  key VARCHAR(100) PRIMARY KEY,
-  value JSONB NOT NULL,
-  description TEXT,
-  updated_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_by UUID REFERENCES admin_users(id)
-);
+-- NOTE: 'settings' table does NOT exist in live DB.
+-- Live DB uses 'system_settings' table instead (key TEXT, value TEXT, category TEXT).
+-- CREATE TABLE IF NOT EXISTS settings ( ... );
 
--- API Sync Logs
-CREATE TABLE IF NOT EXISTS api_sync_logs (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  network VARCHAR(50) NOT NULL,
-  sync_type VARCHAR(50) NOT NULL,
-  status VARCHAR(20) NOT NULL CHECK (status IN ('started', 'completed', 'failed')),
-  records_processed INTEGER DEFAULT 0,
-  records_created INTEGER DEFAULT 0,
-  records_updated INTEGER DEFAULT 0,
-  error_message TEXT,
-  started_at TIMESTAMPTZ DEFAULT NOW(),
-  completed_at TIMESTAMPTZ,
-  metadata JSONB DEFAULT '{}'
-);
+-- NOTE: api_sync_logs table does NOT exist in live DB.
+-- Connector sync results are stored in api_connectors/sync_logs tables added via migrations.
+-- CREATE TABLE IF NOT EXISTS api_sync_logs ( ... );
 
 -- ============================================================
 -- INDEXES

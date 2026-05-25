@@ -47,6 +47,9 @@ export function AggregateRatingSchema({
     ratedBy,
   });
 
+  // generator returns null while review ingestion is not wired up — skip emit.
+  if (schema === null) return null;
+
   return (
     <script
       type="application/ld+json"

@@ -67,13 +67,9 @@ export function generateReviewSchema(review: ReviewData) {
         priceValidUntil: getNextYearDate(),
         availability: 'https://schema.org/InStock',
       },
-      aggregateRating: {
-        '@type': 'AggregateRating',
-        ratingValue: review.rating,
-        bestRating: 5,
-        worstRating: 1,
-        reviewCount: review.reviewCount || 1,
-      },
+      // aggregateRating intentionally omitted: SmartFinPro does not yet ingest
+      // user reviews from a verified source. The single editorial rating below
+      // (reviewRating) is the only one we can defensibly emit.
     },
     reviewRating: {
       '@type': 'Rating',
@@ -165,11 +161,7 @@ export function generateComparisonSchema(products: Product[]) {
       item: {
         '@type': 'SoftwareApplication',
         name: product.name,
-        aggregateRating: {
-          '@type': 'AggregateRating',
-          ratingValue: product.rating,
-          reviewCount: product.reviewCount,
-        },
+        // aggregateRating intentionally omitted — see generateReviewSchema.
         offers: {
           '@type': 'Offer',
           price: product.price,
@@ -355,13 +347,7 @@ export function generateFinancialProductSchema(product: {
       '@type': 'Brand',
       name: product.brand || product.name,
     },
-    aggregateRating: {
-      '@type': 'AggregateRating',
-      ratingValue: product.rating,
-      bestRating: 5,
-      worstRating: 1,
-      reviewCount: product.reviewCount,
-    },
+    // aggregateRating intentionally omitted — see generateReviewSchema.
     ...(product.price && {
       offers: {
         '@type': 'Offer',
@@ -409,7 +395,7 @@ export function generateComparisonTableSchema(comparison: {
         },
         {
           '@type': 'Cell',
-          value: `${product.rating}/5 (${product.reviewCount} reviews)`,
+          value: `${product.rating}/5`,
         },
         {
           '@type': 'Cell',
@@ -421,21 +407,18 @@ export function generateComparisonTableSchema(comparison: {
 }
 
 /**
- * AggregateRating Schema - For standalone rating displays
- * Helps Google understand rating context on comparison pages
+ * AggregateRating Schema - For standalone rating displays.
+ *
+ * @deprecated Emission disabled 2026-05-15 until SmartFinPro ingests verified
+ * user reviews from a real source (Trustpilot, Google Reviews, in-house). Until
+ * then, returning `null` here causes wrapper components to skip rendering rather
+ * than emit fabricated review counts. Re-enable once a `reviewSource` field is
+ * introduced and `reviewCount` is sourced from real data.
  */
-export function generateAggregateRatingSchema(rating: {
+export function generateAggregateRatingSchema(_rating: {
   ratingValue: number;
   reviewCount: number;
   ratedBy?: string;
-}) {
-  return {
-    '@context': 'https://schema.org',
-    '@type': 'AggregateRating',
-    ratingValue: rating.ratingValue,
-    bestRating: 5,
-    worstRating: 1,
-    reviewCount: rating.reviewCount,
-    ratedBy: rating.ratedBy || 'SmartFinPro',
-  };
+}): null {
+  return null;
 }
