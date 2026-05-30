@@ -2,8 +2,8 @@
   "_generated": true,
   "_command": "npm run refresh:agent-context",
   "_do_not_edit": true,
-  "_generated_at": "2026-05-30T06:20:00.579Z",
-  "count": 98,
+  "_generated_at": "2026-05-30T07:03:46.178Z",
+  "count": 100,
   "routes": [
     {
       "path": "/api/ab-testing/impression",
@@ -216,6 +216,7 @@
       "path": "/api/dashboard/compliance-audit",
       "file": "app/api/dashboard/compliance-audit/route.ts",
       "methods": [
+        "GET",
         "POST"
       ]
     },
@@ -376,6 +377,13 @@
       ]
     },
     {
+      "path": "/api/dashboard/system-integrity",
+      "file": "app/api/dashboard/system-integrity/route.ts",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
       "path": "/api/dashboard/test-inspection",
       "file": "app/api/dashboard/test-inspection/route.ts",
       "methods": [
@@ -401,6 +409,13 @@
       "file": "app/api/dashboard/trigger-scan/route.ts",
       "methods": [
         "POST"
+      ]
+    },
+    {
+      "path": "/api/dashboard/web-vitals-summary",
+      "file": "app/api/dashboard/web-vitals-summary/route.ts",
+      "methods": [
+        "GET"
       ]
     },
     {
