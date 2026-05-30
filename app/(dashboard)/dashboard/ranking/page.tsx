@@ -1,6 +1,7 @@
 import { Search } from 'lucide-react';
 import { getRankingData } from '@/lib/actions/ranking';
 import { RankingDashboard } from '@/components/dashboard/ranking-dashboard';
+import { PageHeader } from '@/components/dashboard/ui';
 import { IndexingCard } from './indexing-card';
 
 export const dynamic = 'force-dynamic';
@@ -12,15 +13,11 @@ export default async function RankingPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-          <Search className="h-6 w-6 text-violet-500" />
-          Ranking Tracker
-        </h1>
-        <p className="text-slate-500 mt-1">
-          Google-Positionen &amp; SERP-Monitoring f&uuml;r alle 4 M&auml;rkte
-        </p>
-      </div>
+      <PageHeader
+        icon={Search}
+        title="Ranking Tracker"
+        description="Google-Positionen & SERP-Monitoring für alle 4 Märkte"
+      />
 
       {/* Google Indexing API — fast URL submission */}
       <IndexingCard />

@@ -210,3 +210,25 @@
 .dashboard-progress .bar.blue {
   background: linear-gradient(90deg, var(--dash-accent-blue), #8b5cf6);
 }
+
+/* ============================================================
+   PRIMITIVE TONE TOKENS — brand-aligned icon tints for
+   components/dashboard/ui/* (StatCard icon box, header icons).
+   Foreground = brand --sfp-* vars; tints kept as hex (matches
+   existing dashboard.css convention). No hex in component JSX.
+   ============================================================ */
+.dash-tone-navy  { background: var(--sfp-sky, #E8F0FB); color: var(--sfp-navy, #1B4F8C); }
+.dash-tone-green { background: #E7F3EC; color: var(--sfp-green, #1A6B3A); }
+.dash-tone-gold  { background: #FDF1DD; color: var(--sfp-gold-dark, #D48B1A); }
+.dash-tone-red   { background: #FBE3E4; color: var(--sfp-red, #D64045); }
+.dash-tone-slate { background: #F1F5F9; color: #475569; }
+.dash-tone-blue  { background: #DBEAFE; color: #2563EB; }
+.dash-tone-amber { background: #FEF3C7; color: #D97706; }
+
+.dash-tone-text-navy  { color: var(--sfp-navy, #1B4F8C); }
+.dash-tone-text-green { color: var(--sfp-green, #1A6B3A); }
+.dash-tone-text-gold  { color: var(--sfp-gold-dark, #D48B1A); }
+.dash-tone-text-red   { color: var(--sfp-red, #D64045); }
+.dash-tone-text-slate { color: #64748B; }
+.dash-tone-text-blue  { color: #2563EB; }
+.dash-tone-text-amber { color: #D97706; }

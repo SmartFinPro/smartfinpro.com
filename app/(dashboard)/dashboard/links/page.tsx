@@ -1,26 +1,30 @@
 export const dynamic = 'force-dynamic';
 
 import { Suspense } from 'react';
-import { Plus } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Link2, Plus } from 'lucide-react';
 import { AffiliateCommandCenter } from '@/components/dashboard/affiliate-command-center';
 import { CreateLinkDialog } from '@/components/dashboard/create-link-dialog';
 import { getAffiliateLinksService } from '@/lib/actions/affiliate-links';
 import { WidgetErrorBoundary } from '@/components/dashboard/widget-error-boundary';
+import { PageHeader, ActionButton } from '@/components/dashboard/ui';
 
 export default async function LinksPage() {
   const { data: links } = await getAffiliateLinksService();
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-end">
-        <CreateLinkDialog>
-          <Button className="gap-2 !bg-violet-600 hover:!bg-violet-700 !text-white">
-            <Plus className="h-4 w-4" />
-            Add Link
-          </Button>
-        </CreateLinkDialog>
-      </div>
+      <PageHeader
+        icon={Link2}
+        title="Affiliate Links"
+        description="Manage cloaked affiliate links and CPA mapping"
+        actions={
+          <CreateLinkDialog>
+            <ActionButton variant="primary" icon={Plus}>
+              Add Link
+            </ActionButton>
+          </CreateLinkDialog>
+        }
+      />
 
       <WidgetErrorBoundary label="Affiliate Links" minHeight="h-[600px]">
         <Suspense
