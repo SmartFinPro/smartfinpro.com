@@ -21,6 +21,7 @@ import { EPCTrendChart } from '@/components/dashboard/epc-trend-chart';
 import { RevenueChart } from '@/components/dashboard/revenue-chart';
 import { RecentConversions } from '@/components/dashboard/recent-conversions';
 import { WidgetErrorBoundary } from '@/components/dashboard/widget-error-boundary';
+import { ExportButton } from '@/components/dashboard/export-button';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -209,6 +210,7 @@ export default async function RevenuePage() {
           <span className="text-xs text-slate-400 ml-auto">
             {pageStats.totalPages} pages tracked
           </span>
+          <ExportButton dataset="revenue-by-page" />
         </div>
         <div className="p-4">
           <WidgetErrorBoundary label="Revenue by Page" minHeight="h-64">

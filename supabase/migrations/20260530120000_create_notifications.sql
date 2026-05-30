@@ -2,8 +2,9 @@
 -- Date: 2026-05-30
 --
 -- Central event log surfaced in the dashboard header bell + /dashboard/notifications.
--- Producer: lib/notifications.ts → recordNotification() (also wired into
--- lib/alerts/telegram.ts so every Telegram alert is mirrored here).
+-- Producer: lib/notifications.ts → recordNotification(), fed by the
+-- channel-neutral alert layer (lib/alerts/alert-delivery.ts). Telegram is not
+-- a product channel; the legacy telegram.ts shim delegates here too.
 --
 -- RLS: service role only. All reads/writes go through API routes + server
 -- actions that use the service client (RLS bypassed there).
