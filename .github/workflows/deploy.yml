@@ -219,8 +219,11 @@ jobs:
              done
              echo "  origin not 200 after retries (continuing — smoke test is the gate)"; exit 0'
           echo "── Warming CDN / (primes Cloudflare after pre-smoke purge) ──"
+          # Same UA as scripts/smoke-test.mjs: Cloudflare 403-challenges the
+          # default curl UA from GH Actions datacenter IPs, so without this the
+          # warm-up never gets a 200 and never primes the cache.
           for i in 1 2 3 4 5 6; do
-            S=$(curl -sf -o /dev/null -w "%{http_code}" "${{ secrets.NEXT_PUBLIC_SITE_URL }}/" 2>/dev/null || echo "000")
+            S=$(curl -sf -H "User-Agent: SmartFinPro-SmokeTest/1.0" -o /dev/null -w "%{http_code}" "${{ secrets.NEXT_PUBLIC_SITE_URL }}/" 2>/dev/null || echo "000")
             echo "  cdn attempt $i: HTTP $S"
             [ "$S" = "200" ] && { echo "  cdn ready"; break; }
             sleep 5
