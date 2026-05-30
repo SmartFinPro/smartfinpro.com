@@ -26,7 +26,7 @@ import { ContentHubRefreshButton } from '@/components/dashboard/content-hub-refr
 import { BacklinkImportButton } from '@/components/dashboard/backlink-import-button';
 import { ContentFreshnessWidget } from '@/components/dashboard/content-freshness-widget';
 import { WidgetErrorBoundary } from '@/components/dashboard/widget-error-boundary';
-import { PageHeader, SectionCard } from '@/components/dashboard/ui';
+import { PageHeader, SectionCard, dashToneIconClass, type DashTone } from '@/components/dashboard/ui';
 import type { ContentHubRow, HealthStatus } from '@/lib/actions/content-hub';
 
 export const dynamic = 'force-dynamic';
@@ -140,7 +140,7 @@ function StatCard({
   label,
   value,
   icon: Icon,
-  iconBg,
+  tone = 'navy',
   href,
   active,
   sub,
@@ -148,36 +148,41 @@ function StatCard({
   label: string;
   value: string | number;
   icon: React.ComponentType<{ className?: string }>;
-  iconBg: string;
+  tone?: DashTone;
   href?: string;
   active?: boolean;
   sub?: string;
 }) {
   const card = (
     <div
-      className={`bg-white border rounded-xl p-5 shadow-sm transition-all ${
+      className={`h-full flex flex-col bg-white border rounded-xl p-5 shadow-sm transition-all ${
         active
-          ? 'border-violet-300 ring-2 ring-violet-100'
+          ? 'border-[var(--sfp-navy)] ring-2 ring-[var(--sfp-sky)]'
           : href
-            ? 'border-slate-200 hover:border-violet-200 hover:shadow-md cursor-pointer'
+            ? 'border-slate-200 hover:border-slate-300 hover:shadow-md cursor-pointer'
             : 'border-slate-200'
       }`}
     >
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-sm text-slate-500">{label}</p>
-          <p className="text-2xl font-semibold text-slate-900 mt-1 tabular-nums">{value}</p>
-          {sub && <p className="text-xs text-slate-400 mt-1">{sub}</p>}
-        </div>
-        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${iconBg}`}>
+      {/* Top row: label + tinted icon box */}
+      <div className="flex items-start justify-between gap-3">
+        <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">{label}</p>
+        <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${dashToneIconClass(tone)}`}>
           <Icon className="h-5 w-5" />
         </div>
       </div>
+      {/* Value */}
+      <p className="text-2xl font-semibold text-slate-900 tabular-nums mt-3">{value}</p>
+      {/* Sub line — always rendered (nbsp fallback) so every card aligns to the same baseline */}
+      <p className="text-xs text-slate-400 mt-1">{sub || ' '}</p>
     </div>
   );
 
   if (href) {
-    return <Link href={href}>{card}</Link>;
+    return (
+      <Link href={href} className="block h-full">
+        {card}
+      </Link>
+    );
   }
   return card;
 }
@@ -296,7 +301,7 @@ export default async function ContentHubPage({ searchParams }: ContentHubPagePro
           label="Total Pages"
           value={stats.totalPages}
           icon={FileText}
-          iconBg="bg-violet-50 text-violet-500"
+          tone="navy"
           href="/dashboard/content/hub"
           active={!hasAnyFilter}
         />
@@ -304,32 +309,32 @@ export default async function ContentHubPage({ searchParams }: ContentHubPagePro
           label="Avg CPS"
           value={stats.avgCps !== null ? `${stats.avgCps}/100` : '—'}
           icon={Zap}
-          iconBg="bg-cyan-50 text-cyan-500"
+          tone="navy"
           sub={stats.avgCps !== null ? `${Math.round(stats.cpsCoverage * 100)}% coverage` : 'No competitor snapshots yet'}
         />
         <StatCard
           label="Backlinks"
           value={stats.totalBacklinks > 0 ? stats.totalBacklinks.toLocaleString('en-US') : '—'}
           icon={Link2}
-          iconBg="bg-indigo-50 text-indigo-500"
+          tone="navy"
         />
         <StatCard
           label="Avg Word Count"
           value={stats.avgWordCount.toLocaleString('en-US')}
           icon={TrendingUp}
-          iconBg="bg-emerald-50 text-emerald-500"
+          tone="navy"
         />
         <StatCard
           label="Avg Quality"
           value={`${stats.avgQuality}/100`}
           icon={BarChart3}
-          iconBg="bg-blue-50 text-blue-500"
+          tone="navy"
         />
         <StatCard
           label="SEO Optimal"
           value={stats.seoGreen}
           icon={CheckCircle2}
-          iconBg="bg-emerald-50 text-emerald-500"
+          tone="green"
           href={buildHubUrl({ seo: 'optimal', quality: qualityFilter, status: statusFilter, cps: cpsFilter })}
           active={seoFilter === 'optimal'}
         />
@@ -337,7 +342,7 @@ export default async function ContentHubPage({ searchParams }: ContentHubPagePro
           label="SEO Issues"
           value={stats.seoYellow + stats.seoRed}
           icon={AlertTriangle}
-          iconBg="bg-amber-50 text-amber-500"
+          tone="amber"
           href={buildHubUrl({ seo: 'issues', quality: qualityFilter, status: statusFilter, cps: cpsFilter })}
           active={seoFilter === 'issues'}
         />
@@ -345,7 +350,7 @@ export default async function ContentHubPage({ searchParams }: ContentHubPagePro
           label="Archived"
           value={archivedCount}
           icon={Archive}
-          iconBg="bg-orange-50 text-orange-500"
+          tone="slate"
           href={buildHubUrl({ seo: seoFilter, quality: qualityFilter, status: 'archived', cps: cpsFilter })}
           active={statusFilter === 'archived'}
         />
