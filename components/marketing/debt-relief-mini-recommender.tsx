@@ -114,7 +114,7 @@ export function DebtReliefMiniRecommender({ affiliateUrl }: DebtReliefMiniRecomm
           target="_blank"
           rel="noopener sponsored"
           className="inline-flex items-center justify-center rounded-lg px-3 py-2 text-xs font-semibold no-underline hover:no-underline"
-          style={{ background: 'var(--sfp-gold)', color: '#fff', textDecoration: 'none' }}
+          style={{ background: 'var(--sfp-gold)', color: 'var(--sfp-ink)', textDecoration: 'none' }}
         >
           Get Free Debt Analysis
         </Link>

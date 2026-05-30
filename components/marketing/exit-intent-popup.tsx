@@ -196,7 +196,7 @@ export default function ExitIntentPopup() {
                     <div className="h-1 w-full bg-gray-200 rounded"></div>
                   </div>
                 </div>
-                <div className="absolute -top-2 -right-2 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg" style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}>
+                <div className="absolute -top-2 -right-2 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg" style={{ background: 'var(--sfp-gold)', color: 'var(--sfp-ink)' }}>
                   FREE
                 </div>
               </div>

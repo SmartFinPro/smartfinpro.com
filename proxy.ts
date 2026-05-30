@@ -303,6 +303,46 @@ export async function proxy(request: NextRequest) {
       return response;
     }
 
+    // ── Genesis API Auth Gate (F-03) ─────────────────────────────
+    // Protects ALL /api/genesis/* routes (content pipeline) — they
+    // mutate MDX, burn Claude/Serper budget, and call the Indexing API.
+    // Previously unauthenticated (fell through the /api PROTECTED_PREFIXES
+    // skip). Accepts EITHER a valid dashboard session cookie (UI calls
+    // carry it same-origin) OR a Bearer CRON_SECRET (cron/internal calls).
+    // Returns JSON 401 — never HTML. Must run BEFORE the /api skip.
+    if (pathname.startsWith('/api/genesis')) {
+      const authDisabled =
+        process.env.NODE_ENV !== 'production' &&
+        process.env.DASHBOARD_AUTH_DISABLED === 'true';
+      if (authDisabled) return NextResponse.next();
+
+      const cronSecret = process.env.CRON_SECRET;
+      const authHeader = request.headers.get('authorization') ?? '';
+      const bearerToken = authHeader.startsWith('Bearer ')
+        ? authHeader.slice(7)
+        : '';
+      const hasValidBearer = Boolean(
+        cronSecret && bearerToken && timingSafeCompare(bearerToken, cronSecret),
+      );
+
+      let hasValidSession = false;
+      const dashSecret = process.env.DASHBOARD_SECRET;
+      if (dashSecret) {
+        const expectedToken = await createSessionToken(dashSecret);
+        const candidates = getDashboardCookieCandidates(request);
+        hasValidSession = candidates.some(
+          (value) =>
+            timingSafeCompare(value, expectedToken) ||
+            timingSafeCompare(value, dashSecret),
+        );
+      }
+
+      if (!hasValidBearer && !hasValidSession) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
+      // Authenticated → fall through to normal handling.
+    }
+
     // ── Dashboard Auth Gate ──────────────────────────────────────
     // Protects /dashboard/* with DASHBOARD_SECRET cookie check.
     // Login via POST form — secret never appears in URL or browser history.

@@ -156,7 +156,7 @@ export function FeaturedPartnerOffer({
                 rel="noopener sponsored"
                 onClick={handleClick}
                 className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl text-sm font-bold text-white shadow-md hover:shadow-lg transition-all"
-                style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}
+                style={{ background: 'var(--sfp-gold)', color: 'var(--sfp-ink)' }}
               >
                 Visit {partner.providerName}
                 <ExternalLink className="h-4 w-4" />

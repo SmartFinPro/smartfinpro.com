@@ -67,7 +67,7 @@ export default function UKSavingsPage() {
             <div className="flex flex-wrap gap-3">
               <Button
                 asChild
-                className="bg-var(--sfp-gold) hover:bg-var(--sfp-gold-dark) text-white px-6 py-3 rounded-lg font-medium transition-colors"
+                className="bg-[var(--sfp-gold)] hover:bg-[var(--sfp-gold-dark)] text-[var(--sfp-ink)] px-6 py-3 rounded-lg font-medium transition-colors"
               >
                 <Link href="/uk/savings#accounts">
                   Compare Accounts
@@ -345,7 +345,7 @@ export default function UKSavingsPage() {
             </p>
             <Button
               asChild
-              className="bg-var(--sfp-gold) hover:bg-var(--sfp-gold-dark) text-white px-8 py-3 rounded-lg font-bold transition-colors"
+              className="bg-[var(--sfp-gold)] hover:bg-[var(--sfp-gold-dark)] text-[var(--sfp-ink)] px-8 py-3 rounded-lg font-bold transition-colors"
             >
               <Link href="#accounts">View Account Comparison</Link>
             </Button>

@@ -512,7 +512,7 @@ export function CreditCardRewardsCalculator() {
                 Based on your spending, the {winner.card.name} is the best fit. Apply through our
                 link to access the current welcome bonus offer.
               </p>
-              <Button asChild className="w-full text-white font-semibold hover:opacity-90" style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}>
+              <Button asChild className="w-full text-white font-semibold hover:opacity-90" style={{ background: 'var(--sfp-gold)', color: 'var(--sfp-ink)' }}>
                 <a href={`/go/${winner.card.affiliateSlug}`}>
                   Apply for {winner.card.name}
                   <ArrowRight className="h-4 w-4 ml-2" />
@@ -540,7 +540,7 @@ export function CreditCardRewardsCalculator() {
                 provides the best net value. Try adjusting your dining or grocery spending to see
                 when a premium card makes sense.
               </p>
-              <Button asChild className="w-full text-white hover:opacity-90" style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}>
+              <Button asChild className="w-full text-white hover:opacity-90" style={{ background: 'var(--sfp-gold)', color: 'var(--sfp-ink)' }}>
                 <a href="/personal-finance">
                   Compare Credit Cards
                   <ArrowRight className="h-4 w-4 ml-2" />

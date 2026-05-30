@@ -62,7 +62,7 @@ export default function Hero({
         <div
           className="absolute inset-0"
           style={{
-            background: 'linear-gradient(180deg, rgba(15,46,82,0.45) 0%, rgba(15,46,82,0.65) 60%, rgba(15,46,82,0.85) 100%)',
+            background: 'linear-gradient(180deg, rgba(15,46,82,0.12) 0%, rgba(15,46,82,0.28) 55%, rgba(15,46,82,0.52) 100%)',
           }}
         />
       </div>
@@ -73,19 +73,19 @@ export default function Hero({
         <div
           className="mb-9 inline-flex items-center gap-2"
           style={{
-            border: '1px solid rgba(255,255,255,0.18)',
+            border: '1px solid rgba(255,255,255,0.45)',
             borderRadius: '6px',
             padding: '7px 16px',
           }}
         >
-          <Shield className="h-3.5 w-3.5" style={{ color: 'rgba(255,255,255,0.7)' }} />
+          <Shield className="h-3.5 w-3.5" style={{ color: 'rgba(255,255,255,0.95)' }} />
           <span
             style={{
               fontSize: '11px',
               fontWeight: 600,
               textTransform: 'uppercase',
               letterSpacing: '1.8px',
-              color: 'rgba(255,255,255,0.7)',
+              color: 'rgba(255,255,255,0.95)',
             }}
           >
             Independent Financial Research
@@ -101,6 +101,7 @@ export default function Hero({
             lineHeight: 1.06,
             marginBottom: '28px',
             letterSpacing: '-2.5px',
+            textShadow: '0 2px 18px rgba(8,24,44,0.55)',
           }}
         >
           {firstLine}
@@ -119,10 +120,11 @@ export default function Hero({
           style={{
             fontSize: '16px',
             fontWeight: 400,
-            color: 'rgba(255,255,255,0.55)',
+            color: 'rgba(255,255,255,0.92)',
             maxWidth: '500px',
             marginBottom: '48px',
             lineHeight: 1.75,
+            textShadow: '0 1px 12px rgba(8,24,44,0.6)',
           }}
         >
           {subtitle}
@@ -136,7 +138,7 @@ export default function Hero({
             style={{
               padding: '14px 32px',
               background: 'var(--sfp-gold)',
-              color: '#fff',
+              color: 'var(--sfp-ink)',
               fontSize: '14px',
               fontWeight: 700,
               borderRadius: '8px',
@@ -171,7 +173,7 @@ export default function Hero({
               key={badge.text}
               className="flex items-center gap-2"
               style={{
-                border: '1px solid rgba(255,255,255,0.18)',
+                border: '1px solid rgba(255,255,255,0.45)',
                 borderRadius: '6px',
                 padding: '7px 16px',
               }}
@@ -183,7 +185,7 @@ export default function Hero({
                   fontWeight: 600,
                   textTransform: 'uppercase',
                   letterSpacing: '1.8px',
-                  color: 'rgba(255,255,255,0.7)',
+                  color: 'rgba(255,255,255,0.95)',
                 }}
               >
                 {badge.text}

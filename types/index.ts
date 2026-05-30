@@ -133,6 +133,13 @@ export interface ReviewData {
   content: string;
   /** When true, this is a guide/article — no rating stars, no CTA, no pros/cons */
   isGuide?: boolean;
+  /**
+   * F-04b: Force the leveraged-product risk warning even when the page is not
+   * categorised as trading/forex (e.g. a CFD broker filed under personal-finance).
+   */
+  hasLeverageRisk?: boolean;
+  /** Optional CFD loss quote for the FCA/ASIC risk warning, e.g. "76%". */
+  lossPercentage?: string;
 }
 
 export interface FAQ {

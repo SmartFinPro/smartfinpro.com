@@ -280,7 +280,7 @@ export function NewsletterBox({
                 </div>
               </div>
               {/* Badge */}
-              <div className="absolute -top-2 -right-2 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg" style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}>
+              <div className="absolute -top-2 -right-2 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg" style={{ background: 'var(--sfp-gold)', color: 'var(--sfp-ink)' }}>
                 FREE
               </div>
             </div>

@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import { headers } from 'next/headers';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import Toaster from '@/components/ui/sonner';
@@ -78,24 +77,19 @@ export const metadata: Metadata = {
   // verification: { google: 'ACTUAL-CODE-HERE' },
 };
 
-// Silo (market) is injected by proxy.ts middleware as an x-sfp-silo request header.
-// Reading it here lets us render <html data-silo="..."> server-side, avoiding the
-// inline detection script that triggered React 19's "script tag while rendering
-// React component" dev warning. Falls back to 'us' if header missing (e.g. static).
-async function readSilo(): Promise<'us' | 'uk' | 'ca' | 'au'> {
-  const h = await headers();
-  const v = h.get('x-sfp-silo');
-  return v === 'uk' || v === 'ca' || v === 'au' ? v : 'us';
-}
-
-export default async function RootLayout({
+// F-06: The silo (market) CSS tint is applied client-side by <SiloClassProvider/>
+// (body.silo-* classes, see globals.css). We deliberately DO NOT read the
+// x-sfp-silo header here: a server-side headers() call is a Dynamic API that
+// opts the ENTIRE route tree into dynamic rendering, defeating generateStaticParams
+// for every static route. The body.silo-* fallback covers the tint; html[data-silo]
+// is redundant. Removing it lets non-searchParams routes render statically again.
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const silo = await readSilo();
   return (
-    <html lang="en" data-silo={silo} suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <head>
         {/* Preconnect to image CDN for faster LCP */}
         <link rel="preconnect" href="https://images.smartfinpro.com" crossOrigin="anonymous" />

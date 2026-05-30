@@ -33,6 +33,10 @@ export interface ContentMeta {
   customH1?: boolean;
   keywords?: string[];
   miniQuiz?: { topic: string; market?: string; title?: string };
+  /** F-04b: force CFD/leverage risk warning regardless of category. */
+  hasLeverageRisk?: boolean;
+  /** Optional CFD loss quote for the risk warning, e.g. "76%". */
+  lossPercentage?: string;
 }
 
 // ── Currency Map ────────────────────────────────────────────
@@ -78,6 +82,10 @@ function normalizeFrontmatter(raw: Record<string, unknown>): ContentMeta {
     customH1: Boolean(raw.customH1),
     keywords: (raw.keywords as string[]) ?? undefined,
     miniQuiz: (raw.miniQuiz as ContentMeta['miniQuiz']) ?? undefined,
+    hasLeverageRisk:
+      raw.hasLeverageRisk === true || raw.has_leverage_risk === true || undefined,
+    lossPercentage:
+      (raw.lossPercentage as string) ?? (raw.loss_percentage as string) ?? undefined,
   };
 }
 

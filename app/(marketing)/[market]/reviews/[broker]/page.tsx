@@ -283,7 +283,7 @@ export default async function BrokerReviewPage({ params }: PageProps) {
                 asChild
                 size="lg"
                 className="btn-shimmer h-14 px-10 text-lg border-0 text-white shadow-md"
-                style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}
+                style={{ background: 'var(--sfp-gold)', color: 'var(--sfp-ink)' }}
               >
                 <Link href={review.affiliateUrl} target="_blank" rel="noopener sponsored">
                   {review.ctaLabel}
@@ -574,7 +574,7 @@ export default async function BrokerReviewPage({ params }: PageProps) {
                 asChild
                 size="lg"
                 className="btn-shimmer h-14 px-10 text-lg border-0 text-white shadow-md"
-                style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}
+                style={{ background: 'var(--sfp-gold)', color: 'var(--sfp-ink)' }}
               >
                 <Link href={review.affiliateUrl} target="_blank" rel="noopener sponsored">
                   {review.ctaLabel}

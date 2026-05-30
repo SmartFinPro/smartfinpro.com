@@ -209,7 +209,7 @@ export default function ToolsPage() {
             <Link
               href="/tools/broker-finder"
               className="inline-flex items-center gap-2 px-6 py-3 text-white rounded-xl font-medium transition-colors hover:shadow-lg"
-              style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}
+              style={{ background: 'var(--sfp-gold)', color: 'var(--sfp-ink)' }}
             >
               <Target className="h-5 w-5" />
               Take the Quiz

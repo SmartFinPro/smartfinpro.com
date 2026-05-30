@@ -499,7 +499,7 @@ function PartnerRow({ partner, index, isWinner, onCtaClick }: PartnerRowProps) {
                 : 'border border-gray-200 hover:bg-gray-50'
             }`}
             style={isWinner
-              ? { background: 'var(--sfp-gold)', color: '#ffffff', boxShadow: '0 4px 14px rgba(245,166,35,0.35)' }
+              ? { background: 'var(--sfp-gold)', color: 'var(--sfp-ink)', boxShadow: '0 4px 14px rgba(245,166,35,0.35)' }
               : { background: 'white', color: 'var(--sfp-navy)' }
             }
           >
@@ -609,7 +609,7 @@ function PartnerRow({ partner, index, isWinner, onCtaClick }: PartnerRowProps) {
                 : 'border border-gray-200 hover:bg-gray-50'
             }`}
             style={isWinner
-              ? { background: 'var(--sfp-gold)', color: '#ffffff', boxShadow: '0 4px 14px rgba(245,166,35,0.35)' }
+              ? { background: 'var(--sfp-gold)', color: 'var(--sfp-ink)', boxShadow: '0 4px 14px rgba(245,166,35,0.35)' }
               : { background: 'white', color: 'var(--sfp-navy)' }
             }
           >

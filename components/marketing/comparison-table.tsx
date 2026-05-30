@@ -134,7 +134,7 @@ export function ComparisonTable({
                             asChild
                             size="sm"
                             className="rounded-lg border-0 text-white hover:opacity-90 font-medium"
-                            style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}
+                            style={{ background: 'var(--sfp-gold)', color: 'var(--sfp-ink)' }}
                           >
                             <Link href={item.ctaLink} target="_blank" rel="noopener sponsored">
                               {item.cta || 'Visit Site'}
@@ -263,7 +263,7 @@ export function ComparisonTable({
                           asChild
                           size="sm"
                           className="rounded-lg border-0 text-white hover:opacity-90"
-                          style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}
+                          style={{ background: 'var(--sfp-gold)', color: 'var(--sfp-ink)' }}
                         >
                           <Link href={product.affiliateUrl} target="_blank" rel="noopener sponsored">
                             {product.ctaText || 'Visit Site'}

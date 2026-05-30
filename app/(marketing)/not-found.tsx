@@ -22,7 +22,7 @@ export default function MarketingNotFound() {
           <Link
             href="/"
             className="inline-flex items-center gap-2 px-5 py-2.5 text-white rounded-xl hover:opacity-90 transition-colors font-semibold text-sm"
-            style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}
+            style={{ background: 'var(--sfp-gold)', color: 'var(--sfp-ink)' }}
           >
             <Home className="h-4 w-4" />
             Homepage

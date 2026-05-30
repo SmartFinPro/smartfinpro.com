@@ -27,6 +27,9 @@ export default function robots(): MetadataRoute.Robots {
             '/api/',
             '/go/',
             '/_next/',
+            // F-18c: UA-specific groups do NOT inherit the '*' disallow — repeat private paths.
+            '/private/',
+            '/sfp-mk-*',
           ],
         },
         {
@@ -38,16 +41,47 @@ export default function robots(): MetadataRoute.Robots {
             '/api/',
             '/go/',
             '/_next/',
+            '/private/',
+            '/sfp-mk-*',
           ],
         },
+        // F-10: AEO/GEO — explicitly ALLOW answer-engine + LLM crawlers so content
+        // is citable in ChatGPT, Perplexity, Google AI Overviews & Claude.
+        // Public marketing pages only; /dashboard, /api, /go, /private stay blocked.
         {
-          // Block AI scrapers if desired (optional)
           userAgent: 'GPTBot',
-          disallow: ['/'],
+          allow: '/',
+          disallow: ['/dashboard/', '/api/', '/go/', '/_next/', '/private/', '/sfp-mk-*'],
+        },
+        {
+          userAgent: 'OAI-SearchBot',
+          allow: '/',
+          disallow: ['/dashboard/', '/api/', '/go/', '/_next/', '/private/', '/sfp-mk-*'],
+        },
+        {
+          userAgent: 'ChatGPT-User',
+          allow: '/',
+          disallow: ['/dashboard/', '/api/', '/go/', '/_next/', '/private/', '/sfp-mk-*'],
+        },
+        {
+          userAgent: 'PerplexityBot',
+          allow: '/',
+          disallow: ['/dashboard/', '/api/', '/go/', '/_next/', '/private/', '/sfp-mk-*'],
+        },
+        {
+          userAgent: 'Google-Extended',
+          allow: '/',
+          disallow: ['/dashboard/', '/api/', '/go/', '/_next/', '/private/', '/sfp-mk-*'],
         },
         {
           userAgent: 'CCBot',
-          disallow: ['/'],
+          allow: '/',
+          disallow: ['/dashboard/', '/api/', '/go/', '/_next/', '/private/', '/sfp-mk-*'],
+        },
+        {
+          userAgent: 'ClaudeBot',
+          allow: '/',
+          disallow: ['/dashboard/', '/api/', '/go/', '/_next/', '/private/', '/sfp-mk-*'],
         },
       ],
       sitemap: `${BASE_URL}/sitemap.xml`,

@@ -33,7 +33,7 @@ export function ToggleChip({ label, hint, checked, onChange }: ToggleChipProps) 
             width: 22,
             height: 22,
             background: checked ? 'var(--sfp-gold)' : '#F3F4F6',
-            color: '#ffffff',
+            color: 'var(--sfp-ink)',
             transition: 'background 150ms ease',
           }}
         >

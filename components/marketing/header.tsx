@@ -324,7 +324,7 @@ export default function Header({ market: marketProp }: HeaderProps) {
                     ))}
                   </div>
                 </div>
-                <Button asChild className="w-full text-white border-0 mt-2 font-medium" style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}>
+                <Button asChild className="w-full text-white border-0 mt-2 font-medium" style={{ background: 'var(--sfp-gold)', color: 'var(--sfp-ink)' }}>
                   <Link href="/tools" onClick={() => setMobileMenuOpen(false)}>Get Started</Link>
                 </Button>
               </nav>

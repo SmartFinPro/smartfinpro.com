@@ -172,7 +172,7 @@ export function FrictionlessCTA({
               rel="noopener sponsored"
               onClick={() => trackClick(affiliateUrl)}
               className="inline-flex items-center gap-2 px-8 py-4 rounded-xl text-lg font-bold text-white shadow-md transition-all hover:shadow-lg hover:scale-105"
-              style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}
+              style={{ background: 'var(--sfp-gold)', color: 'var(--sfp-ink)' }}
             >
               <Sparkles className="h-5 w-5" />
               Try {productName} Free
