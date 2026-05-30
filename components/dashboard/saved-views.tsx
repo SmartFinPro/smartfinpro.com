@@ -6,7 +6,7 @@
 // purely on the page's existing query-params; no new filter model.
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-import { Bookmark, ChevronDown, Plus, Trash2 } from 'lucide-react';
+import { Bookmark, ChevronDown, Plus, Trash2, Star } from 'lucide-react';
 
 interface SavedView {
   id: string;
@@ -27,6 +27,7 @@ export function SavedViews() {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const autoAppliedRef = useRef(false); // guards default auto-apply (once per mount)
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -54,6 +55,31 @@ export function SavedViews() {
     document.addEventListener('mousedown', onClick);
     return () => document.removeEventListener('mousedown', onClick);
   }, []);
+
+  // Auto-apply the default view — ONLY when the route is opened without any
+  // query-params. Loop-safe: guarded by a ref (at most one attempt per mount)
+  // AND the empty-params precondition (after router.replace the URL has params,
+  // and pathname is the only dependency, so the effect does not re-fire).
+  useEffect(() => {
+    if (autoAppliedRef.current) return;
+    if (searchParams.toString() !== '') return; // params present → respect them
+    autoAppliedRef.current = true;
+    (async () => {
+      try {
+        const res = await fetch(`/api/dashboard/saved-views?route=${encodeURIComponent(pathname)}`);
+        const json = await res.json();
+        const list: SavedView[] = json?.success ? (json.data ?? []) : [];
+        const def = list.find((v) => v.is_default);
+        if (def) {
+          const qs = new URLSearchParams(def.params).toString();
+          if (qs) router.replace(`${pathname}?${qs}`); // only if the default carries params
+        }
+      } catch {
+        /* non-critical — no auto-apply */
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]);
 
   const applyView = (view: SavedView) => {
     const sp = new URLSearchParams(view.params);
@@ -94,6 +120,20 @@ export function SavedViews() {
     }
   };
 
+  const setDefault = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await fetch('/api/dashboard/saved-views', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ route: pathname, id }),
+      });
+      await load();
+    } catch {
+      /* non-critical */
+    }
+  };
+
   return (
     <div className="relative" ref={ref}>
       <button
@@ -120,11 +160,26 @@ export function SavedViews() {
                   onClick={() => applyView(view)}
                   className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center justify-between gap-2 group"
                 >
-                  <span className="truncate">{view.name}</span>
-                  <Trash2
-                    className="h-3.5 w-3.5 text-slate-300 hover:text-red-500 shrink-0 opacity-0 group-hover:opacity-100 transition"
-                    onClick={(e) => deleteView(view.id, e)}
-                  />
+                  <span className="truncate flex items-center gap-1.5">
+                    {view.is_default && (
+                      <Star className="h-3.5 w-3.5 dash-tone-text-gold shrink-0" fill="currentColor" aria-label="Standard" />
+                    )}
+                    {view.name}
+                  </span>
+                  <span className="flex items-center gap-1.5 shrink-0">
+                    {!view.is_default && (
+                      <Star
+                        className="h-3.5 w-3.5 text-slate-300 hover:text-amber-500 opacity-0 group-hover:opacity-100 transition"
+                        onClick={(e) => setDefault(view.id, e)}
+                        aria-label="Als Standard setzen"
+                      />
+                    )}
+                    <Trash2
+                      className="h-3.5 w-3.5 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition"
+                      onClick={(e) => deleteView(view.id, e)}
+                      aria-label="Löschen"
+                    />
+                  </span>
                 </button>
               ))
             )}

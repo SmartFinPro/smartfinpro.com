@@ -86,3 +86,38 @@ export async function deleteSavedView(id: string): Promise<Result<null>> {
     return { success: false, error: 'Internal error' };
   }
 }
+
+// ── Set the default view for a route (one default per route) ─────────────────
+export async function setDefaultSavedView(route: string, id: string): Promise<Result<null>> {
+  try {
+    const supabase = createServiceClient();
+
+    // 1) Unset any existing default(s) for this route.
+    const { error: unsetError } = await supabase
+      .from('dashboard_saved_views')
+      .update({ is_default: false })
+      .eq('route', route)
+      .eq('is_default', true);
+
+    if (unsetError) {
+      logger.error('setDefaultSavedView unset failed', { error: unsetError.message });
+      return { success: false, error: unsetError.message };
+    }
+
+    // 2) Set the chosen view as default (scoped to route as a defensive check).
+    const { error: setError } = await supabase
+      .from('dashboard_saved_views')
+      .update({ is_default: true })
+      .eq('id', id)
+      .eq('route', route);
+
+    if (setError) {
+      logger.error('setDefaultSavedView set failed', { error: setError.message });
+      return { success: false, error: setError.message };
+    }
+    return { success: true, data: null };
+  } catch (err) {
+    logger.error('setDefaultSavedView failed', err);
+    return { success: false, error: 'Internal error' };
+  }
+}
