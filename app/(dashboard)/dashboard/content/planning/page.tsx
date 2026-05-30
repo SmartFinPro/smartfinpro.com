@@ -2,6 +2,7 @@ import { getPendingPlans } from '@/lib/actions/daily-strategy';
 import { PlanningApproval } from '@/components/dashboard/planning-approval';
 import { AffiliateScanButton } from '@/components/dashboard/affiliate-scan-button';
 import { Sparkles, Calendar } from 'lucide-react';
+import { PageHeader } from '@/components/dashboard/ui';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,25 +24,17 @@ export default async function PlanningPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <div className="flex items-center gap-3 mb-1">
-          <div className="w-10 h-10 rounded-xl bg-violet-50 flex items-center justify-center">
-            <Sparkles className="h-5 w-5 text-violet-500" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-slate-800">Executive Approval</h1>
-            <div className="flex items-center gap-2">
-              <p className="text-sm text-slate-500">AI-curated content opportunities</p>
-              <span className="text-xs text-slate-400 flex items-center gap-1">
-                <Calendar className="h-3 w-3" />
-                {new Date().toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long' })}
-              </span>
-            </div>
-          </div>
-
-          <div className="ml-auto flex items-center gap-2">
+      <PageHeader
+        icon={Sparkles}
+        title="Executive Approval"
+        description="AI-curated content opportunities"
+        actions={
+          <>
+            <span className="text-xs text-slate-400 flex items-center gap-1">
+              <Calendar className="h-3 w-3" />
+              {new Date().toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long' })}
+            </span>
             <AffiliateScanButton />
-
             {plans.length > 0 && (
               <div className="px-3 py-1.5 rounded-full flex items-center gap-2 bg-emerald-50 border border-emerald-200">
                 <span className="relative flex h-2 w-2">
@@ -53,19 +46,19 @@ export default async function PlanningPage() {
                 </span>
               </div>
             )}
-          </div>
-        </div>
+          </>
+        }
+      />
 
-        {/* Instruction hint */}
-        <div className="mt-4 p-3 rounded-xl flex items-center gap-3 bg-violet-50 border border-violet-200">
-          <span className="text-base">&#x1F449;</span>
-          <p className="text-xs text-slate-600">
-            <span className="text-emerald-600 font-semibold">Swipe rechts</span> oder klicke{' '}
-            <span className="text-emerald-600">Approve</span> um die Auto-Genesis Pipeline zu starten.{' '}
-            <span className="text-red-500 font-semibold">Swipe links</span> oder klicke{' '}
-            <span className="text-red-500">Reject</span> um das Keyword zu archivieren.
-          </p>
-        </div>
+      {/* Instruction hint — unverändert (Body-Akzent, out of scope) */}
+      <div className="mt-4 p-3 rounded-xl flex items-center gap-3 bg-violet-50 border border-violet-200">
+        <span className="text-base">&#x1F449;</span>
+        <p className="text-xs text-slate-600">
+          <span className="text-emerald-600 font-semibold">Swipe rechts</span> oder klicke{' '}
+          <span className="text-emerald-600">Approve</span> um die Auto-Genesis Pipeline zu starten.{' '}
+          <span className="text-red-500 font-semibold">Swipe links</span> oder klicke{' '}
+          <span className="text-red-500">Reject</span> um das Keyword zu archivieren.
+        </p>
       </div>
 
       {/* Planning Approval Cards */}

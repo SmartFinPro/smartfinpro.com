@@ -5,6 +5,7 @@ import { getRevenueForecast } from '@/lib/actions/revenue-forecast';
 import { CtaHeatmap } from '@/components/dashboard/cta-heatmap';
 import { RevenueForecast } from '@/components/dashboard/revenue-forecast';
 import { ChunkErrorBoundary } from '@/components/dashboard/chunk-error-boundary';
+import { PageHeader } from '@/components/dashboard/ui';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -42,19 +43,11 @@ export default async function HeatmapPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <div className="flex items-center gap-3 mb-1">
-          <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-md shadow-violet-500/20">
-            <Flame className="h-4.5 w-4.5 text-white" />
-          </div>
-          <div>
-            <h1 className="text-xl font-bold text-slate-800">CTA Click Heatmap</h1>
-            <p className="text-sm text-slate-500">
-              Click density across all {data.cells.length || 194} pages — find your conversion winners
-            </p>
-          </div>
-        </div>
-      </div>
+      <PageHeader
+        icon={Flame}
+        title="CTA Click Heatmap"
+        description={`Click density across all ${data.cells.length || 194} pages — find your conversion winners`}
+      />
 
       {/* Revenue Forecast Panel — wrapped in ChunkErrorBoundary */}
       <ChunkErrorBoundary label="RevenueForecast">
