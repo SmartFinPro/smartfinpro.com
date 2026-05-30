@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { ChevronDown } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 
@@ -19,6 +19,7 @@ const SILOS = [
 export function SiloFilterDropdown({ currentSilo }: { currentSilo: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -31,7 +32,8 @@ export function SiloFilterDropdown({ currentSilo }: { currentSilo: string }) {
     } else {
       params.set('silo', value);
     }
-    router.push(`/dashboard/analytics?${params.toString()}`);
+    const qs = params.toString();
+    router.push(qs ? `${pathname}?${qs}` : pathname);
     setIsOpen(false);
   };
 
