@@ -599,6 +599,13 @@ async function fetchLiveSERPInternal(
       return [];
     }
 
+    // Fire-and-forget cost recording — never affects the SERP result.
+    void import('@/lib/costs/api-costs')
+      .then(({ recordApiCost }) =>
+        recordApiCost({ provider: 'serper', operation: 'search', units: 1, source: 'ranking' }),
+      )
+      .catch(() => {});
+
     const data = await res.json();
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'smartfinpro.com';
     const siteDomain = extractDomain(siteUrl);

@@ -1063,3 +1063,62 @@ export async function getRevenueByPage(days: number = 30): Promise<RevenueByPage
     topPage,
   };
 }
+
+// ============================================================
+// PROFIT & LOSS (Revenue − API Cost = Net)
+// ============================================================
+// Real affiliate revenue (FX-normalised USD) minus what we SPEND on external
+// APIs (Anthropic, Serper, Resend) over the same window. API cost comes from
+// lib/costs/api-costs.ts (graceful — returns zeros if the table is missing).
+// ============================================================
+
+export interface ProfitAndLoss {
+  grossRevenueUsd: number;
+  apiCostUsd: number;
+  netUsd: number;
+  marginPct: number;
+  costByProvider: { provider: string; costUsd: number }[];
+}
+
+export async function getProfitAndLoss(days: number = 30): Promise<ProfitAndLoss> {
+  await loadFxRates();
+  const supabase = createServiceClient();
+  const now = new Date();
+  const since = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+
+  // Gross revenue: approved conversions in the window, normalised to USD.
+  const { data: conversionsData } = await supabase
+    .from('conversions')
+    .select('commission_earned, currency, converted_at, status')
+    .eq('status', 'approved')
+    .gte('converted_at', since.toISOString());
+
+  interface ConvRow {
+    commission_earned: number;
+    currency: string;
+  }
+  const conversions = (conversionsData || []) as ConvRow[];
+  const grossRevenueUsd = conversions.reduce(
+    (sum, c) => sum + toUSD(c.commission_earned || 0, c.currency),
+    0,
+  );
+
+  // API cost over the same window (graceful — zeros if table missing).
+  const { getApiCostSummary } = await import('@/lib/costs/api-costs');
+  const costSummary = await getApiCostSummary({ days });
+  const apiCostUsd = costSummary.totalUsd;
+
+  const netUsd = grossRevenueUsd - apiCostUsd;
+  const marginPct = grossRevenueUsd > 0 ? (netUsd / grossRevenueUsd) * 100 : 0;
+
+  return {
+    grossRevenueUsd: parseFloat(grossRevenueUsd.toFixed(2)),
+    apiCostUsd: parseFloat(apiCostUsd.toFixed(2)),
+    netUsd: parseFloat(netUsd.toFixed(2)),
+    marginPct: parseFloat(marginPct.toFixed(1)),
+    costByProvider: costSummary.byProvider.map((p) => ({
+      provider: p.provider,
+      costUsd: parseFloat(p.costUsd.toFixed(2)),
+    })),
+  };
+}

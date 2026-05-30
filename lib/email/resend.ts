@@ -57,6 +57,12 @@ export async function sendEmail(options: SendEmailOptions): Promise<SendEmailRes
     }
 
     const data = await response.json();
+    // Fire-and-forget cost recording — never affects the send result.
+    void import('@/lib/costs/api-costs')
+      .then(({ recordApiCost }) =>
+        recordApiCost({ provider: 'resend', operation: 'email.send', units: 1, source: 'email' }),
+      )
+      .catch(() => {});
     return { success: true, messageId: data.id };
   } catch (error) {
     console.error('Error sending email:', error);

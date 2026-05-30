@@ -11,7 +11,8 @@ import {
   Zap,
   FileText,
 } from 'lucide-react';
-import { getAutoRevenueStats, getRevenueByPage, getAffiliateLinksForMapping } from '@/lib/actions/revenue';
+import { getAutoRevenueStats, getRevenueByPage, getAffiliateLinksForMapping, getProfitAndLoss } from '@/lib/actions/revenue';
+import { PnlCard } from '@/components/dashboard/pnl-card';
 import { AddConversionForm } from '@/components/dashboard/add-conversion-form';
 import { RevenueByProductTable } from '@/components/dashboard/revenue-by-product';
 import { RevenueByPageTable } from '@/components/dashboard/revenue-by-page';
@@ -82,10 +83,11 @@ function StatCard({
 }
 
 export default async function RevenuePage() {
-  const [stats, pageStats, affiliateLinks] = await Promise.all([
+  const [stats, pageStats, affiliateLinks, pnl] = await Promise.all([
     getAutoRevenueStats(),
     getRevenueByPage(),
     getAffiliateLinksForMapping(),
+    getProfitAndLoss(30),
   ]);
 
   return (
@@ -133,6 +135,11 @@ export default async function RevenuePage() {
           iconColor="bg-amber-50 text-amber-500"
         />
       </div>
+
+      {/* Profit & Loss (Revenue − API Cost) */}
+      <WidgetErrorBoundary label="Profit & Loss" minHeight="h-40">
+        <PnlCard pnl={pnl} days={30} />
+      </WidgetErrorBoundary>
 
       {/* Revenue by Market */}
       <div>
