@@ -49,7 +49,7 @@ export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps
   const params = await searchParams;
   const range = (params.range as TimeRange) || '7d';
   const silo = params.silo || 'all';
-  const stats = await getAnalyticsStats(range);
+  const stats = await getAnalyticsStats(range, silo);
 
   const rangeLabels: Record<TimeRange, string> = {
     '24h': 'last 24 hours',

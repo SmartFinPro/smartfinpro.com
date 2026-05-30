@@ -136,13 +136,15 @@ function categorizeTrafficSource(referrer: string | null, utmSource: string | nu
 // Main Analytics Function
 // ============================================================
 
-async function fetchAnalyticsStats(range: TimeRange): Promise<AnalyticsStats> {
+async function fetchAnalyticsStats(range: TimeRange, market?: string): Promise<AnalyticsStats> {
   const supabase = createServiceClient();
   const now = new Date();
   const rangeStart = getTimeRangeStart(range);
+  const marketFilter = market && market !== 'all' ? market : null;
 
-  // Fetch page views — explicit columns (avoid fetching large user_agent/referrer text)
-  // Limit to 5K rows max to prevent VPS memory issues (20K was over-fetching)
+  // Fetch page views — explicit columns (avoid fetching large user_agent/referrer text).
+  // The sample cap keeps VPS memory bounded; headline totals below use exact COUNT
+  // queries so they stay accurate even when the aggregate sample is capped.
   let pageViewsQuery = supabase
     .from('page_views')
     .select('id, session_id, page_path, article_slug, page_title, market, viewed_at, scroll_depth, time_on_page, referrer, referrer_domain, utm_source, utm_medium, utm_campaign, country_code, device_type, browser, os');
@@ -150,8 +152,11 @@ async function fetchAnalyticsStats(range: TimeRange): Promise<AnalyticsStats> {
   if (rangeStart) {
     pageViewsQuery = pageViewsQuery.gte('viewed_at', rangeStart.toISOString());
   }
+  if (marketFilter) {
+    pageViewsQuery = pageViewsQuery.eq('market', marketFilter);
+  }
 
-  const { data: pageViewsData } = await pageViewsQuery.order('viewed_at', { ascending: false }).limit(5000);
+  const { data: pageViewsData } = await pageViewsQuery.order('viewed_at', { ascending: false }).limit(10000);
   const pageViews = (pageViewsData || []) as PageView[];
 
   // Fetch link clicks for conversion tracking — limit to 20K
@@ -170,10 +175,17 @@ async function fetchAnalyticsStats(range: TimeRange): Promise<AnalyticsStats> {
   type ClickRecord = { id: string; link_id: string | null; utm_source: string | null; utm_medium: string | null; utm_campaign: string | null; referrer: string | null };
   const clicks = (clicksData || []) as ClickRecord[];
 
-  // Get total page views (all time) — head:true = count only, no data transferred
-  const { count: totalPageViews } = await supabase
-    .from('page_views')
-    .select('*', { count: 'exact', head: true });
+  // Exact counts (head:true = count only, no rows transferred) — accurate regardless of
+  // the aggregate sample cap above. Total respects the market filter; in-range respects
+  // both the time range and the market filter.
+  let totalCountQuery = supabase.from('page_views').select('*', { count: 'exact', head: true });
+  if (marketFilter) totalCountQuery = totalCountQuery.eq('market', marketFilter);
+  const { count: totalPageViews } = await totalCountQuery;
+
+  let rangeCountQuery = supabase.from('page_views').select('*', { count: 'exact', head: true });
+  if (rangeStart) rangeCountQuery = rangeCountQuery.gte('viewed_at', rangeStart.toISOString());
+  if (marketFilter) rangeCountQuery = rangeCountQuery.eq('market', marketFilter);
+  const { count: rangePageViewCount } = await rangeCountQuery;
 
   // ============================================================
   // Calculate Overview Stats
@@ -207,7 +219,7 @@ async function fetchAnalyticsStats(range: TimeRange): Promise<AnalyticsStats> {
     avgTimeOnPage,
     avgScrollDepth,
     bounceRate,
-    pageViewsInRange: pageViews.length,
+    pageViewsInRange: rangePageViewCount ?? pageViews.length,
   };
 
   // ============================================================
@@ -450,8 +462,12 @@ const cachedAnalyticsStats = unstable_cache(
   { revalidate: 300 } // Cache for 5 minutes — reduces TTFB on repeated dashboard loads
 );
 
-export async function getAnalyticsStats(range: TimeRange = '7d'): Promise<AnalyticsStats> {
-  return cachedAnalyticsStats(range);
+export async function getAnalyticsStats(
+  range: TimeRange = '7d',
+  market?: string,
+): Promise<AnalyticsStats> {
+  // market participates in the unstable_cache key automatically (cached on all args).
+  return cachedAnalyticsStats(range, market);
 }
 
 function buildPageViewTimeSeries(

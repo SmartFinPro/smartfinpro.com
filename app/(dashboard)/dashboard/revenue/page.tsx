@@ -11,7 +11,8 @@ import {
   Zap,
   FileText,
 } from 'lucide-react';
-import { getAutoRevenueStats, getRevenueByPage } from '@/lib/actions/revenue';
+import { getAutoRevenueStats, getRevenueByPage, getAffiliateLinksForMapping } from '@/lib/actions/revenue';
+import { AddConversionForm } from '@/components/dashboard/add-conversion-form';
 import { RevenueByProductTable } from '@/components/dashboard/revenue-by-product';
 import { RevenueByPageTable } from '@/components/dashboard/revenue-by-page';
 import { RevenueByMarketGrid } from '@/components/dashboard/revenue-by-market';
@@ -81,9 +82,10 @@ function StatCard({
 }
 
 export default async function RevenuePage() {
-  const [stats, pageStats] = await Promise.all([
+  const [stats, pageStats, affiliateLinks] = await Promise.all([
     getAutoRevenueStats(),
     getRevenueByPage(),
+    getAffiliateLinksForMapping(),
   ]);
 
   return (
@@ -215,6 +217,9 @@ export default async function RevenuePage() {
         <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-2">
           <DollarSign className="h-5 w-5 text-emerald-500" />
           <h3 className="font-semibold text-slate-900">Recent Conversions</h3>
+          <div className="ml-auto">
+            <AddConversionForm affiliateLinks={affiliateLinks} />
+          </div>
         </div>
         <div className="p-6">
           <WidgetErrorBoundary label="Recent Conversions" minHeight="h-48">

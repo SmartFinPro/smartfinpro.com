@@ -16,10 +16,17 @@ import {
   Info,
   ChevronDown,
   ChevronUp,
+  FileText,
+  FileWarning,
 } from 'lucide-react';
 import { MARKET_RULES, getComplianceLabel, type MarketRule } from '@/lib/affiliate/compliance-labels';
 import type { Market, Category } from '@/types';
-import type { AuditResult, AuditDetail, LatestAuditRun } from '@/lib/actions/compliance-audit';
+import type {
+  AuditResult,
+  AuditDetail,
+  LatestAuditRun,
+  ContentScanSummary,
+} from '@/lib/actions/compliance-audit';
 
 // ── Constants ───────────────────────────────────────────────
 
@@ -240,6 +247,112 @@ function AuditDetailRow({ detail }: { detail: AuditDetail }) {
   );
 }
 
+// ── Content Disclosure Scan ─────────────────────────────────
+
+function ContentDisclosureScan({ scan }: { scan: ContentScanSummary | null }) {
+  if (!scan) return null;
+
+  const missing = scan.missing ?? [];
+
+  return (
+    <div className="dashboard-card bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+      <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <FileText className="h-5 w-5 text-slate-400" />
+          <div>
+            <h3 className="font-semibold text-slate-900">Content Disclosure Scan</h3>
+            <p className="text-xs text-slate-500 mt-0.5">
+              MDX pages scanned for mandatory FCA / ASIC / CIRO / SEC regulator disclosures
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 text-xs">
+          <span className="font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
+            {scan.scanned} scanned
+          </span>
+          <span className="font-medium px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">
+            {scan.compliant} compliant
+          </span>
+          <span
+            className={`font-medium px-2 py-0.5 rounded-full ${
+              scan.violations > 0 ? 'bg-rose-50 text-rose-700' : 'bg-emerald-50 text-emerald-700'
+            }`}
+          >
+            {scan.violations} missing
+          </span>
+        </div>
+      </div>
+
+      {missing.length > 0 ? (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="bg-slate-50">
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                  Page
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider w-28">
+                  Market
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                  Category
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                  Missing Disclosure
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {missing.map((page) => (
+                <tr key={page.filePath} className="hover:bg-slate-50/50 transition-colors">
+                  <td className="px-4 py-3 border-b border-slate-100">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <FileWarning className="h-4 w-4 text-rose-500 shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-slate-800 truncate">{page.title}</p>
+                        <p className="text-[10px] text-slate-400 truncate font-mono">{page.slug}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 border-b border-slate-100">
+                    <span className="text-xs text-slate-600">
+                      {MARKETS.find((m) => m.code === page.market)?.flag} {page.market.toUpperCase()}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 border-b border-slate-100">
+                    <span className="text-xs text-slate-600">{page.category}</span>
+                  </td>
+                  <td className="px-4 py-3 border-b border-slate-100">
+                    <div className="flex flex-wrap gap-1.5">
+                      {page.issues.map((issue, i) => (
+                        <span
+                          key={i}
+                          title={issue.description}
+                          className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-rose-50 text-rose-700"
+                        >
+                          <ShieldX className="h-3 w-3" />
+                          {issue.regulator}
+                        </span>
+                      ))}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div className="py-12 text-center">
+          <ShieldCheck className="h-10 w-10 text-emerald-300 mx-auto mb-3" />
+          <p className="text-sm text-slate-500">
+            All {scan.scanned} regulated MDX pages carry their required regulator disclosure
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Main Component ──────────────────────────────────────────
 
 interface ComplianceAuditProps {
@@ -290,6 +403,10 @@ export function ComplianceAudit({ linkDistribution, initialLastRun = null }: Com
     filterStatus === 'all' ? true : d.status === filterStatus,
   ) || [];
 
+  // Prefer the fresh audit's content scan, fall back to the persisted last run.
+  const contentScan: ContentScanSummary | null =
+    auditResult?.contentScan ?? lastRun?.contentScan ?? null;
+
   return (
     <div className="space-y-6">
       {/* Stats Row */}
@@ -326,7 +443,7 @@ export function ComplianceAudit({ linkDistribution, initialLastRun = null }: Com
           <Globe className="h-5 w-5 text-slate-400" />
           <div>
             <h3 className="font-semibold text-slate-900">Compliance Label Matrix</h3>
-            <p className="text-xs text-slate-500 mt-0.5">Hover over a cell to preview the exact disclaimer text | FCA CCI (Apr 2026) + BNPL (Jul 2026) + EU AI Act checks active</p>
+            <p className="text-xs text-slate-500 mt-0.5">Hover over a cell to preview the exact disclaimer text | Real MDX disclosure scan below verifies FCA / ASIC / CIRO / SEC labels</p>
           </div>
         </div>
         <div className="overflow-x-auto">
@@ -493,6 +610,9 @@ export function ComplianceAudit({ linkDistribution, initialLastRun = null }: Com
           </div>
         )}
       </div>
+
+      {/* Content Disclosure Scan */}
+      <ContentDisclosureScan scan={contentScan} />
     </div>
   );
 }

@@ -715,6 +715,53 @@ export async function distributeAndIndex(
   }
 }
 
+// ── Placeholder Affiliate-URL Audit ─────────────────────────────
+//
+// Genesis registriert frisch generierte Affiliate-Slugs zunächst mit
+// einer Platzhalter-Destination (`https://placeholder.com/<slug>`),
+// die der Operator später durch die echte Partner-URL ersetzen muss.
+// Solange das nicht passiert, verdient der Content keine Provision
+// (Dead Link / Orphan-Slug). Diese Action liefert genau diese Slugs,
+// damit das Dashboard sie sichtbar nachfordern kann.
+
+export interface PlaceholderAffiliateLink {
+  slug: string;
+  partnerName: string | null;
+  market: string | null;
+  category: string | null;
+  destinationUrl: string;
+}
+
+export async function getPlaceholderAffiliateLinks(): Promise<PlaceholderAffiliateLink[]> {
+  try {
+    const supabase = createServiceClient();
+    const { data, error } = await supabase
+      .from('affiliate_links')
+      .select('slug, partner_name, market, category, destination_url')
+      .or(
+        'destination_url.ilike.%placeholder.com%,destination_url.ilike.%placeholder%,destination_url.ilike.%REPLACE%',
+      )
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      logger.error('[genesis] getPlaceholderAffiliateLinks failed:', error.message);
+      return [];
+    }
+
+    return (data || []).map((l) => ({
+      slug: l.slug as string,
+      partnerName: (l.partner_name as string | null) ?? null,
+      market: (l.market as string | null) ?? null,
+      category: (l.category as string | null) ?? null,
+      destinationUrl: (l.destination_url as string) ?? '',
+    }));
+  } catch (err) {
+    Sentry.captureException(err);
+    logger.error('[genesis] getPlaceholderAffiliateLinks error:', err);
+    return [];
+  }
+}
+
 // ── Standalone Instant Index (for re-indexing existing content) ──
 
 export async function instantIndexByRunId(
