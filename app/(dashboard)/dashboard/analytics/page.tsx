@@ -27,6 +27,7 @@ import { WidgetErrorBoundary } from '@/components/dashboard/widget-error-boundar
 import { GSCOverview } from '@/components/dashboard/gsc-overview';
 import { LiveDashboardBar } from '@/components/dashboard/live-dashboard-bar';
 import { LiveClicksFeed } from '@/components/dashboard/live-clicks-feed';
+import { SavedViews } from '@/components/dashboard/saved-views';
 import { PageHeader, StatCard, FilterBar } from '@/components/dashboard/ui';
 
 export const dynamic = 'force-dynamic';
@@ -61,6 +62,7 @@ export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps
         description={`Detailed traffic analysis for ${rangeLabels[range]}${silo !== 'all' ? ` • ${silo.replace(/-/g, ' ')}` : ''}`}
         actions={
           <FilterBar>
+            <SavedViews />
             <SimulationButton />
             <SiloFilterDropdown currentSilo={silo} />
             <WidgetErrorBoundary label="Time Range" minHeight="h-10">
