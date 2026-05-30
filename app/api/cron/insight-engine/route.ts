@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
   try {
     const result = await runInsightEngine();
 
-    await logCron({
+    logCron({
       job: 'insight-engine',
       status: result.success ? 'success' : 'error',
       duration_ms: Date.now() - start,
@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
     const msg = error instanceof Error ? error.message : 'Unknown error';
     logger.error('[cron/insight-engine] Fatal', { error: msg });
 
-    await logCron({
+    logCron({
       job: 'insight-engine',
       status: 'error',
       duration_ms: Date.now() - start,

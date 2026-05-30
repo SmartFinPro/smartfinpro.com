@@ -124,7 +124,7 @@ export function StickyFooterCTA({
               rel="noopener sponsored"
               onClick={() => trackClick(affiliateUrl)}
               className="group flex items-center gap-2 rounded-lg px-5 py-2 text-sm font-semibold text-white shadow-md transition-all duration-200 hover:scale-[1.02] hover:shadow-lg"
-              style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}
+              style={{ background: 'var(--sfp-gold)', color: 'var(--sfp-ink)' }}
             >
               {ctaText}
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
@@ -162,7 +162,7 @@ export function StickyFooterCTA({
             rel="noopener sponsored"
             onClick={() => trackClick(affiliateUrl)}
             className="group flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white shadow-md transition-all hover:shadow-lg"
-            style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}
+            style={{ background: 'var(--sfp-gold)', color: 'var(--sfp-ink)' }}
           >
             {ctaText}
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />

@@ -73,8 +73,8 @@ export interface ScanLimitInfo {
 
 // ── Safe Query Helpers ───────────────────────────────────────
 
-function safeRows<T>(result: {
-  data: T[] | null;
+function safeRows<T = Record<string, any>>(result: {
+  data: unknown[] | null;
   error: { code?: string; message?: string } | null;
 }): T[] {
   if (result.error) {
@@ -85,7 +85,7 @@ function safeRows<T>(result: {
     }
     logger.warn('[gap-analysis] Query warning:', msg);
   }
-  return result.data || [];
+  return (result.data as T[] | null) || [];
 }
 
 // ── Serper API ───────────────────────────────────────────────

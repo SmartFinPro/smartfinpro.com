@@ -333,7 +333,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
                       {item.meta.featured && (
                         <span
                           className="inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full"
-                          style={{ background: 'var(--sfp-gold)', color: '#fff' }}
+                          style={{ background: 'var(--sfp-gold)', color: 'var(--sfp-ink)' }}
                         >
                           <CheckCircle className="h-3 w-3" />
                           Top Pick

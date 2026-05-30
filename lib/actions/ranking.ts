@@ -1,5 +1,3 @@
-'use server';
-
 import 'server-only';
 import * as Sentry from '@sentry/nextjs';
 import { logger } from '@/lib/logging';
@@ -31,6 +29,9 @@ export interface RankingKeyword {
   impressions: number;
   ctr: number;
   lastUpdated: string;
+  dataSource: 'gsc' | 'serper' | 'seeded' | 'placeholder';
+  lastSuccessfulSync: string | null;
+  isStale: boolean;
 }
 
 export interface RankingStats {
@@ -68,7 +69,10 @@ export interface RankingDashboardData {
   winners: WinnerLoser[];
   losers: WinnerLoser[];
   gscConfigured: boolean;
+  gscHasData: boolean;
   serperConfigured: boolean;
+  source: 'gsc' | 'seeded' | 'mixed';
+  lastSyncAt: string | null;
 }
 
 export interface RealtimeRankingResult {
@@ -101,6 +105,29 @@ function safeData<T>(result: SupabaseResult<T>): T[] {
     logger.warn('[ranking] Query warning:', result.error.message);
   }
   return result.data || [];
+}
+
+export function normalizeKeywordTrackingPosition(value: unknown): number {
+  const numericValue =
+    typeof value === 'number'
+      ? value
+      : typeof value === 'string'
+        ? Number(value)
+        : Number.NaN;
+
+  if (!Number.isFinite(numericValue) || numericValue <= 0) return 0;
+  return Math.round(numericValue);
+}
+
+function normalizeOptionalKeywordTrackingPosition(value: unknown): number | null {
+  if (value == null) return null;
+  return normalizeKeywordTrackingPosition(value);
+}
+
+const SUPPORTED_RANKING_MARKETS: Market[] = ['us', 'uk', 'ca', 'au'];
+
+function isSupportedRankingMarket(value: string): value is Market {
+  return SUPPORTED_RANKING_MARKETS.includes(value as Market);
 }
 
 // ── Seed initial keywords into Supabase ─────────────────────
@@ -261,6 +288,9 @@ export async function seedCompetitorKeywords(limit = 120): Promise<{
 // ── Main data fetcher ───────────────────────────────────────
 
 function mapStoredRow(row: Record<string, unknown>): RankingKeyword {
+  const lastUpdated = (row.tracked_at as string) || new Date().toISOString();
+  const dataSource = inferKeywordDataSource(row);
+
   return {
     id: (row.id as string) || crypto.randomUUID(),
     keyword: row.keyword as string,
@@ -276,8 +306,28 @@ function mapStoredRow(row: Record<string, unknown>): RankingKeyword {
     clicks: (row.clicks as number) || 0,
     impressions: (row.impressions as number) || 0,
     ctr: (row.ctr as number) || 0,
-    lastUpdated: (row.tracked_at as string) || new Date().toISOString(),
+    lastUpdated,
+    dataSource,
+    lastSuccessfulSync: dataSource === 'gsc' || dataSource === 'serper' ? lastUpdated : null,
+    isStale: isRankingDataStale(lastUpdated),
   };
+}
+
+export function inferKeywordDataSource(row: Record<string, unknown>): 'gsc' | 'serper' | 'seeded' | 'placeholder' {
+  const keyword = typeof row.keyword === 'string' ? row.keyword : '';
+  const position = Number(row.current_position || 0);
+  const clicks = Number(row.clicks || 0);
+  const impressions = Number(row.impressions || 0);
+
+  if (!keyword) return 'placeholder';
+  if (position > 0 && (clicks > 0 || impressions > 0)) return 'gsc';
+  if (position > 0) return 'serper';
+  return 'seeded';
+}
+
+export function isRankingDataStale(lastUpdated: string | null, maxAgeHours = 72): boolean {
+  if (!lastUpdated) return false;
+  return (Date.now() - new Date(lastUpdated).getTime()) / (1000 * 60 * 60) > maxAgeHours;
 }
 
 export async function getRankingData(options?: {
@@ -292,14 +342,14 @@ export async function getRankingData(options?: {
   const supabase = createServiceClient();
 
   // Helper: build & run the keyword_tracking query
-  async function fetchStored() {
+  async function fetchStored(): Promise<Record<string, unknown>[]> {
     let q = supabase
       .from('keyword_tracking')
       .select('*')
       .order('current_position', { ascending: true })
       .limit(200);
     if (market) q = q.eq('market', market);
-    return safeData(await q);
+    return safeData<Record<string, unknown>>(await q as SupabaseResult<Record<string, unknown>>);
   }
 
   let stored = await fetchStored();
@@ -331,6 +381,9 @@ export async function getRankingData(options?: {
         impressions: kw.impressions,
         ctr: kw.ctr,
         lastUpdated: new Date().toISOString(),
+        dataSource: 'gsc',
+        lastSuccessfulSync: new Date().toISOString(),
+        isStale: false,
       }));
     } else {
       // GSC configured but no data yet (site too new) — show seed keywords as placeholders
@@ -346,6 +399,9 @@ export async function getRankingData(options?: {
         impressions: 0,
         ctr: 0,
         lastUpdated: new Date().toISOString(),
+        dataSource: 'seeded',
+        lastSuccessfulSync: null,
+        isStale: false,
       }));
     }
   } else {
@@ -362,6 +418,9 @@ export async function getRankingData(options?: {
       impressions: 0,
       ctr: 0,
       lastUpdated: new Date().toISOString(),
+      dataSource: 'seeded',
+      lastSuccessfulSync: null,
+      isStale: false,
     }));
   }
 
@@ -403,7 +462,16 @@ export async function getRankingData(options?: {
     }));
   }
 
-  return { keywords, stats, trend, winners, losers, gscConfigured, serperConfigured };
+  const gscHasData = keywords.some((kw) => kw.dataSource === 'gsc');
+  const lastSyncAt = [...keywords]
+    .map((kw) => kw.lastSuccessfulSync)
+    .filter((value): value is string => Boolean(value))
+    .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())[0] ?? null;
+  const source: 'gsc' | 'seeded' | 'mixed' = gscHasData
+    ? keywords.some((kw) => kw.dataSource !== 'gsc') ? 'mixed' : 'gsc'
+    : 'seeded';
+
+  return { keywords, stats, trend, winners, losers, gscConfigured, gscHasData, serperConfigured, source, lastSyncAt };
 }
 
 // ── Position trend for a specific keyword ───────────────────
@@ -570,9 +638,10 @@ async function fetchLiveSERPInternal(
 export async function syncKeywordTracking(): Promise<{
   synced: number;
   errors: number;
+  skippedUnsupportedMarkets: number;
 }> {
   if (!isGSCConfigured()) {
-    return { synced: 0, errors: 0 };
+    return { synced: 0, errors: 0, skippedUnsupportedMarkets: 0 };
   }
 
   const supabase = createServiceClient();
@@ -588,14 +657,26 @@ export async function syncKeywordTracking(): Promise<{
     const r = row as Record<string, unknown>;
     prevMap.set(
       `${r.keyword}__${r.market}`,
-      r.current_position as number,
+      normalizeKeywordTrackingPosition(r.current_position),
     );
   }
 
   let synced = 0;
   let errors = 0;
+  let skippedUnsupportedMarkets = 0;
 
   for (const kw of keywords) {
+    if (!isSupportedRankingMarket(kw.market)) {
+      skippedUnsupportedMarkets++;
+      if (skippedUnsupportedMarkets <= 3) {
+        logger.warn('[ranking] Skipping unsupported GSC market', {
+          keyword: kw.keyword,
+          market: kw.market,
+        });
+      }
+      continue;
+    }
+
     const prevPos = prevMap.get(`${kw.keyword}__${kw.market}`) ?? null;
 
     const { error } = await supabase.from('keyword_tracking').upsert(
@@ -603,8 +684,10 @@ export async function syncKeywordTracking(): Promise<{
         keyword: kw.keyword,
         page: kw.page,
         market: kw.market,
-        current_position: kw.position,
-        previous_position: prevPos,
+        // keyword_tracking currently stores whole-number ranks; round GSC averages
+        // before persistence so daily syncs do not fail on values like 79.5.
+        current_position: normalizeKeywordTrackingPosition(kw.position),
+        previous_position: normalizeOptionalKeywordTrackingPosition(prevPos),
         clicks: kw.clicks,
         impressions: kw.impressions,
         ctr: kw.ctr,
@@ -621,7 +704,7 @@ export async function syncKeywordTracking(): Promise<{
     }
   }
 
-  return { synced, errors };
+  return { synced, errors, skippedUnsupportedMarkets };
 }
 
 // ── Helpers ─────────────────────────────────────────────────

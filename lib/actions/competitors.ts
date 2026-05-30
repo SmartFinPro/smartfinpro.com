@@ -103,8 +103,8 @@ export interface CompetitorDashboardData {
 
 // ── Safe Query Helpers ───────────────────────────────────────
 
-function safeRows<T>(result: {
-  data: T[] | null;
+function safeRows<T = Record<string, any>>(result: {
+  data: unknown[] | null;
   error: { code?: string; message?: string } | null;
 }): T[] {
   if (result.error) {
@@ -115,7 +115,7 @@ function safeRows<T>(result: {
     }
     logger.warn('[competitors] Query warning:', msg);
   }
-  return result.data || [];
+  return (result.data as T[] | null) || [];
 }
 
 // ── Serper API ───────────────────────────────────────────────
@@ -131,19 +131,37 @@ interface SerperResponse {
 
 const GL_MAP: Record<Market, string> = { us: 'us', uk: 'uk', ca: 'ca', au: 'au' };
 
+function normalizeCompetitorKeyword(keyword: string): string | null {
+  const normalized = keyword.replace(/\s+/g, ' ').trim();
+  if (normalized.length < 2) return null;
+  return normalized.slice(0, 180);
+}
+
 async function fetchSerp(keyword: string, market: Market): Promise<SerperResponse | null> {
   const apiKey = process.env.SERPER_API_KEY;
   if (!apiKey) return null;
+
+  const normalizedKeyword = normalizeCompetitorKeyword(keyword);
+  if (!normalizedKeyword) {
+    logger.warn('[competitors] Skipping invalid keyword before Serper fetch', { keyword, market });
+    return null;
+  }
 
   try {
     const res = await fetch('https://google.serper.dev/search', {
       method: 'POST',
       headers: { 'X-API-KEY': apiKey, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ q: keyword, gl: GL_MAP[market] || 'us', num: 10 }),
+      body: JSON.stringify({ q: normalizedKeyword, gl: GL_MAP[market] || 'us', num: 10 }),
     });
 
     if (!res.ok) {
-      logger.error('[competitors] Serper API error:', res.status);
+      const body = await res.text();
+      logger.error('[competitors] Serper API error', {
+        status: res.status,
+        keyword: normalizedKeyword,
+        market,
+        body: body.slice(0, 400),
+      });
       return null;
     }
 
@@ -162,7 +180,13 @@ export async function analyzeKeyword(
   market: Market,
   category: string,
 ): Promise<SerpSnapshot | null> {
-  const serperData = await fetchSerp(keyword, market);
+  const normalizedKeyword = normalizeCompetitorKeyword(keyword);
+  if (!normalizedKeyword) {
+    logger.warn('[competitors] Skipping invalid tracked keyword', { keyword, market, category });
+    return null;
+  }
+
+  const serperData = await fetchSerp(normalizedKeyword, market);
   if (!serperData) return null;
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'smartfinpro.com';
@@ -208,7 +232,7 @@ export async function analyzeKeyword(
     const supabase = createServiceClient();
 
     await supabase.from('competitor_serp_snapshots').insert({
-      keyword,
+      keyword: normalizedKeyword,
       market,
       category,
       has_ads: signals.adCount > 0,
@@ -227,7 +251,7 @@ export async function analyzeKeyword(
     // Update tracked keyword with latest CPS
     await supabase.from('competitor_tracked_keywords').upsert(
       {
-        keyword,
+        keyword: normalizedKeyword,
         market,
         category,
         source: 'seed',
@@ -250,7 +274,7 @@ export async function analyzeKeyword(
 
       if ((count ?? 0) < 200) {
         const newKws = relatedSearches.slice(0, 3).map((r) => ({
-          keyword: r.query.toLowerCase(),
+          keyword: normalizeCompetitorKeyword(r.query)?.toLowerCase(),
           market,
           category,
           source: 'related_search' as const,
@@ -259,7 +283,17 @@ export async function analyzeKeyword(
           latest_own_position: null,
           last_scanned_at: null,
           created_at: scannedAt,
-        }));
+        })).filter((row): row is {
+          keyword: string;
+          market: Market;
+          category: string;
+          source: 'related_search';
+          active: boolean;
+          latest_cps: number;
+          latest_own_position: null;
+          last_scanned_at: null;
+          created_at: string;
+        } => !!row.keyword);
 
         await supabase
           .from('competitor_tracked_keywords')
@@ -272,7 +306,7 @@ export async function analyzeKeyword(
   }
 
   return {
-    keyword,
+    keyword: normalizedKeyword,
     market,
     category,
     cpsScore,
@@ -503,7 +537,7 @@ const SCAN_BATCH_SIZE = 40;
 export async function triggerCompetitorScan(
   market?: Market,
   category?: string,
-): Promise<{ scanned: number; newAlerts: number; remaining: number }> {
+): Promise<{ scanned: number; failed: number; newAlerts: number; remaining: number }> {
   const supabase = createServiceClient();
 
   // Fetch active tracked keywords, ordered by least recently scanned first
@@ -544,13 +578,18 @@ export async function triggerCompetitorScan(
   const batch = keywords.slice(0, SCAN_BATCH_SIZE);
 
   let scanned = 0;
+  let failed = 0;
 
   for (const kw of batch) {
-    await analyzeKeyword(kw.keyword, kw.market as Market, kw.category);
-    scanned++;
+    const snapshot = await analyzeKeyword(kw.keyword, kw.market as Market, kw.category);
+    if (snapshot) {
+      scanned++;
+    } else {
+      failed++;
+    }
 
     // Rate limit: 50ms between requests
-    if (scanned < batch.length) {
+    if (scanned + failed < batch.length) {
       await new Promise((r) => setTimeout(r, 50));
     }
   }
@@ -558,7 +597,12 @@ export async function triggerCompetitorScan(
   // Run alert detection
   const newAlerts = await detectAlerts(market);
 
-  return { scanned, newAlerts, remaining: Math.max(0, totalKeywords - scanned) };
+  return {
+    scanned,
+    failed,
+    newAlerts,
+    remaining: Math.max(0, totalKeywords - scanned - failed),
+  };
 }
 
 // ── Seed Keywords ───────────────────────────────────────────

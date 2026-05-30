@@ -34,6 +34,27 @@ export interface AuditIssue {
   message: string;
 }
 
+export interface LatestAuditRun {
+  ranAt: string;
+  triggeredBy: string;
+  totalLinks: number;
+  verified: number;
+  warnings: number;
+  critical: number;
+  details: AuditDetail[];
+}
+
+function isMissingAuditRunsTable(error: { code?: string; message?: string } | null): boolean {
+  return Boolean(
+    error && (
+      error.code === '42P01' ||
+      error.code === 'PGRST204' ||
+      error.message?.includes('does not exist') ||
+      error.message?.includes('schema cache')
+    ),
+  );
+}
+
 // ── Audit Logic ─────────────────────────────────────────────
 
 /**
@@ -225,4 +246,64 @@ export async function getLinkDistribution(): Promise<
   }
 
   return dist as Record<Market, Record<Category, number>>;
+}
+
+export async function saveAuditRun(
+  result: AuditResult,
+  triggeredBy: 'manual' | 'cron',
+  durationMs: number,
+): Promise<void> {
+  const supabase = createServiceClient();
+
+  const { error } = await supabase
+    .from('compliance_audit_runs')
+    .insert({
+      ran_at: result.timestamp,
+      triggered_by: triggeredBy,
+      total_links: result.totalLinks,
+      compliant_count: result.compliantLinks,
+      attention_count: result.attentionLinks,
+      critical_count: result.criticalLinks,
+      details: result.details,
+      duration_ms: durationMs,
+    });
+
+  if (error) {
+    if (isMissingAuditRunsTable(error)) {
+      return;
+    }
+    throw new Error(`Failed to persist compliance audit: ${error.message}`);
+  }
+}
+
+export async function getLatestAuditRun(): Promise<LatestAuditRun | null> {
+  const supabase = createServiceClient();
+
+  const { data, error } = await supabase
+    .from('compliance_audit_runs')
+    .select('*')
+    .order('ran_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    if (isMissingAuditRunsTable(error)) {
+      return null;
+    }
+    throw new Error(`Failed to load latest compliance audit: ${error.message}`);
+  }
+
+  if (!data) {
+    return null;
+  }
+
+  return {
+    ranAt: data.ran_at,
+    triggeredBy: data.triggered_by,
+    totalLinks: data.total_links,
+    verified: data.compliant_count,
+    warnings: data.attention_count,
+    critical: data.critical_count,
+    details: (data.details || []) as AuditDetail[],
+  };
 }

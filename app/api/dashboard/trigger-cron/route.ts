@@ -4,34 +4,20 @@
 // Always logs to cron_logs so the Cron Health page picks up the run.
 
 import { NextRequest, NextResponse } from 'next/server';
+import { CRON_DEFINITIONS_BY_NAME, isKnownCronJob } from '@/lib/dashboard/cron-definitions';
+import { inferTriggeredCronLogOutcome } from '@/lib/dashboard/trigger-cron-status';
+import { insertCronLogCompatible } from '@/lib/logging';
 import { createServiceClient } from '@/lib/supabase/server';
-
-const ALLOWED_JOBS = [
-  'spike-monitor',
-  'perf-governance',
-  'auto-genesis',
-  'ev-refresh',
-  'sync-conversions',
-  'update-fx-rates',
-  'seo-drift',
-  'check-links',
-  'sync-competitors',
-  'sync-revenue',
-  'freshness-check',
-  'check-rankings',
-  'affiliate-scout',
-  'send-emails',
-  'backlink-post',
-  'daily-strategy',
-  'backlink-scout',
-  'backlink-verify',
-  'weekly-report',
-];
 
 export async function POST(req: NextRequest) {
   const { job } = await req.json();
 
-  if (!job || !ALLOWED_JOBS.includes(job)) {
+  if (!job || !isKnownCronJob(job)) {
+    return NextResponse.json({ error: 'Unknown job' }, { status: 400 });
+  }
+
+  const definition = CRON_DEFINITIONS_BY_NAME.get(job);
+  if (!definition) {
     return NextResponse.json({ error: 'Unknown job' }, { status: 400 });
   }
 
@@ -55,30 +41,47 @@ export async function POST(req: NextRequest) {
 
   try {
     const res = await fetch(`${baseUrl}/api/cron/${job}`, {
-      method: 'GET',
-      headers: { Authorization: `Bearer ${secret}` },
+      method: definition.requestMethod,
+      headers: {
+        Authorization: `Bearer ${secret}`,
+        ...(definition.requestMethod === 'POST' ? { 'Content-Type': 'application/json' } : {}),
+      },
       signal: AbortSignal.timeout(30_000),
     });
 
     const body = await res.text().catch(() => '');
     const duration = Date.now() - start;
+    const logOutcome = inferTriggeredCronLogOutcome({
+      httpStatus: res.status,
+      bodyText: body,
+    });
 
     // Always log to cron_logs — most cron jobs don't log themselves,
     // so without this the Cron Health page would always show "never run".
     let logError: string | null = null;
     try {
       const supabase = createServiceClient();
-      const { error: insertErr } = await supabase.from('cron_logs').insert({
+      const { usedFallback, persistedStatus } = await insertCronLogCompatible(supabase, {
         job_name: job,
-        status: res.ok ? 'completed' : 'error',
+        status: logOutcome.status,
         duration_ms: duration,
-        error: res.ok ? null : `HTTP ${res.status}: ${body.slice(0, 200)}`,
-        metadata: { source: 'dashboard-trigger', httpStatus: res.status },
+        error: logOutcome.error,
+        metadata: {
+          source: 'dashboard-trigger',
+          httpStatus: res.status,
+          requestMethod: definition.requestMethod,
+        },
         executed_at: new Date().toISOString(),
       });
-      if (insertErr) logError = insertErr.message;
+      if (usedFallback) {
+        logError = `compatibility fallback persisted as ${persistedStatus}`;
+      }
     } catch (e) {
-      logError = e instanceof Error ? e.message : 'unknown';
+      logError = e instanceof Error
+        ? e.message
+        : e && typeof e === 'object' && 'message' in e
+          ? String((e as { message?: unknown }).message)
+          : JSON.stringify(e);
     }
 
     return NextResponse.json({
@@ -95,7 +98,7 @@ export async function POST(req: NextRequest) {
     // Log failure to cron_logs too
     try {
       const supabase = createServiceClient();
-      await supabase.from('cron_logs').insert({
+      await insertCronLogCompatible(supabase, {
         job_name: job,
         status: 'error',
         duration_ms: duration,

@@ -9,6 +9,7 @@
  */
 
 import { createServiceClient } from '@/lib/supabase/server';
+import { runAllConnectors } from './sync-service';
 
 // ============================================================
 // Types
@@ -567,33 +568,21 @@ export async function syncAllNetworks(): Promise<{
   totalCreated: number;
   totalUpdated: number;
 }> {
-  const results: SyncResult[] = [];
+  const result = await runAllConnectors({ trigger: 'scheduled' });
+  const adaptedResults: SyncResult[] = result.results.map((entry) => ({
+    network: entry.connector,
+    success: entry.success,
+    recordsProcessed: entry.records_synced + entry.records_skipped,
+    recordsCreated: entry.records_synced,
+    recordsUpdated: 0,
+    recordsSkipped: entry.records_skipped,
+    errors: entry.errors,
+  }));
 
-  // Sync each network
-  const [partnerStack, awin, financeAds] = await Promise.all([
-    syncPartnerStack(),
-    syncAwin(),
-    syncFinanceAds(),
-  ]);
-
-  results.push(partnerStack, awin, financeAds);
-
-  const totalCreated = results.reduce((sum, r) => sum + r.recordsCreated, 0);
-  const totalUpdated = results.reduce((sum, r) => sum + r.recordsUpdated, 0);
-  const success = results.some((r) => r.success);
-
-  // Log sync
-  const supabase = createServiceClient();
-  await supabase.from('api_sync_logs').insert({
-    network: 'all',
-    sync_type: 'revenue',
-    status: success ? 'completed' : 'failed',
-    records_processed: results.reduce((sum, r) => sum + r.recordsProcessed, 0),
-    records_created: totalCreated,
-    records_updated: totalUpdated,
-    completed_at: new Date().toISOString(),
-    metadata: { results },
-  });
-
-  return { success, results, totalCreated, totalUpdated };
+  return {
+    success: result.failed.length === 0 && result.succeeded.length > 0,
+    results: adaptedResults,
+    totalCreated: result.totalRecords,
+    totalUpdated: 0,
+  };
 }

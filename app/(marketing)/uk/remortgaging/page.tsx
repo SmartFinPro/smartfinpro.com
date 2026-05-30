@@ -67,7 +67,7 @@ export default function UKRemortgagingPage() {
             <div className="flex flex-wrap gap-3">
               <Button
                 asChild
-                className="bg-var(--sfp-gold) hover:bg-var(--sfp-gold-dark) text-white px-6 py-3 rounded-lg font-medium transition-colors"
+                className="bg-[var(--sfp-gold)] hover:bg-[var(--sfp-gold-dark)] text-[var(--sfp-ink)] px-6 py-3 rounded-lg font-medium transition-colors"
               >
                 <Link href="/uk/remortgaging#comparison">
                   Compare Lenders
@@ -218,7 +218,7 @@ export default function UKRemortgagingPage() {
             </div>
             <Button
               asChild
-              className="bg-var(--sfp-gold) hover:bg-var(--sfp-gold-dark) text-white px-6 py-3 rounded-lg font-medium transition-colors"
+              className="bg-[var(--sfp-gold)] hover:bg-[var(--sfp-gold-dark)] text-[var(--sfp-ink)] px-6 py-3 rounded-lg font-medium transition-colors"
             >
               <Link href="/uk/tools/remortgage-calculator/">
                 Open Remortgage Calculator
@@ -349,7 +349,7 @@ export default function UKRemortgagingPage() {
             </p>
             <Button
               asChild
-              className="bg-var(--sfp-gold) hover:bg-var(--sfp-gold-dark) text-white px-8 py-3 rounded-lg font-bold transition-colors"
+              className="bg-[var(--sfp-gold)] hover:bg-[var(--sfp-gold-dark)] text-[var(--sfp-ink)] px-8 py-3 rounded-lg font-bold transition-colors"
             >
               <Link href="#comparison">View Lender Comparison</Link>
             </Button>

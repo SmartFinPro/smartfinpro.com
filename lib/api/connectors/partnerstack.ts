@@ -175,8 +175,10 @@ export class PartnerStackConnector implements AffiliateConnector {
     // PartnerStack uses HMAC-SHA256 for webhook signatures
     // The signature is in the X-Partnerstack-Signature header
     if (!this.apiSecret) {
-      console.warn('No webhook secret configured, skipping signature verification');
-      return true;
+      // F-19: fail CLOSED — never accept an unsigned webhook. An unconfigured
+      // secret previously returned true, letting anyone inject fake conversions.
+      console.error('PartnerStack webhook secret not configured — rejecting webhook');
+      return false;
     }
 
     try {

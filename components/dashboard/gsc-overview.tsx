@@ -91,6 +91,19 @@ interface GSCData {
 
 type GSCRange = '7d' | '28d' | '90d';
 
+function formatGscTooltipLabel(label: unknown): string {
+  if (typeof label !== 'string' && typeof label !== 'number') {
+    return '';
+  }
+
+  const date = new Date(label);
+  if (Number.isNaN(date.getTime())) {
+    return String(label);
+  }
+
+  return date.toLocaleDateString('de-DE', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
 // ── Main Component ─────────────────────────────────────────
 
 export function GSCOverview() {
@@ -305,10 +318,7 @@ export function GSCOverview() {
                       borderRadius: '8px',
                       fontSize: '13px',
                     }}
-                    labelFormatter={(d: string) => {
-                      const date = new Date(d);
-                      return date.toLocaleDateString('de-DE', { day: '2-digit', month: 'short', year: 'numeric' });
-                    }}
+                    labelFormatter={formatGscTooltipLabel}
                   />
                   <Legend />
                   <Area

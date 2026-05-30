@@ -205,7 +205,7 @@ export default function CreditScoreSimulatorPage() {
             <a
               href="/go/the-credit-people"
               className="inline-block px-6 py-3 rounded-lg font-semibold text-white transition-all hover:shadow-lg"
-              style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}
+              style={{ background: 'var(--sfp-gold)', color: 'var(--sfp-ink)' }}
             >
               Get Free Credit Repair Consultation →
             </a>

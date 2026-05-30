@@ -427,7 +427,7 @@ export function XRayScore({
               href={affiliateUrl}
               onClick={() => trackEvent('xray_cta_click', { resultId: result.resultId, xrayScore: result.xrayScore, decisionLabel: result.decisionLabel })}
               className="btn-shimmer w-full flex items-center justify-center gap-2 rounded-2xl py-3 text-sm font-bold text-white transition-all hover:brightness-110 active:scale-[0.98]"
-              style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}
+              style={{ background: 'var(--sfp-gold)', color: 'var(--sfp-ink)' }}
             >
               Try {productName} free
               <ArrowRight className="h-4 w-4" />

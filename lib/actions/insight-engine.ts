@@ -25,6 +25,14 @@ interface InsightRow {
   confidence: number;
 }
 
+interface AffiliateLinkDetailRow {
+  id: string;
+  slug: string | null;
+  partner_name: string | null;
+  market: string | null;
+  category: string | null;
+}
+
 export interface InsightEngineResult {
   success: boolean;
   auditId: string | null;
@@ -365,8 +373,9 @@ async function runRevenueAnomalyDetection(
     .select('id, slug, partner_name, market, category')
     .in('id', [...allLinkIds]);
 
-  const linkMap = new Map<string, typeof linkDetails extends (infer T)[] | null ? T : never>();
-  for (const l of linkDetails ?? []) {
+  const linkRows = (linkDetails || []) as AffiliateLinkDetailRow[];
+  const linkMap = new Map<string, AffiliateLinkDetailRow>();
+  for (const l of linkRows) {
     linkMap.set(l.id, l);
   }
 

@@ -533,7 +533,7 @@ export function MiniQuiz({ topic, market: marketProp, title }: MiniQuizProps) {
           className="shrink-0 inline-flex items-center gap-1.5 rounded-2xl font-medium whitespace-nowrap transition-colors"
           style={{
             background: 'var(--sfp-gold)',
-            color: '#ffffff',
+            color: 'var(--sfp-ink)',
             fontSize: '12px',
             padding: '6px 14px',
           }}

@@ -34,7 +34,9 @@ import { StickyFooterCTA } from '@/components/marketing/sticky-footer-cta';
 import { SafeMDX } from '@/components/content/SafeMDX';
 import { TrustBlockTracker } from '@/components/marketing/trust-block-tracker';
 import { MiniQuiz } from '@/components/marketing/mini-quiz';
-import { generateReviewSchema, generatePersonSchema, generateArticleSchema, generateBreadcrumbSchema } from '@/lib/seo/schema';
+import { generateReviewSchema, generatePersonSchema, generateArticleSchema, generateBreadcrumbSchema, generateFAQSchema } from '@/lib/seo/schema';
+import { RiskWarningBox } from '@/components/marketing/risk-warning';
+import { AffiliateDisclosure } from '@/components/ui/affiliate-disclosure';
 import { categoryConfig } from '@/lib/i18n/config';
 import type { Market, Category } from '@/lib/i18n/config';
 import { buildBreadcrumbs } from '@/lib/breadcrumbs';
@@ -293,6 +295,17 @@ export function ReportLayout({
         }}
       />
 
+      {/* F-07: Schema.org JSON-LD — FAQPage (Rich Results + AI-Overview citability).
+          Frontmatter `faqs:` already exists on 180+ MDX files; only the wiring was missing. */}
+      {review.faqs && review.faqs.length > 0 && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(generateFAQSchema(review.faqs)),
+          }}
+        />
+      )}
+
       {/* ═══════════════════════════════════════════════════════════════
           1. REPORT HERO SECTION
           ═══════════════════════════════════════════════════════════════ */}
@@ -362,6 +375,17 @@ export function ReportLayout({
                 <span>Format: <strong style={{ color: 'var(--sfp-ink)' }}>{isGuide ? 'Expert Guide' : 'Expert Review'}</strong></span>
               </div>
             </div>
+
+            {/* F-05: Affiliate disclosure ABOVE THE FOLD, before the first monetised CTA (FTC/FCA/ASIC/CIRO). */}
+            {hasAffiliate && (
+              <AffiliateDisclosure market={market} position="top" />
+            )}
+
+            {/* F-04: Leveraged-product risk warning before the first CTA — prominent, market-specific loss quote.
+                Gated on category OR the hasLeverageRisk frontmatter flag (F-04b: CFD brokers filed elsewhere). */}
+            {!isGuide && (category === 'forex' || category === 'trading' || review.hasLeverageRisk) && (
+              <RiskWarningBox variant="prominent" market={market} lossPercentage={review.lossPercentage} />
+            )}
 
             {/* Tab Navigation */}
             <div className="flex flex-wrap gap-0 border-b border-[rgba(27,79,140,0.25)] -mb-px">
@@ -1161,7 +1185,7 @@ export function ReportLayout({
                       <TrackedAffiliateLink
                         href={review.affiliateUrl}
                         className="w-full h-12 text-base font-normal border-0 shadow-md hover:shadow-lg transition-all rounded-2xl inline-flex items-center justify-center no-underline hover:no-underline hover:brightness-110"
-                        style={{ background: 'var(--sfp-gold)', color: '#ffffff', textDecoration: 'none' }}
+                        style={{ background: 'var(--sfp-gold)', color: 'var(--sfp-ink)', textDecoration: 'none' }}
                         eventLabel={primaryCtaLabel}
                         market={market}
                         category={category}
@@ -1259,7 +1283,7 @@ export function ReportLayout({
               <TrackedAffiliateLink
                 href={review.affiliateUrl}
                 className="h-10 px-5 text-sm font-normal border-0 rounded-2xl shrink-0 inline-flex items-center justify-center no-underline hover:no-underline hover:brightness-110 transition-all"
-                style={{ background: 'var(--sfp-gold)', color: '#ffffff', textDecoration: 'none' }}
+                style={{ background: 'var(--sfp-gold)', color: 'var(--sfp-ink)', textDecoration: 'none' }}
                 eventLabel={category === 'debt-relief' ? 'Get Analysis' : 'Visit Site'}
                 market={market}
                 category={category}

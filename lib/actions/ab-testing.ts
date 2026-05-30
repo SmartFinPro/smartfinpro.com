@@ -40,6 +40,21 @@ export interface AbTestLiveView {
   status: 'collecting' | 'ready' | 'concluded';
 }
 
+interface AbTestStatsRow {
+  hub_id: string;
+  variant: AbVariant;
+  impressions: number;
+  clicks: number;
+  winner_declared: boolean;
+}
+
+interface AbTestWinnerRow {
+  hub_id: string;
+  winning_variant: AbVariant;
+  lift_percent: number | null;
+  confidence: number | null;
+}
+
 // ── Helpers ──────────────────────────────────────────────────
 
 function buildHubId(category: string, market: string): string {
@@ -292,19 +307,21 @@ export async function getAbTestLiveData(): Promise<AbTestLiveView[]> {
       .select('hub_id, winning_variant, lift_percent, confidence'),
   ]);
 
-  if (!stats) return [];
+  const statRows = (stats || []) as AbTestStatsRow[];
+  if (!statRows.length) return [];
 
   // Group by hub_id
-  const hubMap = new Map<string, typeof stats>();
-  for (const row of stats) {
+  const hubMap = new Map<string, AbTestStatsRow[]>();
+  for (const row of statRows) {
     const existing = hubMap.get(row.hub_id) || [];
     existing.push(row);
     hubMap.set(row.hub_id, existing);
   }
 
-  const winnerMap = new Map<string, (typeof winners extends (infer U)[] | null ? U : never)>();
-  if (winners) {
-    for (const w of winners) {
+  const winnerMap = new Map<string, AbTestWinnerRow>();
+  const winnerRows = (winners || []) as AbTestWinnerRow[];
+  if (winnerRows.length) {
+    for (const w of winnerRows) {
       winnerMap.set(w.hub_id, w);
     }
   }

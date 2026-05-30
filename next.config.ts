@@ -1,7 +1,13 @@
 import type { NextConfig } from "next";
 import { withSentryConfig } from '@sentry/nextjs';
 
-const nextConfig: NextConfig = {
+type SmartFinNextConfig = NextConfig & {
+  eslint?: {
+    ignoreDuringBuilds?: boolean;
+  };
+};
+
+const nextConfig: SmartFinNextConfig = {
   // ============================================================
   // TypeScript — suppress build-time type errors
   // (100+ pre-existing TS errors across lib/actions; fixed separately)

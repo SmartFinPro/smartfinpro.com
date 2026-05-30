@@ -32,6 +32,20 @@ interface GovernanceResult {
   enabled: boolean;
 }
 
+interface SettingRow {
+  key: string;
+  value: string;
+}
+
+interface WebVitalRow {
+  name: 'LCP' | 'INP' | 'CLS';
+  value: number;
+}
+
+interface ActiveAbTestRow {
+  hub_id: string;
+}
+
 // ── Helpers ──────────────────────────────────────────────────────
 
 function computeP75(values: number[]): number | null {
@@ -52,7 +66,7 @@ export async function runPerfGovernance(): Promise<GovernanceResult> {
     .eq('category', 'performance');
 
   const cfg: Record<string, string> = {};
-  for (const s of settings || []) cfg[s.key] = s.value;
+  for (const s of (settings || []) as SettingRow[]) cfg[s.key] = s.value;
 
   const enabled = cfg.cwv_governance_enabled !== 'false';
   if (!enabled) {
@@ -90,10 +104,10 @@ export async function runPerfGovernance(): Promise<GovernanceResult> {
   const thisWeek: Record<string, number[]> = { LCP: [], INP: [], CLS: [] };
   const lastWeek: Record<string, number[]> = { LCP: [], INP: [], CLS: [] };
 
-  for (const r of thisWeekRes.data || []) {
+  for (const r of (thisWeekRes.data || []) as WebVitalRow[]) {
     if (thisWeek[r.name]) thisWeek[r.name].push(r.value);
   }
-  for (const r of lastWeekRes.data || []) {
+  for (const r of (lastWeekRes.data || []) as WebVitalRow[]) {
     if (lastWeek[r.name]) lastWeek[r.name].push(r.value);
   }
 
@@ -160,7 +174,7 @@ export async function runPerfGovernance(): Promise<GovernanceResult> {
       .gte('impressions', 100);
 
     if (activeTests?.length) {
-      const hubIds = [...new Set(activeTests.map((t) => t.hub_id))];
+      const hubIds = [...new Set((activeTests as ActiveAbTestRow[]).map((t) => t.hub_id))];
 
       for (const hubId of hubIds) {
         // Parse hub_id → market + category for page-scoped CWV check
@@ -197,10 +211,10 @@ export async function runPerfGovernance(): Promise<GovernanceResult> {
         // Compute per-hub p75 regression
         const hubThis: Record<string, number[]> = { LCP: [], INP: [], CLS: [] };
         const hubLast: Record<string, number[]> = { LCP: [], INP: [], CLS: [] };
-        for (const r of hubThisWeek.data || []) {
+        for (const r of (hubThisWeek.data || []) as WebVitalRow[]) {
           if (hubThis[r.name]) hubThis[r.name].push(r.value);
         }
-        for (const r of hubLastWeek.data || []) {
+        for (const r of (hubLastWeek.data || []) as WebVitalRow[]) {
           if (hubLast[r.name]) hubLast[r.name].push(r.value);
         }
 

@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
   try {
     const result = await runFeedbackLoop();
 
-    await logCron({
+    logCron({
       job: 'feedback-loop',
       status: result.success ? 'success' : 'error',
       duration_ms: Date.now() - start,
@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
     const msg = error instanceof Error ? error.message : 'Unknown error';
     logger.error('[cron/feedback-loop] Fatal', { error: msg });
 
-    await logCron({
+    logCron({
       job: 'feedback-loop',
       status: 'error',
       duration_ms: Date.now() - start,

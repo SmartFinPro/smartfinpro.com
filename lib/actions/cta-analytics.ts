@@ -119,8 +119,8 @@ export async function getCtaPerformance(params: CtaPerformanceParams = {}) {
     );
 
     // Transform into array sorted by clicks desc
-    const results = Object.entries(stats)
-      .map(([key, clicks]) => {
+    const results = (Object.entries(stats) as Array<[string, number]>)
+      .map(([key, clicks]: [string, number]) => {
         const [provider, variant] = key.split('|');
         return { provider, variant, clicks };
       })

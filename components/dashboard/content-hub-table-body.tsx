@@ -30,6 +30,7 @@ import type { ContentHubRow, HealthStatus, ContentQuality } from '@/lib/actions/
 import type { PartnerOption } from './cta-partner-select';
 import type { PartnerAssignmentConfig } from '@/lib/types/page-cta';
 import { WidgetErrorBoundary } from '@/components/dashboard/widget-error-boundary';
+import { WidgetEmpty } from '@/components/dashboard/widget-states';
 
 const BacklinkDetailDialog = dynamic(
   () => import('./backlink-detail-dialog'),
@@ -118,7 +119,14 @@ function QualityBadge({ quality }: { quality: ContentQuality }) {
 
 function CpsBadge({ cps }: { cps: number | null }) {
   if (cps === null) {
-    return <span className="text-xs text-slate-300">—</span>;
+    return (
+      <span
+        className="inline-flex items-center justify-center px-2 py-0.5 text-[10px] font-medium rounded-md border bg-slate-50 text-slate-400 border-slate-200"
+        title="No competitor snapshot available for this page yet"
+      >
+        unavailable
+      </span>
+    );
   }
 
   const color =
@@ -193,6 +201,8 @@ interface ContentHubTableBodyProps {
   siteUrl: string;
   partnerAssignments: Record<string, PartnerAssignmentConfig[]>;
   partnersByMarket: Record<string, PartnerOption[]>;
+  /** True when at least one filter is active — distinguishes "filter returned nothing" from "no data at all" */
+  hasActiveFilter?: boolean;
 }
 
 export function ContentHubTableBody({
@@ -200,6 +210,7 @@ export function ContentHubTableBody({
   siteUrl,
   partnerAssignments,
   partnersByMarket,
+  hasActiveFilter = false,
 }: ContentHubTableBodyProps) {
   const router = useRouter();
 
@@ -457,6 +468,16 @@ export function ContentHubTableBody({
                       {row.filePath}
                     </span>
                   )}
+                  {row.lastUpdated && (
+                    <span className="text-[10px] text-slate-400 truncate block">
+                      Updated {new Date(row.lastUpdated).toLocaleDateString('en-US')}
+                    </span>
+                  )}
+                  {isMdx && row.freshnessSource === 'unavailable' && (
+                    <span className="text-[10px] text-slate-400 truncate block">
+                      Freshness unavailable
+                    </span>
+                  )}
                   {isArchived && row.redirectTarget && (
                     <span className="text-[10px] text-slate-400 truncate block">
                       301 → {row.redirectTarget}
@@ -648,8 +669,20 @@ export function ContentHubTableBody({
       })}
       {rows.length === 0 && (
         <tr>
-          <td colSpan={14} className="px-4 py-12 text-center text-sm text-slate-400">
-            No pages match this filter.
+          <td colSpan={14}>
+            {hasActiveFilter ? (
+              <p className="px-4 py-12 text-center text-sm text-slate-400">
+                No pages match this filter.
+              </p>
+            ) : (
+              <div className="px-6 py-6">
+                <WidgetEmpty
+                  title="Noch keine Content-Daten"
+                  description="Sobald der freshness-check Cron läuft und content_health_scores befüllt sind, erscheinen hier deine Seiten."
+                  action={{ label: 'Cron-Status prüfen', href: '/dashboard' }}
+                />
+              </div>
+            )}
           </td>
         </tr>
       )}

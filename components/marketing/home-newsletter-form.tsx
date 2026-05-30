@@ -117,7 +117,7 @@ export default function HomeNewsletterForm() {
                 style={{
                   padding: '14px 28px',
                   background: status === 'loading' ? 'var(--sfp-gold-dark)' : 'var(--sfp-gold)',
-                  color: '#fff',
+                  color: 'var(--sfp-ink)',
                   border: 'none',
                   borderRadius: '8px',
                   fontSize: '14px',

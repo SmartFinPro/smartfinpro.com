@@ -238,6 +238,8 @@ export default async function ContentPage({ params }: ContentPageProps) {
             testimonials: [],
             competitors: [],
             content: '',
+            hasLeverageRisk: content.meta.hasLeverageRisk,
+            lossPercentage: content.meta.lossPercentage,
           }}
         />
       </main>
@@ -322,6 +324,8 @@ export default async function ContentPage({ params }: ContentPageProps) {
           competitors: [],
           content: '',
           isGuide: true,
+          hasLeverageRisk: content.meta.hasLeverageRisk,
+          lossPercentage: content.meta.lossPercentage,
         }}
       />
     </>

@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
   try {
     const result = await runAutoExecutor();
 
-    await logCron({
+    logCron({
       job: 'auto-executor',
       status: result.success ? 'success' : 'error',
       duration_ms: Date.now() - start,
@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
     const msg = error instanceof Error ? error.message : 'Unknown error';
     logger.error('[cron/auto-executor] Fatal', { error: msg });
 
-    await logCron({
+    logCron({
       job: 'auto-executor',
       status: 'error',
       duration_ms: Date.now() - start,

@@ -89,6 +89,106 @@ export interface CronLogContext {
   [key: string]: unknown;
 }
 
+interface PersistCronLogPayload {
+  job_name: string;
+  status: string;
+  duration_ms: number | null;
+  error: string | null;
+  metadata: Record<string, unknown> | null;
+  executed_at: string;
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function getPrimaryCronLogStatus(status: CronLogContext['status']): string {
+  return status === 'skipped' ? 'success' : status;
+}
+
+function getLegacyCronLogStatus(_status: string): string {
+  return 'completed';
+}
+
+function formatUnknownError(err: unknown): string {
+  if (err instanceof Error) return err.message;
+  if (err && typeof err === 'object' && 'message' in err) {
+    return String((err as { message?: unknown }).message);
+  }
+  try {
+    return JSON.stringify(err);
+  } catch {
+    return String(err);
+  }
+}
+
+function isCronStatusConstraintError(err: unknown): boolean {
+  const msg = formatUnknownError(err);
+  return msg.includes('cron_logs_status_check') || (
+    msg.includes('violates check constraint') &&
+    msg.toLowerCase().includes('status')
+  );
+}
+
+export async function insertCronLogCompatible(
+  supabase: {
+    from: (table: string) => {
+      insert: (payload: PersistCronLogPayload) => Promise<{ error: unknown | null }>;
+    };
+  },
+  payload: PersistCronLogPayload,
+): Promise<{ persistedStatus: string; usedFallback: boolean }> {
+  const primaryStatus = payload.status;
+  let primaryError: unknown | null = null;
+  try {
+    const primaryResult = await supabase.from('cron_logs').insert(payload);
+    primaryError = primaryResult.error;
+  } catch (error) {
+    primaryError = error;
+  }
+
+  if (!primaryError) {
+    return { persistedStatus: primaryStatus, usedFallback: false };
+  }
+
+  if (!isCronStatusConstraintError(primaryError)) {
+    throw primaryError;
+  }
+
+  const legacyStatus = getLegacyCronLogStatus(primaryStatus);
+  if (legacyStatus === primaryStatus) {
+    throw primaryError;
+  }
+
+  const mergedMetadata = isPlainObject(payload.metadata)
+    ? {
+        ...payload.metadata,
+        canonicalStatus: primaryStatus,
+        compatibilityFallback: true,
+      }
+    : {
+        canonicalStatus: primaryStatus,
+        compatibilityFallback: true,
+      };
+
+  const fallbackPayload: PersistCronLogPayload = {
+    ...payload,
+    status: legacyStatus,
+    metadata: mergedMetadata,
+  };
+
+  try {
+    const fallbackResult = await supabase.from('cron_logs').insert(fallbackPayload);
+    if (fallbackResult.error) {
+      throw fallbackResult.error;
+    }
+  } catch (error) {
+    throw error;
+  }
+
+  return { persistedStatus: legacyStatus, usedFallback: true };
+}
+
 export function logCron(ctx: CronLogContext) {
   const level: LogLevel = ctx.status === 'error' ? 'error' : 'info';
   emit(level, `[cron] ${ctx.job} — ${ctx.status}`, ctx);
@@ -103,25 +203,33 @@ export function logCron(ctx: CronLogContext) {
     // Separate known columns from extra metadata fields
     const { job, status, duration_ms, error, ...rest } = ctx;
     const metadata = Object.keys(rest).length > 0 ? rest : undefined;
+    const payload: PersistCronLogPayload = {
+      job_name:    job,
+      status:      getPrimaryCronLogStatus(status),
+      duration_ms: duration_ms ?? null,
+      error:       error ?? null,
+      metadata:    metadata ?? null,
+      executed_at: new Date().toISOString(),
+    };
 
-    supabase
-      .from('cron_logs')
-      .insert({
-        job_name:    job,
-        status:      status === 'skipped' ? 'success' : status,
-        duration_ms: duration_ms ?? null,
-        error:       error ?? null,
-        metadata:    metadata ?? null,
-        executed_at: new Date().toISOString(),
+    insertCronLogCompatible(supabase, payload)
+      .then(({ persistedStatus, usedFallback }) => {
+        if (!usedFallback) return;
+        console.warn(JSON.stringify({
+          level: 'warn',
+          ts: new Date().toISOString(),
+          msg: `[logCron] compatibility fallback persisted ${job}`,
+          canonicalStatus: payload.status,
+          persistedStatus,
+        }));
       })
-      .then(() => { /* no-op */ })
       .catch((err: unknown) => {
         // Log to stdout only — avoid infinite recursion
-        const msg = err instanceof Error ? err.message : String(err);
+        const msg = formatUnknownError(err);
         console.error(JSON.stringify({ level: 'error', ts: new Date().toISOString(), msg: `[logCron] DB insert failed for ${job}`, error: msg }));
       });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
+    const msg = formatUnknownError(err);
     console.error(JSON.stringify({ level: 'error', ts: new Date().toISOString(), msg: '[logCron] createServiceClient failed', error: msg }));
   }
 }

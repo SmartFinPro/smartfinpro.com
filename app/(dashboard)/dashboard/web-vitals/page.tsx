@@ -2,118 +2,18 @@
 // AP-13 Phase 4 — Core Web Vitals Dashboard
 
 import { createServiceClient } from '@/lib/supabase/server';
+import { getWebVitalsMetricSummaries } from '@/lib/actions/web-vitals';
 import { WebVitalsClient } from './web-vitals-client';
 import { RefreshButton } from './refresh-button';
 
 export const dynamic    = 'force-dynamic';
 export const revalidate = 0;
 
-type Rating = 'good' | 'needs-improvement' | 'poor';
-
-interface MetricSummary {
-  name:        string;
-  p75:         number;
-  rating:      Rating;
-  good:        number;
-  needsImprovement: number;
-  poor:        number;
-  total:       number;
-  unit:        string;
-  target:      number;
-  /** P2b: Budget status — 'ok' | 'warning' | 'over' | null (no data) */
-  budgetStatus: 'ok' | 'warning' | 'over' | null;
-  /** Budget threshold value */
-  budget:      number;
-}
-
 interface TimeSeriesPoint {
   date:    string;
   lcp_p75: number | null;
   inp_p75: number | null;
   cls_p75: number | null;
-}
-
-// Google CWV thresholds (2026)
-const TARGETS: Record<string, { good: number; poor: number; unit: string }> = {
-  LCP:  { good: 2500,  poor: 4000,  unit: 'ms'   },
-  INP:  { good: 200,   poor: 500,   unit: 'ms'   },
-  CLS:  { good: 0.1,   poor: 0.25,  unit: ''     },
-  FCP:  { good: 1800,  poor: 3000,  unit: 'ms'   },
-  TTFB: { good: 800,   poor: 1800,  unit: 'ms'   },
-};
-
-async function getMetricSummaries(): Promise<MetricSummary[]> {
-  const supabase = createServiceClient();
-  const since = new Date(Date.now() - 7 * 86400_000).toISOString();
-
-  // Fetch web_vitals + budget settings in parallel
-  const [vitalsRes, settingsRes] = await Promise.all([
-    supabase
-      .from('web_vitals')
-      .select('name, value, rating')
-      .gte('recorded_at', since),
-    supabase
-      .from('system_settings')
-      .select('key, value')
-      .eq('category', 'performance'),
-  ]);
-
-  const data = vitalsRes.data;
-  if (!data?.length) return [];
-
-  // Parse budget values from system_settings
-  const settingsMap: Record<string, string> = {};
-  for (const s of settingsRes.data || []) settingsMap[s.key] = s.value;
-
-  const budgetValues: Record<string, number> = {
-    LCP: parseFloat(settingsMap.cwv_budget_lcp || '2500'),
-    INP: parseFloat(settingsMap.cwv_budget_inp || '200'),
-    CLS: parseFloat(settingsMap.cwv_budget_cls || '0.1'),
-    FCP: 1800, // Secondary — use Google default
-    TTFB: 800,
-  };
-
-  const byMetric: Record<string, { values: number[]; ratings: Rating[] }> = {};
-
-  for (const row of data) {
-    if (!byMetric[row.name]) byMetric[row.name] = { values: [], ratings: [] };
-    byMetric[row.name].values.push(row.value);
-    byMetric[row.name].ratings.push(row.rating as Rating);
-  }
-
-  return Object.entries(TARGETS).map(([name, cfg]) => {
-    const metric = byMetric[name];
-    const budget = budgetValues[name] ?? cfg.good;
-
-    if (!metric) {
-      return {
-        name, unit: cfg.unit, target: cfg.good, budget,
-        p75: 0, rating: 'good' as Rating, budgetStatus: null,
-        good: 0, needsImprovement: 0, poor: 0, total: 0,
-      };
-    }
-
-    const sorted = [...metric.values].sort((a, b) => a - b);
-    const p75Idx = Math.floor(sorted.length * 0.75);
-    const p75    = sorted[p75Idx] ?? 0;
-
-    const rating: Rating =
-      p75 <= cfg.good ? 'good' :
-      p75 > cfg.poor  ? 'poor' : 'needs-improvement';
-
-    const good             = metric.ratings.filter((r) => r === 'good').length;
-    const poor             = metric.ratings.filter((r) => r === 'poor').length;
-    const needsImprovement = metric.ratings.filter((r) => r === 'needs-improvement').length;
-
-    // Budget status: ok (< 80% budget), warning (80-100%), over (> budget)
-    let budgetStatus: 'ok' | 'warning' | 'over' | null = null;
-    if (p75 > 0 && budget > 0) {
-      const ratio = p75 / budget;
-      budgetStatus = ratio > 1 ? 'over' : ratio > 0.8 ? 'warning' : 'ok';
-    }
-
-    return { name, unit: cfg.unit, target: cfg.good, budget, p75, rating, budgetStatus, good, needsImprovement, poor, total: metric.values.length };
-  });
 }
 
 async function getTimeSeries(): Promise<TimeSeriesPoint[]> {
@@ -183,7 +83,7 @@ function p75(values: number[]): number | null {
 
 export default async function WebVitalsPage() {
   const [metrics, timeSeries, slowPages] = await Promise.all([
-    getMetricSummaries(),
+    getWebVitalsMetricSummaries(),
     getTimeSeries(),
     getTopSlowPages(),
   ]);

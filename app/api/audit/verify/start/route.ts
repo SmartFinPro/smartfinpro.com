@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
     'NEXT_PUBLIC_SITE_URL',
     // Audit script specific — add here as needed, never wildcarded
   ] as const;
-  const sanitizedEnv: NodeJS.ProcessEnv = {};
+  const sanitizedEnv: Record<string, string> = {};
   for (const key of SPAWN_ENV_WHITELIST) {
     const val = process.env[key];
     if (typeof val === 'string') sanitizedEnv[key] = val;
@@ -97,7 +97,7 @@ export async function POST(request: NextRequest) {
       cwd: process.cwd(),
       stdio: ['ignore', 'pipe', 'pipe'],
       detached: true,
-      env: sanitizedEnv,
+      env: sanitizedEnv as NodeJS.ProcessEnv,
     });
   } catch (err) {
     logStream.end(); // P2: close fd on spawn failure

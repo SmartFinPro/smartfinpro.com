@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { MARKET_RULES, getComplianceLabel, type MarketRule } from '@/lib/affiliate/compliance-labels';
 import type { Market, Category } from '@/types';
-import type { AuditResult, AuditDetail } from '@/lib/actions/compliance-audit';
+import type { AuditResult, AuditDetail, LatestAuditRun } from '@/lib/actions/compliance-audit';
 
 // ── Constants ───────────────────────────────────────────────
 
@@ -244,10 +244,19 @@ function AuditDetailRow({ detail }: { detail: AuditDetail }) {
 
 interface ComplianceAuditProps {
   linkDistribution: Record<Market, Record<Category, number>>;
+  initialLastRun?: LatestAuditRun | null;
 }
 
-export function ComplianceAudit({ linkDistribution }: ComplianceAuditProps) {
+function formatAuditTimestamp(timestamp: string): string {
+  return new Date(timestamp).toLocaleString('en-US', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  });
+}
+
+export function ComplianceAudit({ linkDistribution, initialLastRun = null }: ComplianceAuditProps) {
   const [auditResult, setAuditResult] = useState<AuditResult | null>(null);
+  const [lastRun, setLastRun] = useState<LatestAuditRun | null>(initialLastRun);
   const [isRunning, setIsRunning] = useState(false);
   const [filterStatus, setFilterStatus] = useState<'all' | 'compliant' | 'attention' | 'critical'>('all');
 
@@ -255,8 +264,12 @@ export function ComplianceAudit({ linkDistribution }: ComplianceAuditProps) {
     setIsRunning(true);
     try {
       const res = await fetch('/api/dashboard/compliance-audit', { method: 'POST' });
-      const result = await res.json();
+      const payload = await res.json();
+      const result = payload?.result ?? payload;
       setAuditResult(result);
+      if (payload?.lastRun) {
+        setLastRun(payload.lastRun);
+      }
     } catch (err) {
       console.error('Audit failed:', err);
     } finally {
@@ -391,6 +404,21 @@ export function ComplianceAudit({ linkDistribution }: ComplianceAuditProps) {
           </button>
         </div>
 
+        {lastRun && (
+          <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/80">
+            <div className="flex flex-wrap items-center gap-2 text-sm text-slate-600">
+              <span className="font-medium text-slate-800">Last audit:</span>
+              <span>{formatAuditTimestamp(lastRun.ranAt)}</span>
+              <span className="text-slate-300">•</span>
+              <span>{lastRun.verified} verified</span>
+              <span className="text-slate-300">•</span>
+              <span>{lastRun.warnings} warnings</span>
+              <span className="text-slate-300">•</span>
+              <span>{lastRun.critical} critical</span>
+            </div>
+          </div>
+        )}
+
         {/* Audit Results */}
         {auditResult && (
           <div className="p-6">
@@ -455,7 +483,7 @@ export function ComplianceAudit({ linkDistribution }: ComplianceAuditProps) {
         )}
 
         {/* Empty State */}
-        {!auditResult && !isRunning && (
+        {!auditResult && !isRunning && !lastRun && (
           <div className="py-16 text-center">
             <Shield className="h-12 w-12 text-slate-200 mx-auto mb-4" />
             <p className="text-sm text-slate-500 mb-1">No audit has been run yet</p>

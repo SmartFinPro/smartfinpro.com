@@ -523,7 +523,10 @@ interface RankingDashboardProps {
   initialWinners: WinnerLoser[];
   initialLosers: WinnerLoser[];
   gscConfigured: boolean;
+  gscHasData: boolean;
   serperConfigured: boolean;
+  initialSource: 'gsc' | 'seeded' | 'mixed';
+  initialLastSyncAt: string | null;
 }
 
 export function RankingDashboard({
@@ -533,7 +536,10 @@ export function RankingDashboard({
   initialWinners,
   initialLosers,
   gscConfigured,
+  gscHasData,
   serperConfigured,
+  initialSource,
+  initialLastSyncAt,
 }: RankingDashboardProps) {
   const [keywords, setKeywords] = useState(initialKeywords);
   const [stats] = useState(initialStats);
@@ -774,7 +780,7 @@ export function RankingDashboard({
                 Google Search Console nicht verbunden
               </h3>
               <p className="text-sm text-slate-500 leading-relaxed">
-                Setze{' '}
+                Google Search Console ist nicht verbunden — die angezeigten Keywords stammen aktuell aus dem Seed. Setze{' '}
                 <code className="text-xs text-amber-600 px-1.5 py-0.5 rounded font-mono" style={{ background: 'rgba(251,191,36,0.08)' }}>GSC_CLIENT_EMAIL</code>,{' '}
                 <code className="text-xs text-amber-600 px-1.5 py-0.5 rounded font-mono" style={{ background: 'rgba(251,191,36,0.08)' }}>GSC_PRIVATE_KEY</code> und{' '}
                 <code className="text-xs text-amber-600 px-1.5 py-0.5 rounded font-mono" style={{ background: 'rgba(251,191,36,0.08)' }}>GSC_SITE_URL</code> in
@@ -791,6 +797,29 @@ export function RankingDashboard({
         </div>
       )}
 
+      {gscConfigured && !gscHasData && (
+        <div
+          className="rounded-xl p-5 border border-amber-200"
+          style={{ background: 'rgba(251,191,36,0.05)' }}
+        >
+          <div className="flex gap-3">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border border-amber-200"
+              style={{ background: 'rgba(251,191,36,0.12)' }}>
+              <AlertTriangle className="h-4 w-4 text-amber-500" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-slate-800 mb-1">
+                GSC verbunden, aber noch keine Live-Daten
+              </h3>
+              <p className="text-sm text-slate-500 leading-relaxed">
+                Ranking-KPIs warten auf den nächsten erfolgreichen GSC-Sync.
+                {initialLastSyncAt && ` Letzte beobachtete Aktualisierung: ${new Date(initialLastSyncAt).toLocaleString('de-DE')}.`}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Stat Cards */}
       <div className="grid gap-4 md:grid-cols-5">
         <StatCard
@@ -801,9 +830,10 @@ export function RankingDashboard({
         />
         <StatCard
           label="Avg. Position"
-          value={stats.avgPosition > 0 ? `#${stats.avgPosition}` : '\u2014'}
+          value={gscHasData && stats.avgPosition > 0 ? `#${stats.avgPosition}` : '\u2014'}
           icon={BarChart3}
           color="cyan"
+          subtitle={!gscHasData ? 'Awaiting GSC sync' : initialSource === 'mixed' ? 'Mixed source set' : undefined}
         />
         <StatCard
           label="Top 10"
@@ -814,15 +844,17 @@ export function RankingDashboard({
         />
         <StatCard
           label="Total Clicks"
-          value={stats.totalClicks.toLocaleString('en-US')}
+          value={gscHasData ? stats.totalClicks.toLocaleString('en-US') : '\u2014'}
           icon={MousePointer}
           color="emerald"
+          subtitle={!gscHasData ? 'Awaiting GSC sync' : undefined}
         />
         <StatCard
           label="Impressions"
-          value={stats.totalImpressions.toLocaleString('en-US')}
+          value={gscHasData ? stats.totalImpressions.toLocaleString('en-US') : '\u2014'}
           icon={Eye}
           color="slate"
+          subtitle={!gscHasData ? 'Awaiting GSC sync' : undefined}
         />
       </div>
 
@@ -958,7 +990,29 @@ export function RankingDashboard({
                           <p className="text-sm font-medium text-slate-800 truncate">
                             {kw.keyword}
                           </p>
-                          <p className="text-[10px] text-slate-500 truncate">{kw.page}</p>
+                          <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
+                            <p className="text-[10px] text-slate-500 truncate">{kw.page}</p>
+                            {kw.dataSource === 'seeded' && (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 font-medium">
+                                seed
+                              </span>
+                            )}
+                            {kw.dataSource === 'placeholder' && (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 font-medium">
+                                placeholder
+                              </span>
+                            )}
+                            {kw.dataSource === 'serper' && (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-cyan-50 text-cyan-700 font-medium">
+                                serper
+                              </span>
+                            )}
+                            {kw.isStale && (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 font-medium">
+                                stale
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </td>
                       <td className="px-3 py-3 text-center">

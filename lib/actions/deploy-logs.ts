@@ -29,6 +29,8 @@ export interface DeployStats {
   rollbackCount: number;
   successRate: number;
   avgDuration: number;
+  stale: boolean;
+  source: 'live' | 'empty';
   lastDeploy: DeployLog | null;
   recentDeploys: DeployLog[];
 }
@@ -69,6 +71,8 @@ export async function getDeployStats(limit: number = 20): Promise<DeployStats> {
     const avgDuration = durations.length > 0
       ? Math.round(durations.reduce((a, b) => a + b, 0) / durations.length)
       : 0;
+    const lastDeploy = deploys[0] || null;
+    const stale = !lastDeploy || (Date.now() - new Date(lastDeploy.deployed_at).getTime()) > 7 * 24 * 60 * 60 * 1000;
 
     return {
       totalDeploys: deploys.length,
@@ -77,7 +81,9 @@ export async function getDeployStats(limit: number = 20): Promise<DeployStats> {
       rollbackCount,
       successRate: deploys.length > 0 ? Math.round((successCount / deploys.length) * 100) : 0,
       avgDuration,
-      lastDeploy: deploys[0] || null,
+      stale,
+      source: 'live',
+      lastDeploy,
       recentDeploys: deploys,
     };
   } catch (err) {
@@ -95,6 +101,8 @@ function emptyStats(): DeployStats {
     rollbackCount: 0,
     successRate: 0,
     avgDuration: 0,
+    stale: true,
+    source: 'empty',
     lastDeploy: null,
     recentDeploys: [],
   };

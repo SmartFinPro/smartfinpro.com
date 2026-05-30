@@ -3,8 +3,8 @@
   "configurations": [
     {
       "name": "dev",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev:webpack", "--", "-p", "3002"],
+      "runtimeExecutable": "/opt/homebrew/bin/node",
+      "runtimeArgs": ["node_modules/.bin/next", "dev", "--webpack", "-p", "3002"],
       "port": 3002,
       "url": "http://localhost:3002"
     },

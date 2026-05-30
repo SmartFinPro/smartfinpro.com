@@ -67,7 +67,7 @@ export default function UKCostOfLivingPage() {
             <div className="flex flex-wrap gap-3">
               <Button
                 asChild
-                className="bg-var(--sfp-gold) hover:bg-var(--sfp-gold-dark) text-white px-6 py-3 rounded-lg font-medium transition-colors"
+                className="bg-[var(--sfp-gold)] hover:bg-[var(--sfp-gold-dark)] text-[var(--sfp-ink)] px-6 py-3 rounded-lg font-medium transition-colors"
               >
                 <Link href="/uk/cost-of-living#tools">
                   Budget Tools
@@ -278,7 +278,7 @@ export default function UKCostOfLivingPage() {
             </p>
             <Button
               asChild
-              className="bg-var(--sfp-gold) hover:bg-var(--sfp-gold-dark) text-white px-8 py-3 rounded-lg font-bold transition-colors"
+              className="bg-[var(--sfp-gold)] hover:bg-[var(--sfp-gold-dark)] text-[var(--sfp-ink)] px-8 py-3 rounded-lg font-bold transition-colors"
             >
               <Link href="#tools">Explore Money-Saving Tools</Link>
             </Button>

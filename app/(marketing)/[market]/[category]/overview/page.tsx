@@ -148,7 +148,7 @@ export default async function OverviewPage({ params }: OverviewPageProps) {
 
             {/* CTA Buttons */}
             <div className="flex flex-wrap justify-center gap-4">
-              <Button asChild className="rounded-xl border-0 h-11 px-8 text-white" style={{ background: 'var(--sfp-gold)', color: '#ffffff' }}>
+              <Button asChild className="rounded-xl border-0 h-11 px-8 text-white" style={{ background: 'var(--sfp-gold)', color: 'var(--sfp-ink)' }}>
                 <Link href={categoryHref}>
                   View All {categoryInfo.name}
                   <ArrowRight className="ml-2 h-4 w-4" />

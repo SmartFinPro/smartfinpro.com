@@ -170,7 +170,7 @@ export function SmartFinCard({
                 target="_blank"
                 rel="noopener sponsored"
                 className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold text-white shadow-md hover:shadow-lg transition-all hover:brightness-110 no-underline hover:no-underline whitespace-nowrap"
-                style={{ background: 'var(--sfp-gold)', color: '#ffffff', textDecoration: 'none' }}
+                style={{ background: 'var(--sfp-gold)', color: 'var(--sfp-ink)', textDecoration: 'none' }}
               >
                 {ctaText}
                 <ArrowRight className="h-4 w-4" />

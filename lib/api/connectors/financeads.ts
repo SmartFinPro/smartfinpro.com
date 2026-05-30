@@ -191,8 +191,10 @@ export class FinanceAdsConnector implements AffiliateConnector {
 
   verifyWebhookSignature(payload: string, signature: string): boolean {
     if (!this.webhookSecret) {
-      console.warn('No webhook secret configured, skipping signature verification');
-      return true;
+      // F-19: fail CLOSED — never accept an unsigned webhook. An unconfigured
+      // secret previously returned true, letting anyone inject fake conversions.
+      console.error('FinanceAds webhook secret not configured — rejecting webhook');
+      return false;
     }
 
     try {

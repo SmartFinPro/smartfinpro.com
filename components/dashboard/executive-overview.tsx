@@ -24,6 +24,12 @@ import Link from 'next/link';
 import type { TimeComparison, TimeRange, TimeSeriesData, GlobalMarketIntelligence, MarketPerformance } from '@/lib/actions/dashboard';
 import type { DeployStats } from '@/lib/actions/deploy-logs';
 import { WidgetErrorBoundary } from '@/components/dashboard/widget-error-boundary';
+import { WidgetNotConfigured } from '@/components/dashboard/widget-states';
+import {
+  computeWidgetHealth,
+  STATUS_LABEL,
+  type SystemStatus,
+} from '@/lib/dashboard/status';
 
 // ── Types ──────────────────────────────────────────────────────
 
@@ -49,6 +55,24 @@ interface ExecutiveOverviewProps {
   };
   globalMarkets: GlobalMarketIntelligence;
   deployStats: DeployStats;
+  cronHealth: {
+    source: 'live' | 'empty';
+    healthy: number;
+    warning: number;
+    stale: number;
+    errors: number;
+    neverRun: number;
+    totalJobs: number;
+    lastObservedAt: string | null;
+    lastSuccessfulAt: string | null;
+  };
+  webVitalsHealth: {
+    source: 'live' | 'empty';
+    sampleSize: number;
+    poorCount: number;
+    warningCount: number;
+    lastRecordedAt: string | null;
+  };
   alertStats: PerformanceAlertStats;
   range: TimeRange;
   comparisonLabel: string;
@@ -125,15 +149,17 @@ function StatusRow({
 }: {
   icon: React.ComponentType<{ className?: string }>;
   label: string;
-  status: 'operational' | 'warning' | 'critical';
+  status: SystemStatus;
   detail: string;
   href: string;
 }) {
   const dotColor = status === 'operational'
     ? 'bg-emerald-500'
-    : status === 'warning'
+    : status === 'degraded' || status === 'stale'
       ? 'bg-amber-500'
-      : 'bg-red-500';
+      : status === 'down'
+        ? 'bg-red-500'
+        : 'bg-slate-400';
 
   return (
     <Link
@@ -217,6 +243,8 @@ export function ExecutiveOverview({
   stats,
   globalMarkets,
   deployStats,
+  cronHealth,
+  webVitalsHealth,
   alertStats,
   range,
   comparisonLabel,
@@ -228,10 +256,25 @@ export function ExecutiveOverview({
   const sparklineValues = stats.clicksOverTime.map((d) => d.clicks);
   const maxMarketRevenue = Math.max(...globalMarkets.markets.map((m) => m.revenue), 1);
 
-  // Platform pulse status
-  const deployOk = !deployStats.lastDeploy || deployStats.lastDeploy.status === 'success';
   const alertCount = alertStats.totalLowPerformancePages;
   const hasCritical = alertStats.criticalPages > 0;
+  const deployStatus = computeDeployStatus(deployStats);
+  const cronStatus = computeCronStatus(cronHealth);
+  const revenueStatus = computeRevenueStatus(stats);
+  const webVitalsStatus = computeWebVitalsStatus(webVitalsHealth);
+  const alertStatus: SystemStatus = hasCritical ? 'down' : alertCount > 0 ? 'degraded' : 'operational';
+  const overallStatus = computeOverallStatus([
+    deployStatus,
+    cronStatus,
+    revenueStatus,
+    webVitalsStatus,
+    alertStatus,
+  ]);
+  const overallPill = getOverallPill(overallStatus);
+  const deployDetail = getDeployDetail(deployStats, deployStatus);
+  const cronDetail = getCronDetail(cronHealth, cronStatus);
+  const webVitalsDetail = getWebVitalsDetail(webVitalsHealth, webVitalsStatus);
+  const revenueDetail = getRevenueDetail(stats, revenueStatus);
 
   const rangeLabels: Record<TimeRange, string> = {
     '24h': 'Last 24 Hours',
@@ -257,32 +300,29 @@ export function ExecutiveOverview({
               Platform Intelligence · {rangeLabels[range]}
             </p>
           </div>
-          {hasCritical ? (
-            <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-red-50 border border-red-100">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-pulse absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
-              </span>
-              <span className="text-[11px] font-medium text-red-700">{alertCount} Critical Issue{alertCount !== 1 ? 's' : ''}</span>
-            </div>
-          ) : !deployOk ? (
-            <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-amber-50 border border-amber-100">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-pulse absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500" />
-              </span>
-              <span className="text-[11px] font-medium text-amber-700">Deploy Warning</span>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-100">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-pulse absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
-              </span>
-              <span className="text-[11px] font-medium text-emerald-700">All Systems Operational</span>
-            </div>
-          )}
+          <div className={`flex items-center gap-2.5 px-3 py-1.5 rounded-full ${overallPill.wrapperClass}`}>
+            <span className="relative flex h-2 w-2">
+              <span className={`animate-pulse absolute inline-flex h-full w-full rounded-full ${overallPill.pulseClass} opacity-75`} />
+              <span className={`relative inline-flex rounded-full h-2 w-2 ${overallPill.dotClass}`} />
+            </span>
+            <span className={`text-[11px] font-medium ${overallPill.textClass}`}>{overallPill.label}</span>
+          </div>
         </div>
+
+        {/* ── Bootstrap banner: only when ALL infrastructure subsystems have never run.
+             overallStatus === 'never-run' is too broad because revenueStatus can also
+             return 'never-run' for 0 clicks / 0 revenue on a running platform.
+             We gate on deploy + cron + webVitals all being 'never-run' instead. ── */}
+        {deployStatus === 'never-run' && cronStatus === 'never-run' && webVitalsStatus === 'never-run' && (
+          <div className="mb-7">
+            <WidgetNotConfigured
+              title="Platform noch nicht initialisiert"
+              description="Es sind noch keine Daten geflossen. Starte die Cron-Jobs damit das Dashboard befüllt wird."
+              testUrl="/dashboard"
+              testLabel="Zu Cron-Status"
+            />
+          </div>
+        )}
 
         {/* ── KPI Cards ───────────────────────────────────────── */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -395,29 +435,36 @@ export function ExecutiveOverview({
               <StatusRow
                 icon={Zap}
                 label="Deploy Pipeline"
-                status={deployOk ? 'operational' : 'critical'}
-                detail={deployOk ? `${deployStats.successRate}% success` : 'Last deploy failed'}
+                status={deployStatus}
+                detail={deployDetail}
                 href="/dashboard"
+              />
+              <StatusRow
+                icon={Shield}
+                label="Cron Health"
+                status={cronStatus}
+                detail={cronDetail}
+                href="/dashboard/cron-health"
               />
               <StatusRow
                 icon={Activity}
                 label="Web Vitals"
-                status="operational"
-                detail="Monitoring active"
+                status={webVitalsStatus}
+                detail={webVitalsDetail}
                 href="/dashboard/web-vitals"
               />
               <StatusRow
                 icon={Shield}
                 label="Performance Alerts"
-                status={hasCritical ? 'critical' : alertCount > 0 ? 'warning' : 'operational'}
+                status={alertStatus}
                 detail={alertCount > 0 ? `${alertCount} page${alertCount !== 1 ? 's' : ''}` : 'All clear'}
                 href="/dashboard/analytics"
               />
               <StatusRow
                 icon={TrendingUp}
                 label="Revenue Pipeline"
-                status={stats.revenueInRange > 0 ? 'operational' : 'warning'}
-                detail={stats.revenueInRange > 0 ? formatCurrency(stats.revenueInRange) : 'No revenue'}
+                status={revenueStatus}
+                detail={revenueDetail}
                 href="/dashboard/revenue"
               />
             </div>
@@ -444,4 +491,154 @@ export function ExecutiveOverview({
     </div>
     </WidgetErrorBoundary>
   );
+}
+
+function computeDeployStatus(deployStats: DeployStats): SystemStatus {
+  const lastSuccessfulAt = deployStats.recentDeploys.find((deploy) => deploy.status === 'success')?.deployed_at ?? null;
+  const errorState = deployStats.lastDeploy && deployStats.lastDeploy.status !== 'success'
+    ? deployStats.lastDeploy.status
+    : null;
+
+  const baseStatus = computeWidgetHealth({
+    source: deployStats.source === 'live' ? 'live' : 'cached',
+    lastSuccessfulAt,
+    maxAgeMinutes: 7 * 24 * 60,
+    errorState,
+    sampleSize: deployStats.totalDeploys,
+  });
+
+  return deployStats.source === 'empty' ? 'never-run' : baseStatus;
+}
+
+function computeCronStatus(cronHealth: ExecutiveOverviewProps['cronHealth']): SystemStatus {
+  if (cronHealth.source === 'empty') return 'never-run';
+  if (cronHealth.errors > 0) return 'down';
+  if (cronHealth.stale > 0) return 'stale';
+  if (cronHealth.warning > 0) return 'degraded';
+  if (cronHealth.neverRun === cronHealth.totalJobs) return 'never-run';
+  if (cronHealth.neverRun > 0) return 'degraded';
+
+  const baseStatus = computeWidgetHealth({
+    source: 'live',
+    lastSuccessfulAt: cronHealth.lastSuccessfulAt ?? cronHealth.lastObservedAt,
+    maxAgeMinutes: 24 * 60,
+    errorState: null,
+    sampleSize: cronHealth.healthy + cronHealth.warning + cronHealth.stale + cronHealth.errors + cronHealth.neverRun,
+  });
+
+  return baseStatus;
+}
+
+function computeRevenueStatus(stats: ExecutiveOverviewProps['stats']): SystemStatus {
+  const hasObservedPipeline = stats.totalClicks > 0 || stats.totalRevenue > 0;
+  const baseStatus = computeWidgetHealth({
+    source: 'live',
+    lastSuccessfulAt: hasObservedPipeline ? new Date().toISOString() : null,
+    maxAgeMinutes: 60,
+    errorState: stats.totalClicks > 0 && stats.totalRevenue === 0 ? 'no-revenue' : null,
+    sampleSize: stats.totalClicks,
+  });
+
+  return baseStatus;
+}
+
+function computeWebVitalsStatus(webVitalsHealth: ExecutiveOverviewProps['webVitalsHealth']): SystemStatus {
+  const baseStatus = computeWidgetHealth({
+    source: webVitalsHealth.source === 'live' ? 'live' : 'cached',
+    lastSuccessfulAt: webVitalsHealth.lastRecordedAt,
+    maxAgeMinutes: 24 * 60,
+    errorState: null,
+    sampleSize: webVitalsHealth.sampleSize,
+  });
+
+  if (baseStatus !== 'operational') return baseStatus;
+  if (webVitalsHealth.poorCount > 0) return 'down';
+  if (webVitalsHealth.warningCount > 0) return 'degraded';
+  return 'operational';
+}
+
+function computeOverallStatus(statuses: SystemStatus[]): SystemStatus {
+  if (statuses.some((status) => status === 'down')) return 'down';
+  if (statuses.some((status) => status === 'degraded')) return 'degraded';
+  if (statuses.some((status) => status === 'stale')) return 'stale';
+  if (statuses.every((status) => status === 'operational')) return 'operational';
+  if (statuses.some((status) => status === 'never-run')) return 'never-run';
+  return 'unknown';
+}
+
+function getOverallPill(status: SystemStatus) {
+  switch (status) {
+    case 'operational':
+      return {
+        label: 'All Systems Operational',
+        wrapperClass: 'bg-emerald-50 border border-emerald-100',
+        pulseClass: 'bg-emerald-400',
+        dotClass: 'bg-emerald-500',
+        textClass: 'text-emerald-700',
+      };
+    case 'down':
+      return {
+        label: 'Critical Systems Down',
+        wrapperClass: 'bg-red-50 border border-red-100',
+        pulseClass: 'bg-red-400',
+        dotClass: 'bg-red-500',
+        textClass: 'text-red-700',
+      };
+    case 'degraded':
+      return {
+        label: 'System Degraded',
+        wrapperClass: 'bg-amber-50 border border-amber-100',
+        pulseClass: 'bg-amber-400',
+        dotClass: 'bg-amber-500',
+        textClass: 'text-amber-700',
+      };
+    case 'stale':
+      return {
+        label: 'Stale System Data',
+        wrapperClass: 'bg-amber-50 border border-amber-100',
+        pulseClass: 'bg-amber-400',
+        dotClass: 'bg-amber-500',
+        textClass: 'text-amber-700',
+      };
+    default:
+      return {
+        label: `System ${STATUS_LABEL[status]}`,
+        wrapperClass: 'bg-slate-50 border border-slate-200',
+        pulseClass: 'bg-slate-300',
+        dotClass: 'bg-slate-400',
+        textClass: 'text-slate-600',
+      };
+  }
+}
+
+function getDeployDetail(deployStats: DeployStats, status: SystemStatus): string {
+  if (status === 'never-run') return 'No deploy data';
+  if (status === 'stale') return 'Deploy data stale';
+  if (deployStats.lastDeploy?.status === 'failed') return 'Last deploy failed';
+  if (deployStats.lastDeploy?.status === 'rolled_back') return 'Last deploy rolled back';
+  return `${deployStats.successRate}% success`;
+}
+
+function getCronDetail(cronHealth: ExecutiveOverviewProps['cronHealth'], status: SystemStatus): string {
+  if (status === 'never-run') return 'No cron logs yet';
+  if (cronHealth.errors > 0) return `${cronHealth.errors} error${cronHealth.errors === 1 ? '' : 's'}`;
+  if (cronHealth.stale > 0) return `${cronHealth.stale} stale`;
+  if (cronHealth.warning > 0) return `${cronHealth.warning} warning`;
+  if (cronHealth.neverRun > 0) return `${cronHealth.neverRun} never run`;
+  return `${cronHealth.healthy}/${cronHealth.totalJobs} healthy`;
+}
+
+function getWebVitalsDetail(webVitalsHealth: ExecutiveOverviewProps['webVitalsHealth'], status: SystemStatus): string {
+  if (status === 'never-run') return 'No RUM data yet';
+  if (status === 'stale') return 'Vitals data stale';
+  if (webVitalsHealth.poorCount > 0) return `${webVitalsHealth.poorCount} poor metrics`;
+  if (webVitalsHealth.warningCount > 0) return `${webVitalsHealth.warningCount} needs work`;
+  return `${webVitalsHealth.sampleSize} samples`;
+}
+
+function getRevenueDetail(stats: ExecutiveOverviewProps['stats'], status: SystemStatus): string {
+  if (status === 'never-run') return 'No revenue data';
+  if (stats.totalRevenue > 0) return formatCurrency(stats.totalRevenue);
+  if (stats.totalClicks > 0) return `${formatNumber(stats.totalClicks)} clicks, no revenue`;
+  return 'No revenue';
 }

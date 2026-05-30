@@ -163,8 +163,13 @@ export async function GET(request: NextRequest) {
       })
       .sort((a, b) => b.clicks - a.clicks);
 
+    const gscHasData = topKeywords.some((kw) => kw.clicks > 0 || kw.impressions > 0 || kw.position > 0);
+
     return NextResponse.json({
       configured: true,
+      gscHasData,
+      lastSyncAt: null,
+      fetchedAt: new Date().toISOString(),
       range: { start, end, label: range },
       overview: {
         totalClicks,

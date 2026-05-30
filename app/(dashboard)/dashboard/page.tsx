@@ -9,8 +9,12 @@ import {
 } from 'lucide-react';
 import { getDashboardStats, getGlobalMarketIntelligence, TimeRange, ActionItem, GlobalMarketIntelligence } from '@/lib/actions/dashboard';
 import { getLowPerformancePages, getPerformanceAlertStats } from '@/lib/actions/performance-alerts';
+import { CRON_DEFINITIONS } from '@/lib/dashboard/cron-definitions';
 import { loadFxRates } from '@/lib/fx-rates';
 import { getDeployStats } from '@/lib/actions/deploy-logs';
+import { getCronRuntimeState, isSuccessfulCronLog } from '@/lib/dashboard/cron-status';
+import { getWebVitalsP75LastNDays } from '@/lib/actions/web-vitals';
+import { createServiceClient } from '@/lib/supabase/server';
 import { ClicksChart } from '@/components/dashboard/clicks-chart';
 import { RecentClicksLive } from '@/components/dashboard/recent-clicks-live';
 import { TopLinksLive } from '@/components/dashboard/top-links-live';
@@ -40,6 +44,29 @@ export const maxDuration = 15; // Hard limit: 15 seconds max server render
 
 interface DashboardPageProps {
   searchParams: Promise<{ range?: string }>;
+}
+
+interface CronHealthSummary {
+  source: 'live' | 'empty';
+  healthy: number;
+  warning: number;
+  stale: number;
+  errors: number;
+  neverRun: number;
+  totalJobs: number;
+  lastObservedAt: string | null;
+  lastSuccessfulAt: string | null;
+}
+
+interface WebVitalsHealthSummary {
+  source: 'live' | 'empty';
+  sampleSize: number;
+  poorCount: number;
+  warningCount: number;
+  lastRecordedAt: string | null;
+  lcpP75: number | null;
+  inpP75: number | null;
+  clsP75: number | null;
 }
 
 // ── Timeout wrapper: prevents Supabase from hanging indefinitely ──
@@ -84,6 +111,84 @@ function withTimeoutAndFlag<T>(
       },
     );
   });
+}
+
+async function getCronHealthSummary(): Promise<CronHealthSummary> {
+  const supabase = createServiceClient();
+  const { data, error } = await supabase
+    .from('cron_logs')
+    .select('job_name, status, metadata, executed_at')
+    .order('executed_at', { ascending: false })
+    .limit(200);
+
+  if (error || !data || data.length === 0) {
+    return {
+      source: 'empty',
+      healthy: 0,
+      warning: 0,
+      stale: 0,
+      errors: 0,
+      neverRun: CRON_DEFINITIONS.length,
+      totalJobs: CRON_DEFINITIONS.length,
+      lastObservedAt: null,
+      lastSuccessfulAt: null,
+    };
+  }
+
+  const latestByJob = new Map<string, { status: string; executed_at: string; metadata?: { canonicalStatus?: string | null } | null }>();
+  for (const row of data) {
+    if (!latestByJob.has(row.job_name)) {
+      latestByJob.set(row.job_name, row);
+    }
+  }
+
+  const healthy = CRON_DEFINITIONS.filter((cron) => getCronRuntimeState(latestByJob.get(cron.name), cron.maxMinutes) === 'healthy').length;
+  const warning = CRON_DEFINITIONS.filter((cron) => getCronRuntimeState(latestByJob.get(cron.name), cron.maxMinutes) === 'warning').length;
+  const stale = CRON_DEFINITIONS.filter((cron) => getCronRuntimeState(latestByJob.get(cron.name), cron.maxMinutes) === 'stale').length;
+  const errors = CRON_DEFINITIONS.filter((cron) => getCronRuntimeState(latestByJob.get(cron.name), cron.maxMinutes) === 'error').length;
+  const neverRun = CRON_DEFINITIONS.filter((cron) => getCronRuntimeState(latestByJob.get(cron.name), cron.maxMinutes) === 'never-run').length;
+  const lastObservedAt = data[0]?.executed_at ?? null;
+  const lastSuccessfulAt = data.find((row) => isSuccessfulCronLog(row))?.executed_at ?? null;
+
+  return {
+    source: 'live',
+    healthy,
+    warning,
+    stale,
+    errors,
+    neverRun,
+    totalJobs: CRON_DEFINITIONS.length,
+    lastObservedAt,
+    lastSuccessfulAt,
+  };
+}
+
+async function getWebVitalsHealthSummary(): Promise<WebVitalsHealthSummary> {
+  const summary = await getWebVitalsP75LastNDays(7);
+
+  if (summary.sample_size === 0) {
+    return {
+      source: 'empty',
+      sampleSize: 0,
+      poorCount: 0,
+      warningCount: 0,
+      lastRecordedAt: null,
+      lcpP75: null,
+      inpP75: null,
+      clsP75: null,
+    };
+  }
+
+  return {
+    source: 'live',
+    sampleSize: summary.sample_size,
+    poorCount: summary.poor_metrics,
+    warningCount: summary.warning_metrics,
+    lastRecordedAt: summary.last_recorded_at,
+    lcpP75: summary.lcp_p75,
+    inpP75: summary.inp_p75,
+    clsP75: summary.cls_p75,
+  };
 }
 
 // Clean card style - white with subtle border and shadow
@@ -151,17 +256,41 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
 
   const emptyAlertStats = { totalLowPerformancePages: 0, criticalPages: 0, warningPages: 0, potentialLostRevenue: 0 };
   const emptyMarkets: GlobalMarketIntelligence = { markets: [], opportunities: [], leaderMarket: 'US', totalGlobalRevenue: 0, totalGlobalClicks: 0 };
+  const emptyDeployStats = { totalDeploys: 0, successCount: 0, failedCount: 0, rollbackCount: 0, successRate: 0, avgDuration: 0, stale: true, source: 'empty' as const, lastDeploy: null, recentDeploys: [] };
+  const emptyCronHealth: CronHealthSummary = {
+    source: 'empty',
+    healthy: 0,
+    warning: 0,
+    stale: 0,
+    errors: 0,
+    neverRun: 0,
+    totalJobs: CRON_DEFINITIONS.length,
+    lastObservedAt: null,
+    lastSuccessfulAt: null,
+  };
+  const emptyWebVitalsHealth: WebVitalsHealthSummary = {
+    source: 'empty',
+    sampleSize: 0,
+    poorCount: 0,
+    warningCount: 0,
+    lastRecordedAt: null,
+    lcpP75: null,
+    inpP75: null,
+    clsP75: null,
+  };
 
   // SF4: Pre-warm FX cache so getDashboardStats uses dynamic rates (same as getGlobalMarketIntelligence)
   await loadFxRates();
 
   // SF2: All 4 queries start in parallel — stats uses withTimeoutAndFlag to surface timeout in UI
-  const [statsResult, lowPerformancePages, performanceAlertStats, globalMarkets, deployStats] = await Promise.all([
+  const [statsResult, lowPerformancePages, performanceAlertStats, globalMarkets, deployStats, cronHealth, webVitalsHealth] = await Promise.all([
     withTimeoutAndFlag(getDashboardStats(range), QUERY_TIMEOUT, emptyStats),
     withTimeout(getLowPerformancePages(), QUERY_TIMEOUT, []),
     withTimeout(getPerformanceAlertStats(), QUERY_TIMEOUT, emptyAlertStats),
     withTimeout(getGlobalMarketIntelligence(range), QUERY_TIMEOUT, emptyMarkets),
-    withTimeout(getDeployStats(10), QUERY_TIMEOUT, { totalDeploys: 0, successCount: 0, failedCount: 0, rollbackCount: 0, successRate: 0, avgDuration: 0, lastDeploy: null, recentDeploys: [] }),
+    withTimeout(getDeployStats(10), QUERY_TIMEOUT, emptyDeployStats),
+    withTimeout(getCronHealthSummary(), QUERY_TIMEOUT, emptyCronHealth),
+    withTimeout(getWebVitalsHealthSummary(), QUERY_TIMEOUT, emptyWebVitalsHealth),
   ]);
   const { data: stats, timedOut: statsTimedOut } = statsResult;
 
@@ -215,6 +344,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           }}
           globalMarkets={globalMarkets}
           deployStats={deployStats}
+          cronHealth={cronHealth}
+          webVitalsHealth={webVitalsHealth}
           alertStats={performanceAlertStats}
           range={range}
           comparisonLabel={comparisonLabels[range]}

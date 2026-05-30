@@ -262,7 +262,7 @@ export function ComparisonTablePremium({
                   asChild
                   size="sm"
                   className="w-full gap-1.5 text-xs transition-all duration-200 group-hover/row:scale-105 group-hover/row:shadow-md font-normal"
-                  style={{ background: item.isEditorsChoice ? 'var(--sfp-gold)' : 'var(--sfp-navy)', color: '#ffffff', borderRadius: '1rem', fontWeight: 400 }}
+                  style={{ background: item.isEditorsChoice ? 'var(--sfp-gold)' : 'var(--sfp-navy)', color: item.isEditorsChoice ? 'var(--sfp-ink)' : '#ffffff', borderRadius: '1rem', fontWeight: 400 }}
                 >
                   <Link href={item.affiliateUrl} target="_blank" rel="noopener sponsored">
                     {ctaLabel}
@@ -425,7 +425,7 @@ export function ComparisonTablePremium({
                 <Button
                   asChild
                   className="w-full gap-2 font-normal"
-                  style={{ background: item.isEditorsChoice ? 'var(--sfp-gold)' : 'var(--sfp-navy)', color: '#ffffff', borderRadius: '1rem', fontWeight: 400 }}
+                  style={{ background: item.isEditorsChoice ? 'var(--sfp-gold)' : 'var(--sfp-navy)', color: item.isEditorsChoice ? 'var(--sfp-ink)' : '#ffffff', borderRadius: '1rem', fontWeight: 400 }}
                 >
                   <Link href={item.affiliateUrl} target="_blank" rel="noopener sponsored">
                     {ctaLabel} {item.name}

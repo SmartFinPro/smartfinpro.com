@@ -14,12 +14,9 @@ import { validateBearer } from '@/lib/security/timing-safe';
  * Revenue formula: Emerald Clicks × CPA × Conversion Rate (3%)
  * Consistent with getRevenueForecast() and the Dollar-Heatmap.
  *
- * Schedule: Sunday 20:00 UTC
- *
- * Self-hosted crontab entry:
- *   0 20 * * 0 curl -sf -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/cron/weekly-report >> /home/master/applications/smartfinpro/logs/cron.log 2>&1
+ * Schedule: Monday 07:00 UTC via GitHub Actions cron workflow
  */
-export async function GET(request: NextRequest) {
+async function handleRequest(request: NextRequest) {
   // Verify CRON_SECRET (timing-safe)
   const isDev = process.env.NODE_ENV === 'development';
   if (!isDev && !validateBearer(request.headers.get('authorization'), process.env.CRON_SECRET)) {
@@ -90,4 +87,12 @@ export async function GET(request: NextRequest) {
       { status: 500 },
     );
   }
+}
+
+export async function GET(request: NextRequest) {
+  return handleRequest(request);
+}
+
+export async function POST(request: NextRequest) {
+  return handleRequest(request);
 }

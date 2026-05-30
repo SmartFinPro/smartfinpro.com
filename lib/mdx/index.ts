@@ -33,6 +33,10 @@ export interface ContentMeta {
   customH1?: boolean;
   keywords?: string[];
   miniQuiz?: { topic: string; market?: string; title?: string };
+  /** F-04b: force CFD/leverage risk warning regardless of category. */
+  hasLeverageRisk?: boolean;
+  /** Optional CFD loss quote for the risk warning, e.g. "76%". */
+  lossPercentage?: string;
 }
 
 // ── Currency Map ────────────────────────────────────────────
@@ -78,6 +82,10 @@ function normalizeFrontmatter(raw: Record<string, unknown>): ContentMeta {
     customH1: Boolean(raw.customH1),
     keywords: (raw.keywords as string[]) ?? undefined,
     miniQuiz: (raw.miniQuiz as ContentMeta['miniQuiz']) ?? undefined,
+    hasLeverageRisk:
+      raw.hasLeverageRisk === true || raw.has_leverage_risk === true || undefined,
+    lossPercentage:
+      (raw.lossPercentage as string) ?? (raw.loss_percentage as string) ?? undefined,
   };
 }
 
@@ -101,10 +109,16 @@ export interface ContentItem {
  *   40 pts — Word count (E-E-A-T depth signal)
  *   30 pts — Recency / freshness
  *   20 pts — Rating present + value
- *   10 pts — ReviewCount present (social proof)
+ *   10 pts — Reviewer / fact-checker present (E-E-A-T)
  *
  * Score >= QUALITY_SCORE_THRESHOLD = indexing-worthy, included in internal links.
  * Score < threshold = thin/stale content, excluded from navigation (still crawlable).
+ *
+ * Note (2026-05-15): the 10-pt slot was previously gated on `reviewCount > 0`.
+ * That field is no longer a defensible signal — SmartFinPro hardcodes review
+ * counts in MDX frontmatter, so it measured "has been authored" not real social
+ * proof. Switched to `reviewedBy` (215 of ~217 reviews have it), which is a real
+ * E-E-A-T fact-checker attribution.
  */
 export function computeQualityScore(item: ContentItem): number {
   let score = 0;
@@ -131,8 +145,8 @@ export function computeQualityScore(item: ContentItem): number {
     score += Math.min(20, Math.round((item.meta.rating / 5) * 20));
   }
 
-  // 4. ReviewCount (10 pts)
-  if (item.meta.reviewCount && item.meta.reviewCount > 0) score += 10;
+  // 4. Reviewer / fact-checker attribution — E-E-A-T signal (10 pts)
+  if (item.meta.reviewedBy && item.meta.reviewedBy.trim().length > 0) score += 10;
 
   return score;
 }

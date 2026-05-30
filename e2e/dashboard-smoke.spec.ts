@@ -23,10 +23,14 @@ const DASHBOARD_STATS_FIXTURE = {
   todayPageViews: 843,
   todayClicks: 57,
   recentClicks: [
-    { id: '1', slug: '/trading/etoro', market: 'us', device: 'desktop', created_at: new Date().toISOString() },
-    { id: '2', slug: '/forex/ic-markets', market: 'uk', device: 'mobile', created_at: new Date().toISOString() },
+    { id: '1', page_path: '/us/trading/etoro', market: 'us', device_type: 'desktop', clicked_at: new Date().toISOString(), utm_source: 'google' },
+    { id: '2', page_path: '/uk/forex/ic-markets', market: 'uk', device_type: 'mobile', clicked_at: new Date().toISOString(), utm_source: null },
   ],
+  source: 'live',
   fetchedAt: new Date().toISOString(),
+  errorState: null,
+  isEmpty: false,
+  feedBackfilledFromOlderWindow: false,
 };
 
 const DASHBOARD_EMPTY_FIXTURE = {
@@ -35,7 +39,11 @@ const DASHBOARD_EMPTY_FIXTURE = {
   todayPageViews: 0,
   todayClicks: 0,
   recentClicks: [],
+  source: 'live',
   fetchedAt: new Date().toISOString(),
+  errorState: null,
+  isEmpty: true,
+  feedBackfilledFromOlderWindow: false,
 };
 
 // ── Helper: inject auth cookie to bypass login ────────────────────────────────
@@ -103,6 +111,32 @@ test.describe('Dashboard widget render (with fixture data)', () => {
 
 // ── 3. Error State ────────────────────────────────────────────────────────────
 test.describe('Dashboard error states', () => {
+  test('live feed never shows "No clicks" while todayClicks > 0', async ({ page, context }) => {
+    await page.route('**/api/dashboard/live-stats', route =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          activeNow: 3,
+          todayPageViews: 21,
+          todayClicks: 3,
+          recentClicks: [],
+          source: 'live',
+          fetchedAt: new Date().toISOString(),
+          errorState: null,
+          isEmpty: false,
+          feedBackfilledFromOlderWindow: false,
+        }),
+      })
+    );
+
+    await injectDashboardCookie(context);
+    await page.goto('/dashboard/analytics');
+
+    await expect(page.getByText('No clicks recorded yet')).toHaveCount(0);
+    await expect(page.getByText(/3 clicks today, but none in the recent feed window\./)).toBeVisible();
+  });
+
   test('live-stats 500 → shows graceful fallback (no crash)', async ({ page, context }) => {
     await page.route('**/api/dashboard/live-stats', route =>
       route.fulfill({ status: 500, contentType: 'application/json', body: JSON.stringify({ error: 'DB timeout' }) })

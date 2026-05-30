@@ -39,13 +39,14 @@ export async function GET(request: NextRequest) {
 
     const duration = Date.now() - start;
 
-    await logCron({
+    logCron({
       job: 'sync-rankings',
       status: 'success',
       duration_ms: duration,
       seeded: seedResult.seeded,
       synced: syncResult.synced,
       errors: syncResult.errors,
+      skipped_markets: syncResult.skippedUnsupportedMarkets,
     });
 
     return Response.json({
@@ -54,12 +55,13 @@ export async function GET(request: NextRequest) {
       skipped: seedResult.skipped,
       gsc_synced: syncResult.synced,
       gsc_errors: syncResult.errors,
+      gsc_skipped_unsupported_markets: syncResult.skippedUnsupportedMarkets,
       duration_ms: duration,
     });
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
     logger.error('[sync-rankings] Cron failed', { error: msg });
-    await logCron({
+    logCron({
       job: 'sync-rankings',
       status: 'error',
       duration_ms: Date.now() - start,
