@@ -11,7 +11,6 @@ import {
   Target,
   Link2,
   ArrowUpRight,
-  ChevronDown,
 } from 'lucide-react';
 import { getAnalyticsStats } from '@/lib/actions/analytics';
 import { TimeRange } from '@/lib/actions/dashboard';
@@ -28,6 +27,7 @@ import { WidgetErrorBoundary } from '@/components/dashboard/widget-error-boundar
 import { GSCOverview } from '@/components/dashboard/gsc-overview';
 import { LiveDashboardBar } from '@/components/dashboard/live-dashboard-bar';
 import { LiveClicksFeed } from '@/components/dashboard/live-clicks-feed';
+import { PageHeader, StatCard, FilterBar } from '@/components/dashboard/ui';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -35,15 +35,6 @@ export const revalidate = 0;
 interface AnalyticsPageProps {
   searchParams: Promise<{ range?: string; silo?: string }>;
 }
-
-// Stat card icon colors
-const iconStyles = {
-  pageViews: 'bg-emerald-50 text-emerald-500',
-  sessions: 'bg-blue-50 text-blue-500',
-  time: 'bg-purple-50 text-purple-500',
-  scroll: 'bg-amber-50 text-amber-500',
-  bounce: 'bg-red-50 text-red-500',
-};
 
 export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps) {
   const params = await searchParams;
@@ -64,26 +55,22 @@ export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps
       <LiveDashboardBar />
 
       {/* Page Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-            <BarChart3 className="h-6 w-6 text-slate-400" />
-            Traffic Analytics
-          </h1>
-          <p className="text-slate-500 mt-1">
-            Detailed traffic analysis for {rangeLabels[range]} {silo !== 'all' && `• ${silo.replace(/-/g, ' ')}`}
-          </p>
-        </div>
-        <div className="flex items-center gap-3 relative">
-          <SimulationButton />
-          <SiloFilterDropdown currentSilo={silo} />
-          <WidgetErrorBoundary label="Time Range" minHeight="h-10">
-            <Suspense fallback={<div className="h-10 w-40 bg-slate-200 animate-pulse rounded-lg" />}>
-              <TimeRangeSelector />
-            </Suspense>
-          </WidgetErrorBoundary>
-        </div>
-      </div>
+      <PageHeader
+        icon={BarChart3}
+        title="Traffic Analytics"
+        description={`Detailed traffic analysis for ${rangeLabels[range]}${silo !== 'all' ? ` • ${silo.replace(/-/g, ' ')}` : ''}`}
+        actions={
+          <FilterBar>
+            <SimulationButton />
+            <SiloFilterDropdown currentSilo={silo} />
+            <WidgetErrorBoundary label="Time Range" minHeight="h-10">
+              <Suspense fallback={<div className="h-10 w-40 bg-slate-200 animate-pulse rounded-lg" />}>
+                <TimeRangeSelector />
+              </Suspense>
+            </WidgetErrorBoundary>
+          </FilterBar>
+        }
+      />
 
       {/* Google Search Console — Real Search Data */}
       <WidgetErrorBoundary label="Google Search Console" minHeight="h-32">
@@ -105,88 +92,41 @@ export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps
 
       {/* Overview Stats */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-        {/* Page Views */}
-        <div className="dashboard-card p-6">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-sm text-slate-500">Page Views</p>
-              <p className="text-3xl font-semibold text-slate-800 mt-1">
-                {stats.overview.pageViewsInRange.toLocaleString('en-US')}
-              </p>
-              <p className="text-sm text-slate-400 mt-2">
-                {stats.overview.totalPageViews.toLocaleString('en-US')} total
-              </p>
-            </div>
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${iconStyles.pageViews}`}>
-              <FileText className="h-5 w-5" />
-            </div>
-          </div>
-        </div>
-
-        {/* Unique Sessions */}
-        <div className="dashboard-card p-6">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-sm text-slate-500">Unique Sessions</p>
-              <p className="text-3xl font-semibold text-slate-800 mt-1">
-                {stats.overview.uniqueSessions.toLocaleString('en-US')}
-              </p>
-              <p className="text-sm text-slate-400 mt-2">unique visitors</p>
-            </div>
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${iconStyles.sessions}`}>
-              <Users className="h-5 w-5" />
-            </div>
-          </div>
-        </div>
-
-        {/* Avg Time on Page */}
-        <div className="dashboard-card p-6">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-sm text-slate-500">Avg. Time on Page</p>
-              <p className="text-3xl font-semibold text-slate-800 mt-1">
-                {Math.floor(stats.overview.avgTimeOnPage / 60)}:
-                {(stats.overview.avgTimeOnPage % 60).toString().padStart(2, '0')}
-              </p>
-              <p className="text-sm text-slate-400 mt-2">min:sec</p>
-            </div>
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${iconStyles.time}`}>
-              <Clock className="h-5 w-5" />
-            </div>
-          </div>
-        </div>
-
-        {/* Avg Scroll Depth */}
-        <div className="dashboard-card p-6">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-sm text-slate-500">Avg. Scroll Depth</p>
-              <p className="text-3xl font-semibold text-slate-800 mt-1">
-                {stats.overview.avgScrollDepth}%
-              </p>
-              <p className="text-sm text-slate-400 mt-2">of page content</p>
-            </div>
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${iconStyles.scroll}`}>
-              <ScrollText className="h-5 w-5" />
-            </div>
-          </div>
-        </div>
-
-        {/* Bounce Rate */}
-        <div className="dashboard-card p-6">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-sm text-slate-500">Bounce Rate</p>
-              <p className="text-3xl font-semibold text-slate-800 mt-1">
-                {stats.overview.bounceRate}%
-              </p>
-              <p className="text-sm text-slate-400 mt-2">single page visits</p>
-            </div>
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${iconStyles.bounce}`}>
-              <TrendingDown className="h-5 w-5" />
-            </div>
-          </div>
-        </div>
+        <StatCard
+          label="Page Views"
+          value={stats.overview.pageViewsInRange.toLocaleString('en-US')}
+          subtext={`${stats.overview.totalPageViews.toLocaleString('en-US')} total`}
+          icon={FileText}
+          tone="green"
+        />
+        <StatCard
+          label="Unique Sessions"
+          value={stats.overview.uniqueSessions.toLocaleString('en-US')}
+          subtext="unique visitors"
+          icon={Users}
+          tone="blue"
+        />
+        <StatCard
+          label="Avg. Time on Page"
+          value={`${Math.floor(stats.overview.avgTimeOnPage / 60)}:${(stats.overview.avgTimeOnPage % 60).toString().padStart(2, '0')}`}
+          subtext="min:sec"
+          icon={Clock}
+          tone="navy"
+        />
+        <StatCard
+          label="Avg. Scroll Depth"
+          value={`${stats.overview.avgScrollDepth}%`}
+          subtext="of page content"
+          icon={ScrollText}
+          tone="amber"
+        />
+        <StatCard
+          label="Bounce Rate"
+          value={`${stats.overview.bounceRate}%`}
+          subtext="single page visits"
+          icon={TrendingDown}
+          tone="red"
+        />
       </div>
 
       {/* Traffic Chart + Live Clicks Feed */}
