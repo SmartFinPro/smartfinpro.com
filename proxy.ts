@@ -303,14 +303,14 @@ export async function proxy(request: NextRequest) {
       return response;
     }
 
-    // ── Genesis API Auth Gate (F-03) ─────────────────────────────
-    // Protects ALL /api/genesis/* routes (content pipeline) — they
-    // mutate MDX, burn Claude/Serper budget, and call the Indexing API.
-    // Previously unauthenticated (fell through the /api PROTECTED_PREFIXES
-    // skip). Accepts EITHER a valid dashboard session cookie (UI calls
-    // carry it same-origin) OR a Bearer CRON_SECRET (cron/internal calls).
-    // Returns JSON 401 — never HTML. Must run BEFORE the /api skip.
-    if (pathname.startsWith('/api/genesis')) {
+    // ── Genesis + Backlinks API Auth Gate (F-03 / dashboard-phase1) ──
+    // Protects ALL /api/genesis/* (content pipeline — mutates MDX, burns
+    // Claude/Serper budget, calls the Indexing API) AND /api/backlinks
+    // (POST = CSV import + internal scan; previously ungated because it
+    // sits outside /api/dashboard). Accepts EITHER a valid dashboard
+    // session cookie (UI calls carry it same-origin) OR a Bearer
+    // CRON_SECRET (cron/internal). Returns JSON 401 — never HTML.
+    if (pathname.startsWith('/api/genesis') || pathname.startsWith('/api/backlinks')) {
       const authDisabled =
         process.env.NODE_ENV !== 'production' &&
         process.env.DASHBOARD_AUTH_DISABLED === 'true';

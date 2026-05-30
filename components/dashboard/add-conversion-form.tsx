@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Loader2 } from 'lucide-react';
+import { Plus, Loader2, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -26,12 +26,17 @@ interface AddConversionFormProps {
   affiliateLinks: { id: string; slug: string; partner_name: string }[];
 }
 
+// Radix Select forbids an empty-string value, so we use a sentinel for "no link".
+const NO_LINK = '__none__';
+
 export function AddConversionForm({ affiliateLinks }: AddConversionFormProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
 
-  const [linkId, setLinkId] = useState('');
+  const [linkId, setLinkId] = useState(NO_LINK);
   const [amount, setAmount] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [reference, setReference] = useState('');
@@ -40,9 +45,12 @@ export function AddConversionForm({ affiliateLinks }: AddConversionFormProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    setError(null);
+    setSuccess(false);
+
     const amountNum = parseFloat(amount);
     if (isNaN(amountNum) || amountNum <= 0) {
-      alert('Please enter a valid amount');
+      setError('Bitte einen gültigen Betrag (> 0) eingeben.');
       return;
     }
 
@@ -52,28 +60,40 @@ export function AddConversionForm({ affiliateLinks }: AddConversionFormProps) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          link_id: linkId || undefined,
+          link_id: linkId === NO_LINK ? undefined : linkId,
           converted_at: new Date(date).toISOString(),
           commission_earned: amountNum,
           network_reference: reference || undefined,
           status,
         }),
       });
-      if (!res.ok) throw new Error('Failed to add conversion');
+      if (!res.ok) {
+        const payload = await res.json().catch(() => null);
+        throw new Error(payload?.error || 'Failed to add conversion');
+      }
 
-      setOpen(false);
+      setSuccess(true);
       resetForm();
       router.refresh();
-    } catch (error) {
-      console.error('Failed to add conversion:', error);
-      alert('Failed to add conversion. Please try again.');
+      // Auto-close shortly after showing the success state.
+      setTimeout(() => {
+        setOpen(false);
+        setSuccess(false);
+      }, 1200);
+    } catch (err) {
+      console.error('Failed to add conversion:', err);
+      setError(
+        err instanceof Error
+          ? `Conversion konnte nicht gespeichert werden: ${err.message}`
+          : 'Conversion konnte nicht gespeichert werden. Bitte erneut versuchen.',
+      );
     } finally {
       setLoading(false);
     }
   };
 
   const resetForm = () => {
-    setLinkId('');
+    setLinkId(NO_LINK);
     setAmount('');
     setDate(new Date().toISOString().split('T')[0]);
     setReference('');
@@ -81,7 +101,16 @@ export function AddConversionForm({ affiliateLinks }: AddConversionFormProps) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog
+      open={open}
+      onOpenChange={(o) => {
+        setOpen(o);
+        if (!o) {
+          setError(null);
+          setSuccess(false);
+        }
+      }}
+    >
       <DialogTrigger asChild>
         <Button>
           <Plus className="h-4 w-4 mr-2" />
@@ -104,7 +133,7 @@ export function AddConversionForm({ affiliateLinks }: AddConversionFormProps) {
                 <SelectValue placeholder="Select link (optional)" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">None / Unassigned</SelectItem>
+                <SelectItem value={NO_LINK}>None / Unassigned</SelectItem>
                 {affiliateLinks.map((link) => (
                   <SelectItem key={link.id} value={link.id}>
                     {link.partner_name} ({link.slug})
@@ -167,6 +196,18 @@ export function AddConversionForm({ affiliateLinks }: AddConversionFormProps) {
               </SelectContent>
             </Select>
           </div>
+
+          {error && (
+            <p className="text-sm font-medium text-[var(--sfp-red)]" role="alert">
+              {error}
+            </p>
+          )}
+          {success && (
+            <p className="flex items-center gap-1.5 text-sm font-medium text-[var(--sfp-green)]">
+              <CheckCircle2 className="h-4 w-4" />
+              Conversion gespeichert.
+            </p>
+          )}
 
           <div className="flex justify-end gap-2 pt-4">
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>

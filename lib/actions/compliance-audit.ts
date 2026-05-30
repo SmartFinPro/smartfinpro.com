@@ -4,8 +4,21 @@ import 'server-only';
 
 import { createServiceClient } from '@/lib/supabase/server';
 import type { Market, Category, AffiliateLink } from '@/types';
+import {
+  runContentComplianceCheck,
+  type ContentComplianceResult,
+} from '@/lib/actions/compliance-content';
 
 // ── Types ───────────────────────────────────────────────────
+
+export interface ContentScanSummary {
+  scanned: number;
+  compliant: number;
+  violations: number;
+  generatedAt: string;
+  // Only the non-compliant pages — keeps the persisted payload small.
+  missing: ContentComplianceResult[];
+}
 
 export interface AuditResult {
   totalLinks: number;
@@ -13,6 +26,7 @@ export interface AuditResult {
   attentionLinks: number;
   criticalLinks: number;
   details: AuditDetail[];
+  contentScan: ContentScanSummary;
   timestamp: string;
 }
 
@@ -42,6 +56,7 @@ export interface LatestAuditRun {
   warnings: number;
   critical: number;
   details: AuditDetail[];
+  contentScan: ContentScanSummary | null;
 }
 
 function isMissingAuditRunsTable(error: { code?: string; message?: string } | null): boolean {
@@ -81,6 +96,13 @@ export async function runComplianceAudit(): Promise<AuditResult> {
       attentionLinks: 0,
       criticalLinks: 0,
       details: [],
+      contentScan: {
+        scanned: 0,
+        compliant: 0,
+        violations: 0,
+        generatedAt: new Date().toISOString(),
+        missing: [],
+      },
       timestamp: new Date().toISOString(),
     };
   }
@@ -91,6 +113,21 @@ export async function runComplianceAudit(): Promise<AuditResult> {
     'credit-repair', 'debt-relief', 'credit-score', 'remortgaging', 'cost-of-living', 'savings',
     'superannuation', 'gold-investing', 'tax-efficient-investing', 'housing',
   ]);
+
+  // ── Real MDX content disclosure scan (FCA/ASIC/CIRO/SEC) ──────────────
+  // Awaited ONCE here (reads MDX from disk). Findings are indexed by
+  // market+category so they can be merged into matching links cheaply.
+  const contentReport = await runContentComplianceCheck();
+  const contentViolations = contentReport.results.filter((r) => !r.compliant);
+
+  // Index missing-disclosure pages by `${market}/${category}` for O(1) lookup.
+  const contentByMarketCategory = new Map<string, ContentComplianceResult[]>();
+  for (const page of contentViolations) {
+    const key = `${page.market}/${page.category}`;
+    const bucket = contentByMarketCategory.get(key);
+    if (bucket) bucket.push(page);
+    else contentByMarketCategory.set(key, [page]);
+  }
 
   const details: AuditDetail[] = links.map((link: AffiliateLink) => {
     const issues: AuditIssue[] = [];
@@ -155,34 +192,19 @@ export async function runComplianceAudit(): Promise<AuditResult> {
       });
     }
 
-    // Check 7: FCA CCI Regime (UK Apr 2026) - Investment products need CCI label
-    if (link.market === 'uk' && ['trading', 'forex', 'personal-finance', 'remortgaging', 'savings'].includes(link.category)) {
-      // CCI Regime: Consumer Credit Information compliance
-      // PLACEHOLDER: Check if page has "This is a marketing communication" label
+    // Check 7: Real regulatory disclosure scan (FCA/ASIC/CIRO/SEC).
+    // No longer faked — driven by the actual MDX content scan above.
+    // If any page in this link's market+category is missing a mandatory
+    // regulator disclosure, surface it as a warning on this link.
+    const offendingPages = contentByMarketCategory.get(`${link.market}/${link.category}`) ?? [];
+    if (offendingPages.length > 0) {
+      const regulators = Array.from(
+        new Set(offendingPages.flatMap((p) => p.issues.map((i) => i.regulator))),
+      ).join(', ');
       issues.push({
-        code: 'FCA_CCI_REGIME',
-        severity: 'info',
-        message: 'UK CCI Regime (Apr 2026): Verify "This is a marketing communication" label on page',
-      });
-    }
-
-    // Check 8: BNPL Labels (UK Jul 2026) - Buy Now Pay Later disclosure
-    if (link.market === 'uk' && link.category === 'personal-finance') {
-      // FCA BNPL regulation starting July 2026
-      issues.push({
-        code: 'UK_BNPL_LABEL',
-        severity: 'info',
-        message: 'UK BNPL regulation (Jul 2026): If BNPL product, add "Credit subject to status" label',
-      });
-    }
-
-    // Check 9: EU AI Act - AI-generated content must be labeled
-    if (['ai-tools', 'trading', 'forex'].includes(link.category)) {
-      // EU AI Act compliance: AI-generated content labeling
-      issues.push({
-        code: 'EU_AI_ACT',
-        severity: 'info',
-        message: 'EU AI Act: If content is AI-generated, add disclosure label per regulation',
+        code: 'CONTENT_DISCLOSURE_MISSING',
+        severity: 'warning',
+        message: `${offendingPages.length} ${link.market.toUpperCase()}/${link.category} page(s) missing required ${regulators} disclosure`,
       });
     }
 
@@ -214,6 +236,13 @@ export async function runComplianceAudit(): Promise<AuditResult> {
     attentionLinks: details.filter((d) => d.status === 'attention').length,
     criticalLinks: details.filter((d) => d.status === 'critical').length,
     details,
+    contentScan: {
+      scanned: contentReport.scanned,
+      compliant: contentReport.compliant,
+      violations: contentReport.violations,
+      generatedAt: contentReport.generatedAt,
+      missing: contentViolations,
+    },
     timestamp: new Date().toISOString(),
   };
 }
@@ -264,7 +293,13 @@ export async function saveAuditRun(
       compliant_count: result.compliantLinks,
       attention_count: result.attentionLinks,
       critical_count: result.criticalLinks,
-      details: result.details,
+      // No dedicated column for the content scan → persist inside details jsonb.
+      // Stored as a structured object; getLatestAuditRun() reads it back
+      // tolerantly (still accepts the legacy bare-array shape).
+      details: {
+        links: result.details,
+        contentScan: result.contentScan,
+      },
       duration_ms: durationMs,
     });
 
@@ -297,6 +332,20 @@ export async function getLatestAuditRun(): Promise<LatestAuditRun | null> {
     return null;
   }
 
+  // `details` may be the legacy bare AuditDetail[] OR the new
+  // { links, contentScan } object. Normalise both shapes.
+  const rawDetails = data.details;
+  let details: AuditDetail[] = [];
+  let contentScan: ContentScanSummary | null = null;
+
+  if (Array.isArray(rawDetails)) {
+    details = rawDetails as AuditDetail[];
+  } else if (rawDetails && typeof rawDetails === 'object') {
+    const obj = rawDetails as { links?: unknown; contentScan?: unknown };
+    details = (obj.links ?? []) as AuditDetail[];
+    contentScan = (obj.contentScan ?? null) as ContentScanSummary | null;
+  }
+
   return {
     ranAt: data.ran_at,
     triggeredBy: data.triggered_by,
@@ -304,6 +353,7 @@ export async function getLatestAuditRun(): Promise<LatestAuditRun | null> {
     verified: data.compliant_count,
     warnings: data.attention_count,
     critical: data.critical_count,
-    details: (data.details || []) as AuditDetail[],
+    details,
+    contentScan,
   };
 }

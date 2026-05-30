@@ -11,6 +11,10 @@ import {
   ShieldCheck,
   AlertTriangle,
 } from 'lucide-react';
+import {
+  GuardrailControls,
+  UndoActionButton,
+} from '@/components/dashboard/autonomous-actions-widget';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -30,6 +34,7 @@ interface ActionRow {
   executed_at: string;
   measured_at: string | null;
   undone_at: string | null;
+  undo_expires_at: string | null;
 }
 
 interface InsightRow {
@@ -209,29 +214,11 @@ export default async function AutonomousPage() {
         </div>
 
         {/* System Status Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-4 mb-8">
           <div className={`${card} p-4`}>
             <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-1">Auto-Executor</p>
             <p className={`text-lg font-bold ${settingsMap.get('auto_executor_enabled') === 'true' ? 'text-green-600' : 'text-slate-400'}`}>
               {settingsMap.get('auto_executor_enabled') === 'true' ? 'ENABLED' : 'DISABLED'}
-            </p>
-          </div>
-          <div className={`${card} p-4`}>
-            <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-1">Mode</p>
-            <p className={`text-lg font-bold ${settingsMap.get('simulation_mode') === 'true' ? 'text-amber-600' : 'text-green-600'}`}>
-              {settingsMap.get('simulation_mode') === 'true' ? 'SIMULATION' : 'LIVE'}
-            </p>
-          </div>
-          <div className={`${card} p-4`}>
-            <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-1">Max Tier</p>
-            <p className="text-lg font-bold text-slate-900">
-              T{settingsMap.get('auto_executor_max_tier') ?? '1'}
-            </p>
-          </div>
-          <div className={`${card} p-4`}>
-            <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-1">Daily Budget</p>
-            <p className="text-lg font-bold text-slate-900">
-              {settingsMap.get('auto_executor_daily_budget') ?? '5'}
             </p>
           </div>
           <div className={`${card} p-4`}>
@@ -245,6 +232,13 @@ export default async function AutonomousPage() {
             <p className="text-lg font-bold text-slate-900">{actions.length}</p>
           </div>
         </div>
+
+        {/* Editable Guardrails */}
+        <GuardrailControls
+          initialBudget={parseInt(settingsMap.get('auto_executor_daily_budget') ?? '5', 10)}
+          initialMaxTier={parseInt(settingsMap.get('auto_executor_max_tier') ?? '1', 10)}
+          initialSimulation={settingsMap.get('simulation_mode') === 'true'}
+        />
 
         {/* Outcome Summary Bar */}
         {measured.length > 0 && (
@@ -313,9 +307,14 @@ export default async function AutonomousPage() {
                       <span>{action.action_type}</span>
                       <span>{action.market ?? 'global'}</span>
                       <span>{formatAge(action.executed_at)}</span>
-                      {action.undone_at && (
-                        <span className="text-red-500 font-medium">UNDONE</span>
-                      )}
+                      <span className="ml-auto">
+                        <UndoActionButton
+                          actionId={action.id}
+                          riskTier={action.risk_tier}
+                          undoneAt={action.undone_at}
+                          undoExpiresAt={action.undo_expires_at}
+                        />
+                      </span>
                     </div>
                   </div>
                 ))
