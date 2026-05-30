@@ -48,14 +48,36 @@ export async function GET(request: NextRequest) {
       }, { status: 207 });
     }
 
-    // Classify per-network results
+    // Classify per-network results.
+    // A connector skipped purely because another sync already holds its mutex
+    // lock is NOT a failure — sync-revenue and sync-conversions both run on the
+    // unified connector stack, so an overlapping run would otherwise raise a
+    // false "partial/failed" alert. Treat lock collisions as a benign skip.
+    const isLockSkip = (r: { success: boolean; errors: string[] }) =>
+      !r.success &&
+      r.errors.length > 0 &&
+      r.errors.every((e) => /already in progress|mutex locked/i.test(e));
+
+    const lockedNetworks = result.results.filter(isLockSkip).map((r) => r.connector);
+    const genuineFailures = result.results.filter((r) => !r.success && !isLockSkip(r));
     const networksOk = result.succeeded.map((r) => r.connector);
-    const networksFailed = result.failed.map((r) => r.connector);
+    const networksFailed = genuineFailures.map((r) => r.connector);
+
     const allFailed = networksOk.length === 0 && networksFailed.length > 0;
     const partialFailure = networksFailed.length > 0 && networksOk.length > 0;
+    // Nothing genuinely failed and nothing actually synced → every connector was
+    // locked by a concurrent run. Benign no-op, no alert.
+    const skippedOnly =
+      networksFailed.length === 0 && networksOk.length === 0 && lockedNetworks.length > 0;
 
-    // Determine cron log status: success | partial | error
-    const cronStatus = allFailed ? 'error' : partialFailure ? 'partial' : 'success';
+    // Determine cron log status: success | partial | error | skipped
+    const cronStatus = allFailed
+      ? 'error'
+      : partialFailure
+        ? 'partial'
+        : skippedOnly
+          ? 'skipped'
+          : 'success';
 
     logCron({
       job: 'sync-revenue',
@@ -64,28 +86,35 @@ export async function GET(request: NextRequest) {
       records_synced: result.totalRecords,
       records_skipped: result.totalSkipped,
       connectors_succeeded: result.succeeded.length,
-      connectors_failed: result.failed.length,
-      metadata: { networks_ok: networksOk, networks_failed: networksFailed },
+      connectors_failed: networksFailed.length,
+      ...(networksFailed.length === 0 && lockedNetworks.length > 0
+        ? { error: `Skipped (locked by concurrent run): ${lockedNetworks.join(', ')}` }
+        : {}),
+      metadata: {
+        networks_ok: networksOk,
+        networks_failed: networksFailed,
+        networks_locked: lockedNetworks,
+      },
     });
 
-    // Telegram alert for partial or full failure
+    // Telegram alert ONLY for genuine failures — never for lock skips.
     if (partialFailure) {
-      const failedDetails = result.results
-        .filter((r) => !r.success)
+      const failedDetails = genuineFailures
         .map((r) => `  • ${r.connector}: ${r.errors.join(', ') || 'unknown error'}`)
         .join('\n');
 
       await sendTelegramAlert(
         `<b>⚠️ REVENUE SYNC PARTIAL</b>\n\n` +
         `OK: ${networksOk.join(', ')}\n` +
-        `FAILED:\n${failedDetails}\n\n` +
-        `Synced: ${result.totalRecords} | Skipped: ${result.totalSkipped}\n` +
+        `FAILED:\n${failedDetails}\n` +
+        (lockedNetworks.length ? `Skipped (locked): ${lockedNetworks.join(', ')}\n` : '') +
+        `\nSynced: ${result.totalRecords} | Skipped: ${result.totalSkipped}\n` +
         `Duration: ${(duration / 1000).toFixed(1)}s`,
       );
     }
 
     if (allFailed) {
-      const failedDetails = result.results
+      const failedDetails = genuineFailures
         .map((r) => `  • ${r.connector}: ${r.errors.join(', ') || 'unknown error'}`)
         .join('\n');
 
@@ -97,18 +126,22 @@ export async function GET(request: NextRequest) {
     }
 
     const responseBody = {
-      success: cronStatus === 'success',
+      success: cronStatus === 'success' || cronStatus === 'skipped',
       partial: partialFailure,
+      skipped: skippedOnly,
       message: allFailed
         ? 'Revenue sync failed — all networks'
         : partialFailure
           ? `Revenue sync partial — ${networksFailed.join(', ')} failed`
-          : 'Revenue sync completed',
+          : skippedOnly
+            ? 'Revenue sync skipped — all connectors locked by a concurrent run'
+            : 'Revenue sync completed',
       totalSynced: result.totalRecords,
       totalSkipped: result.totalSkipped,
       duration: `${duration}ms`,
       networks_ok: networksOk,
       networks_failed: networksFailed,
+      networks_locked: lockedNetworks,
       results: result.results.map((r) => ({
         connector: r.connector,
         success: r.success,
@@ -118,7 +151,7 @@ export async function GET(request: NextRequest) {
       })),
     };
 
-    // HTTP 207 for partial, 500 for all-failed, 200 for success
+    // HTTP 207 for partial, 500 for all-failed, 200 for success/skipped
     const httpStatus = allFailed ? 500 : partialFailure ? 207 : 200;
     return NextResponse.json(responseBody, { status: httpStatus });
   } catch (error) {
