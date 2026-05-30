@@ -2,8 +2,8 @@
   "_generated": true,
   "_command": "npm run refresh:agent-context",
   "_do_not_edit": true,
-  "_generated_at": "2026-05-30T09:15:07.387Z",
-  "count": 104,
+  "_generated_at": "2026-05-30T09:30:07.499Z",
+  "count": 106,
   "routes": [
     {
       "path": "/api/ab-testing/impression",
@@ -270,6 +270,13 @@
       ]
     },
     {
+      "path": "/api/dashboard/export",
+      "file": "app/api/dashboard/export/route.ts",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
       "path": "/api/dashboard/gap-analysis",
       "file": "app/api/dashboard/gap-analysis/route.ts",
       "methods": [
@@ -372,6 +379,13 @@
     {
       "path": "/api/dashboard/revenue-forecast",
       "file": "app/api/dashboard/revenue-forecast/route.ts",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/dashboard/search",
+      "file": "app/api/dashboard/search/route.ts",
       "methods": [
         "GET"
       ]
