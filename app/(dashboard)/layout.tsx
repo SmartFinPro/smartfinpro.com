@@ -33,6 +33,7 @@ import {
   HeartPulse,
   Bot,
   Droplet,
+  Users,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import NotificationBell from '@/components/dashboard/notification-bell';
@@ -94,6 +95,7 @@ const SIDEBAR_GROUPS: NavGroup[] = [
     links: [
       { name: 'Affiliate Links', href: '/dashboard/links', icon: Link2 },
       { name: 'Funnel', href: '/dashboard/funnel', icon: TrendingUp },
+      { name: 'Cohort LTV', href: '/dashboard/cohorts', icon: Users },
       { name: 'Opportunities', href: '/dashboard/opportunities', icon: Telescope, badgeKey: 'opportunities' },
       { name: 'A/B Testing', href: '/dashboard/ab-testing', icon: FlaskConical },
       { name: 'Quiz Analytics', href: '/dashboard/quiz', icon: Sparkles },
