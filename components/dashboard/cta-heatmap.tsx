@@ -601,12 +601,12 @@ export function CtaHeatmap({ initialData, initialAlertSettings }: CtaHeatmapProp
         </div>
       </div>
 
-      {/* ── Telegram Alert Settings + CTR Thresholds ──── */}
+      {/* ── Spike Alert Settings + CTR Thresholds ──── */}
       <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
         <div className="px-5 py-3 border-b border-slate-100 flex items-center justify-between">
           <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
             <Send className="h-4 w-4 text-blue-500" />
-            Telegram Spike Alerts
+            Spike Alerts
           </h3>
           <span className="text-[10px] text-slate-400 uppercase tracking-wider font-medium">
             Every 15 min &bull; 300% threshold
@@ -614,7 +614,7 @@ export function CtaHeatmap({ initialData, initialAlertSettings }: CtaHeatmapProp
         </div>
         <div className="p-5">
           <p className="text-xs text-slate-500 mb-4">
-            Receive a Telegram notification when CTA clicks spike above 300% of the 7-day average.
+            Receive an in-app notification when CTA clicks spike above 300% of the 7-day average.
             Toggle per market below.
           </p>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -653,12 +653,10 @@ export function CtaHeatmap({ initialData, initialAlertSettings }: CtaHeatmapProp
               );
             })}
           </div>
-          {!process.env.NEXT_PUBLIC_SITE_URL && (
-            <p className="text-[10px] text-amber-500 mt-3 flex items-center gap-1">
-              <Settings2 className="h-3 w-3" />
-              Set TELEGRAM_BOT_TOKEN &amp; TELEGRAM_CHAT_ID in .env.local to enable delivery
-            </p>
-          )}
+          <p className="text-[10px] text-slate-400 mt-3 flex items-center gap-1">
+            <Settings2 className="h-3 w-3" />
+            Alerts are delivered to the in-app Notification Center.
+          </p>
         </div>
       </div>
 
@@ -678,7 +676,7 @@ export function CtaHeatmap({ initialData, initialAlertSettings }: CtaHeatmapProp
             Auto-pilot only fires a rebuild when <strong>Spike detected AND CTR &gt; threshold</strong>.
           </p>
           <p className="text-[10px] text-slate-400 mb-4">
-            CTR &gt; 10% = High-Priority Rebuild &bull; CTR &lt; threshold = Telegram alert only (no rebuild)
+            CTR &gt; 10% = High-Priority Rebuild &bull; CTR &lt; threshold = alert only (no rebuild)
           </p>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {(['us', 'uk', 'ca', 'au'] as const).map((market) => {

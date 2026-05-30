@@ -1,12 +1,24 @@
 /**
- * Telegram Bot API — Alert Delivery + Interactive Keyboards
+ * LEGACY COMPATIBILITY SHIM — do NOT build new features on this file.
  *
- * ENVs required:
- *   TELEGRAM_BOT_TOKEN  — from @BotFather
- *   TELEGRAM_CHAT_ID    — your group/channel ID
+ * Telegram is NOT a product channel. This module no longer talks to the
+ * Telegram Bot API and has NO TELEGRAM_* env dependency. The exported functions
+ * are thin compat shims kept ONLY so existing call-sites keep compiling;
+ * internally they delegate to the channel-neutral alert layer
+ * (lib/alerts/alert-delivery.ts) whose standard sink is the in-app Notification
+ * Center.
+ *
+ * Success contract: sendTelegramAlert / sendTelegramWithKeyboard return
+ * { success: true } whenever the alert is accepted by the neutral layer, so
+ * producers that gate on `.success` are NEVER artificially degraded. The
+ * interactive callback shims (answerCallbackQuery / editTelegramMessage) are
+ * inert no-ops — the old interactive Telegram approval flow is deactivated;
+ * use the in-app Approval Queue at /dashboard/content/planning instead.
+ *
+ * New code MUST import from '@/lib/alerts/alert-delivery' directly.
  */
 
-const TELEGRAM_API = 'https://api.telegram.org';
+import { sendAlert, sendAlertWithActions } from '@/lib/alerts/alert-delivery';
 
 interface TelegramResult {
   success: boolean;
@@ -20,43 +32,13 @@ interface InlineKeyboardButton {
 }
 
 /**
- * Send a message via Telegram Bot API (HTML parse mode).
- * Fire-and-forget friendly — never throws.
+ * Compat shim — records the alert in the Notification Center via the neutral
+ * alert layer. No Telegram API call, no TELEGRAM_* dependency. Always resolves
+ * { success: true } so producers gating on `.success` are never degraded.
  */
 export async function sendTelegramAlert(message: string): Promise<TelegramResult> {
-  const botToken = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_CHAT_ID;
-
-  if (!botToken || !chatId) {
-    return { success: false, error: 'Telegram not configured' };
-  }
-
-  try {
-    const url = `${TELEGRAM_API}/bot${botToken}/sendMessage`;
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chat_id: chatId,
-        text: message,
-        parse_mode: 'HTML',
-        disable_web_page_preview: true,
-      }),
-    });
-
-    if (!res.ok) {
-      const body = await res.text();
-      console.error(`[Telegram] API error ${res.status}:`, body);
-      return { success: false, error: `Telegram API ${res.status}` };
-    }
-
-    const result = await res.json();
-    return { success: true, messageId: result.result?.message_id };
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : 'Unknown error';
-    console.error('[Telegram] Send failed:', msg);
-    return { success: false, error: msg };
-  }
+  await sendAlert({ message, source: 'legacy-alert' });
+  return { success: true };
 }
 
 /**
@@ -67,111 +49,33 @@ export async function sendTelegramWithKeyboard(
   message: string,
   buttons: InlineKeyboardButton[][],
 ): Promise<TelegramResult> {
-  const botToken = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_CHAT_ID;
-
-  if (!botToken || !chatId) {
-    return { success: false, error: 'Telegram not configured' };
-  }
-
-  try {
-    const url = `${TELEGRAM_API}/bot${botToken}/sendMessage`;
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chat_id: chatId,
-        text: message,
-        parse_mode: 'HTML',
-        disable_web_page_preview: true,
-        reply_markup: {
-          inline_keyboard: buttons,
-        },
-      }),
-    });
-
-    if (!res.ok) {
-      const body = await res.text();
-      console.error(`[Telegram] Keyboard API error ${res.status}:`, body);
-      return { success: false, error: `Telegram API ${res.status}` };
-    }
-
-    const result = await res.json();
-    return { success: true, messageId: result.result?.message_id };
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : 'Unknown error';
-    console.error('[Telegram] Keyboard send failed:', msg);
-    return { success: false, error: msg };
-  }
+  // Buttons map to in-app action hints (callback_data → href). No remote
+  // interactivity; the neutral layer just records the alert + its actions.
+  const actions = buttons.flat().map((b) => ({ label: b.text, href: b.callback_data }));
+  await sendAlertWithActions({ message, source: 'legacy-alert' }, actions);
+  return { success: true };
 }
 
 /**
- * Answer a callback query (acknowledge button press in Telegram).
+ * Inert no-op — the interactive Telegram approval flow is deactivated.
+ * Kept only so legacy imports compile.
  */
 export async function answerCallbackQuery(
-  callbackQueryId: string,
-  text: string,
+  _callbackQueryId: string,
+  _text: string,
 ): Promise<TelegramResult> {
-  const botToken = process.env.TELEGRAM_BOT_TOKEN;
-  if (!botToken) return { success: false, error: 'Bot token not configured' };
-
-  try {
-    const url = `${TELEGRAM_API}/bot${botToken}/answerCallbackQuery`;
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        callback_query_id: callbackQueryId,
-        text,
-        show_alert: true,
-      }),
-    });
-
-    if (!res.ok) {
-      return { success: false, error: `Telegram API ${res.status}` };
-    }
-
-    return { success: true };
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : 'Unknown error';
-    return { success: false, error: msg };
-  }
+  return { success: true };
 }
 
 /**
- * Edit an existing message (used to disable buttons after selection).
+ * Inert no-op — the interactive Telegram approval flow is deactivated.
+ * Kept only so legacy imports compile.
  */
 export async function editTelegramMessage(
-  messageId: number,
-  newText: string,
+  _messageId: number,
+  _newText: string,
 ): Promise<TelegramResult> {
-  const botToken = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_CHAT_ID;
-  if (!botToken || !chatId) return { success: false, error: 'Not configured' };
-
-  try {
-    const url = `${TELEGRAM_API}/bot${botToken}/editMessageText`;
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chat_id: chatId,
-        message_id: messageId,
-        text: newText,
-        parse_mode: 'HTML',
-        disable_web_page_preview: true,
-      }),
-    });
-
-    if (!res.ok) {
-      return { success: false, error: `Telegram API ${res.status}` };
-    }
-
-    return { success: true };
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : 'Unknown error';
-    return { success: false, error: msg };
-  }
+  return { success: true };
 }
 
 /**

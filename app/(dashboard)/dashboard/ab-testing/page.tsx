@@ -463,7 +463,7 @@ export default async function AbTestingPage() {
         </p>
         <p className="text-xs text-slate-400 leading-relaxed">
           • Winner declared at{' '}
-          <strong className="text-slate-500">95% confidence (Z-test)</strong> — Telegram alert sent
+          <strong className="text-slate-500">95% confidence (Z-test)</strong> — a notification is sent
           automatically.
         </p>
         <p className="text-xs text-slate-400 leading-relaxed">

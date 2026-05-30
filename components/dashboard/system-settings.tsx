@@ -513,7 +513,7 @@ export function SystemSettingsPanel({ initialSettings, credentialStatus }: Syste
               </span>
             </div>
             <p className="text-[11px] text-slate-400">
-              Minimum CTR-Rate, ab der der Auto-Pilot Freshness Boosts + Deploys triggert. Darunter: nur Telegram-Alert.
+              Minimum CTR-Rate, ab der der Auto-Pilot Freshness Boosts + Deploys triggert. Darunter: nur Alert (Notification Center).
             </p>
           </div>
 

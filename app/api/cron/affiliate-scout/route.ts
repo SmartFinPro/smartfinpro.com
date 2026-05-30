@@ -131,23 +131,13 @@ function extractCandidates(
   return candidates;
 }
 
-// ── Telegram notification ────────────────────────────────────────────────────
+// ── Alert notification (channel-neutral) ─────────────────────────────────────
+// Routes through the neutral alert layer → in-app Notification Center.
+// No Telegram API, no TELEGRAM_* dependency.
 
 async function sendTelegramAlert(message: string): Promise<void> {
-  const token = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_CHAT_ID;
-  if (!token || !chatId) return;
-
-  try {
-    await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ chat_id: chatId, text: message, parse_mode: 'HTML' }),
-      signal: AbortSignal.timeout(8_000),
-    });
-  } catch {
-    // Non-critical — don't fail the cron
-  }
+  const { sendAlert } = await import('@/lib/alerts/alert-delivery');
+  await sendAlert({ message, source: 'affiliate-scout' });
 }
 
 // ── Main handler ─────────────────────────────────────────────────────────────

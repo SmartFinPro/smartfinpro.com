@@ -35,6 +35,8 @@ import {
   Droplet,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import NotificationBell from '@/components/dashboard/notification-bell';
+import { ScrollText } from 'lucide-react';
 // Server action imports removed — loaded dynamically in useEffect to prevent
 // Turbopack from bundling 'use server' modules into the [app-client] chunk.
 
@@ -103,6 +105,8 @@ const SIDEBAR_GROUPS: NavGroup[] = [
       { name: 'Web Vitals', href: '/dashboard/web-vitals', icon: Activity },
       { name: 'Autonomous', href: '/dashboard/autonomous', icon: Bot },
       { name: 'Cron Health', href: '/dashboard/cron-health', icon: HeartPulse },
+      { name: 'Audit Log', href: '/dashboard/audit-log', icon: ScrollText },
+      { name: 'Notifications', href: '/dashboard/notifications', icon: Bell },
       { name: 'Settings', href: '/dashboard/settings', icon: Settings },
     ],
   },
@@ -317,9 +321,7 @@ export default function DashboardLayout({
             </button>
 
             {/* Notifications */}
-            <button aria-label="Notifications" className="relative p-2 rounded-lg hover:bg-slate-100 transition-colors">
-              <Bell className="h-4 w-4 text-slate-500" />
-            </button>
+            <NotificationBell />
 
             {/* User Avatar */}
             <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: 'var(--sfp-navy)' }}>
