@@ -40,6 +40,24 @@ if [ ! -d "$EXPERT_DIR" ]; then
   exit 1
 fi
 
+# Cross-platform image metadata tool detection (override via EXPERT_IMG_TOOL for tests):
+#   macOS    → sips (preinstalled)
+#   ImageMagick → identify (if present)
+#   anywhere → sharp (Node dependency, always installed via `npm ci`) — CI fallback
+IMG_TOOL="${EXPERT_IMG_TOOL:-}"
+if [ -z "$IMG_TOOL" ]; then
+  if command -v sips >/dev/null 2>&1; then
+    IMG_TOOL="sips"
+  elif command -v identify >/dev/null 2>&1; then
+    IMG_TOOL="identify"
+  elif node -e 'require.resolve("sharp")' >/dev/null 2>&1; then
+    IMG_TOOL="sharp"
+  else
+    echo "❌ No image metadata tool found: need 'sips' (macOS), 'identify' (ImageMagick), or the 'sharp' npm package."
+    exit 1
+  fi
+fi
+
 check_file() {
   local file="$1"
   local path="$EXPERT_DIR/$file"
@@ -55,11 +73,25 @@ check_file() {
     VIOLATIONS=$((VIOLATIONS + 1))
   fi
 
-  local format width height bytes
-  format="$(sips -g format "$path" 2>/dev/null | awk -F': ' '/format:/ {print tolower($2)}')"
-  width="$(sips -g pixelWidth "$path" 2>/dev/null | awk -F': ' '/pixelWidth:/ {print $2}')"
-  height="$(sips -g pixelHeight "$path" 2>/dev/null | awk -F': ' '/pixelHeight:/ {print $2}')"
-  bytes="$(stat -f%z "$path" 2>/dev/null || echo 0)"
+  local format width height bytes meta
+  if [ "$IMG_TOOL" = "sips" ]; then
+    format="$(sips -g format "$path" 2>/dev/null | awk -F': ' '/format:/ {print tolower($2)}')"
+    width="$(sips -g pixelWidth "$path" 2>/dev/null | awk -F': ' '/pixelWidth:/ {print $2}')"
+    height="$(sips -g pixelHeight "$path" 2>/dev/null | awk -F': ' '/pixelHeight:/ {print $2}')"
+  elif [ "$IMG_TOOL" = "identify" ]; then
+    # ImageMagick: %m=format (e.g. JPEG), %w=width, %h=height. [0] guards multi-frame.
+    format="$(identify -format '%m' "${path}[0]" 2>/dev/null | tr '[:upper:]' '[:lower:]')"
+    width="$(identify -format '%w' "${path}[0]" 2>/dev/null)"
+    height="$(identify -format '%h' "${path}[0]" 2>/dev/null)"
+  else
+    # sharp (Node): metadata().format is already lowercase (e.g. "jpeg").
+    meta="$(node -e 'require("sharp")(process.argv[1]).metadata().then(m=>console.log(`${m.format}|${m.width}|${m.height}`)).catch(()=>console.log("||"))' "$path" 2>/dev/null || echo '||')"
+    format="$(printf '%s' "$meta" | cut -d'|' -f1)"
+    width="$(printf '%s' "$meta" | cut -d'|' -f2)"
+    height="$(printf '%s' "$meta" | cut -d'|' -f3)"
+  fi
+  # Byte size: GNU stat (-c%s, Linux) first, then BSD stat (-f%z, macOS), else 0.
+  bytes="$(stat -c%s "$path" 2>/dev/null || stat -f%z "$path" 2>/dev/null || echo 0)"
 
   if [ "$format" != "jpeg" ]; then
     echo "❌ Not a JPEG file: $file (detected: ${format:-unknown})"
