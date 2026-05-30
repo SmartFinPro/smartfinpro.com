@@ -165,6 +165,13 @@ async function fetchSerp(keyword: string, market: Market): Promise<SerperRespons
       return null;
     }
 
+    // Fire-and-forget cost recording — never affects the SERP result.
+    void import('@/lib/costs/api-costs')
+      .then(({ recordApiCost }) =>
+        recordApiCost({ provider: 'serper', operation: 'search', units: 1, source: 'competitors' }),
+      )
+      .catch(() => {});
+
     return (await res.json()) as SerperResponse;
   } catch (err) {
     Sentry.captureException(err);

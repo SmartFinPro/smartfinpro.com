@@ -64,6 +64,19 @@ export async function createClaudeMessage(
         if (response._request_id) {
           console.info(`[anthropic] ${operation} success request_id=${response._request_id}`);
         }
+        // Fire-and-forget cost recording — never affects the call result.
+        void import('@/lib/costs/api-costs')
+          .then(({ recordApiCost }) =>
+            recordApiCost({
+              provider: 'anthropic',
+              operation: 'messages.create',
+              model: params.model,
+              inputTokens: response.usage?.input_tokens,
+              outputTokens: response.usage?.output_tokens,
+              source: operation,
+            }),
+          )
+          .catch(() => {});
         return response;
       } finally {
         clearTimeout(timer);
