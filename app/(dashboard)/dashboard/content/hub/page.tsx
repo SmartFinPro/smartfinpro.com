@@ -26,6 +26,7 @@ import { ContentHubRefreshButton } from '@/components/dashboard/content-hub-refr
 import { BacklinkImportButton } from '@/components/dashboard/backlink-import-button';
 import { ContentFreshnessWidget } from '@/components/dashboard/content-freshness-widget';
 import { WidgetErrorBoundary } from '@/components/dashboard/widget-error-boundary';
+import { PageHeader, SectionCard } from '@/components/dashboard/ui';
 import type { ContentHubRow, HealthStatus } from '@/lib/actions/content-hub';
 
 export const dynamic = 'force-dynamic';
@@ -277,23 +278,17 @@ export default async function ContentHubPage({ searchParams }: ContentHubPagePro
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-start justify-between">
-        <div className="flex items-center gap-3 mb-1">
-          <div className="w-10 h-10 rounded-xl bg-violet-50 flex items-center justify-center">
-            <FileSearch className="h-5 w-5 text-violet-500" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-slate-800">Content Hub</h1>
-            <p className="text-sm text-slate-500">
-              SEO health, content inventory &amp; indexation status across all markets
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <BacklinkImportButton />
-          <ContentHubRefreshButton />
-        </div>
-      </div>
+      <PageHeader
+        icon={FileSearch}
+        title="Content Hub"
+        description="SEO health, content inventory & indexation status across all markets"
+        actions={
+          <>
+            <BacklinkImportButton />
+            <ContentHubRefreshButton />
+          </>
+        }
+      />
 
       {/* Stat Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-8">
@@ -536,20 +531,21 @@ export default async function ContentHubPage({ searchParams }: ContentHubPagePro
       )}
 
       {/* Content Freshness */}
-      <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-2">
-          <Clock className="h-5 w-5 text-amber-500" />
-          <h3 className="font-semibold text-slate-900">Content Freshness</h3>
-          <span className="text-xs text-slate-400 ml-auto">
+      <SectionCard
+        title="Content Freshness"
+        icon={Clock}
+        tone="amber"
+        contentClassName="p-5"
+        actions={
+          <span className="text-xs text-slate-400">
             {Math.round(stats.freshnessCoverage * 100)}% MDX coverage · {stats.freshnessStaleCount} stale · updated daily by freshness-check cron
           </span>
-        </div>
-        <div className="p-5">
-          <WidgetErrorBoundary label="Content Freshness" minHeight="h-48">
-            <ContentFreshnessWidget stats={freshnessStats} />
-          </WidgetErrorBoundary>
-        </div>
-      </div>
+        }
+      >
+        <WidgetErrorBoundary label="Content Freshness" minHeight="h-48">
+          <ContentFreshnessWidget stats={freshnessStats} />
+        </WidgetErrorBoundary>
+      </SectionCard>
 
       {/* Table (batch bar + table rendered by client component to avoid <div> inside <table> hydration error) */}
       <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
