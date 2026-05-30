@@ -48,8 +48,8 @@ export default async function CohortsPage({ searchParams }: CohortsPageProps) {
     <div className="space-y-6">
       <PageHeader
         icon={Users}
-        title="Cohort LTV"
-        description="Weekly click cohorts · cumulative approved revenue per click (tracked postback events)"
+        title="Earnings per Click"
+        description="How much a click earns over time — clicks grouped by their entry week, cumulative approved revenue per click (tracked postback events)"
         actions={weekSelector}
       />
 
@@ -72,16 +72,16 @@ export default async function CohortsPage({ searchParams }: CohortsPageProps) {
             <StatCard label="Total Clicks" value={data!.kpis.totalClicks.toLocaleString('en-US')} icon={MousePointer} tone="navy" />
             <StatCard label="Approved Revenue" value={money(data!.kpis.totalApprovedRevenueUsd)} subtext="USD · tracked events" icon={DollarSign} tone="green" />
             <StatCard label="Conversion Rate" value={pct(data!.kpis.conversionRate)} subtext={`${data!.kpis.convertingClicks.toLocaleString('en-US')} converting clicks`} icon={Target} tone="amber" />
-            <StatCard label="Avg LTV / Click" value={money(data!.kpis.avgLtvPerClick)} icon={TrendingUp} tone="navy" />
-            <StatCard label="Avg LTV / Click @W4" value={money(data!.kpis.avgLtvPerClickAtW4)} subtext="mature cohorts" icon={BarChart3} tone="blue" />
+            <StatCard label="Avg Earnings / Click" value={money(data!.kpis.avgLtvPerClick)} icon={TrendingUp} tone="navy" />
+            <StatCard label="Avg Earnings / Click @ Week 4" value={money(data!.kpis.avgLtvPerClickAtW4)} subtext="mature weeks only" icon={BarChart3} tone="blue" />
           </div>
 
           {/* Cohort matrix */}
           <SectionCard
-            title="Weekly click cohorts — LTV per click"
+            title="Cumulative earnings per click — by entry week"
             icon={Users}
             tone="navy"
-            description={`${data!.cohorts.length} cohorts · ages W0–W${data!.maxAgeWeeks}`}
+            description={`${data!.cohorts.length} weekly groups · age W0–W${data!.maxAgeWeeks} (weeks since the click)`}
             contentClassName="p-0"
           >
             <div className="overflow-x-auto">
