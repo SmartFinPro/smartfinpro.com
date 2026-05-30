@@ -1,9 +1,27 @@
 // app/api/refresh-content-hub/route.ts — Invalidates Content Hub cache
 import { revalidateTag } from 'next/cache';
 import { logger } from '@/lib/logging';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { isValidDashboardSessionValue } from '@/lib/auth/dashboard-session';
+import { compareSecret } from '@/lib/security/timing-safe';
 
-export async function POST() {
+// Dashboard-session gate — this is triggered by the dashboard "refresh" button
+// (same-origin, carries the cookie). Dev-bypass only outside production.
+function isAuthed(request: NextRequest): boolean {
+  if (process.env.NODE_ENV !== 'production' && process.env.DASHBOARD_AUTH_DISABLED === 'true') {
+    return true;
+  }
+  const dashSecret = process.env.DASHBOARD_SECRET;
+  if (!dashSecret) return false;
+  const cookie = request.cookies.get('sfp-dash-auth')?.value;
+  const bearer = request.headers.get('authorization')?.replace(/^Bearer\s+/i, '');
+  return isValidDashboardSessionValue(cookie, dashSecret) || compareSecret(bearer, dashSecret);
+}
+
+export async function POST(request: NextRequest) {
+  if (!isAuthed(request)) {
+    return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+  }
   try {
     revalidateTag('content-hub', {});
     return NextResponse.json({
