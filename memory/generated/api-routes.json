@@ -2,8 +2,8 @@
   "_generated": true,
   "_command": "npm run refresh:agent-context",
   "_do_not_edit": true,
-  "_generated_at": "2026-05-30T07:27:26.755Z",
-  "count": 100,
+  "_generated_at": "2026-05-30T08:21:25.877Z",
+  "count": 101,
   "routes": [
     {
       "path": "/api/ab-testing/impression",
@@ -151,6 +151,13 @@
     {
       "path": "/api/dashboard/affiliate-scan",
       "file": "app/api/dashboard/affiliate-scan/route.ts",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/dashboard/autonomous-controls",
+      "file": "app/api/dashboard/autonomous-controls/route.ts",
       "methods": [
         "POST"
       ]
