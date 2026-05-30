@@ -37,6 +37,7 @@ import {
 import { cn } from '@/lib/utils';
 import NotificationBell from '@/components/dashboard/notification-bell';
 import KpiHeader from '@/components/dashboard/kpi-header';
+import CommandPalette from '@/components/dashboard/command-palette';
 import { ScrollText } from 'lucide-react';
 // Server action imports removed — loaded dynamically in useEffect to prevent
 // Turbopack from bundling 'use server' modules into the [app-client] chunk.
@@ -333,6 +334,9 @@ export default function DashboardLayout({
 
         {/* Global KPI strip — persistent headline metrics across all dashboard pages */}
         <KpiHeader />
+
+        {/* Global command palette (Cmd/Ctrl+K) — self-contained overlay */}
+        <CommandPalette />
 
         {/* Page Content */}
         <main className="flex-1 p-6 overflow-auto bg-slate-50">{children}</main>

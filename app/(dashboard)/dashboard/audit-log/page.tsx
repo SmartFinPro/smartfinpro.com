@@ -19,6 +19,7 @@ import {
   type GetAuditLogOptions,
 } from '@/lib/actions/audit-log';
 import { AuditLogControls, ExpandableMetadata } from './audit-log-controls';
+import { ExportButton } from '@/components/dashboard/export-button';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -158,6 +159,9 @@ export default async function AuditLogPage({ searchParams }: PageProps) {
           <p className="text-sm text-slate-500">
             Unified audit trail — autonomous actions and cron runs across the platform
           </p>
+        </div>
+        <div className="ml-auto">
+          <ExportButton dataset="audit-log" />
         </div>
       </div>
 

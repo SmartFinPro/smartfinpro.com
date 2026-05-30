@@ -4,6 +4,7 @@ import { getSettings, getCredentialStatus } from '@/lib/actions/settings';
 import { ConnectorList } from '@/components/dashboard/connector-list';
 import { SyncLogsTable } from '@/components/dashboard/sync-logs-table';
 import { SystemSettingsPanel } from '@/components/dashboard/system-settings';
+import { TotpSetupCard } from '@/components/dashboard/totp-setup-card';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -15,6 +16,9 @@ export default async function SettingsPage() {
     getSettings(),
     getCredentialStatus(),
   ]);
+
+  // 2FA status is derived server-side from the runtime env secret.
+  const totpConfigured = Boolean(process.env.DASHBOARD_TOTP_SECRET);
 
   return (
     <div className="space-y-6">
@@ -34,6 +38,9 @@ export default async function SettingsPage() {
         initialSettings={settings}
         credentialStatus={credentialStatus}
       />
+
+      {/* Two-Factor Authentication (TOTP) */}
+      <TotpSetupCard configured={totpConfigured} />
 
       {/* API Connectors */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
