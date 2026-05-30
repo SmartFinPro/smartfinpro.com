@@ -2,8 +2,8 @@
   "_generated": true,
   "_command": "npm run refresh:agent-context",
   "_do_not_edit": true,
-  "_generated_at": "2026-05-30T08:21:25.964Z",
-  "count": 53,
+  "_generated_at": "2026-05-30T08:50:19.012Z",
+  "count": 55,
   "modules": [
     {
       "name": "ab-testing",
@@ -68,6 +68,20 @@
         "getArchivedRedirect",
         "hardDeletePage",
         "restorePage"
+      ],
+      "hasUseServer": true,
+      "hasServerOnly": true
+    },
+    {
+      "name": "audit-log",
+      "file": "lib/actions/audit-log.ts",
+      "exports": [
+        "AuditLogEntry",
+        "AuditLogSource",
+        "AuditLogStatus",
+        "GetAuditLogOptions",
+        "GetAuditLogResult",
+        "getAuditLog"
       ],
       "hasUseServer": true,
       "hasServerOnly": true
@@ -552,6 +566,19 @@
       ],
       "hasUseServer": true,
       "hasServerOnly": false
+    },
+    {
+      "name": "notifications",
+      "file": "lib/actions/notifications.ts",
+      "exports": [
+        "NotificationRow",
+        "getNotifications",
+        "getUnreadCount",
+        "markAllNotificationsRead",
+        "markNotificationRead"
+      ],
+      "hasUseServer": true,
+      "hasServerOnly": true
     },
     {
       "name": "offer-ev",
