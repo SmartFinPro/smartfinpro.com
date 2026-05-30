@@ -5,7 +5,7 @@
 import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { validate } from '@/lib/validation';
-import { listSavedViews, createSavedView, deleteSavedView } from '@/lib/actions/saved-views';
+import { listSavedViews, createSavedView, deleteSavedView, setDefaultSavedView } from '@/lib/actions/saved-views';
 import { logger } from '@/lib/logging';
 
 export const dynamic = 'force-dynamic';
@@ -14,6 +14,11 @@ const CreateSchema = z.object({
   route: z.string().min(1).max(200),
   name: z.string().trim().min(1).max(80),
   params: z.record(z.string(), z.string()).default({}),
+});
+
+const SetDefaultSchema = z.object({
+  route: z.string().min(1).max(200),
+  id: z.string().uuid(),
 });
 
 // GET /api/dashboard/saved-views?route=/dashboard/analytics
@@ -54,4 +59,24 @@ export async function DELETE(request: NextRequest) {
   }
   const result = await deleteSavedView(id);
   return Response.json(result, { status: result.success ? 200 : 500 });
+}
+
+// PATCH /api/dashboard/saved-views  { route, id } — set as default for the route
+export async function PATCH(request: NextRequest) {
+  let body: unknown = null;
+  try {
+    body = await request.json();
+  } catch {
+    /* fall through — validate(null) returns a 400 */
+  }
+  const parsed = validate(SetDefaultSchema, body);
+  if (!parsed.ok) return parsed.error;
+
+  try {
+    const result = await setDefaultSavedView(parsed.data.route, parsed.data.id);
+    return Response.json(result, { status: result.success ? 200 : 500 });
+  } catch (err) {
+    logger.error('saved-views PATCH failed', err);
+    return Response.json({ success: false, error: 'Internal error' }, { status: 500 });
+  }
 }

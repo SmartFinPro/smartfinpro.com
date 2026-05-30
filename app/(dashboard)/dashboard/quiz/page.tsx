@@ -3,6 +3,7 @@ import { Sparkles, Info } from 'lucide-react';
 import { getQuizAnalytics } from '@/lib/actions/quiz-analytics';
 import { QuizAnalytics } from '@/components/dashboard/quiz-analytics';
 import { TimeRangeSelector } from '@/components/dashboard/time-range-selector';
+import { SavedViews } from '@/components/dashboard/saved-views';
 import { TimeRange } from '@/lib/actions/dashboard';
 
 export const dynamic = 'force-dynamic';
@@ -37,9 +38,12 @@ export default async function QuizAnalyticsPage({ searchParams }: QuizPageProps)
             Track high-intent events from the Smart Finder Quiz • {rangeLabels[range]}
           </p>
         </div>
-        <Suspense fallback={<div className="h-10 w-40 bg-slate-200 animate-pulse rounded-lg" />}>
-          <TimeRangeSelector />
-        </Suspense>
+        <div className="flex items-center gap-3">
+          <SavedViews />
+          <Suspense fallback={<div className="h-10 w-40 bg-slate-200 animate-pulse rounded-lg" />}>
+            <TimeRangeSelector />
+          </Suspense>
+        </div>
       </div>
 
       {/* Quiz Explanation */}

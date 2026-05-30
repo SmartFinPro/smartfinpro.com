@@ -22,6 +22,7 @@ import { TopPages } from '@/components/dashboard/top-pages';
 import { DeviceChart } from '@/components/dashboard/device-chart';
 import { ConversionFunnel } from '@/components/dashboard/conversion-funnel';
 import { TimeRangeSelector } from '@/components/dashboard/time-range-selector';
+import { SavedViews } from '@/components/dashboard/saved-views';
 import { ScrollDepthStats } from '@/components/dashboard/scroll-depth-stats';
 import { ProblemArticles } from '@/components/dashboard/problem-articles';
 import { PerformanceAlerts } from '@/components/dashboard/performance-alerts';
@@ -314,7 +315,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       <div className="max-w-7xl mx-auto px-6 py-8">
 
         {/* Time Range Selector (positioned top-right) */}
-        <div className="flex justify-end mb-4">
+        <div className="flex justify-end items-center gap-3 mb-4">
+          <SavedViews />
           <Suspense fallback={<Skeleton className="h-10 w-32" />}>
             <TimeRangeSelector />
           </Suspense>
