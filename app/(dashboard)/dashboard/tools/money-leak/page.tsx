@@ -2,6 +2,7 @@ import { Suspense } from 'react';
 import { Droplet, Info } from 'lucide-react';
 import { getMoneyLeakStats } from '@/lib/actions/money-leak-stats';
 import { TimeRangeSelector } from '@/components/dashboard/time-range-selector';
+import { SavedViews } from '@/components/dashboard/saved-views';
 import type { TimeRange } from '@/lib/actions/dashboard';
 
 export const dynamic = 'force-dynamic';
@@ -54,9 +55,12 @@ export default async function MoneyLeakDashboardPage({ searchParams }: PageProps
             Lead magnet funnel · {RANGE_LABELS[range]}
           </p>
         </div>
-        <Suspense fallback={<div className="h-10 w-40 bg-slate-200 animate-pulse rounded-lg" />}>
-          <TimeRangeSelector />
-        </Suspense>
+        <div className="flex items-center gap-3">
+          <SavedViews />
+          <Suspense fallback={<div className="h-10 w-40 bg-slate-200 animate-pulse rounded-lg" />}>
+            <TimeRangeSelector />
+          </Suspense>
+        </div>
       </div>
 
       {/* About */}

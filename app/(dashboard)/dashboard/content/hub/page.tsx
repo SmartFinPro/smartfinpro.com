@@ -26,6 +26,7 @@ import { ContentHubRefreshButton } from '@/components/dashboard/content-hub-refr
 import { BacklinkImportButton } from '@/components/dashboard/backlink-import-button';
 import { ContentFreshnessWidget } from '@/components/dashboard/content-freshness-widget';
 import { WidgetErrorBoundary } from '@/components/dashboard/widget-error-boundary';
+import { SavedViews } from '@/components/dashboard/saved-views';
 import { PageHeader, SectionCard, dashToneIconClass, type DashTone } from '@/components/dashboard/ui';
 import type { ContentHubRow, HealthStatus } from '@/lib/actions/content-hub';
 
@@ -289,6 +290,7 @@ export default async function ContentHubPage({ searchParams }: ContentHubPagePro
         description="SEO health, content inventory & indexation status across all markets"
         actions={
           <>
+            <SavedViews />
             <BacklinkImportButton />
             <ContentHubRefreshButton />
           </>
