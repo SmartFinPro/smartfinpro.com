@@ -196,6 +196,36 @@ jobs:
           CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
         run: node scripts/purge-cloudflare.mjs
 
+      # ── 11b-warm. Warm-up `/` (best-effort) BEFORE the gated smoke test ──
+      # After PM2 restart + CF purge, the first CDN hit to `/` is a cache MISS
+      # against a freshly-restarted origin → the heavy homepage can render slowly
+      # on the very first request, causing a transient smoke-test FAIL (observed
+      # on deploy of #19). This probe warms `/` on origin (via SSH) AND CDN with
+      # bounded retries so the gated Smoke Test below hits a ready, cached `/`.
+      # It NEVER gates the deploy (continue-on-error): the Smoke Test stays the
+      # hard gate and rollback remains keyed to its outcome.
+      - name: Warm-up `/` before smoke test
+        if: steps.healthcheck.outcome == 'success'
+        continue-on-error: true
+        run: |
+          echo "── Warming origin / (via SSH → localhost:3000) ──"
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
+            'for i in 1 2 3 4 5 6; do
+               S=$(curl -sf -o /dev/null -w "%{http_code}" http://localhost:3000/ 2>/dev/null || echo "000")
+               echo "  origin attempt $i: HTTP $S"
+               [ "$S" = "200" ] && { echo "  origin ready"; exit 0; }
+               sleep 5
+             done
+             echo "  origin not 200 after retries (continuing — smoke test is the gate)"; exit 0'
+          echo "── Warming CDN / (primes Cloudflare after pre-smoke purge) ──"
+          for i in 1 2 3 4 5 6; do
+            S=$(curl -sf -o /dev/null -w "%{http_code}" "${{ secrets.NEXT_PUBLIC_SITE_URL }}/" 2>/dev/null || echo "000")
+            echo "  cdn attempt $i: HTTP $S"
+            [ "$S" = "200" ] && { echo "  cdn ready"; break; }
+            sleep 5
+          done
+
       # ── 11b. Smoke Test — 15 Critical URLs ───────────────────
       # Gate: failure triggers rollback (same as health check failure).
       # continue-on-error is intentionally NOT set so the outcome is 'failure'.
