@@ -276,7 +276,11 @@ async function syncToConversions(
         .single();
 
       if (!existing.data) {
-        await supabase.from('conversions').insert({
+        // NB: live `conversions` schema has no `approved_at` column — approval is
+        // captured via status='approved' + converted_at. Writing approved_at here
+        // made the INSERT fail silently (PostgREST returns the error, doesn't throw)
+        // and left the conversions table empty despite valid postbacks.
+        const { error: insertConvErr } = await supabase.from('conversions').insert({
           link_id,
           converted_at: new Date().toISOString(),
           commission_earned: payout,
@@ -284,13 +288,26 @@ async function syncToConversions(
           network: connector || null,
           network_reference: txn_id || click_id,
           status: 'approved',
-          approved_at: new Date().toISOString(),
         });
+        if (insertConvErr) {
+          logger.error('[postback] conversions INSERT failed', {
+            error: insertConvErr.message,
+            click_id,
+            network_reference: txn_id || click_id,
+          });
+        }
       } else {
-        await supabase
+        const { error: updateConvErr } = await supabase
           .from('conversions')
-          .update({ status: 'approved', approved_at: new Date().toISOString() })
+          .update({ status: 'approved' })
           .eq('id', existing.data.id);
+        if (updateConvErr) {
+          logger.error('[postback] conversions UPDATE failed', {
+            error: updateConvErr.message,
+            click_id,
+            conversion_id: existing.data.id,
+          });
+        }
       }
     }
 
