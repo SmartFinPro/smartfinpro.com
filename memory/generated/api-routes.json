@@ -2,7 +2,7 @@
   "_generated": true,
   "_command": "npm run refresh:agent-context",
   "_do_not_edit": true,
-  "_generated_at": "2026-05-30T16:10:59.281Z",
+  "_generated_at": "2026-05-30T17:02:37.126Z",
   "count": 107,
   "routes": [
     {
@@ -389,6 +389,7 @@
       "methods": [
         "GET",
         "POST",
+        "PATCH",
         "DELETE"
       ]
     },
