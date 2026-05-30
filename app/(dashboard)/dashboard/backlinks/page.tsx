@@ -119,10 +119,10 @@ export default async function BacklinksDashboardPage() {
 
         <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
           <div className="flex items-center gap-2 mb-1">
-            <Clock className="h-4 w-4 text-violet-500" />
+            <Clock className="h-4 w-4" style={{ color: 'var(--sfp-navy)' }} />
             <span className="text-xs text-slate-500 uppercase tracking-wide font-medium">Manual Queue</span>
           </div>
-          <p className="text-3xl font-bold text-violet-600">{stats.manualQueue}</p>
+          <p className="text-3xl font-bold" style={{ color: 'var(--sfp-navy)' }}>{stats.manualQueue}</p>
         </div>
       </div>
 
