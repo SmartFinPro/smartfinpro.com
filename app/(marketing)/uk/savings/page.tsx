@@ -34,7 +34,7 @@ export default function UKSavingsPage() {
         <div className="container mx-auto px-4 py-16 lg:py-24">
           <div className="max-w-3xl">
             {/* Badge */}
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-var(--sfp-sky) px-4 py-2 border border-blue-200">
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-[var(--sfp-sky)] px-4 py-2 border border-blue-200">
               <Sparkles className="h-4 w-4 text-blue-600" />
               <span className="text-sm font-medium text-blue-900">
                 Updated February {currentYear}
@@ -77,7 +77,7 @@ export default function UKSavingsPage() {
               <Button
                 asChild
                 variant="outline"
-                className="border-2 border-var(--sfp-navy) text-var(--sfp-navy) hover:bg-var(--sfp-sky) px-6 py-3 rounded-lg font-medium transition-colors"
+                className="border-2 border-var(--sfp-navy) text-var(--sfp-navy) hover:bg-[var(--sfp-sky)] px-6 py-3 rounded-lg font-medium transition-colors"
               >
                 <Link href="#isa-guide">ISA Guide</Link>
               </Button>
@@ -93,7 +93,7 @@ export default function UKSavingsPage() {
 
       {/* Answer Block - Common Question */}
       <section className="container mx-auto px-4 py-12">
-        <div className="max-w-3xl bg-var(--sfp-sky) border-l-4 border-var(--sfp-navy) rounded-lg p-6 md:p-8">
+        <div className="max-w-3xl bg-[var(--sfp-sky)] border-l-4 border-var(--sfp-navy) rounded-lg p-6 md:p-8">
           <h2 className="text-xl font-bold text-var(--sfp-navy) mb-3">
             What Is an ISA (Individual Savings Account)?
           </h2>
@@ -146,7 +146,7 @@ export default function UKSavingsPage() {
                   className="bg-white border-2 border-slate-200 rounded-lg p-6 hover:border-var(--sfp-gold) transition-colors"
                 >
                   <div className="flex items-start gap-3 mb-3">
-                    <div className="p-2 bg-var(--sfp-gray) rounded-lg">{item.icon}</div>
+                    <div className="p-2 bg-[var(--sfp-gray)] rounded-lg">{item.icon}</div>
                     <div>
                       <h3 className="font-bold text-var(--sfp-navy)">{item.title}</h3>
                       <p className="text-sm text-var(--sfp-gold) font-bold mt-1">{item.rate} APY</p>
@@ -197,7 +197,7 @@ export default function UKSavingsPage() {
               ].map((isa, idx) => (
                 <div
                   key={idx}
-                  className="bg-var(--sfp-gray) rounded-lg border border-slate-200 p-6"
+                  className="bg-[var(--sfp-gray)] rounded-lg border border-slate-200 p-6"
                 >
                   <h3 className="text-lg font-bold text-var(--sfp-navy) mb-4">
                     {isa.type}
@@ -226,7 +226,7 @@ export default function UKSavingsPage() {
             <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
-                  <thead className="bg-var(--sfp-sky) border-b-2 border-var(--sfp-navy)">
+                  <thead className="bg-[var(--sfp-sky)] border-b-2 border-var(--sfp-navy)">
                     <tr>
                       <th className="text-left px-4 py-3 font-bold text-var(--sfp-navy)">Provider</th>
                       <th className="text-left px-4 py-3 font-bold text-var(--sfp-navy)">Easy Access Rate</th>
@@ -241,12 +241,12 @@ export default function UKSavingsPage() {
                       { provider: 'Placeholder Bank C', easyAccess: '4.8%', fixed: '5.3%', type: 'Fixed Bond' },
                       { provider: 'Placeholder Bank D', easyAccess: '5.0%', fixed: '5.1%', type: 'Notice Account' },
                     ].map((row, idx) => (
-                      <tr key={idx} className="hover:bg-var(--sfp-gray) transition-colors">
+                      <tr key={idx} className="hover:bg-[var(--sfp-gray)] transition-colors">
                         <td className="px-4 py-3 font-medium text-var(--sfp-ink)">{row.provider}</td>
                         <td className="px-4 py-3 font-bold text-var(--sfp-gold)">{row.easyAccess}</td>
                         <td className="px-4 py-3 font-bold text-var(--sfp-gold)">{row.fixed}</td>
                         <td className="px-4 py-3">
-                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-var(--sfp-green) text-white text-xs font-medium">
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--sfp-green)] text-white text-xs font-medium">
                             {row.type}
                           </span>
                         </td>
@@ -336,7 +336,7 @@ export default function UKSavingsPage() {
           </div>
 
           {/* Final CTA */}
-          <div className="bg-var(--sfp-sky) rounded-lg p-8 border-l-4 border-var(--sfp-gold) text-center">
+          <div className="bg-[var(--sfp-sky)] rounded-lg p-8 border-l-4 border-var(--sfp-gold) text-center">
             <h3 className="text-xl font-bold text-var(--sfp-navy) mb-3">
               Start Saving More Today
             </h3>

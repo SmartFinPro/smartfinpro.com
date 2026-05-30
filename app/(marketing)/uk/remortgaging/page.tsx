@@ -34,7 +34,7 @@ export default function UKRemortgagingPage() {
         <div className="container mx-auto px-4 py-16 lg:py-24">
           <div className="max-w-3xl">
             {/* Badge */}
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-var(--sfp-sky) px-4 py-2 border border-blue-200">
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-[var(--sfp-sky)] px-4 py-2 border border-blue-200">
               <Sparkles className="h-4 w-4 text-blue-600" />
               <span className="text-sm font-medium text-blue-900">
                 Updated February {currentYear}
@@ -77,7 +77,7 @@ export default function UKRemortgagingPage() {
               <Button
                 asChild
                 variant="outline"
-                className="border-2 border-var(--sfp-navy) text-var(--sfp-navy) hover:bg-var(--sfp-sky) px-6 py-3 rounded-lg font-medium transition-colors"
+                className="border-2 border-var(--sfp-navy) text-var(--sfp-navy) hover:bg-[var(--sfp-sky)] px-6 py-3 rounded-lg font-medium transition-colors"
               >
                 <Link href="#calculator">Savings Calculator</Link>
               </Button>
@@ -93,7 +93,7 @@ export default function UKRemortgagingPage() {
 
       {/* Answer Block - Common Question */}
       <section className="container mx-auto px-4 py-12">
-        <div className="max-w-3xl bg-var(--sfp-sky) border-l-4 border-var(--sfp-navy) rounded-lg p-6 md:p-8">
+        <div className="max-w-3xl bg-[var(--sfp-sky)] border-l-4 border-var(--sfp-navy) rounded-lg p-6 md:p-8">
           <h2 className="text-xl font-bold text-var(--sfp-navy) mb-3">
             What Is Remortgaging?
           </h2>
@@ -157,7 +157,7 @@ export default function UKRemortgagingPage() {
             <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
-                  <thead className="bg-var(--sfp-sky) border-b-2 border-var(--sfp-navy)">
+                  <thead className="bg-[var(--sfp-sky)] border-b-2 border-var(--sfp-navy)">
                     <tr>
                       <th className="text-left px-4 py-3 font-bold text-var(--sfp-navy)">Lender</th>
                       <th className="text-left px-4 py-3 font-bold text-var(--sfp-navy)">Rate</th>
@@ -171,7 +171,7 @@ export default function UKRemortgagingPage() {
                       { lender: 'Trussle', rate: 'Whole-of-market', terms: 'Free online broker, 2-5 yr fixed', rating: 4.5 },
                       { lender: 'London & Country', rate: 'Whole-of-market', terms: 'Free broker, phone & online', rating: 4.4 },
                     ].map((row, idx) => (
-                      <tr key={idx} className="hover:bg-var(--sfp-gray) transition-colors">
+                      <tr key={idx} className="hover:bg-[var(--sfp-gray)] transition-colors">
                         <td className="px-4 py-3 font-medium text-var(--sfp-ink)">{row.lender}</td>
                         <td className="px-4 py-3 text-var(--sfp-ink) font-bold text-var(--sfp-gold)">
                           {row.rate}
@@ -202,9 +202,9 @@ export default function UKRemortgagingPage() {
           </div>
 
           {/* Tool Embed — Remortgage Calculator */}
-          <div id="calculator" className="bg-var(--sfp-sky) rounded-lg border border-slate-200 p-6 md:p-8">
+          <div id="calculator" className="bg-[var(--sfp-sky)] rounded-lg border border-slate-200 p-6 md:p-8">
             <div className="flex items-start gap-4 mb-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-var(--sfp-navy) text-white shrink-0">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--sfp-navy)] text-white shrink-0">
                 <Sparkles className="h-5 w-5" />
               </div>
               <div>
@@ -316,7 +316,7 @@ export default function UKRemortgagingPage() {
           {/* ISA Tax Savings Calculator Embed */}
           <div className="bg-white border-2 border-slate-200 rounded-lg p-6 md:p-8">
             <div className="flex items-start gap-4 mb-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-var(--sfp-green) text-white shrink-0">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--sfp-green)] text-white shrink-0">
                 <Shield className="h-5 w-5" />
               </div>
               <div>
@@ -330,7 +330,7 @@ export default function UKRemortgagingPage() {
             </div>
             <Button
               asChild
-              className="bg-var(--sfp-navy) hover:bg-var(--sfp-navy-dark) text-white px-6 py-3 rounded-lg font-medium transition-colors"
+              className="bg-[var(--sfp-navy)] hover:bg-[var(--sfp-navy-dark)] text-white px-6 py-3 rounded-lg font-medium transition-colors"
             >
               <Link href="/uk/tools/isa-tax-savings-calculator/">
                 Open ISA Calculator
@@ -340,7 +340,7 @@ export default function UKRemortgagingPage() {
           </div>
 
           {/* Final CTA */}
-          <div className="bg-var(--sfp-sky) rounded-lg p-8 border-l-4 border-var(--sfp-gold) text-center">
+          <div className="bg-[var(--sfp-sky)] rounded-lg p-8 border-l-4 border-var(--sfp-gold) text-center">
             <h3 className="text-xl font-bold text-var(--sfp-navy) mb-3">
               Ready to Compare Remortgage Deals?
             </h3>

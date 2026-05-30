@@ -34,7 +34,7 @@ export default function UKCostOfLivingPage() {
         <div className="container mx-auto px-4 py-16 lg:py-24">
           <div className="max-w-3xl">
             {/* Badge */}
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-var(--sfp-sky) px-4 py-2 border border-blue-200">
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-[var(--sfp-sky)] px-4 py-2 border border-blue-200">
               <Sparkles className="h-4 w-4 text-blue-600" />
               <span className="text-sm font-medium text-blue-900">
                 Updated February {currentYear}
@@ -77,7 +77,7 @@ export default function UKCostOfLivingPage() {
               <Button
                 asChild
                 variant="outline"
-                className="border-2 border-var(--sfp-navy) text-var(--sfp-navy) hover:bg-var(--sfp-sky) px-6 py-3 rounded-lg font-medium transition-colors"
+                className="border-2 border-var(--sfp-navy) text-var(--sfp-navy) hover:bg-[var(--sfp-sky)] px-6 py-3 rounded-lg font-medium transition-colors"
               >
                 <Link href="#strategies">Money Saving Tips</Link>
               </Button>
@@ -93,7 +93,7 @@ export default function UKCostOfLivingPage() {
 
       {/* Answer Block - Common Question */}
       <section className="container mx-auto px-4 py-12">
-        <div className="max-w-3xl bg-var(--sfp-sky) border-l-4 border-var(--sfp-navy) rounded-lg p-6 md:p-8">
+        <div className="max-w-3xl bg-[var(--sfp-sky)] border-l-4 border-var(--sfp-navy) rounded-lg p-6 md:p-8">
           <h2 className="text-xl font-bold text-var(--sfp-navy) mb-3">
             What Is the UK Cost of Living Crisis?
           </h2>
@@ -177,7 +177,7 @@ export default function UKCostOfLivingPage() {
               ].map((tool, idx) => (
                 <div
                   key={idx}
-                  className="bg-var(--sfp-gray) rounded-lg p-5 border border-slate-200 hover:shadow-md transition-shadow"
+                  className="bg-[var(--sfp-gray)] rounded-lg p-5 border border-slate-200 hover:shadow-md transition-shadow"
                 >
                   <div className="flex items-start gap-3 mb-3">
                     <Lightbulb className="h-5 w-5 text-var(--sfp-gold) shrink-0 mt-0.5" />
@@ -269,7 +269,7 @@ export default function UKCostOfLivingPage() {
           </div>
 
           {/* Final CTA */}
-          <div className="bg-var(--sfp-sky) rounded-lg p-8 border-l-4 border-var(--sfp-gold) text-center">
+          <div className="bg-[var(--sfp-sky)] rounded-lg p-8 border-l-4 border-var(--sfp-gold) text-center">
             <h3 className="text-xl font-bold text-var(--sfp-navy) mb-3">
               Start Reducing Your Costs Today
             </h3>
