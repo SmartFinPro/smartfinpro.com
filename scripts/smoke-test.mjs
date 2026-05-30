@@ -96,6 +96,47 @@ async function fetchWithTimeout(url, ms) {
   }
 }
 
+// ── Bounded retry (transient errors only) ──────────────────────────────────────
+// Absorbs transient cold-start / first-hit failures right after a deploy
+// (network blips, connection refused, timeouts, 5xx, 429) WITHOUT softening the
+// gate: a 200 returns immediately (content checks still decide), and 4xx incl.
+// 404 are NOT retried (real content errors must still fail). After 3 exhausted
+// attempts the last response/error is surfaced → the URL still fails the gate.
+const MAX_ATTEMPTS = 3;
+const RETRY_BACKOFF_MS = [500, 1500]; // before attempt 2 and 3
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+function isTransientStatus(status) {
+  return status === 429 || (status >= 500 && status <= 599);
+}
+
+async function fetchWithRetry(url, ms) {
+  let lastErr;
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    try {
+      const res = await fetchWithTimeout(url, ms);
+      if (isTransientStatus(res.status) && attempt < MAX_ATTEMPTS) {
+        console.log(`       ↻ transient HTTP ${res.status} (attempt ${attempt}/${MAX_ATTEMPTS}), retrying…`);
+        await sleep(RETRY_BACKOFF_MS[attempt - 1] ?? 1500);
+        continue;
+      }
+      // 200, 4xx (incl. 404), or final-attempt 5xx/429 → let the caller evaluate.
+      return res;
+    } catch (err) {
+      lastErr = err;
+      if (attempt < MAX_ATTEMPTS) {
+        const label = err.name === 'AbortError' ? `timeout after ${ms}ms` : String(err.message || err);
+        console.log(`       ↻ transient fetch error (attempt ${attempt}/${MAX_ATTEMPTS}): ${label}, retrying…`);
+        await sleep(RETRY_BACKOFF_MS[attempt - 1] ?? 1500);
+        continue;
+      }
+      throw err; // exhausted → real failure
+    }
+  }
+  throw lastErr; // safeguard (unreachable)
+}
+
 // ── Checks ────────────────────────────────────────────────────────────────────
 
 /**
@@ -179,7 +220,7 @@ async function smokeTest({ path, tier }) {
   };
 
   try {
-    const res = await fetchWithTimeout(url, TIMEOUT_MS);
+    const res = await fetchWithRetry(url, TIMEOUT_MS);
     checks.status = { ok: res.status === 200, detail: `HTTP ${res.status}` };
 
     if (res.status === 200) {
