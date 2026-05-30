@@ -85,7 +85,7 @@ export function ArchivePageDialog({ open, onOpenChange, page, batchPages }: Arch
         setProgress(i + 1);
       }
 
-      // Send batch summary Telegram alert (fire-and-forget, ≥2 pages)
+      // Send batch summary alert to the Notification Center (fire-and-forget, ≥2 pages)
       if (isBatch) {
         fetch('/api/archive-page/batch-notify', {
           method: 'POST',
