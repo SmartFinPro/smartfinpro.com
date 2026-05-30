@@ -10,6 +10,9 @@
 - **Create** `__tests__/unit/cohorts-aggregate.test.ts` — vitest gegen `computeCohorts` mit deterministischen Fixtures.
 - **Keine** Route, **keine** Komponente, **keine** Migration, **keine** Navigation in 3.1.
 
+## ⚠️ Korrektur während 3.1 — echte Datenquellen
+Der Spec nahm `conversions` + `click_id`-Join an. **Befund:** Die Live-`conversions`-Tabelle hat **kein `click_id`** (link-level/reconciled, von `revenue.ts` genutzt) → trägt **keine** Klick-Kohorten. Korrekte Quellen sind **`link_clicks`** (`click_id`, `clicked_at`) und **`conversion_events`** (`click_id`, `event_value`, `currency`, `received_at`, `event_type`). „Approved" = `event_type='approved'`. **Hinweis:** Diese (getrackten Postback-)Werte können von den **reconciled** Revenue-Zahlen des Revenue-Dashboards (`conversions.commission_earned`) abweichen.
+
 ## Datenquellen & Aggregationslogik
 **Quellen (Live-Spalten, bestätigt):**
 - `clicks`: `clicked_at` (TIMESTAMPTZ), `click_id` (VARCHAR, Tracking-ID), `link_id`, `country_code`, `page_slug`.
