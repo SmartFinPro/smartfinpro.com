@@ -1,7 +1,12 @@
 import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowRight, FileText } from 'lucide-react';
 import { getAllResearchSectors, getResearchBySector } from '@/lib/research';
+
+// Only sectors produced by generateStaticParams are valid; everything else 404s
+// (prevents crawlable empty pages at /research/<anything>).
+export const dynamicParams = false;
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://smartfinpro.com';
 
@@ -44,6 +49,9 @@ export default async function ResearchSectorPage({
 }: ResearchSectorPageProps) {
   const { sector } = await params;
   const items = await getResearchBySector(sector);
+  if (items.length === 0) {
+    notFound();
+  }
   const label = sectorLabel(sector);
 
   return (

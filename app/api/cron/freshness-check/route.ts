@@ -167,17 +167,17 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // ── Scan research notes (DECOUPLED from content_freshness) ─────────
-    // Research notes are NOT market-scoped. They must NOT enter the
-    // market content_freshness pipeline, because content-health.ts reads
-    // every content_freshness row into content_health_scores, which the
-    // autonomous insight/executor stack consumes. We scan research notes
-    // for an overdue next_review and alert on a separate lane instead.
-    const researchScanned: { slug: string; ageDays: number | null; needsReview: boolean }[] = [];
+    // ── Scan research notes ────────────────────────────────────────────
+    // Research notes share the content_freshness store so they inherit the
+    // same flagged_at de-dupe: the alert fires only when a note is NEWLY
+    // overdue, not on every cron run. market='research' is explicitly
+    // EXCLUDED by the autonomous consumer (lib/actions/content-health.ts),
+    // so research never reaches content_health_scores or the executor.
     if (fs.existsSync(RESEARCH_DIR)) {
       for (const sectorEntry of fs.readdirSync(RESEARCH_DIR, { withFileTypes: true })) {
         if (!sectorEntry.isDirectory()) continue;
-        const sectorDir = path.join(RESEARCH_DIR, sectorEntry.name);
+        const sector = sectorEntry.name;
+        const sectorDir = path.join(RESEARCH_DIR, sector);
 
         for (const filePath of collectMdxFiles(sectorDir)) {
           try {
@@ -202,8 +202,13 @@ export async function GET(request: NextRequest) {
             const needsReview =
               nextReviewExceeded || (ageDays !== null && ageDays > STALE_THRESHOLD_DAYS);
 
-            researchScanned.push({
+            scanned.push({
+              filePath: path.relative(process.cwd(), filePath),
               slug: researchSlugFromPath(filePath),
+              market: 'research',
+              category: sector,
+              publishDate,
+              modifiedDate,
               ageDays,
               needsReview,
             });
@@ -316,30 +321,6 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // ── Separate alert lane for overdue research notes ─────────────────
-    const researchOverdue = researchScanned.filter((r) => r.needsReview);
-    if (researchOverdue.length > 0) {
-      const list = researchOverdue
-        .slice(0, 8)
-        .map((r) => `  • <code>${r.slug}</code>`)
-        .join('\n');
-      const overflow =
-        researchOverdue.length > 8 ? `\n  … and ${researchOverdue.length - 8} more` : '';
-      const message = [
-        `📑 <b>RESEARCH REVIEW DUE</b>`,
-        ``,
-        `⚠️ <b>${researchOverdue.length}</b> research note(s) past next_review`,
-        ``,
-        list + overflow,
-        ``,
-        `<i>${new Date().toISOString().replace('T', ' ').slice(0, 19)} UTC</i>`,
-      ].join('\n');
-      const tg = await sendTelegramAlert(message);
-      if (!tg.success) {
-        logger.warn('[freshness-check] Research alert failed', { error: tg.error });
-      }
-    }
-
     logCron({ job: 'freshness-check', status: errors.length === 0 ? 'success' : 'error', duration_ms: durationMs, scanned: scanned.length, stale: staleCount, newly_flagged: newlyFlagged });
 
     return NextResponse.json({
@@ -348,7 +329,6 @@ export async function GET(request: NextRequest) {
       stale: staleCount,
       newlyFlagged,
       alertSent,
-      research: { scanned: researchScanned.length, overdue: researchOverdue.length },
       errors: errors.length > 0 ? errors : undefined,
       duration: `${(durationMs / 1000).toFixed(1)}s`,
       timestamp: new Date().toISOString(),

@@ -90,9 +90,13 @@ export async function computeContentHealthScores(): Promise<ContentHealthResult>
 
   try {
     // ── Step 1: Get all content pages from content_freshness ──
+    // Exclude market='research': research notes live in content_freshness for
+    // freshness de-dupe only and must NOT be scored into content_health_scores
+    // (which the autonomous insight/executor stack consumes).
     const { data: pages, error: pagesErr } = await supabase
       .from('content_freshness')
-      .select('slug, market, category, publish_date, modified_date');
+      .select('slug, market, category, publish_date, modified_date')
+      .neq('market', 'research');
 
     if (pagesErr || !pages) {
       logger.error('[content-health] Failed to load pages', { error: pagesErr?.message });

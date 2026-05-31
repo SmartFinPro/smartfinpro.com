@@ -14,6 +14,9 @@ interface ResearchDetailPageProps {
   }>;
 }
 
+// Only (sector, slug) pairs from generateStaticParams are valid; others 404.
+export const dynamicParams = false;
+
 export async function generateStaticParams() {
   return getAllResearchSlugs();
 }
