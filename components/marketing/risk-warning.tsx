@@ -4,6 +4,8 @@ interface RiskWarningBoxProps {
   variant?: 'prominent' | 'compact';
   lossPercentage?: string;
   market?: 'us' | 'uk' | 'ca' | 'au';
+  titleOverride?: string;
+  textOverride?: string;
 }
 
 const marketWarnings: Record<string, { title: string; text: (loss: string) => string }> = {
@@ -33,15 +35,18 @@ export function RiskWarningBox({
   variant = 'prominent',
   lossPercentage = '74-89%',
   market,
+  titleOverride,
+  textOverride,
 }: RiskWarningBoxProps) {
   const warning = market ? marketWarnings[market] : marketWarnings.uk;
-  const text = warning.text(lossPercentage);
+  const title = titleOverride || warning.title;
+  const text = textOverride || warning.text(lossPercentage);
 
   if (variant === 'compact') {
     return (
       <div className="not-prose my-6 rounded-lg border px-4 py-3" style={{ borderColor: 'rgba(214,64,69,0.2)', background: 'rgba(214,64,69,0.04)' }}>
         <p className="text-xs leading-relaxed" style={{ color: 'var(--sfp-slate)' }}>
-          <span className="font-semibold" style={{ color: 'var(--sfp-red)' }}>{warning.title}:</span>{' '}
+          <span className="font-semibold" style={{ color: 'var(--sfp-red)' }}>{title}:</span>{' '}
           {text}
         </p>
       </div>
@@ -57,7 +62,7 @@ export function RiskWarningBox({
           </div>
         </div>
         <div>
-          <h4 className="text-sm font-semibold mb-1.5" style={{ color: 'var(--sfp-red)' }}>{warning.title}</h4>
+          <h4 className="text-sm font-semibold mb-1.5" style={{ color: 'var(--sfp-red)' }}>{title}</h4>
           <p className="text-xs leading-relaxed" style={{ color: 'var(--sfp-slate)' }}>
             {text}
           </p>

@@ -1,5 +1,6 @@
 import { MetadataRoute } from 'next';
 import { getAllContent } from '@/lib/mdx';
+import { getAllResearch } from '@/lib/research';
 import { markets, marketCategories, Market } from '@/lib/i18n/config';
 // Categories that have actual overview content (must stay in sync with lib/data/overview-content.ts)
 const overviewCategories = new Set(['remortgaging', 'savings', 'superannuation', 'housing']);
@@ -240,6 +241,51 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           lastModified: pillarLastMod.get(`${market}/${category}`) || now,
           changeFrequency: 'monthly',
           priority: 0.75,
+        });
+      }
+    }
+
+    // ============================================================
+    // 9. RESEARCH PAGES — Priority 0.55-0.65
+    // Public authority layer outside the market-prefixed routing tree.
+    // ============================================================
+
+    const allResearch = await getAllResearch();
+    if (allResearch.length > 0) {
+      const latestResearchMod = allResearch.reduce((latest, item) => {
+        const itemDate = new Date(item.meta.modifiedDate || item.meta.publishDate || now);
+        return itemDate > latest ? itemDate : latest;
+      }, new Date(allResearch[0].meta.modifiedDate || allResearch[0].meta.publishDate || now));
+
+      entries.push({
+        url: `${BASE_URL}/research`,
+        lastModified: latestResearchMod,
+        changeFrequency: 'weekly',
+        priority: 0.55,
+      });
+
+      const sectorLastMod = new Map<string, Date>();
+      for (const item of allResearch) {
+        const lastMod = new Date(item.meta.modifiedDate || item.meta.publishDate || now);
+        const existing = sectorLastMod.get(item.meta.sector);
+        if (!existing || lastMod > existing) {
+          sectorLastMod.set(item.meta.sector, lastMod);
+        }
+
+        entries.push({
+          url: `${BASE_URL}/research/${item.meta.sector}/${item.slug}`,
+          lastModified: lastMod,
+          changeFrequency: 'monthly',
+          priority: 0.65,
+        });
+      }
+
+      for (const [sector, lastModified] of sectorLastMod.entries()) {
+        entries.push({
+          url: `${BASE_URL}/research/${sector}`,
+          lastModified,
+          changeFrequency: 'monthly',
+          priority: 0.6,
         });
       }
     }

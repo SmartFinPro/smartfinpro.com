@@ -22,6 +22,7 @@ import { logger, logCron } from '@/lib/logging';
 import { validateBearer } from '@/lib/security/timing-safe';
 
 const CONTENT_DIR = path.join(process.cwd(), 'content');
+const RESEARCH_DIR = path.join(CONTENT_DIR, 'research-notes');
 const STALE_THRESHOLD_DAYS = 180; // 6 months
 const VALID_MARKETS = ['us', 'uk', 'ca', 'au'] as const;
 
@@ -101,6 +102,13 @@ function slugFromPath(absolutePath: string): string {
   return '/' + parts.join('/');
 }
 
+function researchSlugFromPath(absolutePath: string): string {
+  const rel = path.relative(RESEARCH_DIR, absolutePath);
+  const parts = rel.replace(/\.mdx$/, '').split(path.sep);
+  const [sector, slug] = parts;
+  return `/research/${sector}/${slug}`;
+}
+
 export async function GET(request: NextRequest) {
   // ── Auth (timing-safe) ────────────────────────────────────────────────
   const isDev = process.env.NODE_ENV === 'development';
@@ -154,6 +162,56 @@ export async function GET(request: NextRequest) {
             });
           } catch (parseErr) {
             logger.warn('[freshness-check] Could not parse MDX', { file: filePath, error: parseErr instanceof Error ? parseErr.message : String(parseErr) });
+          }
+        }
+      }
+    }
+
+    // ── Scan research notes (DECOUPLED from content_freshness) ─────────
+    // Research notes are NOT market-scoped. They must NOT enter the
+    // market content_freshness pipeline, because content-health.ts reads
+    // every content_freshness row into content_health_scores, which the
+    // autonomous insight/executor stack consumes. We scan research notes
+    // for an overdue next_review and alert on a separate lane instead.
+    const researchScanned: { slug: string; ageDays: number | null; needsReview: boolean }[] = [];
+    if (fs.existsSync(RESEARCH_DIR)) {
+      for (const sectorEntry of fs.readdirSync(RESEARCH_DIR, { withFileTypes: true })) {
+        if (!sectorEntry.isDirectory()) continue;
+        const sectorDir = path.join(RESEARCH_DIR, sectorEntry.name);
+
+        for (const filePath of collectMdxFiles(sectorDir)) {
+          try {
+            const { data } = matter(fs.readFileSync(filePath, 'utf8'));
+
+            const publishDate: string | null = data.publishDate ?? data.date ?? null;
+            const modifiedDate: string | null = data.modifiedDate ?? null;
+            const nextReview: string | null = data.next_review ?? data.nextReview ?? null;
+            const ageDays = daysSince(modifiedDate ?? publishDate);
+
+            let nextReviewExceeded = false;
+            if (nextReview) {
+              const parsed = new Date(nextReview);
+              if (!isNaN(parsed.getTime())) {
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                parsed.setHours(0, 0, 0, 0);
+                nextReviewExceeded = parsed < today;
+              }
+            }
+
+            const needsReview =
+              nextReviewExceeded || (ageDays !== null && ageDays > STALE_THRESHOLD_DAYS);
+
+            researchScanned.push({
+              slug: researchSlugFromPath(filePath),
+              ageDays,
+              needsReview,
+            });
+          } catch (parseErr) {
+            logger.warn('[freshness-check] Could not parse research MDX', {
+              file: filePath,
+              error: parseErr instanceof Error ? parseErr.message : String(parseErr),
+            });
           }
         }
       }
@@ -258,6 +316,30 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    // ── Separate alert lane for overdue research notes ─────────────────
+    const researchOverdue = researchScanned.filter((r) => r.needsReview);
+    if (researchOverdue.length > 0) {
+      const list = researchOverdue
+        .slice(0, 8)
+        .map((r) => `  • <code>${r.slug}</code>`)
+        .join('\n');
+      const overflow =
+        researchOverdue.length > 8 ? `\n  … and ${researchOverdue.length - 8} more` : '';
+      const message = [
+        `📑 <b>RESEARCH REVIEW DUE</b>`,
+        ``,
+        `⚠️ <b>${researchOverdue.length}</b> research note(s) past next_review`,
+        ``,
+        list + overflow,
+        ``,
+        `<i>${new Date().toISOString().replace('T', ' ').slice(0, 19)} UTC</i>`,
+      ].join('\n');
+      const tg = await sendTelegramAlert(message);
+      if (!tg.success) {
+        logger.warn('[freshness-check] Research alert failed', { error: tg.error });
+      }
+    }
+
     logCron({ job: 'freshness-check', status: errors.length === 0 ? 'success' : 'error', duration_ms: durationMs, scanned: scanned.length, stale: staleCount, newly_flagged: newlyFlagged });
 
     return NextResponse.json({
@@ -266,6 +348,7 @@ export async function GET(request: NextRequest) {
       stale: staleCount,
       newlyFlagged,
       alertSent,
+      research: { scanned: researchScanned.length, overdue: researchOverdue.length },
       errors: errors.length > 0 ? errors : undefined,
       duration: `${(durationMs / 1000).toFixed(1)}s`,
       timestamp: new Date().toISOString(),
