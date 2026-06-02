@@ -243,8 +243,16 @@ export interface MarketPerformance {
   currencySymbol: string;
   // Core Metrics
   clicks: number;
+  previousClicks: number; // prior-period affiliate clicks (bot-prone; not used for SEO cards)
   clicksTrend: 'up' | 'down' | 'neutral';
   clicksChange: number;
+  // Organic search (GSC keyword_tracking) — clean signal for SEO/traffic cards
+  organicKeywords: number;
+  organicRankedTop20: number;
+  organicImpressions: number;
+  organicClicks: number;
+  rankingDeclined: number;
+  rankingImproved: number;
   revenue: number; // in USD
   revenueLocal: number; // in local currency
   revenueChange: number;
@@ -1251,6 +1259,7 @@ export async function getGlobalMarketIntelligence(range: TimeRange = '7d'): Prom
     gmiPrevConversionsResult,
     gmiLinksResult,
     gmiPageViewsResult,
+    gmiKeywordTrackingResult,
   ] = await Promise.all([
     clicksQuery.order('clicked_at', { ascending: false }),
     previousPeriod
@@ -1271,6 +1280,9 @@ export async function getGlobalMarketIntelligence(range: TimeRange = '7d'): Prom
       : gmiNoop,
     supabase.from('affiliate_links').select('id, slug, partner_name, category'),
     pageViewsQuery,
+    // Real organic-search signal (GSC) — replaces bot-prone affiliate clicks
+    // as the basis for the SEO/traffic opportunity cards.
+    supabase.from('keyword_tracking').select('market, current_position, previous_position, clicks, impressions'),
   ]);
 
   // ── Extract results ───────────────────────────────────────────────────────
@@ -1286,6 +1298,32 @@ export async function getGlobalMarketIntelligence(range: TimeRange = '7d'): Prom
   }>;
   const linksMap = new Map(marketLinks.map((l) => [l.id, l]));
   const pageViews = safeData(gmiPageViewsResult);
+
+  // ── GSC organic signal by market (keyword_tracking) ─────────────────
+  // keyword_tracking.market is lowercase and uses 'uk'; map to MarketCode ('GB').
+  const KT_MARKET_MAP: Record<string, MarketCode> = { us: 'US', uk: 'GB', ca: 'CA', au: 'AU' };
+  type GscAgg = { keywords: number; rankedTop20: number; impressions: number; clicks: number; declined: number; improved: number };
+  const gscByMarket: Record<MarketCode, GscAgg> = {
+    US: { keywords: 0, rankedTop20: 0, impressions: 0, clicks: 0, declined: 0, improved: 0 },
+    GB: { keywords: 0, rankedTop20: 0, impressions: 0, clicks: 0, declined: 0, improved: 0 },
+    CA: { keywords: 0, rankedTop20: 0, impressions: 0, clicks: 0, declined: 0, improved: 0 },
+    AU: { keywords: 0, rankedTop20: 0, impressions: 0, clicks: 0, declined: 0, improved: 0 },
+  };
+  for (const row of (safeData(gmiKeywordTrackingResult) as Array<{
+    market: string | null; current_position: number | null; previous_position: number | null; clicks: number | null; impressions: number | null;
+  }>)) {
+    const mc = row.market ? KT_MARKET_MAP[row.market] : undefined;
+    if (!mc) continue;
+    const g = gscByMarket[mc];
+    g.keywords++;
+    g.impressions += row.impressions || 0;
+    g.clicks += row.clicks || 0;
+    const cur = row.current_position || 0;
+    const prev = row.previous_position || 0;
+    if (cur > 0 && cur <= 20) g.rankedTop20++;
+    if (prev > 0 && cur > 0 && cur > prev) g.declined++;
+    if (prev > 0 && cur > 0 && cur < prev) g.improved++;
+  }
 
   // Build market-specific data
   const marketData: Record<MarketCode, {
@@ -1415,6 +1453,7 @@ export async function getGlobalMarketIntelligence(range: TimeRange = '7d'): Prom
   for (const [marketCode, config] of Object.entries(marketConfig)) {
     const code = marketCode as MarketCode;
     const data = marketData[code];
+    const gsc = gscByMarket[code];
 
     const totalClicks = data.clicks.length;
     const totalRevenue = data.conversions.reduce((sum, c) => sum + toUSD(c.commission_earned || 0, c.currency), 0);
@@ -1486,8 +1525,15 @@ export async function getGlobalMarketIntelligence(range: TimeRange = '7d'): Prom
       currency: config.currency,
       currencySymbol: config.symbol,
       clicks: totalClicks,
+      previousClicks: data.previousClicks,
       clicksTrend: clicksComparison.trend,
       clicksChange: clicksComparison.change,
+      organicKeywords: gsc.keywords,
+      organicRankedTop20: gsc.rankedTop20,
+      organicImpressions: gsc.impressions,
+      organicClicks: gsc.clicks,
+      rankingDeclined: gsc.declined,
+      rankingImproved: gsc.improved,
       revenue: totalRevenue,
       revenueLocal: totalRevenue / (getFxRatesSnapshot()[config.currency] || config.exchangeRate),
       revenueChange: revenueComparison.change,
@@ -1519,6 +1565,9 @@ export async function getGlobalMarketIntelligence(range: TimeRange = '7d'): Prom
   // Generate market opportunities
   const opportunities: MarketOpportunity[] = [];
 
+  // SEO/traffic cards are driven by GSC organic data (keyword_tracking), NOT by
+  // geolocated affiliate clicks — those are bot-polluted (e.g. VN/IL bursts) and
+  // produced misleading "±100%" swings. Affiliate clicks still drive conversion/EPC.
   markets.forEach(market => {
     // High traffic, low conversion
     if (market.clicks > 10 && market.conversionRate < 1) {
@@ -1534,31 +1583,43 @@ export async function getGlobalMarketIntelligence(range: TimeRange = '7d'): Prom
       });
     }
 
-    // Growing traffic
-    if (market.clicksTrend === 'up' && market.clicksChange > 30) {
+    // SEO: real ranking decline (GSC) — replaces the bot-prone affiliate "traffic down" card
+    if (market.rankingDeclined >= 3) {
       opportunities.push({
-        id: `growth-${market.market}`,
+        id: `seo-decline-${market.market}`,
         market: market.market,
-        type: 'growth',
-        title: `${market.marketName} Traffic Growing +${market.clicksChange}%`,
-        description: `Strong momentum in ${market.marketName}. Consider expanding ${market.market} content.`,
-        metric: `+${market.clicksChange}%`,
-        action: `Create more ${market.market}-specific comparison articles`,
+        type: 'warning',
+        title: `${market.marketName}: ${market.rankingDeclined} keywords lost ranking`,
+        description: `${market.rankingDeclined} tracked ${market.marketName} keywords slipped in Google (Search Console). Review on-page SEO and internal links on the affected pages.`,
+        metric: `${market.rankingDeclined} keywords down`,
+        action: `Audit ${market.market} pages that lost positions in Search Console`,
+        priority: 'high',
+      });
+    } else if (market.organicKeywords >= 10 && market.organicRankedTop20 === 0) {
+      // SEO: no organic visibility yet — the real state when nothing ranks (replaces fake "−100%")
+      opportunities.push({
+        id: `seo-invisible-${market.market}`,
+        market: market.market,
+        type: 'warning',
+        title: `${market.marketName}: no organic visibility yet`,
+        description: `${market.organicKeywords} tracked keywords and ${market.organicImpressions} impressions, but 0 in the top 20 and ${market.organicClicks} organic clicks. There is no organic traffic to "lose" — the priority is to earn rankings.`,
+        metric: `0 of ${market.organicKeywords} in top 20`,
+        action: `Deepen ${market.market} pillar content + internal links; earn backlinks to lift positions`,
         priority: 'medium',
       });
     }
 
-    // Declining traffic
-    if (market.clicksTrend === 'down' && market.clicksChange > 20) {
+    // SEO: ranking momentum (GSC)
+    if (market.rankingImproved >= 3) {
       opportunities.push({
-        id: `decline-${market.market}`,
+        id: `seo-growth-${market.market}`,
         market: market.market,
-        type: 'warning',
-        title: `${market.marketName} Traffic Down -${market.clicksChange}%`,
-        description: `Traffic from ${market.marketName} is declining. Review SEO rankings.`,
-        metric: `-${market.clicksChange}%`,
-        action: `Audit ${market.market} pillar pages for ranking drops`,
-        priority: 'high',
+        type: 'growth',
+        title: `${market.marketName} rankings improving`,
+        description: `${market.rankingImproved} tracked ${market.marketName} keywords gained positions in Google. Expand this cluster while momentum lasts.`,
+        metric: `${market.rankingImproved} keywords up`,
+        action: `Create more ${market.market} content around the improving keywords`,
+        priority: 'medium',
       });
     }
 
