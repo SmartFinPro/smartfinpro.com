@@ -324,6 +324,22 @@ const PAGE_TITLE = 'Programmatic Financial Firewall for LLC Cash Flow';
 const PAGE_DESCRIPTION =
   'Deploy Mercury as an API-driven LLC cash-flow firewall: isolate subscriptions, automate receipts, harden access, and claim the SmartFinPro bonus.';
 
+const protocolButtonBase =
+  "group relative isolate inline-flex items-center justify-center overflow-hidden border border-cyan-300/35 bg-zinc-950/95 font-extrabold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.10),0_0_34px_rgba(34,211,238,0.12)] transition-all duration-300 before:absolute before:inset-0 before:-z-10 before:bg-[radial-gradient(circle_at_18%_0%,rgba(34,211,238,0.22),transparent_46%)] before:opacity-70 before:transition-opacity hover:-translate-y-0.5 hover:border-cyan-200/70 hover:bg-cyan-950/25 hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.16),0_0_44px_rgba(34,211,238,0.22)] hover:before:opacity-100 focus:outline-none focus:ring-2 focus:ring-cyan-300/60 focus:ring-offset-2 focus:ring-offset-black";
+
+const protocolButtonSizes = {
+  compact: 'min-h-11 rounded-[1.1rem] gap-2 px-4 py-2 text-xs sm:px-5',
+  default: 'min-h-14 rounded-[1.35rem] gap-3 px-7 py-4 text-sm',
+  wide: 'min-h-14 rounded-[1.35rem] gap-3 px-8 py-4 text-sm',
+} as const;
+
+function protocolButtonClass(size: keyof typeof protocolButtonSizes = 'default') {
+  return cn(protocolButtonBase, protocolButtonSizes[size]);
+}
+
+const protocolButtonIconClass =
+  'h-5 w-5 text-cyan-200 transition duration-300 group-hover:translate-x-1 group-hover:text-white';
+
 export default function ProgrammaticFinancialFirewallPage() {
   const [activeNodeId, setActiveNodeId] = useState(firewallNodes[0].id);
   const [activeCodeTab, setActiveCodeTab] = useState(codeTabs[0].id);
@@ -389,10 +405,10 @@ export default function ProgrammaticFinancialFirewallPage() {
             href={MERCURY_AFFILIATE_URL}
             target="_blank"
             rel="noopener sponsored"
-            className="inline-flex shrink-0 items-center gap-2 rounded-full bg-white px-4 py-2 text-xs font-bold text-black shadow-[0_0_30px_rgba(255,255,255,0.25)] transition hover:scale-[1.02] hover:bg-zinc-200 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black sm:px-5"
+            className={cn('shrink-0', protocolButtonClass('compact'))}
           >
             Launch Free Account
-            <ArrowRight className="h-4 w-4" />
+            <ArrowRight className={cn(protocolButtonIconClass, 'h-4 w-4')} />
           </Link>
         </nav>
       </div>
@@ -421,17 +437,17 @@ export default function ProgrammaticFinancialFirewallPage() {
                     href={MERCURY_AFFILIATE_URL}
                     target="_blank"
                     rel="noopener sponsored"
-                    className="inline-flex items-center justify-center gap-3 rounded-full bg-white px-7 py-4 text-sm font-extrabold text-black transition hover:scale-[1.02] hover:bg-zinc-200 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black"
+                    className={protocolButtonClass()}
                   >
                     Launch Free Mercury Account
-                    <ArrowRight className="h-5 w-5" />
+                    <ArrowRight className={protocolButtonIconClass} />
                   </Link>
                   <Link
                     href="#phase-01"
-                    className="inline-flex items-center justify-center gap-3 rounded-full border border-white/15 bg-white/5 px-7 py-4 text-sm font-bold text-white transition hover:border-white/35 hover:bg-white/10"
+                    className={protocolButtonClass()}
                   >
                     Read the protocol
-                    <ChevronRight className="h-5 w-5" />
+                    <ChevronRight className={protocolButtonIconClass} />
                   </Link>
                 </div>
                 <p className="mt-5 max-w-2xl text-xs leading-5 text-zinc-500">
@@ -464,11 +480,13 @@ export default function ProgrammaticFinancialFirewallPage() {
                               aria-pressed={isActive}
                               onClick={() => setActiveNodeId(node.id)}
                               className={cn(
-                                'rounded-2xl border bg-white/[0.03] p-4 text-left transition hover:bg-white/[0.06]',
-                                isActive ? `${node.border} shadow-[0_0_34px_rgba(255,255,255,0.08)]` : 'border-white/10'
+                                'group rounded-2xl border bg-zinc-950/85 p-4 text-left transition-all duration-300 hover:-translate-y-0.5 hover:border-cyan-300/45 hover:bg-cyan-950/15',
+                                isActive
+                                  ? `${node.border} shadow-[0_0_34px_rgba(34,211,238,0.13)]`
+                                  : 'border-white/10'
                               )}
                             >
-                              <Icon className={cn('mb-5 h-5 w-5', node.accent)} />
+                              <Icon className={cn('mb-5 h-5 w-5 transition-transform duration-300 group-hover:scale-110', node.accent)} />
                               <div className="text-xs font-bold text-white">{node.name}</div>
                               <div className="mt-1 text-[11px] text-zinc-500">{node.label}</div>
                             </button>
@@ -581,12 +599,14 @@ export default function ProgrammaticFinancialFirewallPage() {
                       type="button"
                       onClick={() => setActiveNodeId(node.id)}
                       className={cn(
-                        'group rounded-3xl border bg-zinc-950 p-6 text-left transition hover:-translate-y-1 hover:bg-zinc-900',
-                        isActive ? node.border : 'border-white/10'
+                        'group rounded-3xl border bg-zinc-950 p-6 text-left transition-all duration-300 hover:-translate-y-1 hover:border-cyan-300/45 hover:bg-cyan-950/15 hover:shadow-[0_0_42px_rgba(34,211,238,0.12)]',
+                        isActive
+                          ? `${node.border} shadow-[0_0_46px_rgba(34,211,238,0.14)]`
+                          : 'border-white/10'
                       )}
                     >
                       <div className="flex items-center justify-between">
-                        <Icon className={cn('h-7 w-7', node.accent)} />
+                        <Icon className={cn('h-7 w-7 transition-transform duration-300 group-hover:scale-110', node.accent)} />
                         <span className="rounded-full border border-white/10 px-3 py-1 text-[11px] font-semibold text-zinc-400">
                           {node.name}
                         </span>
@@ -676,10 +696,10 @@ export default function ProgrammaticFinancialFirewallPage() {
                       type="button"
                       onClick={() => setActiveCodeTab(tab.id)}
                       className={cn(
-                        'rounded-full px-4 py-2 text-xs font-bold transition',
+                        'rounded-[1rem] border px-4 py-2 text-xs font-bold transition-all duration-300 hover:-translate-y-0.5',
                         activeCodeTab === tab.id
-                          ? 'bg-white text-black'
-                          : 'bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-white'
+                          ? 'border-cyan-300/60 bg-cyan-950/30 text-white shadow-[0_0_24px_rgba(34,211,238,0.14)]'
+                          : 'border-white/10 bg-white/[0.03] text-zinc-400 hover:border-cyan-300/45 hover:bg-cyan-950/15 hover:text-white'
                       )}
                     >
                       {tab.label}
@@ -716,15 +736,15 @@ export default function ProgrammaticFinancialFirewallPage() {
                     type="button"
                     onClick={() => setActiveHardeningStep(index)}
                     className={cn(
-                      'rounded-2xl border p-5 text-left transition',
+                      'group rounded-[1.5rem] border bg-zinc-950/85 p-5 text-left transition-all duration-300 hover:-translate-y-0.5 hover:border-cyan-300/45 hover:bg-cyan-950/15',
                       activeHardeningStep === index
-                        ? 'border-white/40 bg-white text-black'
-                        : 'border-white/10 bg-white/[0.03] text-white hover:bg-white/[0.07]'
+                        ? 'border-cyan-300/60 text-white shadow-[0_0_34px_rgba(34,211,238,0.15)]'
+                        : 'border-white/10 text-white'
                     )}
                   >
                     <div className="flex items-center justify-between gap-4">
                       <span className="font-mono text-sm font-bold">{step.number}</span>
-                      <ChevronRight className="h-4 w-4" />
+                      <ChevronRight className="h-4 w-4 text-cyan-200 transition-transform duration-300 group-hover:translate-x-1" />
                     </div>
                     <h3 className="mt-4 text-lg font-extrabold tracking-tight">{step.title}</h3>
                   </button>
@@ -783,17 +803,17 @@ export default function ProgrammaticFinancialFirewallPage() {
                         href={MERCURY_AFFILIATE_URL}
                         target="_blank"
                         rel="noopener sponsored"
-                        className="inline-flex items-center justify-center gap-3 rounded-full bg-white px-8 py-4 text-sm font-extrabold text-black transition hover:scale-[1.02] hover:bg-zinc-200 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black"
+                        className={protocolButtonClass('wide')}
                       >
                         Launch Free Account
-                        <ArrowRight className="h-5 w-5" />
+                        <ArrowRight className={protocolButtonIconClass} />
                       </Link>
                       <Link
                         href="/us/business-banking/mercury-review"
-                        className="inline-flex items-center justify-center gap-3 rounded-full border border-white/15 bg-white/5 px-8 py-4 text-sm font-bold text-white transition hover:border-white/35 hover:bg-white/10"
+                        className={protocolButtonClass('wide')}
                       >
                         Read Mercury Review
-                        <ChevronRight className="h-5 w-5" />
+                        <ChevronRight className={protocolButtonIconClass} />
                       </Link>
                     </div>
                   </div>
@@ -834,10 +854,10 @@ export default function ProgrammaticFinancialFirewallPage() {
                   <Link
                     key={link.href}
                     href={link.href}
-                    className="group flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm font-semibold text-zinc-300 transition hover:bg-white/[0.07] hover:text-white"
+                    className="group flex items-center justify-between rounded-[1.15rem] border border-white/10 bg-zinc-950/80 px-4 py-3 text-sm font-semibold text-zinc-300 transition-all duration-300 hover:-translate-y-0.5 hover:border-cyan-300/45 hover:bg-cyan-950/15 hover:text-white"
                   >
                     {link.label}
-                    <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
+                    <ArrowRight className="h-4 w-4 text-cyan-200 transition-transform duration-300 group-hover:translate-x-1 group-hover:text-white" />
                   </Link>
                 ))}
               </div>
@@ -851,10 +871,10 @@ export default function ProgrammaticFinancialFirewallPage() {
                     href={link.href}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="group flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm font-semibold text-zinc-300 transition hover:bg-white/[0.07] hover:text-white"
+                    className="group flex items-center justify-between rounded-[1.15rem] border border-white/10 bg-zinc-950/80 px-4 py-3 text-sm font-semibold text-zinc-300 transition-all duration-300 hover:-translate-y-0.5 hover:border-cyan-300/45 hover:bg-cyan-950/15 hover:text-white"
                   >
                     {link.label}
-                    <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
+                    <ArrowRight className="h-4 w-4 text-cyan-200 transition-transform duration-300 group-hover:translate-x-1 group-hover:text-white" />
                   </a>
                 ))}
               </div>
