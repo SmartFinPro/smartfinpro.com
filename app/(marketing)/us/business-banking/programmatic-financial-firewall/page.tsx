@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import {
-  ArrowRight,
   BadgeCheck,
   Banknote,
   Check,
@@ -325,7 +324,7 @@ const PAGE_DESCRIPTION =
   'Deploy Mercury as an API-driven LLC cash-flow firewall: isolate subscriptions, automate receipts, harden access, and claim the SmartFinPro bonus.';
 
 const protocolButtonBase =
-  "group relative isolate inline-flex items-center justify-center overflow-hidden border border-cyan-300/35 bg-zinc-950/95 font-extrabold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.10),0_0_34px_rgba(34,211,238,0.12)] transition-all duration-300 before:absolute before:inset-0 before:-z-10 before:bg-[radial-gradient(circle_at_18%_0%,rgba(34,211,238,0.22),transparent_46%)] before:opacity-70 before:transition-opacity hover:-translate-y-0.5 hover:border-cyan-200/70 hover:bg-cyan-950/25 hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.16),0_0_44px_rgba(34,211,238,0.22)] hover:before:opacity-100 focus:outline-none focus:ring-2 focus:ring-cyan-300/60 focus:ring-offset-2 focus:ring-offset-black";
+  "group relative isolate inline-flex items-center justify-center overflow-hidden border border-cyan-300/35 bg-zinc-950/95 font-extrabold !text-white !no-underline shadow-[inset_0_1px_0_rgba(255,255,255,0.10),0_0_34px_rgba(34,211,238,0.12)] transition-all duration-300 before:absolute before:inset-0 before:-z-10 before:bg-[radial-gradient(circle_at_18%_0%,rgba(34,211,238,0.22),transparent_46%)] before:opacity-70 before:transition-opacity hover:-translate-y-0.5 hover:border-cyan-200/70 hover:bg-cyan-950/25 hover:!text-white hover:!no-underline hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.16),0_0_44px_rgba(34,211,238,0.22)] hover:before:opacity-100 active:!no-underline visited:!text-white visited:!no-underline focus:!no-underline focus:outline-none focus:ring-2 focus:ring-cyan-300/60 focus:ring-offset-2 focus:ring-offset-black";
 
 const protocolButtonSizes = {
   compact: 'min-h-11 rounded-[1.1rem] gap-2 px-4 py-2 text-xs sm:px-5',
@@ -338,7 +337,7 @@ function protocolButtonClass(size: keyof typeof protocolButtonSizes = 'default')
 }
 
 const protocolButtonIconClass =
-  'h-5 w-5 text-cyan-200 transition duration-300 group-hover:translate-x-1 group-hover:text-white';
+  'h-5 w-5 shrink-0 stroke-[2.5] text-cyan-200 transition-transform duration-300 group-hover:translate-x-1 group-hover:text-white';
 
 export default function ProgrammaticFinancialFirewallPage() {
   const [activeNodeId, setActiveNodeId] = useState(firewallNodes[0].id);
@@ -408,7 +407,7 @@ export default function ProgrammaticFinancialFirewallPage() {
             className={cn('shrink-0', protocolButtonClass('compact'))}
           >
             Launch Free Account
-            <ArrowRight className={cn(protocolButtonIconClass, 'h-4 w-4')} />
+            <ChevronRight className={cn(protocolButtonIconClass, 'h-4 w-4')} />
           </Link>
         </nav>
       </div>
@@ -440,7 +439,7 @@ export default function ProgrammaticFinancialFirewallPage() {
                     className={protocolButtonClass()}
                   >
                     Launch Free Mercury Account
-                    <ArrowRight className={protocolButtonIconClass} />
+                    <ChevronRight className={protocolButtonIconClass} />
                   </Link>
                   <Link
                     href="#phase-01"
@@ -806,7 +805,7 @@ export default function ProgrammaticFinancialFirewallPage() {
                         className={protocolButtonClass('wide')}
                       >
                         Launch Free Account
-                        <ArrowRight className={protocolButtonIconClass} />
+                        <ChevronRight className={protocolButtonIconClass} />
                       </Link>
                       <Link
                         href="/us/business-banking/mercury-review"
@@ -857,7 +856,7 @@ export default function ProgrammaticFinancialFirewallPage() {
                     className="group flex items-center justify-between rounded-[1.15rem] border border-white/10 bg-zinc-950/80 px-4 py-3 text-sm font-semibold text-zinc-300 transition-all duration-300 hover:-translate-y-0.5 hover:border-cyan-300/45 hover:bg-cyan-950/15 hover:text-white"
                   >
                     {link.label}
-                    <ArrowRight className="h-4 w-4 text-cyan-200 transition-transform duration-300 group-hover:translate-x-1 group-hover:text-white" />
+                    <ChevronRight className="h-4 w-4 text-cyan-200 transition-transform duration-300 group-hover:translate-x-1 group-hover:text-white" />
                   </Link>
                 ))}
               </div>
@@ -874,7 +873,7 @@ export default function ProgrammaticFinancialFirewallPage() {
                     className="group flex items-center justify-between rounded-[1.15rem] border border-white/10 bg-zinc-950/80 px-4 py-3 text-sm font-semibold text-zinc-300 transition-all duration-300 hover:-translate-y-0.5 hover:border-cyan-300/45 hover:bg-cyan-950/15 hover:text-white"
                   >
                     {link.label}
-                    <ArrowRight className="h-4 w-4 text-cyan-200 transition-transform duration-300 group-hover:translate-x-1 group-hover:text-white" />
+                    <ChevronRight className="h-4 w-4 text-cyan-200 transition-transform duration-300 group-hover:translate-x-1 group-hover:text-white" />
                   </a>
                 ))}
               </div>
