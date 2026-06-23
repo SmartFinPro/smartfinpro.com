@@ -135,6 +135,25 @@ const architectureSteps = [
   },
 ];
 
+const receiptIntakeSteps = [
+  {
+    label: 'Workspace intake',
+    detail: 'Route vendor invoices from Gmail or Google Workspace into a dedicated finance inbox label.',
+  },
+  {
+    label: 'Attachment fingerprint',
+    detail: 'Extract amount, merchant, invoice ID, due date, and PDF hash before touching the ledger.',
+  },
+  {
+    label: 'Transaction match',
+    detail: 'Match the invoice to the Mercury card node by merchant, amount, timestamp window, and card ID.',
+  },
+  {
+    label: 'Receipt closure',
+    detail: 'Attach or email the receipt into Mercury, then send low-confidence cases to finance review.',
+  },
+];
+
 const codeTabs = [
   {
     id: 'route',
@@ -194,6 +213,67 @@ function verifyWebhook(rawBody: string, signature: string | null) {
   const right = Buffer.from(signature);
 
   return left.length === right.length && timingSafeEqual(left, right);
+}`,
+  },
+  {
+    id: 'workspace',
+    label: 'Workspace Intake',
+    code: String.raw`// app/api/finance/workspace-receipt-intake/route.ts
+import { NextRequest, NextResponse } from "next/server";
+
+type WorkspaceInvoiceAttachment = {
+  messageId: string;
+  from: string;
+  subject: string;
+  receivedAt: string;
+  filename: string;
+  mimeType: "application/pdf" | "image/png" | "image/jpeg";
+  bytesBase64: string;
+};
+
+export async function POST(request: NextRequest) {
+  const token = request.headers.get("x-automation-token");
+  if (token !== process.env.RECEIPT_INTAKE_TOKEN) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const invoice = (await request.json()) as WorkspaceInvoiceAttachment;
+  const parsed = await extractInvoiceFields(invoice.bytesBase64, invoice.mimeType);
+
+  const transaction = await findMercuryCardTransaction({
+    merchant: parsed.vendorName,
+    amount: parsed.amountUsd,
+    occurredBetween: [
+      new Date(Date.parse(invoice.receivedAt) - 72 * 60 * 60 * 1000),
+      new Date(Date.parse(invoice.receivedAt) + 72 * 60 * 60 * 1000),
+    ],
+  });
+
+  if (!transaction || transaction.confidence < 0.92) {
+    await queueFinanceReview({
+      reason: "LOW_CONFIDENCE_RECEIPT_MATCH",
+      messageId: invoice.messageId,
+      parsed,
+      transactionCandidate: transaction,
+    });
+
+    return NextResponse.json({ status: "needs_review" });
+  }
+
+  await uploadReceiptToMercury({
+    transactionId: transaction.id,
+    filename: invoice.filename,
+    mimeType: invoice.mimeType,
+    bytesBase64: invoice.bytesBase64,
+  });
+
+  await markReceiptClosed({
+    messageId: invoice.messageId,
+    mercuryTransactionId: transaction.id,
+    invoiceNumber: parsed.invoiceNumber,
+  });
+
+  return NextResponse.json({ status: "auto_closed", transactionId: transaction.id });
 }`,
   },
   {
@@ -298,6 +378,21 @@ const hardeningSteps = [
   },
 ];
 
+const commandOps = [
+  {
+    label: 'Natural-language finance ops',
+    detail: 'Use Command for reviewed actions such as issuing cards, freezing cards, assigning GL codes, or asking spend questions without exporting data.',
+  },
+  {
+    label: 'Terminal-native monitoring',
+    detail: 'Use the Mercury CLI for balances, transactions, invoices, payments, and webhook checks from a hardened terminal or CI job.',
+  },
+  {
+    label: 'Agent-ready read layer',
+    detail: 'Use API, scoped tokens, and Mercury MCP patterns for read-only dashboards and AI analysis without granting payment authority.',
+  },
+];
+
 const internalLinks = [
   { label: 'Mercury Review', href: '/us/business-banking/mercury-review' },
   { label: 'Business Banking Hub', href: '/us/business-banking' },
@@ -311,6 +406,7 @@ const internalLinks = [
 
 const sourceLinks = [
   { label: 'Mercury Pricing', href: 'https://mercury.com/pricing' },
+  { label: 'Mercury Command', href: 'https://mercury.com/command' },
   { label: 'Mercury Security', href: 'https://mercury.com/security' },
   { label: 'Mercury API and CLI', href: 'https://mercury.com/api' },
   { label: 'Mercury Webhooks', href: 'https://docs.mercury.com/reference/webhooks' },
@@ -429,7 +525,8 @@ export default function ProgrammaticFinancialFirewallPage() {
                 <p className="mt-8 max-w-3xl text-lg leading-8 text-zinc-300 md:text-xl">
                   This is not a standard bank review. It is a deployment protocol for founders who want their
                   international LLC&apos;s money stack to behave like hardened infrastructure: isolated vendor rails,
-                  automated reconciliation, narrow permissions, and a clean API operating layer.
+                  automated reconciliation, narrow permissions, AI-assisted command surfaces, and a clean API/CLI
+                  operating layer.
                 </p>
                 <div className="mt-10 flex flex-col gap-4 sm:flex-row">
                   <Link
@@ -651,6 +748,41 @@ export default function ProgrammaticFinancialFirewallPage() {
                 </div>
               </div>
             </div>
+
+            <div className="mt-6 overflow-hidden rounded-[2rem] border border-cyan-300/20 bg-zinc-950/90 shadow-[0_0_54px_rgba(34,211,238,0.08)]">
+              <div className="border-b border-white/10 px-6 py-5">
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-300">
+                  Founder copy-paste policy
+                </p>
+                <h3 className="mt-2 text-2xl font-extrabold tracking-tight text-white">
+                  Recommended card limit matrix
+                </h3>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-white/10 text-left text-sm">
+                  <thead className="bg-white/[0.03] text-xs uppercase tracking-[0.16em] text-zinc-500">
+                    <tr>
+                      <th className="px-6 py-4 font-bold">Lane</th>
+                      <th className="px-6 py-4 font-bold">Vendors</th>
+                      <th className="px-6 py-4 font-bold">Recommended ceiling</th>
+                      <th className="px-6 py-4 font-bold">Failure response</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/10">
+                    {firewallNodes.map((node) => (
+                      <tr key={node.id} className="transition hover:bg-cyan-950/10">
+                        <td className="px-6 py-5 font-bold text-white">
+                          {node.name}: {node.label}
+                        </td>
+                        <td className="max-w-xs px-6 py-5 leading-6 text-zinc-300">{node.vendors}</td>
+                        <td className="px-6 py-5 font-semibold text-cyan-200">{node.limit}</td>
+                        <td className="max-w-sm px-6 py-5 leading-6 text-zinc-400">{node.trigger}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -665,9 +797,27 @@ export default function ProgrammaticFinancialFirewallPage() {
                 <p className="mt-8 text-lg leading-8 text-zinc-300">
                   Mercury&apos;s API and webhook model lets the finance stack behave like production software.
                   Transactions arrive in real time, your backend validates the event, matches it against Stripe
-                  invoices or server invoices, then pushes unresolved items into review before month-end drift
-                  becomes expensive.
+                  invoices, server invoices, or Gmail/Google Workspace receipts, then pushes unresolved items into
+                  review before month-end drift becomes expensive.
                 </p>
+                <div className="mt-10 rounded-[2rem] border border-cyan-300/20 bg-zinc-950/85 p-5">
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-300">
+                    Receipt automation SOP
+                  </p>
+                  <div className="mt-5 grid gap-3">
+                    {receiptIntakeSteps.map((step, index) => (
+                      <div key={step.label} className="flex gap-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-cyan-300/25 bg-cyan-950/25 font-mono text-xs font-bold text-cyan-200">
+                          {String(index + 1).padStart(2, '0')}
+                        </div>
+                        <div>
+                          <h3 className="font-bold text-white">{step.label}</h3>
+                          <p className="mt-1 text-sm leading-6 text-zinc-400">{step.detail}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
                 <div className="mt-10 grid gap-4">
                   {architectureSteps.map((step) => {
                     const Icon = step.icon;
@@ -769,6 +919,33 @@ export default function ProgrammaticFinancialFirewallPage() {
                     <div key={item} className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
                       <Check className="mt-0.5 h-5 w-5 shrink-0 text-emerald-300" />
                       <span className="text-sm leading-6 text-zinc-300">{item}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-8 rounded-[2rem] border border-cyan-300/20 bg-zinc-950/85 p-6 shadow-[0_0_64px_rgba(34,211,238,0.08)] md:p-8">
+              <div className="grid gap-8 lg:grid-cols-[0.75fr_1.25fr]">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-300">
+                    Technical proof layer
+                  </p>
+                  <h3 className="mt-3 text-3xl font-extrabold tracking-tight text-white">
+                    Mercury Command for operators. CLI for engineers.
+                  </h3>
+                  <p className="mt-5 text-sm leading-7 text-zinc-400">
+                    The conversion argument is not &quot;another checking account.&quot; It is a programmable control plane:
+                    AI-assisted finance operations through Mercury Command, terminal-native monitoring through
+                    Mercury CLI, and scoped API access for dashboards that should never gain payment authority.
+                  </p>
+                </div>
+                <div className="grid gap-4 md:grid-cols-3">
+                  {commandOps.map((item) => (
+                    <div key={item.label} className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+                      <Terminal className="h-6 w-6 text-cyan-200" />
+                      <h4 className="mt-5 font-bold text-white">{item.label}</h4>
+                      <p className="mt-3 text-sm leading-6 text-zinc-400">{item.detail}</p>
                     </div>
                   ))}
                 </div>
