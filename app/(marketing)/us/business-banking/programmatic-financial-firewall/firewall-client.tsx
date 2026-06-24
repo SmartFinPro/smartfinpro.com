@@ -854,6 +854,29 @@ export default function FirewallClient({
           </div>
         </section>
 
+        {/* International founders — US-LLC angle (cross-silo positioning; no localized variants yet) */}
+        <section className="px-4 pb-4 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-7xl">
+            <div className="rounded-[1.75rem] border border-white/10 bg-white/[0.03] p-6 md:p-8">
+              <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+                <div className="max-w-2xl">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-cyan-300">International Founder Routing</p>
+                  <p className="mt-3 text-lg font-semibold text-white">Operate a US LLC from abroad?</p>
+                  <p className="mt-2 text-sm leading-6 text-zinc-400">
+                    This protocol works the same wherever you&apos;re based — it isolates and automates the US
+                    banking layer of your US LLC. Mercury onboards international founders; the setup below is identical.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <span className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-zinc-200">🇬🇧 United Kingdom</span>
+                  <span className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-zinc-200">🇨🇦 Canada</span>
+                  <span className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-zinc-200">🇦🇺 Australia</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* Win-win offer + the 8 reasons, combined — placed right under the hero/reviewer byline. */}
         <section className="px-4 pt-10 pb-20 sm:px-6 md:pt-14 md:pb-28 lg:px-8">
           <div className="mx-auto max-w-7xl">
