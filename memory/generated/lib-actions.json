@@ -2,8 +2,8 @@
   "_generated": true,
   "_command": "npm run refresh:agent-context",
   "_do_not_edit": true,
-  "_generated_at": "2026-06-24T18:59:06.925Z",
-  "count": 56,
+  "_generated_at": "2026-06-24T19:16:02.460Z",
+  "count": 57,
   "modules": [
     {
       "name": "ab-testing",
@@ -153,6 +153,15 @@
       ],
       "hasUseServer": true,
       "hasServerOnly": false
+    },
+    {
+      "name": "cohorts",
+      "file": "lib/actions/cohorts.ts",
+      "exports": [
+        "getCohortData"
+      ],
+      "hasUseServer": true,
+      "hasServerOnly": true
     },
     {
       "name": "competitors",
