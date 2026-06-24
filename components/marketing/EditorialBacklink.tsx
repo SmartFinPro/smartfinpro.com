@@ -12,8 +12,8 @@
  * thread. Part of the documented dark BOFU exception — do NOT convert to light.
  */
 
-import Link from 'next/link';
 import Image from 'next/image';
+import { TrackedReviewLink } from '@/components/marketing/tracked-review-link';
 
 export interface EditorialBacklinkProps {
   reviewer: { name: string; role: string; image: string };
@@ -44,16 +44,16 @@ export function EditorialBacklink({ reviewer, reviewHref, blurb }: EditorialBack
         <p className="text-sm leading-relaxed text-zinc-300">
           {blurb ?? 'This protocol is backed by our hands-on, independent Mercury review — fees, FDIC coverage and onboarding tested in full.'}
         </p>
-        <Link
+        <TrackedReviewLink
           href={reviewHref}
-          className="mt-3 inline-flex items-center gap-2 text-base font-bold text-white no-underline"
-          style={{ borderBottom: '2px solid #F5A623', paddingBottom: '2px' }}
+          eventName="firewall_review_backlink_click"
+          className="mt-3 inline-flex items-center gap-2 border-b-2 border-[#F5A623] pb-0.5 text-base font-bold text-white no-underline"
         >
           Read the full Mercury review
           <span className="transition-transform duration-300 group-hover:translate-x-1" aria-hidden>
             →
           </span>
-        </Link>
+        </TrackedReviewLink>
       </div>
     </aside>
   );
