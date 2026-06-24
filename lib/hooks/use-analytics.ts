@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef } from 'react';
-import { usePathname, useSearchParams } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 
 // ============================================================
 // Session Management
@@ -34,7 +34,6 @@ export function useAnalytics(options: UseAnalyticsOptions = {}) {
   const { trackPageViews = true, trackScrollDepth = true, trackTimeOnPage = true } = options;
 
   const pathname = usePathname();
-  const searchParams = useSearchParams();
   const pageLoadTime = useRef<number>(0);
   const maxScrollDepth = useRef<number>(0);
   const hasTrackedPageview = useRef<boolean>(false);
@@ -84,9 +83,19 @@ export function useAnalytics(options: UseAnalyticsOptions = {}) {
 
   // Track page view
   const trackPageView = useCallback(() => {
-    const utmSource = searchParams.get('utm_source');
-    const utmMedium = searchParams.get('utm_medium');
-    const utmCampaign = searchParams.get('utm_campaign');
+    // Read UTM params from the live URL instead of next/navigation's
+    // useSearchParams(). trackPageView only ever runs on the client (inside an
+    // effect/timeout), so window.location.search is always available and yields
+    // identical data. Avoiding useSearchParams() here keeps pages that consume
+    // this hook directly (e.g. the Firewall page) statically prerenderable —
+    // useSearchParams() forces a Suspense boundary and a full CSR bailout.
+    const params =
+      typeof window !== 'undefined'
+        ? new URLSearchParams(window.location.search)
+        : new URLSearchParams();
+    const utmSource = params.get('utm_source');
+    const utmMedium = params.get('utm_medium');
+    const utmCampaign = params.get('utm_campaign');
 
     track('pageview', {
       pageTitle: document.title,
@@ -97,7 +106,7 @@ export function useAnalytics(options: UseAnalyticsOptions = {}) {
       screenWidth: window.screen.width,
       screenHeight: window.screen.height,
     });
-  }, [track, searchParams]);
+  }, [track]);
 
   // Track custom event
   const trackEvent = useCallback(
