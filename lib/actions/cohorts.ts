@@ -25,7 +25,7 @@ const ROW_CAP = 50_000;
  * no click_id):
  *   - link_clicks(click_id, clicked_at)           → cohort = ISO week of click
  *   - conversion_events(click_id, received_at,
- *       event_value, currency, event_type)        → approved revenue per click
+ *       event_value, event_currency, event_type)  → approved revenue per click
  *
  * Assumptions: approved = event_type 'approved'; revenue = FX→USD via toUSD;
  * cohorts = ISO weeks (Monday, UTC). Both tables are windowed by `weeks`
@@ -47,7 +47,7 @@ export async function getCohortData(weeks = 12): Promise<Result<CohortResult>> {
         .limit(ROW_CAP),
       supabase
         .from('conversion_events')
-        .select('click_id, received_at, event_value, currency, event_type')
+        .select('click_id, received_at, event_value, event_currency, event_type')
         .eq('event_type', 'approved')
         .gte('received_at', sinceIso)
         .not('click_id', 'is', null)
@@ -71,7 +71,7 @@ export async function getCohortData(weeks = 12): Promise<Result<CohortResult>> {
     const events: CohortRevenueEvent[] = (eventsRes.data ?? []).map((r) => ({
       clickId: String(r.click_id),
       receivedAt: String(r.received_at),
-      valueUsd: toUSD(Number(r.event_value) || 0, r.currency as string | null),
+      valueUsd: toUSD(Number(r.event_value) || 0, r.event_currency as string | null),
       eventType: String(r.event_type),
     }));
 
