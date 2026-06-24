@@ -28,7 +28,6 @@ import {
 } from 'lucide-react';
 import type { FAQ } from '@/types';
 import { cn } from '@/lib/utils';
-import { REVIEWER } from './firewall-content';
 
 const MERCURY_AFFILIATE_URL = '/go/mercury';
 
@@ -761,21 +760,6 @@ export default function FirewallClient({
                   ))}
                 </div>
                 <p className="mt-3 text-xs font-medium text-zinc-400">{heroReassurance}</p>
-
-                {/* EEAT: real reviewer byline — framed as a trust seal (2x size) */}
-                <div className="mt-6 flex w-fit items-center gap-6 rounded-[2rem] border border-white/10 bg-white/[0.03] px-8 py-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
-                  <Image
-                    src={REVIEWER.image}
-                    alt={REVIEWER.name}
-                    width={80}
-                    height={80}
-                    className="h-20 w-20 rounded-full border border-white/15 object-cover"
-                  />
-                  <div className="leading-tight">
-                    <p className="text-lg font-semibold text-zinc-200">Reviewed by {REVIEWER.name}</p>
-                    <p className="mt-1 text-sm text-zinc-500">{REVIEWER.role}</p>
-                  </div>
-                </div>
 
                 <p className="mt-6 max-w-2xl text-xs leading-5 text-zinc-500">
                   Affiliate disclosure: SmartFinPro may earn compensation if you open an account through
