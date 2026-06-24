@@ -28,6 +28,9 @@ import {
 } from 'lucide-react';
 import type { FAQ } from '@/types';
 import { cn } from '@/lib/utils';
+import { useAnalytics } from '@/lib/hooks/use-analytics';
+import { FirewallConfigurator } from './firewall-configurator';
+import type { FounderLocation } from './firewall-plan';
 
 const MERCURY_AFFILIATE_URL = '/go/mercury';
 
@@ -635,6 +638,8 @@ export default function FirewallClient({
   const [activeNodeId, setActiveNodeId] = useState(firewallNodes[0].id);
   const [activeCodeTab, setActiveCodeTab] = useState(codeTabs[0].id);
   const [activeHardeningStep, setActiveHardeningStep] = useState(0);
+  const [configLocation, setConfigLocation] = useState<FounderLocation>('us');
+  const { trackEvent: trackFirewallEvent } = useAnalytics({ trackPageViews: false });
 
   const activeNode = useMemo(
     () => firewallNodes.find((node) => node.id === activeNodeId) ?? firewallNodes[0],
@@ -868,9 +873,27 @@ export default function FirewallClient({
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <span className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-zinc-200">🇬🇧 United Kingdom</span>
-                  <span className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-zinc-200">🇨🇦 Canada</span>
-                  <span className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-zinc-200">🇦🇺 Australia</span>
+                  {([
+                    { market: 'uk' as FounderLocation, label: '🇬🇧 United Kingdom' },
+                    { market: 'ca' as FounderLocation, label: '🇨🇦 Canada' },
+                    { market: 'au' as FounderLocation, label: '🇦🇺 Australia' },
+                  ]).map((chip) => (
+                    <button
+                      key={chip.market}
+                      type="button"
+                      onClick={() => {
+                        setConfigLocation(chip.market);
+                        trackFirewallEvent('firewall_international_chip_click', {
+                          category: 'firewall_configurator',
+                          properties: { market: chip.market },
+                        });
+                        document.getElementById('firewall-configurator')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      }}
+                      className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-zinc-200 transition-colors hover:border-cyan-300/45 hover:text-white"
+                    >
+                      {chip.label}
+                    </button>
+                  ))}
                 </div>
               </div>
             </div>
@@ -1135,6 +1158,8 @@ export default function FirewallClient({
             </div>
           </div>
         </section>
+
+        <FirewallConfigurator location={configLocation} onLocationChange={setConfigLocation} />
 
         <section id="phase-02" className="scroll-mt-32 px-4 py-24 sm:px-6 md:py-32 lg:px-8">
           <div className="mx-auto max-w-7xl">
