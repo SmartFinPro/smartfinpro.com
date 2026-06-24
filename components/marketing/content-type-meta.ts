@@ -28,11 +28,11 @@ export const CONTENT_TYPE_META: Record<ContentType, ContentTypeMeta> = {
   protocol: {
     label: 'Protocol',
     tone: 'dark',
-    className: 'border-cyan-300/40 bg-cyan-950/30 text-cyan-700',
+    className: 'border-cyan-300/40 bg-[#0a0a0c] text-cyan-300',
   },
   playbook: {
     label: 'Playbook',
     tone: 'dark',
-    className: 'border-cyan-300/40 bg-cyan-950/30 text-cyan-700',
+    className: 'border-cyan-300/40 bg-[#0a0a0c] text-cyan-300',
   },
 };
