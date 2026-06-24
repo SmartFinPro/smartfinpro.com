@@ -193,7 +193,9 @@ export function ReportLayout({
   return (
     <article className="min-h-screen" style={{ background: 'var(--sfp-gray)' }}>
 
-      {/* ── Sticky top navigation bar (appears when hero scrolls out of view) ── */}
+      {/* ── Sticky top navigation bar (appears when hero scrolls out of view) ──
+           Sticky-nav CTA links DIRECT to the affiliate URL — the Pre-Qual quiz
+           stays on the in-article CTAs only (no enablePreQual here). ── */}
       {!isGuide && (
         <StickyReviewNav
           productName={review.productName}
@@ -207,7 +209,6 @@ export function ReportLayout({
           primaryCtaLabel={primaryCtaLabel}
           ctaPartners={ctaPartners}
           sentinelId="review-sticky-sentinel"
-          enablePreQual
         />
       )}
 
