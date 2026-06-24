@@ -20,6 +20,9 @@ export interface ProtocolBridgeProps {
   subtitle?: string;
   chips?: string[];
   cta?: string;
+  /** Outer spacing/utility override. Defaults to `my-8` for in-article (MDX body) use;
+   *  pass `''` when the parent already controls spacing (e.g. a sidebar with space-y). */
+  className?: string;
 }
 
 export function ProtocolBridge({
@@ -29,11 +32,12 @@ export function ProtocolBridge({
   subtitle,
   chips,
   cta = 'Open the build protocol',
+  className = 'my-8',
 }: ProtocolBridgeProps) {
   return (
     <Link
       href={href}
-      className="group not-prose my-8 block rounded-[1.5rem] border border-white/10 bg-[#0a0a0c] p-6 no-underline shadow-[0_0_40px_rgba(34,211,238,0.10)] transition-all duration-300 hover:-translate-y-0.5 hover:border-cyan-300/40"
+      className={`group not-prose block rounded-[1.5rem] border border-white/10 bg-[#0a0a0c] p-6 no-underline shadow-[0_0_40px_rgba(34,211,238,0.10)] transition-all duration-300 hover:-translate-y-0.5 hover:border-cyan-300/40 ${className}`}
     >
       <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-cyan-300">{kicker}</p>
       <p className="mt-2 text-xl font-extrabold text-white">{title}</p>

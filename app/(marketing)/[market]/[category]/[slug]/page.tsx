@@ -212,6 +212,7 @@ export default async function ContentPage({ params }: ContentPageProps) {
           market={market as Market}
           category={category as Category}
           slug={slug}
+          protocolBridge={content.meta.protocolBridge}
           miniQuiz={content.meta.miniQuiz}
           review={{
             title: content.meta.seoTitle || content.meta.title,
