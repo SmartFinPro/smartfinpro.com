@@ -903,9 +903,10 @@ export default function FirewallClient({
                           <ChevronRight className={protocolButtonIconClass} />
                         </Link>
                       </div>
-                      {editorialBacklink ? <div className="mt-8">{editorialBacklink}</div> : null}
                     </div>
-                    <div className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-6">
+                    <div className="space-y-6">
+                      {editorialBacklink}
+                      <div className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-6">
                       <div className="flex items-center justify-between border-b border-white/10 pb-5">
                         <div>
                           <p className="text-xs font-bold uppercase tracking-[0.18em] text-zinc-500">Founder incentive</p>
@@ -926,6 +927,7 @@ export default function FirewallClient({
                           </div>
                         ))}
                       </div>
+                    </div>
                     </div>
                   </div>
 
