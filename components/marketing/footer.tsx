@@ -55,6 +55,12 @@ interface FooterProps {
   market?: Market;
 }
 
+// Footer renders dark on BOFU "Protocol" product pages (the dark/glassmorphism
+// exception — see CLAUDE.md governance). Add future protocol-page paths here.
+const DARK_FOOTER_PATHS = new Set<string>([
+  '/us/business-banking/programmatic-financial-firewall',
+]);
+
 export function Footer({ market: marketProp }: FooterProps) {
   const pathname = usePathname();
   const market = marketProp || detectMarketFromPath(pathname);
@@ -62,9 +68,13 @@ export function Footer({ market: marketProp }: FooterProps) {
   const siloCategoryLinks = getAllSiloCategoryLinks(market);
   const siloToolLinks = getSiloToolLinks(market);
   const featuredLinks = marketSiloConfig[market]?.featured || [];
+  const isDark = DARK_FOOTER_PATHS.has((pathname || '').replace(/\/+$/, ''));
 
   return (
-    <footer style={{ background: 'var(--sfp-gray)', borderTop: '1px solid var(--border)' }}>
+    <footer
+      className={isDark ? 'footer-dark' : undefined}
+      style={{ background: 'var(--sfp-gray)', borderTop: '1px solid var(--border)' }}
+    >
       {/* ── Newsletter Section ─────────────────────────────────── */}
       <div className="border-b border-[#E2E8F0]">
         <div className="mx-auto max-w-[1200px] px-8 py-12">
@@ -86,7 +96,7 @@ export function Footer({ market: marketProp }: FooterProps) {
                 />
                 <button
                   className="px-6 py-3 rounded text-sm font-bold text-white uppercase tracking-wide transition-colors whitespace-nowrap"
-                  style={{ background: 'var(--sfp-gold)', color: 'var(--sfp-ink)' }}
+                  style={{ background: 'var(--sfp-gold)', color: '#1A1A2E' }}
                   onMouseOver={(e) => (e.currentTarget.style.background = 'var(--sfp-gold-dark)')}
                   onMouseOut={(e) => (e.currentTarget.style.background = 'var(--sfp-gold)')}
                 >
