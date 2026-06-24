@@ -144,6 +144,8 @@ import { FrictionlessCTA } from '@/components/marketing/frictionless-cta';
 import { EvidenceCarousel } from '@/components/marketing/evidence-carousel';
 import { StickyComparisonBar } from '@/components/marketing/sticky-comparison-bar';
 import { ExpertVerifier } from '@/components/marketing/expert-verifier';
+import { ProtocolBridge } from '@/components/marketing/ProtocolBridge';
+import { ContentTypeTag } from '@/components/marketing/ContentTypeTag';
 import { WinnerAtGlance } from '@/components/marketing/winner-at-glance';
 import { StickyTableOfContents } from '@/components/marketing/sticky-toc';
 import { StickyFooterCTA } from '@/components/marketing/sticky-footer-cta';
@@ -1876,6 +1878,8 @@ export const mdxComponents = {
   FrictionlessCTA,
   StickyComparisonBar,
   ExpertVerifier,
+  ProtocolBridge,
+  ContentTypeTag,
   WinnerAtGlance,
   StickyTableOfContents,
   StickyFooterCTA,

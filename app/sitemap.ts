@@ -63,6 +63,12 @@ const siloPages: Record<string, string[]> = {
   ],
 };
 
+// Custom conversion landing pages (literal-segment React routes, not MDX-generated).
+// These are NOT picked up by getAllContent(), so they must be listed explicitly.
+const landingPages = [
+  '/us/business-banking/programmatic-financial-firewall',
+];
+
 // Other static pages (not market-prefixed)
 const staticPages = [
   '/trading-platforms/tradingview',
@@ -254,6 +260,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         lastModified: now,
         changeFrequency: 'monthly',
         priority: 0.6,
+      });
+    }
+
+    // ============================================================
+    // 11. CONVERSION LANDING PAGES (custom React routes) — Priority 0.8
+    // ============================================================
+
+    for (const path of landingPages) {
+      entries.push({
+        url: `${BASE_URL}${path}`,
+        lastModified: now,
+        changeFrequency: 'monthly',
+        priority: 0.8,
       });
     }
 

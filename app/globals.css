@@ -95,6 +95,23 @@
 }
 
 /* ============================================================
+   Dark footer variant — applied only on BOFU "Protocol" product
+   pages (the dark/glassmorphism exception). Scoped CSS-variable
+   overrides so the footer's --sfp tokens resolve to dark; the two
+   hardcoded light utilities are overridden too. The gold Subscribe
+   button keeps a hardcoded dark text color (set in footer.tsx).
+   ============================================================ */
+.footer-dark {
+  --sfp-gray: #09090b;                 /* footer background */
+  --sfp-ink: #ffffff;                  /* headings + input text */
+  --sfp-slate: #a1a1aa;                /* body text + links */
+  --border: rgba(255, 255, 255, 0.10); /* dividers + default borders */
+  --sfp-navy: #7dd3fc;                 /* link/privacy accent, readable on dark */
+}
+.footer-dark .border-\[\#E2E8F0\] { border-color: rgba(255, 255, 255, 0.10) !important; }
+.footer-dark .bg-white { background-color: rgba(255, 255, 255, 0.04) !important; }
+
+/* ============================================================
    CROSS-BROWSER COMPATIBILITY FIXES
    Safari, Firefox, Chrome, Edge
    ============================================================ */
@@ -941,4 +958,39 @@ html[data-silo="ca"], body.silo-ca { --sfp-silo-tint: #FFE5E5; }
   .sfp-range::-moz-range-thumb { transition: none; }
   .sfp-range:hover::-webkit-slider-thumb,
   .sfp-range:hover::-moz-range-thumb { transform: none; }
+}
+
+/* Firewall landing page — scroll-triggered reveal. JS (IntersectionObserver) adds
+   `.is-visible` when the element scrolls into view. The hidden start state applies
+   ONLY under no-preference, so reduced-motion users always see content immediately. */
+.firewall-reveal {
+  transition:
+    opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: opacity, transform;
+}
+/* Armed (hidden) state — applied by JS only to below-the-fold elements, removed when
+   they scroll into view. The fade plays for everyone; the upward float is motion-gated. */
+.firewall-reveal-hide {
+  opacity: 0;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .firewall-reveal-hide {
+    transform: translateY(28px);
+  }
+}
+
+/* Highlighted CTA — brighter cyan border + a gentle attention glow. Uses drop-shadow
+   (a filter), so it never conflicts with the button's own box-shadow. Motion-gated. */
+.cta-glow {
+  border-color: rgba(34, 211, 238, 0.6);
+}
+@keyframes cta-glow-pulse {
+  0%, 100% { filter: drop-shadow(0 0 5px rgba(34, 211, 238, 0.25)); }
+  50%      { filter: drop-shadow(0 0 17px rgba(34, 211, 238, 0.6)); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .cta-glow {
+    animation: cta-glow-pulse 2.4s ease-in-out infinite;
+  }
 }

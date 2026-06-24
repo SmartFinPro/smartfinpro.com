@@ -29,6 +29,7 @@ import { ComparisonTablePremium } from './comparison-table-premium';
 import { DebtReliefMiniRecommender } from './debt-relief-mini-recommender';
 import { TrackedAffiliateLink } from './tracked-affiliate-link';
 import { ExpertVerifier } from '@/components/marketing/expert-verifier';
+import { ProtocolBridge } from '@/components/marketing/ProtocolBridge';
 import { FrictionlessCTA } from '@/components/marketing/frictionless-cta';
 import { StickyFooterCTA } from '@/components/marketing/sticky-footer-cta';
 import { SafeMDX } from '@/components/content/SafeMDX';
@@ -93,6 +94,8 @@ interface ReportLayoutProps {
   slug?: string;
   /** Cross-category content for "Related Topics" section — Topical Authority + cross-silo links */
   crossCategoryContent?: ContentItem[];
+  /** Optional sidebar bridge into a dark "Protocol" landing page (e.g. the Financial Firewall). */
+  protocolBridge?: { href: string; title: string; subtitle?: string; chips?: string[] };
 }
 
 function looksLikeRole(text: string): boolean {
@@ -124,6 +127,7 @@ export function ReportLayout({
   miniQuiz,
   ctaPartners,
   slug,
+  protocolBridge,
 }: ReportLayoutProps) {
   const marketPrefix = `/${market}`;
   const categoryName = categoryConfig[category]?.name || category.replace('-', ' ');
@@ -189,7 +193,9 @@ export function ReportLayout({
   return (
     <article className="min-h-screen" style={{ background: 'var(--sfp-gray)' }}>
 
-      {/* ── Sticky top navigation bar (appears when hero scrolls out of view) ── */}
+      {/* ── Sticky top navigation bar (appears when hero scrolls out of view) ──
+           Sticky-nav CTA links DIRECT to the affiliate URL — the Pre-Qual quiz
+           stays on the in-article CTAs only (no enablePreQual here). ── */}
       {!isGuide && (
         <StickyReviewNav
           productName={review.productName}
@@ -203,7 +209,6 @@ export function ReportLayout({
           primaryCtaLabel={primaryCtaLabel}
           ctaPartners={ctaPartners}
           sentinelId="review-sticky-sentinel"
-          enablePreQual
         />
       )}
 
@@ -1035,6 +1040,9 @@ export function ReportLayout({
                   </div>
                 </div>
               )}
+
+              {/* Protocol bridge (e.g. Financial Firewall) — sidebar, above "About the Reviewer" */}
+              {protocolBridge && <ProtocolBridge {...protocolBridge} className="" />}
 
               {/* Expert Bio Card — below photo, compact authority signal */}
               {showExpertCards && (

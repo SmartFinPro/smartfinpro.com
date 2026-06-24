@@ -37,6 +37,8 @@ export interface ContentMeta {
   hasLeverageRisk?: boolean;
   /** Optional CFD loss quote for the risk warning, e.g. "76%". */
   lossPercentage?: string;
+  /** Optional sidebar bridge to a dark "Protocol" landing page (e.g. the Financial Firewall). */
+  protocolBridge?: { href: string; title: string; subtitle?: string; chips?: string[] };
 }
 
 // ── Currency Map ────────────────────────────────────────────
@@ -86,6 +88,7 @@ function normalizeFrontmatter(raw: Record<string, unknown>): ContentMeta {
       raw.hasLeverageRisk === true || raw.has_leverage_risk === true || undefined,
     lossPercentage:
       (raw.lossPercentage as string) ?? (raw.loss_percentage as string) ?? undefined,
+    protocolBridge: (raw.protocol_bridge as ContentMeta['protocolBridge']) ?? undefined,
   };
 }
 

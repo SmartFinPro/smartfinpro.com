@@ -448,6 +448,7 @@ export async function POST(request: NextRequest) {
 | Turbopack instabil in Dev | Fallback: `npm run dev:webpack` startet Webpack-Dev-Server statt Turbopack |
 | Expert-Bild falsch formatiert | Immer 640×480 JPEG, `[vorname-nachname].jpg`, Dateiname = DB `image_url`. Kein SVG, kein PNG |
 | HTML-Kommentar in MDX | MDX = JSX-Syntax! `<!-- -->` verursacht `Unexpected character '!'`. Immer `{/* */}` verwenden. Check: `npm run check:mdx` |
+| Dunkles Design außerhalb einer Protocol-Seite | Dunkel/Glassmorphism ist NUR für BOFU-„Protocol"-Landingpages erlaubt (z. B. Financial Firewall). Reviews/Guides bleiben hell (Navy/Gold/Green). Brücken via `ProtocolBridge`/`EditorialBacklink`/`ContentTypeTag`. |
 
 ---
 

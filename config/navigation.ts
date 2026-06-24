@@ -30,6 +30,7 @@ export const marketSiloConfig: Record<Market, MarketSiloConfig> = {
   us: {
     primaryNav: ['credit-repair', 'debt-relief', 'personal-finance', 'ai-tools', 'trading', 'business-banking'],
     featured: [
+      { label: 'Programmatic Financial Firewall', href: '/us/business-banking/programmatic-financial-firewall' },
       { label: 'Best Robo-Advisors 2026', href: '/us/personal-finance/best-robo-advisors' },
       { label: 'Credit Card Comparison', href: '/us/personal-finance/credit-cards-comparison' },
       { label: 'Amex Gold Review', href: '/us/personal-finance/amex-gold-card-review' },
