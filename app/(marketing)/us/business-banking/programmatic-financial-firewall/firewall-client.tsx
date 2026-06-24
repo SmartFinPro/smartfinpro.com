@@ -626,7 +626,13 @@ function FirewallMedia({
   );
 }
 
-export default function FirewallClient({ faqs }: { faqs: FAQ[] }) {
+export default function FirewallClient({
+  faqs,
+  editorialBacklink,
+}: {
+  faqs: FAQ[];
+  editorialBacklink?: ReactNode;
+}) {
   const [activeNodeId, setActiveNodeId] = useState(firewallNodes[0].id);
   const [activeCodeTab, setActiveCodeTab] = useState(codeTabs[0].id);
   const [activeHardeningStep, setActiveHardeningStep] = useState(0);
@@ -896,11 +902,8 @@ export default function FirewallClient({ faqs }: { faqs: FAQ[] }) {
                           Launch Free Account
                           <ChevronRight className={protocolButtonIconClass} />
                         </Link>
-                        <Link href="/us/business-banking/mercury-review" className={protocolButtonClass('wide')}>
-                          Read Mercury Review
-                          <ChevronRight className={protocolButtonIconClass} />
-                        </Link>
                       </div>
+                      {editorialBacklink ? <div className="mt-8">{editorialBacklink}</div> : null}
                     </div>
                     <div className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-6">
                       <div className="flex items-center justify-between border-b border-white/10 pb-5">

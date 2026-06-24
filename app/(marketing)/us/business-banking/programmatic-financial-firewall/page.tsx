@@ -2,7 +2,9 @@
 import type { Metadata } from 'next';
 import type { FAQ } from '@/types';
 import { ArticleSchema, BreadcrumbSchema, FAQSchema } from '@/components/seo';
+import { EditorialBacklink } from '@/components/marketing/EditorialBacklink';
 import FirewallClient from './firewall-client';
+import { REVIEWER } from './firewall-content';
 
 const PAGE_PATH = '/us/business-banking/programmatic-financial-firewall';
 const PAGE_URL = `https://smartfinpro.com${PAGE_PATH}`;
@@ -83,7 +85,12 @@ export default function ProgrammaticFinancialFirewallPage() {
         ]}
       />
       <FAQSchema faqs={firewallFaqs} />
-      <FirewallClient faqs={firewallFaqs} />
+      <FirewallClient
+        faqs={firewallFaqs}
+        editorialBacklink={
+          <EditorialBacklink reviewer={REVIEWER} reviewHref="/us/business-banking/mercury-review" />
+        }
+      />
     </>
   );
 }
