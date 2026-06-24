@@ -623,6 +623,17 @@ export function ReportLayout({
 
             </div>
 
+            {/* Protocol bridge — mobile fallback. The desktop bridge lives in the
+                right sidebar (hidden < lg), so render it here in the article flow
+                for mobile/narrow viewports — the editorial→product bridge is never
+                lost on small screens. Hidden from lg up to avoid duplicating the
+                sidebar card on desktop. */}
+            {protocolBridge && (
+              <div className="lg:hidden mb-8">
+                <ProtocolBridge {...protocolBridge} className="" />
+              </div>
+            )}
+
             {/* CTA Slot — Placement 2 (Middle / Mitte) */}
             {ctaPartners && ctaPartners.length > 0 && (
               <div className="mb-8">
