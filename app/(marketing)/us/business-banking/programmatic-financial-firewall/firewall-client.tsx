@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import type { FAQ } from '@/types';
 import { cn } from '@/lib/utils';
+import { REVIEWER } from './firewall-content';
 
 const MERCURY_AFFILIATE_URL = '/go/mercury';
 
@@ -35,13 +36,6 @@ const MERCURY_AFFILIATE_URL = '/go/mercury';
 const heroOffers = ['$250 cash bonus', '$0 monthly fees', 'No minimum deposit'];
 const heroReassurance =
   'Free to open · No credit check to open · FDIC-insured via partner banks · Apply in minutes';
-
-// EEAT: the real reviewer of SmartFinPro's Mercury coverage (portrait matches name).
-const REVIEWER = {
-  name: 'Robert Hayes, CFP',
-  role: 'Certified Financial Planner · Business banking',
-  image: '/images/experts/robert-hayes.webp',
-};
 
 const trustPoints = [
   'No monthly maintenance fees',
