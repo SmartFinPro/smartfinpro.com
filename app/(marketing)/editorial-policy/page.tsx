@@ -10,6 +10,13 @@ export const metadata: Metadata = {
   alternates: {
     canonical: '/editorial-policy',
   },
+  openGraph: {
+    type: 'website',
+    url: '/editorial-policy',
+    title: 'Editorial Policy & Review Methodology | SmartFinPro',
+    description:
+      'SmartFinPro\'s transparent review methodology, rating criteria, independence policy, and fact-checking process for financial product reviews.',
+  },
 };
 
 export default function EditorialPolicyPage() {

@@ -19,6 +19,15 @@ export const metadata: Metadata = {
   alternates: {
     canonical: '/about',
   },
+  // Page-specific OG so the About page (key entity page for AI engines) no longer
+  // inherits the root layout's homepage og:url / og:title.
+  openGraph: {
+    type: 'website',
+    url: '/about',
+    title: 'About SmartFinPro | Expert Financial Guidance Since 2024',
+    description:
+      'Meet the expert team behind SmartFinPro. Learn our commitment to transparency, independence, and evidence-based financial reviews.',
+  },
 };
 
 export default function AboutPage() {

@@ -5,9 +5,14 @@ export const metadata: Metadata = {
   description:
     'Learn how SmartFinPro evaluates financial products. Our rigorous methodology covers features, usability, pricing, security, and support across 30-90 day testing periods.',
   openGraph: {
+    type: 'website',
+    url: '/methodology',
     title: 'Our Review Methodology | SmartFinPro',
     description:
       'Rigorous, multi-step evaluation process for every financial product we review.',
+  },
+  alternates: {
+    canonical: '/methodology',
   },
 };
 

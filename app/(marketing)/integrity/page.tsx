@@ -39,6 +39,13 @@ export const metadata: Metadata = {
   alternates: {
     canonical: '/integrity',
   },
+  openGraph: {
+    type: 'website',
+    url: '/integrity',
+    title: 'Data Integrity | SmartFinPro Integrity Engine',
+    description:
+      'How SmartFinPro ensures data accuracy through automated integration tests, unit tests, and S2S postback deduplication.',
+  },
 };
 
 // ── Expert Data ───────────────────────────────────────────────────────────────
