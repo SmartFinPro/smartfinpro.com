@@ -741,7 +741,10 @@ export function ReportLayout({
             {/* FAQ Section */}
             {review.faqs && review.faqs.length > 0 && (
               <div id="faq" className="mb-8">
-                <FAQSection faqs={review.faqs} />
+                {/* includeSchema=false: report-layout already emits the single
+                    FAQPage JSON-LD above (search "F-07"). Without this, FAQSection
+                    would emit a duplicate FAQPage block. */}
+                <FAQSection faqs={review.faqs} includeSchema={false} />
               </div>
             )}
 
