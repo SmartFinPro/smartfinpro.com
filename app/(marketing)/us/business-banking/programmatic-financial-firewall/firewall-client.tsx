@@ -878,6 +878,10 @@ export default function FirewallClient({
                 locked down with phishing-resistant FIDO2 hardware keys instead of SMS — so one
                 compromised vendor never exposes the whole account.
               </p>
+              {/* Visible freshness + authorship signal (trust/E-E-A-T). */}
+              <p className="mt-4 text-xs text-zinc-500">
+                Published June 2026 · Updated June 2026 · Reviewed by Robert Hayes, CFP
+              </p>
             </div>
           </div>
         </section>

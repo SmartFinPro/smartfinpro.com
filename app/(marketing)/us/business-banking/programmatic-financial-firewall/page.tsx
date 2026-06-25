@@ -80,6 +80,9 @@ export const metadata: Metadata = {
     siteName: 'SmartFinPro',
     title: PAGE_TITLE,
     description: PAGE_DESCRIPTION,
+    // article: dates (mirror the Article JSON-LD) so og parsers + AI get freshness.
+    publishedTime: '2026-06-20',
+    modifiedTime: '2026-06-23',
   },
   twitter: {
     card: 'summary_large_image',
@@ -98,6 +101,12 @@ export default function ProgrammaticFinancialFirewallPage() {
         publishDate="2026-06-20"
         modifiedDate="2026-06-23"
         author="SmartFinPro Editorial Team"
+        // Named, credentialed reviewer in schema (matches the visible "Reviewed by
+        // Robert Hayes, CFP" on the page) — E-E-A-T/GEO trust signal.
+        reviewedBy={REVIEWER.name}
+        reviewedByUrl="https://smartfinpro.com/about"
+        // Page-specific image instead of the generic site og-image.
+        image="https://smartfinpro.com/images/firewall/01-hero.webp"
         url={PAGE_URL}
       />
       <BreadcrumbSchema
