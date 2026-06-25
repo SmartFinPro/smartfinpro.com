@@ -1,7 +1,7 @@
 // app/(marketing)/us/business-banking/programmatic-financial-firewall/page.tsx
 import type { Metadata } from 'next';
 import type { FAQ } from '@/types';
-import { ArticleSchema, BreadcrumbSchema, FAQSchema } from '@/components/seo';
+import { ArticleSchema, BreadcrumbSchema, FAQSchema, HowToSchema } from '@/components/seo';
 import { EditorialBacklink } from '@/components/marketing/EditorialBacklink';
 import FirewallClient from './firewall-client';
 import { REVIEWER } from './firewall-content';
@@ -47,6 +47,27 @@ const firewallFaqs: FAQ[] = [
   },
 ];
 
+// HowTo steps mirror the page's visible three-phase protocol (Phase 01 Cards →
+// 02 API → 03 Access). Kept in sync with the on-page content so the markup
+// reflects what the reader actually sees (Google HowTo policy).
+const firewallHowToSteps = [
+  {
+    name: 'Isolate every vendor on its own virtual card',
+    description:
+      'Issue a dedicated Mercury virtual card for each spend lane — ad spend, core infrastructure, and team SaaS — each with its own hard monthly limit and merchant controls, so a compromised vendor only exposes that single card, never the full operating balance.',
+  },
+  {
+    name: 'Automate receipt reconciliation with webhooks',
+    description:
+      "Verify Mercury's signed transaction webhooks in a Next.js API route, then match each event against Stripe, server, or Gmail/Workspace invoices by amount, merchant, card node, and timestamp. Matched items close automatically; low-confidence cases route to finance review.",
+  },
+  {
+    name: 'Harden account access with FIDO2 hardware keys',
+    description:
+      'Remove SMS 2FA from every account that can reset finance access, mandate phishing-resistant FIDO2/WebAuthn hardware keys, split read-only monitoring from write authority with scoped API tokens, and monitor balances from the Mercury CLI instead of the browser.',
+  },
+];
+
 export const metadata: Metadata = {
   title: PAGE_TITLE,
   description: PAGE_DESCRIPTION,
@@ -85,6 +106,13 @@ export default function ProgrammaticFinancialFirewallPage() {
         ]}
       />
       <FAQSchema faqs={firewallFaqs} />
+      <HowToSchema
+        name="How to Build a Programmatic Financial Firewall for an LLC"
+        description="A three-phase protocol to isolate, automate, and harden a US LLC's cash flow with Mercury: per-vendor virtual cards, webhook-driven receipt reconciliation, and FIDO2 account hardening."
+        estimatedTime="PT1H"
+        image="https://smartfinpro.com/images/firewall/01-hero.webp"
+        steps={firewallHowToSteps}
+      />
       <FirewallClient
         faqs={firewallFaqs}
         editorialBacklink={
