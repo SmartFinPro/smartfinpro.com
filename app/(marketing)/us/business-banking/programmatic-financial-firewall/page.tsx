@@ -8,7 +8,9 @@ import { REVIEWER } from './firewall-content';
 
 const PAGE_PATH = '/us/business-banking/programmatic-financial-firewall';
 const PAGE_URL = `https://smartfinpro.com${PAGE_PATH}`;
-const PAGE_TITLE = 'Programmatic Financial Firewall for LLC Cash Flow';
+// Kept ≤ ~54 chars incl. the " | SmartFinPro" template suffix so the SERP title
+// doesn't truncate (was 63). "Cash Flow" lives in the description + H1.
+const PAGE_TITLE = 'Programmatic Financial Firewall for LLCs';
 const PAGE_DESCRIPTION =
   'Deploy Mercury as an API-driven LLC cash-flow firewall: isolate subscriptions, automate receipts, harden access, and claim the SmartFinPro bonus.';
 
@@ -112,6 +114,23 @@ export default function ProgrammaticFinancialFirewallPage() {
         estimatedTime="PT1H"
         image="https://smartfinpro.com/images/firewall/01-hero.webp"
         steps={firewallHowToSteps}
+      />
+      {/* Speakable — marks the question→answer definition block as voice/TTS-
+          friendly for answer engines. Tied to the page entity via @id. */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'WebPage',
+            '@id': PAGE_URL,
+            url: PAGE_URL,
+            speakable: {
+              '@type': 'SpeakableSpecification',
+              cssSelector: ['#what-is-a-financial-firewall'],
+            },
+          }),
+        }}
       />
       <FirewallClient
         faqs={firewallFaqs}

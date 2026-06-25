@@ -859,6 +859,29 @@ export default function FirewallClient({
           </div>
         </section>
 
+        {/* AEO answer-first block — a question-phrased H2 + a concise (~55-word)
+            definition, placed high for featured snippets and AI answer engines.
+            The id is referenced by the SpeakableSpecification schema. */}
+        <section className="px-4 pb-4 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-7xl">
+            <div
+              id="what-is-a-financial-firewall"
+              className="rounded-[1.75rem] border border-cyan-300/20 bg-white/[0.03] p-6 md:p-8"
+            >
+              <h2 className="text-xl font-bold text-white md:text-2xl">
+                What is a programmatic financial firewall?
+              </h2>
+              <p className="mt-3 max-w-3xl text-base leading-7 text-zinc-300">
+                A programmatic financial firewall runs an LLC&apos;s banking like hardened
+                infrastructure: each vendor gets its own virtual card with a hard spend limit, every
+                transaction is reconciled automatically through API webhooks, and account access is
+                locked down with phishing-resistant FIDO2 hardware keys instead of SMS — so one
+                compromised vendor never exposes the whole account.
+              </p>
+            </div>
+          </div>
+        </section>
+
         {/* International founders — US-LLC angle (cross-silo positioning; no localized variants yet) */}
         <section className="px-4 pb-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-7xl">
