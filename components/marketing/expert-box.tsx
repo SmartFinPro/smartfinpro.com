@@ -327,7 +327,7 @@ interface MethodologyBoxProps {
 
 export function MethodologyBox({
   title = 'How We Test & Review',
-  steps,
+  steps = [],
   dataPoints = 50,
   hoursResearch = 100,
   testingPeriod,

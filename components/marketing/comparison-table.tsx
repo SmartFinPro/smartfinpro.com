@@ -106,12 +106,15 @@ export function ComparisonTable({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {/* Feature rows — use the longest features array */}
-                {Array.from({ length: Math.max(...items.map((it) => it.features.length)) }).map((_, rowIdx) => (
+                {/* Feature rows — use the longest features array.
+                    Guard against items that omit `features` (some MDX reviews pass a
+                    pros/cons shape instead): default to [] so SSR never throws on
+                    `undefined.length`. Math.max(0, …) avoids -Infinity for empty items. */}
+                {Array.from({ length: Math.max(0, ...items.map((it) => (it.features?.length ?? 0))) }).map((_, rowIdx) => (
                   <TableRow key={rowIdx} className="border-b border-gray-100">
                     {items.map((item) => (
                       <TableCell key={item.name} className="text-center">
-                        {item.features[rowIdx] ? (
+                        {item.features?.[rowIdx] ? (
                           <div className="flex items-start gap-2 text-sm text-left px-2" style={{ color: 'var(--sfp-ink)' }}>
                             <Check className="h-4 w-4 shrink-0 mt-0.5" style={{ color: 'var(--sfp-green)' }} />
                             <span>{item.features[rowIdx]}</span>
