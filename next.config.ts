@@ -435,6 +435,22 @@ const nextConfig: SmartFinNextConfig = {
       // CDN (Cloudflare): s-maxage=3600 → cached 1h am Edge.
       // Surrogate-Control: Varnish/Fastly/Cloudways-Proxy.
       // ============================================================
+      // RSC / flight responses must NEVER be edge-cached. If Cloudflare caches a
+      // text/x-component prefetch under the HTML URL, real navigations get the raw
+      // RSC payload ("0:{...}") instead of the page. Bypass the CDN for any request
+      // carrying the `rsc` header. The caching rules below add `missing: rsc` so
+      // they only apply to real (non-prefetch) HTML requests.
+      // ============================================================
+      {
+        source: '/:path((?!api|_next|static|favicon|dashboard).*)',
+        has: [{ type: 'header', key: 'rsc' }],
+        headers: [
+          { key: 'Cache-Control', value: 'private, no-store' },
+          { key: 'CDN-Cache-Control', value: 'no-store' },
+          { key: 'Cloudflare-CDN-Cache-Control', value: 'no-store' },
+        ],
+      },
+      // ============================================================
       // Review & Category Pages — Aggressive Cloudflare Edge Caching
       // MDX-Reviews ändern sich selten → 24h CDN Cache sinnvoll.
       // CDN-Cache-Control: Cloudflare-spezifisch, überschreibt Cache-Control
@@ -442,6 +458,7 @@ const nextConfig: SmartFinNextConfig = {
       // ============================================================
       {
         source: '/:market(uk|ca|au)/:category/:slug*',
+        missing: [{ type: 'header', key: 'rsc' }],
         headers: [
           {
             key: 'Cache-Control',
@@ -464,6 +481,7 @@ const nextConfig: SmartFinNextConfig = {
       // US Review Pages (kein Market-Prefix)
       {
         source: '/:category(ai-tools|trading|forex|personal-finance|business-banking|cybersecurity|credit-repair|debt-relief|credit-score)/:slug*',
+        missing: [{ type: 'header', key: 'rsc' }],
         headers: [
           {
             key: 'Cache-Control',
@@ -489,6 +507,7 @@ const nextConfig: SmartFinNextConfig = {
       // ============================================================
       {
         source: '/:path((?!api|_next|static|favicon|dashboard).*)',
+        missing: [{ type: 'header', key: 'rsc' }],
         headers: [
           {
             key: 'Cache-Control',
