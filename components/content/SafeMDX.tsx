@@ -25,7 +25,7 @@
  * Server → serializeMDX(source) → JSON payload → SafeMDX renders (SSR + client)
  */
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import * as jsxRuntime from 'react/jsx-runtime';
 import * as jsxDevRuntime from 'react/jsx-dev-runtime';
 import type { MDXRemoteSerializeResult } from '@/lib/mdx/types';
@@ -79,6 +79,24 @@ interface SafeMDXProps {
   source: MDXRemoteSerializeResult;
 }
 
+// Error boundary around the rendered MDX body. A single bad/undefined component
+// in one MDX file used to be harmless (client-only render); now that the body is
+// server-rendered, an uncaught throw would 500 the entire page. This contains it:
+// the page shell + frontmatter-driven content still render; only the MDX body
+// degrades to nothing. Fix the offending component/MDX to restore the body.
+class MDXContentBoundary extends React.Component<
+  { children: React.ReactNode },
+  { hasError: boolean }
+> {
+  state = { hasError: false };
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  render() {
+    return this.state.hasError ? null : this.props.children;
+  }
+}
+
 export default function SafeMDX({ source }: SafeMDXProps) {
   const { compiledSource, frontmatter, scope } = source;
 
@@ -130,9 +148,17 @@ export default function SafeMDX({ source }: SafeMDXProps) {
 
   // DIRECT PASS — components passed as props.components win last in the compiled
   // MDX merge, so our components always override.
+  // Suspense makes a throw inside the MDX body a *recoverable* SSR error (the
+  // boundary's fallback is streamed) instead of a fatal shell error that 500s the
+  // page. The error boundary then renders nothing for the broken subtree, so the
+  // page returns 200 with the shell intact. Fix the offending MDX to restore the body.
   return (
     <div className="mdx-content-wrapper">
-      <Content components={mdxComponents} />
+      <Suspense fallback={null}>
+        <MDXContentBoundary>
+          <Content components={mdxComponents} />
+        </MDXContentBoundary>
+      </Suspense>
     </div>
   );
 }

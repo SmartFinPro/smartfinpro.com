@@ -175,25 +175,55 @@ export function StickyBottomCTA({ href, productName, price }: StickyBottomCTAPro
 }
 
 // Decision Helper CTA
-interface DecisionCTAProps {
-  options: {
-    label: string;
-    description: string;
-    href: string;
-    recommended?: boolean;
-  }[];
-  title?: string;
+interface DecisionCTAOption {
+  label: string;
+  description: string;
+  href: string;
+  recommended?: boolean;
 }
 
-export function DecisionCTA({ options, title = "Which is right for you?" }: DecisionCTAProps) {
+interface DecisionCTAProps {
+  options?: DecisionCTAOption[];
+  title?: string;
+  // Legacy yes/no API still used by some MDX reviews (e.g. etoro-review).
+  headline?: string;
+  yesText?: string;
+  yesHref?: string;
+  noText?: string;
+  noHref?: string;
+}
+
+export function DecisionCTA({
+  options,
+  title = "Which is right for you?",
+  headline,
+  yesText,
+  yesHref,
+  noText,
+  noHref,
+}: DecisionCTAProps) {
+  // Back-compat + crash safety: if no `options` array is given, build one from the
+  // legacy yes/no props. Never call .map() on undefined — this component used to
+  // render client-only (where an undefined.map() was silently swallowed); it now
+  // renders during SSR, where that would 500 the whole page.
+  const resolvedOptions: DecisionCTAOption[] =
+    options && options.length > 0
+      ? options
+      : [
+          yesText && yesHref ? { label: yesText, description: '', href: yesHref, recommended: true } : null,
+          noText && noHref ? { label: noText, description: '', href: noHref } : null,
+        ].filter((o): o is DecisionCTAOption => o !== null);
+
+  if (resolvedOptions.length === 0) return null;
+
   return (
     <div className="my-10 rounded-2xl border border-gray-200 bg-white shadow-sm p-6 md:p-8">
       <h4 className="text-xl font-bold mb-6 text-center flex items-center justify-center gap-3" style={{ color: 'var(--sfp-ink)' }}>
         <Target className="h-5 w-5" style={{ color: 'var(--sfp-gold)' }} />
-        {title}
+        {headline || title}
       </h4>
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {options.map((option) => (
+        {resolvedOptions.map((option) => (
           <Link
             key={option.label}
             href={option.href}
