@@ -9,6 +9,7 @@ import type { AffiliateConnector } from './types';
 import { PartnerStackConnector } from './partnerstack';
 import { FinanceAdsConnector } from './financeads';
 import { AwinConnector } from './awin';
+import { CjConnector } from './cj';
 
 // Connector class type
 type ConnectorClass = new () => AffiliateConnector;
@@ -18,6 +19,7 @@ const connectorRegistry = new Map<string, ConnectorClass>([
   ['partnerstack', PartnerStackConnector],
   ['financeads', FinanceAdsConnector],
   ['awin', AwinConnector],
+  ['cj', CjConnector],
 ]);
 
 /**
@@ -64,3 +66,4 @@ export * from './types';
 export { PartnerStackConnector } from './partnerstack';
 export { FinanceAdsConnector } from './financeads';
 export { AwinConnector } from './awin';
+export { CjConnector } from './cj';

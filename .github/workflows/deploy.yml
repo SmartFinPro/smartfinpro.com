@@ -69,6 +69,7 @@ jobs:
           GOOGLE_INDEXING_JSON=${{ secrets.GOOGLE_INDEXING_JSON }}
           RESEND_WEBHOOK_SECRET=${{ secrets.RESEND_WEBHOOK_SECRET }}
           POSTBACK_SECRET=${{ secrets.POSTBACK_SECRET }}
+          CJ_API_TOKEN=${{ secrets.CJ_API_TOKEN }}
           EOF
           sed -i 's/^[[:space:]]*//' .next/standalone/.env
           echo "✅ .env written ($(wc -l < .next/standalone/.env) lines)"
@@ -145,7 +146,7 @@ jobs:
 
              # Sync all runtime vars from standalone .env to .env.local
              # This ensures vars written by Step 5b reach PM2's working directory
-             for KEY in GSC_CLIENT_EMAIL GSC_SITE_URL GOOGLE_INDEXING_JSON RESEND_WEBHOOK_SECRET POSTBACK_SECRET; do
+             for KEY in GSC_CLIENT_EMAIL GSC_SITE_URL GOOGLE_INDEXING_JSON RESEND_WEBHOOK_SECRET POSTBACK_SECRET CJ_API_TOKEN; do
                VAL=\$(grep \"^\${KEY}=\" \"\$STANDALONE_ENV\" 2>/dev/null | head -1 | cut -d= -f2-)
                if [ -n \"\$VAL\" ]; then
                  update_env \"\$KEY\" \"\$VAL\"
