@@ -58,6 +58,52 @@ export function parseUTMParams(url: string): UTMParams {
 }
 
 /**
+ * Append our click_id to the destination URL as the SubID the network will echo
+ * back in its S2S postback.
+ *
+ * CRITICAL: the value a network returns in its postback MUST be our click_id
+ * (a UUID) — `processPostback` rejects anything that is not a UUID matching a
+ * `link_clicks` row ("Invalid click_id format" / "click_id_not_found"). Each
+ * network reads a *different* SubID parameter, so we set the correct one
+ * (detected from the tracking host or the link's `network`), always carrying
+ * the click_id. A generic `subid` is always set as a fallback.
+ *
+ * Previously `sid` carried the *slug*, which CJ echoed back verbatim → every
+ * CJ conversion was silently dropped at the UUID gate. This is that fix.
+ */
+export function buildTrackedDestinationUrl(
+  destinationUrl: string,
+  clickId: string,
+  network: string | null,
+  utm?: Partial<UTMParams>,
+): string {
+  const destUrl = new URL(destinationUrl);
+  const host = destUrl.hostname.toLowerCase();
+  const net = String(network || '').toLowerCase();
+
+  // Generic fallback param read by many networks.
+  destUrl.searchParams.set('subid', clickId);
+
+  const isAwin = net.includes('awin') || /(^|\.)awin1\.com$/.test(host);
+  const isImpact = net.includes('impact') || /(^|\.)impact\.com$/.test(host);
+
+  if (isAwin) {
+    destUrl.searchParams.set('clickref', clickId); // Awin echoes `clickref`
+  } else if (isImpact) {
+    destUrl.searchParams.set('subId1', clickId); // Impact echoes `subId1`
+  } else {
+    // CJ (echoes `sid`) + safe default for any other / unknown network.
+    destUrl.searchParams.set('sid', clickId);
+  }
+
+  if (utm?.utm_source) destUrl.searchParams.set('utm_source', utm.utm_source);
+  if (utm?.utm_medium) destUrl.searchParams.set('utm_medium', utm.utm_medium);
+  if (utm?.utm_campaign) destUrl.searchParams.set('utm_campaign', utm.utm_campaign);
+
+  return destUrl.toString();
+}
+
+/**
  * Get country code from request headers.
  * Supports: Cloudflare (CF-IPCountry), Vercel (x-vercel-ip-country),
  * and Next.js middleware (x-geo-country) as fallbacks.
@@ -202,17 +248,9 @@ export async function trackClick(slug: string): Promise<string | null> {
     console.error('Error recording click:', clickError);
   }
 
-  // Build destination URL with tracking parameters
-  const destUrl = new URL(link.destination_url);
-  destUrl.searchParams.set('subid', clickId);
-  destUrl.searchParams.set('sid', slug);
-
-  // Pass through UTM params if present
-  if (utmParams.utm_source)   destUrl.searchParams.set('utm_source',   utmParams.utm_source);
-  if (utmParams.utm_medium)   destUrl.searchParams.set('utm_medium',   utmParams.utm_medium);
-  if (utmParams.utm_campaign) destUrl.searchParams.set('utm_campaign', utmParams.utm_campaign);
-
-  return destUrl.toString();
+  // Build destination URL with the network-correct SubID passthrough so the
+  // network echoes our click_id (UUID) back in its postback — not the slug.
+  return buildTrackedDestinationUrl(link.destination_url, clickId, link.network, utmParams);
 }
 
 /**
