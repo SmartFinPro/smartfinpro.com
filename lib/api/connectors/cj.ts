@@ -129,7 +129,6 @@ export class CjConnector implements AffiliateConnector {
           eventDate
           postingDate
           orderId
-          currency
           pubCommissionAmountUsd
           advertiserName
         }
