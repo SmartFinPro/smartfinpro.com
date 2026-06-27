@@ -95,15 +95,31 @@ async function completeSyncLog(
 async function acquireConnectorSyncLock(connectorName: string): Promise<boolean> {
   const supabase = createServiceClient();
   const staleThreshold = new Date(Date.now() - STALE_SYNC_LOCK_MS).toISOString();
-  const { data, error } = await supabase
+
+  // Check-then-set. The previous single-statement
+  //   .update({...}).or('sync_in_progress_at.is.null,...lt.<ts>').select().single()
+  // errored 42703 on PostgREST (the timestamp in the .or() filter broke the
+  // parser) AND re-filtered the just-updated row out — both made acquire
+  // ALWAYS return false, silently disabling every connector sync (sync_logs
+  // stayed empty). A rare check-then-set race is harmless: conversionExists()
+  // dedups by external_id, and crons don't normally overlap.
+  const { data: row, error: readErr } = await supabase
+    .from('api_connectors')
+    .select('sync_in_progress_at')
+    .eq('name', connectorName)
+    .single();
+  if (readErr) return false;
+
+  const lockedAt = (row?.sync_in_progress_at as string | null) ?? null;
+  const isFree = !lockedAt || lockedAt < staleThreshold; // ISO strings compare chronologically
+  if (!isFree) return false;
+
+  const { error: writeErr } = await supabase
     .from('api_connectors')
     .update({ sync_in_progress_at: new Date().toISOString() })
-    .eq('name', connectorName)
-    .or(`sync_in_progress_at.is.null,sync_in_progress_at.lt.${staleThreshold}`)
-    .select('name')
-    .single();
+    .eq('name', connectorName);
 
-  return !error && !!data;
+  return !writeErr;
 }
 
 async function releaseConnectorSyncLock(connectorName: string): Promise<void> {
