@@ -51,15 +51,18 @@ export class PartnerStackConnector implements AffiliateConnector {
   private partnerKey?: string;
 
   async initialize(config: ConnectorConfig): Promise<void> {
-    if (!config.api_key) {
-      throw new Error('PartnerStack API key is required');
-    }
-    if (!config.api_secret) {
-      throw new Error('PartnerStack API secret is required');
+    // Key lives in env (PARTNERSTACK_API_KEY via GitHub Secrets → .env.local),
+    // never in the DB — same pattern as the CJ connector.
+    this.apiKey = (config.api_key as string) || process.env.PARTNERSTACK_API_KEY || '';
+    // PartnerStack v2 uses a SINGLE API key (Basic auth: key as username, EMPTY
+    // password — see makeRequest). There is NO separate secret. api_secret is
+    // optional and only used for webhook HMAC, which the pull path never hits.
+    this.apiSecret = (config.api_secret as string) || process.env.PARTNERSTACK_API_SECRET || '';
+
+    if (!this.apiKey) {
+      throw new Error('PartnerStack API key is required (config or PARTNERSTACK_API_KEY env)');
     }
 
-    this.apiKey = config.api_key;
-    this.apiSecret = config.api_secret;
     this.partnerKey = config.partner_key as string | undefined;
 
     if (config.base_url) {
@@ -220,8 +223,10 @@ export class PartnerStackConnector implements AffiliateConnector {
       });
     }
 
-    // PartnerStack uses Basic Auth with API key and secret
-    const credentials = Buffer.from(`${this.apiKey}:${this.apiSecret}`).toString('base64');
+    // PartnerStack v2 = single API key as the Basic-auth username with an EMPTY
+    // password (no separate secret). Hardcode the empty password so a stray
+    // PARTNERSTACK_API_SECRET value can't corrupt the credential.
+    const credentials = Buffer.from(`${this.apiKey}:`).toString('base64');
 
     return fetch(url.toString(), {
       method: 'GET',
