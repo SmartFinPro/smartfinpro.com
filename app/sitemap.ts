@@ -251,6 +251,26 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
 
     // ============================================================
+    // 9b. COMPARISON ENGINE "/best" PAGES — Priority 0.8
+    // Only market×category combos that actually have product_attributes rows.
+    // ============================================================
+
+    try {
+      const { getComparisonRouteParams } = await import('@/lib/comparison/loader');
+      const compareParams = await getComparisonRouteParams();
+      for (const { market, category } of compareParams) {
+        entries.push({
+          url: marketUrl(market, `/${category}/best`),
+          lastModified: pillarLastMod.get(`${market}/${category}`) || now,
+          changeFrequency: 'weekly',
+          priority: 0.8,
+        });
+      }
+    } catch {
+      // Comparison data unavailable at build — non-fatal, skip /best entries.
+    }
+
+    // ============================================================
     // 10. STATIC PAGES — Priority 0.5-0.6
     // ============================================================
 
