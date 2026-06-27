@@ -223,15 +223,13 @@ export class PartnerStackConnector implements AffiliateConnector {
       });
     }
 
-    // PartnerStack v2 = single API key as the Basic-auth username with an EMPTY
-    // password (no separate secret). Hardcode the empty password so a stray
-    // PARTNERSTACK_API_SECRET value can't corrupt the credential.
-    const credentials = Buffer.from(`${this.apiKey}:`).toString('base64');
-
+    // PartnerStack Partner API = single API key via BEARER auth (not Basic):
+    //   Authorization: Bearer <key>
     return fetch(url.toString(), {
       method: 'GET',
       headers: {
-        Authorization: `Basic ${credentials}`,
+        Authorization: `Bearer ${this.apiKey}`,
+        Accept: 'application/json',
         'Content-Type': 'application/json',
       },
     });
