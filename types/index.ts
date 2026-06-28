@@ -37,6 +37,10 @@ export interface AffiliateLink {
   health_status?: 'healthy' | 'degraded' | 'dead' | 'unchecked';
   compliance_label?: string | null; // e.g. "Terms Apply", "Capital at Risk"
   network?: string | null; // e.g. "PartnerStack", "Awin", "Direct"
+  // Attribution gate (Comparison Cockpit) — see migration affiliate_links_tracking
+  tracking_status?: 'verified' | 'dashboard_only' | 'unverified' | 'inactive';
+  postback_supported?: boolean;
+  subid_param?: string | null;
 }
 
 // Link health check result

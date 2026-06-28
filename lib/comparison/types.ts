@@ -96,6 +96,22 @@ export interface ProductForComparison {
   bestFor: string | null;
   displayOrder: number;
 
+  // Generic topic fields (Comparison Cockpit) — banking rows default these.
+  topic: string;
+  managementFee: number;
+  accountMinimum: number;
+  attributes: Record<string, unknown>;
+  deepDive: string | null;
+  sourceType: 'official' | 'regulator' | 'editorial' | 'user_reviews' | null;
+  confidence: 'high' | 'medium' | 'low' | null;
+  /**
+   * Attribution transparency for analytics:
+   * 'verified' = click_id can return a conversion (full S2S);
+   * 'dashboard_only' = monetized but NO click-id conversion attribution;
+   * null = not a monetized offer.
+   */
+  offerAttribution: 'verified' | 'dashboard_only' | null;
+
   market: Market;
   category: Category;
 }
