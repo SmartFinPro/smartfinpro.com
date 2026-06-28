@@ -15,6 +15,8 @@ export interface SpecColumn {
   format: (v: string | number | null) => string;
   /** Which extreme is "best" (gets the green winner highlight). Omit for non-comparable. */
   winner?: 'min' | 'max';
+  /** sortOptions value this column maps to (makes the Table header clickable). */
+  sortKey?: string;
 }
 
 /** A boolean filter pill (AND-combined). */
@@ -47,8 +49,8 @@ export interface CompareRow {
   key: string;
   label: string;
   accessor: (p: ProductForComparison) => string;
-  /** Comparator over two formatted values; the max-scoring cell wins. Omit = no winner. */
-  winner?: (a: string, b: string) => number;
+  /** Higher = better; the top-scoring cell(s) win the green highlight. Omit = no winner. */
+  score?: (p: ProductForComparison) => number;
 }
 
 /** A spec row shown inside "View details". */

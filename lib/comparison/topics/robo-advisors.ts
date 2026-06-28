@@ -45,6 +45,7 @@ export const roboAdvisorsConfig: TopicConfig = {
       accessor: (p) => p.managementFee,
       format: (v) => pct(Number(v)),
       winner: 'min',
+      sortKey: 'fee',
     },
     {
       key: 'accountMinimum',
@@ -52,6 +53,7 @@ export const roboAdvisorsConfig: TopicConfig = {
       accessor: (p) => p.accountMinimum,
       format: (v) => usd(Number(v)),
       winner: 'min',
+      sortKey: 'min',
     },
     {
       key: 'tlh',
@@ -143,16 +145,11 @@ export const roboAdvisorsConfig: TopicConfig = {
   },
 
   compareRows: [
-    {
-      key: 'fee',
-      label: 'Management fee',
-      accessor: (p) => pct(p.managementFee),
-      winner: (a, b) => parseFloat(b) - parseFloat(a), // lower fee wins → higher score for smaller %
-    },
-    { key: 'min', label: 'Account minimum', accessor: (p) => usd(p.accountMinimum) },
-    { key: 'tlh', label: 'Tax-loss harvesting', accessor: (p) => yesNo(attr(p, 'tlh')) },
-    { key: 'human', label: 'Human advisor', accessor: (p) => yesNo(attr(p, 'human_advisor')) },
-    { key: 'sipc', label: 'SIPC insured', accessor: (p) => yesNo(attr(p, 'sipc')) },
+    { key: 'fee', label: 'Management fee', accessor: (p) => pct(p.managementFee), score: (p) => -p.managementFee },
+    { key: 'min', label: 'Account minimum', accessor: (p) => usd(p.accountMinimum), score: (p) => -p.accountMinimum },
+    { key: 'tlh', label: 'Tax-loss harvesting', accessor: (p) => yesNo(attr(p, 'tlh')), score: (p) => (attr(p, 'tlh') ? 1 : 0) },
+    { key: 'human', label: 'Human advisor', accessor: (p) => yesNo(attr(p, 'human_advisor')), score: (p) => (attr(p, 'human_advisor') ? 1 : 0) },
+    { key: 'sipc', label: 'SIPC insured', accessor: (p) => yesNo(attr(p, 'sipc')), score: (p) => (attr(p, 'sipc') ? 1 : 0) },
   ],
 
   detailRows: [
