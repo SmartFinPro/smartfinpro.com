@@ -366,6 +366,49 @@ export function generateFinancialProductSchema(product: {
 }
 
 /**
+ * Banking / financial-product comparison ItemList.
+ * Emits an ItemList whose items are `FinancialProduct` (not SoftwareApplication
+ * like generateComparisonSchema) — correct for business-banking / loan /
+ * fintech comparisons. aggregateRating is intentionally omitted to stay
+ * consistent with generateFinancialProductSchema (avoids review-snippet abuse).
+ */
+export function generateBankingComparisonSchema(input: {
+  title: string;
+  description?: string;
+  url: string;
+  products: Array<{
+    name: string;
+    description?: string;
+    features?: string[];
+    /** Absolute URL to the offer/review for this provider */
+    url?: string;
+    areaServed?: string[];
+  }>;
+}) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name: input.title,
+    ...(input.description && { description: input.description }),
+    url: input.url,
+    numberOfItems: input.products.length,
+    itemListElement: input.products.map((p, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      item: {
+        '@type': 'FinancialProduct',
+        name: p.name,
+        ...(p.description && { description: p.description }),
+        brand: { '@type': 'Brand', name: p.name },
+        ...(p.features && p.features.length > 0 && { featureList: p.features }),
+        url: p.url || input.url,
+        areaServed: p.areaServed || ['US'],
+      },
+    })),
+  };
+}
+
+/**
  * Product Comparison Schema - For comparison matrices
  * Helps Google understand product comparison context
  */

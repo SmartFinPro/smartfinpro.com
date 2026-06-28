@@ -198,6 +198,12 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
 
   const canonicalUrl = getCanonicalUrl(market as Market, `/${category}`);
 
+  // Comparison Engine "/best" page — only link it when this market×category has data.
+  const { getComparisonRouteParams } = await import('@/lib/comparison/loader');
+  const hasComparePage = (await getComparisonRouteParams()).some(
+    (r) => r.market === market && r.category === category,
+  );
+
   return (
     <main id="main-content">
     <article className="min-h-screen" style={{ background: 'var(--sfp-gray)' }}>
@@ -271,6 +277,19 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
               <Calendar className="h-3.5 w-3.5" />
               Updated {new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
             </span>
+            {hasComparePage && (
+              <>
+                <span className="text-gray-300">|</span>
+                <Link
+                  href={`/${market}/${category}/best`}
+                  className="inline-flex items-center gap-1.5 font-semibold hover:underline"
+                  style={{ color: 'var(--sfp-navy)' }}
+                >
+                  <BarChart3 className="h-3.5 w-3.5" />
+                  Compare all providers
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </section>

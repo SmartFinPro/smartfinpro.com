@@ -87,6 +87,13 @@ const ALLOWED_HOSTS = new Set([
   // Novo (US SMB banking for Stripe/Shopify freelancers)
   'novo.co',
   'www.novo.co',
+  // Comparison Engine pilot — US business banking partners
+  'bluevine.com',
+  'www.bluevine.com',
+  'lili.co',
+  'www.lili.co',
+  'found.com',
+  'www.found.com',
   'revolut.com',
   'www.revolut.com',
   'wise.com',
