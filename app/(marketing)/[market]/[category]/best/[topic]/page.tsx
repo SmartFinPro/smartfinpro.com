@@ -26,9 +26,10 @@ import {
 } from '@/lib/seo/schema';
 import { getCockpitData, getCockpitRouteParams } from '@/lib/comparison/loader';
 import { getTopicConfig } from '@/lib/comparison/topics/index';
+import { BEST_X_MANIFEST } from '@/lib/comparison/topics/manifest';
 import { getMarketExpert } from '@/lib/actions/experts';
 import { ComparisonCockpit } from '@/components/marketing/comparison-cockpit';
-import { CockpitVerdict, CockpitBody, type VerdictPick } from '@/components/marketing/cockpit-content';
+import { CockpitHero, CockpitBody } from '@/components/marketing/cockpit-content';
 import { AffiliateDisclosure } from '@/components/ui/affiliate-disclosure';
 import type { ProductForComparison } from '@/lib/comparison/types';
 
@@ -144,15 +145,8 @@ export default async function CockpitPage({ params }: CockpitPageProps) {
   const modified =
     products.map((p) => p.dataVerifiedAt).filter(Boolean).sort().at(-1) ?? config.publishedDate;
 
-  const verdictPicks: VerdictPick[] = products.slice(0, 3).map((p, i) => ({
-    rank: i + 1,
-    name: p.displayName,
-    why: p.verdict ?? p.tagline,
-    rating: p.rating,
-    href: providerUrl(p, market, category, topic),
-    external: p.ctaMode !== 'offer' && !!p.externalUrl,
-    ctaLabel: p.ctaMode === 'offer' ? 'View offer' : p.externalUrl ? 'Visit site' : 'Read review',
-  }));
+  const heroImage =
+    BEST_X_MANIFEST.find((e) => e.market === market && e.category === category && e.topic === topic)?.image ?? null;
 
   const article = generateArticleSchema({
     title: config.metaTitle(year),
@@ -177,35 +171,20 @@ export default async function CockpitPage({ params }: CockpitPageProps) {
 
   return (
     <div style={{ background: 'var(--sfp-gray)' }}>
-      <div className="mx-auto max-w-4xl px-4 pt-10">
-        <h1 className="text-3xl font-bold tracking-tight" style={{ color: 'var(--sfp-ink)' }}>
-          {config.h1(year)}
-        </h1>
-        <p className="mt-2 text-base" style={{ color: 'var(--sfp-slate)' }}>
-          {config.intro}
-        </p>
-        <p className="mt-3 text-xs" style={{ color: 'var(--sfp-slate)' }}>
-          Advertising disclosure: some links may earn us a commission at no cost to you — it never affects our rankings.{' '}
-          <a href="#affiliate-disclosure" className="underline" style={{ color: 'var(--sfp-navy)' }}>
-            Details
-          </a>
-        </p>
-      </div>
-
-      <div className="mx-auto max-w-4xl px-4 pt-4">
-        <CockpitVerdict
-          intro={config.verdict.intro}
-          picks={verdictPicks}
+      <div className="mx-auto max-w-6xl px-4 pt-10">
+        <CockpitHero
+          image={heroImage}
+          imageAlt={config.label}
+          categoryLabel={categoryConfig[category as Category].name}
+          h1={config.h1(year)}
+          intro={config.intro}
           verifiedDate={modified}
-          reviewerName={expert.name}
-          reviewerCredential={expert.credentials?.[0]}
           productCount={products.length}
           regulators={config.compliance.regulators}
-          complianceNotice={config.compliance.notice}
         />
       </div>
 
-      <div className="mx-auto max-w-6xl px-4 pb-10 pt-4">
+      <div className="mx-auto max-w-6xl px-4 pb-10 pt-6">
         <Suspense fallback={null}>
           <ComparisonCockpit
             products={products}
@@ -216,7 +195,7 @@ export default async function CockpitPage({ params }: CockpitPageProps) {
         </Suspense>
       </div>
 
-      <div className="mx-auto max-w-4xl px-4">
+      <div className="mx-auto max-w-6xl px-4">
         <CockpitBody
           label={config.label}
           methodology={config.methodology}
@@ -227,7 +206,7 @@ export default async function CockpitPage({ params }: CockpitPageProps) {
         />
       </div>
 
-      <div className="mx-auto max-w-4xl px-4 pb-12" id="affiliate-disclosure">
+      <div className="mx-auto max-w-6xl px-4 pb-12" id="affiliate-disclosure">
         <AffiliateDisclosure market={market as Market} position="bottom" />
       </div>
 

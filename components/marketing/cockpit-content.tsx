@@ -9,7 +9,8 @@
 // compact verdict markup (not WinnerAtGlance) so the heading is a proper <h2> and pick
 // links respect the attribution gate (no blanket rel="sponsored").
 
-import { Star, ArrowUpRight } from 'lucide-react';
+import Image from 'next/image';
+import { Star, ArrowUpRight, Check, Clock } from 'lucide-react';
 import { FAQSection } from './faq-section';
 import { ExpertVerifier } from './expert-verifier';
 
@@ -21,6 +22,82 @@ function fmtDate(iso: string): string {
   } catch {
     return iso;
   }
+}
+
+function fmtMonthYear(iso: string): string {
+  try {
+    return new Date(iso).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+  } catch {
+    return iso;
+  }
+}
+
+interface CockpitHeroProps {
+  image: string | null;
+  imageAlt: string;
+  categoryLabel: string;
+  h1: string;
+  intro: string;
+  verifiedDate: string; // ISO YYYY-MM-DD
+  productCount: number;
+  regulators: string[];
+}
+
+/** Tier-0 hero — topic image + title + short description so the user is oriented
+ *  the moment they land (image-left/right split). Replaces the bare H1+intro. */
+export function CockpitHero({
+  image,
+  imageAlt,
+  categoryLabel,
+  h1,
+  intro,
+  verifiedDate,
+  productCount,
+  regulators,
+}: CockpitHeroProps) {
+  return (
+    <section className="grid grid-cols-1 gap-8 lg:grid-cols-[1.25fr_1fr] lg:items-center">
+      <div>
+        <span className="text-[11px] font-bold uppercase tracking-[1.5px]" style={{ color: 'var(--sfp-slate)' }}>
+          {categoryLabel} · Comparison
+        </span>
+        <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-[38px] sm:leading-[1.12]" style={{ color: 'var(--sfp-ink)' }}>
+          {h1}
+        </h1>
+        <p className="mt-4 text-[15px] leading-relaxed" style={{ color: 'var(--sfp-slate)' }}>
+          {intro}
+        </p>
+        <div className="mt-5 flex flex-wrap items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold" style={{ background: 'var(--sfp-sky)', color: 'var(--sfp-navy)' }}>
+            <Check size={13} aria-hidden="true" /> {productCount} providers tested
+          </span>
+          <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold" style={{ background: 'var(--sfp-sky)', color: 'var(--sfp-navy)' }}>
+            <Clock size={13} aria-hidden="true" /> Updated {fmtMonthYear(verifiedDate)}
+          </span>
+          {regulators.map((r) => (
+            <span
+              key={r}
+              className="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium"
+              style={{ background: 'rgba(26,107,58,0.08)', color: 'var(--sfp-green)', border: '1px solid rgba(26,107,58,0.2)' }}
+            >
+              {r}
+            </span>
+          ))}
+        </div>
+        <p className="mt-4 text-xs" style={{ color: 'var(--sfp-slate)' }}>
+          Advertising disclosure: some links may earn us a commission at no cost to you — it never affects our rankings.{' '}
+          <a href="#affiliate-disclosure" className="underline" style={{ color: 'var(--sfp-navy)' }}>
+            Details
+          </a>
+        </p>
+      </div>
+      {image && (
+        <div className="relative overflow-hidden rounded-2xl" style={{ aspectRatio: '4 / 3', border: `1px solid ${BORDER}` }}>
+          <Image src={image} alt={imageAlt} fill sizes="(max-width: 1024px) 100vw, 40vw" className="object-cover" priority />
+        </div>
+      )}
+    </section>
+  );
 }
 
 export interface VerdictPick {
