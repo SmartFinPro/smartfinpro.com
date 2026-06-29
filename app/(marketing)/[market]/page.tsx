@@ -228,31 +228,7 @@ export default async function MarketHomePage({ params, searchParams }: MarketPag
       )}
 
       {/* ═══════════════════════════════════════════════════════════════
-          5. GLOBAL TRUST — Markets + Regulators
-      ═══════════════════════════════════════════════════════════════ */}
-      <GlobalTrustSection />
-
-      {/* ═══════════════════════════════════════════════════════════════
-          6. METHODOLOGY — How We Review
-      ═══════════════════════════════════════════════════════════════ */}
-      <MethodologySection />
-
-      {/* ═══════════════════════════════════════════════════════════════
-          8. EDITOR'S PICKS — Top-rated this month
-      ═══════════════════════════════════════════════════════════════ */}
-      <EditorsPicks market={marketData} picks={editorsPicks} />
-
-      {/* UK Broker Hero Slider — Exclusive to UK Market */}
-      {marketData === 'uk' && (
-        <section className="py-10" style={{ background: 'var(--sfp-gray)' }}>
-          <div className="container mx-auto px-4">
-            <UKBrokerHeroSlider />
-          </div>
-        </section>
-      )}
-
-      {/* ═══════════════════════════════════════════════════════════════
-          9. REPORT FEED — Two-Column Layout (Sidebar + Reports)
+          5. REPORT FEED — Two-Column Layout (Sidebar + Reports)
       ═══════════════════════════════════════════════════════════════ */}
       <section id="reports" style={{ background: '#fff', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)' }}>
         <div style={{ maxWidth: '1140px', margin: '0 auto', padding: '80px 40px' }}>
@@ -321,6 +297,31 @@ export default async function MarketHomePage({ params, searchParams }: MarketPag
           </div>
         </div>
       </section>
+
+      {/* ═══════════════════════════════════════════════════════════════
+          6. GLOBAL TRUST — Markets + Regulators
+      ═══════════════════════════════════════════════════════════════ */}
+      <GlobalTrustSection />
+
+      {/* ═══════════════════════════════════════════════════════════════
+          6. METHODOLOGY — How We Review
+      ═══════════════════════════════════════════════════════════════ */}
+      <MethodologySection />
+
+      {/* ═══════════════════════════════════════════════════════════════
+          8. EDITOR'S PICKS — Top-rated this month
+      ═══════════════════════════════════════════════════════════════ */}
+      <EditorsPicks market={marketData} picks={editorsPicks} />
+
+      {/* UK Broker Hero Slider — Exclusive to UK Market */}
+      {marketData === 'uk' && (
+        <section className="py-10" style={{ background: 'var(--sfp-gray)' }}>
+          <div className="container mx-auto px-4">
+            <UKBrokerHeroSlider />
+          </div>
+        </section>
+      )}
+
     </main>
   );
 }

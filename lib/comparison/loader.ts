@@ -427,37 +427,42 @@ export interface BestXIndexItem {
   label: string;
   blurb: string;
   icon: string;
+  image: string;
   status: 'live' | 'legacy' | 'coming_soon';
   href: string | null;
   count: number | null;
   winner: { name: string; metric: string } | null;
+  verifiedAt: string | null;
 }
 
 async function buildBestXIndex(market: Market): Promise<BestXIndexItem[]> {
   const entries = BEST_X_MANIFEST.filter((e) => e.market === market);
   return Promise.all(
     entries.map(async (e): Promise<BestXIndexItem> => {
-      const base = { category: e.category, topic: e.topic, label: e.label, blurb: e.blurb, icon: e.icon };
+      const base = { category: e.category, topic: e.topic, label: e.label, blurb: e.blurb, icon: e.icon, image: e.image };
       // Still on the legacy engine → link to /{market}/{category}/best.
       if (e.legacy) {
-        return { ...base, status: 'legacy', href: `/${e.market}/${e.category}/best`, count: null, winner: null };
+        return { ...base, status: 'legacy', href: `/${e.market}/${e.category}/best`, count: null, winner: null, verifiedAt: null };
       }
       const config = getTopicConfig(e.category, e.topic);
-      if (!config) return { ...base, status: 'coming_soon', href: null, count: null, winner: null };
+      if (!config) return { ...base, status: 'coming_soon', href: null, count: null, winner: null, verifiedAt: null };
       const products = await getCockpitData(e.market, e.category, e.topic);
       // Activate ONLY with real data — a merged config alone (prod seed may lag) must not light a tile.
       if (!products || products.length === 0) {
-        return { ...base, status: 'coming_soon', href: null, count: null, winner: null };
+        return { ...base, status: 'coming_soon', href: null, count: null, winner: null, verifiedAt: null };
       }
       const top = products[0];
       const col = config.specColumns[0];
       const metric = col ? col.format(col.accessor(top)) : '';
+      const verifiedAt =
+        products.map((p) => p.dataVerifiedAt).filter(Boolean).sort().at(-1) ?? config.publishedDate;
       return {
         ...base,
         status: 'live',
         href: `/${e.market}/${e.category}/best/${e.topic}`,
         count: products.length,
         winner: { name: top.displayName, metric },
+        verifiedAt,
       };
     }),
   );

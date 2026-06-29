@@ -2,6 +2,7 @@
 // Homepage landing page sections — Server Components (no 'use client' needed)
 
 import Link from 'next/link';
+import Image from 'next/image';
 import {
   Sparkles,
   Shield,
@@ -172,7 +173,7 @@ export function ComplianceBar() {
         borderTop: '1px solid #E2E8F0',
         borderBottom: '1px solid #E2E8F0',
         padding: '22px 40px',
-        marginTop: '64px',
+        marginTop: '32px',
       }}
     >
       <div
@@ -230,74 +231,141 @@ interface BestXIndexProps {
   items: BestXIndexItem[];
 }
 
+function fmtMonthYear(iso: string | null): string {
+  if (!iso) return '';
+  try {
+    return new Date(iso).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+  } catch {
+    return '';
+  }
+}
+
 export function BestXIndex({ market, items }: BestXIndexProps) {
   const prefix = market === 'us' ? '' : `/${market}`;
   const sectorCats = marketCategories[market].slice(0, 6);
 
   return (
-    <section style={{ maxWidth: '1140px', margin: '0 auto', padding: '112px 40px' }}>
-      <div style={{ textAlign: 'center', marginBottom: '64px' }}>
+    <section style={{ maxWidth: '1140px', margin: '0 auto', padding: '56px 40px 112px' }}>
+      <div style={{ textAlign: 'center', marginBottom: '48px' }}>
         <span style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--sfp-slate)', display: 'block', marginBottom: '16px' }}>
           Best-X Comparisons
         </span>
         <h2 style={{ fontSize: 'clamp(26px, 3.2vw, 38px)', fontWeight: 800, color: 'var(--sfp-ink)', letterSpacing: '-0.6px', marginBottom: '16px', lineHeight: 1.15 }}>
-          Compare the best — independent &amp; data-driven
+          Compare the best financial products
         </h2>
         <p style={{ fontSize: '16px', color: 'var(--sfp-slate)', maxWidth: '520px', margin: '0 auto', lineHeight: 1.7 }}>
           Side-by-side comparison cockpits for every category — ranked by our methodology, re-verified monthly, never by commission.
         </p>
       </div>
 
+      {/* Seamless photo mosaic — text overlaid on each image, tiles edge-to-edge */}
       <div
         className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
-        style={{ gap: '1px', background: '#E2E8F0', border: '1px solid #E2E8F0', borderRadius: '16px', overflow: 'hidden' }}
+        style={{ gap: 0, borderRadius: '16px', overflow: 'hidden', border: '1px solid #E2E8F0' }}
       >
         {items.map((item) => {
-          const IconComp = iconMap[item.icon] || Sparkles;
-          const isLink = item.status !== 'coming_soon' && !!item.href;
-          const tileStyle: React.CSSProperties = {
-            background: '#fff',
-            padding: '36px 32px',
-            display: 'block',
-            transition: 'all 0.25s ease',
-            opacity: item.status === 'coming_soon' ? 0.6 : 1,
-          };
+          const comingSoon = item.status === 'coming_soon';
+          const isLink = !comingSoon && !!item.href;
+          const catName = categoryConfig[item.category as Category]?.name ?? item.category;
+
           const inner = (
             <>
-              <div style={{ width: '40px', height: '40px', marginBottom: '16px', color: item.status === 'coming_soon' ? 'var(--sfp-slate)' : 'var(--sfp-navy)' }}>
-                <IconComp style={{ width: '24px', height: '24px' }} />
-              </div>
-              <h3 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--sfp-ink)', marginBottom: '8px', letterSpacing: '-0.2px' }}>
-                {item.label}
-              </h3>
-              <p style={{ fontSize: '14px', color: 'var(--sfp-slate)', lineHeight: 1.65, marginBottom: '20px' }}>
-                {item.blurb}
-              </p>
-              {item.status === 'coming_soon' ? (
-                <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--sfp-slate)', background: 'var(--sfp-gray)', padding: '4px 10px', borderRadius: '4px' }}>
-                  Launching soon
+              <Image
+                src={item.image}
+                alt={item.label}
+                fill
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                className="object-cover transition-transform duration-500 group-hover:scale-[1.06]"
+              />
+              {/* No color band — text sits on the full-color photo; a soft dark text-shadow
+                  (inherited by all children) keeps it legible without tinting the image. */}
+              <div
+                style={{
+                  position: 'absolute',
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  padding: '14px 16px 15px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'flex-start',
+                  textShadow:
+                    '0 0 4px rgba(0,0,0,0.85), 0 1px 3px rgba(0,0,0,0.92), 0 2px 16px rgba(0,0,0,0.7)',
+                }}
+              >
+                <span
+                  style={{
+                    display: 'inline-block',
+                    background: comingSoon ? '#5C6B7C' : 'var(--sfp-green)',
+                    color: '#fff',
+                    fontSize: '10.5px',
+                    fontWeight: 800,
+                    letterSpacing: '1px',
+                    textTransform: 'uppercase',
+                    padding: '4px 9px',
+                    borderRadius: '3px',
+                    marginBottom: '10px',
+                  }}
+                >
+                  {catName}
                 </span>
-              ) : (
-                <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
-                  {item.winner && (
-                    <span style={{ fontSize: '11.5px', fontWeight: 600, color: 'var(--sfp-navy)', background: 'var(--sfp-sky)', padding: '4px 10px', borderRadius: '4px' }}>
-                      #1 {item.winner.name}
-                      {item.winner.metric ? ` · ${item.winner.metric}` : ''}
-                    </span>
-                  )}
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '13px', fontWeight: 600, color: 'var(--sfp-navy)' }}>
-                    {item.count ? `Compare ${item.count}` : 'Compare'} <ArrowRight style={{ width: '14px', height: '14px' }} />
-                  </span>
-                </div>
-              )}
+                <h3
+                  className="inline-block transition-colors duration-200 bg-[var(--sfp-navy)] group-hover:bg-[#2F6BC0]"
+                  style={{
+                    margin: 0,
+                    color: '#fff',
+                    fontSize: '16px',
+                    fontWeight: 600,
+                    lineHeight: 1.2,
+                    letterSpacing: '-0.1px',
+                    padding: '5px 11px',
+                    borderRadius: '8px',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.25)',
+                    textShadow: 'none',
+                  }}
+                >
+                  {item.label}
+                </h3>
+
+                {item.status === 'live' && item.winner && (
+                  <p style={{ margin: '8px 0 0', fontSize: '13px', fontWeight: 700, color: '#fff' }}>
+                    <span style={{ fontWeight: 800 }}>{item.winner.name}</span>
+                    {item.winner.metric ? ` · ${item.winner.metric}` : ''}
+                  </p>
+                )}
+
+                {item.status === 'live' && (
+                  <p style={{ margin: '6px 0 0', fontSize: '11px', fontWeight: 700, letterSpacing: '0.5px', textTransform: 'uppercase', color: 'rgba(255,255,255,0.82)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Clock style={{ width: '13px', height: '13px' }} aria-hidden="true" />
+                    {fmtMonthYear(item.verifiedAt) ? `Updated ${fmtMonthYear(item.verifiedAt)}` : 'Updated'}
+                    {item.count ? ` · ${item.count} compared` : ''}
+                  </p>
+                )}
+
+                {item.status === 'legacy' && (
+                  <p style={{ margin: '10px 0 0', fontSize: '12.5px', fontWeight: 800, color: '#fff', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    Compare providers <ArrowRight style={{ width: '14px', height: '14px' }} aria-hidden="true" />
+                  </p>
+                )}
+
+                {comingSoon && (
+                  <p style={{ margin: '10px 0 0', fontSize: '11px', fontWeight: 700, letterSpacing: '0.5px', textTransform: 'uppercase', color: 'rgba(255,255,255,0.82)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Clock style={{ width: '13px', height: '13px' }} aria-hidden="true" /> Launching soon
+                  </p>
+                )}
+              </div>
             </>
           );
+
+          const tileClass = 'group relative block no-underline overflow-hidden';
+          const tileStyle: React.CSSProperties = { aspectRatio: '4 / 3', background: '#0F2E52' };
+
           return isLink ? (
-            <Link key={item.topic} href={item.href!} className="no-underline sector-card-hover" style={tileStyle}>
+            <Link key={item.topic} href={item.href!} className={tileClass} style={tileStyle}>
               {inner}
             </Link>
           ) : (
-            <div key={item.topic} style={tileStyle}>
+            <div key={item.topic} className={tileClass} style={{ ...tileStyle, cursor: 'default' }}>
               {inner}
             </div>
           );
