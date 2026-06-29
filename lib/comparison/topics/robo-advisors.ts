@@ -36,6 +36,7 @@ export const roboAdvisorsConfig: TopicConfig = {
     `Compare the best robo-advisors of ${y} side by side: management fees, account minimums, tax-loss harvesting and a live multi-year cost projection. Independent, data-driven, no fluff.`,
   intro:
     'Independent, side-by-side comparison of the leading US robo-advisors — ranked by fees, minimums and features, with a live multi-year cost projection on your own balance.',
+  publishedDate: '2026-06-29',
   attributesSchema: roboAttributesSchema,
 
   specColumns: [

@@ -99,6 +99,8 @@ export interface TopicConfig {
   metaTitle: (year: number) => string;
   metaDescription: (year: number) => string;
   intro: string;
+  /** ISO YYYY-MM-DD — the page's first-published date (Article publishDate). */
+  publishedDate: string;
   /** Zod schema for the `attributes` JSONB blob — validated per row in the loader. */
   attributesSchema: ZodType;
   specColumns: SpecColumn[];
