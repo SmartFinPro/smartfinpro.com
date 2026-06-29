@@ -104,6 +104,7 @@ export interface ProductForComparison {
   deepDive: string | null;
   sourceType: 'official' | 'regulator' | 'editorial' | 'user_reviews' | null;
   confidence: 'high' | 'medium' | 'low' | null;
+  dataVerifiedAt: string | null; // ISO date (YYYY-MM-DD) of last source re-verification
   /**
    * Attribution transparency for analytics:
    * 'verified' = click_id can return a conversion (full S2S);

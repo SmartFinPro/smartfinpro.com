@@ -18,13 +18,17 @@ import {
 } from '@/lib/i18n/config';
 import { generateAlternates, getCanonicalUrl } from '@/lib/seo/hreflang';
 import {
+  generateArticleSchema,
   generateBreadcrumbSchema,
   generateComparisonItemListSchema,
   generateFAQSchema,
+  generatePersonSchema,
 } from '@/lib/seo/schema';
 import { getCockpitData, getCockpitRouteParams } from '@/lib/comparison/loader';
 import { getTopicConfig } from '@/lib/comparison/topics/index';
+import { getMarketExpert } from '@/lib/actions/experts';
 import { ComparisonCockpit } from '@/components/marketing/comparison-cockpit';
+import { CockpitVerdict, CockpitBody, type VerdictPick } from '@/components/marketing/cockpit-content';
 import { AffiliateDisclosure } from '@/components/ui/affiliate-disclosure';
 import type { ProductForComparison } from '@/lib/comparison/types';
 
@@ -44,8 +48,11 @@ function isValidCombo(market: string, category: string): market is Market {
 
 function providerUrl(p: ProductForComparison, market: string, category: string, topic: string): string {
   if (p.ctaMode === 'offer') return `${SITE}/go/${p.slug}`;
-  if (p.ctaMode === 'review' && p.reviewSlug) return `${SITE}/${market}/${category}/${p.reviewSlug}`;
-  return p.externalUrl || `${SITE}/${market}/${category}/best/${topic}`;
+  // External-first: the provider's own site always exists; some review slugs have no
+  // MDX yet, so review-first would emit 404s in JSON-LD/verdict links.
+  if (p.externalUrl) return p.externalUrl;
+  if (p.reviewSlug) return `${SITE}/${market}/${category}/${p.reviewSlug}`;
+  return `${SITE}/${market}/${category}/best/${topic}`;
 }
 
 export async function generateStaticParams() {
@@ -78,6 +85,12 @@ export async function generateMetadata({ params }: CockpitPageProps): Promise<Me
   const title = config.metaTitle(year);
   const description = config.metaDescription(year);
 
+  // Article dates: publishDate from config; modifiedDate from the latest source re-verify.
+  const products = await getCockpitData(market as Market, category as Category, topic);
+  const expert = await getMarketExpert(market as Market, category as Category);
+  const modified =
+    products.map((p) => p.dataVerifiedAt).filter(Boolean).sort().at(-1) ?? config.publishedDate;
+
   return {
     title: `${title} | SmartFinPro`,
     description,
@@ -85,10 +98,14 @@ export async function generateMetadata({ params }: CockpitPageProps): Promise<Me
     openGraph: {
       title,
       description,
-      type: 'website',
+      type: 'article',
       url: canonicalUrl,
       locale: marketConfig[market as Market].locale.replace('-', '_'),
+      publishedTime: config.publishedDate,
+      modifiedTime: modified,
+      authors: [expert.name],
     },
+    twitter: { card: 'summary_large_image', title, description },
   };
 }
 
@@ -123,6 +140,41 @@ export default async function CockpitPage({ params }: CockpitPageProps) {
   });
   const faq = generateFAQSchema(config.faq.map((f) => ({ question: f.q, answer: f.a })));
 
+  const expert = await getMarketExpert(market as Market, category as Category);
+  const modified =
+    products.map((p) => p.dataVerifiedAt).filter(Boolean).sort().at(-1) ?? config.publishedDate;
+
+  const verdictPicks: VerdictPick[] = products.slice(0, 3).map((p, i) => ({
+    rank: i + 1,
+    name: p.displayName,
+    why: p.verdict ?? p.tagline,
+    rating: p.rating,
+    href: providerUrl(p, market, category, topic),
+    external: p.ctaMode !== 'offer' && !!p.externalUrl,
+    ctaLabel: p.ctaMode === 'offer' ? 'View offer' : p.externalUrl ? 'Visit site' : 'Read review',
+  }));
+
+  const article = generateArticleSchema({
+    title: config.metaTitle(year),
+    description: config.metaDescription(year),
+    publishDate: config.publishedDate,
+    modifiedDate: modified,
+    author: expert.name,
+    url: pageUrl,
+    reviewedBy: expert.name,
+    reviewedByUrl: expert.linkedin_url ?? `${SITE}/about`,
+  });
+  const personSchema = generatePersonSchema({
+    name: expert.name,
+    jobTitle: expert.role,
+    credentials: expert.credentials,
+    image: expert.image_url ?? undefined,
+    sameAs: expert.linkedin_url ? [expert.linkedin_url] : undefined,
+    url: `${SITE}/about`,
+  });
+  // Per-provider FinancialProduct entities are already carried as the ItemList's
+  // itemListElements (above) — a standalone set would duplicate them by URL.
+
   return (
     <div style={{ background: 'var(--sfp-gray)' }}>
       <div className="mx-auto max-w-4xl px-4 pt-10">
@@ -140,6 +192,19 @@ export default async function CockpitPage({ params }: CockpitPageProps) {
         </p>
       </div>
 
+      <div className="mx-auto max-w-4xl px-4 pt-4">
+        <CockpitVerdict
+          intro={config.verdict.intro}
+          picks={verdictPicks}
+          verifiedDate={modified}
+          reviewerName={expert.name}
+          reviewerCredential={expert.credentials?.[0]}
+          productCount={products.length}
+          regulators={config.compliance.regulators}
+          complianceNotice={config.compliance.notice}
+        />
+      </div>
+
       <div className="mx-auto max-w-6xl px-4 pb-10 pt-4">
         <Suspense fallback={null}>
           <ComparisonCockpit
@@ -151,6 +216,17 @@ export default async function CockpitPage({ params }: CockpitPageProps) {
         </Suspense>
       </div>
 
+      <div className="mx-auto max-w-4xl px-4">
+        <CockpitBody
+          label={config.label}
+          methodology={config.methodology}
+          buyerGuide={config.buyerGuide}
+          faq={config.faq}
+          reviewer={expert}
+          verifiedDate={modified}
+        />
+      </div>
+
       <div className="mx-auto max-w-4xl px-4 pb-12" id="affiliate-disclosure">
         <AffiliateDisclosure market={market as Market} position="bottom" />
       </div>
@@ -158,6 +234,8 @@ export default async function CockpitPage({ params }: CockpitPageProps) {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(itemList) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faq) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(article) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(personSchema) }} />
     </div>
   );
 }

@@ -23,6 +23,9 @@ const BODY = `# SmartFinPro
 ## Implementation Guides (BOFU)
 - [The Programmatic Financial Firewall](https://smartfinpro.com/us/business-banking/programmatic-financial-firewall): a build protocol to isolate LLC cash flow with per-vendor virtual cards, webhook receipt reconciliation (Next.js + Mercury API), and FIDO2/WebAuthn account hardening.
 
+## Comparison Cockpits — Best X (US)
+- [Best Robo-Advisors](https://smartfinpro.com/us/personal-finance/best/robo-advisors): independent side-by-side comparison of leading US robo-advisors — management fees, account minimums, tax-loss harvesting, SIPC coverage, and a live multi-year cost projection on your own balance. Editor's picks: Wealthfront (best overall), Betterment (goal-based), Fidelity Go (lowest cost). Expert-reviewed, quarterly re-verified, affiliate-independent ranking. (Add one bullet per Best-X topic; URL pattern: /{market}/{category}/best/{topic}.)
+
 ## Other Markets
 - [United Kingdom](https://smartfinpro.com/uk)
 - [Canada](https://smartfinpro.com/ca)

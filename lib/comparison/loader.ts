@@ -113,6 +113,7 @@ function mapRow(row: any, activeOfferSlugs: Set<string>): ProductForComparison {
     deepDive: row.deep_dive ?? null,
     sourceType: row.source_type ?? null,
     confidence: row.confidence ?? null,
+    dataVerifiedAt: row.data_verified_at ?? null,
     offerAttribution: null,
 
     market: row.market as Market,
@@ -227,6 +228,7 @@ export function mapCockpitRow(
     deepDive: row.deep_dive ?? null,
     sourceType: row.source_type ?? null,
     confidence: row.confidence ?? null,
+    dataVerifiedAt: row.data_verified_at ?? null,
     offerAttribution,
 
     market: row.market as Market,

@@ -15,6 +15,7 @@ interface ExpertVerifierProps {
   variant?: 'default' | 'compact';
   quote?: string; // MDX-friendly — displayed as factCheckNote
   expertName?: string; // MDX alias for name
+  includeSchema?: boolean; // emit Person JSON-LD (default true; pass false when the page already emits a Person node)
 }
 
 function formatDate(iso: string): string {
@@ -41,6 +42,7 @@ export function ExpertVerifier({
   variant = 'default',
   quote,
   expertName,
+  includeSchema = true,
 }: ExpertVerifierProps) {
   const name = nameProp || expertName || 'Expert Reviewer';
   const formattedDate = formatDate(lastFactChecked);
@@ -100,18 +102,20 @@ export function ExpertVerifier({
         </div>
 
         {/* Schema.org Person */}
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              '@context': 'https://schema.org',
-              '@type': 'Person',
-              name,
-              jobTitle: title,
-              ...(linkedInUrl && { sameAs: linkedInUrl }),
-            }),
-          }}
-        />
+        {includeSchema && (
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+              __html: JSON.stringify({
+                '@context': 'https://schema.org',
+                '@type': 'Person',
+                name,
+                jobTitle: title,
+                ...(linkedInUrl && { sameAs: linkedInUrl }),
+              }),
+            }}
+          />
+        )}
       </div>
     );
   }
@@ -212,18 +216,20 @@ export function ExpertVerifier({
       </div>
 
       {/* Schema.org Person */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            '@context': 'https://schema.org',
-            '@type': 'Person',
-            name,
-            jobTitle: title,
-            ...(linkedInUrl && { sameAs: linkedInUrl }),
-          }),
-        }}
-      />
+      {includeSchema && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'Person',
+              name,
+              jobTitle: title,
+              ...(linkedInUrl && { sameAs: linkedInUrl }),
+            }),
+          }}
+        />
+      )}
     </div>
   );
 }
