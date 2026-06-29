@@ -138,7 +138,7 @@ const marketTrends = [
     flag: '🇺🇸',
     trend: 'SEC climate disclosure rules drive ESG transparency',
     links: [
-      { text: 'Best Robo-Advisors', href: '/us/personal-finance/best-robo-advisors' },
+      { text: 'Best Robo-Advisors', href: '/us/personal-finance/best/robo-advisors' },
       { text: 'Interactive Brokers Review', href: '/us/trading/interactive-brokers-review' },
     ],
   },
@@ -439,7 +439,7 @@ export default function GreenFinancePage() {
           </p>
           <div className="flex flex-wrap items-center justify-center gap-4">
             <Button asChild className="bg-[var(--sfp-green)] hover:bg-[var(--sfp-green)]/90">
-              <Link href="/us/personal-finance/best-robo-advisors">
+              <Link href="/us/personal-finance/best/robo-advisors">
                 View ESG Platforms <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>

@@ -42,6 +42,7 @@ import { ReportCard } from '@/components/marketing/report-card';
 import { ReportPagination } from '@/components/marketing/report-pagination';
 import UKBrokerHeroSlider from '@/components/home/uk-broker-hero-slider';
 import {
+  BestXIndex,
   CategoryShowcase,
   EditorsPicks,
   MethodologySection,
@@ -49,6 +50,7 @@ import {
   ComplianceBar,
   GlobalTrustSection,
 } from '@/components/marketing/homepage-sections';
+import { getBestXIndex } from '@/lib/comparison/loader';
 
 import type { Category } from '@/lib/i18n/config';
 
@@ -167,6 +169,9 @@ export default async function MarketHomePage({ params, searchParams }: MarketPag
     if (cat) categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
   }
 
+  // Best-X Compare Index (homepage): live winners + coming-soon tiles, per market.
+  const bestX = await getBestXIndex(marketData);
+
   // Editor's Picks — top 6 rated reviews (different categories preferred)
   // 6 picks (up from 3) = stronger Hub→Leaf signal from homepage to leaf review pages.
   // Diversity filter: max 2 per category to ensure broad coverage across 6 categories.
@@ -216,7 +221,11 @@ export default async function MarketHomePage({ params, searchParams }: MarketPag
       {/* ═══════════════════════════════════════════════════════════════
           4. CATEGORY SHOWCASE — 6 sectors with icons + counts
       ═══════════════════════════════════════════════════════════════ */}
-      <CategoryShowcase market={marketData} categoryCounts={categoryCounts} />
+      {bestX.some((t) => t.status !== 'coming_soon') ? (
+        <BestXIndex market={marketData} items={bestX} />
+      ) : (
+        <CategoryShowcase market={marketData} categoryCounts={categoryCounts} />
+      )}
 
       {/* ═══════════════════════════════════════════════════════════════
           5. GLOBAL TRUST — Markets + Regulators
