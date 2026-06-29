@@ -27,6 +27,7 @@ import {
   Clock,
   PiggyBank,
   Coins,
+  Plus,
 } from 'lucide-react';
 import type { Market, Category } from '@/lib/i18n/config';
 import { categoryConfig, marketCategories } from '@/lib/i18n/config';
@@ -370,6 +371,35 @@ export function BestXIndex({ market, items }: BestXIndexProps) {
             </div>
           );
         })}
+
+        {/* Utility fillers — complete the 3-col grid (10 topics + 2 = 12 = 4 even rows) */}
+        <Link
+          href="#reports"
+          className="relative block no-underline overflow-hidden transition-colors duration-200 bg-[var(--sfp-navy)] hover:bg-[var(--sfp-navy-dark)]"
+          style={{ aspectRatio: '4 / 3' }}
+        >
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '20px', gap: '10px' }}>
+            <BookOpen style={{ width: 26, height: 26, color: 'var(--sfp-gold)' }} aria-hidden="true" />
+            <span style={{ fontSize: '15px', fontWeight: 600, color: '#fff' }}>Browse all reviews</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '12px', fontWeight: 600, color: 'rgba(255,255,255,0.72)' }}>
+              Research library <ArrowRight style={{ width: 13, height: 13 }} aria-hidden="true" />
+            </span>
+          </div>
+        </Link>
+
+        <Link
+          href="/contact"
+          className="relative block no-underline overflow-hidden transition-colors duration-200 bg-[var(--sfp-navy)] hover:bg-[var(--sfp-navy-dark)]"
+          style={{ aspectRatio: '4 / 3' }}
+        >
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '20px', gap: '10px' }}>
+            <Plus style={{ width: 26, height: 26, color: 'var(--sfp-gold)' }} aria-hidden="true" />
+            <span style={{ fontSize: '15px', fontWeight: 600, color: '#fff' }}>Suggest a comparison</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '12px', fontWeight: 600, color: 'rgba(255,255,255,0.72)' }}>
+              Tell us what to test <ArrowRight style={{ width: 13, height: 13 }} aria-hidden="true" />
+            </span>
+          </div>
+        </Link>
       </div>
 
       {/* Browse by sector — keep the hub internal links */}
