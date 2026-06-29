@@ -86,8 +86,16 @@ export function CockpitCompare({ all, selectedSlugs, config, inputs, onToggleSel
           {/* Header row */}
           <div style={{ background: C.navy, color: '#fff', padding: '12px', display: 'flex', alignItems: 'flex-end', fontSize: 12.5, fontWeight: 600 }}>Side-by-side</div>
           {ps.map((p) => {
-            const isOffer = p.ctaMode === 'offer';
-            const ctaHref = isOffer ? `/go/${p.slug}` : p.ctaMode === 'review' && p.reviewSlug ? `/${p.market}/${p.category}/${p.reviewSlug}` : p.externalUrl || '#';
+            const reviewHref = p.reviewSlug ? `/${p.market}/${p.category}/${p.reviewSlug}` : null;
+            // Mirror the card's primary CTA: always green, never /go for unverified.
+            const cta =
+              p.ctaMode === 'offer'
+                ? { label: 'View offer', href: `/go/${p.slug}`, external: false, tracked: true }
+                : p.externalUrl
+                  ? { label: 'Visit site', href: p.externalUrl, external: true, tracked: false }
+                  : reviewHref
+                    ? { label: 'Read review', href: reviewHref, external: false, tracked: false }
+                    : { label: 'Visit site', href: '#', external: true, tracked: false };
             return (
               <div key={p.slug} style={{ background: C.navy, color: '#fff', padding: '12px', textAlign: 'center', position: 'relative' }}>
                 {ps.length > 2 && (
@@ -100,13 +108,13 @@ export function CockpitCompare({ all, selectedSlugs, config, inputs, onToggleSel
                 </span>
                 <div style={{ fontSize: 13, fontWeight: 600 }}>{p.displayName}</div>
                 <a
-                  href={ctaHref}
+                  href={cta.href}
                   className="cmp-cta"
-                  {...(p.ctaMode === 'visit' ? { target: '_blank', rel: 'nofollow sponsored noopener' } : {})}
-                  onClick={isOffer ? () => onOfferClick(p) : undefined}
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 8, padding: '6px 12px', borderRadius: 8, fontSize: 11.5, fontWeight: 600, textDecoration: 'none', background: isOffer ? C.ctaGreen : '#fff', color: isOffer ? '#fff' : C.navy, border: isOffer ? 'none' : `1px solid ${C.navy}` }}
+                  {...(cta.external ? { target: '_blank', rel: 'nofollow sponsored noopener' } : {})}
+                  onClick={cta.tracked ? () => onOfferClick(p) : undefined}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 8, padding: '6px 12px', borderRadius: 8, fontSize: 11.5, fontWeight: 600, textDecoration: 'none', whiteSpace: 'nowrap', background: C.ctaGreen, color: '#fff', border: 'none' }}
                 >
-                  {isOffer ? 'View offer' : p.ctaMode === 'review' ? 'Review' : 'Visit'} <ArrowRight size={12} aria-hidden="true" />
+                  {cta.label} <ArrowRight size={12} aria-hidden="true" />
                 </a>
               </div>
             );
