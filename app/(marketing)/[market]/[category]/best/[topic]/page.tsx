@@ -89,11 +89,15 @@ export async function generateMetadata({ params }: CockpitPageProps): Promise<Me
   // Article dates: publishDate from config; modifiedDate from the latest source re-verify.
   const products = await getCockpitData(market as Market, category as Category, topic);
   const expert = await getMarketExpert(market as Market, category as Category);
-  const modified =
+  const latestVerified =
     products.map((p) => p.dataVerifiedAt).filter(Boolean).sort().at(-1) ?? config.publishedDate;
+  // Never let dateModified precede datePublished (invalid Article schema).
+  const modified = latestVerified < config.publishedDate ? config.publishedDate : latestVerified;
 
   return {
-    title: `${title} | SmartFinPro`,
+    // Bare title — the root layout template ('%s | SmartFinPro') adds the brand
+    // suffix exactly once (was doubled: "… | SmartFinPro | SmartFinPro").
+    title,
     description,
     alternates: { canonical: canonicalUrl, languages: alternates },
     openGraph: {
@@ -105,8 +109,9 @@ export async function generateMetadata({ params }: CockpitPageProps): Promise<Me
       publishedTime: config.publishedDate,
       modifiedTime: modified,
       authors: [expert.name],
+      images: [{ url: '/og-image.png', width: 1200, height: 630, alt: title }],
     },
-    twitter: { card: 'summary_large_image', title, description },
+    twitter: { card: 'summary_large_image', title, description, images: ['/og-image.png'] },
   };
 }
 
@@ -142,8 +147,10 @@ export default async function CockpitPage({ params }: CockpitPageProps) {
   const faq = generateFAQSchema(config.faq.map((f) => ({ question: f.q, answer: f.a })));
 
   const expert = await getMarketExpert(market as Market, category as Category);
-  const modified =
+  const latestVerified =
     products.map((p) => p.dataVerifiedAt).filter(Boolean).sort().at(-1) ?? config.publishedDate;
+  // Never let dateModified precede datePublished (invalid Article schema).
+  const modified = latestVerified < config.publishedDate ? config.publishedDate : latestVerified;
 
   const heroImage =
     BEST_X_MANIFEST.find((e) => e.market === market && e.category === category && e.topic === topic)?.image ?? null;
@@ -151,6 +158,7 @@ export default async function CockpitPage({ params }: CockpitPageProps) {
   const article = generateArticleSchema({
     title: config.metaTitle(year),
     description: config.metaDescription(year),
+    image: heroImage ? `${SITE}${heroImage}` : undefined,
     publishDate: config.publishedDate,
     modifiedDate: modified,
     author: expert.name,

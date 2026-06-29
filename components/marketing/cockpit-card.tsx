@@ -131,7 +131,13 @@ export function CockpitCard({
           </div>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 9, flexWrap: 'wrap' }}>
-              <h3 style={{ fontSize: 22, fontWeight: 700, color: C.ink, letterSpacing: '-.4px', margin: 0, display: 'inline' }}>{p.displayName}</h3>
+              <h3 style={{ fontSize: 22, fontWeight: 700, color: C.ink, letterSpacing: '-.4px', margin: 0, display: 'inline' }}>
+                {reviewHref ? (
+                  <a href={reviewHref} style={{ color: C.ink, textDecoration: 'none' }}>{p.displayName}</a>
+                ) : (
+                  p.displayName
+                )}
+              </h3>
               {p.verified && (
                 <span style={{ color: C.greenDark, fontSize: 13, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 3 }}>
                   <BadgeCheck size={15} aria-hidden="true" /> Verified

@@ -58,7 +58,8 @@ export async function generateMetadata({ params }: ComparePageProps): Promise<Me
   const alternates = generateAlternates(path, availableMarkets.length > 0 ? availableMarkets : [market as Market]);
 
   return {
-    title: `${title} | SmartFinPro`,
+    // Bare title — root layout template adds "| SmartFinPro" once (was doubled).
+    title,
     description,
     alternates: { canonical: canonicalUrl, languages: alternates },
     openGraph: {
