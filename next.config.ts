@@ -563,6 +563,15 @@ const nextConfig: SmartFinNextConfig = {
   // ============================================================
   async redirects() {
     return [
+      // ── Cockpit migration: legacy business-banking /best → topic route ───
+      // The 2-segment page is now served by the cockpit topic route. Exact
+      // path (no pattern) so it never shadows /best/[topic] or other categories.
+      {
+        source: '/us/business-banking/best',
+        destination: '/us/business-banking/best/business-bank-accounts',
+        permanent: true,
+      },
+
       // ── US market canonical (no prefix) ──────────────────────────────────
       {
         source: '/us',
