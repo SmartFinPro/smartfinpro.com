@@ -81,10 +81,10 @@ export function CockpitCompare({ all, selectedSlugs, config, inputs, onToggleSel
       </div>
 
       {/* Side-by-side matrix */}
-      <div style={{ background: '#fff', border: `2px solid ${C.navy}`, borderRadius: 14, overflowX: 'auto', fontVariantNumeric: 'tabular-nums' }}>
+      <div className="ck-scroll-x" style={{ background: '#fff', border: `2px solid ${C.navy}`, borderRadius: 14, overflowX: 'auto', fontVariantNumeric: 'tabular-nums' }}>
         <div style={{ display: 'grid', gridTemplateColumns: gridCols, gap: 1, background: C.border, minWidth: 128 + ps.length * 150 }}>
           {/* Header row */}
-          <div style={{ background: C.navy, color: '#fff', padding: '12px', display: 'flex', alignItems: 'flex-end', fontSize: 12.5, fontWeight: 600 }}>Side-by-side</div>
+          <div className="ck-cmp-corner" style={{ background: C.navy, color: '#fff', padding: '12px', display: 'flex', alignItems: 'flex-end', fontSize: 12.5, fontWeight: 600 }}>Side-by-side</div>
           {ps.map((p) => {
             const reviewHref = p.reviewSlug ? `/${p.market}/${p.category}/${p.reviewSlug}` : null;
             // Mirror the card's primary CTA: always green, never /go for unverified.
@@ -99,7 +99,7 @@ export function CockpitCompare({ all, selectedSlugs, config, inputs, onToggleSel
             return (
               <div key={p.slug} style={{ background: C.navy, color: '#fff', padding: '12px', textAlign: 'center', position: 'relative' }}>
                 {ps.length > 2 && (
-                  <button type="button" onClick={() => onToggleSelect(p.slug)} aria-label={`Remove ${p.displayName}`} style={{ position: 'absolute', top: 6, right: 8, background: 'none', border: 'none', color: '#fff', opacity: 0.85, cursor: 'pointer', padding: 0 }}>
+                  <button type="button" className="ck-cmp-remove" onClick={() => onToggleSelect(p.slug)} aria-label={`Remove ${p.displayName}`} style={{ position: 'absolute', top: 6, right: 8, background: 'none', border: 'none', color: '#fff', opacity: 0.85, cursor: 'pointer', padding: 0 }}>
                     <X size={14} aria-hidden="true" />
                   </button>
                 )}
@@ -151,7 +151,7 @@ function ComparisonRowCells({
 }) {
   return (
     <>
-      <div style={{ background: '#FAFBFD', padding: '11px 12px', fontSize: 12, color: C.slate }}>{row.label}</div>
+      <div className="ck-cmp-label" style={{ background: '#FAFBFD', padding: '11px 12px', fontSize: 12, color: C.slate }}>{row.label}</div>
       {ps.map((p, i) => {
         const win = varies && scores[i] === max;
         return (
