@@ -61,8 +61,8 @@ export function CockpitDecisionBar({
     <div style={{ background: '#fff', border: '1px solid #E1E7F0', borderRadius: 14, padding: '18px', marginBottom: 16 }}>
       <style>{`
         .ck-pill{border:1px solid ${C.border};background:#fff;color:${C.navyDark};font-size:12.5px;padding:7px 12px;border-radius:999px;cursor:pointer;transition:all .12s;white-space:nowrap;font-weight:500;display:inline-flex;align-items:center;gap:5px;font-family:inherit}
-        .ck-pill:hover{background:${C.sky};border-color:#9FC0EE;color:#3B5FD9}
-        .ck-pill[data-on="true"]{background:${C.navy};border-color:${C.navy};color:#fff}
+        .ck-pill:hover{background:#54B269;border-color:#54B269;color:#fff}
+        .ck-pill[data-on="true"]{background:#54B269;border-color:#54B269;color:#fff}
         .ck-range{width:100%;accent-color:#F5A623;margin:7px 0 0}
       `}</style>
 

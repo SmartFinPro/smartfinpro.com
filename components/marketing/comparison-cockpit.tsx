@@ -275,8 +275,8 @@ export function ComparisonCockpit({ products, category, topic }: ComparisonCockp
         .cmp-cta{transition:background .12s ease,color .12s ease,border-color .12s ease}
         .cmp-cta:hover{background:#54B269 !important;border-color:#54B269 !important;color:#fff !important}
         .ck-fil{border:1px solid #C9D1DC;background:#fff;color:${C.ink};font-size:12px;padding:7px 13px;border-radius:999px;cursor:pointer;transition:all .12s;font-weight:500;font-family:inherit}
-        .ck-fil:hover{background:${C.sky};border-color:#9FC0EE;color:#3B5FD9}
-        .ck-fil[data-on="true"]{background:${C.sky};border-color:#9FC0EE;color:#3B5FD9}
+        .ck-fil:hover{background:#54B269;border-color:#54B269;color:#fff}
+        .ck-fil[data-on="true"]{background:#54B269;border-color:#54B269;color:#fff}
         .ck-seg{padding:9px 15px;font-size:13px;font-weight:600;color:${C.navy};background:#fff;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-family:inherit;border:none;transition:all .12s}
         .ck-seg:hover:not([data-on="true"]){background:#54B269;color:#fff}
         .ck-seg[data-on="true"]{background:${C.navy};color:#fff}
