@@ -20,7 +20,7 @@ const BUSINESS_BANKING_US: any[] = [
       verdict: 'The best all-rounder for funded startups',
       has_no_monthly_fee: true, has_free_atm: false, has_no_fx_fee: false, has_cashback: false, has_bonus: false, has_sub_accounts: true, has_interest: false, has_apple_pay: true,
       entity_types: ['llc', 's-corp', 'c-corp'], supports_cash_deposits: false, supports_intl_wires: true, has_bookkeeping: false, has_lending: false, integrations: ['quickbooks', 'stripe', 'xero'],
-      is_affiliate: true, review_slug: 'mercury-review', external_url: null, is_top_pick: true, best_for: 'Funded startups', display_order: 1,
+      is_affiliate: true, review_slug: 'mercury-review', external_url: 'https://mercury.com', is_top_pick: true, best_for: 'Funded startups', display_order: 1,
     },
     {
       slug: 'novo', market: 'us', category: 'business-banking', display_name: 'Novo',
@@ -35,7 +35,7 @@ const BUSINESS_BANKING_US: any[] = [
       verdict: 'The strongest truly-free pick for freelancers',
       has_no_monthly_fee: true, has_free_atm: true, has_no_fx_fee: true, has_cashback: false, has_bonus: false, has_sub_accounts: false, has_interest: false, has_apple_pay: true,
       entity_types: ['sole-prop', 'llc', 's-corp'], supports_cash_deposits: false, supports_intl_wires: false, has_bookkeeping: false, has_lending: false, integrations: ['stripe', 'shopify', 'quickbooks'],
-      is_affiliate: true, review_slug: 'novo-review', external_url: null, is_top_pick: false, best_for: 'Freelancers', display_order: 2,
+      is_affiliate: true, review_slug: 'novo-review', external_url: 'https://www.novo.co', is_top_pick: false, best_for: 'Freelancers', display_order: 2,
     },
     {
       slug: 'relay', market: 'us', category: 'business-banking', display_name: 'Relay',
@@ -50,7 +50,7 @@ const BUSINESS_BANKING_US: any[] = [
       verdict: 'Built for teams and Profit-First budgeting',
       has_no_monthly_fee: true, has_free_atm: true, has_no_fx_fee: false, has_cashback: false, has_bonus: false, has_sub_accounts: true, has_interest: false, has_apple_pay: true,
       entity_types: ['llc', 's-corp', 'c-corp', 'sole-prop'], supports_cash_deposits: true, supports_intl_wires: true, has_bookkeeping: false, has_lending: false, integrations: ['quickbooks', 'xero'],
-      is_affiliate: true, review_slug: 'relay-review', external_url: null, is_top_pick: false, best_for: 'Teams', display_order: 3,
+      is_affiliate: true, review_slug: 'relay-review', external_url: 'https://relayfi.com', is_top_pick: false, best_for: 'Teams', display_order: 3,
     },
     {
       slug: 'bluevine', market: 'us', category: 'business-banking', display_name: 'Bluevine',
@@ -65,7 +65,7 @@ const BUSINESS_BANKING_US: any[] = [
       verdict: 'The pick if you park a higher balance',
       has_no_monthly_fee: true, has_free_atm: false, has_no_fx_fee: false, has_cashback: false, has_bonus: true, has_sub_accounts: false, has_interest: true, has_apple_pay: true,
       entity_types: ['llc', 's-corp', 'c-corp', 'sole-prop'], supports_cash_deposits: true, supports_intl_wires: false, has_bookkeeping: false, has_lending: true, integrations: ['quickbooks'],
-      is_affiliate: false, review_slug: 'bluevine-review', external_url: null, is_top_pick: false, best_for: 'High balances', display_order: 4,
+      is_affiliate: false, review_slug: 'bluevine-review', external_url: 'https://www.bluevine.com', is_top_pick: false, best_for: 'High balances', display_order: 4,
     },
     {
       slug: 'lili', market: 'us', category: 'business-banking', display_name: 'Lili',
