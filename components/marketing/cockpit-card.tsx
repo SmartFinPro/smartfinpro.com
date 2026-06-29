@@ -33,6 +33,7 @@ const C = {
   greenDark: '#3F9655',
   checkGreen: '#16A34A',
   link: '#3B5FD9',
+  checkBlue: '#2563EB',
   red: '#DC2626',
   indigo: '#5046E5',
   tile: '#00B67A',
@@ -91,15 +92,21 @@ export function CockpitCard({
   const specCells = config.specColumns.slice(0, 3);
 
   const reviewHref = p.reviewSlug ? `/${p.market}/${p.category}/${p.reviewSlug}` : null;
-  let primary: { label: string; href: string; variant: 'green' | 'outline'; external?: boolean; tracked?: boolean };
+  // Primary is always the green "go to provider" button (matches the business-banking
+  // engine's offer card). Verified offer → tracked /go; otherwise an external visit to
+  // the provider's own site (NO /go — the attribution gate stays intact for unverified
+  // providers). "Read review" rides along as the blue secondary whenever a review exists.
+  let primary: { label: string; href: string; external?: boolean; tracked?: boolean };
   if (p.ctaMode === 'offer') {
-    primary = { label: 'View offer', href: `/go/${p.slug}`, variant: 'green', tracked: true };
-  } else if (p.ctaMode === 'review' && reviewHref) {
-    primary = { label: 'Read review', href: reviewHref, variant: 'outline' };
+    primary = { label: 'View offer', href: `/go/${p.slug}`, tracked: true };
+  } else if (p.externalUrl) {
+    primary = { label: 'Visit site', href: p.externalUrl, external: true };
+  } else if (reviewHref) {
+    primary = { label: 'Read review', href: reviewHref };
   } else {
-    primary = { label: 'Visit site', href: p.externalUrl || '#', variant: 'outline', external: true };
+    primary = { label: 'Visit site', href: '#', external: true };
   }
-  const showReadReviewInRating = p.ctaMode === 'offer' && !!reviewHref;
+  const showReadReviewInRating = !!reviewHref && primary.href !== reviewHref;
 
   return (
     <div
@@ -156,22 +163,21 @@ export function CockpitCard({
             style={{
               display: 'inline-flex',
               alignItems: 'center',
-              gap: 7,
-              padding: '13px 24px',
-              borderRadius: 12,
-              fontSize: 14.5,
-              fontWeight: 600,
+              gap: 6,
+              padding: '14px 30px',
+              borderRadius: 8,
+              fontSize: 14,
+              fontWeight: 700,
+              letterSpacing: '.5px',
               textDecoration: 'none',
-              background: primary.variant === 'green' ? C.ctaGreen : '#fff',
-              color: primary.variant === 'green' ? '#fff' : C.navy,
-              border: primary.variant === 'green' ? 'none' : `1px solid ${C.navy}`,
+              background: C.ctaGreen,
+              color: '#fff',
+              border: 'none',
             }}
           >
-            {primary.label} <ArrowRight size={15} aria-hidden="true" />
+            {primary.label} <ArrowRight size={16} aria-hidden="true" />
           </a>
-          <div style={{ fontSize: 11.5, color: C.slate, marginTop: 6 }}>
-            {p.ctaMode === 'offer' ? `on ${hostFromUrl(p.externalUrl)}` : p.ctaMode === 'review' ? 'independent review' : `on ${hostFromUrl(p.externalUrl)}`}
-          </div>
+          <div style={{ fontSize: 12.5, color: C.slate, marginTop: 8 }}>on {hostFromUrl(p.externalUrl)}</div>
           <button
             type="button"
             onClick={() => onToggleSelect(p.slug)}
@@ -236,17 +242,18 @@ export function CockpitCard({
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
           {showReadReviewInRating && reviewHref && (
-            <a className="cmp-cta" href={reviewHref} style={{ padding: '11px 22px', borderRadius: 12, fontSize: 14, fontWeight: 600, textDecoration: 'none', background: C.sky, color: C.link, border: 'none' }}>
+            <a className="cmp-cta" href={reviewHref} style={{ padding: '10px 20px', borderRadius: 8, fontSize: 13.5, fontWeight: 600, textDecoration: 'none', background: C.sky, color: C.checkBlue, border: `1px solid ${C.sky}` }}>
               Read review
             </a>
           )}
           <button
             type="button"
+            className="cmp-cta"
             onClick={() => onToggleDetails(p.slug)}
             aria-expanded={expanded}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '11px 18px', borderRadius: 12, fontSize: 14, fontWeight: 600, cursor: 'pointer', background: '#fff', color: C.ink, border: `1px solid #D8DFE8` }}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 18px', borderRadius: 8, fontSize: 13.5, fontWeight: 500, cursor: 'pointer', background: '#fff', color: C.ink, border: `1px solid ${C.borderStrong}` }}
           >
-            View details {expanded ? <ChevronUp size={15} aria-hidden="true" /> : <ChevronDown size={15} aria-hidden="true" />}
+            View details {expanded ? <ChevronUp size={16} aria-hidden="true" /> : <ChevronDown size={16} aria-hidden="true" />}
           </button>
         </div>
       </div>

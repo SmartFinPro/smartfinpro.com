@@ -272,6 +272,8 @@ export function ComparisonCockpit({ products, category, topic }: ComparisonCockp
     <div style={{ fontVariantNumeric: 'tabular-nums' }}>
       <style>{`
         .ck-cta::after{content:none !important}
+        .cmp-cta{transition:background .12s ease,color .12s ease,border-color .12s ease}
+        .cmp-cta:hover{background:#54B269 !important;border-color:#54B269 !important;color:#fff !important}
         .ck-fil{border:1px solid #C9D1DC;background:#fff;color:${C.ink};font-size:12px;padding:7px 13px;border-radius:999px;cursor:pointer;transition:all .12s;font-weight:500;font-family:inherit}
         .ck-fil:hover{background:${C.sky};border-color:#9FC0EE;color:#3B5FD9}
         .ck-fil[data-on="true"]{background:${C.sky};border-color:#9FC0EE;color:#3B5FD9}
