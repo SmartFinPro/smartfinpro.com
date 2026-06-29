@@ -24,9 +24,12 @@ import {
   BookOpen,
   Calculator,
   Clock,
+  PiggyBank,
+  Coins,
 } from 'lucide-react';
 import type { Market, Category } from '@/lib/i18n/config';
 import { categoryConfig, marketCategories } from '@/lib/i18n/config';
+import type { BestXIndexItem } from '@/lib/comparison/loader';
 
 /* ═══════════════════════════════════════════════════════════════
    ICON MAP — Maps category icon strings to Lucide components
@@ -39,10 +42,13 @@ const iconMap: Record<string, React.ElementType> = {
   Building,
   Wallet,
   BarChart: BarChart3,
-  PiggyBank: DollarSign,
+  PiggyBank,
   Home: Building,
-  Coins: DollarSign,
+  Coins,
   Calculator,
+  Eye,
+  Zap,
+  RefreshCw,
 };
 
 /* ═══════════════════════════════════════════════════════════════
@@ -213,6 +219,107 @@ export function ComplianceBar() {
 /* ═══════════════════════════════════════════════════════════════
    3. CATEGORY SHOWCASE — 6 sectors in 3-col bordered grid
 ═══════════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════════
+   3b. BEST-X COMPARE INDEX — the 10 money pages as a living grid.
+   Replaces CategoryShowcase on markets that have Best-X topics; each
+   tile shows the engine's current #1 pick + a Compare CTA, with
+   coming-soon tiles (no link) that auto-activate as topics ship.
+═══════════════════════════════════════════════════════════════ */
+interface BestXIndexProps {
+  market: Market;
+  items: BestXIndexItem[];
+}
+
+export function BestXIndex({ market, items }: BestXIndexProps) {
+  const prefix = market === 'us' ? '' : `/${market}`;
+  const sectorCats = marketCategories[market].slice(0, 6);
+
+  return (
+    <section style={{ maxWidth: '1140px', margin: '0 auto', padding: '112px 40px' }}>
+      <div style={{ textAlign: 'center', marginBottom: '64px' }}>
+        <span style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--sfp-slate)', display: 'block', marginBottom: '16px' }}>
+          Best-X Comparisons
+        </span>
+        <h2 style={{ fontSize: 'clamp(26px, 3.2vw, 38px)', fontWeight: 800, color: 'var(--sfp-ink)', letterSpacing: '-0.6px', marginBottom: '16px', lineHeight: 1.15 }}>
+          Compare the best — independent &amp; data-driven
+        </h2>
+        <p style={{ fontSize: '16px', color: 'var(--sfp-slate)', maxWidth: '520px', margin: '0 auto', lineHeight: 1.7 }}>
+          Side-by-side comparison cockpits for every category — ranked by our methodology, re-verified monthly, never by commission.
+        </p>
+      </div>
+
+      <div
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+        style={{ gap: '1px', background: '#E2E8F0', border: '1px solid #E2E8F0', borderRadius: '16px', overflow: 'hidden' }}
+      >
+        {items.map((item) => {
+          const IconComp = iconMap[item.icon] || Sparkles;
+          const isLink = item.status !== 'coming_soon' && !!item.href;
+          const tileStyle: React.CSSProperties = {
+            background: '#fff',
+            padding: '36px 32px',
+            display: 'block',
+            transition: 'all 0.25s ease',
+            opacity: item.status === 'coming_soon' ? 0.6 : 1,
+          };
+          const inner = (
+            <>
+              <div style={{ width: '40px', height: '40px', marginBottom: '16px', color: item.status === 'coming_soon' ? 'var(--sfp-slate)' : 'var(--sfp-navy)' }}>
+                <IconComp style={{ width: '24px', height: '24px' }} />
+              </div>
+              <h3 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--sfp-ink)', marginBottom: '8px', letterSpacing: '-0.2px' }}>
+                {item.label}
+              </h3>
+              <p style={{ fontSize: '14px', color: 'var(--sfp-slate)', lineHeight: 1.65, marginBottom: '20px' }}>
+                {item.blurb}
+              </p>
+              {item.status === 'coming_soon' ? (
+                <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--sfp-slate)', background: 'var(--sfp-gray)', padding: '4px 10px', borderRadius: '4px' }}>
+                  Launching soon
+                </span>
+              ) : (
+                <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+                  {item.winner && (
+                    <span style={{ fontSize: '11.5px', fontWeight: 600, color: 'var(--sfp-navy)', background: 'var(--sfp-sky)', padding: '4px 10px', borderRadius: '4px' }}>
+                      #1 {item.winner.name}
+                      {item.winner.metric ? ` · ${item.winner.metric}` : ''}
+                    </span>
+                  )}
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '13px', fontWeight: 600, color: 'var(--sfp-navy)' }}>
+                    {item.count ? `Compare ${item.count}` : 'Compare'} <ArrowRight style={{ width: '14px', height: '14px' }} />
+                  </span>
+                </div>
+              )}
+            </>
+          );
+          return isLink ? (
+            <Link key={item.topic} href={item.href!} className="no-underline sector-card-hover" style={tileStyle}>
+              {inner}
+            </Link>
+          ) : (
+            <div key={item.topic} style={tileStyle}>
+              {inner}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Browse by sector — keep the hub internal links */}
+      <div style={{ textAlign: 'center', marginTop: '32px', fontSize: '13px', color: 'var(--sfp-slate)' }}>
+        <span style={{ fontWeight: 600 }}>Browse by sector: </span>
+        {sectorCats.map((cat, i) => (
+          <span key={cat}>
+            {i > 0 && <span style={{ opacity: 0.5 }}> · </span>}
+            <Link href={`${prefix}/${cat}`} className="no-underline" style={{ color: 'var(--sfp-navy)' }}>
+              {categoryConfig[cat].name}
+            </Link>
+          </span>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 interface CategoryShowcaseProps {
   market: Market;
   categoryCounts: Record<string, number>;

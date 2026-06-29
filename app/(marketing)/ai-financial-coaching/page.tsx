@@ -109,7 +109,7 @@ const marketLinks = [
     market: 'United States',
     flag: '🇺🇸',
     links: [
-      { text: 'Best Robo-Advisors', href: '/us/personal-finance/best-robo-advisors' },
+      { text: 'Best Robo-Advisors', href: '/us/personal-finance/best/robo-advisors' },
       { text: 'Wealthfront Review', href: '/us/personal-finance/best-wealthfront-review-2026' },
       { text: 'AI ROI Calculator', href: '/tools/ai-roi-calculator' },
     ],
@@ -337,7 +337,7 @@ export default function AIFinancialCoachingPage() {
           </p>
           <div className="flex flex-wrap items-center justify-center gap-4">
             <Button asChild className="bg-[var(--sfp-gold)] hover:bg-[var(--sfp-gold-dark)]">
-              <Link href="/us/personal-finance/best-robo-advisors">
+              <Link href="/us/personal-finance/best/robo-advisors">
                 View Best Robo-Advisors <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
