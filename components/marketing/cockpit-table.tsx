@@ -88,14 +88,14 @@ export function CockpitTable({
   const maxCost = Math.max(1, ...costs);
 
   return (
-    <div style={{ background: '#fff', border: `1px solid ${C.border}`, borderRadius: 14, overflowX: 'auto' }}>
-      <table style={{ width: '100%', borderCollapse: 'collapse', fontVariantNumeric: 'tabular-nums', minWidth: 720 }}>
+    <div className="ck-scroll-x" style={{ background: '#fff', border: `1px solid ${C.border}`, borderRadius: 14, overflowX: 'auto' }}>
+      <table className="ck-tbl" style={{ width: '100%', borderCollapse: 'collapse', fontVariantNumeric: 'tabular-nums', minWidth: 720 }}>
         <thead>
           <tr style={{ background: '#FAFBFD', borderBottom: `1px solid ${C.border}` }}>
-            <th scope="col" style={{ width: 36 }}>
+            <th scope="col" className="ck-sticky-c1 ck-checkcol">
               <span className="sr-only">Compare</span>
             </th>
-            <th scope="col" style={{ textAlign: 'left', padding: '10px 8px', fontSize: 11.5, fontWeight: 600, color: C.slate, textTransform: 'uppercase', letterSpacing: '.3px' }}>
+            <th scope="col" className="ck-sticky-c2" style={{ textAlign: 'left', padding: '10px 8px', fontSize: 11.5, fontWeight: 600, color: C.slate, textTransform: 'uppercase', letterSpacing: '.3px' }}>
               Provider
             </th>
             <SortHead label="Rating" sortKey="rating" active={sort === 'rating'} dir={dir} onSort={onSort} />
@@ -123,18 +123,24 @@ export function CockpitTable({
                     : { label: 'Visit site', href: '#', external: true, tracked: false };
             return (
               <tr key={p.slug} style={{ borderTop: `1px solid ${C.border}`, background: p.isTopPick ? '#FBFCFE' : '#fff' }}>
-                <td style={{ textAlign: 'center', padding: '8px 4px' }}>
+                <td className="ck-sticky-c1 ck-checkcol">
                   <button
                     type="button"
+                    className="ck-tbl-check"
                     onClick={() => onToggleSelect(p.slug)}
                     aria-pressed={selected}
                     aria-label={`Compare ${p.displayName}`}
-                    style={{ width: 19, height: 19, borderRadius: 5, border: selected ? `1.5px solid ${C.ctaGreen}` : '1.5px solid #c4ccd6', background: selected ? C.ctaGreen : '#fff', color: '#fff', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}
+                    style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
                   >
-                    {selected && <Check size={12} aria-hidden="true" />}
+                    <span
+                      aria-hidden="true"
+                      style={{ width: 19, height: 19, borderRadius: 5, border: selected ? `1.5px solid ${C.ctaGreen}` : '1.5px solid #c4ccd6', background: selected ? C.ctaGreen : '#fff', color: '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+                    >
+                      {selected && <Check size={12} aria-hidden="true" />}
+                    </span>
                   </button>
                 </td>
-                <td style={{ padding: '10px 8px' }}>
+                <td className="ck-sticky-c2" style={{ padding: '10px 8px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <span aria-hidden="true" style={{ width: 26, height: 26, borderRadius: 7, background: C.navy, color: '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 11, flexShrink: 0 }}>
                       {p.initial}

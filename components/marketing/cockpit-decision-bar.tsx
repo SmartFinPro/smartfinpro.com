@@ -60,10 +60,12 @@ export function CockpitDecisionBar({
   return (
     <div style={{ background: '#fff', border: '1px solid #E1E7F0', borderRadius: 14, padding: '18px', marginBottom: 16 }}>
       <style>{`
-        .ck-pill{border:1px solid ${C.border};background:#fff;color:${C.navyDark};font-size:12.5px;padding:7px 12px;border-radius:999px;cursor:pointer;transition:all .12s;white-space:nowrap;font-weight:500;display:inline-flex;align-items:center;gap:5px;font-family:inherit}
-        .ck-pill:hover{background:#54B269;border-color:#54B269;color:#fff}
-        .ck-pill[data-on="true"]{background:#54B269;border-color:#54B269;color:#fff}
-        .ck-range{width:100%;accent-color:#F5A623;margin:7px 0 0}
+        .ck-root .ck-pill{border:1px solid ${C.border};background:#fff;color:${C.navyDark};font-size:12.5px;padding:7px 12px;border-radius:999px;cursor:pointer;transition:all .12s;white-space:nowrap;font-weight:500;display:inline-flex;align-items:center;gap:5px;font-family:inherit}
+        .ck-root .ck-pill:hover{background:#54B269;border-color:#54B269;color:#fff}
+        .ck-root .ck-pill[data-on="true"]{background:#54B269;border-color:#54B269;color:#fff}
+        .ck-root .ck-range{width:100%;accent-color:#F5A623;margin:7px 0 0}
+        .ck-root .ck-decision-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px}
+        @media (max-width:640px){.ck-root .ck-decision-grid{grid-template-columns:1fr;gap:12px}}
       `}</style>
 
       <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
@@ -117,7 +119,7 @@ export function CockpitDecisionBar({
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginTop: 16 }}>
+      <div className="ck-decision-grid">
         {/* In a hurry? */}
         <div style={{ background: '#FAFBFD', border: '1px solid #E1E7F0', borderRadius: 12, padding: 16 }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 600, color: C.slate, textTransform: 'uppercase', letterSpacing: '.4px', marginBottom: 13 }}>

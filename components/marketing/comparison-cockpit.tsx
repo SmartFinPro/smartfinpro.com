@@ -269,17 +269,55 @@ export function ComparisonCockpit({ products, category, topic }: ComparisonCockp
   ];
 
   return (
-    <div style={{ fontVariantNumeric: 'tabular-nums' }}>
+    <div className="ck-root" style={{ fontVariantNumeric: 'tabular-nums' }}>
       <style>{`
-        .ck-cta::after{content:none !important}
-        .cmp-cta{transition:background .12s ease,color .12s ease,border-color .12s ease}
-        .cmp-cta:hover{background:#54B269 !important;border-color:#54B269 !important;color:#fff !important}
-        .ck-fil{border:1px solid #C9D1DC;background:#fff;color:${C.ink};font-size:12px;padding:7px 13px;border-radius:999px;cursor:pointer;transition:all .12s;font-weight:500;font-family:inherit}
-        .ck-fil:hover{background:#54B269;border-color:#54B269;color:#fff}
-        .ck-fil[data-on="true"]{background:#54B269;border-color:#54B269;color:#fff}
-        .ck-seg{padding:9px 15px;font-size:13px;font-weight:600;color:${C.navy};background:#fff;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-family:inherit;border:none;transition:all .12s}
-        .ck-seg:hover:not([data-on="true"]){background:#54B269;color:#fff}
-        .ck-seg[data-on="true"]{background:${C.navy};color:#fff}
+        .ck-root .ck-cta::after{content:none !important}
+        .ck-root .cmp-cta{transition:background .12s ease,color .12s ease,border-color .12s ease}
+        .ck-root .cmp-cta:hover{background:#54B269 !important;border-color:#54B269 !important;color:#fff !important}
+        .ck-root .ck-fil{border:1px solid #C9D1DC;background:#fff;color:${C.ink};font-size:12px;padding:7px 13px;border-radius:999px;cursor:pointer;transition:all .12s;font-weight:500;font-family:inherit}
+        .ck-root .ck-fil:hover{background:#54B269;border-color:#54B269;color:#fff}
+        .ck-root .ck-fil[data-on="true"]{background:#54B269;border-color:#54B269;color:#fff}
+        .ck-root .ck-seg{padding:9px 15px;font-size:13px;font-weight:600;color:${C.navy};background:#fff;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-family:inherit;border:none;transition:all .12s}
+        .ck-root .ck-seg:hover:not([data-on="true"]){background:#54B269;color:#fff}
+        .ck-root .ck-seg[data-on="true"]{background:${C.navy};color:#fff}
+        /* Phase B — mobile (≤640px). Base rules replicate prior inline desktop values (no desktop regression). */
+        .ck-root .ck-toolbar-controls{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+        .ck-root .ck-seg-group{display:inline-flex;border:1.5px solid ${C.navy};border-radius:11px;overflow:hidden}
+        .ck-root .ck-sort{display:flex;align-items:center;gap:8px}
+        .ck-root .ck-card{padding:22px 24px}
+        .ck-root .ck-card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
+        .ck-root .ck-card-cta{display:flex;flex-direction:column;align-items:flex-end;flex-shrink:0}
+        .ck-root .ck-card-spec{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin:18px 0 4px}
+        .ck-root .ck-card-proscons{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin:16px 0 2px}
+        .ck-root .ck-card-rating-row{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+        .ck-root .ck-card-rating-actions{display:flex;gap:10px}
+        .ck-root .ck-card-head > *,.ck-root .ck-card-spec > *,.ck-root .ck-card-proscons > *,.ck-root .ck-card-rating-actions > *{min-width:0}
+        .ck-root .ck-scroll-x{-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain}
+        .ck-root .ck-checkcol{width:40px;text-align:center;padding:8px 0}
+        @media (max-width:640px){
+          .ck-root .ck-toolbar-controls{width:100%;flex-direction:column;align-items:stretch;gap:10px}
+          .ck-root .ck-seg-group{width:100%}
+          .ck-root .ck-seg-group .ck-seg{flex:1;justify-content:center}
+          .ck-root .ck-sort{justify-content:flex-end}
+          .ck-root .ck-sort select{flex:1}
+          .ck-root .ck-card{padding:18px 16px}
+          .ck-root .ck-card-head{flex-direction:column;gap:14px}
+          .ck-root .ck-card-cta{align-items:stretch;width:100%}
+          .ck-root .ck-card-cta .ck-card-cta-btn{width:100%;justify-content:center}
+          .ck-root .ck-card-spec{grid-template-columns:repeat(2,1fr);gap:14px}
+          .ck-root .ck-card-proscons{grid-template-columns:1fr;gap:6px}
+          .ck-root .ck-card-rating-row{flex-direction:column;align-items:stretch}
+          .ck-root .ck-card-rating-actions{width:100%}
+          .ck-root .ck-card-rating-actions > a,.ck-root .ck-card-rating-actions > button{flex:1;justify-content:center;text-align:center}
+          .ck-root .ck-tbl td.ck-sticky-c1{position:sticky;left:0;z-index:1;background:#fff}
+          .ck-root .ck-tbl td.ck-sticky-c2{position:sticky;left:40px;z-index:1;background:#fff;box-shadow:1px 0 0 #E1E7F0}
+          .ck-root .ck-tbl th.ck-sticky-c1{position:sticky;left:0;z-index:1;background:#FAFBFD}
+          .ck-root .ck-tbl th.ck-sticky-c2{position:sticky;left:40px;z-index:1;background:#FAFBFD;box-shadow:1px 0 0 #E1E7F0}
+          .ck-root .ck-tbl-check{min-width:40px;min-height:40px;display:inline-flex;align-items:center;justify-content:center}
+          .ck-root .ck-cmp-corner{position:sticky;left:0;z-index:3;background:${C.navy}}
+          .ck-root .ck-cmp-label{position:sticky;left:0;z-index:2;background:#FAFBFD}
+          .ck-root .ck-cmp-remove{min-width:40px;min-height:40px;display:inline-flex;align-items:center;justify-content:center}
+        }
       `}</style>
 
       <Suspense fallback={null}>
@@ -307,8 +345,8 @@ export function ComparisonCockpit({ products, category, topic }: ComparisonCockp
         <div style={{ fontSize: 15, fontWeight: 600, color: C.ink }}>
           {visible.length} {visible.length === 1 ? 'provider' : 'providers'}
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-          <div style={{ display: 'inline-flex', border: `1.5px solid ${C.navy}`, borderRadius: 11, overflow: 'hidden' }}>
+        <div className="ck-toolbar-controls">
+          <div className="ck-seg-group">
             {views.map((v, i) => (
               <button
                 key={v.key}
@@ -325,7 +363,7 @@ export function ComparisonCockpit({ products, category, topic }: ComparisonCockp
               </button>
             ))}
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: C.slate }}>
+          <div className="ck-sort" style={{ fontSize: 13, color: C.slate }}>
             <label htmlFor="ck-sort">Sort</label>
             <select
               id="ck-sort"

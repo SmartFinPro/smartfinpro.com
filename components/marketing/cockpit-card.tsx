@@ -110,18 +110,18 @@ export function CockpitCard({
 
   return (
     <div
+      className="ck-card"
       style={{
         background: '#fff',
         border: isMatch ? `2px solid ${C.ctaGreen}` : isTop ? `2px solid ${C.navy}` : `1px solid ${C.border}`,
         borderRadius: 12,
-        padding: '22px 24px',
         marginBottom: 14,
         boxShadow: isMatch ? '0 4px 20px rgba(84,178,107,.16)' : '0 1px 3px rgba(27,79,140,.05)',
         fontVariantNumeric: 'tabular-nums',
       }}
     >
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16, flexWrap: 'wrap' }}>
+      <div className="ck-card-head">
         <div style={{ display: 'flex', gap: 15, alignItems: 'flex-start' }}>
           <div
             aria-hidden="true"
@@ -154,10 +154,10 @@ export function CockpitCard({
             {p.tagline && <div style={{ fontSize: 14, color: C.slate, marginTop: 4 }}>{p.tagline}</div>}
           </div>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', flexShrink: 0 }}>
+        <div className="ck-card-cta">
           <a
             href={primary.href}
-            className="cmp-cta"
+            className="cmp-cta ck-card-cta-btn"
             {...(primary.external ? { target: '_blank', rel: 'nofollow sponsored noopener' } : {})}
             onClick={primary.tracked ? () => onOfferClick(p) : undefined}
             style={{
@@ -203,7 +203,7 @@ export function CockpitCard({
       )}
 
       {/* Spec row: first 3 config columns + live X-yr cost */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, margin: '18px 0 4px' }}>
+      <div className="ck-card-spec">
         {specCells.map((col) => {
           const win = isColWinner(col.key, p);
           return (
@@ -219,14 +219,14 @@ export function CockpitCard({
       </div>
 
       {/* Pros / Cons */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 22, margin: '16px 0 2px' }}>
+      <div className="ck-card-proscons">
         <div>{p.pros.map((x) => <LineItem key={x} kind="pro" text={x} />)}</div>
         <div>{p.cons.map((x) => <LineItem key={x} kind="con" text={x} />)}</div>
       </div>
 
       {/* Dashed divider + rating row */}
       <div style={{ borderTop: `1px dashed ${C.borderStrong}`, margin: '16px 0' }} />
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+      <div className="ck-card-rating-row">
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <span style={{ fontSize: 26, fontWeight: 700, color: C.ink, letterSpacing: '-.5px' }}>{p.rating.toFixed(1)}</span>
           <div style={{ display: 'flex', gap: 4 }} aria-label={`${p.rating} out of 5`}>
@@ -240,7 +240,7 @@ export function CockpitCard({
             <b style={{ color: C.ink, fontWeight: 600 }}>{p.reviewCount.toLocaleString('en-US')}</b> reviews
           </span>
         </div>
-        <div style={{ display: 'flex', gap: 10 }}>
+        <div className="ck-card-rating-actions">
           {showReadReviewInRating && reviewHref && (
             <a className="cmp-cta" href={reviewHref} style={{ padding: '10px 20px', borderRadius: 8, fontSize: 13.5, fontWeight: 600, textDecoration: 'none', background: C.sky, color: C.checkBlue, border: `1px solid ${C.sky}` }}>
               Read review
