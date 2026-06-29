@@ -271,6 +271,26 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
 
     // ============================================================
+    // 9c. COMPARISON COCKPIT "/best/{topic}" PAGES — Priority 0.8
+    // The 3-segment cockpit money pages. DB-driven (active products only) so
+    // every URL resolves 200 — do NOT enumerate the manifest (coming_soon → 404).
+    // ============================================================
+    try {
+      const { getCockpitRouteParams } = await import('@/lib/comparison/loader');
+      const cockpitParams = await getCockpitRouteParams();
+      for (const { market, category, topic } of cockpitParams) {
+        entries.push({
+          url: marketUrl(market, `/${category}/best/${topic}`),
+          lastModified: pillarLastMod.get(`${market}/${category}`) || now,
+          changeFrequency: 'weekly',
+          priority: 0.8,
+        });
+      }
+    } catch {
+      // Cockpit data unavailable at build — non-fatal, skip topic entries.
+    }
+
+    // ============================================================
     // 10. STATIC PAGES — Priority 0.5-0.6
     // ============================================================
 

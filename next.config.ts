@@ -51,6 +51,7 @@ const nextConfig: SmartFinNextConfig = {
   // ============================================================
   experimental: {
     optimizeCss: false, // Disabled for Safari compatibility
+    optimizePackageImports: ['lucide-react'], // shrink the client cockpit hydration chunk
   },
 
   // ============================================================

@@ -30,7 +30,7 @@ export const businessBankAccountsConfig: TopicConfig = {
   h1: (y) => `Best business bank accounts in ${y}`,
   metaTitle: (y) => `Best Business Bank Accounts (${y}) — Compared & Ranked`,
   metaDescription: (y) =>
-    `Compare the best US business checking accounts of ${y} side by side: monthly fees, FDIC coverage, sub-accounts, ATM and wire support, plus a live multi-year cost projection. Independent, data-driven, no fluff.`,
+    `Compare the best US business bank accounts of ${y}: monthly fees, FDIC coverage, sub-accounts, ATM & wire support, plus a live multi-year cost calculator.`,
   intro:
     'Independent, side-by-side comparison of the leading US business checking accounts — ranked by fees, FDIC coverage and features, with a live cost projection over your chosen time horizon.',
   publishedDate: '2026-06-29',
@@ -193,6 +193,10 @@ export const businessBankAccountsConfig: TopicConfig = {
     },
   ],
   faq: [
+    {
+      q: 'What is the best business bank account in 2026?',
+      a: 'Mercury is our top overall pick for 2026 — $0 monthly fees with up to $5M in FDIC coverage through its partner-bank sweep network. Novo is best for freelancers and solopreneurs, and Relay is best for teams that need multiple sub-accounts. We re-verify fees and features quarterly, and the ranking never depends on commissions.',
+    },
     {
       q: 'How is the multi-year cost calculated?',
       a: 'We apply each account’s monthly fee plus a representative usage profile (about 4 out-of-network ATM withdrawals and $500 of foreign spend per month) across your chosen time horizon. Move the horizon slider to see the dollar impact — the ranking updates live.',
