@@ -132,9 +132,12 @@ export default async function CockpitPage({ params }: CockpitPageProps) {
         <p className="mt-2 text-base" style={{ color: 'var(--sfp-slate)' }}>
           {config.intro}
         </p>
-        <div className="mt-4">
-          <AffiliateDisclosure market={market as Market} position="top" />
-        </div>
+        <p className="mt-3 text-xs" style={{ color: 'var(--sfp-slate)' }}>
+          Advertising disclosure: some links may earn us a commission at no cost to you — it never affects our rankings.{' '}
+          <a href="#affiliate-disclosure" className="underline" style={{ color: 'var(--sfp-navy)' }}>
+            Details
+          </a>
+        </p>
       </div>
 
       <div className="mx-auto max-w-6xl px-4 pb-10 pt-4">
@@ -146,6 +149,10 @@ export default async function CockpitPage({ params }: CockpitPageProps) {
             topic={topic}
           />
         </Suspense>
+      </div>
+
+      <div className="mx-auto max-w-4xl px-4 pb-12" id="affiliate-disclosure">
+        <AffiliateDisclosure market={market as Market} position="bottom" />
       </div>
 
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }} />
