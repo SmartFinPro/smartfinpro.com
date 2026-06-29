@@ -3,9 +3,11 @@
 
 import type { TopicConfig } from './types';
 import { roboAdvisorsConfig } from './robo-advisors';
+import { businessBankAccountsConfig } from './business-bank-accounts';
 
 const REGISTRY: Record<string, TopicConfig> = {
   'personal-finance/robo-advisors': roboAdvisorsConfig,
+  'business-banking/business-bank-accounts': businessBankAccountsConfig,
 };
 
 export function getTopicConfig(category: string, topic: string): TopicConfig | null {

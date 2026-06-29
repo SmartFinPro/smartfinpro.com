@@ -2,7 +2,7 @@
 // Presentational decision bar: "Find my match" wizard, "In a hurry?" intent
 // quick-sorts, and the live cost sliders that re-rank everything. Config-driven.
 
-import { Sparkles, Zap, Calculator, ArrowRight, Coins, Percent, Wallet, Star, type LucideIcon } from 'lucide-react';
+import { Sparkles, Zap, Calculator, ArrowRight, Coins, Percent, Wallet, Star, Users, type LucideIcon } from 'lucide-react';
 import type { ProductForComparison } from '@/lib/comparison/types';
 import type { TopicConfig } from '@/lib/comparison/topics/types';
 
@@ -16,7 +16,7 @@ const C = {
   ctaGreen: '#54B269',
 } as const;
 
-const CHIP_ICON: Record<string, LucideIcon> = { Coins, Percent, Wallet, Star };
+const CHIP_ICON: Record<string, LucideIcon> = { Coins, Percent, Wallet, Star, Users };
 const usd = (n: number) => `$${Math.round(n).toLocaleString('en-US')}`;
 
 export interface MatchRow {
@@ -142,12 +142,17 @@ export function CockpitDecisionBar({
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 600, color: C.slate, textTransform: 'uppercase', letterSpacing: '.4px', marginBottom: 9 }}>
             <Calculator size={13} aria-hidden="true" /> Your cost · re-ranks live
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13.5, color: C.ink }}>
-            <span>{cm.amountLabel}</span>
-            <b style={{ fontWeight: 700, color: C.navy }}>{usd(amount)}</b>
-          </div>
-          <input className="ck-range" type="range" min={cm.amountMin} max={cm.amountMax} step={cm.amountStep} value={amount} aria-label={cm.amountLabel} onChange={(e) => onAmount(Number(e.target.value))} />
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13.5, color: C.ink, marginTop: 12 }}>
+          {/* Banking cost = annual fees × years (amount is ignored) → hide the amount slider. */}
+          {cm.kind !== 'banking' && (
+            <>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13.5, color: C.ink }}>
+                <span>{cm.amountLabel}</span>
+                <b style={{ fontWeight: 700, color: C.navy }}>{usd(amount)}</b>
+              </div>
+              <input className="ck-range" type="range" min={cm.amountMin} max={cm.amountMax} step={cm.amountStep} value={amount} aria-label={cm.amountLabel} onChange={(e) => onAmount(Number(e.target.value))} />
+            </>
+          )}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13.5, color: C.ink, marginTop: cm.kind === 'banking' ? 0 : 12 }}>
             <span>{cm.yearsLabel}</span>
             <b style={{ fontWeight: 700, color: C.navy }}>{years}</b>
           </div>
