@@ -278,7 +278,7 @@ export function ComparisonCockpit({ products, category, topic }: ComparisonCockp
         .ck-fil:hover{background:${C.sky};border-color:#9FC0EE;color:#3B5FD9}
         .ck-fil[data-on="true"]{background:${C.sky};border-color:#9FC0EE;color:#3B5FD9}
         .ck-seg{padding:9px 15px;font-size:13px;font-weight:600;color:${C.navy};background:#fff;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-family:inherit;border:none;transition:all .12s}
-        .ck-seg:hover{background:${C.sky}}
+        .ck-seg:hover:not([data-on="true"]){background:#54B269;color:#fff}
         .ck-seg[data-on="true"]{background:${C.navy};color:#fff}
       `}</style>
 
