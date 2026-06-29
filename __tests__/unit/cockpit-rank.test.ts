@@ -47,6 +47,16 @@ describe('orderProducts', () => {
     expect(out[0].slug).toBe('free');
   });
 
+  it("does NOT pin isTopPick on an explicit sort ('cost') — honest order", () => {
+    const products = [
+      makeProduct({ slug: 'pick', managementFee: 0.5, isTopPick: true }),
+      makeProduct({ slug: 'free', managementFee: 0 }),
+      makeProduct({ slug: 'mid', managementFee: 0.25 }),
+    ];
+    const out = orderProducts(products, config, inputs, 'cost');
+    expect(out[0].slug).toBe('free'); // cheapest first, top pick not forced to #1
+  });
+
   it('does not mutate the input array', () => {
     const products = [makeProduct({ slug: 'a', score: 1 }), makeProduct({ slug: 'b', score: 9 })];
     const snapshot = products.slice();

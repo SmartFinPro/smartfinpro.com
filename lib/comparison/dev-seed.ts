@@ -6,8 +6,7 @@
 // production. Once the migration + seed are live, real DB rows take over.
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-export const DEV_SEED_ROWS: Record<string, any[]> = {
-  'us/business-banking': [
+const BUSINESS_BANKING_US: any[] = [
     {
       slug: 'mercury', market: 'us', category: 'business-banking', display_name: 'Mercury',
       tagline: 'Best business banking for VC-backed startups', logo_url: null, verified: true,
@@ -83,7 +82,16 @@ export const DEV_SEED_ROWS: Record<string, any[]> = {
       entity_types: ['sole-prop', 'llc'], supports_cash_deposits: true, supports_intl_wires: false, has_bookkeeping: true, has_lending: false, integrations: [],
       is_affiliate: false, review_slug: null, external_url: 'https://lili.co/', is_top_pick: false, best_for: 'Tax tools', display_order: 5,
     },
-  ],
+];
+
+export const DEV_SEED_ROWS: Record<string, any[]> = {
+  // Legacy 2-segment engine key (unchanged).
+  'us/business-banking': BUSINESS_BANKING_US,
+  // Cockpit 3-segment key — same rows, tagged with the topic the loader queries by.
+  'us/business-banking/business-bank-accounts': BUSINESS_BANKING_US.map((r) => ({
+    ...r,
+    topic: 'business-bank-accounts',
+  })),
 
   'us/personal-finance/robo-advisors': [
     {

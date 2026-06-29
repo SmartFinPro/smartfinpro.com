@@ -62,7 +62,10 @@ export function orderProducts(
         : p.score;
   const sign = (opt?.dir ?? dir) === 'asc' ? -1 : 1;
   const sorted = products.slice().sort((a, b) => sign * (metric(b) - metric(a)));
-  const pin = sorted.findIndex((p) => p.isTopPick);
+  // Pin the editor's top pick to #1 ONLY on Smart Rank. Explicit sorts
+  // (cost/fee/rating/team/apy + the priority chips) must sort honestly so
+  // "Lowest cost" really shows the cheapest first. The top-pick badge still shows.
+  const pin = sort === 'smart' ? sorted.findIndex((p) => p.isTopPick) : -1;
   if (pin > 0) {
     const [top] = sorted.splice(pin, 1);
     sorted.unshift(top);
