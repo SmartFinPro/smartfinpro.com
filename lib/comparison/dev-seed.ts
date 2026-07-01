@@ -137,7 +137,7 @@ export const DEV_SEED_ROWS: Record<string, any[]> = {
       sub_scores: { fees: 9.9, features: 7.8, ux: 8.4, support: 8.8 },
       verdict: 'The best free starter for cost-conscious investors',
       deep_dive: 'Fidelity Go is free under $25,000 and has effectively no minimum, making it the cheapest way to start automated investing — the trade-off is no tax-loss harvesting and a 0.35% fee once balances grow past $25k.',
-      is_affiliate: false, review_slug: 'fidelity-go-review', external_url: 'https://www.fidelity.com', is_top_pick: false, best_for: 'Beginners', display_order: 3,
+      is_affiliate: false, review_slug: null, external_url: 'https://www.fidelity.com', is_top_pick: false, best_for: 'Beginners', display_order: 3,
     },
     {
       slug: 'schwab-intelligent', market: 'us', category: 'personal-finance', topic: 'robo-advisors', display_name: 'Schwab Intelligent',
@@ -152,7 +152,7 @@ export const DEV_SEED_ROWS: Record<string, any[]> = {
       sub_scores: { fees: 9.6, features: 8.5, ux: 8.0, support: 9.0 },
       verdict: 'The best zero-fee option for larger balances',
       deep_dive: 'Schwab Intelligent Portfolios charges no advisory fee and adds tax-loss harvesting above $50k, but requires a $5,000 minimum and keeps a mandatory cash allocation that can drag on returns.',
-      is_affiliate: false, review_slug: 'schwab-intelligent-review', external_url: 'https://www.schwab.com', is_top_pick: false, best_for: '$50k+ balances', display_order: 4,
+      is_affiliate: false, review_slug: null, external_url: 'https://www.schwab.com', is_top_pick: false, best_for: '$50k+ balances', display_order: 4,
     },
     {
       slug: 'vanguard-digital', market: 'us', category: 'personal-finance', topic: 'robo-advisors', display_name: 'Vanguard Digital',
@@ -167,7 +167,7 @@ export const DEV_SEED_ROWS: Record<string, any[]> = {
       sub_scores: { fees: 9.4, features: 7.4, ux: 7.6, support: 8.2 },
       verdict: 'The best pick for buy-and-hold index investors',
       deep_dive: 'Vanguard Digital Advisor wraps genuine Vanguard index funds in a very low 0.15% all-in fee, making it the natural home for long-term, buy-and-hold investors who do not need tax-loss harvesting.',
-      is_affiliate: false, review_slug: 'vanguard-digital-advisor-review', external_url: 'https://investor.vanguard.com', is_top_pick: false, best_for: 'Long-term index', display_order: 5,
+      is_affiliate: false, review_slug: null, external_url: 'https://investor.vanguard.com', is_top_pick: false, best_for: 'Long-term index', display_order: 5,
     },
     {
       slug: 'sofi-robo', market: 'us', category: 'personal-finance', topic: 'robo-advisors', display_name: 'SoFi Robo',
@@ -182,7 +182,7 @@ export const DEV_SEED_ROWS: Record<string, any[]> = {
       sub_scores: { fees: 9.5, features: 7.2, ux: 9.0, support: 8.4 },
       verdict: 'The best free starter robo for beginners',
       deep_dive: 'SoFi’s automated investing is free to manage and includes complimentary access to human financial planners, which — combined with a $50 minimum and a polished app — makes it a friendly on-ramp for first-time investors.',
-      is_affiliate: true, review_slug: 'sofi-robo-review', external_url: 'https://www.sofi.com', is_top_pick: false, best_for: 'Beginners', display_order: 6,
+      is_affiliate: true, review_slug: null, external_url: 'https://www.sofi.com', is_top_pick: false, best_for: 'Beginners', display_order: 6,
     },
   ],
 };

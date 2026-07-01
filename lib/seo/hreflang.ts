@@ -30,12 +30,15 @@ export function generateHreflang(
     });
   });
 
-  // x-default points to US version
-  links.push({
-    rel: 'alternate',
-    hreflang: 'x-default',
-    href: `${BASE_URL}/us${path}`,
-  });
+  // x-default points to the US version when it exists, otherwise the first available market
+  const defaultMarket = availableMarkets.includes('us') ? 'us' : availableMarkets[0];
+  if (defaultMarket) {
+    links.push({
+      rel: 'alternate',
+      hreflang: 'x-default',
+      href: `${BASE_URL}/${defaultMarket}${path}`,
+    });
+  }
 
   return links;
 }
@@ -54,8 +57,11 @@ export function generateAlternates(
     alternates[marketConfig[market].hreflang] = `${BASE_URL}/${market}${path}`;
   });
 
-  // Add x-default
-  alternates['x-default'] = `${BASE_URL}/us${path}`;
+  // Add x-default: US version when it exists, otherwise the first available market
+  const defaultMarket = availableMarkets.includes('us') ? 'us' : availableMarkets[0];
+  if (defaultMarket) {
+    alternates['x-default'] = `${BASE_URL}/${defaultMarket}${path}`;
+  }
 
   return alternates;
 }
