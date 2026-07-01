@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>SmartFinPro Media Kit 2026</title>
+<style>
+  :root {
+    --sfp-navy: #1B4F8C;
+    --sfp-navy-dark: #163D6E;
+    --sfp-gold: #F5A623;
+    --sfp-gold-dark: #D48B1A;
+    --sfp-green: #1A6B3A;
+    --sfp-sky: #E8F0FB;
+    --sfp-gray: #F2F4F8;
+    --sfp-ink: #1A1A2E;
+    --sfp-slate: #555555;
+    --sfp-line: #D9DEE6;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    color: var(--sfp-ink);
+    font-size: 10.5pt;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3 {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-weight: normal;
+    color: var(--sfp-navy-dark);
+    margin: 0;
+  }
+
+  .page {
+    width: 8.5in;
+    height: 11in;
+    position: relative;
+    page-break-after: always;
+    overflow: hidden;
+  }
+  .page:last-child { page-break-after: avoid; }
+
+  .content {
+    padding: 0.85in 0.75in 0.75in 0.75in;
+    height: 100%;
+  }
+
+  /* ---------- Running header/footer for interior pages ---------- */
+  .doc-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 7.5pt;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--sfp-slate);
+    border-bottom: 1px solid var(--sfp-line);
+    padding-bottom: 8px;
+    margin-bottom: 26px;
+  }
+  .doc-header .brand {
+    color: var(--sfp-navy-dark);
+    font-weight: bold;
+    letter-spacing: 0.08em;
+  }
+
+  .doc-footer {
+    position: absolute;
+    bottom: 0.45in;
+    left: 0.75in;
+    right: 0.75in;
+    display: flex;
+    justify-content: space-between;
+    font-size: 7.5pt;
+    color: var(--sfp-slate);
+    border-top: 1px solid var(--sfp-line);
+    padding-top: 6px;
+  }
+
+  .eyebrow {
+    font-size: 8.5pt;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--sfp-gold-dark);
+    font-weight: bold;
+    margin-bottom: 6px;
+  }
+
+  h1.section-title {
+    font-size: 22pt;
+    margin-bottom: 18px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--sfp-navy);
+  }
+
+  p { margin: 0 0 10px 0; }
+  .lede {
+    font-size: 11.5pt;
+    color: var(--sfp-navy-dark);
+    margin-bottom: 16px;
+  }
+
+  ul.clean { list-style: none; margin: 0 0 14px 0; padding: 0; }
+  ul.clean li {
+    position: relative;
+    padding-left: 18px;
+    margin-bottom: 9px;
+  }
+  ul.clean li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 6px;
+    width: 6px;
+    height: 6px;
+    background: var(--sfp-gold);
+  }
+  ul.check { list-style: none; margin: 0 0 14px 0; padding: 0; }
+  ul.check li {
+    position: relative;
+    padding-left: 22px;
+    margin-bottom: 9px;
+  }
+  ul.check li::before { display: none; }
+  ul.check li::after {
+    content: "\2713";
+    position: absolute;
+    left: 0;
+    top: 0;
+    color: var(--sfp-green);
+    font-weight: bold;
+    font-size: 10pt;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 8px 0 18px 0;
+    font-size: 9.5pt;
+  }
+  th {
+    background: var(--sfp-navy);
+    color: white;
+    text-align: left;
+    padding: 8px 10px;
+    font-weight: normal;
+    font-size: 8.5pt;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+  }
+  td {
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--sfp-line);
+    vertical-align: top;
+  }
+  tr:nth-child(even) td { background: var(--sfp-sky); }
+
+  .callout {
+    background: var(--sfp-gray);
+    border-left: 3px solid var(--sfp-navy);
+    padding: 14px 18px;
+    margin: 14px 0;
+    font-size: 9.8pt;
+    color: var(--sfp-navy-dark);
+  }
+  .callout.gold { border-left-color: var(--sfp-gold-dark); }
+  .callout.green { border-left-color: var(--sfp-green); }
+
+  .stat-grid {
+    display: flex;
+    gap: 0;
+    margin: 10px 0 22px 0;
+    border-top: 1px solid var(--sfp-line);
+    border-bottom: 1px solid var(--sfp-line);
+  }
+  .stat {
+    flex: 1;
+    padding: 16px 10px;
+    text-align: center;
+    border-right: 1px solid var(--sfp-line);
+  }
+  .stat:last-child { border-right: none; }
+  .stat .num {
+    font-family: Georgia, serif;
+    font-size: 22pt;
+    color: var(--sfp-navy-dark);
+    display: block;
+  }
+  .stat .label {
+    font-size: 7.8pt;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--sfp-slate);
+  }
+
+  .two-col {
+    display: flex;
+    gap: 28px;
+  }
+  .two-col > div { flex: 1; }
+
+  h3.sub {
+    font-size: 12.5pt;
+    color: var(--sfp-navy-dark);
+    margin: 18px 0 8px 0;
+    font-weight: bold;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+  }
+
+  .tag {
+    display: inline-block;
+    background: var(--sfp-sky);
+    color: var(--sfp-navy-dark);
+    font-size: 7.5pt;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    margin: 2px 6px 2px 0;
+    border: 1px solid var(--sfp-line);
+  }
+
+  .example-url {
+    font-family: 'Courier New', monospace;
+    font-size: 9pt;
+    color: var(--sfp-navy-dark);
+  }
+
+  /* ---------- Cover page ---------- */
+  .cover {
+    background: linear-gradient(to bottom, #1B4F8C, #2563EB);
+    color: white;
+    height: 100%;
+    position: relative;
+  }
+  .cover-gold-bar {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 6px;
+    background: var(--sfp-gold);
+  }
+  .cover-inner {
+    padding: 0.9in 0.9in 0 0.9in;
+  }
+  .cover-mark {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 90px;
+  }
+  .cover-mark .box {
+    width: 40px; height: 40px;
+    border-radius: 9px;
+    background: rgba(255,255,255,0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .cover-mark .wordmark {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-weight: bold;
+    font-size: 19pt;
+    letter-spacing: -0.02em;
+    color: #fff;
+  }
+  .cover-mark .wordmark .fin {
+    color: rgba(255,255,255,0.85);
+  }
+  .cover h1 {
+    color: white;
+    font-size: 34pt;
+    line-height: 1.18;
+    max-width: 6.2in;
+    margin-bottom: 22px;
+  }
+  .cover .dek {
+    font-size: 12.5pt;
+    color: #C9D9EC;
+    max-width: 5in;
+    line-height: 1.6;
+    margin-bottom: 60px;
+  }
+  .cover-meta {
+    border-top: 1px solid rgba(255,255,255,0.25);
+    padding-top: 18px;
+    display: flex;
+    gap: 40px;
+    font-size: 9pt;
+    color: #C9D9EC;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .cover-footer {
+    position: absolute;
+    bottom: 0.55in;
+    left: 0.9in;
+    right: 0.9in;
+    font-size: 8pt;
+    color: #93AAC9;
+    border-top: 1px solid rgba(255,255,255,0.2);
+    padding-top: 12px;
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ PAGE 1 — COVER ============ -->
+<div class="page">
+  <div class="cover">
+    <div class="cover-gold-bar"></div>
+    <div class="cover-inner">
+      <div class="cover-mark">
+        <div class="box">
+          <svg viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" width="20" height="20">
+            <rect x="6.5" y="1" width="5" height="16" rx="1.5" fill="#FFC942"/>
+            <rect x="1" y="6.5" width="16" height="5" rx="1.5" fill="#FFC942"/>
+          </svg>
+        </div>
+        <div class="wordmark">Smart<span class="fin">Fin</span>Pro</div>
+      </div>
+      <h1>Media Kit 2026</h1>
+      <div class="dek">Independent financial product research and comparison platform, serving high-intent readers across four English-speaking markets.</div>
+      <div class="cover-meta">
+        <span>Confidential Partner Briefing</span>
+        <span>US &middot; UK &middot; Canada &middot; Australia</span>
+      </div>
+    </div>
+    <div class="cover-footer">
+      SmartFinPro LLC &middot; Wyoming, USA &middot; smartfinpro.com &middot; media@smartfinpro.com<br/>
+      Prepared for prospective partners. Not for public distribution.
+    </div>
+  </div>
+</div>
+
+<!-- ============ PAGE 2 — EXECUTIVE SUMMARY ============ -->
+<div class="page">
+  <div class="content">
+    <div class="doc-header"><span class="brand">SmartFinPro</span><span>Media Kit 2026 &middot; Confidential</span></div>
+
+    <div class="eyebrow">Executive Summary</div>
+    <h1 class="section-title">About SmartFinPro</h1>
+
+    <p class="lede">SmartFinPro is an independent, expert-led research and comparison platform for financial products and services, built for readers who are actively evaluating options before they commit.</p>
+
+    <p>Founded in 2024 and operated by SmartFinPro LLC (Wyoming, USA), the platform publishes in-depth, editorially independent coverage across trading platforms, business banking, robo-advisors and wealth management, forex brokers, cybersecurity tools for professionals, AI productivity tools, credit and personal finance products, and precious metals investing &mdash; localised for the United States, United Kingdom, Canada, and Australia.</p>
+
+    <h3 class="sub">Built For</h3>
+    <ul class="clean">
+      <li>Individual investors and traders comparing platforms before opening an account</li>
+      <li>Small business owners evaluating banking, payments, and finance tooling</li>
+      <li>Finance professionals and consultants researching vendor and software options</li>
+      <li>Readers arriving via specific, comparison-oriented search queries &mdash; not casual browsing</li>
+    </ul>
+
+    <h3 class="sub">Why Partners Engage With SmartFinPro</h3>
+    <ul class="check">
+      <li>Four-market reach &mdash; US, UK, Canada, and Australia &mdash; from a single integration</li>
+      <li>Structured comparison placement inside a genuine decision tool, not a rotating banner</li>
+      <li>A compliance-first editorial model with regional regulatory disclosure built in</li>
+      <li>Attribution-gated tracking infrastructure designed for verified, accountable partnerships</li>
+    </ul>
+
+    <div class="callout">This document outlines SmartFinPro's platform, audience, and the Comparison Cockpit &mdash; our structured comparison infrastructure &mdash; along with how prospective partners can engage.</div>
+
+    <div class="doc-footer"><span>SmartFinPro LLC &middot; smartfinpro.com</span><span>Page 1</span></div>
+  </div>
+</div>
+
+<!-- ============ PAGE 3 — AUDIENCE & MARKET POSITION ============ -->
+<div class="page">
+  <div class="content">
+    <div class="doc-header"><span class="brand">SmartFinPro</span><span>Media Kit 2026 &middot; Confidential</span></div>
+
+    <div class="eyebrow">Audience &amp; Market Position</div>
+    <h1 class="section-title">Who SmartFinPro Reaches</h1>
+
+    <p class="lede">SmartFinPro readers arrive with intent &mdash; searching for specific comparisons ("best business bank account for startups," "eToro vs. Interactive Brokers," "best robo-advisor for retirement") rather than browsing generally.</p>
+
+    <h3 class="sub">Four-Market Coverage</h3>
+    <table>
+      <tr><th>Market</th><th>Regulatory Context</th><th>Representative Categories</th></tr>
+      <tr><td><strong>United States</strong></td><td>&mdash;</td><td>Trading, AI Tools, Personal Finance, Business Banking, Gold Investing</td></tr>
+      <tr><td><strong>United Kingdom</strong></td><td>FCA</td><td>Trading, Cybersecurity, Business Banking, Personal Finance</td></tr>
+      <tr><td><strong>Australia</strong></td><td>ASIC</td><td>Forex, Cybersecurity, Business Banking, Superannuation</td></tr>
+      <tr><td><strong>Canada</strong></td><td>CIRO</td><td>Trading, Forex, Personal Finance</td></tr>
+    </table>
+
+    <h3 class="sub">Reader Intent</h3>
+    <p>Content is structured around bottom-of-funnel research: side-by-side comparisons, "best of" category pages, and in-depth single-product reviews. Readers are typically comparing a shortlist of two to four providers before making a decision.</p>
+
+    <div class="callout gold">Detailed traffic and engagement analytics are available to prospective partners on request, verified directly against SmartFinPro's analytics dashboard rather than quoted from a static document.</div>
+
+    <div class="doc-footer"><span>SmartFinPro LLC &middot; smartfinpro.com</span><span>Page 2</span></div>
+  </div>
+</div>
+
+<!-- ============ PAGE 4 — COMPARISON COCKPIT ============ -->
+<div class="page">
+  <div class="content">
+    <div class="doc-header"><span class="brand">SmartFinPro</span><span>Media Kit 2026 &middot; Confidential</span></div>
+
+    <div class="eyebrow">Platform Infrastructure</div>
+    <h1 class="section-title">The Comparison Cockpit</h1>
+
+    <p class="lede">A structured decision layer for high-intent categories &mdash; not a static roundup article, but a server-rendered comparison engine built for the moment a reader is choosing between providers.</p>
+
+    <p>The Comparison Cockpit powers SmartFinPro's "Best X" pages: interactive, SEO- and AEO-optimised comparison surfaces for categories such as robo-advisors, business bank accounts, and trading platforms. Each page is server-rendered for speed and crawlability, and structured for both traditional search and answer engines.</p>
+
+    <h3 class="sub">Core Capabilities</h3>
+    <div class="two-col">
+      <div>
+        <ul class="check">
+          <li>Sortable comparison matrix across fees, features, and ratings</li>
+          <li>Live cost projection per product</li>
+          <li>Side-by-side product comparison</li>
+        </ul>
+      </div>
+      <div>
+        <ul class="check">
+          <li>Guided "Find My Match" filtering</li>
+          <li>Attribution-gated CTAs, verified before activation</li>
+          <li>Full JSON-LD structured data for search &amp; AI visibility</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3 class="sub">Live Examples</h3>
+    <table>
+      <tr><th>Category</th><th>Live Page</th></tr>
+      <tr><td>Robo-Advisors (US)</td><td class="example-url">smartfinpro.com/us/personal-finance/best/robo-advisors</td></tr>
+      <tr><td>Business Bank Accounts (US)</td><td class="example-url">smartfinpro.com/us/business-banking/best/business-bank-accounts</td></tr>
+    </table>
+
+    <div class="callout">For partners, this means placement inside a genuine research and decision tool at the exact moment a reader is comparing options &mdash; not a banner competing for attention alongside unrelated content.</div>
+
+    <div class="doc-footer"><span>SmartFinPro LLC &middot; smartfinpro.com</span><span>Page 3</span></div>
+  </div>
+</div>
+
+<!-- ============ PAGE 5 — CONTENT & DISTRIBUTION ASSETS ============ -->
+<div class="page">
+  <div class="content">
+    <div class="doc-header"><span class="brand">SmartFinPro</span><span>Media Kit 2026 &middot; Confidential</span></div>
+
+    <div class="eyebrow">Content &amp; Distribution</div>
+    <h1 class="section-title">Content &amp; Distribution Assets</h1>
+
+    <p class="lede">Every review is produced under a documented editorial methodology, independent of commercial relationships, and structured for discovery across both search engines and AI answer engines.</p>
+
+    <div class="stat-grid">
+      <div class="stat"><span class="num">100+</span><span class="label">Expert-Reviewed Products</span></div>
+      <div class="stat"><span class="num">200+</span><span class="label">Indexed Content Pages</span></div>
+      <div class="stat"><span class="num">16</span><span class="label">Product Categories</span></div>
+      <div class="stat"><span class="num">4</span><span class="label">Markets</span></div>
+    </div>
+
+    <h3 class="sub">Content Formats</h3>
+    <ul class="clean">
+      <li>Long-form, single-product expert reviews with pros/cons and verdict</li>
+      <li>Comparison Cockpit "Best X" category pages</li>
+      <li>Interactive financial calculators and comparison tools</li>
+      <li>Editorial methodology, expert verification, and correction policy pages</li>
+    </ul>
+
+    <h3 class="sub">SEO &amp; AEO Structure</h3>
+    <p>Pages carry Review, FAQ, and structured product schema (JSON-LD), a public methodology and editorial policy, and per-market hreflang. SmartFinPro also publishes an <span class="example-url">llms.txt</span> file, explicitly signalling content availability to AI crawlers and answer engines.</p>
+    <div>
+      <span class="tag">Schema.org / JSON-LD</span>
+      <span class="tag">Hreflang (4 markets)</span>
+      <span class="tag">llms.txt</span>
+      <span class="tag">E-E-A-T Editorial Process</span>
+    </div>
+
+    <div class="doc-footer"><span>SmartFinPro LLC &middot; smartfinpro.com</span><span>Page 4</span></div>
+  </div>
+</div>
+
+<!-- ============ PAGE 6 — PARTNER OPPORTUNITIES ============ -->
+<div class="page">
+  <div class="content">
+    <div class="doc-header"><span class="brand">SmartFinPro</span><span>Media Kit 2026 &middot; Confidential</span></div>
+
+    <div class="eyebrow">Partnership</div>
+    <h1 class="section-title">Partner Opportunities</h1>
+
+    <p class="lede">Placement options are structured around genuine editorial and comparison surfaces &mdash; never pay-to-rank.</p>
+
+    <h3 class="sub">Verified Offer Placement</h3>
+    <p>Primary CTA slot within a relevant Comparison Cockpit page. Activates only once a partner's tracking integration (network or direct) has been verified &mdash; there is no monetised CTA prior to verification.</p>
+
+    <h3 class="sub">Review Placement</h3>
+    <p>A dedicated, in-depth expert review of the partner's product, produced under SmartFinPro's standard editorial and disclosure process.</p>
+
+    <h3 class="sub">Comparison Table Inclusion</h3>
+    <p>A row within a "Best X" comparison matrix, evaluated against competitors on the same documented criteria as every other listed product.</p>
+
+    <h3 class="sub">Content &amp; Editorial Collaboration</h3>
+    <p>Considered on a case-by-case basis, always subject to SmartFinPro's independent editorial standards.</p>
+
+    <div class="callout gold">Newsletter and additional distribution placements are evaluated case-by-case as those channels scale.</div>
+
+    <div class="doc-footer"><span>SmartFinPro LLC &middot; smartfinpro.com</span><span>Page 5</span></div>
+  </div>
+</div>
+
+<!-- ============ PAGE 7 — COMPLIANCE & EDITORIAL STANDARDS ============ -->
+<div class="page">
+  <div class="content">
+    <div class="doc-header"><span class="brand">SmartFinPro</span><span>Media Kit 2026 &middot; Confidential</span></div>
+
+    <div class="eyebrow">Governance</div>
+    <h1 class="section-title">Compliance &amp; Editorial Standards</h1>
+
+    <p class="lede">SmartFinPro's commercial model depends on maintaining reader trust &mdash; compliance and editorial independence are treated as infrastructure, not afterthoughts.</p>
+
+    <ul class="check">
+      <li><strong>Independent methodology.</strong> Reviews are researched and written independent of commercial arrangements; no partnership influences a rating or ranking.</li>
+      <li><strong>Mandatory affiliate disclosure</strong> on every page carrying a monetised link.</li>
+      <li><strong>Regional regulatory disclosure</strong> &mdash; FCA (UK), ASIC (AU), and CIRO (CA) context surfaced on relevant pages.</li>
+      <li><strong>No pay-to-rank.</strong> Table position reflects documented, published criteria &mdash; not commercial tier.</li>
+      <li><strong>Dated product data.</strong> Fees, rates, and terms are sourced and timestamped, refreshed on a defined cadence.</li>
+      <li><strong>Attribution transparency.</strong> Monetised CTAs route through a trackable redirect; SubID passback is available once a partner's integration is verified.</li>
+    </ul>
+
+    <div class="callout green">Compliance review is a prerequisite for activation, not a step taken after launch.</div>
+
+    <div class="doc-footer"><span>SmartFinPro LLC &middot; smartfinpro.com</span><span>Page 6</span></div>
+  </div>
+</div>
+
+<!-- ============ PAGE 8 — PRIORITY PARTNER CATEGORIES ============ -->
+<div class="page">
+  <div class="content">
+    <div class="doc-header"><span class="brand">SmartFinPro</span><span>Media Kit 2026 &middot; Confidential</span></div>
+
+    <div class="eyebrow">Program Fit</div>
+    <h1 class="section-title">Priority Partner Categories</h1>
+
+    <p class="lede">SmartFinPro is actively building out Comparison Cockpit coverage across the following categories. Programs with clean tracking integrations &mdash; network or direct S2S/postback &mdash; are prioritised for placement.</p>
+
+    <div class="two-col">
+      <div>
+        <ul class="clean">
+          <li>Business Banking &mdash; accounts, cards, treasury tools for SMBs</li>
+          <li>Robo-Advisors &amp; Wealth Management</li>
+          <li>Trading &amp; Forex Platforms</li>
+          <li>Credit Monitoring &amp; Credit Repair</li>
+        </ul>
+      </div>
+      <div>
+        <ul class="clean">
+          <li>Cybersecurity for SMBs &mdash; VPN, identity, endpoint security</li>
+          <li>AI Tools for Finance &amp; Productivity</li>
+          <li>Gold &amp; Precious Metals / Savings Products</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="callout">SmartFinPro deliberately limits the number of partners onboarded per category to keep comparison pages useful and uncluttered for readers.</div>
+
+    <div class="doc-footer"><span>SmartFinPro LLC &middot; smartfinpro.com</span><span>Page 7</span></div>
+  </div>
+</div>
+
+<!-- ============ PAGE 9 — CONTACT / NEXT STEPS ============ -->
+<div class="page">
+  <div class="content">
+    <div class="doc-header"><span class="brand">SmartFinPro</span><span>Media Kit 2026 &middot; Confidential</span></div>
+
+    <div class="eyebrow">Next Steps</div>
+    <h1 class="section-title">Get In Touch</h1>
+
+    <p class="lede">If your program fits one of SmartFinPro's priority categories, we'd like to talk.</p>
+
+    <h3 class="sub">Before a Monetised CTA Goes Live</h3>
+    <ul class="check">
+      <li>Verified tracking integration &mdash; network-based or direct S2S/postback</li>
+      <li>Current, accurate product terms supplied by the partner</li>
+      <li>Compliance review sign-off</li>
+    </ul>
+
+    <div class="callout gold" style="margin-top: 30px;">
+      <strong style="color: var(--sfp-navy-dark); font-size: 12pt;">media@smartfinpro.com</strong><br/>
+      smartfinpro.com &middot; SmartFinPro LLC, Wyoming, USA
+    </div>
+
+    <p style="margin-top: 60px; font-size: 8.5pt; color: var(--sfp-slate);">This document is confidential and intended solely for prospective partners evaluating a relationship with SmartFinPro. Not for public distribution.</p>
+
+    <div class="doc-footer"><span>SmartFinPro LLC &middot; smartfinpro.com</span><span>Page 8</span></div>
+  </div>
+</div>
+
+</body>
+</html>
