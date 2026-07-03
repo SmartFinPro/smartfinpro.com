@@ -178,8 +178,8 @@ seeds.
 | `is_top_pick` | true | false | false | false | false | false |
 | `best_for` | Best overall | Best guarantee | Lowest entry cost | Attorney-led | Couples/custom pricing | Cheapest overall |
 | `score` | 9.0 | 8.8 | 8.2 | 8.4 | 8.0 | 8.3 |
-| `monthlyFee` | 79.99 (Polish tier; Remodel 109.99, Clean Slate 139.99 in notes) | 99 (Full Service; Basic 79, Premium 119 in notes) | 99 (Standard; Premium 119, flat-rate $599/6mo in notes) | *pending manual verify — likely 99* | 98 (individual; couples 69/person) | 49.99 |
-| `attributes.setup_fee` | 99 | 0 | 19 | *pending manual verify* | null (variable, footnote) | 0 |
+| `monthlyFee` | 79.99 (Polish tier; Remodel 109.99, Clean Slate 139.99 in notes) | 99 (Full Service; Basic 79, Premium 119 in notes) | 99 (Standard; Premium 119, flat-rate $599/6mo in notes) | **129.99** (resolved §11 — FinanceBuzz, conservative pick amid source conflict) | 98 (individual; couples 69/person) | 49.99 |
+| `attributes.setup_fee` | 99 | 0 | 19 | **129** (resolved §11) | null (variable, footnote) | 0 |
 | `attributes.bbb_rating` | A- | A+ (not accredited) | C+ (not accredited) | A- | C+ (not accredited) | **'A'** (single seeded value — sources disagree A+/A, discrepancy in note; not accredited) |
 | `attributes.bbb_accredited` | true | false | false | true | false | false |
 | `attributes.review_score`/`_count`/`_source` | 4.6 / 643 / Trustpilot (note: >20% 1-star) | 4.3 / 497 / Google (Trustpilot sample too small to use, 2 reviews) | **4.3 / 300 / BestCompany** (Fable Change 3 — Trustpilot's count-less 1.8 "Poor" disclosed in both `cons` and the review_source note, not used as headline) | 4.7 / 734 / Birdeye (no Trustpilot profile exists) | 4.8 / 2225 / Google (largest sample in field) | 2.5 / ~50 / Trustpilot (range 46-61 across snapshots) |
@@ -320,11 +320,34 @@ compliance: {
    point the CTA at the bare external homepage instead, matching the `external_url`
    standing rule).
 
-## 11. Pre-seed verification still needed (flagged, not yet done)
+## 11. Pre-seed verification — RESOLVED (migration gate cleared)
 
-Three facts are WAF-blocked from automated verification and need a one-time manual
-browser check before the seed migration is finalized: (1) Safeport Law's current
-monthly fee + setup fee (safeportlaw.com), (2) Credit Saint's exact state-exclusion
-list + guarantee refund scope (creditsaint.com/terms-of-service), (3) The Credit
-People's $19 setup fee (thecreditpeople.com checkout flow). Everything else in the
-source matrix is `confidence: high` or `medium` with a real source, safe to seed as-is.
+`safeportlaw.com` and `creditsaint.com` are both confirmed genuinely unreachable —
+403 Forbidden to a full real-browser session (`claude-in-chrome`), not just automated
+`curl`/WebFetch, ruling out a simple headless-detection block; this matches the
+FOREX.com WAF-block precedent from the Forex slice. Resolved via independent
+WebSearch/WebFetch cross-checks against fresh (2026-dated) third-party sources instead:
+
+1. **Safeport Law pricing — genuine, irreconcilable source conflict, resolved
+   conservatively.** Two 2026-dated sources directly disagree: ConsumersAdvocate says
+   $99/month with no separate setup fee (3 months upfront ≈ $300 to qualify for the
+   guarantee); FinanceBuzz says $129.99/month + a $129 initial work fee, one plan
+   ("Credit Cleanse"), explicitly contrasting Safeport's single-tier model against
+   competitors' multi-tier ones. **Decision: seed the higher, more conservative
+   FinanceBuzz figures** ($129.99/mo + $129 setup) rather than the lower ones — errs
+   toward not understating cost to users when two sources disagree. `confidence: medium`
+   (not high), with the ConsumersAdvocate discrepancy disclosed explicitly in
+   `monthly_fee_note`. `setup_fee: 129`, `monthlyFee: 129.99`.
+2. **Credit Saint states — confirmed independently.** Fresh WebSearch cross-check
+   confirms GA, KS, LA, SC, VT (matches the source matrix exactly). Guarantee scope:
+   confirmed "full refund if no items deleted within 90 days" with a 91-120-day audit
+   window, but no source explicitly confirms whether the $99-195 first-work fee is
+   included in that refund — `guarantee_note` phrases this neutrally rather than
+   asserting either way.
+3. **The Credit People setup fee — confirmed cleanly, no conflict.** Multiple
+   independent 2026 sources converge exactly on $19 setup + $99/mo Standard + $119/mo
+   Premium + $599/6mo flat-rate option, matching the source matrix precisely.
+   `confidence: high`.
+
+All 6 candidates now have a defensible, sourced seed value — migration gate (§0a
+item 6) is cleared, proceeding to implementation.
