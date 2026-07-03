@@ -66,9 +66,13 @@ export interface DetailRow {
  * - `banking` = legacy annual cost × years.
  * - `fee-on-amount` = one-time settlement-style fee (fee% × amount), independent
  *   of years (e.g. debt-relief: a % of the enrolled debt, not a recurring charge).
+ * - `monthly-plus-setup` = flat monthly subscription + a one-time setup/first-work
+ *   fee (e.g. credit repair). The generic `amount` slider is repurposed as a
+ *   MONTHS dial for this kind (not a dollar amount) — `years` is unused, same as
+ *   `fee-on-amount` leaves it unused.
  */
 export interface CostModelDef {
-  kind: 'compounding-fee' | 'banking' | 'fee-on-amount';
+  kind: 'compounding-fee' | 'banking' | 'fee-on-amount' | 'monthly-plus-setup';
   growthRate?: number; // e.g. 0.06
   /** `fee-on-amount` only: fee % source. Defaults to `p.managementFee` when omitted. */
   feeAccessor?: (p: Pick<ProductForComparison, 'managementFee' | 'attributes'>) => number | null;
@@ -80,6 +84,11 @@ export interface CostModelDef {
    * non-null number, so their true cost is shown instead of a misleading $0.
    */
   flatFeeAccessor?: (p: Pick<ProductForComparison, 'managementFee' | 'attributes'>) => number | null;
+  /**
+   * `monthly-plus-setup` only: one-time setup/first-work fee. Defaults to 0
+   * when omitted. The recurring fee always comes from `p.monthlyFee`.
+   */
+  setupFeeAccessor?: (p: Pick<ProductForComparison, 'attributes'>) => number | null;
   amountLabel: string;
   amountMin: number;
   amountMax: number;
