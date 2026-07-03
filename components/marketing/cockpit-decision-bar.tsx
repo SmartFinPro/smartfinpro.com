@@ -147,7 +147,10 @@ export function CockpitDecisionBar({
             <>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13.5, color: C.ink }}>
                 <span>{cm.amountLabel}</span>
-                <b style={{ fontWeight: 700, color: C.navy }}>{usd(amount)}</b>
+                {/* monthly-plus-setup repurposes this slider as a MONTHS dial, not a
+                    dollar amount (credit repair: setup + monthly fee × months) — the
+                    other 3 kinds keep the existing $-formatted display unchanged. */}
+                <b style={{ fontWeight: 700, color: C.navy }}>{cm.kind === 'monthly-plus-setup' ? `${amount} months` : usd(amount)}</b>
               </div>
               <input className="ck-range" type="range" min={cm.amountMin} max={cm.amountMax} step={cm.amountStep} value={amount} aria-label={cm.amountLabel} onChange={(e) => onAmount(Number(e.target.value))} />
             </>
@@ -155,8 +158,10 @@ export function CockpitDecisionBar({
           {/* fee-on-amount cost is a one-time fee% of the amount, independent of years
               (no compounding balance, no annual charge) — a years slider here would be
               interactive but inert, which reads as broken. Hide it, same as the amount
-              slider is hidden for `banking`. */}
-          {cm.kind !== 'fee-on-amount' && (
+              slider is hidden for `banking`. monthly-plus-setup has the same problem
+              (its "months" dial above already captures program duration; a separate
+              years slider would be redundant and inert), so it's hidden too. */}
+          {cm.kind !== 'fee-on-amount' && cm.kind !== 'monthly-plus-setup' && (
             <>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13.5, color: C.ink, marginTop: cm.kind === 'banking' ? 0 : 12 }}>
                 <span>{cm.yearsLabel}</span>

@@ -24,6 +24,9 @@ export type CockpitSortKey = string;
  *   A `flatFeeAccessor` overrides this with a fixed dollar total for
  *   providers whose true cost isn't a % of the balance at all (e.g. a
  *   non-profit DMP's setup + monthly fees) — never silently shows $0.
+ * - `monthly-plus-setup` (credit repair): a one-time setup fee plus a flat
+ *   monthly subscription × `inputs.amount`, where `amount` is repurposed as a
+ *   MONTHS count for this kind (not a dollar figure) — `years` is unused.
  */
 export function costOverTime(
   p: Pick<ProductForComparison, 'managementFee' | 'monthlyFee' | 'fxFeePct' | 'atmFee' | 'attributes'>,
@@ -38,6 +41,19 @@ export function costOverTime(
     if (flat != null) return Math.round(flat);
     const feeRate = (model.feeAccessor?.(p) ?? p.managementFee ?? 0) / 100;
     return feeRate <= 0 ? 0 : Math.round(inputs.amount * feeRate);
+  }
+  if (model.kind === 'monthly-plus-setup') {
+    const setupResult = model.setupFeeAccessor?.(p);
+    // A defined accessor returning null means "genuinely unknown/variable for
+    // this row" (e.g. MSI's case-by-case setup fee), not "no setup fee at
+    // all" — Infinity is a real, non-NaN number that mathematically can
+    // never win a min/max cost comparison, without poisoning Math.min/Math.max
+    // for the other rows (same pattern as debt-relief's non-profit-DMP fee
+    // sentinel). Renders as "$∞" via toLocaleString, an honest "uncapped".
+    if (model.setupFeeAccessor && setupResult == null) return Infinity;
+    const setup = setupResult ?? 0;
+    const monthly = p.monthlyFee ?? 0;
+    return Math.round(setup + monthly * inputs.amount);
   }
   const feeRate = (p.managementFee ?? 0) / 100;
   const growth = model.growthRate ?? 0.06;

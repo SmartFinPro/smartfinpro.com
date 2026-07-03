@@ -7,6 +7,7 @@ import { businessBankAccountsConfig } from './business-bank-accounts';
 import { debtReliefCompaniesConfig } from './debt-relief-companies';
 import { tradingPlatformsConfig } from './trading-platforms';
 import { forexBrokersConfig } from './forex-brokers';
+import { creditRepairCompaniesConfig } from './credit-repair-companies';
 
 const REGISTRY: Record<string, TopicConfig> = {
   'personal-finance/robo-advisors': roboAdvisorsConfig,
@@ -14,6 +15,7 @@ const REGISTRY: Record<string, TopicConfig> = {
   'debt-relief/companies': debtReliefCompaniesConfig,
   'trading/trading-platforms': tradingPlatformsConfig,
   'forex/forex-brokers': forexBrokersConfig,
+  'credit-repair/companies': creditRepairCompaniesConfig,
 };
 
 export function getTopicConfig(category: string, topic: string): TopicConfig | null {

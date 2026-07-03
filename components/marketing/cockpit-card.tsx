@@ -217,7 +217,7 @@ export function CockpitCard({
           );
         })}
         <Spec
-          label={`${inputs.years}-yr cost`}
+          label={config.costModel.kind === 'monthly-plus-setup' ? `${inputs.amount}-mo cost` : `${inputs.years}-yr cost`}
           value={usd(cost)}
           win={isCostWinner(p)}
           subNode={<span style={{ color: C.indigo }}>re-ranks live</span>}
