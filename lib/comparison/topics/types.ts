@@ -72,6 +72,14 @@ export interface CostModelDef {
   growthRate?: number; // e.g. 0.06
   /** `fee-on-amount` only: fee % source. Defaults to `p.managementFee` when omitted. */
   feeAccessor?: (p: Pick<ProductForComparison, 'managementFee' | 'attributes'>) => number | null;
+  /**
+   * `fee-on-amount` only: a fixed dollar total, independent of the amount
+   * slider — for providers whose real cost is NOT a % of the enrolled balance
+   * (e.g. a non-profit debt-management plan charging setup + monthly fees).
+   * Takes precedence over `feeAccessor`/`managementFee` when it returns a
+   * non-null number, so their true cost is shown instead of a misleading $0.
+   */
+  flatFeeAccessor?: (p: Pick<ProductForComparison, 'managementFee' | 'attributes'>) => number | null;
   amountLabel: string;
   amountMin: number;
   amountMax: number;

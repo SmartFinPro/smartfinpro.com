@@ -31,4 +31,5 @@ export const BEST_X_MANIFEST: BestXManifestEntry[] = [
   { market: 'us', category: 'ai-tools', topic: 'ai-tools-finance', label: 'Best AI Tools for Finance', blurb: 'AI software for finance professionals.', icon: 'Zap', image: '/images/comparison/ai-tools-finance.webp' },
   { market: 'us', category: 'cybersecurity', topic: 'cybersecurity-smb', label: 'Best Cybersecurity for SMBs', blurb: 'Security tools for small businesses.', icon: 'Shield', image: '/images/comparison/cybersecurity-smb.webp' },
   { market: 'us', category: 'gold-investing', topic: 'platforms', label: 'Best Gold Investing Platforms', blurb: 'Buy & store gold, by fees & custody.', icon: 'Coins', image: '/images/comparison/gold-investing.webp' },
+  { market: 'us', category: 'debt-relief', topic: 'companies', label: 'Best Debt Relief Companies', blurb: 'Settlement & debt management, by fees & accreditation.', icon: 'DollarSign', image: '/images/content/us/debt-relief/hero.webp' },
 ];

@@ -21,6 +21,9 @@ export type CockpitSortKey = string;
  * - `banking`: the legacy annual cost × years.
  * - `fee-on-amount` (debt-relief): a one-time fee% of the enrolled amount,
  *   independent of `years` — there is no compounding balance to project.
+ *   A `flatFeeAccessor` overrides this with a fixed dollar total for
+ *   providers whose true cost isn't a % of the balance at all (e.g. a
+ *   non-profit DMP's setup + monthly fees) — never silently shows $0.
  */
 export function costOverTime(
   p: Pick<ProductForComparison, 'managementFee' | 'monthlyFee' | 'fxFeePct' | 'atmFee' | 'attributes'>,
@@ -31,6 +34,8 @@ export function costOverTime(
     return Math.round(annualCost(p, DEFAULT_USAGE) * Math.max(1, inputs.years));
   }
   if (model.kind === 'fee-on-amount') {
+    const flat = model.flatFeeAccessor?.(p);
+    if (flat != null) return Math.round(flat);
     const feeRate = (model.feeAccessor?.(p) ?? p.managementFee ?? 0) / 100;
     return feeRate <= 0 ? 0 : Math.round(inputs.amount * feeRate);
   }

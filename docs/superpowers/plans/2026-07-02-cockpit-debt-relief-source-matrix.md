@@ -4,6 +4,21 @@
 > Kandidatenliste laut Owner-Entscheidung §7.3: Top-8 aus der Shortlist, **Americor gestrichen**, Freedom Debt Relief mit sichtbarem Risikohinweis featuren.
 > **Kostenmodell-Hinweis:** `fee_pct_mid` = arithmetischer Mittelwert aus `fee_pct_min`/`fee_pct_max`, wird als `management_fee` (Top-Level-Spalte, generisch wiederverwendet) gespeichert und treibt den `fee-on-amount`-Kostenrechner. AADR = Nachfolgeorganisation der AFCC (seit 2023); UI-Label „AADR (ehem. AFCC)".
 
+## Fable-5-Review-Checkpoint (02.07.2026) — Verdikt: FREIGEGEBEN MIT ÄNDERUNGEN
+
+Vor der Seed-Migration hat ein Fable-5-Review (Model-Routing-Regel des Rollout-Plans) diese Matrix + die geplanten Seed-Werte geprüft. Ergebnis, bereits eingearbeitet in Code + unten stehende Tabellen:
+
+1. **NDR-Migration korrigiert:** NUR `category='debt-relief'`-Fix. **Kein** Wiederherstellen der `?a=smartfinpro`-Referral-URL, **kein** `tracking_status='dashboard_only'`. Begründung: Der Parameter taucht identisch bei 3 unabhängigen Anbietern in derselben Migration auf (Template-Platzhalter, kein belegter echter Referral-Code); die Orphan-Migration (`ON CONFLICT DO NOTHING`) deutet darauf hin, dass die ursprüngliche Migration in prod nie angewendet wurde. `tracking_status` bleibt `unverified` → CTA = `review` (MDX-Review existiert), kein `/go`-Offer bis eine echte Partnerbeziehung extern verifiziert ist.
+2. **GreenPath-Bug behoben (kritisch):** `management_fee=0` hätte GreenPath fälschlich zum „niedrigste Gebühr"-Gewinner gemacht UND $0 im Kostenrechner gezeigt (real: ~$1,523 Gesamtkosten). Fix: `is_nonprofit_dmp`-Attribut routet Fee-Spalte/CompareRow auf Infinity/-Infinity-Sentinels (gewinnt nie, ohne Math.min/max der anderen Zeilen zu vergiften); `costModel.flatFeeAccessor` (neu, `lib/comparison/cost.ts`) zeigt den echten Festbetrag statt eines %-Werts. `dmp_flat_total = $35 + $31 × 48 Monate (Mittelwert 36–60) = $1,523`, abgeleitet aus den bereits offiziell belegten $35/$31/36–60-Werten (confidence: high, da alle 3 Eingaben official/high sind).
+3. **Freedom-Position korrigiert:** War Platz 8 (hinter JG Wentworth) — dateninkonsistent, da Freedom bei Gebühren, Bewertungen und Track-Record objektiv besser abschneidet als JGW. **Neu: Freedom #7, JG Wentworth #8.** `best_for` für Freedom = „Program guarantee" (sachlich, kein Superlativ) statt „—".
+4. **JG-Wentworth-Rating korrigiert:** Das 4.8★/17k-Trustpilot-Rating gilt für die GESAMTE Marke (überwiegend Structured-Settlement-Kunden), nicht die Debt-Settlement-Sparte. Seed nutzt stattdessen die sparten-spezifische BBB-Kundenbewertung (~3.13★, 188 Reviews) — deutlich niedriger, aber korrekt zugeordnet.
+5. **CuraDebt-Rating konservativ:** Trustpilot-Werte widersprüchlich/nicht primärverifiziert (OFFEN) → Rating wird bewusst NIEDRIG-konservativ gesetzt (4.3, unter allen anderen Kandidaten), damit ein unverifizierter Wert nicht versehentlich „Top rated" gewinnt. `confidence='low'` auf Zeilenebene.
+6. **New-Era-Lücken nachrecherchiert:** `min_debt=$15,000` (Forbes Advisor, medium confidence — Snippet-Verifikation, Quellen divergieren $7,500–$15,000) und `program_months≈24–36` (Forbes: Ø 27–28 Monate Abschluss, Design bis ~36) ergänzt, jeweils mit URL.
+7. **Pacific afcc=OFFEN** in die Ranked-live-Ausnahmeliste + OFFEN-Sektion aufgenommen (war zuvor nur in der Haupttabelle vermerkt).
+8. **Zod-Schema:** `afcc` ist jetzt `z.boolean().nullable()` — OFFEN-Fälle (Accredited, CuraDebt, Pacific) rendern als „—", nicht als falsches „No".
+
+---
+
 ## 1. National Debt Relief
 
 | Attribut | Wert | source_url | source_type | confidence |
@@ -77,9 +92,9 @@
 | Attribut | Wert | source_url | source_type | confidence |
 |---|---|---|---|---|
 | fee_pct_min / max | 14 / 23 (verifiziert niedriger als Branchenstandard 25%) | neweradebtsolutions.com/why-new-era/extraordinary-value/ | official | high |
-| min_debt | $10,000 | Editorial-Cross-Check (mehrere übereinstimmende Quellen) | editorial | medium |
-| program_months_min / max | 24 / 48 (Ø ~28) | Editorial-Cross-Check | editorial | medium |
-| afcc (AADR) | true laut Sekundärquellen (nicht auf offizieller Seite direkt bestätigt — Site blockte WebFetch) | Editorial-Cross-Check | editorial | medium |
+| min_debt | $15,000 (Quellen divergieren: $7,500–$15,000; Forbes-Wert gewählt, da einzige zitierbare URL, per Suchindex-Snippet verifiziert, nicht Volltext — Forbes blockte direktes WebFetch mit 403) | forbes.com/advisor/debt-relief/best-debt-relief-companies/ | editorial | medium |
+| program_months_min / max | 24 / 36 (Forbes: Ø 27–28 Monate bis Abschluss, Design bis ~36; offizielle Seite nennt keine Zahl) | forbes.com/advisor/debt-relief/best-debt-relief-companies/ | editorial | medium |
+| afcc (AADR) | OFFEN — nur via Sekundärquellen behauptet, nicht auf der offiziellen Seite bestätigt (Site blockte direktes WebFetch); nach demselben Maßstab wie Accredited/CuraDebt/Pacific als unbestätigt behandelt | Editorial-Cross-Check (kein Primärbeleg) | editorial | low |
 | iapda | true (Logo auf offizieller Seite) | neweradebtsolutions.com/why-new-era/extraordinary-value/ | official | medium |
 | free_consult | true | neweradebtsolutions.com/why-new-era/extraordinary-value/ | official | high |
 | states_note | ~38+ Staaten, exakte Liste OFFEN | Editorial-Cross-Check | editorial | low |
@@ -129,6 +144,7 @@
 | states_note | Alle 50 Staaten + DC + PR laut Formular; „varies by state" ohne Ausschlussliste | curadebt.com/ | official | medium |
 | bbb_rating | A+ | curadebt.com/ · bbb.org/us/fl/hollywood/profile/debt-relief-services/curadebt-systems-llc-0633-90058374 | official + regulator | high |
 | trustpilot | OFFEN — widersprüchliche Snapshots (5.0★/217 vs. 4.7★/30), nicht primärverifiziert | trustpilot.com/review/www.curadebt.com | user_reviews | low |
+| **seed rating (konservativ, Fable-5-Fix)** | **4.3★** — bewusst NIEDRIG-konservativ gesetzt (unter allen anderen 7 Kandidaten: NDR 4.7, Freedom 4.6, Accredited 4.8, New Era 4.9, Pacific 4.7, GreenPath 4.95, JGW 3.1-Sparte), damit ein nicht primärverifiziertes Rating nicht versehentlich den „Top rated"-Sort/Winner gewinnt. Kein Präzisionsanspruch — reiner Platzhalter bis eine belastbare Quelle vorliegt. | — (redaktionelle Konservativ-Entscheidung, kein Primärbeleg) | user_reviews | low |
 | founded | 2001 (San Diego) | curadebt.com/ | official | high |
 | no_upfront_fees | true | curadebt.com/debt-settlement-program/ | official | high |
 | tax_debt_specialist | true — IRS-lizenzierte Enrolled Agents, IRS-Vertretung, Offers in Compromise, State Tax Relief | curadebt.com/ | official | high |
@@ -145,6 +161,8 @@
 |---|---|---|---|---|
 | dmp_setup_fee | Ø $35 (0–$50 je Staat) | greenpath.com/resources-tools/faq/ | official | high |
 | dmp_monthly_fee | Ø $31 (~$25–$50 je Staat) | greenpath.com/resources-tools/faq/ · zogby.com/reviews/greenpath/ | official + editorial | high (Ø) / medium (Spanne) |
+| **dmp_flat_total (neu, Fable-5-Fix)** | **$1,523** = $35 + $31 × 48 Monate (Mittelwert des offiziellen 36–60-Monats-Bereichs). Abgeleitet aus 3 bereits offiziell belegten Werten (setup/monthly/Programmdauer) — kein neuer unabhängiger Wert. Treibt `costModel.flatFeeAccessor`, damit der Kostenrechner den echten Festbetrag statt eines falschen $0 zeigt. | greenpath.com/resources-tools/faq/ (Ableitung) | official (abgeleitet) | high |
+| **min_debt (neu, Fable-5-Fix)** | **Kein formales Mindest-Schuldenniveau** — DMPs gaten strukturbedingt nicht auf eine Schuldensumme (anders als Settlement-Anbieter, deren %-Gebühr sich erst ab einer Mindestsumme lohnt). Nicht explizit auf greenpath.com als eigene Kennzahl beziffert — konservativ als Branchenstruktur-Inferenz behandelt (KEIN offizieller Einzelbeleg), daher `confidence: medium`, nicht `high`. | greenpath.com/debt-management/ (Struktur-Inferenz, keine explizite Zahl) | editorial | medium |
 | free_consult | true | greenpath.com/resources-tools/faq/ | official | high |
 | nfcc_member | true (+ COA-akkreditiert) | greenpath.com/debt-management/ | official | high |
 | nonprofit_since | 1961 | greenpath.com/debt-management/ | official | high |
@@ -172,7 +190,8 @@
 | free_consult | true | nerdwallet.com/… | editorial | high |
 | states_note | Direktprogramm in 31 Staaten + DC; 12 weitere nur via Kanzlei-Referral; nicht in WV | jgwentworth.com/debt-relief · lendedu.com/blog/jg-wentworth-debt-relief-review/ | official + editorial | medium |
 | bbb_rating | A+ (akkreditiert seit 1996; Sparten-Kundenbewertung nur ~3.13★, 188 Reviews) | lendedu.com/blog/jg-wentworth-debt-relief-review/ | editorial + user_reviews | medium-high |
-| trustpilot | 4.8★, ~17,026 Reviews (Achtung: gilt für Gesamtmarke inkl. Structured Settlements, nicht Sparten-isoliert) | lendedu.com/blog/jg-wentworth-debt-relief-review/ | user_reviews | medium |
+| **seed rating (korrigiert)** | **3.1★ / 188 Reviews — die sparten-spezifische BBB-Kundenbewertung, NICHT das markenweite Trustpilot-Rating.** Fable-5-Checkpoint: 4.8★/17,026 gilt für jgwentworth.com gesamt (überwiegend Structured-Settlement-Kunden), nicht isoliert für die Debt-Settlement-Sparte — würde als Seed-Rating eine falsche Qualitätsaussage für DIESES Produkt treffen. | lendedu.com/blog/jg-wentworth-debt-relief-review/ | user_reviews | medium |
+| trustpilot (Referenz, NICHT als Seed-Rating verwendet) | 4.8★, ~17,026 Reviews — Gesamtmarke inkl. Structured Settlements | lendedu.com/blog/jg-wentworth-debt-relief-review/ | user_reviews | medium |
 | founded | 1991 (Settlement-Sparte seit 2019) | en.wikipedia.org/wiki/J.G._Wentworth | editorial/reference | high |
 | no_upfront_fees | true (Settlement-Fee erst nach Erfolg; $9.95 Setup + $9.95/Monat Escrow laufen ab Start) | nerdwallet.com/personal-loans/learn/jg-wentworth-debt-relief-debt-settlement | editorial | high |
 
@@ -198,17 +217,33 @@
 ## Ranked-live-Einstufung (Gate aus Rollout-Plan Guardrail 4 / Addendum §6.1)
 
 Alle 8 Kandidaten haben `fee_pct_min/max` mit mindestens `medium confidence` und belegter Quelle → **Ranked-live** ist gerechtfertigt für die Kernattribute (Gebühr, Mindestsumme, Programmdauer, Akkreditierung). Ausnahmen, die NICHT in Ranking/Winner-Metrik einfließen (bleiben in `attributes` als Anzeige-Text, nicht als Score-Treiber):
-- CuraDebt: `fee_pct_mid` mit `confidence: medium` (Editorial-Aggregat, nicht offiziell beziffert) — wird dennoch für den Kostenrechner verwendet (transparente Spanne, kein geratener Einzelwert), aber NICHT für einen „niedrigste Gebühr"-Winner-Claim.
-- Accredited/CuraDebt: `afcc` = false/OFFEN → UI zeigt „—" statt eines falschen Häkchens.
+- CuraDebt: `fee_pct_mid` mit `confidence: medium` (Editorial-Aggregat, nicht offiziell beziffert) — wird dennoch für den Kostenrechner verwendet (transparente Spanne, kein geratener Einzelwert), aber NICHT für einen „niedrigste Gebühr"-Winner-Claim. Rating konservativ auf 4.3★ gesetzt (siehe oben) — schließt einen falschen „Top rated"-Gewinn strukturell aus.
+- Accredited/CuraDebt/**Pacific**/**New Era**: `afcc` = OFFEN (null im Zod-Schema) → UI zeigt „—" statt eines falschen Häkchens oder eines falschen „No".
+- GreenPath: `management_fee` fließt NICHT direkt in Fee-Winner/Kostenrechner ein — Infinity-Sentinel (spec/compare) + `flatFeeAccessor` (Kosten) zeigen den echten Festbetrag ($1,523), siehe Fable-5-Review-Sektion oben.
+- JG Wentworth: Seed-`rating` = 3.1★/188 (sparten-spezifisch, BBB), NICHT das markenweite 4.8★/17k-Trustpilot-Rating.
 - New Era: „27+ Jahre"/„niedrigste CFPB-Quote" NICHT in Copy — nur belegte Werte (14–23% Gebühr, A+ BBB seit 2001, 4.9★ Trustpilot).
 - Alle „states_note"-Werte als Freitext, nicht als hartes Filter-Flag (Quellen teils divergent — kein falsches „verfügbar in deinem Staat"-Signal).
 
+### Redaktionelle Reihenfolge (Fable-5-korrigiert)
+
+1. National Debt Relief — is_top_pick=true, best_for=„Most trusted overall"
+2. Accredited Debt Relief — best_for=„Larger debt balances ($10k+)"
+3. New Era Debt Solutions — best_for=„Lowest fees"
+4. GreenPath Financial Wellness — best_for=„Avoiding debt settlement / credit-score-conscious"
+5. Pacific Debt Relief — best_for=„Long track record"
+6. CuraDebt — best_for=„Tax debt specialists"
+7. **Freedom Debt Relief** — best_for=„Program guarantee" (sachlich, kein Superlativ; sichtbarer Risikohinweis in cons/deep_dive, siehe §2)
+8. **JG Wentworth** — best_for=„Legacy brand recognition"
+
+Korrektur ggü. Erstentwurf: Freedom (#8→#7) und JG Wentworth (#7→#8) getauscht — Freedom schlägt JGW objektiv bei Gebühren, Bewertungen (sparten-spezifisch 4.6★/1,573 vs. 3.1★/188) und Track-Record; letzte Position wäre eine Doppelbestrafung on top des bereits sichtbaren Risikohinweises gewesen.
+
 ## OFFEN — nicht für Ranking/Kosten verwendet
-- Pacific: BBB-Kundenbewertung exakter Wert, Kündigungsregelung.
-- CuraDebt: Programmdauer exakt, AADR-Status, Trustpilot-Wert.
+- Pacific: BBB-Kundenbewertung exakter Wert, Kündigungsregelung, **`afcc`-Status** (Website nennt „ACDR", nicht eindeutig AADR → `afcc=null`).
+- CuraDebt: Programmdauer exakt, **`afcc`-Status** (nur „ACDR Member" genannt → `afcc=null`), Trustpilot-Wert (Rating konservativ ersetzt, s.o.).
 - Freedom: exakte Staaten-Ausschlussliste (Quellen divergieren bei NE/ND).
 - JG Wentworth: Staaten-Liste (Quellen divergieren zwischen „nur WV ausgeschlossen" und der differenzierteren 31+12-Staaten-Aufschlüsselung — die differenzierte Version wird verwendet).
-- Accredited/New Era: `afcc`-Status jeweils unsicher (siehe oben).
-- New Era: Gründungsjahr, Staaten-Liste exakt, BBB-Kundenbewertung.
+- Accredited: **`afcc`-Status** unsicher (Forbes nennt nur „ACDR") → `afcc=null`.
+- New Era: Gründungsjahr, Staaten-Liste exakt, BBB-Kundenbewertung, **`afcc`-Status** (nur Sekundärquellen, kein Primärbeleg) → `afcc=null`.
+- GreenPath: `min_debt` ist eine Branchenstruktur-Inferenz, kein expliziter Einzelbeleg (siehe §7, `confidence: medium`).
 
-Alle „OFFEN"-Werte fließen NICHT in Ranking, Winner-Chips oder Kostenrechner (Guardrail 4/5 des Rollout-Plans).
+Alle „OFFEN"-Werte fließen NICHT in Ranking, Winner-Chips oder Kostenrechner (Guardrail 4/5 des Rollout-Plans). `afcc=null` rendert im Cockpit als „—", niemals als falsches „No" (Zod: `z.boolean().nullable()`).

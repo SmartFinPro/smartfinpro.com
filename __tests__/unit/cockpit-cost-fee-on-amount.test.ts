@@ -58,6 +58,33 @@ describe('costOverTime — fee-on-amount (debt-relief)', () => {
       costOverTime({ managementFee: 10, ...noFees, attributes: {} }, withAccessor, { amount: 10_000, years: 3 }),
     ).toBe(1_000);
   });
+
+  it('flatFeeAccessor overrides fee%×amount with a fixed dollar total (non-profit DMP, not a % of debt)', () => {
+    const withFlatFee: CostModelDef = {
+      ...model,
+      flatFeeAccessor: (p) =>
+        typeof p.attributes?.dmp_flat_total === 'number' ? p.attributes.dmp_flat_total : null,
+    };
+    // GreenPath-style: managementFee is 0 (no % fee), but the real cost is
+    // ~$35 setup + $31/mo x 48mo = $1,523 — never a false $0.
+    expect(
+      costOverTime({ managementFee: 0, ...noFees, attributes: { dmp_flat_total: 1_523 } }, withFlatFee, {
+        amount: 20_000,
+        years: 3,
+      }),
+    ).toBe(1_523);
+    // The flat total must NOT scale with the amount slider — it's a fixed cost.
+    expect(
+      costOverTime({ managementFee: 0, ...noFees, attributes: { dmp_flat_total: 1_523 } }, withFlatFee, {
+        amount: 80_000,
+        years: 3,
+      }),
+    ).toBe(1_523);
+    // Rows without a flat total fall through to the normal fee%×amount path.
+    expect(
+      costOverTime({ managementFee: 20, ...noFees, attributes: {} }, withFlatFee, { amount: 10_000, years: 3 }),
+    ).toBe(2_000);
+  });
 });
 
 describe('costOverTime — regression pins (bestehende Kinds unverändert)', () => {
@@ -72,7 +99,10 @@ describe('costOverTime — regression pins (bestehende Kinds unverändert)', () 
   it('banking liefert den Vorher-Golden (annualCost × years)', () => {
     const model: CostModelDef = { kind: 'banking', ...base };
     expect(
-      costOverTime({ managementFee: 0, monthlyFee: 10, fxFeePct: 1, atmFee: 2 }, model, { amount: 500, years: 3 }),
+      costOverTime({ managementFee: 0, monthlyFee: 10, fxFeePct: 1, atmFee: 2, attributes: {} }, model, {
+        amount: 500,
+        years: 3,
+      }),
     ).toBe(828);
   });
 });
