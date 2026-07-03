@@ -109,9 +109,12 @@ export async function generateMetadata({ params }: CockpitPageProps): Promise<Me
       publishedTime: config.publishedDate,
       modifiedTime: modified,
       authors: [expert.name],
-      images: [{ url: '/og-image.png', width: 1200, height: 630, alt: title }],
+      // No explicit `images` here — an explicit openGraph.images shadows the
+      // file-convention opengraph-image.tsx route entirely (verified empirically:
+      // with this field set, og:image kept pointing at the static /og-image.png
+      // fallback). Omitting it lets Next.js auto-inject the dynamic per-topic image.
     },
-    twitter: { card: 'summary_large_image', title, description, images: ['/og-image.png'] },
+    twitter: { card: 'summary_large_image', title, description },
   };
 }
 
