@@ -42,11 +42,13 @@ export const creditRepairAttributesSchema = z
   .object({
     setup_fee: z.number().nullable(), // null = variable/no fixed price (MSI)
     setup_fee_note: z.string().optional(),
+    monthly_fee_note: z.string().optional(), // e.g. Safeport's cross-source price conflict
     dispute_scope_note: z.string(),
     guarantee_type: z.enum(['unconditional_refund', 'conditional_refund', 'partial_refund', 'none']),
     guarantee_note: z.string(),
     states_note: z.string(),
     bbb_rating: z.string(),
+    bbb_rating_note: z.string().optional(), // e.g. Credit Firm's A+/A source disagreement
     bbb_accredited: z.boolean(),
     review_score: z.number(),
     review_count: z.number(),
@@ -230,6 +232,7 @@ export const creditRepairCompaniesConfig: TopicConfig = {
     { key: 'guaranteeNote', label: 'Guarantee detail', accessor: (p) => attrStr(p, 'guarantee_note') || '—' },
     { key: 'states', label: 'State availability', accessor: (p) => attrStr(p, 'states_note') || '—' },
     { key: 'regulatory', label: 'Regulatory history', accessor: (p) => attrStr(p, 'regulatory_history_note') || '—' },
+    { key: 'pricingNote', label: 'Pricing detail', accessor: (p) => attrStr(p, 'monthly_fee_note') || attrStr(p, 'setup_fee_note') || '—' },
   ],
 
   verdict: {
