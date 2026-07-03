@@ -7,6 +7,42 @@
 > / Model-Routing-Regel point 4) — review this, THEN the TopicConfig + migration get
 > written.
 
+## 0a. Fable-5 pre-migration review outcome: APPROVE WITH 4 CHANGES (applied below)
+
+Full review on file alongside this doc (agent transcript). Summary of the 4 required
+changes, all applied in the tables/config below — no re-research needed:
+
+1. **§3 — OANDA rate must use the measured 1.68 pips, not the official 1.4.** The source
+   matrix's methodology is "measured ForexBrokers.com averages for all 5, not marketing
+   'as low as' numbers" — using OANDA's official figure while measuring the other 4 mixes
+   source types and systematically flatters the one broker with a favorable published
+   number. Ranking order is unchanged (OANDA is priciest either way); the official 1.4 is
+   now documented only in `eur_usd_spread_note`.
+2. **§4 — the "EUR/USD spread" specColumn must show all-in round-turn cost, not spread
+   alone.** Spread-only crowned FOREX.com (0.137 pips) as tightest while hiding its $7/lot
+   commission, contradicting the "lowest all-in cost" sort (which correctly picks IBKR).
+   Fixed by computing the column as `managementFee × 1000` (round-turn $ per $100k
+   notional) — this already equals the same number the cost-rate table computes, no new
+   attribute needed.
+3. **§5 — Schwab's reused 4.4/3000 rating needs an explicit caveat**, since it measures
+   Schwab's overall brokerage (Trustpilot-adjacent, per the source review), not forex
+   specifically, where Schwab is this field's weakest entry (no micro-lots, no
+   TradingView, no MT4/5, last-place score). Verified independently: `generateComparison
+   ItemListSchema` (the only JSON-LD generator the cockpit page actually calls — confirmed
+   via `lib/seo/schema.ts:417` and a repo-wide grep showing `generateComparisonTableSchema`,
+   the one with a rating field, is defined but never invoked) does NOT emit
+   `aggregateRating` per item, so there is no schema-integrity risk from this reuse — but
+   the seed still needs a caveat note and `confidence: medium` citing the rating too (not
+   only max_leverage).
+4. **§5 — Schwab's `max_leverage` display should read "up to 50:1 (US cap)"**, not a bare
+   `50`, since Schwab publishes no leverage figure of its own (medium-confidence,
+   inferred from the CFTC/NFA regulatory ceiling that applies to all 5).
+
+Also incorporated as optional strengthenings the review flagged: the compliance notice
+now adds a SIPC/FDIC-non-coverage line (§8), and the OANDA "beginner" verdict pick (§10)
+cites its three sourced attributes ($0 minimum, 1-unit minimum order, native TradingView)
+instead of the unsourced "simplest onboarding" phrasing.
+
 ## 0. Owner decisions already made (do not re-litigate)
 
 Per the source matrix's two material shortlist corrections, the owner has confirmed:
@@ -64,16 +100,16 @@ supplied: `feeRate = (p.managementFee ?? 0) / 100; cost = amount * feeRate`. So
 (spread-in-pips × 0.01% + commission-%), and no custom `feeAccessor`/`flatFeeAccessor` is
 needed at all (simpler than debt-relief's GreenPath special case).
 
-**Rates (round-turn, standardized on each broker's most authoritative available spread —
-official published rate where one exists, otherwise the ForexBrokers.com 2026 measured
-average):**
+**Rates (round-turn, standardized uniformly on ForexBrokers.com 2026 measured averages for
+all 5 — per Fable's Change 1, NOT mixing in OANDA's official published figure, since that
+would be the only marketing-controlled number among five independently-measured ones):**
 
 | Provider | Spread used | Why this one | Commission | Rate (`management_fee`) |
 |---|---|---|---|---|
 | tastyfx | 1.15 pips (measured avg, Standard) | No stable official avg published (only "as low as 0.8" teaser) | $0 | **0.0115** |
 | Interactive Brokers | 0.226 pips (measured) | IBKR's raw-interbank model has no single published avg; floats per quote | $4.60/100k (Tier I, 0.20bp) | **0.0063** |
 | FOREX.com | 0.137 pips (measured, RAW tier) | RAW is the all-in tier Fable recommends for ranking (Standard has an unresolved 1.00-vs-1.62 discrepancy between two ForexBrokers pages — noted, not seeded as the headline number) | $7.00/100k (RAW) | **0.0084** |
-| OANDA | 1.4 pips (**official**, oanda.com pricing page) | Real official number exists — prefer it over the 1.68 measured figure for the headline/ranking value | $0 | **0.0140** |
+| OANDA | **1.68 pips (measured avg)** | Same measurement methodology as the other 4; official 1.4 pips (oanda.com pricing page) documented in `eur_usd_spread_note` only, not used for ranking | $0 | **0.0168** |
 | Charles Schwab | 1.27 pips (measured, Oct 2025) | No official avg published | $0 | **0.0127** |
 
 ```ts
@@ -103,13 +139,25 @@ will document both tiers for transparency.
 Rejected candidate: `max_leverage` — all 5 are capped at 50:1 on majors (US regulatory cap),
 so this column would never show a winner distinction. Replaced with `currency_pairs_count`.
 
-1. **EUR/USD spread (round-turn)** — `attributes.eur_usd_spread_pips`, format `X.XX pips`, `winner: 'min'`, sortKey `spread`.
+**Fable Change 2:** column 1 is all-in round-turn cost, not bare spread — spread-only
+crowned FOREX.com tightest while hiding its $7/lot commission, contradicting the
+"lowest all-in cost" sort (which correctly picks IBKR). Computed as `managementFee × 1000`
+(the same figure the cost-rate table already uses, expressed as $ per $100k notional) — no
+new attribute required:
+
+1. **All-in cost per $100k traded (round-turn)** — `managementFee × 1000`, format `$X.XX`,
+   `winner: 'min'`, sortKey `spread`. Values: IBKR **$6.30**, FOREX.com **$8.40**,
+   tastyfx **$11.50**, Charles Schwab **$12.70**, OANDA **$16.80**.
 2. **Minimum deposit** — `accountMinimum`, format `$X`, `winner: 'min'`, sortKey `min`.
 3. **Currency pairs** — `attributes.currency_pairs_count`, format `X+`, `winner: 'max'`.
 4. **TradingView integration** — boolean, `winner: 'max'`.
 
-`max_leverage` still appears in compareRows/detailRows as informational text (all show "50:1"),
-never scored — matches the robo-advisors precedent of a tied/free-text row with no `score`.
+`max_leverage` still appears in compareRows/detailRows as informational text, never scored
+— matches the robo-advisors precedent of a tied/free-text row with no `score`. Displayed as
+"50:1 (majors)" for the 4 candidates with a real published cap, and (Fable Change 4) as
+**"up to 50:1 (US cap)"** for Charles Schwab specifically, since Schwab publishes no own
+leverage figure — this is inferred from the CFTC/NFA regulatory ceiling, not a Schwab
+disclosure.
 
 ## 5. Planned per-candidate seed values
 
@@ -119,12 +167,12 @@ never scored — matches the robo-advisors precedent of a tied/free-text row wit
 | `is_top_pick` | **true** | false | false | false | false |
 | `best_for` | Best overall | Best for active/high-volume traders | — | Best for beginners | — |
 | `score` | 9.4 | 9.2 | 8.6 | 8.8 | 8.0 |
-| `rating` / `review_count` | 4.4 / 200 (existing `tastyfx-review.mdx`) | 4.2 / 500 (existing) | 4.3 / 1500 (existing) | 4.3 / 500 (existing) | 4.4 / 3000 (reused from `charles-schwab-review.mdx` — same company/platform, no dedicated forex review exists) |
-| `eur_usd_spread_pips` | 1.15 | 0.226 | 0.137 (RAW) | 1.4 (official) | 1.27 |
+| `rating` / `review_count` | 4.4 / 200 (existing `tastyfx-review.mdx`) | 4.2 / 500 (existing) | 4.3 / 1500 (existing) | 4.3 / 500 (existing) | 4.4 / 3000 (reused from `charles-schwab-review.mdx`; **Fable Change 3**: add explicit caveat — this measures Schwab's overall brokerage, not forex specifically, where Schwab is this field's weakest entry. Verified no `aggregateRating` is emitted in the cockpit's JSON-LD, so no schema-integrity risk) |
+| `eur_usd_spread_pips` | 1.15 | 0.226 | 0.137 (RAW) | **1.68 (measured; Fable Change 1 — was 1.4 official)** | 1.27 |
 | `commission_per_lot` | 0 | 4.60 | 7.00 (RAW) | 0 | 0 |
-| `management_fee` (cost rate %) | 0.0115 | 0.0063 | 0.0084 | 0.0140 | 0.0127 |
+| `management_fee` (cost rate %) | 0.0115 | 0.0063 | 0.0084 | **0.0168** | 0.0127 |
 | `account_minimum` | 0 | 0 | 100 | 0 | 0 |
-| `max_leverage` | 50 | 50 | 50 | 50 | 50 (no official Schwab number — note flags this) |
+| `max_leverage` | 50:1 (majors) | 50:1 (majors) | 50:1 (majors) | 50:1 (majors) | **"up to 50:1 (US cap)" (Fable Change 4 — no official Schwab number, inferred from CFTC/NFA ceiling)** |
 | `micro_lots` | true | true (IdealPro $25k min + odd-lot caveat in note) | true | true (1-unit min order) | **false** (10,000-unit min — biggest weakness) |
 | `demo_account` | true | true | true | true | true |
 | `tradingview_integration` | true | true | true | true | **false** |
@@ -132,7 +180,7 @@ never scored — matches the robo-advisors precedent of a tied/free-text row wit
 | `mt5_support` | true | false | true | **false** (US-specific limitation) | false |
 | `currency_pairs_count` | 85 | 100 | 80 | 68 | 65 |
 | `nfa_cftc_regulated` | true ×5 (all) |
-| `confidence` | high | high | **medium** (WAF-blocked, editorial-sourced) | high | **medium** (max_leverage unpublished) |
+| `confidence` | high | high | **medium** (WAF-blocked, editorial-sourced) | high | **medium** (max_leverage unpublished + rating reused from a non-forex-specific review) |
 | `source_type` | official | official | editorial | official | official |
 | `is_affiliate` | false (no link) | **true** (`interactive-brokers-forex`, $200 CPA) | **true** (`forex-com`, health flagged dead — see §6) | **true** (`oanda`, healthy) | false (no forex-specific link; the `charles-schwab` link is scoped to the trading-platforms topic/category and doesn't resolve here) |
 | `review_slug` | `tastyfx-review` | `interactive-brokers-forex-review` | `forex-com-review` | `oanda-review` | **null** (no dedicated forex review) |
@@ -175,10 +223,14 @@ body all 5 brokers hold, confirmed individually in the source matrix).
 
 ```ts
 compliance: {
-  notice: 'Not investment advice · retail forex trading is highly leveraged and carries a high risk of loss; most retail accounts lose money.',
+  notice: 'Not investment advice · retail forex trading is highly leveraged and carries a high risk of loss; most retail accounts lose money. Forex balances are not SIPC-protected or FDIC-insured.',
   regulators: ['NFA', 'CFTC'],
 },
 ```
+
+(SIPC/FDIC line added per Fable's optional strengthening — confirmed accurate: forex is not
+a securities product, so SIPC coverage doesn't apply, and retail forex accounts are not bank
+deposits, so FDIC insurance doesn't apply either.)
 
 ## 9. filters / priorityChips / sortOptions / matcher
 
@@ -222,11 +274,15 @@ matcher: [
   commission, tightest spread-only pricing, widest pair selection.
 - **Best for active/high-volume traders:** Interactive Brokers — lowest all-in cost at scale
   (0.0063%), though steepest learning curve (TWS).
-- **Best for beginners:** OANDA — $0 minimum deposit, native TradingView, simplest onboarding.
+- **Best for beginners:** OANDA — $0 minimum deposit, 1-unit minimum order size
+  (best-in-field), native TradingView integration. (Fable Change: replaced the unsourced
+  "simplest onboarding" phrasing with these three sourced attributes.)
 
-## 11. Open question for Fable's review
+## 11. Fable-5 pre-migration review — RESOLVED
 
-Is standardizing on "official spread where one exists, else measured average" (rather than
-uniformly using one source type) a defensible, consistent rule across all 5 — or does mixing
-official (OANDA) with measured-average (the other 4) risk an apples-to-oranges ranking
-comparison? Recommend confirming or overriding before code is written.
+Fable-5 reviewed this design and returned **APPROVE WITH 4 CHANGES**, all applied above
+(see §0a). No unsupported/invented values were found (§7 of the review audited every
+number back to the source matrix or existing MDX frontmatter). Verdict picks, scores,
+display order, compliance regulators, and the max_leverage/currency_pairs specColumn swap
+were all confirmed correct as originally drafted. **Cleared to proceed to TopicConfig +
+migration implementation.**
