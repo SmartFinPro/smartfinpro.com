@@ -92,7 +92,7 @@ export const creditRepairCompaniesConfig: TopicConfig = {
   h1: (y) => `Best credit repair companies in ${y}`,
   metaTitle: (y) => `Best Credit Repair Companies (${y}) — Compared & Ranked`,
   metaDescription: (y) =>
-    `Compare the best US credit repair companies of ${y}: monthly fees, setup costs, money-back guarantees and BBB ratings — independent, sourced, and honest about compliance history.`,
+    `Compare the best US credit repair companies of ${y}: fees, setup costs, guarantees and BBB ratings — independent, sourced, and honest about compliance history.`,
   intro:
     'Independent, side-by-side comparison of the leading US credit repair companies — ranked by monthly cost, setup fees, money-back guarantee strength and BBB standing, with a live cost calculator on your own program length.',
   publishedDate: '2026-07-03',
