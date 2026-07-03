@@ -152,11 +152,19 @@ export function CockpitDecisionBar({
               <input className="ck-range" type="range" min={cm.amountMin} max={cm.amountMax} step={cm.amountStep} value={amount} aria-label={cm.amountLabel} onChange={(e) => onAmount(Number(e.target.value))} />
             </>
           )}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13.5, color: C.ink, marginTop: cm.kind === 'banking' ? 0 : 12 }}>
-            <span>{cm.yearsLabel}</span>
-            <b style={{ fontWeight: 700, color: C.navy }}>{years}</b>
-          </div>
-          <input className="ck-range" type="range" min={cm.yearsMin} max={cm.yearsMax} step={1} value={years} aria-label={cm.yearsLabel} onChange={(e) => onYears(Number(e.target.value))} />
+          {/* fee-on-amount cost is a one-time fee% of the amount, independent of years
+              (no compounding balance, no annual charge) — a years slider here would be
+              interactive but inert, which reads as broken. Hide it, same as the amount
+              slider is hidden for `banking`. */}
+          {cm.kind !== 'fee-on-amount' && (
+            <>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13.5, color: C.ink, marginTop: cm.kind === 'banking' ? 0 : 12 }}>
+                <span>{cm.yearsLabel}</span>
+                <b style={{ fontWeight: 700, color: C.navy }}>{years}</b>
+              </div>
+              <input className="ck-range" type="range" min={cm.yearsMin} max={cm.yearsMax} step={1} value={years} aria-label={cm.yearsLabel} onChange={(e) => onYears(Number(e.target.value))} />
+            </>
+          )}
         </div>
       </div>
     </div>
