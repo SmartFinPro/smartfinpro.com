@@ -9,6 +9,40 @@
 > force-fit an existing one, (4) fix `best-credit-repair-companies.mdx`'s compliance/
 > accuracy problems within this slice.
 
+## 0a. Fable-5 pre-migration review outcome: APPROVE WITH 7 CHANGES (applied below)
+
+1. §10.4 (now §10 item 4): add the dead `/go/credit-saint` CTA removal to
+   `credit-saint-review.mdx`'s fix scope — the source matrix's own Befund #6 flagged
+   it, the seed-values draft missed it.
+2. §10.2 (now §10 item 2): add a fix for `lexington-law-review.mdx`'s frontmatter
+   rating (currently 4.3) — not defensible given the CFPB judgment, BBB NR, and
+   Trustpilot 2.3-2.6.
+3. §3 resolved: **Option (a)** — seed BestCompany 4.3/300 as the headline rating for
+   The Credit People, with Trustpilot's 1.8 "Poor" figure disclosed in BOTH `cons` and
+   the `review_source` note (not just one of the two) — the "score+source+count always
+   together" rule this same research applied to reject Sky Blue Credit's 2-review
+   Trustpilot sample would be applied inconsistently if Trustpilot's count-less 1.8
+   were used as the headline instead.
+4. Credit Firm's `bbb_rating` seeds as a single ordinal-safe value, **`'A'`** (not the
+   ambiguous "A+/A" from two source disagreeing) — the discrepancy moves to a note,
+   since the ordinal winner-column accessor needs one value per candidate.
+5. MSI's cost output must never render as a bare `$588` — always with the "+ variable
+   setup fee" qualifier attached, since the real cost is unknowable without a
+   candidate-specific quote. `guarantee_note` clarifies only the setup fee (not
+   ongoing monthly payments) is refundable if deletion targets aren't met.
+6. **Migration gate**: the 3 pending manual verifications (§11) must complete BEFORE
+   the seed migration is finalized — Safeport Law's row is blocked on its price check
+   specifically, since an unverified number would feed a `winner: 'min'` headline
+   column, a filter, and the live cost dial. Shared code (§1) and the TopicConfig can
+   be built and reviewed in parallel; only the seed migration itself waits.
+7. The `cockpit-decision-bar.tsx` change is approved as additive and safe (verified
+   directly against the live file: the new kind-gated conditionals evaluate to the
+   existing `usd(amount)` / years-slider-visible behavior for all 3 existing kinds,
+   with zero drift) — condition: mandatory unit tests (setup + monthly×months, `years`
+   inert, 3-existing-kind regression) plus a visual regression pass on all 4 live
+   topic pages (`robo-advisors`, `business-bank-accounts`, `trading-platforms`,
+   `debt-relief-companies`) before merge.
+
 ## 0. Ranked field: 6 candidates (confirmed, not re-litigating)
 
 Credit Saint · Sky Blue Credit · The Credit People · Safeport Law · MSI Credit
@@ -122,35 +156,19 @@ concept), `managementFee` unused (0) for this topic (no %-rate concept), `rating
 `is_affiliate`, `score`, `display_order`, `is_top_pick`, `best_for`, `source_type`,
 `confidence`, `data_verified_at`.
 
-## 3. Open judgment call for Fable-5: The Credit People's headline rating
+## 3. The Credit People's headline rating — RESOLVED: Option (a)
 
-This is the one place I'm not confident enough to decide unilaterally — flagging for
-your review rather than picking silently, since The Credit People is also this slice's
-only genuinely monetized candidate (existing affiliate_links row), which raises the
-stakes on getting this right rather than convenient.
-
-The source matrix found two wildly divergent numbers: **Trustpilot 1.8/5 "Poor"**
-(official source, but no exact review count given, "small sample" per the matrix) vs.
-**BestCompany 4.3/300+** (editorial/aggregator source, real count). The site's own
-*existing* MDX review currently claims "Trustpilot 4.6 from 12,847 reviews" — the
-matrix calls this "not verifiable, presumably fabricated" and flags it as a mandatory
-content fix regardless of which number the cockpit seeds.
-
-Two options:
-- **(a) Seed BestCompany 4.3/300 as the headline rating**, and put the Trustpilot 1.8
-  "Poor" figure explicitly in `cons` and a `review_source` note as a transparency
-  caveat (matches the debt-relief precedent of disclosing rather than picking the
-  flattering number and staying silent about the other one).
-- **(b) Seed Trustpilot 1.8 as the headline rating** (lower review count precision,
-  but it's the more official-sourced, direct-from-platform number, and it's more
-  internally consistent with the BBB C+/non-accredited picture already seeded for this
-  candidate) — more conservative for a monetized candidate, at the cost of not having
-  an exact review count to cite.
-
-My tentative lean is (a), since a headline rating needs a real, citable count and (a)
-still surfaces the negative signal honestly in cons rather than hiding it — but this
-is exactly the kind of call I'd rather have your sign-off on before it goes into a
-live seed migration for the one monetized row in the topic.
+Fable-5's definitive recommendation: **seed BestCompany 4.3/300 as the headline
+`review_score`/`review_count`/`review_source`**, with the Trustpilot 1.8 "Poor" figure
+disclosed in BOTH `cons` AND the `review_source`/note field — not just one of the two.
+Reasoning: this same research rejected Sky Blue Credit's Trustpilot sample (2.9/5 from
+just 2 reviews) specifically because "score+source+count must always appear together,
+never a bare number" — using Trustpilot's count-less 1.8 as The Credit People's
+headline would apply that rule inconsistently. The monetization status doesn't change
+this: the CTA is `review` regardless (Gate 5, bare homepage URL with no attribution),
+never `offer`. The site's existing MDX claim of "Trustpilot 4.6 from 12,847 reviews" is
+fixed as part of the §10 content-hygiene pass regardless of which number the cockpit
+seeds.
 
 ## 4. Per-candidate seed values
 
@@ -162,9 +180,9 @@ live seed migration for the one monetized row in the topic.
 | `score` | 9.0 | 8.8 | 8.2 | 8.4 | 8.0 | 8.3 |
 | `monthlyFee` | 79.99 (Polish tier; Remodel 109.99, Clean Slate 139.99 in notes) | 99 (Full Service; Basic 79, Premium 119 in notes) | 99 (Standard; Premium 119, flat-rate $599/6mo in notes) | *pending manual verify — likely 99* | 98 (individual; couples 69/person) | 49.99 |
 | `attributes.setup_fee` | 99 | 0 | 19 | *pending manual verify* | null (variable, footnote) | 0 |
-| `attributes.bbb_rating` | A- | A+ (not accredited) | C+ (not accredited) | A- | C+ (not accredited) | A+/A (sources differ, not accredited) |
+| `attributes.bbb_rating` | A- | A+ (not accredited) | C+ (not accredited) | A- | C+ (not accredited) | **'A'** (single seeded value — sources disagree A+/A, discrepancy in note; not accredited) |
 | `attributes.bbb_accredited` | true | false | false | true | false | false |
-| `attributes.review_score`/`_count`/`_source` | 4.6 / 643 / Trustpilot (note: >20% 1-star) | 4.3 / 497 / Google (Trustpilot sample too small to use, 2 reviews) | **see §3 open question** | 4.7 / 734 / Birdeye (no Trustpilot profile exists) | 4.8 / 2225 / Google (largest sample in field) | 2.5 / ~50 / Trustpilot (range 46-61 across snapshots) |
+| `attributes.review_score`/`_count`/`_source` | 4.6 / 643 / Trustpilot (note: >20% 1-star) | 4.3 / 497 / Google (Trustpilot sample too small to use, 2 reviews) | **4.3 / 300 / BestCompany** (Fable Change 3 — Trustpilot's count-less 1.8 "Poor" disclosed in both `cons` and the review_source note, not used as headline) | 4.7 / 734 / Birdeye (no Trustpilot profile exists) | 4.8 / 2225 / Google (largest sample in field) | 2.5 / ~50 / Trustpilot (range 46-61 across snapshots) |
 | `attributes.guarantee_type` | conditional_refund | unconditional_refund | partial_refund | conditional_refund | conditional_refund | none |
 | `attributes.nacso` | null (claimed by aggregators only) | null | null | null (not claimed) | **true** (only confirmed member) | null |
 | `attributes.attorney_led` | false | false | false | **true** | false | false (attorney-founded, not attorney-led today) |
@@ -176,6 +194,13 @@ live seed migration for the one monetized row in the topic.
 All `*_note` fields carry the full caveat text from the source matrix (states
 availability gaps, guarantee fine print, setup-fee ambiguity, regulatory disclosure)
 — not duplicated here in full, see the source matrix for verbatim text.
+
+**Fable Change 5 (MSI):** the cost-calculator output and the "Setup fee" specColumn
+cell must never render MSI's total as a bare `$588` — always with a "+ variable setup
+fee" qualifier attached (its real setup cost is unknowable without a candidate-specific
+audit). Its `guarantee_note` clarifies that only the initial/setup fee is refundable
+if minimum-deletion standards aren't met — not the ongoing monthly payments already
+made.
 
 ## 5. specColumns (4 headline columns)
 
@@ -277,10 +302,11 @@ compliance: {
    block (CFPB judgment, entity dissolution/successor purchase, current $139.95
    pricing replacing the stale $89-$139 + $99 setup figures); remove the dead
    `/go/lexington-law` CTA (no `affiliate_links` row exists, and promoting it would
-   contradict the exclusion decision); page stays live as an informational/warning
-   page rather than being deleted (real search demand for "Lexington Law review" is
-   informational intent, matching how the tastyfx/IG-US redirect was handled rather
-   than deletion in Slice 4).
+   contradict the exclusion decision); **(Fable Change 2) fix the frontmatter rating**
+   (currently 4.3 — not defensible against the CFPB judgment, BBB NR, and Trustpilot
+   2.3-2.6); page stays live as an informational/warning page rather than being
+   deleted (real search demand for "Lexington Law review" is informational intent,
+   matching how the tastyfx/IG-US redirect was handled rather than deletion in Slice 4).
 3. **`content/us/credit-repair/the-credit-people-review.mdx`** — correct the
    guarantee description ("90-day money-back" overstates it; real terms: cancel
    anytime, refund of the last two monthly payments), correct pricing tiers ($99/$119
@@ -289,7 +315,10 @@ compliance: {
 4. **`content/us/credit-repair/credit-saint-review.mdx`** — expand the incomplete
    state-exclusion list (GA, KS, LA, SC, VT — not just GA/SC as currently stated);
    correct the first-work fee (MDX currently says $49; multi-source 2025/2026
-   consensus is $99/$195 depending on tier).
+   consensus is $99/$195 depending on tier); **(Fable Change 1) remove/replace the
+   dead `/go/credit-saint` CTA** (no `affiliate_links` row exists for this slug —
+   point the CTA at the bare external homepage instead, matching the `external_url`
+   standing rule).
 
 ## 11. Pre-seed verification still needed (flagged, not yet done)
 
