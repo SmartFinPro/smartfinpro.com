@@ -22,6 +22,7 @@ export const CATEGORIES = [
   'credit-repair',
   'credit-score',
   'gold-investing',
+  'debt-relief',
 ] as const;
 export const CategorySchema = z.enum(CATEGORIES);
 export type Category = (typeof CATEGORIES)[number];
