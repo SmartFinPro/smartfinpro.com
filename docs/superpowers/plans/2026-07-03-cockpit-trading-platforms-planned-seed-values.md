@@ -137,3 +137,147 @@ the Cockpit's usual "live cost calculator" value prop for this specific topic? T
 `lib/comparison/cost.ts` + `cockpit-decision-bar.tsx` — a bigger, Shared-UI-Freeze-relevant change
 not clearly justified by one topic's needs. Recommend confirming or overriding this call
 explicitly before code is written.
+
+---
+
+## 9. REVISIONS after Fable-5 pre-migration review (CHANGES REQUESTED → addressed below)
+
+Fable-5 reviewed sections 1–8 against the source matrix and the actual codebase
+(`mapCockpitRow`, `cost.ts`/`ranking.ts`, `cockpit-decision-bar.tsx`, live `affiliate_links`
+table) and returned **CHANGES REQUESTED** with 2 blocking fixes + conditions. All are
+incorporated below; this is now the final design the implementer works from.
+
+### Fix 1 (blocking) — `options_fee` is now a round-trip (open+close) figure, not a bare open-fee
+
+Fable found the original per-open-leg framing inverted tastytrade's own documented advantage
+(tastytrade's fee cap makes it the *cheapest* broker for active/multi-leg traders despite a
+higher nominal open fee — the source matrix says so explicitly). Column relabeled **"Options
+fee (round-trip)"**, values now: Fidelity/Schwab/IBKR-Lite/E\*TRADE/Merrill Edge = **$1.30**
+(open $0.65 + close $0.65), Robinhood = **$0.08** ($0.04 × 2), tastytrade = **$1.00** (open
+$1.00, close $0 — the cap structure), eToro/Webull = **$0**. `options_fee_note` keeps the raw
+per-leg source-matrix number for transparency (e.g. Fidelity's note now reads "Round-trip
+(open+close) of the official $0.65/contract per-leg fee").
+
+### Fix 2 (blocking) — `account_minimum` specColumn relabeled "Minimum deposit"
+
+eToro's seed ($100) was accurate to "minimum first deposit" but the column was labeled
+"Account minimum" (which the source matrix says is genuinely $0 for eToro) — a documented $0
+fact was being displayed as a $100 claim. Column relabeled **"Minimum deposit"** (broader,
+accurate framing that covers both concepts for all 9): eToro = 100 (sourced, medium
+confidence), all other 8 = 0. `winner: 'min'` stays — now honestly comparing deposit minimums,
+not misrepresenting eToro's account-opening minimum.
+
+### Fix 3 (conditional, applied) — Schwab `cash_sweep_apy` display softened
+
+Per Fable: the exact 0.01% is only editorial/medium-sourced (Schwab's own pages block
+scrapers). `cash_sweep_note` for Schwab now explicitly reads "~0.01% (editorial estimate,
+Schwab's own pricing pages block automated verification — re-verify before treating as
+broker-confirmed)" so the compareRow's rendered text carries the caveat, not a bare number.
+
+### Cost-model — Fable's DEFINITIVE answer to §8: reuse `'banking'`, 3 conditions (all applied)
+
+Fable verified in code (`ranking.ts` `annualCost`, `cost.ts` `costOverTime`,
+`comparison-cockpit.tsx:91` `varies` guard, `cockpit-decision-bar.tsx:146` amount-slider hiding)
+that `monthlyFee/fxFeePct/atmFee = 0` for all 9 genuinely produces $0 with no false
+winner-badge and a hidden amount slider — confirmed safe, no new costModel kind needed.
+Conditions, all applied in this design:
+1. **No `'cost'` sortOption and no "Lowest cost" priorityChip** in this TopicConfig (§4/§5
+   below) — a 9-way $0 tie would read as a broken control.
+2. FAQ (§10) explicitly explains why the multi-year cost is $0 for every provider.
+3. The inert $0 cost display + hidden amount slider is accepted as-is for this slice (a
+   `costDisplay: 'hidden'` opt-out is a future shared-UI follow-up, not in scope now).
+
+### `cash_sweep_apy` — confirmed never scored, made explicit for the implementer
+
+No `score` on its compareRow, no sortOption, no priorityChip, no matcher question references
+it. Its compareRow accessor renders the qualifier text (default/opt-in/paid-tier), never the
+bare percentage alone.
+
+### Attribution-gate slug fix
+
+Fable cross-checked the live `affiliate_links` table directly: the Schwab row's slug is
+**`charles-schwab`**, not `schwab`. `product_attributes.slug` for Schwab MUST be
+`charles-schwab` to actually join via `linksBySlug` in `mapCockpitRow` — using `schwab` would
+silently break the (already-gated-closed) link association. Corrected in §5 below.
+
+### `display_order` realigned to descending `score` (was following the shortlist's own numbering, which didn't match the scores)
+
+New order: 1 Fidelity (9.6) · 2 Charles Schwab (9.3) · 3 Interactive Brokers (9.2) ·
+4 tastytrade (8.8) · 5 Robinhood (8.7) · 6 Webull (8.5) · 7 E\*TRADE (8.4) · 8 eToro (8.3) ·
+9 Merrill Edge (8.0).
+
+### Row-level `confidence` set to each row's LOWEST individual attribute confidence (was previously unset/implied "high" for all)
+
+Fidelity = high · Charles Schwab = medium (cash_sweep editorial) · Interactive Brokers = high ·
+Robinhood = high · eToro = **low** (extended_hours is the one open/low-confidence cell) ·
+Webull = medium (cash_sweep editorial) · E\*TRADE = medium (crypto pilot editorial) ·
+tastytrade = medium (account_minimum editorial) · Merrill Edge = medium (rating/review_count
+supplement is medium confidence).
+
+### `extended_hours` display — `null` renders as "—", never conflated with "No"/`false`
+
+Format function must branch on `null` explicitly (eToro) separately from `'none'` (not
+currently used by any of the 9, but kept in the enum for future topics) — both differ from
+`'classic'`/`'overnight'`. `null` → "—", never "No".
+
+### Verdict picks — Fidelity and Interactive Brokers confirmed; Robinhood accepted WITH a condition
+
+Fable flagged Robinhood as the weakest of the 3 picks (no paper trading — Webull is "#1 Paper
+Trading 2026" per the matrix — and 0.01% default cash vs. Webull/eToro's $0 options fee).
+Accepted only under Fable's stated condition: Robinhood's verdict copy justifies the pick via
+**simplicity/UX**, not fees/features, and Robinhood's seeded `cons` array explicitly includes
+"No paper/demo trading account". Fidelity's verdict/pros may descriptively mention its
+automatic ~3.3% SPAXX sweep (dated) as a factual pro — that's a factual statement with a date,
+not a comparative winner-claim, so it doesn't conflict with the cash_sweep_apy scoring ban.
+
+### `filters` / `matcher` / `priorityChips` / `sortOptions` — were missing from this doc, now specified (Fable flagged the gap)
+
+```ts
+filters: [
+  { key: 'fractional', label: 'Fractional shares', predicate: (p) => attr(p, 'fractional_shares') },
+  { key: 'crypto', label: 'Crypto trading', predicate: (p) => attr(p, 'crypto_trading') },
+  { key: 'futures', label: 'Futures trading', predicate: (p) => attr(p, 'futures_trading') },
+  { key: 'paperTrading', label: 'Paper trading', predicate: (p) => attr(p, 'paper_trading') },
+  { key: 'tradingview', label: 'TradingView integration', predicate: (p) => attr(p, 'tradingview_integration') },
+  { key: 'overnight', label: '24/5 overnight trading', predicate: (p) => attr(p, 'extended_hours') === 'overnight' }, // eToro's null is conservatively excluded, never asserted false
+  { key: 'noMin', label: 'No minimum deposit', predicate: (p) => p.accountMinimum === 0 },
+],
+
+priorityChips: [
+  { id: 'fee', label: 'Cheapest options', icon: 'Percent', sort: 'fee' },
+  { id: 'min', label: 'No minimum', icon: 'Wallet', sort: 'min' },
+  { id: 'rating', label: 'Top rated', icon: 'Star', sort: 'rating' },
+  { id: 'active', label: 'Best for active trading', icon: 'TrendingUp', sort: 'active' },
+], // NOTE: no 'cost' chip — banned per the cost-model conditions above
+
+sortOptions: [
+  { value: 'smart', label: 'Smart rank', metric: (p) => p.score },
+  { value: 'fee', label: 'Cheapest options (round-trip)', metric: (p) => -attr(p, 'options_fee') },
+  { value: 'min', label: 'Lowest minimum deposit', metric: (p) => -p.accountMinimum },
+  { value: 'rating', label: 'Best rated', metric: (p) => p.rating * 100 + p.score },
+  { value: 'active', label: 'Best for active trading', metric: (p) => extHoursOrdinal(p) * 10 + (attr(p, 'futures_trading') ? 8 : 0) + (attr(p, 'tradingview_integration') ? 8 : 0) + p.score },
+], // NOTE: no 'cost' sortOption — banned per the cost-model conditions above
+
+matcher: [
+  { id: 'options', label: 'Do you trade options frequently?', weight: 14, options: [yes/no],
+    award: (p, a) => a === 'yes' ? { matched: attr(p, 'options_fee') <= 1.0, reason: 'Low/no options fee' } : { matched: true } },
+  { id: 'crypto', label: 'Want to trade crypto on the same platform?', weight: 10, options: [yes/no],
+    award: (p, a) => a === 'yes' ? { matched: attr(p, 'crypto_trading'), reason: 'Crypto trading' } : { matched: true } },
+  { id: 'active', label: 'Want futures trading or native TradingView charting?', weight: 10, options: [yes/no],
+    award: (p, a) => a === 'yes' ? { matched: attr(p, 'futures_trading') || attr(p, 'tradingview_integration'), reason: 'Futures/TradingView' } : { matched: true } },
+],
+```
+
+### Top-level `source_type` per row
+
+`'official'` for all 9 — each candidate's headline fee data (the columns that matter most:
+options fee, account/deposit minimum) traces to an official broker page even where a secondary
+attribute (cash-sweep rate, one crypto pilot date) leans editorial; the granular caveats live in
+the `*_note` fields, not in this single categorical tag.
+
+### `data_verified_at`
+
+`'2026-07-03'` for all 9 rows (source-matrix research date).
+
+This section (§9) supersedes the specific numbers in §4/§5 above where they conflict — the
+implementer should read §9 as the final authority for anything it revises.
