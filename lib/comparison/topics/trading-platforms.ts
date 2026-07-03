@@ -88,7 +88,7 @@ export const tradingPlatformsConfig: TopicConfig = {
   h1: (y) => `Best trading platforms in ${y}`,
   metaTitle: (y) => `Best Trading Platforms (${y}) — Compared & Ranked`,
   metaDescription: (y) =>
-    `Compare the best US trading platforms of ${y}: options fees, minimum deposit, extended-hours trading, crypto and futures access, TradingView integration and SIPC coverage — independent, data-driven, no fluff.`,
+    `Compare the best US trading platforms of ${y}: options fees, minimum deposit, crypto access and TradingView support — independent and data-driven.`,
   intro:
     'Independent, side-by-side comparison of the leading US trading platforms — ranked by options fees, minimum deposit and features, with the honest fee and cash-sweep details behind each broker.',
   publishedDate: '2026-07-03',
