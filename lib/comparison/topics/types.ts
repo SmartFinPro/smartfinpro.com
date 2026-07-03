@@ -60,10 +60,18 @@ export interface DetailRow {
   accessor: (p: ProductForComparison) => string;
 }
 
-/** Live cost model. `compounding-fee` = robo (mgmt fee on a growing balance). */
+/**
+ * Live cost model.
+ * - `compounding-fee` = robo (mgmt fee on a growing balance, compounds over years).
+ * - `banking` = legacy annual cost × years.
+ * - `fee-on-amount` = one-time settlement-style fee (fee% × amount), independent
+ *   of years (e.g. debt-relief: a % of the enrolled debt, not a recurring charge).
+ */
 export interface CostModelDef {
-  kind: 'compounding-fee' | 'banking';
+  kind: 'compounding-fee' | 'banking' | 'fee-on-amount';
   growthRate?: number; // e.g. 0.06
+  /** `fee-on-amount` only: fee % source. Defaults to `p.managementFee` when omitted. */
+  feeAccessor?: (p: Pick<ProductForComparison, 'managementFee' | 'attributes'>) => number | null;
   amountLabel: string;
   amountMin: number;
   amountMax: number;

@@ -19,14 +19,20 @@ export type CockpitSortKey = string;
  * - `compounding-fee` (robo): each year the balance grows at `growthRate`, then
  *   the management fee is charged on the year-end balance and removed.
  * - `banking`: the legacy annual cost × years.
+ * - `fee-on-amount` (debt-relief): a one-time fee% of the enrolled amount,
+ *   independent of `years` — there is no compounding balance to project.
  */
 export function costOverTime(
-  p: Pick<ProductForComparison, 'managementFee' | 'monthlyFee' | 'fxFeePct' | 'atmFee'>,
+  p: Pick<ProductForComparison, 'managementFee' | 'monthlyFee' | 'fxFeePct' | 'atmFee' | 'attributes'>,
   model: CostModelDef,
   inputs: CostInputs,
 ): number {
   if (model.kind === 'banking') {
     return Math.round(annualCost(p, DEFAULT_USAGE) * Math.max(1, inputs.years));
+  }
+  if (model.kind === 'fee-on-amount') {
+    const feeRate = (model.feeAccessor?.(p) ?? p.managementFee ?? 0) / 100;
+    return feeRate <= 0 ? 0 : Math.round(inputs.amount * feeRate);
   }
   const feeRate = (p.managementFee ?? 0) / 100;
   const growth = model.growthRate ?? 0.06;
