@@ -601,6 +601,18 @@ const nextConfig: SmartFinNextConfig = {
         permanent: true,
       },
 
+      // ── Broker rebrand: IG US → tastyfx (June 2024, official) ────────────
+      // IG US LLC officially rebranded its forex platform to tastyfx (see
+      // docs/superpowers/plans/2026-07-03-cockpit-forex-brokers-source-matrix.md,
+      // §"Entity-Auflösung"). Consolidates the old review's link equity onto
+      // the current, correctly-branded page rather than serving stale
+      // duplicate content for a defunct brand name.
+      {
+        source: '/us/forex/ig-markets-review',
+        destination: '/us/forex/tastyfx-review',
+        permanent: true,
+      },
+
       // ── Wrong-market content: AU reviews linked with /us/ prefix ─────────
       // Google crawled these via hreflang from AU pages. Redirect to correct market.
       {
