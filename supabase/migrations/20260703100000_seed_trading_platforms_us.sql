@@ -48,8 +48,16 @@
 -- does NOT by itself open the monetized CTA gate, since mapCockpitRow additionally requires
 -- tracking_status IN ('verified','dashboard_only'), which stays at the DB-wide 'unverified'
 -- default and is NOT changed in this migration. Webull, E*TRADE, tastytrade and Merrill Edge get
--- is_affiliate=false (no affiliate_links row exists for them today). All 9 render as
--- review (8, matched by review_slug) or visit (Merrill Edge, external_url) CTAs in this slice.
+-- is_affiliate=false (no affiliate_links row exists for them today). All 9 have `ctaMode: 'review'`
+-- (8, matched by review_slug) or `'visit'` (Merrill Edge) internally — never `'offer'`.
+--
+-- external_url is set for ALL 9 candidates (each provider's own bare official homepage — never a
+-- tracked/disguised affiliate link, per Guardrail 2), matching the debt-relief precedent
+-- (National Debt Relief has both a review_slug AND an external_url). Per cockpit-card.tsx's CTA
+-- priority (`ctaMode==='offer'` > `externalUrl` set > `reviewSlug` set), this makes "Visit site"
+-- the PRIMARY green CTA for all 9 cards (linking straight to the provider's real homepage, not a
+-- `/go/` tracked route — the attribution gate stays closed regardless), with "Read review" riding
+-- along as the secondary blue pill for the 8 with a published review.
 
 INSERT INTO public.product_attributes (
   affiliate_link_id, slug, market, category, topic, display_name, tagline,
@@ -72,7 +80,7 @@ INSERT INTO public.product_attributes (
   '{"fees":9.4,"features":8.6,"ux":9.2,"support":9.6}'::jsonb,
   'The best overall pick for most traders and investors',
   'Fidelity pairs a standard $0.65/contract options fee with the strongest all-round package in this category: zero-expense-ratio index funds, a #1 J.D. Power customer-service rating for five straight years, and — uniquely among the 9 — an automatic ~3.3% yield on uninvested cash with no opt-in or subscription required, which is the single largest real "hidden cost" difference in this whole comparison.',
-  true, 'fidelity-review', NULL, true, 'Best overall', 1,
+  true, 'fidelity-review', 'https://www.fidelity.com/', true, 'Best overall', 1,
   'https://www.fidelity.com/trading/commissions-margin-rates', DATE '2026-07-03', true
 ),
 (
@@ -88,7 +96,7 @@ INSERT INTO public.product_attributes (
   '{"fees":8.6,"features":9.4,"ux":8.8,"support":8.6}'::jsonb,
   'A comprehensive, professional-grade platform for most traders',
   'Charles Schwab combines a standard $0.65/contract options fee with the most fully-featured platform in this category: thinkorswim brings 400+ indicators, full paper trading across stocks/options/futures, and one of the widest 24/5 overnight-trading windows in the field. Its new spot-crypto offering is still in a phased rollout (not yet live in NY or LA), and its default cash-sweep yield is close to zero unless you actively move into a money-market fund.',
-  true, 'charles-schwab-review', NULL, false, 'Best all-in-one platform', 2,
+  true, 'charles-schwab-review', 'https://www.schwab.com/', false, 'Best all-in-one platform', 2,
   'https://disclosures.schwab.com/SchwabDashboard/61330/REG23060.pdf', DATE '2026-07-03', true
 ),
 (
@@ -104,7 +112,7 @@ INSERT INTO public.product_attributes (
   '{"fees":8.8,"features":9.6,"ux":8.2,"support":8.6}'::jsonb,
   'The best choice for active, advanced and global traders',
   'Interactive Brokers pairs IBKR Lite''s standard $0.65/contract options fee with the widest asset and market access in this category: 150+ global markets, the broadest overnight-trading window of any of the 9 brokers, native TradingView integration, and full paper trading across stocks, options, futures, crypto and forex — making it the clear pick for active and advanced traders willing to work with a steeper-learning-curve platform.',
-  true, 'interactive-brokers-review', NULL, false, 'Best for active/advanced traders', 3,
+  true, 'interactive-brokers-review', 'https://www.interactivebrokers.com/', false, 'Best for active/advanced traders', 3,
   'https://www.interactivebrokers.com/en/pricing/commissions-options.php', DATE '2026-07-03', true
 ),
 (
@@ -120,7 +128,7 @@ INSERT INTO public.product_attributes (
   '{"fees":9.0,"features":8.6,"ux":8.2,"support":8.6}'::jsonb,
   'The best value pick for active options and futures traders',
   'tastytrade''s $1.00-to-open/$0-to-close options structure (capped at $10/leg) makes it the cheapest broker in this category for active, multi-leg options traders, even though its nominal open fee looks higher than competitors'' flat $0.65. It pairs this with native TradingView integration and strong futures pricing, though it has no paper trading account and stays a niche, options-first platform rather than a beginner-friendly all-rounder.',
-  false, 'tastytrade-review', NULL, false, 'Active options traders', 4,
+  false, 'tastytrade-review', 'https://tastytrade.com/', false, 'Active options traders', 4,
   'https://tastytrade.com/pricing/', DATE '2026-07-03', true
 ),
 (
@@ -136,7 +144,7 @@ INSERT INTO public.product_attributes (
   '{"fees":8.2,"features":8.0,"ux":9.4,"support":8.4}'::jsonb,
   'The simplest, least intimidating platform for first-time traders',
   'Robinhood''s pick here is about simplicity and user experience, not fees: its mobile-first app remains the easiest on-ramp into investing for absolute beginners, with a $0 account minimum and fractional shares from $1. It no longer offers genuinely free options trading (a small $0.04/contract pass-through fee applies since January 2025), has no paper trading account, and its default cash yield is negligible without a paid Gold subscription — trade-offs that active or cost-focused traders should weigh against its ease of use.',
-  true, 'robinhood-review', NULL, false, 'Best for beginners', 5,
+  true, 'robinhood-review', 'https://robinhood.com/', false, 'Best for beginners', 5,
   'https://robinhood.com/us/en/support/articles/trading-fees-on-robinhood/', DATE '2026-07-03', true
 ),
 (
@@ -152,7 +160,7 @@ INSERT INTO public.product_attributes (
   '{"fees":9.0,"features":8.8,"ux":8.2,"support":7.6}'::jsonb,
   'A strong free-charting, zero-options-fee pick for self-directed traders',
   'Webull charges $0/contract on equity options and pairs that with official, native TradingView integration and StockBrokers.com''s top-rated paper trading simulator for 2026 — a compelling combination for cost-conscious, chart-driven traders. Its cash yield requires manually opting into Cash Management (nothing accrues by default), and its Chinese ownership structure has drawn an ongoing CFIUS review that some traders will want to weigh.',
-  false, 'webull-review', NULL, false, 'Free charting & paper trading', 6,
+  false, 'webull-review', 'https://www.webull.com/', false, 'Free charting & paper trading', 6,
   'https://www.webull.com/pricing', DATE '2026-07-03', true
 ),
 (
@@ -168,7 +176,7 @@ INSERT INTO public.product_attributes (
   '{"fees":8.0,"features":8.4,"ux":8.4,"support":8.0}'::jsonb,
   'A solid choice for options traders who want built-in probability tools',
   'E*TRADE pairs a standard $0.65/contract options fee (discounted to $0.50 for frequent traders) with Power E*TRADE''s probability-of-profit visualization tools and Morgan Stanley wealth-management integration. Its new crypto offering is still a limited pilot ahead of a planned "later 2026" full rollout, it doesn''t support fractional-share purchases, and its default cash-sweep yield is negligible for most account sizes.',
-  false, 'etrade-review', NULL, false, 'Options probability tools', 7,
+  false, 'etrade-review', 'https://us.etrade.com/', false, 'Options probability tools', 7,
   'https://us.etrade.com/what-we-offer/pricing-and-rates', DATE '2026-07-03', true
 ),
 (
@@ -184,7 +192,7 @@ INSERT INTO public.product_attributes (
   '{"fees":8.8,"features":8.0,"ux":8.4,"support":7.8}'::jsonb,
   'The cheapest options broker in the category, with a caveat on extended hours',
   'eToro is the only broker in this comparison charging genuinely $0 per options contract for US customers, backed by a large, well-known social/copy-trading community and a permanent $100,000 demo account. It requires a $100 minimum first deposit (versus $0 at most peers), and its extended-hours trading availability for US accounts could not be verified at the time of research, so we show it as unestablished rather than claim a feature that may not exist for US customers.',
-  true, 'etoro-review', NULL, false, 'Cheapest options trading', 8,
+  true, 'etoro-review', 'https://www.etoro.com/', false, 'Cheapest options trading', 8,
   'https://www.etoro.com/en-us/trading/fees/', DATE '2026-07-03', true
 ),
 (
