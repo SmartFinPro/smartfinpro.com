@@ -78,7 +78,7 @@ const GUARANTEE_ORDINAL: Record<string, number> = { none: 0, partial_refund: 1, 
 const guaranteeOrdinal = (p: ProductForComparison) => GUARANTEE_ORDINAL[attrStr(p, 'guarantee_type')] ?? 0;
 const GUARANTEE_LABEL: Record<string, string> = {
   none: 'No refund guarantee',
-  partial_refund: 'Conditional refund (setup fee only)',
+  partial_refund: 'Partial refund (see terms)',
   conditional_refund: 'Conditional refund (if no deletions)',
   unconditional_refund: 'Unconditional refund',
 };

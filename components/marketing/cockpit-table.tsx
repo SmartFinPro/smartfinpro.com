@@ -102,7 +102,7 @@ export function CockpitTable({
             {config.specColumns.map((col) => (
               <SortHead key={col.key} label={col.label} sortKey={col.sortKey} active={sort === col.sortKey} dir={dir} onSort={onSort} />
             ))}
-            <SortHead label={`${inputs.years}-yr cost`} sortKey="cost" active={sort === 'cost'} dir={dir} onSort={onSort} />
+            <SortHead label={config.costModel.kind === 'monthly-plus-setup' ? `${inputs.amount}-mo cost` : `${inputs.years}-yr cost`} sortKey="cost" active={sort === 'cost'} dir={dir} onSort={onSort} />
             <th scope="col" style={{ width: 124 }} />
           </tr>
         </thead>

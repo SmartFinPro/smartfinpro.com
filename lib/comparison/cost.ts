@@ -43,7 +43,15 @@ export function costOverTime(
     return feeRate <= 0 ? 0 : Math.round(inputs.amount * feeRate);
   }
   if (model.kind === 'monthly-plus-setup') {
-    const setup = model.setupFeeAccessor?.(p) ?? 0;
+    const setupResult = model.setupFeeAccessor?.(p);
+    // A defined accessor returning null means "genuinely unknown/variable for
+    // this row" (e.g. MSI's case-by-case setup fee), not "no setup fee at
+    // all" — Infinity is a real, non-NaN number that mathematically can
+    // never win a min/max cost comparison, without poisoning Math.min/Math.max
+    // for the other rows (same pattern as debt-relief's non-profit-DMP fee
+    // sentinel). Renders as "$∞" via toLocaleString, an honest "uncapped".
+    if (model.setupFeeAccessor && setupResult == null) return Infinity;
+    const setup = setupResult ?? 0;
     const monthly = p.monthlyFee ?? 0;
     return Math.round(setup + monthly * inputs.amount);
   }

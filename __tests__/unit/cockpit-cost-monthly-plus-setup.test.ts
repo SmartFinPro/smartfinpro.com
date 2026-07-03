@@ -54,16 +54,29 @@ describe('costOverTime — monthly-plus-setup (credit repair)', () => {
     );
   });
 
-  it('defaults setupFeeAccessor to 0 when omitted (no bare-$0-looking gap for missing setup data)', () => {
+  it('defaults setup to 0 when no setupFeeAccessor is configured at all (topic has no setup-fee concept)', () => {
     expect(costOverTime({ ...noFees, monthlyFee: 98 }, model, { amount: 6, years: 1 })).toBe(588);
   });
 
-  it('setupFeeAccessor returning null falls back to 0, not an error', () => {
-    const withNullableSetup: CostModelDef = {
+  it('a defined setupFeeAccessor returning null means genuinely unknown (e.g. MSI) -- returns Infinity, never a misleadingly-optimistic $0-assumption total', () => {
+    const withUnknownSetup: CostModelDef = {
       ...model,
       setupFeeAccessor: () => null,
     };
-    expect(costOverTime({ ...noFees, monthlyFee: 98 }, withNullableSetup, { amount: 6, years: 1 })).toBe(588);
+    const cost = costOverTime({ ...noFees, monthlyFee: 98 }, withUnknownSetup, { amount: 6, years: 1 });
+    expect(cost).toBe(Infinity);
+    // Infinity can never win a Math.min comparison against a real number --
+    // it mathematically excludes this row from ever "winning" a cost sort,
+    // without poisoning Math.min/Math.max for the other rows.
+    expect(Math.min(cost, 594)).toBe(594);
+  });
+
+  it('a defined setupFeeAccessor returning a real number (even 0) is used normally, not treated as unknown', () => {
+    const withZeroSetup: CostModelDef = {
+      ...model,
+      setupFeeAccessor: () => 0,
+    };
+    expect(costOverTime({ ...noFees, monthlyFee: 98 }, withZeroSetup, { amount: 6, years: 1 })).toBe(588);
   });
 });
 
