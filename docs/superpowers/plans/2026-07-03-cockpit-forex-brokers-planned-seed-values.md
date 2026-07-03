@@ -107,8 +107,8 @@ would be the only marketing-controlled number among five independently-measured 
 | Provider | Spread used | Why this one | Commission | Rate (`management_fee`) |
 |---|---|---|---|---|
 | tastyfx | 1.15 pips (measured avg, Standard) | No stable official avg published (only "as low as 0.8" teaser) | $0 | **0.0115** |
-| Interactive Brokers | 0.226 pips (measured) | IBKR's raw-interbank model has no single published avg; floats per quote | $4.60/100k (Tier I, 0.20bp) | **0.0063** |
-| FOREX.com | 0.137 pips (measured, RAW tier) | RAW is the all-in tier Fable recommends for ranking (Standard has an unresolved 1.00-vs-1.62 discrepancy between two ForexBrokers pages — noted, not seeded as the headline number) | $7.00/100k (RAW) | **0.0084** |
+| Interactive Brokers | 0.226 pips (measured) | IBKR's raw-interbank model has no single published avg; floats per quote | $4.60/100k (Tier I, 0.20bp) | **0.00686** (corrected post-review, see below — was 0.0063) |
+| FOREX.com | 0.137 pips (measured, RAW tier) | RAW is the all-in tier Fable recommends for ranking (Standard has an unresolved 1.00-vs-1.62 discrepancy between two ForexBrokers pages — noted, not seeded as the headline number) | $7.00/100k (RAW) | **0.00837** (corrected post-review, see below — was 0.0084) |
 | OANDA | **1.68 pips (measured avg)** | Same measurement methodology as the other 4; official 1.4 pips (oanda.com pricing page) documented in `eur_usd_spread_note` only, not used for ranking | $0 | **0.0168** |
 | Charles Schwab | 1.27 pips (measured, Oct 2025) | No official avg published | $0 | **0.0127** |
 
@@ -146,8 +146,23 @@ crowned FOREX.com tightest while hiding its $7/lot commission, contradicting the
 new attribute required:
 
 1. **All-in cost per $100k traded (round-turn)** — `managementFee × 1000`, format `$X.XX`,
-   `winner: 'min'`, sortKey `spread`. Values: IBKR **$6.30**, FOREX.com **$8.40**,
+   `winner: 'min'`, sortKey `cost`. Values: IBKR **$6.86**, FOREX.com **$8.37**,
    tastyfx **$11.50**, Charles Schwab **$12.70**, OANDA **$16.80**.
+
+   **Post-review correction (code-quality review, applied before merge):** IBKR's
+   originally-seeded `management_fee` of 0.0063 was arithmetically wrong — the correct
+   sum of its 0.226-pip spread (0.00226%) and $4.60/100k round-turn commission
+   (4.60/100000×100 = 0.0046%) is **0.00686**, not 0.0063 (the 0.0063 figure came from
+   the source matrix's own internal shortcut of "2 × 0.20bp = 0.0040%", which doesn't
+   reconcile with its own separately-stated $4.60 commission figure once the ~1.15
+   EUR/USD conversion factor is included). FOREX.com's 0.0084 was also a rounding of the
+   more precise 0.00837 (0.137×0.01 + 7.00/1000). Both corrected in the seed migration.
+   Separately, the code-quality review caught that `product_attributes.management_fee`
+   was `DECIMAL(6,3)` (only 3 decimal places) — too narrow for these rates and silently
+   rounding every one of the 5 seeded values on insert (a 4-9% swing per broker). Fixed
+   with a new migration widening the column to `DECIMAL(8,5)`
+   (`20260703105000_widen_management_fee_precision.sql`), applied before the seed
+   migration.
 2. **Minimum deposit** — `accountMinimum`, format `$X`, `winner: 'min'`, sortKey `min`.
 3. **Currency pairs** — `attributes.currency_pairs_count`, format `X+`, `winner: 'max'`.
 4. **TradingView integration** — boolean, `winner: 'max'`.
@@ -170,7 +185,7 @@ disclosure.
 | `rating` / `review_count` | 4.4 / 200 (existing `tastyfx-review.mdx`) | 4.2 / 500 (existing) | 4.3 / 1500 (existing) | 4.3 / 500 (existing) | 4.4 / 3000 (reused from `charles-schwab-review.mdx`; **Fable Change 3**: add explicit caveat — this measures Schwab's overall brokerage, not forex specifically, where Schwab is this field's weakest entry. Verified no `aggregateRating` is emitted in the cockpit's JSON-LD, so no schema-integrity risk) |
 | `eur_usd_spread_pips` | 1.15 | 0.226 | 0.137 (RAW) | **1.68 (measured; Fable Change 1 — was 1.4 official)** | 1.27 |
 | `commission_per_lot` | 0 | 4.60 | 7.00 (RAW) | 0 | 0 |
-| `management_fee` (cost rate %) | 0.0115 | 0.0063 | 0.0084 | **0.0168** | 0.0127 |
+| `management_fee` (cost rate %) | 0.0115 | **0.00686** (corrected, was 0.0063) | **0.00837** (corrected, was 0.0084) | **0.0168** | 0.0127 |
 | `account_minimum` | 0 | 0 | 100 | 0 | 0 |
 | `max_leverage` | 50:1 (majors) | 50:1 (majors) | 50:1 (majors) | 50:1 (majors) | **"up to 50:1 (US cap)" (Fable Change 4 — no official Schwab number, inferred from CFTC/NFA ceiling)** |
 | `micro_lots` | true | true (IdealPro $25k min + odd-lot caveat in note) | true | true (1-unit min order) | **false** (10,000-unit min — biggest weakness) |
@@ -273,7 +288,7 @@ matcher: [
 - **Best overall:** tastyfx — consensus #1 (ForexBrokers.com & BrokerChooser 2026), zero
   commission, tightest spread-only pricing, widest pair selection.
 - **Best for active/high-volume traders:** Interactive Brokers — lowest all-in cost at scale
-  (0.0063%), though steepest learning curve (TWS).
+  (0.00686%), though steepest learning curve (TWS).
 - **Best for beginners:** OANDA — $0 minimum deposit, 1-unit minimum order size
   (best-in-field), native TradingView integration. (Fable Change: replaced the unsourced
   "simplest onboarding" phrasing with these three sourced attributes.)

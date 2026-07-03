@@ -80,12 +80,12 @@ INSERT INTO public.product_attributes (
 (
   (SELECT id FROM public.affiliate_links WHERE slug = 'interactive-brokers-forex' AND market = 'us' LIMIT 1),
   'interactive-brokers-forex', 'us', 'forex', 'forex-brokers', 'Interactive Brokers', 'Best for active and high-volume traders',
-  9.2, 4.2, 500, 0, 0.0063, 0,
+  9.2, 4.2, 500, 0, 0.00686, 0,
   '{"eur_usd_spread_pips":0.226,"eur_usd_spread_note":"Measured average (ForexBrokers.com 2026) of the raw interbank spread, quoted from 17 FX dealers, before commission. IBKR''s own site advertises spreads \"as narrow as 1/10 pip\" as a best-case figure, not a stable average.","commission_per_lot":4.60,"commission_per_lot_note":"Tier I pricing: 0.20 basis points of trade value, $2.00/order minimum -- roughly $4.60 round-turn per 100k EUR/USD notional at current rates. Drops to 0.08bp for traders above $5 billion in monthly volume.","max_leverage":50,"micro_lots":true,"micro_lots_note":"Limited support -- IdealPro requires a $25,000 minimum order; smaller orders (from 1,000 units / 0.01 lot) route as an \"odd lot\" and fill roughly 1 pip outside the interbank best bid/offer, meaning worse execution for very small trades.","demo_account":true,"tradingview_integration":true,"mt4_support":false,"mt5_support":false,"currency_pairs_count":100,"nfa_cftc_regulated":true}'::jsonb,
   'official', 'high',
   '[{"type":"sky","label":"Best for active trading"}]'::jsonb,
   ARRAY['Lowest all-in cost at scale','Native TradingView integration','100+ currency pairs']::text[],
-  ARRAY['Lowest all-in trading cost in this comparison at scale (0.0063% round-turn) -- commission drops to 0.08bp above $5B monthly volume','Native TradingView integration -- ForexBrokers.com''s "#1 Broker for TradingView 2026"','100+ pairs across 28 currencies via IdealPro, IBKR''s institutional FX venue','Full paper trading and multi-asset access across forex, stocks, options and futures from one account']::text[],
+  ARRAY['Lowest all-in trading cost in this comparison at scale (0.00686% round-turn) -- commission drops to 0.08bp above $5B monthly volume','Native TradingView integration -- ForexBrokers.com''s "#1 Broker for TradingView 2026"','100+ pairs across 28 currencies via IdealPro, IBKR''s institutional FX venue','Full paper trading and multi-asset access across forex, stocks, options and futures from one account']::text[],
   ARRAY['No MetaTrader 4/5 support -- forex trades exclusively through TWS, IBKR Desktop/Mobile or FXTrader','Orders below the $25,000 IdealPro minimum route as odd lots with weaker execution, roughly 1 pip outside interbank pricing','TWS platform has a steep learning curve for traders new to Interactive Brokers']::text[],
   '{"cost":9.8,"platform":8.6,"pairs":9.2,"support":8.6}'::jsonb,
   'The best choice for active, high-volume and professional forex traders',
@@ -96,7 +96,7 @@ INSERT INTO public.product_attributes (
 (
   (SELECT id FROM public.affiliate_links WHERE slug = 'forex-com' AND market = 'us' LIMIT 1),
   'forex-com', 'us', 'forex', 'forex-brokers', 'FOREX.com', 'Solid mid-tier pick with the widest platform choice',
-  8.6, 4.3, 1500, 0, 0.0084, 100,
+  8.6, 4.3, 1500, 0, 0.00837, 100,
   '{"eur_usd_spread_pips":0.137,"eur_usd_spread_note":"RAW-tier average (ForexBrokers.com 2026), commission included in the all-in cost figure. The commission-free Standard tier''s spread is ambiguous between ForexBrokers.com''s own pages (1.00 pips per its Guide table vs 1.62 pips per its Review page) -- not used as the seeded/ranking value; expect roughly 1.0-1.6 pips spread-only on Standard.","commission_per_lot":7.00,"commission_per_lot_note":"RAW tier: $7 round-turn per 100k notional ($3.50/side, charged per leg). Standard tier is commission-free (spread-only).","max_leverage":50,"micro_lots":true,"micro_lots_note":"0.01 lot = 1,000 units, on both FOREX.com''s own platform and MT5.","demo_account":true,"tradingview_integration":true,"mt4_support":true,"mt5_support":true,"currency_pairs_count":80,"nfa_cftc_regulated":true}'::jsonb,
   'editorial', 'medium',
   '[]'::jsonb,
