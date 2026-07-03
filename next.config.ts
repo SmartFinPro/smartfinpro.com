@@ -238,7 +238,13 @@ const nextConfig: SmartFinNextConfig = {
       // ============================================================
       // Next.js Generated Assets (CSS, JS, Chunks)
       // Alle Dateien unter /_next/static/ haben Content-Hashes im
-      // Dateinamen → immutable ist sicher.
+      // Dateinamen → immutable ist sicher — ABER NUR im Production-Build.
+      // Im Dev-Server sind Chunk-Pfade wie
+      // /_next/static/chunks/app/.../page.js STABIL (kein Content-Hash) und
+      // ändern sich bei jedem Rebuild — ein 1-Jahres-immutable-Cache friert
+      // dort dann eine veraltete Version im Browser ein, egal wie oft der
+      // Dev-Server neu startet oder .next gelöscht wird (entdeckt beim
+      // Debuggen des Comparison-Cockpit debt-relief-Slice, 03.07.2026).
       // no-transform: verhindert dass Proxies CSS/JS modifizieren
       // (Ursache für kaputte Styles in Opera Mini, UC Browser,
       // Samsung Internet über Carrier-Proxies).
@@ -248,7 +254,10 @@ const nextConfig: SmartFinNextConfig = {
         headers: [
           {
             key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable, no-transform',
+            value:
+              process.env.NODE_ENV === 'production'
+                ? 'public, max-age=31536000, immutable, no-transform'
+                : 'no-store',
           },
           // Access-Control für cross-origin CSS-Fonts in Firefox
           {
@@ -570,6 +579,18 @@ const nextConfig: SmartFinNextConfig = {
       {
         source: '/us/business-banking/best',
         destination: '/us/business-banking/best/business-bank-accounts',
+        permanent: true,
+      },
+
+      // ── Cockpit migration: legacy debt-relief /best → topic route ────────
+      // getComparisonRouteParams() (legacy 2-segment engine) doesn't filter
+      // out rows that have a `topic` set, so once the debt-relief seed
+      // landed, /us/debt-relief/best became reachable too — rendering the
+      // same 8 rows through the WRONG (banking) cost/ranking engine with a
+      // mismatched title. Same fix as business-banking above.
+      {
+        source: '/us/debt-relief/best',
+        destination: '/us/debt-relief/best/companies',
         permanent: true,
       },
 

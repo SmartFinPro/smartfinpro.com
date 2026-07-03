@@ -205,7 +205,7 @@ export const debtReliefCompaniesConfig: TopicConfig = {
   detailRows: [
     { key: 'states', label: 'State availability', accessor: (p) => attrStr(p, 'states_note') || '—' },
     { key: 'consult', label: 'Free consultation', accessor: (p) => yesNo(attr(p, 'free_consult')) },
-    { key: 'range', label: 'Fee range', accessor: (p) => `${attrNum(p, 'fee_pct_min')}%–${attrNum(p, 'fee_pct_max')}%` },
+    { key: 'range', label: 'Fee range', accessor: (p) => (attr(p, 'is_nonprofit_dmp') ? 'No % fee (DMP)' : `${attrNum(p, 'fee_pct_min')}%–${attrNum(p, 'fee_pct_max')}%`) },
   ],
 
   verdict: {

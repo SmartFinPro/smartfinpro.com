@@ -137,7 +137,7 @@ Vor der Seed-Migration hat ein Fable-5-Review (Model-Routing-Regel des Rollout-P
 |---|---|---|---|---|
 | fee_pct_min / max | ~15 / 25 (offizielle Seite nennt kein exaktes %, Range aus Editorial-Aggregat) | curadebt.com/debt-settlement-program/ (Modell) | official + editorial | medium |
 | min_debt | ~$5,000 (keine harte offizielle Grenze) | Editorial-Aggregat | editorial | medium |
-| program_months_min / max | OFFEN — nur „typically a couple of years" | curadebt.com/debt-settlement-program/ | official | low |
+| program_months_min / max | **Korrigiert (Fable-5-Pre-Merge-Review):** 24 / 48 — offiziell nur „typically a couple of years" belegt (low confidence, kein exakter Wert). Seed nutzt den bereits im `cons`-Feld offengelegten „industry-standard range"-Wert (deckungsgleich mit 5 der 7 anderen Settlement-Anbieter dieser Liste), NICHT die ursprünglich fälschlich eingetragene 24/36-Kombination — diese hatte keine Matrix-Zeile und verletzte Guardrail 5. | curadebt.com/debt-settlement-program/ (Modell) + Branchen-Konsens (NDR/Freedom/Accredited/Pacific/JGW) | official (Modell) + editorial (Range) | medium |
 | afcc (AADR) | OFFEN — nur „ACDR Member" genannt | curadebt.com/debt-settlement-program/ | official | low |
 | iapda | teilweise belegt (DMP-Seite listet IAPDA, Settlement-Seite nicht explizit) | curadebt.com/debt-management-program/ | official | medium |
 | free_consult | true | curadebt.com/debt-settlement-program/ | official | high |

@@ -361,12 +361,13 @@ export function BestXIndex({ market, items }: BestXIndexProps) {
           const tileClass = 'group relative block no-underline overflow-hidden';
           const tileStyle: React.CSSProperties = { aspectRatio: '4 / 3', background: '#0F2E52' };
 
+          const itemKey = `${item.category}/${item.topic}`;
           return isLink ? (
-            <Link key={item.topic} href={item.href!} className={tileClass} style={tileStyle}>
+            <Link key={itemKey} href={item.href!} className={tileClass} style={tileStyle}>
               {inner}
             </Link>
           ) : (
-            <div key={item.topic} className={tileClass} style={{ ...tileStyle, cursor: 'default' }}>
+            <div key={itemKey} className={tileClass} style={{ ...tileStyle, cursor: 'default' }}>
               {inner}
             </div>
           );
