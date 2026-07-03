@@ -160,7 +160,7 @@ INSERT INTO public.product_attributes (
   'etrade', 'us', 'trading', 'trading-platforms', 'E*TRADE', 'Best options probability tools',
   8.4, 4.0, 2000, 0, NULL, 0,
   '{"options_fee":1.30,"options_fee_note":"Round-trip (open+close) of the official $0.65/contract per-leg fee; drops to $0.50/contract at 30+ trades per quarter.","fractional_shares":false,"fractional_shares_note":"No fractional-share purchases — only dividend reinvestment lands in fractional amounts (as of May 2026).","crypto_trading":true,"crypto_note":"New pilot (since May 2026): BTC/ETH/SOL via Zero Hash, 50bp/trade; full rollout to all 8.6M customers planned for \"later 2026\" — not yet universally available.","futures_trading":true,"paper_trading":true,"extended_hours":"overnight","extended_hours_note":"Near-24/5 — pre-market 7:00-9:30am, after-hours 4:00-8:00pm, plus an overnight session 8:00pm-7:00am ET, Sunday-Thursday.","tradingview_integration":false,"cash_sweep_apy":0.01,"cash_sweep_note":"0.01% APY default sweep for all tiers up to $999,999 (0.05% from $500k, 0.15% only from $1M) — Morgan Stanley Bank Deposit Program.","sipc_insured":true}'::jsonb,
-  'editorial', 'medium',
+  'official', 'medium',
   '[]'::jsonb,
   ARRAY['Power E*TRADE probability tools','Morgan Stanley integration','Solid mobile app']::text[],
   ARRAY['Power E*TRADE probability tools including cone visualization, Greeks display, and risk/reward calculator','Options fee drops to $0.50/contract at 30+ trades per quarter','Morgan Stanley integration for wealth-management clients','Well-rated mobile app (4.6/5) with one-tap trading']::text[],
