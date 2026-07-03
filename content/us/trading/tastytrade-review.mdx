@@ -268,14 +268,14 @@ While tastytrade's headline commissions are industry-leading, several additional
 
 ### Break-Even Analysis: tastytrade vs Competitors
 
-Understanding the break-even point tells you exactly when tastytrade's commission model starts saving real money. On tastytrade, the opening fee ($1.00/contract) is capped at $10 per leg and the close is free, so cost per leg tops out at $10 no matter how large the position gets — while brokers charging $0.65/contract on both sides keep scaling linearly with volume, with no cap at all.
+At ordinary single-leg trade sizes (a few contracts per trade), tastytrade's advantage comes from its cheaper all-in round-trip rate ($1.00 to open, $0 to close = $1.00 total) versus a flat $0.65-each-way competitor ($0.65 + $0.65 = $1.30 round-trip) — the $10-per-leg cap isn't yet a factor at these volumes. For very large single-leg positions where the cap does kick in, the savings are even bigger — see the example below.
 
-| Monthly Volume | tastytrade Cost (per leg, open capped at $10, close free) | Competitor Cost ($0.65/contract, open+close) | Monthly Savings |
+| Monthly Volume | tastytrade Cost ($1.00/contract to open, $0 to close) | Competitor Cost ($0.65/contract, open+close) | Monthly Savings |
 |---------------|----------------|----------------------------------|-----------------|
-| 5 round-trip options trades (20 contracts total) | $10.00 | $26.00 | $16.00 |
-| 10 round-trip spreads (40 contracts total) | $10.00 | $52.00 | $42.00 |
-| 20 round-trip spreads (80 contracts total) | $10.00 | $104.00 | $94.00 |
-| 50 round-trip spreads (200 contracts total) | $10.00 | $260.00 | $250.00 |
+| 5 single-leg round-trip trades (20 contracts total) | $20.00 | $26.00 | $6.00 |
+| 10 single-leg round-trip trades (40 contracts total) | $40.00 | $52.00 | $12.00 |
+| 20 single-leg round-trip trades (80 contracts total) | $80.00 | $104.00 | $24.00 |
+| 50 single-leg round-trip trades (200 contracts total) | $200.00 | $260.00 | $60.00 |
 
 <AffiliateButton href="/go/tastytrade" productName="tastytrade">Start Trading Options at tastytrade</AffiliateButton>
 
@@ -291,9 +291,9 @@ Understanding the break-even point tells you exactly when tastytrade's commissio
 
 ### 1. $1.00 to Open (Capped $10/Leg) / $0 to Close Options Commission Model
 
-tastytrade's signature feature is the asymmetric, capped commission structure that enables options strategies other platforms make more expensive at larger position sizes. The math is straightforward but the impact is transformative for active traders. Consider a concrete example: selling 10 call spreads (20 total legs) as a premium selling strategy. On tastytrade, opening 20 contracts at $1.00/contract would be $20, but the $10-per-leg cap limits it to $10, and closing is free — total cost $10. On any competitor charging $0.65 per contract, the same trade costs $0.65 multiplied by 40 legs (open and close), totaling $26.00.
+tastytrade's signature feature is the asymmetric, capped commission structure that enables options strategies other platforms make more expensive at larger position sizes. The math is straightforward but the impact is transformative for active traders. Consider a concrete example: selling a 10-lot call spread (2 legs, 10 contracts each — 20 contracts total) as a premium selling strategy. On tastytrade, each leg's opening fee is $1.00/contract × 10 contracts = $10, exactly at the $10-per-leg cap, so both legs together cost $20 to open, and closing is free — total cost $20. On any competitor charging $0.65 per contract each way, the same 20-contract round-trip costs $0.65 × 20 × 2 = $26.00.
 
-The $16 per trade difference, repeated across 20 monthly trades, produces roughly $320 per month in commission savings. For premium sellers who rely on collecting small credits across many positions, this is not a marginal improvement — it is the difference between a profitable strategy and a break-even one. Over a full year, that translates to roughly $3,840 in commission savings alone, before accounting for the behavioral improvements that a free close enables, such as tighter trade management and more frequent profit-taking.
+The $6 per trade difference, repeated across 20 monthly trades, produces roughly $120 per month in commission savings. For premium sellers who rely on collecting small credits across many positions, this adds up over time. Over a full year, that translates to roughly $1,440 in commission savings alone, before accounting for the behavioral improvements that a free close enables, such as tighter trade management and more frequent profit-taking.
 
 ### 2. Probability of Profit (PoP) Visualization
 
@@ -329,9 +329,9 @@ Unlimited paper trading provides a risk-free environment for testing strategies 
 
 The commission savings from tastytrade's model compound as position size grows, and the behavioral effects amplify the raw cost advantage. When closing a position costs $0 instead of $0.65 per contract, traders are measurably more likely to take profits early, cut losses sooner, and adjust positions more frequently. Our testing confirmed this pattern — over three months, the zero-cost closing led to approximately 15% more position adjustments compared to the same strategies executed on [Interactive Brokers](/trading/interactive-brokers-review) during a parallel testing period.
 
-Consider a real-world scenario modeled on a typical active options trader: Marcus Bennett, a 42-year-old options trader in Chicago who had been trading for 8 years using Interactive Brokers. His strategy involved selling 2-3 monthly income spreads at $0.65 per contract each way across 40 legs, costing $52 per spread round-trip ($26 to open plus $26 to close), plus 2-3 directional spreads at another $52 per spread. His monthly options commissions totaled approximately $260 for 5 spreads.
+Consider a real-world scenario modeled on a typical active options trader: Marcus Bennett, a 42-year-old options trader in Chicago who had been trading for 8 years using Interactive Brokers. His strategy involved selling 2-3 monthly income spreads, each a 2-leg vertical averaging 40 contracts per leg, at $0.65 per contract each way — $52 per leg round-trip ($26 to open plus $26 to close), or $104 per 2-leg spread — plus 2-3 similarly-sized directional spreads. His monthly options commissions totaled approximately $520 for 5 spreads.
 
-After migrating to tastytrade and maintaining the identical trading strategy, Marcus's monthly costs dropped to $50 — his 40-leg spreads hit tastytrade's $10-per-leg cap on the open (40 contracts × $1.00 capped at $10) and cost nothing to close, working out to $10 per spread across his 5 monthly spreads. The direct annual commission savings: ($260 minus $50) multiplied by 12 months equals roughly $2,520 per year. But the real impact went deeper. The zero-cost close enabled Marcus to test new strategies more freely since exiting a failing position was free. He increased his position frequency from 5 to 7 spreads monthly since the previously inhibitive $52-per-round-trip barrier was gone. He refined his trade management by closing winners at optimal times without fee hesitation. After one year, the result was roughly $2,520 in direct commission savings plus an 8% improvement in win rate (from 58% to 66%) driven by behavioral changes, translating to additional profit on top. tastytrade's own pricing page (tastytrade.com/pricing/) confirms the $1.00-to-open/$0-to-close/$10-per-leg-cap structure used in this scenario.
+After migrating to tastytrade and maintaining the identical trading strategy, Marcus's monthly costs dropped to $100 — each 40-contract leg hit tastytrade's $10-per-leg cap on the open (40 contracts × $1.00 capped at $10) and cost nothing to close, working out to $20 per 2-leg spread across his 5 monthly spreads. The direct annual commission savings: ($520 minus $100) multiplied by 12 months equals roughly $5,040 per year. But the real impact went deeper. The zero-cost close enabled Marcus to test new strategies more freely since exiting a failing position was free. He increased his position frequency from 5 to 7 spreads monthly since the previously inhibitive $104-per-round-trip barrier was gone. He refined his trade management by closing winners at optimal times without fee hesitation. After one year, the result was roughly $5,040 in direct commission savings plus an 8% improvement in win rate (from 58% to 66%) driven by behavioral changes, translating to additional profit on top. tastytrade's own pricing page (tastytrade.com/pricing/) confirms the $1.00-to-open/$0-to-close/$10-per-leg-cap structure used in this scenario.
 
 ### Futures Trading at $1.25/Contract
 
@@ -392,10 +392,10 @@ To illustrate the full economic impact beyond raw commissions, consider a trader
 
 | Cost Item | tastytrade | E*TRADE | Interactive Brokers | Schwab |
 |-----------|-----------|---------|-------------------|--------|
-| **Monthly options commissions** | $50.00 (5 spreads × $10 capped-per-leg open, $0 close) | $260.00 | $260.00 | $260.00 |
-| **Annual options commissions** | $600.00 | $3,120.00 | $3,120.00 | $3,120.00 |
+| **Monthly options commissions** | $100.00 (5 spreads × 2 legs × $10 capped-per-leg open, $0 close) | $520.00 | $520.00 | $520.00 |
+| **Annual options commissions** | $1,200.00 | $6,240.00 | $6,240.00 | $6,240.00 |
 | **Education value (vs paid courses)** | $0 (free) | $0 | $0 | $0 |
-| **Net annual commission savings vs. each competitor** | **+$2,520** | **Baseline** | **Baseline** | **Baseline** |
+| **Net annual commission savings vs. each competitor** | **+$5,040** | **Baseline** | **Baseline** | **Baseline** |
 
 This reflects the direct commission math only. tastytrade's own pricing page (tastytrade.com/pricing/) confirms the $1.00-to-open/$0-to-close structure with a $10-per-leg cap used throughout this comparison; any additional savings from behavioral effects (faster profit-taking, more frequent position adjustments enabled by a free close) will vary by trader and are not quantified here.
 

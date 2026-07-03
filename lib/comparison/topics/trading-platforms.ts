@@ -285,7 +285,7 @@ export const tradingPlatformsConfig: TopicConfig = {
     },
     {
       q: 'Which broker has the cheapest options trading?',
-      a: "eToro charges $0 per options contract for US customers — the only true $0 options broker in this list. Robinhood's combined pass-through fee is $0.04/contract ($0.08 round-trip), and tastytrade's capped fee structure ($1.00 to open, $0 to close, capped at $10/leg) makes it the cheapest broker in the group for active, multi-leg options traders despite a higher nominal open fee.",
+      a: "eToro charges $0 per options contract for US customers with no exceptions — the only broker in this list with an unconditional $0 options fee. Webull is $0/contract on equity options too, but charges $0.50/contract on certain index options, so it isn't unconditionally free. Robinhood's combined pass-through fee is $0.04/contract ($0.08 round-trip), and tastytrade's capped fee structure ($1.00 to open, $0 to close, capped at $10/leg) makes it the cheapest broker in the group for active, multi-leg options traders despite a higher nominal open fee.",
     },
     {
       q: "Which brokers support 24/5 or overnight trading?",
