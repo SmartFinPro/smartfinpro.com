@@ -62,10 +62,10 @@ const marketHeroContent: Record<string, {
   secondaryCta: { text: string; href: string };
 }> = {
   us: {
-    title: 'Financial Product\nResearch, Simplified.',
-    subtitle: '108+ expert-reviewed products across trading, AI, cybersecurity, and personal finance. Independent analysis. 4 regulated markets.',
-    primaryCta: { text: 'Explore Reports', href: '/us/trading' },
-    secondaryCta: { text: 'How We Review', href: '/tools' },
+    title: 'Smarter Financial Research with\nBEST-X Compare',
+    subtitle: 'Find the financial products that fit your goals, backed by expert research and transparent comparisons.',
+    primaryCta: { text: 'Start now', href: '#best-x-compare' },
+    secondaryCta: { text: 'How We Review', href: '/integrity' },
   },
   uk: {
     title: 'UK Financial\nIntelligence, Delivered.',

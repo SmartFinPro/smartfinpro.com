@@ -64,49 +64,43 @@ export default function CookieConsentBanner() {
 
   return (
     <div
-      className={`fixed bottom-0 left-0 right-0 z-[9999] transition-transform duration-400 ease-out ${
-        visible ? 'translate-y-0' : 'translate-y-full'
+      className={`fixed bottom-4 left-4 right-4 sm:left-auto sm:right-6 sm:bottom-6 sm:max-w-sm z-[9999] transition-all duration-400 ease-out ${
+        visible ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0 pointer-events-none'
       }`}
     >
       <div
-        className="border-t border-gray-200 shadow-lg"
-        style={{ background: 'rgba(255, 255, 255, 0.97)' }}
+        className="rounded-2xl border border-gray-200 shadow-xl p-5"
+        style={{ background: 'rgba(255, 255, 255, 0.98)' }}
       >
-        <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
-            {/* Explanation text */}
-            <div className="flex-1">
-              <p className="text-sm" style={{ color: 'var(--sfp-slate)' }}>
-                We use cookies to enhance your experience, analyse site traffic, and for marketing purposes.
-                You can choose to accept all cookies or only essential ones.{' '}
-                <Link
-                  href="/privacy"
-                  className="underline underline-offset-2 transition-colors hover:opacity-80"
-                  style={{ color: 'var(--sfp-navy)' }}
-                >
-                  Privacy Policy
-                </Link>
-              </p>
-            </div>
+        {/* Explanation text */}
+        <p className="text-sm mb-4" style={{ color: 'var(--sfp-slate)' }}>
+          We use cookies to enhance your experience, analyse site traffic, and for marketing purposes.
+          You can choose to accept all cookies or only essential ones.{' '}
+          <Link
+            href="/privacy"
+            className="underline underline-offset-2 transition-colors hover:opacity-80"
+            style={{ color: 'var(--sfp-navy)' }}
+          >
+            Privacy Policy
+          </Link>
+        </p>
 
-            {/* Action buttons */}
-            <div className="flex shrink-0 items-center gap-3">
-              <button
-                onClick={() => handleConsent('essential')}
-                className="cursor-pointer rounded-2xl border border-gray-300 px-4 py-2 text-sm font-medium transition-all hover:border-gray-400 hover:bg-gray-50"
-                style={{ color: 'var(--sfp-ink)', background: 'white' }}
-              >
-                Essential Only
-              </button>
-              <button
-                onClick={() => handleConsent('all')}
-                className="cursor-pointer rounded-2xl px-4 py-2 text-sm font-medium text-white transition-all hover:opacity-90"
-                style={{ background: 'var(--sfp-gold)', color: 'var(--sfp-ink)' }}
-              >
-                Accept All
-              </button>
-            </div>
-          </div>
+        {/* Action buttons */}
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => handleConsent('essential')}
+            className="cursor-pointer flex-1 rounded-2xl border border-gray-300 px-4 py-2 text-sm font-medium transition-all hover:border-gray-400 hover:bg-gray-50"
+            style={{ color: 'var(--sfp-ink)', background: 'white' }}
+          >
+            Essential Only
+          </button>
+          <button
+            onClick={() => handleConsent('all')}
+            className="cursor-pointer flex-1 rounded-2xl px-4 py-2 text-sm font-medium transition-all hover:opacity-90"
+            style={{ background: 'var(--sfp-gold)', color: 'var(--sfp-ink)' }}
+          >
+            Accept All
+          </button>
         </div>
       </div>
     </div>

@@ -7,7 +7,6 @@ import {
   MenuIcon as Menu,
   XIcon as X,
   ChevronDownIcon as ChevronDown,
-  ArrowRightIcon as ArrowRight,
   StarIcon as Star,
 } from '@/components/icons/header-icons';
 import {
@@ -179,13 +178,23 @@ export default function Header({ market: marketProp }: HeaderProps) {
   const navGroups = getNavGroupsForMarket(market);
   const featuredLinks = marketSiloConfig[market]?.featured || [];
 
+  // Keeps rendering the last-open panel's content while it fades out,
+  // so the flyout never flashes empty during the close transition.
+  const [lastMenu, setLastMenu] = useState<string | null>(null);
+  useEffect(() => {
+    if (activeMenu) setLastMenu(activeMenu);
+  }, [activeMenu]);
+  const displayMenu = activeMenu ?? lastMenu;
+
   const openMenu = useCallback((menu: string) => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
     setActiveMenu(menu);
   }, []);
 
+  // Generous close delay — forgives the diagonal mouse path from the
+  // nav trigger down into the panel instead of closing mid-move.
   const closeMenu = useCallback(() => {
-    timeoutRef.current = setTimeout(() => setActiveMenu(null), 150);
+    timeoutRef.current = setTimeout(() => setActiveMenu(null), 300);
   }, []);
 
   const toggleMobileSection = (section: string) => {
@@ -220,9 +229,9 @@ export default function Header({ market: marketProp }: HeaderProps) {
           <div className="hidden lg:flex lg:items-center lg:space-x-1 ml-8">
             {navGroups.map(({ group }) => (
               <div key={group} onMouseEnter={() => openMenu(group.toLowerCase())} onMouseLeave={closeMenu}>
-                <button className={`flex items-center gap-1.5 px-4 py-2 text-[13px] font-medium transition-colors rounded-lg ${activeMenu === group.toLowerCase() ? 'bg-white/15' : 'hover:bg-white/10'}`} style={{ color: activeMenu === group.toLowerCase() ? '#fff' : 'rgba(255,255,255,0.85)' }}>
+                <button className={`flex items-center gap-1.5 px-4 py-2 text-[13px] font-medium transition-colors rounded-lg ${displayMenu === group.toLowerCase() ? 'bg-white/15' : 'hover:bg-white/10'}`} style={{ color: displayMenu === group.toLowerCase() ? '#fff' : 'rgba(255,255,255,0.85)' }}>
                   {group}
-                  <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${activeMenu === group.toLowerCase() ? 'rotate-180' : ''}`} />
+                  <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${displayMenu === group.toLowerCase() ? 'rotate-180' : ''}`} />
                 </button>
               </div>
             ))}
@@ -334,17 +343,24 @@ export default function Header({ market: marketProp }: HeaderProps) {
       </div>
 
       {/* ── Mega-menu panels (market.us compact style) ──────────── */}
-      {activeMenu && (
-        <div className="absolute left-0 right-0 z-40 hidden lg:block" onMouseEnter={() => openMenu(activeMenu)} onMouseLeave={closeMenu}>
-          <div className="border-b border-gray-200 shadow-xl bg-white">
+      {/* Stays mounted after first open — only opacity/transform toggle on
+          activeMenu — so closing fades out instead of vanishing instantly,
+          and content (from displayMenu) never flashes empty mid-transition. */}
+      {displayMenu && (
+        <div
+          className={`absolute left-0 right-0 z-40 hidden lg:block transition-all duration-200 ease-out ${activeMenu ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 -translate-y-1 pointer-events-none'}`}
+          onMouseEnter={() => displayMenu && openMenu(displayMenu)}
+          onMouseLeave={closeMenu}
+        >
+          <div className="border-b border-white/10 shadow-xl bg-transparent backdrop-blur-2xl backdrop-saturate-150">
             <div className="py-6" style={{ maxWidth: '1140px', margin: '0 auto', padding: '24px 40px' }}>
 
               {/* Category-based panels (Investing, Banking, Trading) */}
               {navGroups
-                .filter(({ group }) => group !== 'Tools' && activeMenu === group.toLowerCase())
+                .filter(({ group }) => group !== 'Tools' && displayMenu === group.toLowerCase())
                 .map(({ group, categories: groupCats }) => (
                   <div key={group}>
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">{group}</p>
+                    <p className="text-xs font-semibold uppercase tracking-wider mb-4 text-white/50">{group}</p>
                     <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-8 gap-y-1">
                       {/* Category links — compact text-only */}
                       {groupCats.map((cat) => {
@@ -353,13 +369,12 @@ export default function Header({ market: marketProp }: HeaderProps) {
                           <Link
                             key={cat}
                             href={`${prefix}/${cat}`}
-                            className="group flex items-center gap-2 py-1.5 px-2 rounded-lg hover:bg-gray-50 transition-colors"
+                            className="flex items-center gap-2 py-1.5 px-2 rounded-lg hover:bg-black/20 transition-colors"
                             onClick={() => setActiveMenu(null)}
                           >
-                            <span className="text-sm font-medium transition-colors" style={{ color: 'var(--sfp-ink)' }}>
+                            <span className="text-sm font-medium transition-colors text-white">
                               {config.name}
                             </span>
-                            <ArrowRight className="h-3 w-3 opacity-0 -translate-x-1 group-hover:opacity-60 group-hover:translate-x-0 transition-all" style={{ color: 'var(--sfp-navy)' }} />
                           </Link>
                         );
                       })}
@@ -367,7 +382,7 @@ export default function Header({ market: marketProp }: HeaderProps) {
                       {/* Featured links for this market — inline in the grid */}
                       {featuredLinks.length > 0 && (
                         <div className="col-span-1 row-span-3">
-                          <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-2 px-2">
+                          <p className="text-[10px] font-semibold uppercase tracking-wider mb-2 px-2 text-white/50">
                             Featured in {currentMarket.name}
                           </p>
                           <div className="space-y-0.5">
@@ -375,13 +390,12 @@ export default function Header({ market: marketProp }: HeaderProps) {
                               <Link
                                 key={link.href}
                                 href={link.href}
-                                className="group flex items-center gap-2 py-1.5 px-2 rounded-lg hover:bg-gray-50 transition-colors"
+                                className="flex items-center gap-2 py-1.5 px-2 rounded-lg hover:bg-black/20 transition-colors"
                                 onClick={() => setActiveMenu(null)}
                               >
-                                <span className="text-sm transition-colors" style={{ color: 'var(--sfp-slate)' }}>
+                                <span className="text-sm transition-colors text-white/80">
                                   {link.label}
                                 </span>
-                                <ArrowRight className="h-3 w-3 opacity-0 -translate-x-1 group-hover:opacity-60 group-hover:translate-x-0 transition-all" style={{ color: 'var(--sfp-navy)' }} />
                               </Link>
                             ))}
                           </div>
@@ -391,20 +405,19 @@ export default function Header({ market: marketProp }: HeaderProps) {
 
                     {/* Broker reviews in Trading mega-panel — compact text pills */}
                     {group === 'Trading' && (
-                      <div className="mt-4 pt-3 border-t border-gray-100">
-                        <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-2">Broker Reviews</p>
+                      <div className="mt-4 pt-3 border-t border-white/10">
+                        <p className="text-[10px] font-semibold uppercase tracking-wider mb-2 text-white/50">Broker Reviews</p>
                         <div className="flex flex-wrap gap-2">
                           {brokerCards.map((broker) => (
                             <Link
                               key={broker.slug}
                               href={`${prefix}/reviews/${broker.slug}`}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border border-gray-200 hover:bg-gray-50 transition-colors"
-                              style={{ color: 'var(--sfp-ink)' }}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border border-white/20 hover:bg-black/20 transition-colors text-white"
                               onClick={() => setActiveMenu(null)}
                             >
                               {broker.name}
                               <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
-                              <span className="text-amber-500">{broker.rating}</span>
+                              <span className="text-amber-400">{broker.rating}</span>
                             </Link>
                           ))}
                         </div>
@@ -414,32 +427,31 @@ export default function Header({ market: marketProp }: HeaderProps) {
                 ))}
 
               {/* Tools Mega-Menu — compact text-only */}
-              {activeMenu === 'tools' && (
+              {displayMenu === 'tools' && (
                 <div>
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">Free Tools & Calculators</p>
+                  <p className="text-xs font-semibold uppercase tracking-wider mb-4 text-white/50">Free Tools & Calculators</p>
                   <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-1">
                     {getToolCardsForMarket(market).map((tool) => (
                       <Link
                         key={tool.href}
                         href={tool.href}
-                        className="group flex items-center gap-2 py-1.5 px-2 rounded-lg hover:bg-gray-50 transition-colors"
+                        className="flex items-center gap-2 py-1.5 px-2 rounded-lg hover:bg-black/20 transition-colors"
                         onClick={() => setActiveMenu(null)}
                       >
-                        <span className="text-sm font-medium transition-colors" style={{ color: 'var(--sfp-ink)' }}>
+                        <span className="text-sm font-medium transition-colors text-white">
                           {tool.name}
                         </span>
                         {tool.badge && (
-                          <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold" style={{ background: 'rgba(245,166,35,0.15)', color: 'var(--sfp-gold-dark)' }}>
+                          <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold" style={{ background: 'rgba(245,166,35,0.25)', color: 'var(--sfp-gold)' }}>
                             {tool.badge}
                           </span>
                         )}
                       </Link>
                     ))}
                   </div>
-                  <div className="mt-4 pt-3 border-t border-gray-100">
-                    <Link href="/tools" className="group inline-flex items-center gap-2 text-sm font-medium transition-colors" style={{ color: 'var(--sfp-navy)' }} onClick={() => setActiveMenu(null)}>
+                  <div className="mt-4 pt-3 border-t border-white/10">
+                    <Link href="/tools" className="inline-flex items-center gap-2 text-sm font-medium transition-colors text-white hover:text-white/80" onClick={() => setActiveMenu(null)}>
                       View All Tools
-                      <ArrowRight className="h-3.5 w-3.5 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
                     </Link>
                   </div>
                 </div>
@@ -450,8 +462,12 @@ export default function Header({ market: marketProp }: HeaderProps) {
       )}
 
       {/* Overlay */}
-      {activeMenu && (
-        <div className="fixed inset-0 z-30 bg-black/20 hidden lg:block" onMouseEnter={closeMenu} style={{ top: '64px' }} />
+      {displayMenu && (
+        <div
+          className={`fixed inset-0 z-30 bg-black/20 hidden lg:block transition-opacity duration-200 ease-out ${activeMenu ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+          onMouseEnter={closeMenu}
+          style={{ top: '64px' }}
+        />
       )}
     </header>
   );

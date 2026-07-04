@@ -246,7 +246,7 @@ export function BestXIndex({ market, items }: BestXIndexProps) {
   const sectorCats = marketCategories[market].slice(0, 6);
 
   return (
-    <section style={{ maxWidth: '1140px', margin: '0 auto', padding: '56px 40px 112px' }}>
+    <section id="best-x-compare" className="scroll-mt-24" style={{ maxWidth: '1140px', margin: '0 auto', padding: '56px 40px 112px' }}>
       <div style={{ textAlign: 'center', marginBottom: '48px' }}>
         <span style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--sfp-slate)', display: 'block', marginBottom: '16px' }}>
           Best-X Comparisons
@@ -259,11 +259,9 @@ export function BestXIndex({ market, items }: BestXIndexProps) {
         </p>
       </div>
 
-      {/* Seamless photo mosaic — text overlaid on each image, tiles edge-to-edge */}
-      <div
-        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
-        style={{ gap: 0, borderRadius: '16px', overflow: 'hidden', border: '1px solid #E2E8F0' }}
-      >
+      {/* Card grid — image on top (own rounded corners), heading + short blurb below.
+          Gapped (not edge-to-edge) so each tile reads as a distinct, organized card. */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-10">
         {items.map((item) => {
           const comingSoon = item.status === 'coming_soon';
           const isLink = !comingSoon && !!item.href;
@@ -271,86 +269,59 @@ export function BestXIndex({ market, items }: BestXIndexProps) {
 
           const inner = (
             <>
-              <Image
-                src={item.image}
-                alt={item.label}
-                fill
-                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                className="object-cover transition-transform duration-500 group-hover:scale-[1.06]"
-              />
-              {/* No color band — text sits on the full-color photo; a soft dark text-shadow
-                  (inherited by all children) keeps it legible without tinting the image. */}
-              <div
-                style={{
-                  position: 'absolute',
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  padding: '14px 16px 15px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'flex-start',
-                  textShadow:
-                    '0 0 4px rgba(0,0,0,0.85), 0 1px 3px rgba(0,0,0,0.92), 0 2px 16px rgba(0,0,0,0.7)',
-                }}
-              >
+              <div className="relative overflow-hidden rounded-2xl" style={{ aspectRatio: '4 / 3', background: '#0F2E52' }}>
+                <Image
+                  src={item.image}
+                  alt={item.label}
+                  fill
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                  className={`object-cover transition-transform duration-500 group-hover:scale-[1.05] ${comingSoon ? 'opacity-70' : ''}`}
+                />
+              </div>
+
+              <div style={{ marginTop: '18px' }}>
                 <span
                   style={{
-                    display: 'inline-block',
-                    background: comingSoon ? '#5C6B7C' : 'var(--sfp-green)',
-                    color: '#fff',
-                    fontSize: '10.5px',
-                    fontWeight: 800,
+                    display: 'block',
+                    fontSize: '11px',
+                    fontWeight: 700,
                     letterSpacing: '1px',
                     textTransform: 'uppercase',
-                    padding: '4px 9px',
-                    borderRadius: '3px',
-                    marginBottom: '10px',
+                    color: comingSoon ? '#94A3B8' : 'var(--sfp-green)',
+                    marginBottom: '8px',
                   }}
                 >
                   {catName}
                 </span>
                 <h3
-                  className="inline-block transition-colors duration-200 bg-[var(--sfp-navy)] group-hover:bg-[#2F6BC0]"
-                  style={{
-                    margin: 0,
-                    color: '#fff',
-                    fontSize: '16px',
-                    fontWeight: 600,
-                    lineHeight: 1.2,
-                    letterSpacing: '-0.1px',
-                    padding: '5px 11px',
-                    borderRadius: '8px',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.25)',
-                    textShadow: 'none',
-                  }}
+                  className="transition-colors duration-200 group-hover:text-[#2F6BC0]"
+                  style={{ margin: 0, color: 'var(--sfp-ink)', fontSize: '19px', fontWeight: 700, letterSpacing: '-0.3px', marginBottom: '6px' }}
                 >
                   {item.label}
                 </h3>
-
-                {item.status === 'live' && item.winner && (
-                  <p style={{ margin: '8px 0 0', fontSize: '13px', fontWeight: 700, color: '#fff' }}>
-                    <span style={{ fontWeight: 800 }}>{item.winner.name}</span>
-                    {item.winner.metric ? ` · ${item.winner.metric}` : ''}
-                  </p>
-                )}
+                <p style={{ margin: 0, fontSize: '14px', color: 'var(--sfp-slate)', lineHeight: 1.6 }}>
+                  {item.blurb}
+                </p>
 
                 {item.status === 'live' && (
-                  <p style={{ margin: '6px 0 0', fontSize: '11px', fontWeight: 700, letterSpacing: '0.5px', textTransform: 'uppercase', color: 'rgba(255,255,255,0.82)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <Clock style={{ width: '13px', height: '13px' }} aria-hidden="true" />
-                    {fmtMonthYear(item.verifiedAt) ? `Updated ${fmtMonthYear(item.verifiedAt)}` : 'Updated'}
-                    {item.count ? ` · ${item.count} compared` : ''}
+                  <p style={{ margin: '10px 0 0', fontSize: '12.5px', fontWeight: 600, color: 'var(--sfp-navy)' }}>
+                    {item.winner && <span style={{ fontWeight: 700 }}>{item.winner.name}</span>}
+                    {item.winner?.metric ? ` · ${item.winner.metric}` : ''}
+                    <span style={{ color: 'var(--sfp-slate)', fontWeight: 500 }}>
+                      {fmtMonthYear(item.verifiedAt) ? ` · Updated ${fmtMonthYear(item.verifiedAt)}` : ''}
+                      {item.count ? ` · ${item.count} compared` : ''}
+                    </span>
                   </p>
                 )}
 
                 {item.status === 'legacy' && (
-                  <p style={{ margin: '10px 0 0', fontSize: '12.5px', fontWeight: 800, color: '#fff', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <p style={{ margin: '10px 0 0', fontSize: '12.5px', fontWeight: 700, color: 'var(--sfp-navy)', display: 'flex', alignItems: 'center', gap: '6px' }}>
                     Compare providers <ArrowRight style={{ width: '14px', height: '14px' }} aria-hidden="true" />
                   </p>
                 )}
 
                 {comingSoon && (
-                  <p style={{ margin: '10px 0 0', fontSize: '11px', fontWeight: 700, letterSpacing: '0.5px', textTransform: 'uppercase', color: 'rgba(255,255,255,0.82)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <p style={{ margin: '10px 0 0', fontSize: '11px', fontWeight: 700, letterSpacing: '0.5px', textTransform: 'uppercase', color: '#94A3B8', display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <Clock style={{ width: '13px', height: '13px' }} aria-hidden="true" /> Launching soon
                   </p>
                 )}
@@ -358,47 +329,51 @@ export function BestXIndex({ market, items }: BestXIndexProps) {
             </>
           );
 
-          const tileClass = 'group relative block no-underline overflow-hidden';
-          const tileStyle: React.CSSProperties = { aspectRatio: '4 / 3', background: '#0F2E52' };
-
+          const tileClass = comingSoon ? 'group block no-underline cursor-default' : 'group block no-underline';
           const itemKey = `${item.category}/${item.topic}`;
           return isLink ? (
-            <Link key={itemKey} href={item.href!} className={tileClass} style={tileStyle}>
+            <Link key={itemKey} href={item.href!} className={tileClass}>
               {inner}
             </Link>
           ) : (
-            <div key={itemKey} className={tileClass} style={{ ...tileStyle, cursor: 'default' }}>
+            <div key={itemKey} className={tileClass}>
               {inner}
             </div>
           );
         })}
 
         {/* Utility fillers — complete the 3-col grid (10 topics + 2 = 12 = 4 even rows) */}
-        <Link
-          href="#reports"
-          className="relative block no-underline overflow-hidden transition-colors duration-200 bg-[var(--sfp-navy)] hover:bg-[var(--sfp-navy-dark)]"
-          style={{ aspectRatio: '4 / 3' }}
-        >
-          <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '20px', gap: '10px' }}>
-            <BookOpen style={{ width: 26, height: 26, color: 'var(--sfp-gold)' }} aria-hidden="true" />
-            <span style={{ fontSize: '15px', fontWeight: 600, color: '#fff' }}>Browse all reviews</span>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '12px', fontWeight: 600, color: 'rgba(255,255,255,0.72)' }}>
-              Research library <ArrowRight style={{ width: 13, height: 13 }} aria-hidden="true" />
-            </span>
+        <Link href="#reports" className="group block no-underline">
+          <div
+            className="relative overflow-hidden rounded-2xl flex items-center justify-center transition-colors duration-200 bg-[var(--sfp-navy)] group-hover:bg-[var(--sfp-navy-dark)]"
+            style={{ aspectRatio: '4 / 3' }}
+          >
+            <BookOpen style={{ width: 32, height: 32, color: 'var(--sfp-gold)' }} aria-hidden="true" />
+          </div>
+          <div style={{ marginTop: '18px' }}>
+            <h3 style={{ margin: 0, color: 'var(--sfp-ink)', fontSize: '19px', fontWeight: 700, letterSpacing: '-0.3px', marginBottom: '6px' }}>
+              Browse all reviews
+            </h3>
+            <p style={{ margin: 0, fontSize: '14px', color: 'var(--sfp-slate)', lineHeight: 1.6 }}>
+              Every report in the research library, in one place.
+            </p>
           </div>
         </Link>
 
-        <Link
-          href="/contact"
-          className="relative block no-underline overflow-hidden transition-colors duration-200 bg-[var(--sfp-navy)] hover:bg-[var(--sfp-navy-dark)]"
-          style={{ aspectRatio: '4 / 3' }}
-        >
-          <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '20px', gap: '10px' }}>
-            <Plus style={{ width: 26, height: 26, color: 'var(--sfp-gold)' }} aria-hidden="true" />
-            <span style={{ fontSize: '15px', fontWeight: 600, color: '#fff' }}>Suggest a comparison</span>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '12px', fontWeight: 600, color: 'rgba(255,255,255,0.72)' }}>
-              Tell us what to test <ArrowRight style={{ width: 13, height: 13 }} aria-hidden="true" />
-            </span>
+        <Link href="/contact" className="group block no-underline">
+          <div
+            className="relative overflow-hidden rounded-2xl flex items-center justify-center transition-colors duration-200 bg-[var(--sfp-navy)] group-hover:bg-[var(--sfp-navy-dark)]"
+            style={{ aspectRatio: '4 / 3' }}
+          >
+            <Plus style={{ width: 32, height: 32, color: 'var(--sfp-gold)' }} aria-hidden="true" />
+          </div>
+          <div style={{ marginTop: '18px' }}>
+            <h3 style={{ margin: 0, color: 'var(--sfp-ink)', fontSize: '19px', fontWeight: 700, letterSpacing: '-0.3px', marginBottom: '6px' }}>
+              Suggest a comparison
+            </h3>
+            <p style={{ margin: 0, fontSize: '14px', color: 'var(--sfp-slate)', lineHeight: 1.6 }}>
+              Tell us which category to test next.
+            </p>
           </div>
         </Link>
       </div>

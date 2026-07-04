@@ -45,13 +45,13 @@ export default function Hero({
 
   return (
     <section
-      className="relative overflow-hidden text-center"
+      className="relative overflow-hidden"
       style={{ background: '#0F2E52', padding: '80px 40px 80px' }}
     >
       {/* Hero Background Image */}
       <div className="absolute inset-0" aria-hidden="true">
         <Image
-          src="/images/header001.webp"
+          src="/images/header002.webp"
           alt=""
           fill
           priority
@@ -65,10 +65,17 @@ export default function Hero({
             background: 'linear-gradient(180deg, rgba(15,46,82,0.12) 0%, rgba(15,46,82,0.28) 55%, rgba(15,46,82,0.52) 100%)',
           }}
         />
+        {/* Anthracite left-side wash — premium editorial depth behind the left-aligned copy */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background: 'linear-gradient(100deg, rgba(18,19,23,0.62) 0%, rgba(18,19,23,0.42) 32%, rgba(18,19,23,0.16) 56%, rgba(18,19,23,0) 74%)',
+          }}
+        />
       </div>
 
       {/* Hero Inner Content */}
-      <div className="relative z-[2] mx-auto" style={{ maxWidth: '720px' }}>
+      <div className="relative z-[2]" style={{ maxWidth: '600px' }}>
         {/* Chip / Kicker Badge */}
         <div
           className="mb-9 inline-flex items-center gap-2"
@@ -116,7 +123,6 @@ export default function Hero({
 
         {/* Subheadline */}
         <p
-          className="mx-auto"
           style={{
             fontSize: '16px',
             fontWeight: 400,
@@ -131,7 +137,7 @@ export default function Hero({
         </p>
 
         {/* CTAs */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-start gap-3">
           <Link
             href={primaryCta.href}
             className="no-underline inline-flex items-center justify-center transition-all duration-200 hover:brightness-110 hover:no-underline"
@@ -146,7 +152,7 @@ export default function Hero({
               border: 'none',
             }}
           >
-            {primaryCta.text} →
+            {primaryCta.text}
           </Link>
           <Link
             href={secondaryCta.href}
@@ -167,7 +173,7 @@ export default function Hero({
         </div>
 
         {/* Trust Badges */}
-        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+        <div className="mt-8 flex flex-wrap items-center justify-start gap-3">
           {trustBadges.map((badge) => (
             <div
               key={badge.text}
