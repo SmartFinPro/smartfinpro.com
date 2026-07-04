@@ -1,14 +1,13 @@
 ---
 title: "Perimeter 81 Review Canada 2026: Zero Trust SASE"
-description: "We tested Perimeter 81 for 90 days with a Canadian financial services team. Here's our in-depth analysis of Zero Trust features, SASE architecture,"
+description: "An in-depth analysis of Perimeter 81's Zero Trust features, SASE architecture, and compliance fit for Canadian financial services teams,"
 author: SmartFinPro CA Security Team
-reviewedBy: 'Marc Fontaine, CFA, CIM'
+reviewedBy: 'Marie Fontaine, CFA, CIM'
 publishDate: '2026-01-22'
 modifiedDate: '2026-03-03'
 category: cybersecurity
 market: ca
 rating: 4.6
-reviewCount: 1087
 affiliateUrl: /go/perimeter-81
 affiliateDisclosure: true
 featured: true
@@ -41,7 +40,7 @@ sections:
   - id: canadian-compliance
     title: PIPEDA & Canadian Compliance
   - id: testing-results
-    title: Our Testing Results
+    title: Zero Trust in Practice for Canadian Finance Teams
   - id: pricing-plans
     title: Pricing Plans
   - id: pros-cons
@@ -120,7 +119,7 @@ The Check Point acquisition in 2023 brought additional threat intelligence capab
 
 
 <ExpertBox
-  name="Marc Fontaine"
+  name="Marie Fontaine"
   title="CFA, CIM | Canada Finance Editor"
   credentials={["18+ years Canadian financial services", "Chartered Financial Analyst", "Chartered Investment Manager"]}
   quote="The Canadian Centre for Cyber Security's Zero Trust guidance is clear: perimeter-based security is no longer sufficient for OSFI-regulated institutions. Perimeter 81 provides a pragmatic entry point for mid-market Canadian firms that cannot justify Zscaler's enterprise pricing but need genuine ZTNA capabilities beyond what NordLayer offers. For PIPEDA compliance, the granular access controls and audit logging are exactly what regulators expect to see."
@@ -129,11 +128,11 @@ The Check Point acquisition in 2023 brought additional threat intelligence capab
 
 <TrustAuthority
   title="Verified Platform Data"
-  source="SmartFinPro Testing · OPC Canada · G2"
+  source="SmartFinPro Research · OPC Canada · G2"
   stats={[
-    { label: "Testing Period", value: "3 Months" },
-    { label: "Zero Trust Tests", value: "50+" },
-    { label: "PIPEDA Ready", value: "Yes" },
+    { label: "Founded", value: "2018" },
+    { label: "Acquired by Check Point", value: "2023" },
+    { label: "Segment", value: "SASE / ZTNA" },
     { label: "G2 Rating", value: "4.6/5" }
   ]}
 />
@@ -194,7 +193,7 @@ Micro-segmentation is where Perimeter 81 delivers its most significant security 
 
 ### 4. Automatic Wi-Fi Security
 
-Critical protection for Canadian finance professionals travelling between offices in Toronto, Montreal, Vancouver, and Calgary or working remotely from public locations. The automatic Wi-Fi security feature detects untrusted networks and activates encrypted connections without requiring any user intervention. During our 90-day test with a Canadian finance team, the feature activated 234 times on untrusted public networks and 45 times on hotel and conference Wi-Fi, with a 100 percent automatic activation success rate.
+Critical protection for Canadian finance professionals travelling between offices in Toronto, Montreal, Vancouver, and Calgary or working remotely from public locations. The automatic Wi-Fi security feature detects untrusted networks and activates encrypted connections without requiring any user intervention, per Perimeter 81's published product documentation, on both public networks and hotel or conference Wi-Fi.
 
 | Feature | Protection Level |
 |---------|-----------------|
@@ -295,39 +294,24 @@ For securities-regulated entities operating under provincial securities commissi
 
 ---
 
-## Our Testing Results
+## Zero Trust in Practice for Canadian Finance Teams
 
-We deployed Perimeter 81 across a 30-person Canadian finance team for 90 days, testing Zero Trust enforcement, speed impact, security effectiveness, and user adoption across offices in Toronto and Montreal plus remote workers in Vancouver and Calgary.
+A mid-market Canadian finance firm deploying Perimeter 81 across a distributed team — spanning offices in Toronto and Montreal plus remote workers in Vancouver and Calgary — is the profile this platform is built for. The Zero Trust model matters most in exactly this kind of environment, where staff routinely access trading platforms, CRM systems, and client data from varied networks and provinces.
 
 ### Speed Performance (Canadian Gateways)
 
-Speed overhead is one of the primary concerns when adopting any network security layer. We measured download and upload speeds, latency, and application load times across Perimeter 81's Canadian gateway infrastructure during peak business hours. The WireGuard protocol delivered the best performance, with a 7.6 percent download speed reduction that proved imperceptible during normal business operations including video conferencing, document sharing, and trading platform access.
-
-| Test | Without ZTNA | With Perimeter 81 (Toronto) | Impact |
-|------|-------------|----------------------|--------|
-| Download (Mbps) | 500 | 462 | -7.6% |
-| Upload (Mbps) | 50 | 45 | -10% |
-| Latency (ms) | 10 | 16 | +6ms |
-| Application load | 1.2s | 1.5s | +0.3s |
+Speed overhead is one of the primary concerns when adopting any network security layer. As with most ZTNA/SASE platforms, the WireGuard protocol underlying Perimeter 81's Canadian gateway infrastructure (Toronto, Montreal) is designed to keep the performance impact of policy evaluation and continuous verification small enough to be imperceptible during normal business operations, including video conferencing, document sharing, and trading platform access. Actual latency and throughput impact will vary by office location, ISP, and gateway distance — validate with a pilot group before full rollout.
 
 ### Security Effectiveness
 
-We conducted controlled penetration testing scenarios to evaluate Perimeter 81's security enforcement under realistic attack conditions. Each test simulated common attack vectors that Canadian financial services firms face, including credential theft, lateral movement, and insider threats. Perimeter 81 successfully blocked lateral movement in every test scenario, containing compromised credentials to the single resource the user was authorised to access. Policy violations were detected and alerted within three seconds on average.
-
-| Metric | Before Perimeter 81 | After Perimeter 81 | Change |
-|--------|---------------------|-------------------|--------|
-| Unauthorized access attempts | 45/month | 0/month | -100% |
-| Network attack surface | Broad | Application-level | Minimized |
-| Policy violations detected | Unknown | 23/month | Now visible |
-| Time to revoke access | 24+ hours | Instant | Immediate |
-| Lateral movement incidents | Unknown | 0 | Contained |
+Perimeter 81's Zero Trust model is designed to contain, not just detect, common attack vectors that Canadian financial services firms face — including credential theft, lateral movement, and insider threats — by limiting a compromised credential to the single resource that user was authorised to access, rather than the broader network. Policy violation alerting and audit logging are built into the platform to support the kind of continuous monitoring OSFI-regulated firms are expected to maintain.
 
 ### Deployment Timeline and User Adoption
 
-Deployment was significantly faster than anticipated, with no hardware procurement delays thanks to the cloud-native architecture. The Toronto cloud gateway was configured within three hours, followed by one day of access policy design and segmentation rules, two days of agent deployment and user training, and one week of policy refinement and performance optimization. After 90 days, 100 percent of the team connected through Perimeter 81, with 88 percent rating the experience as seamless or better than their legacy VPN. Automatic Wi-Fi security activations achieved a 94 percent success rate, and zero security incidents occurred during the entire testing period.
+Because Perimeter 81 is cloud-native, deployment does not require hardware procurement delays. A typical rollout follows initial gateway configuration, access policy design and segmentation rules, agent deployment and user training, and a subsequent period of policy refinement. As with any SASE/ZTNA rollout, expect a tuning period after initial deployment to eliminate false positives in web filtering and access policies before the system settles into steady-state operation.
 
 <Tip>
-When deploying Perimeter 81 to a Canadian finance team, start with a pilot group of 5-10 users on the most sensitive systems (trading, compliance, client data) before rolling out to the broader organisation. This allows IT teams to refine access policies based on actual usage patterns before full deployment, reducing disruption and accelerating adoption. Most Canadian deployments complete full rollout within two weeks.
+When deploying Perimeter 81 to a Canadian finance team, start with a pilot group of 5-10 users on the most sensitive systems (trading, compliance, client data) before rolling out to the broader organisation. This allows IT teams to refine access policies based on actual usage patterns before full deployment, reducing disruption and accelerating adoption.
 </Tip>
 
 ---
@@ -422,7 +406,7 @@ Very small firms with fewer than 10 employees where a traditional VPN solution p
 
 ## Our Verdict
 
-After 90 days of testing with a Canadian finance team, Perimeter 81 earns **4.6 out of 5 stars** for its combination of genuine Zero Trust security, Canadian regulatory compliance support, and operational simplicity.
+Perimeter 81 earns **4.6 out of 5 stars** for its combination of genuine Zero Trust security, Canadian regulatory compliance support, and operational simplicity.
 
 **Bottom line:** Perimeter 81 delivers authentic Zero Trust Network Access that aligns with CCCS recommendations and directly supports PIPEDA and OSFI Guideline B-13 compliance requirements. For Canadian financial services firms moving beyond traditional VPN security, it offers the right combination of micro-segmentation, SASE convergence, compliance documentation, and ease of deployment at a competitive price point. The Check Point acquisition has strengthened the platform's threat intelligence and enterprise support without sacrificing the deployment simplicity that makes it accessible to mid-market firms.
 
@@ -495,7 +479,7 @@ Yes. Perimeter 81 integrates natively with Microsoft Azure Active Directory thro
 - [1Password Business Review Canada 2026: Worth It?](/ca/cybersecurity/1password-business-review/)
 - [CrowdStrike Falcon Review Canada 2026: SMB Verdict](/ca/cybersecurity/crowdstrike-review/)
 - [NordVPN Business Review Canada 2026: Finance Guide](/ca/cybersecurity/nordvpn-business-review/)
-- [Proofpoint Email Security Canada 2026: 90-Day Test](/ca/cybersecurity/proofpoint-review/)
+- [Proofpoint Email Security Canada 2026: In-Depth Review](/ca/cybersecurity/proofpoint-review/)
 - [1Password Business Review 2026: Zero-Knowledge Team Vault](/cybersecurity/1password-business-review/)
 - [CrowdStrike Falcon Review 2026 - Fastest Threat Detection](/cybersecurity/crowdstrike-review/)
 - [NordVPN Business Review 2026: Enterprise VPN for Finance](/cybersecurity/nordvpn-business-review/)
