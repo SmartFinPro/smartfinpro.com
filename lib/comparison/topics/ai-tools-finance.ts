@@ -75,8 +75,6 @@ export const aiToolsFinanceAttributesSchema = z
 const attr = (p: ProductForComparison, k: string): boolean => p.attributes?.[k] === true;
 const attrStr = (p: ProductForComparison, k: string): string =>
   typeof p.attributes?.[k] === 'string' ? (p.attributes[k] as string) : '';
-const attrNum = (p: ProductForComparison, k: string): number =>
-  typeof p.attributes?.[k] === 'number' ? (p.attributes[k] as number) : 0;
 /** null (genuinely unrated) is distinct from 0 (worst possible) — never coerced. */
 const attrNumOrNull = (p: ProductForComparison, k: string): number | null =>
   typeof p.attributes?.[k] === 'number' ? (p.attributes[k] as number) : null;
