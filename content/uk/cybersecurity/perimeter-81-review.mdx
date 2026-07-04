@@ -1,6 +1,6 @@
 ---
 title: 'Perimeter 81 Review 2026: UK Zero Trust Security'
-description: "We tested Perimeter 81 for 90 days with a UK finance team. Here's our in-depth analysis of Zero Trust features, SASE architecture, FCA/PRA compliance,"
+description: "An in-depth analysis of Perimeter 81's Zero Trust features, SASE architecture, and FCA/PRA compliance for UK finance teams."
 author: SmartFinPro UK Security Team
 reviewedBy: 'Sarah Thompson, CFA, CISI'
 publishDate: '2026-01-22'
@@ -8,7 +8,6 @@ modifiedDate: '2026-03-03'
 category: cybersecurity
 market: uk
 rating: 4.7
-reviewCount: 1456
 affiliateUrl: /go/perimeter-81
 affiliateDisclosure: true
 pros:
@@ -40,7 +39,7 @@ sections:
   - id: uk-compliance
     title: UK Regulatory Compliance
   - id: testing-results
-    title: Our Testing Results
+    title: Zero Trust in Practice for UK Finance Teams
   - id: pricing-plans
     title: Pricing Plans
   - id: pros-cons
@@ -88,8 +87,9 @@ faqs:
   - question: What happens if Perimeter 81's cloud infrastructure goes down?
     answer: >-
       Perimeter 81 operates across multiple cloud providers with automatic
-      failover. In our 90-day UK test, we experienced 99.95% uptime with zero
-      complete outages. Configurable failover policies ensure continuous access.
+      failover. Their published SLA targets 99.95% uptime, and configurable
+      failover policies are designed to ensure continuous access if one
+      region experiences disruption.
   - question: Is Perimeter 81 suitable for PRA-regulated firms?
     answer: >-
       Yes. Perimeter 81's Zero Trust architecture, micro-segmentation, and
@@ -122,17 +122,17 @@ The Check Point acquisition in 2023 brought additional threat intelligence capab
 <ExpertBox
   name="Sarah Thompson"
   title="CFA, CISI | UK Finance Editor"
-  credentials={["15+ years UK financial services", "Chartered Financial Analyst", "CISI Level 6 certified"]}
+  credentials={["SmartFinPro Editorial Team"]}
   quote="Zero Trust is no longer optional for FCA-regulated firms. The ICO's 2025 enforcement actions demonstrated that perimeter-based security is insufficient for protecting client data. Perimeter 81 offers a pragmatic entry point for mid-market firms that cannot justify Zscaler's enterprise pricing but need genuine ZTNA capabilities beyond what NordLayer provides."
   variant="highlight"
 />
 
 <TrustAuthority
   title="Verified Platform Data"
-  source="SmartFinPro Testing · NCSC UK · G2"
+  source="SmartFinPro Research · NCSC UK · G2"
   stats={[
-    { label: "Testing Period", value: "3 Months" },
-    { label: "Zero Trust Tests", value: "50+" },
+    { label: "Founded", value: "2018" },
+    { label: "Segment", value: "SASE / ZTNA" },
     { label: "G2 Rating", value: "4.6/5" },
     { label: "GDPR Ready", value: "Yes" }
   ]}
@@ -281,36 +281,21 @@ For PRA-regulated deposit-takers and insurers, Perimeter 81's micro-segmentation
 
 ---
 
-## Our Testing Results
+## Zero Trust in Practice for UK Finance Teams
 
-We deployed Perimeter 81 across a 35-person London-based investment management team for 90 days, testing Zero Trust enforcement, speed impact, security effectiveness, and user adoption across multiple office locations and remote workers.
+A London-based investment management team rolling out Perimeter 81 across multiple office locations and remote workers is the profile this platform is built for. Zero Trust enforcement, micro-segmentation, and identity-based access matter most in exactly this kind of distributed environment, where staff routinely access trading platforms, client data, and compliance systems from varied networks.
 
 ### Speed Performance (UK Gateways)
 
-Speed overhead is one of the primary concerns when adopting any network security layer. We measured download and upload speeds, latency, and page load times across Perimeter 81's UK gateway infrastructure during peak business hours. The WireGuard protocol delivered the best performance, with an 8.1% download speed reduction that proved imperceptible during normal business operations including video conferencing, document sharing, and trading platform access.
-
-| Test | Without ZTNA | With Perimeter 81 | Impact |
-|------|-------------|-------------------|--------|
-| Download (Mbps) | 480 | 441 | -8.1% |
-| Upload (Mbps) | 48 | 44 | -8.3% |
-| Latency (ms) | 9 | 15 | +6ms |
-| Page Load | 1.1s | 1.4s | +0.3s |
+Speed overhead is one of the primary concerns when adopting any network security layer. The WireGuard protocol underpinning Perimeter 81's tunnel is architected for a smaller throughput penalty than legacy VPN protocols, thanks to a leaner codebase and more efficient handshake. On UK gateways at normal business hours, that overhead is generally small enough to be imperceptible during everyday operations including video conferencing, document sharing, and trading platform access — though, as with any Zero Trust or VPN layer, additional policy evaluation and continuous verification checks add some processing overhead compared to a direct connection.
 
 ### Security Effectiveness
 
-We conducted controlled penetration testing scenarios to evaluate Perimeter 81's security enforcement under realistic attack conditions. Each test simulated common attack vectors that UK financial services firms face, including credential theft, lateral movement, and insider threats. Perimeter 81 successfully blocked lateral movement in every test scenario, containing compromised credentials to the single resource the user was authorised to access.
+Perimeter 81's Zero Trust model is designed to contain compromised credentials to the single resource a user was authorised to access, rather than the entire network. Because access decisions are evaluated per-request against identity, device posture, and context — rather than granted broadly at login — an attacker who compromises one set of credentials cannot move laterally across other segments by design. Real-time policy alerting and MFA step-up for off-hours or anomalous access add further layers of containment.
 
-| Test Scenario | Result |
-|--------------|--------|
-| Compromised credentials | Access limited to single authorised resource |
-| Lateral movement attempt | Blocked by micro-segmentation |
-| Unauthorised device | Connection refused (device posture fail) |
-| Policy violation | Real-time alert generated within 3 seconds |
-| Off-hours access | Prompted for additional MFA step |
+### Reliability and Rollout
 
-### Reliability and User Adoption
-
-Over the 90-day test period, Perimeter 81 delivered 99.95% uptime with only four brief connection interruptions, all of which auto-reconnected within 15 seconds. Policy synchronisation across all connected devices completed in under 30 seconds after any administrative change. User adoption reached 100% by day 14, with 89% of the team reporting setup as easy or very easy. Zero successful lateral movement incidents occurred during the entire testing period, and three policy violations were detected and remediated through automated alerting.
+Perimeter 81 publishes an SLA target of 99.95% uptime backed by automatic failover across cloud regions, with policy synchronisation across connected devices typically completing within seconds of an administrative change. As with any Zero Trust or SASE rollout, expect an initial tuning period to refine access policies and eliminate false positives in web filtering before the system settles into steady-state operation.
 
 <Tip>
 When deploying Perimeter 81 to a UK finance team, start with a pilot group of 5-10 users on the most sensitive systems (trading, compliance) before rolling out to the broader organisation. This allows IT teams to refine access policies based on actual usage patterns before full deployment, reducing disruption and accelerating adoption.
@@ -355,7 +340,7 @@ The total cost of ownership comparison demonstrates that Perimeter 81 delivers s
     "Unified SASE platform replaces VPN, firewall, and SWG",
     "FCA and PRA operational resilience alignment with audit trails",
     "UK GDPR compliant with UK data residency options",
-    "Intuitive deployment achieves 100% adoption within 14 days",
+    "Intuitive deployment designed for fast team-wide adoption",
     "Micro-segmentation isolates critical financial systems"
   ]}
   cons={[
@@ -407,7 +392,7 @@ Very small firms with fewer than 10 employees where a traditional VPN solution p
 
 ## Our Verdict
 
-After 90 days of testing with a UK investment management team, Perimeter 81 earns **4.7 out of 5 stars** for its combination of genuine Zero Trust security, regulatory compliance support, and operational simplicity.
+Perimeter 81 earns **4.7 out of 5 stars** for its combination of genuine Zero Trust security, regulatory compliance support, and operational simplicity for UK financial services firms.
 
 **Bottom line:** Perimeter 81 delivers authentic Zero Trust Network Access that aligns with NCSC recommendations and directly supports FCA/PRA operational resilience requirements. For UK financial services firms moving beyond traditional VPN security, it offers the right combination of micro-segmentation, SASE convergence, compliance documentation, and ease of deployment at a competitive price point. The Check Point acquisition has strengthened the platform's threat intelligence and enterprise support without sacrificing the deployment simplicity that makes it accessible to mid-market firms.
 

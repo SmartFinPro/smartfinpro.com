@@ -1,6 +1,6 @@
 ---
 title: 'Perimeter 81 Review Australia 2026: Zero Trust'
-description: "We tested Perimeter 81's Zero Trust SASE platform with a 25-person Australian finance team for 60 days. Complete analysis of APRA CPS 234 compliance,"
+description: "An in-depth analysis of Perimeter 81's Zero Trust SASE platform for Australian finance teams. Complete analysis of APRA CPS 234 compliance,"
 author: SmartFinPro AU Security Team
 reviewedBy: 'Emma Whitfield, CFA, AFA'
 publishDate: '2026-01-22'
@@ -8,13 +8,12 @@ modifiedDate: '2026-03-03'
 category: cybersecurity
 market: au
 rating: 4.6
-reviewCount: 892
 affiliateUrl: /go/perimeter-81
 affiliateDisclosure: true
 featured: false
 pros:
   - True Zero Trust Network Access (ZTNA) with APRA CPS 234 alignment
-  - Rapid SASE deployment — fastest we tested in the Australian market
+  - Rapid SASE deployment per vendor documentation — basic setup in hours, not weeks
   - 'SOC 2 Type II compliant, supports APRA CPS 234 and Privacy Act 1988'
   - 'Integrates with identity providers (Okta, Azure AD, Google Workspace)'
   - Automatic Wi-Fi security for mobile workers across Australian cities
@@ -43,7 +42,7 @@ sections:
   - id: security-analysis
     title: Security Analysis
   - id: testing-results
-    title: Our Testing Results
+    title: Zero Trust in Practice for Australian Finance Teams
   - id: pricing-plans
     title: Pricing Plans (AUD)
   - id: competitors
@@ -141,10 +140,10 @@ The Check Point acquisition in 2023 brought additional threat intelligence capab
 
 <TrustAuthority
   title="Verified Platform Data"
-  source="SmartFinPro Testing · ACSC Australia · G2"
+  source="SmartFinPro Research · ACSC Australia · G2"
   stats={[
-    { label: "Testing Period", value: "3 Months" },
-    { label: "Zero Trust Tests", value: "50+" },
+    { label: "Founded as Perimeter 81", value: "2018" },
+    { label: "Acquired by Check Point", value: "Sept 2023" },
     { label: "APRA CPS 234", value: "Ready" },
     { label: "G2 Rating", value: "4.6/5" }
   ]}
@@ -211,7 +210,7 @@ Perimeter 81 integrates with your existing identity infrastructure to enforce co
 
 ### 3. Automatic Wi-Fi Security
 
-Critical protection for Australian finance professionals working from co-working spaces, client offices, or travelling between Sydney, Melbourne, Brisbane, and Perth. The automatic Wi-Fi security feature detects untrusted networks and activates encrypted connections without requiring any user intervention. During our 60-day test with an Australian finance team, the feature activated 187 times on untrusted public networks and 32 times on hotel and conference Wi-Fi, with a 100 percent automatic activation success rate.
+Critical protection for Australian finance professionals working from co-working spaces, client offices, or travelling between Sydney, Melbourne, Brisbane, and Perth. The automatic Wi-Fi security feature detects untrusted networks and activates encrypted connections without requiring any user intervention, per Perimeter 81's published documentation.
 
 | Feature | Protection Level |
 |---------|-----------------|
@@ -227,7 +226,7 @@ For the best performance in Australia, configure Perimeter 81 to route through t
 
 ### 4. Web Filtering and DNS Security
 
-Perimeter 81 includes built-in web security that operates at the DNS and application layer, providing an additional defence against phishing, malware, and social engineering attacks targeting Australian financial services firms. In our testing from Sydney and Melbourne locations, web filtering blocked 87 percent of phishing attempts specifically targeting financial services portals, including convincing replicas of ANZ, Westpac, and CommBank login pages.
+Perimeter 81 includes built-in web security that operates at the DNS and application layer, providing an additional defence against phishing, malware, and social engineering attacks targeting Australian financial services firms. This is a core protection layer for finance teams handling sensitive client and trading data, since phishing — including convincing replicas of ANZ, Westpac, and CommBank login pages — remains one of the most common initial-access vectors targeting Australian financial services portals.
 
 | Feature | Protection |
 |---------|-----------|
@@ -348,46 +347,11 @@ Perimeter 81 maintains detailed logs critical for Australian regulatory requirem
 
 ---
 
-## Our Testing Results
+## Zero Trust in Practice for Australian Finance Teams
 
-We deployed Perimeter 81 across a 25-person Australian finance team based in Sydney and Melbourne for 60 days, testing Zero Trust enforcement, speed impact, security effectiveness, and user adoption across office and remote work environments.
+An APRA-regulated advisory firm or mid-market financial services team deploying Perimeter 81 across Sydney and Melbourne offices plus remote workers is the profile this platform is built for. The Zero Trust model matters most in exactly this kind of environment, where staff routinely access client data, reporting systems, and regulatory platforms from varied networks and locations.
 
-### Security Metrics
-
-During the 60-day testing period, Perimeter 81 blocked 38 unauthorised access attempts, 19 phishing sites specifically targeting financial services portals, and 6 malware downloads. The platform detected 9 policy violations where users attempted to access resources outside their authorised scope, demonstrating that the least-privilege model works as designed. We recorded only 4 false positives across the entire testing period, all of which were resolved through minor policy adjustments within the first two weeks.
-
-| Metric | Result |
-|--------|--------|
-| Unauthorised access attempts blocked | 38 |
-| Phishing sites blocked | 19 |
-| Malware downloads prevented | 6 |
-| Policy violations detected | 9 |
-| False positives | 4 |
-| Lateral movement incidents | 0 |
-
-### Performance Impact (Sydney-Based Testing)
-
-Speed overhead is one of the primary concerns when adopting any network security layer. We measured download speeds, latency, and application load times across Perimeter 81's Sydney edge node during peak business hours. The WireGuard protocol delivered the best performance, with a 12 percent reduction in file transfer speed that proved imperceptible during normal business operations including video conferencing, Xero access, and MYOB reporting.
-
-| Test | Without Perimeter 81 | With Perimeter 81 | Impact |
-|------|---------------------|-------------------|--------|
-| App load time | 1.3s | 1.6s | +23% |
-| File transfer | 42 Mbps | 37 Mbps | -12% |
-| Latency (Sydney node) | 12ms | 19ms | +7ms |
-| Latency (Singapore node) | 68ms | 82ms | +14ms |
-
-Performance impact is slightly higher than traditional VPN due to Zero Trust verification checks at each access request. The Sydney edge node keeps domestic latency acceptable for all business applications we tested. Connections routed via international nodes show a more noticeable increase, which is expected given the additional verification layer.
-
-### User Experience
-
-Post-deployment survey results from all 25 Australian test users demonstrated strong adoption across both technical and non-technical staff. The 80 percent positive response for workflow disruption was the lowest metric, primarily driven by users who needed to request additional application access during the first week of deployment before policies were fully refined.
-
-| Question | Positive Response |
-|----------|-------------------|
-| Easy to install | 92% |
-| Transparent operation | 84% |
-| No workflow disruption | 80% |
-| Would recommend | 88% |
+Performance overhead with ZTNA/SASE platforms is generally somewhat higher than a traditional VPN due to the additional policy evaluation and continuous verification checks, though this is typically not noticeable in day-to-day use for most finance workflows including video conferencing, Xero, and MYOB access. The Sydney edge node keeps domestic latency low for business applications; connections routed via international nodes will show a more noticeable increase, which is expected given the additional verification layer. As with any SASE/ZTNA rollout, expect a tuning period after initial deployment to eliminate false positives in web filtering and access policies before the system settles into steady-state operation.
 
 ---
 
@@ -453,11 +417,11 @@ Perimeter 81 occupies the mid-market sweet spot for Australian financial service
 <ProsCons
   pros={[
     "True Zero Trust architecture aligned with APRA CPS 234 and ACSC Essential Eight",
-    "Fastest SASE deployment we tested in the Australian market (hours, not weeks)",
+    "Quick SASE deployment per vendor documentation (hours, not weeks)",
     "Strong identity provider integrations (Okta, Azure AD, Google Workspace)",
     "SOC 2 Type II and ISO 27001 certified with comprehensive audit logging",
-    "Sydney edge nodes deliver sub-20ms latency for domestic resources",
-    "Built-in web filtering blocks 87% of financial services phishing attempts"
+    "Sydney edge nodes deliver low latency for domestic resources",
+    "Built-in web filtering for phishing and malicious-domain protection"
   ]}
   cons={[
     "Higher per-user cost than traditional VPN solutions (A$12 vs A$8)",
@@ -484,7 +448,7 @@ Very small teams with fewer than 10 employees where a traditional VPN solution p
 
 ## Our Verdict
 
-After 60 days of testing with an Australian finance team, Perimeter 81 earns **4.6 out of 5 stars** for its combination of genuine Zero Trust security, Australian regulatory compliance support, and operational simplicity.
+Based on our research into Perimeter 81's published architecture, compliance documentation, and standing among Australian mid-market financial services adopters, Perimeter 81 earns **4.6 out of 5 stars** for its combination of genuine Zero Trust security, Australian regulatory compliance support, and operational simplicity.
 
 **Bottom line:** Perimeter 81 delivers authentic Zero Trust Network Access that aligns with ACSC Essential Eight guidance and directly supports APRA CPS 234 compliance requirements. For Australian financial services firms moving beyond traditional VPN security, it offers the right combination of micro-segmentation, SASE convergence, compliance documentation, and ease of deployment at a competitive price point. The Check Point acquisition has strengthened the platform's threat intelligence and enterprise support without sacrificing the deployment simplicity that makes it accessible to mid-market firms.
 
