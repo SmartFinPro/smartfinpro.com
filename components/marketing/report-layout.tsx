@@ -369,9 +369,11 @@ export function ReportLayout({
                         }`}
                       />
                     ))}
-                    <span className="text-sm font-semibold ml-1" style={{ color: 'var(--sfp-ink)' }}>
-                      ({review.reviewCount})
-                    </span>
+                    {review.reviewCount > 0 && (
+                      <span className="text-sm font-semibold ml-1" style={{ color: 'var(--sfp-ink)' }}>
+                        ({review.reviewCount})
+                      </span>
+                    )}
                   </div>
                 </>
               )}

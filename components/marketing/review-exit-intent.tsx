@@ -286,7 +286,7 @@ export function ReviewExitIntent({
           <div className="space-y-3 mb-5">
             {[
               { icon: ShieldCheck, color: 'var(--sfp-green)', text: 'Verified & regulated platform' },
-              { icon: Star, color: 'var(--sfp-gold)', text: rating ? `Rated ${rating.toFixed(1)}/5 by ${reviewCount?.toLocaleString('en-US') || 'industry'} experts` : 'Top-rated by industry experts' },
+              { icon: Star, color: 'var(--sfp-gold)', text: rating ? `Rated ${rating.toFixed(1)}/5 by ${reviewCount && reviewCount > 0 ? reviewCount.toLocaleString('en-US') : 'industry'} experts` : 'Top-rated by industry experts' },
               { icon: TrendingUp, color: 'var(--sfp-navy)', text: 'Exclusive sign-up bonus for SmartFinPro readers' },
               { icon: Zap, color: '#8B5CF6', text: 'Account setup in under 5 minutes' },
             ].map((item, i) => (

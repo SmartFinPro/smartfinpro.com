@@ -7,8 +7,21 @@ description: >-
 author: Michael Torres
 reviewedBy: 'Michael Torres, CFA'
 publishDate: '2026-02-27'
-modifiedDate: '2026-03-01'
+modifiedDate: '2026-07-04'
 changelog:
+  - date: '2026-07-04'
+    note: >-
+      Removed fabricated Trustpilot claim (4.7/5 from 2,000+ reviews — real
+      profile has only ~24 reviews) and replaced with verified App Store
+      (4.9/5, ~70,000 ratings) and Google Play (4.7/5, ~17,600 reviews)
+      figures; removed the non-existent free Basic plan (90-day history) —
+      Monarch has no ongoing free tier, only a 7-day trial requiring a
+      credit card; corrected pricing to Core $14.99/mo or $99.99/yr and
+      added the previously-missing Plus tier ($199/yr, annual billing
+      only); replaced the dead /go/monarch-money affiliate CTA (no
+      affiliate_links DB row exists) with the bare homepage URL since no
+      real affiliate relationship exists; updated domain references from
+      monarchmoney.com to monarch.com
   - date: '2026-03-01'
     note: >-
       Added per-criterion scoring, inline source links, cost comparison tables,
@@ -17,10 +30,10 @@ changelog:
     note: Initial publication with 4-month hands-on testing data
 category: ai-tools
 market: us
-rating: 4.7
-reviewCount: 2000
-affiliateUrl: /go/monarch-money
-affiliateDisclosure: true
+rating: 4.9
+reviewCount: 70000
+affiliateUrl: 'https://www.monarch.com/'
+affiliateDisclosure: false
 featured: false
 pros:
   - 'Unified financial dashboard connecting 12,000+ institutions via Plaid'
@@ -28,7 +41,7 @@ pros:
   - Investment portfolio tracking alongside budgeting (rare in this category)
   - 'Cross-platform availability (iOS, Android, Web) — not locked to Apple'
   - Collaborative budgeting for couples and families with selective transparency
-  - 'Trustpilot 4.7/5 rating from 2,000+ verified user reviews'
+  - 'App Store 4.9/5 rating from ~70,000 ratings; Google Play 4.7/5 from ~17,600 reviews'
 cons:
   - Passive budgeting approach — does not enforce discipline like YNAB
   - Limited debt payoff optimization (no avalanche/snowball calculators)
@@ -39,9 +52,9 @@ cons:
   - No tax filing integration
 bestFor: >-
   Individuals and couples managing multi-account finances with investments
-  ($14.99/mo or $99/yr)
-pricing: Free basic plan / Premium $14.99/mo or $99/yr ($8.25/mo)
-guarantee: 7-day free trial on Premium
+  (Core $14.99/mo or $99.99/yr; Plus $199/yr)
+pricing: 'Core $14.99/mo or $99.99/yr; Plus $199/yr (annual billing only)'
+guarantee: 7-day free trial (credit card required)
 sections:
   - id: overview
     title: Overview
@@ -118,11 +131,10 @@ faqs:
       visibility and trend analysis rather than predictive modeling.
   - question: What happens to my data if I cancel Monarch Money?
     answer: >-
-      If you cancel your Premium subscription, you revert to the free Basic plan
-      with limited features (90-day transaction history, basic reporting). Your
-      data remains accessible but advanced analytics, goal tracking, and
-      collaborative features become unavailable. You can export your transaction
-      history before downgrading.
+      Monarch Money does not offer an ongoing free plan — if you cancel your
+      subscription, your account access ends rather than downgrading to a free
+      tier. You can export your transaction history before canceling to retain
+      your records.
   - question: Does Monarch Money work with crypto accounts?
     answer: >-
       Monarch Money connects to some cryptocurrency exchanges through Plaid, but
@@ -134,12 +146,12 @@ faqs:
 
 <TrustAuthority
   title="Verified Platform Data"
-  source="SmartFinPro Testing · Trustpilot · App Store"
+  source="SmartFinPro Testing · App Store · Google Play"
   stats={[
     { label: "Testing Period", value: "4 Months" },
     { label: "Accounts Connected", value: "14" },
     { label: "Transactions Tracked", value: "3,200+" },
-    { label: "Trustpilot Rating", value: "4.7/5 (2k+)" }
+    { label: "App Store Rating", value: "4.9/5 (~70k)" }
   ]}
 />
 
@@ -149,14 +161,14 @@ faqs:
 
 <AnswerBlock
   question="Which Americans should consider Monarch Money?"
-  answer="Monarch Money is best for individuals and couples managing 5+ financial accounts across multiple institutions who want a unified dashboard combining budgeting, net worth tracking, and investment portfolio visibility. The $99/year plan saves hours monthly vs. logging into separate bank, brokerage, and credit card portals. If you only need strict budgeting discipline, YNAB is a better choice."
+  answer="Monarch Money is best for individuals and couples managing 5+ financial accounts across multiple institutions who want a unified dashboard combining budgeting, net worth tracking, and investment portfolio visibility. The Core $99.99/year plan saves hours monthly vs. logging into separate bank, brokerage, and credit card portals. If you only need strict budgeting discipline, YNAB is a better choice."
 />
 
 {/* Platform Evidence section — screenshots to be added in forthcoming update */}
 
 ## Monarch Money: The Leading Mint Replacement for Multi-Account Households
 
-Monarch Money emerged specifically to fill the void after [Mint's discontinuation in January 2024](https://www.intuit.com/), and after four months of hands-on testing (October 2025 through February 2026), tracking over 3,200 transactions across 14 connected accounts, it is clear the platform has earned its position as the leading Mint alternative. Priced at $14.99 monthly or $99 annually ($8.25/month), Monarch Money combines Plaid's bank integration with AI-powered transaction categorization, collaborative budgeting for couples and families, and investment portfolio tracking that most budgeting apps ignore entirely. With a [Trustpilot rating of 4.7/5 stars](https://www.trustpilot.com/review/monarchmoney.com) from 2,000+ reviews, the platform demonstrates strong user satisfaction among those managing complex household finances.
+Monarch Money emerged specifically to fill the void after [Mint's discontinuation in January 2024](https://www.intuit.com/), and after four months of hands-on testing (October 2025 through February 2026), tracking over 3,200 transactions across 14 connected accounts, it is clear the platform has earned its position as the leading Mint alternative. Priced at $14.99 monthly or $99.99 annually for the Core plan (with a $199/year Plus tier for households wanting deeper features), Monarch Money combines Plaid's bank integration with AI-powered transaction categorization, collaborative budgeting for couples and families, and investment portfolio tracking that most budgeting apps ignore entirely. With a [4.9/5 rating on the App Store](https://apps.apple.com/app/monarch-money/id1537849670) from roughly 70,000 ratings and a 4.7/5 rating on Google Play from approximately 17,600 reviews, the platform demonstrates strong user satisfaction among those managing complex household finances.
 
 Unlike single-purpose budgeting tools, Monarch Money targets users who need a comprehensive financial dashboard spanning checking accounts, savings, credit cards, investment portfolios, retirement accounts, and loans. The platform connects to [12,000+ financial institutions through Plaid](https://plaid.com/), refreshing transaction data multiple times daily and balance changes within hours. Cross-platform support across iOS, Android, and Web differentiates it from Apple-exclusive competitors like [Copilot Money](https://copilot.money/), making it accessible regardless of your device ecosystem. For a broader overview of how AI is transforming financial management tools, our guide to [AI-driven finance tools](/ai-tools/) covers the full landscape of available solutions.
 
@@ -181,64 +193,64 @@ Monarch Money is a US-based personal finance platform offering account aggregati
   profileUrl="#how-we-tested"
   credentials={["Certified Financial Analyst with fintech specialization", "Tested Monarch Money, YNAB, and Copilot Money side-by-side", "4 months hands-on evaluation across 14 connected accounts"]}
   quote="After tracking 3,200+ transactions across 14 accounts over four months, the data is clear: Monarch Money delivers the most comprehensive financial dashboard in this price range. The investment tracking alone differentiates it from YNAB and most competitors. However, if your primary goal is enforcing spending discipline rather than gaining financial visibility, YNAB's zero-based methodology remains more effective."
-  rating={4.7}
+  rating={4.9}
   variant="highlight"
 />
 
-<AffiliateButton href="/go/monarch-money" productName="Monarch Money" />
+<AffiliateButton href="https://www.monarch.com/" productName="Monarch Money" />
 
 ---
 
 <ScoringCriteria
   title="How We Score Monarch Money"
   criteria={[
-    { name: "Value & Pricing", weight: 20, score: 4.6, description: "Competitive at $14.99/month or $99/year ($8.25/mo) against YNAB ($14.99/mo) and Copilot Money ($13/mo). Free tier available but limited to 90-day history. Annual plan offers strong value for committed users.", icon: "rates" },
+    { name: "Value & Pricing", weight: 20, score: 4.5, description: "Core plan at $14.99/month or $99.99/year against YNAB ($14.99/mo) and Copilot Money ($13/mo), plus a $199/year Plus tier (annual billing only) for deeper features. No ongoing free plan — only a 7-day free trial that requires a credit card. Annual plans offer meaningful savings for committed users.", icon: "rates" },
     { name: "Features & Tools", weight: 25, score: 4.9, description: "Most comprehensive feature set among personal budgeting apps: investment tracking, net worth, collaborative budgeting, AI categorization, custom rules, recurring bill detection, goal tracking. Loses points only for missing debt optimization tools.", icon: "features" },
-    { name: "Ease of Use", weight: 25, score: 4.8, description: "Clean interface with intuitive navigation. Plaid setup takes minutes. AI categorization reduces manual work significantly. Cross-platform consistency across iOS, Android, and Web is excellent. 4.7/5 Trustpilot reflects genuine ease of use.", icon: "ease" },
+    { name: "Ease of Use", weight: 25, score: 4.8, description: "Clean interface with intuitive navigation. Plaid setup takes minutes. AI categorization reduces manual work significantly. Cross-platform consistency across iOS, Android, and Web is excellent. 4.9/5 on the App Store reflects genuine ease of use.", icon: "ease" },
     { name: "Customer Support", weight: 10, score: 4.3, description: "Email and in-app support with reasonable response times (typically 4-12 hours). Help center covers most common questions. No phone support available. Community forum provides peer assistance.", icon: "support" },
     { name: "Security & Privacy", weight: 20, score: 4.7, description: "Plaid OAuth integration (SOC 2 Type II audited, $1T+ annual volume). View-only access — Monarch cannot move money. Bank-grade 256-bit encryption. Two-factor authentication available. No credential storage on Monarch servers.", icon: "regulation" }
   ]}
 />
 
 <Info>
-**Weighted score calculation:** (4.6x20% + 4.9x25% + 4.8x25% + 4.3x10% + 4.7x20%) = **4.7/5 overall**. Features and ease of use carry the score — Monarch delivers the broadest feature set in the personal budgeting category while maintaining an intuitive interface that minimizes learning curve.
+**Weighted score calculation:** (4.5x20% + 4.9x25% + 4.8x25% + 4.3x10% + 4.7x20%) = **4.7/5 overall**. Features and ease of use carry the score — Monarch delivers the broadest feature set in the personal budgeting category while maintaining an intuitive interface that minimizes learning curve.
 </Info>
 
 ---
 
 ## Pricing & Plans 2026
 
-Monarch Money offers two tiers with a straightforward pricing structure. Unlike competitors with complex tier systems, Monarch keeps it simple: a limited free plan and a full-featured Premium plan. Current pricing is sourced from the [official Monarch Money pricing page](https://www.monarchmoney.com/pricing):
+Monarch Money offers two paid tiers — there is no ongoing free plan. Unlike competitors with complex tier systems, Monarch keeps it simple: a Core plan for most households and a Plus plan (annual billing only) for those wanting deeper features. Current pricing is sourced from the [official Monarch Money pricing page](https://www.monarch.com/pricing):
 
-| Plan | Monthly Fee | Transaction History | Analytics | Investment Tracking | Collaborative Access | Goal Tracking |
-|------|-------------|--------------------:|:---------:|:-------------------:|:--------------------:|:-------------:|
-| **Basic (Free)** | $0 | 90 days | Basic only | No | No | No |
-| **Premium (Monthly)** | $14.99/mo | Unlimited | Full | Yes | Yes | Yes |
-| **Premium (Annual)** | $8.25/mo ($99/yr) | Unlimited | Full | Yes | Yes | Yes |
+| Plan | Price | Billing | Analytics | Investment Tracking | Collaborative Access | Goal Tracking |
+|------|-------------|--------------------|:---------:|:-------------------:|:--------------------:|:-------------:|
+| **Core (Monthly)** | $14.99/mo | Monthly | Full | Yes | Yes | Yes |
+| **Core (Annual)** | $99.99/yr (~$8.33/mo) | Annual | Full | Yes | Yes | Yes |
+| **Plus (Annual only)** | $199/yr | Annual only | Full + advanced | Yes | Yes | Yes |
 
 ### Cost Considerations
 
-The $99 annual subscription works out to $8.25/month — a 45% savings over the monthly rate. For users committed to the platform, this represents strong value given the feature set. The free Basic plan provides account syncing and balance viewing with 90-day transaction history, which is sufficient for casual users exploring whether Monarch fits their workflow before committing to Premium.
+The $99.99 annual Core subscription works out to roughly $8.33/month — a meaningful savings over the $14.99/month rate. There is no ongoing free tier; new users get a 7-day free trial ("your first week is on us"), which requires a credit card to start. Monarch also runs promo codes periodically (e.g., MONARCHVIP for 50% off or WELCOME for 30% off the first year), which can meaningfully lower the effective annual cost.
 
-Compared to [YNAB](https://www.ynab.com/) at $14.99/month ($99/year) and [Copilot Money](https://copilot.money/) at $13/month, Monarch's pricing aligns with premium competitors. The annual subscription matches YNAB's pricing exactly at $99/year, meaning the decision should hinge on feature fit and methodology preference rather than cost differentiation. For users considering how [AI tools transform personal financial planning](/ai-tools/ai-driven-finance-future), Monarch represents one of the most feature-complete options at this price point.
+Compared to [YNAB](https://www.ynab.com/) at $14.99/month ($99/year) and [Copilot Money](https://copilot.money/) at $13/month, Monarch's Core pricing aligns closely with premium competitors, while the Plus tier ($199/year) sits above them for households wanting the most advanced feature set. For users considering how [AI tools transform personal financial planning](/ai-tools/ai-driven-finance-future), Monarch represents one of the most feature-complete options at this price point.
 
-### Break-Even Analysis: Monarch Money vs. Free Alternatives
+### Break-Even Analysis: Monarch Money vs. Alternatives
 
 | User Profile | Best Choice | Why |
 |-------------|-------------|-----|
-| Single checking + savings, no investments | **Free spreadsheet or Mint alternative** | Monarch Premium overkill for simple finances |
-| 3-5 accounts, basic budgeting needs | **Monarch Basic (Free)** | 90-day history covers most needs |
-| 5+ accounts across institutions | **Monarch Premium ($99/yr)** | Unified dashboard saves 2+ hours monthly |
-| Complex finances + investments | **Monarch Premium ($99/yr)** | Investment tracking + net worth uniquely valuable |
+| Single checking + savings, no investments | **Free spreadsheet or Mint alternative** | Monarch Core overkill for simple finances |
+| 3-5 accounts, basic budgeting needs | **Monarch Core ($99.99/yr)** | Unlimited history and full analytics at the lower tier |
+| 5+ accounts across institutions | **Monarch Core ($99.99/yr)** | Unified dashboard saves 2+ hours monthly |
+| Complex finances + investments | **Monarch Core or Plus** | Investment tracking + net worth uniquely valuable |
 | Needs strict budgeting discipline | **YNAB ($99/yr)** | Zero-based methodology enforces intentional spending |
 | Apple-only, design-first priority | **Copilot Money ($13/mo)** | Native Apple ecosystem integration |
 
-<AffiliateButton href="/go/monarch-money" productName="Monarch Money">Start Free Trial</AffiliateButton>
+<AffiliateButton href="https://www.monarch.com/" productName="Monarch Money">Start Free Trial</AffiliateButton>
 
 ---
 
 <Warning>
-**Subscription Commitment:** Unlike Mint which was free (ad-supported), Monarch Money requires a paid subscription for full functionality. The free Basic plan limits transaction history to 90 days and excludes investment tracking, collaborative features, and advanced analytics. Evaluate whether the $99/year Premium cost is justified by your financial complexity before committing.
+**Subscription Commitment:** Unlike Mint which was free (ad-supported), Monarch Money requires a paid subscription for full functionality — there is no ongoing free plan. Only a 7-day free trial is available, and it requires a credit card to start. Evaluate whether the $99.99/year Core (or $199/year Plus) cost is justified by your financial complexity before committing.
 </Warning>
 
 ## Key Features for Americans
@@ -293,7 +305,7 @@ Multi-user access addresses one of the most common sources of relationship finan
 
 Shared accounts (joint checking, mortgage, joint credit cards) are visible to both users automatically. Individual accounts can be hidden entirely or made visible at the account holder's discretion. Collaborative goals like saving for a house down payment or building a vacation fund track progress that both partners can see, creating shared accountability without requiring total financial exposure. Spending insights by category can be shared or kept private based on each user's preference setting, which was thoughtfully implemented in our testing.
 
-The built-in notes and discussion features within Monarch allow couples to communicate about specific transactions or budget decisions without needing a separate messaging thread. During our testing, we found this particularly useful for flagging unusual charges ("Was the $250 Home Depot charge for the bathroom project?") and coordinating large purchase decisions in real time. This feature alone justified the Premium subscription for one of our test households managing complex joint finances.
+The built-in notes and discussion features within Monarch allow couples to communicate about specific transactions or budget decisions without needing a separate messaging thread. During our testing, we found this particularly useful for flagging unusual charges ("Was the $250 Home Depot charge for the bathroom project?") and coordinating large purchase decisions in real time. This feature alone justified the Core subscription for one of our test households managing complex joint finances.
 
 <Warning>
 **Passive Budgeting Approach:** Unlike [YNAB's zero-based methodology](https://www.ynab.com/the-four-rules) where every dollar gets assigned a purpose before spending, Monarch Money suggests budgets based on historical spending patterns. This passive approach works for disciplined spenders who want visibility and optimization, but may enable undisciplined spending for users who need external structure. YNAB forces intention: "I will spend $600 on dining this month." Monarch observes: "You typically spend $650 on dining, so I suggest that budget." The difference is subtle but meaningful for behavioral change.
@@ -313,11 +325,11 @@ Recognizing recurring charges helps identify forgotten subscriptions silently dr
 
 Choosing between Monarch Money, YNAB, and Copilot Money is not simply a matter of comparing monthly fees — each platform takes a fundamentally different approach to personal finance management. Monarch prioritizes comprehensive visibility (budgeting plus investments plus net worth), YNAB prioritizes behavioral methodology (zero-based budgeting with every dollar assigned), and Copilot Money prioritizes design experience (Apple-native interface with clean aesthetics). We tested all three platforms simultaneously over our four-month evaluation period, and the comparison below reflects real usage differences rather than just what the marketing pages promise.
 
-| Feature | Monarch Premium | YNAB | Copilot Money | Empower Premium |
+| Feature | Monarch Core | YNAB | Copilot Money | Empower Premium |
 |---------|:--------------:|:----:|:-------------:|:---------------:|
 | **Monthly fee** | $14.99/mo | $14.99/mo | $13/mo | $14.99/mo |
-| **Annual fee** | $99/yr ($8.25/mo) | $99/yr ($8.25/mo) | N/A (monthly only) | N/A |
-| **Free tier** | Yes (limited) | No (34-day trial) | No (7-day trial) | Yes (basic) |
+| **Annual fee** | $99.99/yr (~$8.33/mo) | $99/yr ($8.25/mo) | N/A (monthly only) | N/A |
+| **Free tier** | No (7-day trial, card required) | No (34-day trial) | No (7-day trial) | Yes (basic) |
 | **Platform** | iOS, Android, Web | iOS, Android, Web | Apple only | iOS, Android, Web |
 | **Investment tracking** | Yes (comprehensive) | No | Basic | Yes (comprehensive) |
 | **Net worth tracking** | Yes | Limited | Yes | Yes |
@@ -341,17 +353,17 @@ Choosing between Monarch Money, YNAB, and Copilot Money is not simply a matter o
 
 To help you choose the right platform, we modeled annual costs and time savings for three common American household profiles. All figures assume annual subscription pricing where available and reflect the platform capabilities most relevant to each profile.
 
-| Scenario | Monarch Premium | YNAB | Copilot Money | Empower Premium |
+| Scenario | Monarch Core | YNAB | Copilot Money | Empower Premium |
 |----------|:--------------:|:----:|:-------------:|:---------------:|
-| **Single professional — 3 accounts, basic budgeting** | $99/yr | $99/yr | $156/yr | $179.88/yr |
-| **Couple — 8+ accounts, shared finances** | $99/yr (collaborative) | $99/yr (limited sharing) | $312/yr (2 subs needed) | $359.76/yr (2 subs needed) |
-| **Complex household — 12+ accounts, investments, retirement** | $99/yr (all-in-one) | $99/yr (no investment tracking) | $156/yr (basic investments) | $179.88/yr |
+| **Single professional — 3 accounts, basic budgeting** | $99.99/yr | $99/yr | $156/yr | $179.88/yr |
+| **Couple — 8+ accounts, shared finances** | $99.99/yr (collaborative) | $99/yr (limited sharing) | $312/yr (2 subs needed) | $359.76/yr (2 subs needed) |
+| **Complex household — 12+ accounts, investments, retirement** | $99.99/yr (Core) or $199/yr (Plus) | $99/yr (no investment tracking) | $156/yr (basic investments) | $179.88/yr |
 
 <Info>
-**Key assumptions:** Annual pricing used where available (Monarch $99/yr, YNAB $99/yr). Copilot Money at $13/mo has no annual discount. Empower Premium at $14.99/mo has no annual discount. Couples needing collaborative access: Monarch includes it in one subscription; YNAB has limited multi-user support; Copilot and Empower require separate subscriptions per user. Investment tracking quality varies significantly — Monarch and Empower offer position-level detail, YNAB does not track investments, Copilot offers basic tracking.
+**Key assumptions:** Annual pricing used where available (Monarch Core $99.99/yr, Monarch Plus $199/yr annual-only, YNAB $99/yr). Copilot Money at $13/mo has no annual discount. Empower Premium at $14.99/mo has no annual discount. Couples needing collaborative access: Monarch includes it in one subscription; YNAB has limited multi-user support; Copilot and Empower require separate subscriptions per user. Investment tracking quality varies significantly — Monarch and Empower offer position-level detail, YNAB does not track investments, Copilot offers basic tracking.
 </Info>
 
-**The takeaway:** For single users with simple finances, all platforms cost roughly the same ($99-$180/year) and the choice comes down to methodology preference. For couples and complex households, Monarch Money's all-inclusive subscription — covering collaborative access and comprehensive investment tracking in a single $99/year fee — delivers the strongest value. YNAB matches on price but lacks investment tracking. Copilot Money and Empower require multiple subscriptions for couples, doubling the effective cost.
+**The takeaway:** For single users with simple finances, all platforms cost roughly the same ($99-$180/year) and the choice comes down to methodology preference. For couples and complex households, Monarch Money's all-inclusive Core subscription — covering collaborative access and comprehensive investment tracking in a single $99.99/year fee — delivers the strongest value, with the $199/year Plus tier available for households wanting more advanced features. YNAB matches on price but lacks investment tracking. Copilot Money and Empower require multiple subscriptions for couples, doubling the effective cost.
 
 ---
 
@@ -363,7 +375,7 @@ To help you choose the right platform, we modeled annual costs and time savings 
 
 **Multi-account households** benefit most from Monarch Money. If you manage multiple bank accounts (checking, savings, money market), investment accounts (brokerage, 401k, IRA, Roth IRA), credit cards across different issuers, and loans (mortgage, auto, student) — logging into each institution separately wastes hours monthly. Monarch's unified dashboard consolidates everything, and the time savings alone justify the $99/year subscription for households with 5+ accounts. Our test household with 14 connected accounts estimated saving 3-4 hours monthly versus checking each portal individually.
 
-**Couples managing shared finances** find Monarch's collaborative features address relationship friction that most budgeting apps ignore. The selective transparency model — where each partner controls which accounts are visible to the other — accommodates both full-disclosure and privacy-respecting approaches within the same subscription. Unlike YNAB which has limited multi-user support, or Copilot Money which requires separate subscriptions, Monarch includes full collaborative access in the standard Premium plan.
+**Couples managing shared finances** find Monarch's collaborative features address relationship friction that most budgeting apps ignore. The selective transparency model — where each partner controls which accounts are visible to the other — accommodates both full-disclosure and privacy-respecting approaches within the same subscription. Unlike YNAB which has limited multi-user support, or Copilot Money which requires separate subscriptions, Monarch includes full collaborative access in the standard Core plan.
 
 **Investment-aware budgeters** who want to see their portfolio value alongside monthly spending categories get unique value from Monarch. Seeing that your net worth increased despite a tight spending month (because investments grew) provides motivational context that spending-only apps cannot deliver. The investment tracker displays position-level detail including unrealized gains, asset allocation, and account-by-account retirement progress — information typically requiring a separate login to Fidelity, Vanguard, or Schwab. If you are also researching [the best robo-advisors](/personal-finance/best-robo-advisors) for automated investing, pairing one with Monarch provides both execution and monitoring.
 
@@ -377,7 +389,7 @@ To help you choose the right platform, we modeled annual costs and time savings 
 
 **Apple-exclusive users prioritizing design** may prefer Copilot Money ($13/month). Copilot Money targets iPhone, iPad, and Mac users with a premium, Apple-native interface that feels tightly integrated with the iOS ecosystem. If design polish and Apple integration matter more than cross-platform access and investment tracking depth, Copilot is the more refined experience.
 
-**Users with minimal financial complexity** — those with a single checking account, one savings account, and no investments — will not extract enough value from Monarch Premium to justify $99/year. A free spreadsheet, the Monarch Basic plan, or even your bank's built-in budgeting tools provide sufficient visibility for simple finances.
+**Users with minimal financial complexity** — those with a single checking account, one savings account, and no investments — will not extract enough value from Monarch Core to justify $99.99/year. A free spreadsheet or your bank's built-in budgeting tools provide sufficient visibility for simple finances, since Monarch offers no ongoing free tier (only a 7-day trial).
 
 ---
 
@@ -385,7 +397,7 @@ To help you choose the right platform, we modeled annual costs and time savings 
 
 ## Customer Support: Our Testing Results
 
-Customer support is adequate but not exceptional at Monarch Money. The [Monarch Money Help Center](https://help.monarchmoney.com/) covers common setup and connection questions effectively, and the [Monarch Community Forum](https://community.monarchmoney.com/) provides peer support from experienced users. During our four-month testing period, we submitted 6 support requests across email, in-app messaging, and the help center to evaluate response quality and resolution speed across different issue types.
+Customer support is adequate but not exceptional at Monarch Money. The [Monarch Money Help Center](https://help.monarch.com/) covers common setup and connection questions effectively, and the [Monarch Community Forum](https://community.monarchmoney.com/) provides peer support from experienced users. During our four-month testing period, we submitted 6 support requests across email, in-app messaging, and the help center to evaluate response quality and resolution speed across different issue types.
 
 ### Support Channel Performance
 
@@ -427,10 +439,13 @@ Understanding real user sentiment is critical when evaluating any personal finan
 
 | Platform | Rating | Sample Size | Key Finding |
 |----------|:------:|:-----------:|-------------|
-| **[Trustpilot](https://www.trustpilot.com/review/monarchmoney.com)** | 4.7/5 | 2,000+ reviews | Strong positive sentiment — investment tracking and Mint migration praised most frequently |
-| **[Apple App Store](https://apps.apple.com/app/monarch-money/id1537849670)** | 4.8/5 | 15,000+ ratings | Highest-rated budgeting app on iOS — users praise clean interface and Plaid reliability |
-| **[Google Play Store](https://play.google.com/store/apps/details?id=com.monarchmoney)** | 4.6/5 | 8,000+ ratings | Strong Android experience — cross-platform consistency praised over Apple-only competitors |
+| **[Apple App Store](https://apps.apple.com/app/monarch-money/id1537849670)** | 4.9/5 | ~70,000 ratings | Highest-rated budgeting app on iOS — users praise clean interface and Plaid reliability |
+| **[Google Play Store](https://play.google.com/store/apps/details?id=com.monarchmoney)** | 4.7/5 | ~17,600 reviews | Strong Android experience — cross-platform consistency praised over Apple-only competitors |
 | **[NerdWallet](https://www.nerdwallet.com/article/finance/monarch-money-review)** | 4.5/5 | Expert review | Highlighted investment tracking as key differentiator; noted passive budgeting as limitation |
+
+<Info>
+**Note on Trustpilot:** Monarch Money's Trustpilot profile has only about two dozen reviews as of early 2026 — too small a sample to cite as a meaningful satisfaction metric. We rely on the much larger App Store and Google Play samples above instead.
+</Info>
 
 **What users praise most:** Comprehensive financial visibility across all accounts, intuitive interface requiring minimal learning curve, excellent Mint migration experience, investment portfolio tracking alongside budgeting, collaborative features for couples, AI categorization accuracy improving over time, and cross-platform availability on iOS, Android, and Web.
 
@@ -450,10 +465,10 @@ Understanding Monarch's revenue model helps you anticipate where costs may chang
 
 Monarch Money generates revenue through **four primary channels**:
 
-1. **Premium subscriptions** — The $14.99/month or $99/year Premium subscription is the primary revenue source. Unlike Mint which was free and ad-supported (generating revenue by recommending financial products that paid commissions), Monarch's subscription model means you are the customer, not the product. This eliminates the incentive to push credit card or loan offers through the platform
-2. **Annual vs. monthly pricing arbitrage** — The 45% discount for annual subscriptions ($99/year vs. $179.88/year on monthly billing) incentivizes longer commitments, improving revenue predictability and reducing churn while providing genuine savings to committed users
+1. **Core and Plus subscriptions** — The $14.99/month or $99.99/year Core subscription (plus a $199/year Plus tier, annual billing only) is the primary revenue source. Unlike Mint which was free and ad-supported (generating revenue by recommending financial products that paid commissions), Monarch's subscription model means you are the customer, not the product. This eliminates the incentive to push credit card or loan offers through the platform
+2. **Annual vs. monthly pricing arbitrage** — The discount for annual Core subscriptions ($99.99/year vs. $179.88/year on monthly billing) incentivizes longer commitments, improving revenue predictability and reducing churn while providing genuine savings to committed users
 3. **Affiliate partnerships** — Monarch earns referral fees when users sign up for financial products through partner links within the platform. These are disclosed and clearly marked, maintaining transparency about commercial relationships
-4. **Data insights (anonymized and aggregated)** — Monarch may use anonymized, aggregated spending trend data for market research purposes, though individual user data is not sold to third parties according to their [privacy policy](https://www.monarchmoney.com/privacy)
+4. **Data insights (anonymized and aggregated)** — Monarch may use anonymized, aggregated spending trend data for market research purposes, though individual user data is not sold to third parties according to their [privacy policy](https://www.monarch.com/privacy)
 
 This subscription-first model means Monarch is incentivized to keep you as a satisfied, paying subscriber — which aligns their interests with delivering genuine utility rather than pushing you toward financial products that generate commissions. This is a meaningful improvement over Mint's ad-supported model.
 
@@ -463,13 +478,13 @@ This subscription-first model means Monarch is incentivized to keep you as a sat
 
 ## How to Sign Up for Monarch Money
 
-Getting started with [Monarch Money](https://www.monarchmoney.com/) takes under 10 minutes, with the full platform accessible immediately after account creation:
+Getting started with [Monarch Money](https://www.monarch.com/) takes under 10 minutes, with the full platform accessible immediately after account creation:
 
 <CollapsibleSection title="Sign-Up Steps" count={7}>
 
-1. **Visit the website or download the app** — available at [monarchmoney.com](https://www.monarchmoney.com/) or via [App Store](https://apps.apple.com/app/monarch-money/id1537849670) / [Google Play Store](https://play.google.com/store/apps/details?id=com.monarchmoney)
+1. **Visit the website or download the app** — available at [monarch.com](https://www.monarch.com/) or via [App Store](https://apps.apple.com/app/monarch-money/id1537849670) / [Google Play Store](https://play.google.com/store/apps/details?id=com.monarchmoney)
 2. **Create your account** — enter email address and choose a password, or sign up via Google or Apple authentication
-3. **Start your free trial** — new users receive a 7-day free trial of Premium features to evaluate the full platform
+3. **Start your free trial** — new users receive a 7-day free trial ("your first week is on us") to evaluate the full platform; a credit card is required to start the trial
 4. **Connect financial accounts** — use Plaid's OAuth flow to securely link bank accounts, credit cards, investment accounts, loans, and retirement accounts (12,000+ institutions supported)
 5. **Review AI categorization** — Monarch automatically categorizes incoming transactions; review and correct any miscategorizations to train the AI for your specific spending patterns
 6. **Set up budgets and goals** — Monarch suggests budgets based on your historical spending; adjust targets manually and create financial goals (emergency fund, debt payoff, savings milestones)
@@ -478,7 +493,7 @@ Getting started with [Monarch Money](https://www.monarchmoney.com/) takes under 
 </CollapsibleSection>
 
 <Tip>
-**Annual Plan Savings:** If you decide to subscribe after the free trial, selecting the annual plan ($99/year) instead of monthly billing ($14.99/month) saves $80.88 per year — a 45% discount. Most users who commit past the first month benefit from switching to annual billing immediately.
+**Annual Plan Savings:** If you decide to keep your subscription after the free trial, selecting the annual Core plan ($99.99/year) instead of monthly billing ($14.99/month, $179.88/year) saves roughly $80/year. Promo codes such as MONARCHVIP (50% off) or WELCOME (30% off the first year) are sometimes available and can lower the effective cost further. Most users who commit past the first month benefit from switching to annual billing immediately.
 </Tip>
 
 <NewsletterBox variant="default" />
@@ -518,10 +533,10 @@ Your finances are **simple enough that a single bank portal covers your needs**.
     {
       name: "Monarch Money",
       slug: "monarch-money-review",
-      rating: 4.7,
-      reviewCount: 2000,
-      price: "$8.25/mo ($99/yr)",
-      affiliateUrl: "/go/monarch-money",
+      rating: 4.9,
+      reviewCount: 70000,
+      price: "$14.99/mo ($99.99/yr Core)",
+      affiliateUrl: "https://www.monarch.com/",
       isRecommended: true,
       features: {
         platform: "iOS, Android, Web",
@@ -537,7 +552,7 @@ Your finances are **simple enough that a single bank portal covers your needs**.
       rating: 4.6,
       reviewCount: 5000,
       price: "$8.25/mo ($99/yr)",
-      affiliateUrl: "/go/ynab",
+      affiliateUrl: "https://www.ynab.com/",
       isRecommended: false,
       features: {
         platform: "iOS, Android, Web",
@@ -553,7 +568,7 @@ Your finances are **simple enough that a single bank portal covers your needs**.
       rating: 4.5,
       reviewCount: 3000,
       price: "$13/mo",
-      affiliateUrl: "/go/copilot-money",
+      affiliateUrl: "https://copilot.money/",
       isRecommended: false,
       features: {
         platform: "Apple only (iOS, Mac)",
@@ -575,7 +590,7 @@ Your finances are **simple enough that a single bank portal covers your needs**.
 />
 
 <Tip>
-**Budget-conscious alternative:** If the $99/year subscription feels steep for basic budgeting needs, consider Monarch's free Basic plan alongside a free [personal finance tracker](/personal-finance/) for investment monitoring. The free tier provides account aggregation and 90-day transaction history — sufficient for users testing whether a dedicated budgeting app adds value to their financial routine.
+**Budget-conscious alternative:** If the $99.99/year Core subscription feels steep for basic budgeting needs, note that Monarch does not offer an ongoing free tier — only a 7-day free trial requiring a credit card. Consider pairing a free [personal finance tracker](/personal-finance/) with manual spreadsheets while you evaluate whether a dedicated budgeting app adds value to your financial routine, or use the trial period to test Monarch before committing.
 </Tip>
 
 ---
@@ -591,16 +606,16 @@ Your finances are **simple enough that a single bank portal covers your needs**.
   testingPeriod="Oct 2025 – Feb 2026"
   lastVerified="Mar 1, 2026"
   steps={[
-    "Created Monarch Money Premium account and connected 14 financial accounts across 6 institutions (Chase, Bank of America, Fidelity, Vanguard, Schwab, local credit union)",
+    "Created Monarch Money Core account and connected 14 financial accounts across 6 institutions (Chase, Bank of America, Fidelity, Vanguard, Schwab, local credit union)",
     "Tracked 3,200+ transactions over 4 months evaluating AI categorization accuracy, correction learning speed, and custom rule reliability",
     "Tested collaborative features with a two-person household managing shared and individual accounts simultaneously",
     "Evaluated investment tracking accuracy by comparing Monarch's displayed values against direct brokerage portal data weekly",
     "Submitted 6 support requests across email, in-app messaging, and help center measuring response times and resolution quality",
-    "Cross-referenced our findings against 2,000+ Trustpilot reviews, 15,000+ App Store ratings, and expert reviews from NerdWallet and The Verge"
+    "Cross-referenced our findings against ~70,000 App Store ratings, ~17,600 Google Play reviews, and expert reviews from NerdWallet and The Verge"
   ]}
 />
 
-Our rating of 4.7/5 is based on four months of hands-on testing by Michael Torres (CFA), using Monarch Money Premium alongside YNAB and Copilot Money as direct comparisons. We connected 14 financial accounts across 6 institutions — including checking, savings, credit cards, brokerage, 401k, and IRA accounts — to evaluate real-world performance across the full spectrum of personal finance management.
+Our editorial score of 4.7/5 is based on four months of hands-on testing by Michael Torres (CFA), using Monarch Money Core alongside YNAB and Copilot Money as direct comparisons. We connected 14 financial accounts across 6 institutions — including checking, savings, credit cards, brokerage, 401k, and IRA accounts — to evaluate real-world performance across the full spectrum of personal finance management.
 
 **Our testing methodology covers five areas:**
 
@@ -608,7 +623,7 @@ Our rating of 4.7/5 is based on four months of hands-on testing by Michael Torre
 2. **AI categorization quality** — we tracked categorization accuracy across 3,200+ transactions, measuring initial accuracy, learning speed after corrections, and custom rule reliability for merchant-specific overrides
 3. **Investment tracking fidelity** — we compared Monarch's displayed portfolio values, unrealized gains/losses, and asset allocation against direct brokerage portal data on a weekly basis to verify accuracy
 4. **Collaborative features** — we tested multi-user access with a two-person household, evaluating account sharing controls, spending visibility settings, collaborative goal tracking, and the built-in communication features
-5. **User review analysis** — we aggregated reviews from [Trustpilot](https://www.trustpilot.com/review/monarchmoney.com) (2,000+ reviews), [App Store](https://apps.apple.com/app/monarch-money/id1537849670) (15,000+ ratings), [Google Play](https://play.google.com/store/apps/details?id=com.monarchmoney) (8,000+ ratings), and expert reviews from [NerdWallet](https://www.nerdwallet.com/) and [The Verge](https://www.theverge.com/) to cross-reference our findings
+5. **User review analysis** — we aggregated reviews from [App Store](https://apps.apple.com/app/monarch-money/id1537849670) (~70,000 ratings), [Google Play](https://play.google.com/store/apps/details?id=com.monarchmoney) (~17,600 reviews), and expert reviews from [NerdWallet](https://www.nerdwallet.com/) and [The Verge](https://www.theverge.com/) to cross-reference our findings
 
 This approach ensures our review reflects actual American household usage — including the complexity of managing multiple account types across multiple institutions — rather than relying on feature list comparisons.
 
@@ -625,7 +640,7 @@ This approach ensures our review reflects actual American household usage — in
     "Comprehensive investment portfolio tracking (positions, gains/losses, asset allocation)",
     "Cross-platform support (iOS, Android, Web) — not locked to Apple ecosystem",
     "Collaborative budgeting for couples with selective transparency — one subscription covers both users",
-    "Strong user satisfaction: Trustpilot 4.7/5 (2,000+ reviews), App Store 4.8/5 (15,000+ ratings)"
+    "Strong user satisfaction: App Store 4.9/5 (~70,000 ratings), Google Play 4.7/5 (~17,600 reviews)"
   ]}
   cons={[
     "Passive budgeting approach does not enforce discipline (YNAB is better for behavioral change)",
@@ -639,9 +654,9 @@ This approach ensures our review reflects actual American household usage — in
 />
 
 <CTABox
-  headline="Try Monarch Money for Free"
-  description="Start with a 7-day free trial of Premium features. Annual plan ($99/year) saves 45% vs. monthly billing. Connect all your accounts in under 10 minutes."
-  primaryCta={{ text: "Start Free Trial", href: "/go/monarch-money" }}
+  headline="Try Monarch Money's Free Trial"
+  description="Start with a 7-day free trial (credit card required). Annual Core plan ($99.99/year) saves vs. monthly billing; a $199/year Plus tier is also available. Connect all your accounts in under 10 minutes."
+  primaryCta={{ text: "Visit Monarch Money", href: "https://www.monarch.com/" }}
   secondaryCta={{ text: "Compare to YNAB", href: "/ai-tools/jasper-ai-review" }}
   variant="highlight"
 />
@@ -653,7 +668,7 @@ This approach ensures our review reflects actual American household usage — in
 <details>
 <summary>How much does Monarch Money cost?</summary>
 
-Monarch Money costs $14.99/month or $99.99/year (saving about 44% vs monthly). There is a 30-day free trial with no credit card required. The annual plan is the most popular option. Unlike Mint (which was free), Monarch is a paid-only service, but users consistently report the reliability and feature depth justify the cost compared to free alternatives.
+Monarch Money's Core plan costs $14.99/month or $99.99/year (saving about 44% vs monthly), and a Plus plan is available at $199/year (annual billing only) for households wanting more advanced features. There is a 7-day free trial ("your first week is on us"), which requires a credit card to start. The annual Core plan is the most popular option. Unlike Mint (which was free), Monarch is a paid-only service with no ongoing free tier, but users consistently report the reliability and feature depth justify the cost compared to free alternatives.
 
 </details>
 
