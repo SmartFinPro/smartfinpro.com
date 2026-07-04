@@ -9,6 +9,7 @@ import { tradingPlatformsConfig } from './trading-platforms';
 import { forexBrokersConfig } from './forex-brokers';
 import { creditRepairCompaniesConfig } from './credit-repair-companies';
 import { creditMonitoringConfig } from './credit-monitoring';
+import { aiToolsFinanceConfig } from './ai-tools-finance';
 
 const REGISTRY: Record<string, TopicConfig> = {
   'personal-finance/robo-advisors': roboAdvisorsConfig,
@@ -18,6 +19,7 @@ const REGISTRY: Record<string, TopicConfig> = {
   'forex/forex-brokers': forexBrokersConfig,
   'credit-repair/companies': creditRepairCompaniesConfig,
   'personal-finance/credit-monitoring': creditMonitoringConfig,
+  'ai-tools/ai-tools-finance': aiToolsFinanceConfig,
 };
 
 export function getTopicConfig(category: string, topic: string): TopicConfig | null {

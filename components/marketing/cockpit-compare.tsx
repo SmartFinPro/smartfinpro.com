@@ -44,7 +44,7 @@ export function CockpitCompare({ all, selectedSlugs, config, inputs, onToggleSel
   const ps = selectedSlugs.map((s) => bySlug.get(s)).filter((p): p is ProductForComparison => !!p);
 
   const rows: Row[] = [
-    { key: 'rating', label: 'Our rating', render: (p) => p.rating.toFixed(1), score: (p) => p.rating },
+    { key: 'rating', label: 'Our rating', render: (p) => (p.reviewCount === 0 ? 'Not yet rated' : p.rating.toFixed(1)), score: (p) => p.rating },
     { key: 'cost', label: config.costModel.kind === 'monthly-plus-setup' ? `${inputs.amount}-mo cost` : `${inputs.years}-yr cost`, render: (p) => usd(costOverTime(p, config.costModel, inputs)), score: (p) => -costOverTime(p, config.costModel, inputs), indigo: true },
     ...config.compareRows.map((r) => ({ key: r.key, label: r.label, render: r.accessor, score: r.score ?? (() => 0) })),
   ];

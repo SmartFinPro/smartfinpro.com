@@ -233,19 +233,25 @@ export function CockpitCard({
       {/* Dashed divider + rating row */}
       <div style={{ borderTop: `1px dashed ${C.borderStrong}`, margin: '16px 0' }} />
       <div className="ck-card-rating-row">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <span style={{ fontSize: 26, fontWeight: 700, color: C.ink, letterSpacing: '-.5px' }}>{p.rating.toFixed(1)}</span>
-          <div style={{ display: 'flex', gap: 4 }} aria-label={`${p.rating} out of 5`}>
-            {Array.from({ length: 5 }).map((_, i) => (
-              <span key={i} style={{ width: 24, height: 24, borderRadius: 4, background: i < filledTiles ? C.tile : '#E1E7F0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Star size={14} color="#fff" fill="#fff" aria-hidden="true" />
-              </span>
-            ))}
+        {p.reviewCount === 0 ? (
+          <div style={{ display: 'flex', alignItems: 'center', height: 26 }}>
+            <span style={{ fontSize: 14, color: C.slate, fontStyle: 'italic' }}>Not yet rated</span>
           </div>
-          <span style={{ fontSize: 14, color: C.slate }}>
-            <b style={{ color: C.ink, fontWeight: 600 }}>{p.reviewCount.toLocaleString('en-US')}</b> reviews
-          </span>
-        </div>
+        ) : (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <span style={{ fontSize: 26, fontWeight: 700, color: C.ink, letterSpacing: '-.5px' }}>{p.rating.toFixed(1)}</span>
+            <div style={{ display: 'flex', gap: 4 }} aria-label={`${p.rating} out of 5`}>
+              {Array.from({ length: 5 }).map((_, i) => (
+                <span key={i} style={{ width: 24, height: 24, borderRadius: 4, background: i < filledTiles ? C.tile : '#E1E7F0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Star size={14} color="#fff" fill="#fff" aria-hidden="true" />
+                </span>
+              ))}
+            </div>
+            <span style={{ fontSize: 14, color: C.slate }}>
+              <b style={{ color: C.ink, fontWeight: 600 }}>{p.reviewCount.toLocaleString('en-US')}</b> reviews
+            </span>
+          </div>
+        )}
         <div className="ck-card-rating-actions">
           {showReadReviewInRating && reviewHref && (
             <a className="cmp-cta" href={reviewHref} style={{ padding: '10px 20px', borderRadius: 8, fontSize: 13.5, fontWeight: 600, textDecoration: 'none', background: C.sky, color: C.checkBlue, border: `1px solid ${C.sky}` }}>

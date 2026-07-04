@@ -154,8 +154,10 @@ export function CockpitTable({
                     </span>
                   </div>
                 </td>
-                <td style={{ padding: '10px 8px', fontSize: 13, fontWeight: 600, color: isColWinner('rating', p) ? C.greenDark : C.ink }}>
-                  <Star size={11} aria-hidden="true" style={{ verticalAlign: -1 }} /> {p.rating.toFixed(1)}
+                <td style={{ padding: '10px 8px', fontSize: 13, fontWeight: 600, color: p.reviewCount === 0 ? C.slate : isColWinner('rating', p) ? C.greenDark : C.ink }}>
+                  {p.reviewCount === 0 ? '—' : (<>
+                    <Star size={11} aria-hidden="true" style={{ verticalAlign: -1 }} /> {p.rating.toFixed(1)}
+                  </>)}
                 </td>
                 {config.specColumns.map((col) => {
                   const raw = col.accessor(p);
