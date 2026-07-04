@@ -328,8 +328,8 @@ interface MethodologyBoxProps {
 export function MethodologyBox({
   title = 'How We Test & Review',
   steps = [],
-  dataPoints = 50,
-  hoursResearch = 100,
+  dataPoints,
+  hoursResearch,
   testingPeriod,
   lastVerified,
 }: MethodologyBoxProps) {
@@ -342,15 +342,20 @@ export function MethodologyBox({
         <h4 className="font-bold text-xl" style={{ color: 'var(--sfp-ink)' }}>{title}</h4>
       </div>
 
+      {(hoursResearch !== undefined || dataPoints !== undefined || testingPeriod || lastVerified) && (
       <div className="grid grid-cols-2 gap-4 mb-8">
-        <div className="flex items-center gap-4 p-4 rounded-xl border border-gray-200" style={{ background: 'var(--sfp-gray)' }}>
-          <div className="text-3xl font-bold" style={{ color: 'var(--sfp-navy)' }}>{hoursResearch}+</div>
-          <div className="text-sm" style={{ color: 'var(--sfp-slate)' }}>Hours of Research</div>
-        </div>
-        <div className="flex items-center gap-4 p-4 rounded-xl border border-gray-200" style={{ background: 'var(--sfp-gray)' }}>
-          <div className="text-3xl font-bold" style={{ color: 'var(--sfp-navy)' }}>{dataPoints.toLocaleString('en-US')}+</div>
-          <div className="text-sm" style={{ color: 'var(--sfp-slate)' }}>Data Points Analyzed</div>
-        </div>
+        {hoursResearch !== undefined && (
+          <div className="flex items-center gap-4 p-4 rounded-xl border border-gray-200" style={{ background: 'var(--sfp-gray)' }}>
+            <div className="text-3xl font-bold" style={{ color: 'var(--sfp-navy)' }}>{hoursResearch}+</div>
+            <div className="text-sm" style={{ color: 'var(--sfp-slate)' }}>Hours of Research</div>
+          </div>
+        )}
+        {dataPoints !== undefined && (
+          <div className="flex items-center gap-4 p-4 rounded-xl border border-gray-200" style={{ background: 'var(--sfp-gray)' }}>
+            <div className="text-3xl font-bold" style={{ color: 'var(--sfp-navy)' }}>{dataPoints.toLocaleString('en-US')}+</div>
+            <div className="text-sm" style={{ color: 'var(--sfp-slate)' }}>Data Points Analyzed</div>
+          </div>
+        )}
         {testingPeriod && (
           <div className="flex items-center gap-4 p-4 rounded-xl border border-gray-200" style={{ background: 'var(--sfp-gray)' }}>
             <Clock className="h-6 w-6 shrink-0" style={{ color: 'var(--sfp-navy)' }} />
@@ -370,6 +375,7 @@ export function MethodologyBox({
           </div>
         )}
       </div>
+      )}
 
       <ol className="space-y-4">
         {steps.map((step, index) => (
