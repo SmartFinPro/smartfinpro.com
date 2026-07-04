@@ -32,11 +32,13 @@
 // settlement + $1 trial mechanics + BBB grade seeded `null`, not the stale
 // "A+" some search results still show), LifeLock (FTC $12M 2010 + $100M 2015
 // contempt settlement), Experian (CFPB $3M 2017 + CAN-SPAM $650k 2023 + an
-// ACTIVE CFPB FCRA suit as of March 2026 — phrased as pending, no finding,
-// disclosed directly on its top-pick card per §0a-8), Credit Karma (FTC $3M
-// dark-patterns settlement 2023), and IdentityForce's parent TransUnion (CFPB
-// consent order 2017 + a 2022 suit dismissed with prejudice 2025 — attributed
-// to the parent, never the product).
+// ACTIVE CFPB FCRA suit, in discovery per the most recent docket entry
+// verified (January 2026) and still unresolved as of our July 2026 review —
+// phrased as pending, no finding, disclosed directly on its top-pick card per
+// §0a-8), Credit Karma (FTC $3M dark-patterns settlement 2023), and
+// IdentityForce's parent TransUnion (CFPB consent order 2017 + a 2022 suit
+// dismissed with prejudice 2025 — attributed to the parent, never the
+// product).
 //
 // `bbb_rating` is a nullable tri-state: `null` (IdentityIQ only — BBB profile
 // is "being updated, no report available", NOT the same as a real "NR") is
@@ -240,7 +242,7 @@ export const creditMonitoringConfig: TopicConfig = {
     {
       key: 'rating',
       label: 'Consumer review score',
-      accessor: (p) => `${attrNum(p, 'review_score')}/5 (${attrNum(p, 'review_count')} ${attrStr(p, 'review_source')} reviews)`,
+      accessor: (p) => `${attrNum(p, 'review_score')}/5 (${attrNum(p, 'review_count').toLocaleString('en-US')} ${attrStr(p, 'review_source')} reviews)`,
       score: (p) => attrNum(p, 'review_score'),
     },
   ],
@@ -249,7 +251,9 @@ export const creditMonitoringConfig: TopicConfig = {
     { key: 'regulatory', label: 'Regulatory history', accessor: (p) => attrStr(p, 'regulatory_history_note') || '—' },
     { key: 'monitoring', label: 'Monitoring scope', accessor: (p) => attrStr(p, 'monitoring_scope_note') || '—' },
     { key: 'pricingNote', label: 'Pricing detail', accessor: (p) => attrStr(p, 'monthly_fee_note') || '—' },
+    { key: 'freeTierNote', label: 'Free tier detail', accessor: (p) => attrStr(p, 'free_tier_note') || '—' },
     { key: 'insuranceNote', label: 'Insurance detail', accessor: (p) => attrStr(p, 'id_theft_insurance_note') || '—' },
+    { key: 'familyPlanNote', label: 'Family plan detail', accessor: (p) => attrStr(p, 'family_plan_note') || '—' },
     { key: 'bbbNote', label: 'BBB detail', accessor: (p) => attrStr(p, 'bbb_rating_note') || attrStr(p, 'bbb_accredited_note') || '—' },
     { key: 'reviewNote', label: 'Review detail', accessor: (p) => attrStr(p, 'review_note') || '—' },
   ],
@@ -267,7 +271,7 @@ export const creditMonitoringConfig: TopicConfig = {
   buyerGuide: [
     {
       h3: 'VantageScore vs. FICO Score',
-      body: "Most free tiers in this comparison — Credit Karma, and the free layers of Experian and myFICO — show your VantageScore, while myFICO is the only service here that sells the actual FICO Score (in over 28 versions) that most lenders use for mortgage and auto-loan decisions. The two scores use different models and can differ by 20+ points for the same person at the same moment, so a free VantageScore is a useful trend indicator but not a substitute for the FICO Score a lender will actually pull.",
+      body: "Credit Karma's free tier shows your VantageScore 3.0, while Experian's and myFICO's free tiers actually include a real FICO 8 — but only for one bureau (Experian and Equifax, respectively). myFICO is the only paid service here that sells the full range of FICO Scores (in over 28 versions, covering the bureaus and score versions most lenders pull for mortgage and auto-loan decisions), where the free tiers only give you one version from one bureau. VantageScore and FICO use different models and can differ by 20+ points for the same person at the same moment, so a free score — VantageScore or a single-bureau FICO 8 — is a useful trend indicator but not a substitute for the specific FICO Score a lender will actually pull.",
     },
     {
       h3: 'Free self-help alternatives',
@@ -305,11 +309,11 @@ export const creditMonitoringConfig: TopicConfig = {
     },
     {
       q: 'What happened with Experian’s active CFPB lawsuit?',
-      a: 'The CFPB sued Experian in January 2025, alleging its dispute-investigation process amounted to "sham investigations" that failed consumers under the Fair Credit Reporting Act. As of March 2026, Experian’s motion to dismiss has been denied and the case is in discovery — no court has made a finding of wrongdoing, and the case remains unresolved. We disclose this directly because Experian is our "Best overall" pick; the litigation doesn’t change its category-leading feature set and genuine free tier, but you should know about it before enrolling.',
+      a: 'The CFPB sued Experian in January 2025, alleging its dispute-investigation process amounted to "sham investigations" that failed consumers under the Fair Credit Reporting Act. Experian’s motion to dismiss was denied in October 2025, and the case was in discovery per the most recent docket entry we verified (January 2026) — no court has made a finding of wrongdoing, and the case remains active and unresolved as of our July 2026 review. We disclose this directly because Experian is our "Best overall" pick; the litigation doesn’t change its category-leading feature set and genuine free tier, but you should know about it before enrolling.',
     },
     {
       q: 'Are Aura and IdentityIQ safe to use despite their disclosed issues?',
-      a: "Both are included with disclosure rather than excluded, because neither issue is the kind that disqualifies a company in our methodology (an adjudicated illegal business model, or manipulated review data). Aura's March 2026 data breach exposed contact information (not SSNs, passwords or financial data, per Aura) for a limited subset of customers, and it disclosed the incident with a documented response plan. IdentityIQ settled a $8.77 million class-action lawsuit over unclear auto-renewal terms — a private settlement with no admission of wrongdoing, not a government enforcement action — and its $1 \"trial\" pre-authorizes your card for the full monthly fee after 7 days, so never treat it as free. Both companies' underlying review bases are intact and unmanipulated.",
+      a: "Both are included with disclosure rather than excluded, because neither issue is the kind that disqualifies a company in our methodology (an adjudicated illegal business model, or manipulated review data). Aura's March 2026 data breach exposed contact information (not SSNs, passwords or financial data, per Aura) for a limited subset of customers, and it disclosed the incident with a documented response plan. IdentityIQ settled an $8.77 million class-action lawsuit over unclear auto-renewal terms — a private settlement with no admission of wrongdoing, not a government enforcement action — and its $1 \"trial\" pre-authorizes your card for the full monthly fee after 7 days, so never treat it as free. Both companies' underlying review bases are intact and unmanipulated.",
     },
   ],
   compliance: {
