@@ -11,9 +11,9 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { X, ArrowRight, Sparkles, Star, Trophy } from 'lucide-react';
+import { ArrowRight, Sparkles, Star, Trophy } from 'lucide-react';
 import { StarRating } from './trust-badges';
-import { CheckCircleIcon } from './check-icon';
+import { CheckCircleIcon, MinusCircleIcon } from './check-icon';
 
 interface ComparisonProduct {
   name: string;
@@ -297,10 +297,7 @@ function renderFeatureValue(value: boolean | string | undefined) {
       </div>
     ) : (
       <div className="flex items-center justify-center">
-        <svg className="h-5 w-5" style={{ color: 'var(--sfp-red)' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-          <line x1="18" y1="6" x2="6" y2="18" />
-          <line x1="6" y1="6" x2="18" y2="18" />
-        </svg>
+        <MinusCircleIcon size={20} />
       </div>
     );
   }

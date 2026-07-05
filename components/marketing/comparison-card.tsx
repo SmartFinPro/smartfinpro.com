@@ -7,7 +7,6 @@ import type { ReactNode } from 'react';
 import {
   BadgeCheck,
   PartyPopper,
-  X,
   ArrowRight,
   Star,
   ChevronDown,
@@ -16,7 +15,7 @@ import {
   Smartphone,
   Globe,
 } from 'lucide-react';
-import { CheckCircleIcon } from './check-icon';
+import { CheckCircleIcon, MinusCircleIcon } from './check-icon';
 import type { ProductForComparison, Usage } from '@/lib/comparison/types';
 import { annualCost, DEFAULT_USAGE } from '@/lib/comparison/ranking';
 
@@ -313,7 +312,7 @@ function LineItem({ kind, text }: { kind: 'pro' | 'con'; text: string }) {
       {kind === 'pro' ? (
         <CheckCircleIcon size={17} style={{ flexShrink: 0, marginTop: 1 }} />
       ) : (
-        <X size={17} style={{ color: C.red, flexShrink: 0, marginTop: 1 }} aria-hidden="true" />
+        <MinusCircleIcon size={17} style={{ flexShrink: 0, marginTop: 1 }} />
       )}
       <span>{text}</span>
     </div>
