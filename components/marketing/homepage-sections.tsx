@@ -27,7 +27,6 @@ import {
   Clock,
   PiggyBank,
   Coins,
-  CreditCard,
 } from 'lucide-react';
 import type { Market, Category } from '@/lib/i18n/config';
 import { categoryConfig, marketCategories } from '@/lib/i18n/config';
@@ -352,14 +351,23 @@ export function BestXIndex({ market, items }: BestXIndexProps) {
             original "Browse all reviews" link instead. */}
         {market === 'us' ? (
           <Link href={`${prefix}/personal-finance/credit-cards-comparison`} className="group block no-underline">
-            <div
-              className="relative overflow-hidden rounded-2xl flex items-center justify-center transition-colors duration-200 bg-[var(--sfp-navy)] group-hover:bg-[var(--sfp-navy-dark)]"
-              style={{ aspectRatio: '4 / 3' }}
-            >
-              <CreditCard style={{ width: 32, height: 32, color: 'var(--sfp-gold)' }} aria-hidden="true" />
+            <div className="relative overflow-hidden rounded-2xl" style={{ aspectRatio: '4 / 3', background: '#0F2E52' }}>
+              <Image
+                src="/images/comparison/credit-card-companies.webp"
+                alt="Best Credit Card Companies"
+                fill
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                className="object-cover transition-transform duration-500 group-hover:scale-[1.05]"
+              />
             </div>
             <div style={{ marginTop: '18px' }}>
-              <h3 style={{ margin: 0, color: 'var(--sfp-ink)', fontSize: '19px', fontWeight: 700, letterSpacing: '-0.3px', marginBottom: '6px' }}>
+              <span style={{ display: 'block', fontSize: '11px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--sfp-green)', marginBottom: '8px' }}>
+                Personal Finance
+              </span>
+              <h3
+                className="transition-colors duration-200 group-hover:text-[#2F6BC0]"
+                style={{ margin: 0, color: 'var(--sfp-ink)', fontSize: '19px', fontWeight: 700, letterSpacing: '-0.3px', marginBottom: '6px' }}
+              >
                 Best Credit Card Companies
               </h3>
               <p style={{ margin: 0, fontSize: '14px', color: 'var(--sfp-slate)', lineHeight: 1.6 }}>
