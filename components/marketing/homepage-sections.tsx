@@ -245,7 +245,7 @@ export function BestXIndex({ market, items }: BestXIndexProps) {
   const sectorCats = marketCategories[market].slice(0, 6);
 
   return (
-    <section id="best-x-compare" className="scroll-mt-24" style={{ maxWidth: '1140px', margin: '0 auto', padding: '56px 40px 112px' }}>
+    <section id="best-x-compare" className="scroll-mt-24" style={{ maxWidth: '1140px', margin: '0 auto', padding: '56px 40px 56px' }}>
       <div style={{ textAlign: 'center', marginBottom: '48px' }}>
         <span style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--sfp-slate)', display: 'block', marginBottom: '16px' }}>
           Best-X Comparisons
@@ -348,18 +348,6 @@ export function BestXIndex({ market, items }: BestXIndexProps) {
 
       </div>
 
-      {/* Browse by sector — keep the hub internal links */}
-      <div style={{ textAlign: 'center', marginTop: '16px', fontSize: '13px', color: 'var(--sfp-slate)' }}>
-        <span style={{ fontWeight: 600 }}>Browse by sector: </span>
-        {sectorCats.map((cat, i) => (
-          <span key={cat}>
-            {i > 0 && <span style={{ opacity: 0.5 }}> · </span>}
-            <Link href={`${prefix}/${cat}`} className="no-underline" style={{ color: 'var(--sfp-navy)' }}>
-              {categoryConfig[cat].name}
-            </Link>
-          </span>
-        ))}
-      </div>
     </section>
   );
 }
