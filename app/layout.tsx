@@ -49,7 +49,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'SmartFinPro - Financial Intelligence for Modern Professionals',
     description:
-      'Discover AI-powered tools, cybersecurity solutions, and trading platforms.',
+      'Compare AI-powered tools, cybersecurity solutions, and trading platforms across 4 global markets. Expert reviews and free calculators.',
     images: ['/og-image.png'],
     creator: '@smartfinpro',
   },

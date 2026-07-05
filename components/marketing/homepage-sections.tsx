@@ -27,10 +27,13 @@ import {
   Clock,
   PiggyBank,
   Coins,
+  HelpCircle,
 } from 'lucide-react';
 import type { Market, Category } from '@/lib/i18n/config';
 import { categoryConfig, marketCategories } from '@/lib/i18n/config';
 import type { BestXIndexItem } from '@/lib/comparison/loader';
+import { FAQSchema } from '@/components/seo/faq-schema';
+import type { FAQ } from '@/types';
 
 /* ═══════════════════════════════════════════════════════════════
    ICON MAP — Maps category icon strings to Lucide components
@@ -771,6 +774,113 @@ export function MethodologySection() {
 }
 
 /* ═══════════════════════════════════════════════════════════════
+   6b. HOMEPAGE FAQ — Visible Q&A + FAQPage schema (AEO)
+═══════════════════════════════════════════════════════════════ */
+const regulatorByMarket: Record<Market, string> = {
+  us: 'the SEC and FTC',
+  uk: 'the FCA',
+  ca: 'CIRO',
+  au: 'ASIC',
+};
+
+interface HomepageFAQSectionProps {
+  market: Market;
+  marketName: string;
+  categoryCount: number;
+}
+
+export function HomepageFAQSection({ market, marketName, categoryCount }: HomepageFAQSectionProps) {
+  const faqs: FAQ[] = [
+    {
+      question: 'How does SmartFinPro select and rank products?',
+      answer: `Every product is hands-on tested with a real account over 2–4 weeks, then scored on pricing, execution, support quality, and regulatory standing. We verify registration status directly with regulators such as ${regulatorByMarket[market]} before a product is included. Rankings are re-checked monthly, and every report is timestamped so you can see exactly when it was last verified.`,
+    },
+    {
+      question: 'How is SmartFinPro funded — is this independent research?',
+      answer: 'SmartFinPro earns a commission when readers sign up through some of the links in our reports. This does not affect our rankings or ratings, which are based solely on our editorial testing process. Full details are available in our affiliate disclosure and editorial policy.',
+    },
+    {
+      question: 'Which markets does SmartFinPro cover?',
+      answer: `SmartFinPro publishes market-specific research for the United States, United Kingdom, Canada, and Australia, each with local regulatory context, currency, and product availability. ${marketName} coverage currently spans ${categoryCount} sectors, including trading platforms, forex brokers, AI tools, cybersecurity, and personal finance.`,
+    },
+    {
+      question: 'How often are reviews updated?',
+      answer: 'Pricing, fees, spreads, and feature sets are re-checked monthly. Every report displays its last-verified date, and providers are re-tested immediately if we identify a material change.',
+    },
+  ];
+
+  return (
+    <section style={{ maxWidth: '840px', margin: '0 auto', padding: '0 40px 112px' }}>
+      <FAQSchema faqs={faqs} />
+
+      {/* Section Header */}
+      <div style={{ textAlign: 'center', marginBottom: '48px' }}>
+        <span
+          style={{
+            fontSize: '11px',
+            fontWeight: 700,
+            textTransform: 'uppercase',
+            letterSpacing: '2px',
+            color: 'var(--sfp-slate)',
+            display: 'block',
+            marginBottom: '16px',
+          }}
+        >
+          Common Questions
+        </span>
+        <h2
+          style={{
+            fontSize: 'clamp(26px, 3.2vw, 38px)',
+            fontWeight: 800,
+            color: 'var(--sfp-ink)',
+            letterSpacing: '-0.6px',
+            lineHeight: 1.15,
+          }}
+        >
+          Frequently Asked Questions
+        </h2>
+      </div>
+
+      {/* Visible Q&A list */}
+      <div className="space-y-6">
+        {faqs.map((faq) => (
+          <div
+            key={faq.question}
+            style={{
+              background: '#fff',
+              border: '1px solid #E2E8F0',
+              borderRadius: '12px',
+              padding: '28px 32px',
+            }}
+          >
+            <h3
+              style={{
+                fontSize: '16px',
+                fontWeight: 700,
+                color: 'var(--sfp-ink)',
+                marginBottom: '10px',
+                letterSpacing: '-0.2px',
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: '10px',
+              }}
+            >
+              <HelpCircle
+                style={{ width: '18px', height: '18px', color: 'var(--sfp-navy)', flexShrink: 0, marginTop: '1px' }}
+              />
+              {faq.question}
+            </h3>
+            <p style={{ fontSize: '14px', color: 'var(--sfp-slate)', lineHeight: 1.7, marginLeft: '28px' }}>
+              {faq.answer}
+            </p>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════
    7. GLOBAL TRUST SECTION — Dark navy-deep bg with market cards
 ═══════════════════════════════════════════════════════════════ */
 const globalMarkets = [
@@ -780,7 +890,8 @@ const globalMarkets = [
     name: 'United States',
     description: 'SEC & FTC compliant reviews. Credit cards, brokers, AI tools, and cybersecurity.',
     regLabel: 'FTC Compliant',
-    href: '/us',
+    // US homepage is served at the bare root — /us itself 308-redirects there.
+    href: '/',
   },
   {
     flag: '🇬🇧',

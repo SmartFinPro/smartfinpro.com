@@ -6,9 +6,10 @@ export function generateOrganizationSchema() {
   return {
     '@context': 'https://schema.org',
     '@type': 'Organization',
+    '@id': `${BASE_URL}/#organization`,
     name: 'SmartFinPro',
     url: BASE_URL,
-    logo: `${BASE_URL}/logo.png`,
+    logo: `${BASE_URL}/icon.png`,
     sameAs: [
       'https://twitter.com/smartfinpro',
       'https://linkedin.com/company/smartfinpro',
@@ -41,12 +42,12 @@ export function generateWebsiteSchema() {
   return {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
+    '@id': `${BASE_URL}/#website`,
     name: 'SmartFinPro',
     url: BASE_URL,
     description: 'Financial Intelligence for Modern Professionals. Expert reviews, AI-powered tools, and trading platform comparisons across 4 global markets.',
     publisher: {
-      '@type': 'Organization',
-      name: 'SmartFinPro',
+      '@id': `${BASE_URL}/#organization`,
     },
   };
 }
@@ -96,7 +97,7 @@ export function generateReviewSchema(review: ReviewData) {
       name: 'SmartFinPro',
       logo: {
         '@type': 'ImageObject',
-        url: `${BASE_URL}/logo.png`,
+        url: `${BASE_URL}/icon.png`,
       },
     },
     datePublished: review.publishDate,
@@ -224,7 +225,7 @@ export function generateArticleSchema(article: {
       name: 'SmartFinPro',
       logo: {
         '@type': 'ImageObject',
-        url: `${BASE_URL}/logo.png`,
+        url: `${BASE_URL}/icon.png`,
       },
     },
     datePublished: article.publishDate,

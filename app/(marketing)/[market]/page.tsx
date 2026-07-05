@@ -12,6 +12,8 @@ import {
 import { generateAlternates } from '@/lib/seo/hreflang';
 import { getContentByMarketAndCategory } from '@/lib/mdx';
 
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://smartfinpro.com';
+
 // Cache the MDX filesystem scan per market — avoids re-reading 74+ files on every request.
 // Static pages are pre-rendered at build time anyway; this helps ISR and dev mode warm reqs.
 // NOTE: content field is intentionally excluded — it can be 30KB+ per file (3.5MB total for US),
@@ -49,6 +51,7 @@ import {
   PlatformStats,
   ComplianceBar,
   GlobalTrustSection,
+  HomepageFAQSection,
 } from '@/components/marketing/homepage-sections';
 import { getBestXIndex } from '@/lib/comparison/loader';
 
@@ -115,14 +118,20 @@ export async function generateMetadata({
   // US canonical is / (no market prefix) — avoids canonical chain via /us redirect.
   // Other markets use /{market} as canonical.
   const canonicalBase = isUS ? '/' : `/${market}`;
+  const canonicalUrl = isUS ? `${BASE_URL}/` : `${BASE_URL}/${market}`;
+
+  const title = isUS
+    ? 'SmartFinPro - Financial Intelligence for Modern Professionals'
+    : `${config.name} Financial Intelligence Hub — Expert Research Reports | SmartFinPro`;
+  const description = isUS
+    ? 'Discover AI-powered tools, cybersecurity solutions, and financial products for modern professionals. Expert reviews, comparisons, and guides across 4 global markets.'
+    : `Discover AI-powered tools, cybersecurity solutions, and financial products for ${config.name} professionals. ${marketCategories[market as Market].length} market sectors with expert reviews.`;
 
   return {
-    title: isUS
-      ? 'SmartFinPro - Financial Intelligence for Modern Professionals'
-      : `${config.name} Financial Intelligence Hub — Expert Research Reports | SmartFinPro`,
-    description: isUS
-      ? 'Discover AI-powered tools, cybersecurity solutions, and financial products for modern professionals. Expert reviews, comparisons, and guides across 4 global markets.'
-      : `Discover AI-powered tools, cybersecurity solutions, and financial products for ${config.name} professionals. ${marketCategories[market as Market].length} market sectors with expert reviews.`,
+    // `title: { absolute }` bypasses the root layout's `%s | SmartFinPro` template.
+    // Both branches already contain the brand name once — the template would double it.
+    title: { absolute: title },
+    description,
     // Paginated pages (?page=2+) must not be indexed — canonical already points to the
     // base page, and noindex removes them from GSC's "Alternative with correct canonical" report.
     ...(currentPage > 1 && { robots: { index: false, follow: true } }),
@@ -130,8 +139,23 @@ export async function generateMetadata({
       canonical: canonicalBase,
       languages: alternates,
     },
+    // Page-level `openGraph` fully replaces (not merges with) the layout's openGraph
+    // object in Next.js metadata resolution — every field needed must be repeated here.
     openGraph: {
+      type: 'website',
       locale: config.locale.replace('-', '_'),
+      url: canonicalUrl,
+      siteName: 'SmartFinPro',
+      title,
+      description,
+      images: [
+        {
+          url: '/og-image.png',
+          width: 1200,
+          height: 630,
+          alt: 'SmartFinPro',
+        },
+      ],
     },
   };
 }
@@ -307,6 +331,11 @@ export default async function MarketHomePage({ params, searchParams }: MarketPag
           6. METHODOLOGY — How We Review
       ═══════════════════════════════════════════════════════════════ */}
       <MethodologySection />
+
+      {/* ═══════════════════════════════════════════════════════════════
+          7b. FAQ — Visible Q&A + FAQPage schema (AEO)
+      ═══════════════════════════════════════════════════════════════ */}
+      <HomepageFAQSection market={marketData} marketName={config.name} categoryCount={categories.length} />
 
       {/* ═══════════════════════════════════════════════════════════════
           8. EDITOR'S PICKS — Top-rated this month

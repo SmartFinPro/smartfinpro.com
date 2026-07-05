@@ -15,6 +15,19 @@ const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://smartfinpro.com';
  * @param availableMarkets - Markets where this content is available
  * @returns Array of hreflang link objects
  */
+/**
+ * The US homepage is served at the bare domain root (no /us prefix) — the
+ * /us and /us/ paths themselves 308-redirect there (next.config.ts redirects).
+ * Hreflang/canonical targets must be self-canonical 200 URLs, so the US
+ * homepage special-cases to the root instead of the redirecting /us URL.
+ */
+function marketPathUrl(market: Market, path: string): string {
+  if (market === 'us' && path === '/') {
+    return `${BASE_URL}/`;
+  }
+  return `${BASE_URL}/${market}${path}`;
+}
+
 export function generateHreflang(
   path: string,
   availableMarkets: Market[] = ['us', 'uk', 'ca', 'au']
@@ -26,7 +39,7 @@ export function generateHreflang(
     links.push({
       rel: 'alternate',
       hreflang: marketConfig[market].hreflang,
-      href: `${BASE_URL}/${market}${path}`,
+      href: marketPathUrl(market, path),
     });
   });
 
@@ -36,7 +49,7 @@ export function generateHreflang(
     links.push({
       rel: 'alternate',
       hreflang: 'x-default',
-      href: `${BASE_URL}/${defaultMarket}${path}`,
+      href: marketPathUrl(defaultMarket, path),
     });
   }
 
@@ -54,13 +67,13 @@ export function generateAlternates(
   const alternates: Record<string, string> = {};
 
   availableMarkets.forEach((market) => {
-    alternates[marketConfig[market].hreflang] = `${BASE_URL}/${market}${path}`;
+    alternates[marketConfig[market].hreflang] = marketPathUrl(market, path);
   });
 
   // Add x-default: US version when it exists, otherwise the first available market
   const defaultMarket = availableMarkets.includes('us') ? 'us' : availableMarkets[0];
   if (defaultMarket) {
-    alternates['x-default'] = `${BASE_URL}/${defaultMarket}${path}`;
+    alternates['x-default'] = marketPathUrl(defaultMarket, path);
   }
 
   return alternates;

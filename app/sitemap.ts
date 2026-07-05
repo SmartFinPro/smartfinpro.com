@@ -127,7 +127,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     for (const market of markets) {
       entries.push({
-        url: `${BASE_URL}/${market}`,
+        // US homepage is served at the bare root — /us itself 308-redirects there.
+        url: market === 'us' ? `${BASE_URL}/` : `${BASE_URL}/${market}`,
         lastModified: now,
         changeFrequency: 'daily',
         priority: market === 'us' ? 1.0 : 0.9,
@@ -323,7 +324,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const now = new Date();
     return [
       {
-        url: `${BASE_URL}/us`,
+        url: `${BASE_URL}/`,
         lastModified: now,
         changeFrequency: 'daily',
         priority: 1.0,

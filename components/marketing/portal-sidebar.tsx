@@ -49,6 +49,8 @@ interface PortalSidebarProps {
 export function PortalSidebar({ market, activeCategory, categoryCounts }: PortalSidebarProps) {
   const categories = marketCategories[market];
   const marketPrefix = `/${market}`;
+  // US homepage is served at the bare root — /us itself 308-redirects there.
+  const marketHomeHref = market === 'us' ? '/' : marketPrefix;
 
   return (
     <aside className="lg:w-[280px] xl:w-[300px] flex-shrink-0 hidden lg:block">
@@ -129,7 +131,7 @@ export function PortalSidebar({ market, activeCategory, categoryCounts }: Portal
           {/* Bottom CTA */}
           <div style={{ padding: '12px 24px 16px', borderTop: '1px solid #E2E8F0' }}>
             <Link
-              href={`${marketPrefix}`}
+              href={marketHomeHref}
               className="no-underline inline-flex items-center gap-1"
               style={{ fontSize: '12px', fontWeight: 600, color: 'var(--sfp-navy)' }}
             >
