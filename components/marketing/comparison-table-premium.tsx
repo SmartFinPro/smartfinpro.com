@@ -2,7 +2,8 @@
 'use client';
 
 import Link from 'next/link';
-import { Star, Award, Shield, ExternalLink, ChevronDown, ChevronUp, CheckCircle, AlertTriangle, Sparkles } from 'lucide-react';
+import { Star, Award, Shield, ExternalLink, ChevronDown, ChevronUp, AlertTriangle, Sparkles } from 'lucide-react';
+import { CheckCircleIcon } from './check-icon';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 
@@ -284,7 +285,7 @@ export function ComparisonTablePremium({
                     <div className="space-y-2 mb-3">
                       {item.pros.map((pro, i) => (
                         <div key={i} className="flex items-start gap-2.5 rounded-lg px-3 py-2 border" style={{ background: 'rgba(26,107,58,0.04)', borderColor: 'rgba(26,107,58,0.12)' }}>
-                          <CheckCircle className="h-4 w-4 shrink-0 mt-0.5" style={{ color: 'var(--sfp-green)' }} />
+                          <CheckCircleIcon size={16} className="shrink-0 mt-0.5" />
                           <span className="text-xs leading-relaxed" style={{ color: 'var(--sfp-ink)' }}>{pro}</span>
                         </div>
                       ))}
@@ -410,7 +411,7 @@ export function ComparisonTablePremium({
                     )}
                     {item.pros?.map((pro, i) => (
                       <div key={i} className="flex items-center gap-2 text-xs rounded-lg px-3 py-2 border" style={{ color: 'var(--sfp-ink)', background: 'rgba(26,107,58,0.04)', borderColor: 'rgba(26,107,58,0.1)' }}>
-                        <CheckCircle className="h-3.5 w-3.5 shrink-0" style={{ color: 'var(--sfp-green)' }} /> {pro}
+                        <CheckCircleIcon size={14} className="shrink-0" /> {pro}
                       </div>
                     ))}
                     {item.con && (

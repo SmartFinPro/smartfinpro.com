@@ -15,6 +15,7 @@ import {
   ChevronUp,
   Plus,
 } from 'lucide-react';
+import { CheckCircleIcon } from './check-icon';
 import type { ProductForComparison } from '@/lib/comparison/types';
 import type { TopicConfig } from '@/lib/comparison/topics/types';
 import { costOverTime, type CostInputs } from '@/lib/comparison/cost';
@@ -201,7 +202,7 @@ export function CockpitCard({
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 15 }}>
           {p.chips.map((chip) => (
             <span key={chip} style={{ fontSize: 12.5, color: C.navyDark, background: C.pill, borderRadius: 20, padding: '6px 13px', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: 6, fontWeight: 500 }}>
-              <Check size={14} style={{ color: C.greenDark }} aria-hidden="true" />
+              <CheckCircleIcon size={13} />
               {chip}
             </span>
           ))}
@@ -314,7 +315,7 @@ function LineItem({ kind, text }: { kind: 'pro' | 'con'; text: string }) {
   return (
     <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start', fontSize: 14, lineHeight: 1.5, marginBottom: 9, color: C.body }}>
       {kind === 'pro' ? (
-        <Check size={16} style={{ color: C.greenDark, flexShrink: 0, marginTop: 1 }} aria-hidden="true" />
+        <CheckCircleIcon size={16} style={{ flexShrink: 0, marginTop: 1 }} />
       ) : (
         <X size={16} style={{ color: C.red, flexShrink: 0, marginTop: 1 }} aria-hidden="true" />
       )}

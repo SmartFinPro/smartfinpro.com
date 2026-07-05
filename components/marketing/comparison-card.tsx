@@ -7,7 +7,6 @@ import type { ReactNode } from 'react';
 import {
   BadgeCheck,
   PartyPopper,
-  Check,
   X,
   ArrowRight,
   Star,
@@ -17,6 +16,7 @@ import {
   Smartphone,
   Globe,
 } from 'lucide-react';
+import { CheckCircleIcon } from './check-icon';
 import type { ProductForComparison, Usage } from '@/lib/comparison/types';
 import { annualCost, DEFAULT_USAGE } from '@/lib/comparison/ranking';
 
@@ -182,7 +182,7 @@ export function ComparisonCard({
               key={chip}
               style={{ fontSize: 13.5, color: C.navyDark, background: C.pill, borderRadius: 20, padding: '7px 14px', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: 7, fontWeight: 500 }}
             >
-              <Check size={15} style={{ color: C.checkGreen }} aria-hidden="true" />
+              <CheckCircleIcon size={14} />
               {chip}
             </span>
           ))}
@@ -311,7 +311,7 @@ function LineItem({ kind, text }: { kind: 'pro' | 'con'; text: string }) {
   return (
     <div style={{ display: 'flex', gap: 9, alignItems: 'flex-start', fontSize: 14.5, lineHeight: 1.55, marginBottom: 11, color: C.body }}>
       {kind === 'pro' ? (
-        <Check size={17} style={{ color: C.checkGreen, flexShrink: 0, marginTop: 1 }} aria-hidden="true" />
+        <CheckCircleIcon size={17} style={{ flexShrink: 0, marginTop: 1 }} />
       ) : (
         <X size={17} style={{ color: C.red, flexShrink: 0, marginTop: 1 }} aria-hidden="true" />
       )}

@@ -4,6 +4,7 @@
 // compare checkbox per row. Config-driven columns.
 
 import { ArrowDown, ArrowUp, Check, Minus, Star, ArrowRight, Award } from 'lucide-react';
+import { CheckCircleIcon } from './check-icon';
 import type { ProductForComparison } from '@/lib/comparison/types';
 import type { TopicConfig } from '@/lib/comparison/topics/types';
 import { costOverTime, type CostInputs } from '@/lib/comparison/cost';
@@ -167,7 +168,7 @@ export function CockpitTable({
                     <td key={col.key} style={{ padding: '10px 8px', fontSize: 12.5, color: win ? C.greenDark : C.ink, fontWeight: win ? 700 : 400 }}>
                       {isBool ? (
                         col.format(raw) === 'Yes' ? (
-                          <Check size={15} style={{ color: C.greenDark }} aria-label="Yes" />
+                          <CheckCircleIcon size={15} aria-label="Yes" />
                         ) : (
                           <Minus size={15} style={{ color: '#B6BECA' }} aria-label="No" />
                         )

@@ -11,8 +11,9 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Check, X, ArrowRight, Sparkles, Star, Trophy } from 'lucide-react';
+import { X, ArrowRight, Sparkles, Star, Trophy } from 'lucide-react';
 import { StarRating } from './trust-badges';
+import { CheckCircleIcon } from './check-icon';
 
 interface ComparisonProduct {
   name: string;
@@ -116,7 +117,7 @@ export function ComparisonTable({
                       <TableCell key={item.name} className="text-center">
                         {item.features?.[rowIdx] ? (
                           <div className="flex items-start gap-2 text-sm text-left px-2" style={{ color: 'var(--sfp-ink)' }}>
-                            <Check className="h-4 w-4 shrink-0 mt-0.5" style={{ color: 'var(--sfp-green)' }} />
+                            <CheckCircleIcon size={16} className="shrink-0 mt-0.5" />
                             <span>{item.features[rowIdx]}</span>
                           </div>
                         ) : (
@@ -292,9 +293,7 @@ function renderFeatureValue(value: boolean | string | undefined) {
   if (typeof value === 'boolean') {
     return value ? (
       <div className="flex items-center justify-center">
-        <svg className="h-5 w-5" style={{ color: 'var(--sfp-green)' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-          <polyline points="20 6 9 17 4 12" />
-        </svg>
+        <CheckCircleIcon size={20} />
       </div>
     ) : (
       <div className="flex items-center justify-center">

@@ -10,10 +10,10 @@ import {
   Zap,
   TrendingUp,
   Star,
-  CheckCircle,
   ExternalLink,
   Sparkles,
 } from 'lucide-react';
+import { CheckCircleIcon } from './check-icon';
 
 interface MatrixTool {
   name: string;
@@ -234,7 +234,7 @@ export function ComparisonMatrix({
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex flex-wrap items-center gap-4 text-xs" style={{ color: 'var(--sfp-slate)' }}>
               <span className="flex items-center gap-1.5">
-                <CheckCircle className="h-3.5 w-3.5" style={{ color: 'var(--sfp-green)' }} />
+                <CheckCircleIcon size={14} />
                 Efficiency based on 6-month testing
               </span>
               <span className="flex items-center gap-1.5">

@@ -10,7 +10,8 @@
 // links respect the attribution gate (no blanket rel="sponsored").
 
 import Image from 'next/image';
-import { Star, ArrowUpRight, Check, Clock } from 'lucide-react';
+import { Star, ArrowUpRight, Clock } from 'lucide-react';
+import { CheckCircleIcon } from './check-icon';
 import { FAQSection } from './faq-section';
 import { ExpertVerifier } from './expert-verifier';
 
@@ -69,7 +70,7 @@ export function CockpitHero({
         </p>
         <div className="mt-5 flex flex-wrap items-center gap-2">
           <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold" style={{ background: 'var(--sfp-sky)', color: 'var(--sfp-navy)' }}>
-            <Check size={13} aria-hidden="true" /> {productCount} providers tested
+            <CheckCircleIcon size={13} /> {productCount} providers tested
           </span>
           <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold" style={{ background: 'var(--sfp-sky)', color: 'var(--sfp-navy)' }}>
             <Clock size={13} aria-hidden="true" /> Updated {fmtMonthYear(verifiedDate)}
