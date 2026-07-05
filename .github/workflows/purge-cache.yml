@@ -1,0 +1,24 @@
+name: Purge Cloudflare Cache
+
+on:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: "URL to purge (leave empty = purge everything)"
+        required: false
+
+jobs:
+  purge:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Purge cache
+        run: |
+          if [ -n "${{ github.event.inputs.url }}" ]; then
+            node scripts/purge-cloudflare.mjs "${{ github.event.inputs.url }}"
+          else
+            node scripts/purge-cloudflare.mjs --everything
+          fi
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
