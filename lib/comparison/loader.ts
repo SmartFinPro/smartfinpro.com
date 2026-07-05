@@ -432,6 +432,10 @@ export interface BestXIndexItem {
   href: string | null;
   count: number | null;
   winner: { name: string; metric: string } | null;
+  /** Direct link to the winner's own editorial review, when one exists — a
+   *  second, more specifically-anchored internal link alongside the tile's
+   *  main link to the /best/{topic} comparison page. */
+  winnerReviewHref: string | null;
   verifiedAt: string | null;
 }
 
@@ -442,14 +446,14 @@ async function buildBestXIndex(market: Market): Promise<BestXIndexItem[]> {
       const base = { category: e.category, topic: e.topic, label: e.label, blurb: e.blurb, icon: e.icon, image: e.image };
       // Still on the legacy engine → link to /{market}/{category}/best.
       if (e.legacy) {
-        return { ...base, status: 'legacy', href: `/${e.market}/${e.category}/best`, count: null, winner: null, verifiedAt: null };
+        return { ...base, status: 'legacy', href: `/${e.market}/${e.category}/best`, count: null, winner: null, winnerReviewHref: null, verifiedAt: null };
       }
       const config = getTopicConfig(e.category, e.topic);
-      if (!config) return { ...base, status: 'coming_soon', href: null, count: null, winner: null, verifiedAt: null };
+      if (!config) return { ...base, status: 'coming_soon', href: null, count: null, winner: null, winnerReviewHref: null, verifiedAt: null };
       const products = await getCockpitData(e.market, e.category, e.topic);
       // Activate ONLY with real data — a merged config alone (prod seed may lag) must not light a tile.
       if (!products || products.length === 0) {
-        return { ...base, status: 'coming_soon', href: null, count: null, winner: null, verifiedAt: null };
+        return { ...base, status: 'coming_soon', href: null, count: null, winner: null, winnerReviewHref: null, verifiedAt: null };
       }
       const top = products[0];
       const col = config.specColumns[0];
@@ -462,6 +466,7 @@ async function buildBestXIndex(market: Market): Promise<BestXIndexItem[]> {
         href: `/${e.market}/${e.category}/best/${e.topic}`,
         count: products.length,
         winner: { name: top.displayName, metric },
+        winnerReviewHref: top.reviewSlug ? `/${e.market}/${e.category}/${top.reviewSlug}` : null,
         verifiedAt,
       };
     }),

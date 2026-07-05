@@ -275,7 +275,10 @@ export function BestXIndex({ market, items }: BestXIndexProps) {
           // browsers to fetch it at default/lazy priority.
           const isAboveFold = index < 3;
 
-          const inner = (
+          // Main tile body — image, category, heading, blurb. Does NOT include the
+          // winner line: that renders as its own sibling link (see below), since an
+          // <a> can't nest inside another <a>.
+          const cardBody = (
             <>
               <div className="relative overflow-hidden rounded-2xl" style={{ aspectRatio: '4 / 3', background: '#0F2E52' }}>
                 <Image
@@ -312,17 +315,6 @@ export function BestXIndex({ market, items }: BestXIndexProps) {
                   {item.blurb}
                 </p>
 
-                {item.status === 'live' && (
-                  <p style={{ margin: '10px 0 0', fontSize: '12.5px', fontWeight: 600, color: 'var(--sfp-navy)' }}>
-                    {item.winner && <span style={{ fontWeight: 700 }}>{item.winner.name}</span>}
-                    {item.winner?.metric ? ` · ${item.winner.metric}` : ''}
-                    <span style={{ color: 'var(--sfp-slate)', fontWeight: 500 }}>
-                      {fmtMonthYear(item.verifiedAt) ? ` · Updated ${fmtMonthYear(item.verifiedAt)}` : ''}
-                      {item.count ? ` · ${item.count} compared` : ''}
-                    </span>
-                  </p>
-                )}
-
                 {item.status === 'legacy' && (
                   <p style={{ margin: '10px 0 0', fontSize: '12.5px', fontWeight: 700, color: 'var(--sfp-navy)', display: 'flex', alignItems: 'center', gap: '6px' }}>
                     Compare providers <ArrowRight style={{ width: '14px', height: '14px' }} aria-hidden="true" />
@@ -338,15 +330,37 @@ export function BestXIndex({ market, items }: BestXIndexProps) {
             </>
           );
 
-          const tileClass = comingSoon ? 'group block no-underline cursor-default' : 'group block no-underline';
+          // Winner line — a second, distinctly-anchored internal link straight to the
+          // winning product's own review (falls back to plain text if no review exists).
+          const winnerLine = item.status === 'live' && item.winner ? (
+            <p style={{ margin: '10px 0 0', fontSize: '12.5px', fontWeight: 600, color: 'var(--sfp-navy)' }}>
+              {item.winnerReviewHref ? (
+                <Link href={item.winnerReviewHref} className="hover:underline" style={{ fontWeight: 700, color: 'inherit' }}>
+                  {item.winner.name}
+                </Link>
+              ) : (
+                <span style={{ fontWeight: 700 }}>{item.winner.name}</span>
+              )}
+              {item.winner.metric ? ` · ${item.winner.metric}` : ''}
+              <span style={{ color: 'var(--sfp-slate)', fontWeight: 500 }}>
+                {fmtMonthYear(item.verifiedAt) ? ` · Updated ${fmtMonthYear(item.verifiedAt)}` : ''}
+                {item.count ? ` · ${item.count} compared` : ''}
+              </span>
+            </p>
+          ) : null;
+
+          const bodyClass = comingSoon ? 'block no-underline cursor-default' : 'block no-underline';
           const itemKey = `${item.category}/${item.topic}`;
-          return isLink ? (
-            <Link key={itemKey} href={item.href!} className={tileClass}>
-              {inner}
-            </Link>
-          ) : (
-            <div key={itemKey} className={tileClass}>
-              {inner}
+          return (
+            <div key={itemKey} className="group">
+              {isLink ? (
+                <Link href={item.href!} className={bodyClass}>
+                  {cardBody}
+                </Link>
+              ) : (
+                <div className={bodyClass}>{cardBody}</div>
+              )}
+              {winnerLine}
             </div>
           );
         })}
