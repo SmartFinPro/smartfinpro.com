@@ -27,7 +27,7 @@ import {
   Clock,
   PiggyBank,
   Coins,
-  Plus,
+  CreditCard,
 } from 'lucide-react';
 import type { Market, Category } from '@/lib/i18n/config';
 import { categoryConfig, marketCategories } from '@/lib/i18n/config';
@@ -347,40 +347,44 @@ export function BestXIndex({ market, items }: BestXIndexProps) {
           );
         })}
 
-        {/* Utility fillers — complete the 3-col grid (10 topics + 2 = 12 = 4 even rows) */}
-        <Link href="#reports" className="group block no-underline">
-          <div
-            className="relative overflow-hidden rounded-2xl flex items-center justify-center transition-colors duration-200 bg-[var(--sfp-navy)] group-hover:bg-[var(--sfp-navy-dark)]"
-            style={{ aspectRatio: '4 / 3' }}
-          >
-            <BookOpen style={{ width: 32, height: 32, color: 'var(--sfp-gold)' }} aria-hidden="true" />
-          </div>
-          <div style={{ marginTop: '18px' }}>
-            <h3 style={{ margin: 0, color: 'var(--sfp-ink)', fontSize: '19px', fontWeight: 700, letterSpacing: '-0.3px', marginBottom: '6px' }}>
-              Browse all reviews
-            </h3>
-            <p style={{ margin: 0, fontSize: '14px', color: 'var(--sfp-slate)', lineHeight: 1.6 }}>
-              Every report in the research library, in one place.
-            </p>
-          </div>
-        </Link>
-
-        <Link href="/contact" className="group block no-underline">
-          <div
-            className="relative overflow-hidden rounded-2xl flex items-center justify-center transition-colors duration-200 bg-[var(--sfp-navy)] group-hover:bg-[var(--sfp-navy-dark)]"
-            style={{ aspectRatio: '4 / 3' }}
-          >
-            <Plus style={{ width: 32, height: 32, color: 'var(--sfp-gold)' }} aria-hidden="true" />
-          </div>
-          <div style={{ marginTop: '18px' }}>
-            <h3 style={{ margin: 0, color: 'var(--sfp-ink)', fontSize: '19px', fontWeight: 700, letterSpacing: '-0.3px', marginBottom: '6px' }}>
-              Suggest a comparison
-            </h3>
-            <p style={{ margin: 0, fontSize: '14px', color: 'var(--sfp-slate)', lineHeight: 1.6 }}>
-              Tell us which category to test next.
-            </p>
-          </div>
-        </Link>
+        {/* Utility filler — only on US for now, credit-cards-comparison MDX
+            doesn't exist yet for uk/ca/au (would 404), so they keep the
+            original "Browse all reviews" link instead. */}
+        {market === 'us' ? (
+          <Link href={`${prefix}/personal-finance/credit-cards-comparison`} className="group block no-underline">
+            <div
+              className="relative overflow-hidden rounded-2xl flex items-center justify-center transition-colors duration-200 bg-[var(--sfp-navy)] group-hover:bg-[var(--sfp-navy-dark)]"
+              style={{ aspectRatio: '4 / 3' }}
+            >
+              <CreditCard style={{ width: 32, height: 32, color: 'var(--sfp-gold)' }} aria-hidden="true" />
+            </div>
+            <div style={{ marginTop: '18px' }}>
+              <h3 style={{ margin: 0, color: 'var(--sfp-ink)', fontSize: '19px', fontWeight: 700, letterSpacing: '-0.3px', marginBottom: '6px' }}>
+                Best Credit Card Companies
+              </h3>
+              <p style={{ margin: 0, fontSize: '14px', color: 'var(--sfp-slate)', lineHeight: 1.6 }}>
+                Premium rewards cards, ranked by real spending data.
+              </p>
+            </div>
+          </Link>
+        ) : (
+          <Link href="#reports" className="group block no-underline">
+            <div
+              className="relative overflow-hidden rounded-2xl flex items-center justify-center transition-colors duration-200 bg-[var(--sfp-navy)] group-hover:bg-[var(--sfp-navy-dark)]"
+              style={{ aspectRatio: '4 / 3' }}
+            >
+              <BookOpen style={{ width: 32, height: 32, color: 'var(--sfp-gold)' }} aria-hidden="true" />
+            </div>
+            <div style={{ marginTop: '18px' }}>
+              <h3 style={{ margin: 0, color: 'var(--sfp-ink)', fontSize: '19px', fontWeight: 700, letterSpacing: '-0.3px', marginBottom: '6px' }}>
+                Browse all reviews
+              </h3>
+              <p style={{ margin: 0, fontSize: '14px', color: 'var(--sfp-slate)', lineHeight: 1.6 }}>
+                Every report in the research library, in one place.
+              </p>
+            </div>
+          </Link>
+        )}
       </div>
 
       {/* Browse by sector — keep the hub internal links */}
