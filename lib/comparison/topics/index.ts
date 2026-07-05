@@ -12,6 +12,7 @@ import { creditMonitoringConfig } from './credit-monitoring';
 import { aiToolsFinanceConfig } from './ai-tools-finance';
 import { cybersecuritySmbConfig } from './cybersecurity-smb';
 import { goldInvestingConfig } from './gold-investing';
+import { highYieldSavingsConfig } from './high-yield-savings';
 
 const REGISTRY: Record<string, TopicConfig> = {
   'personal-finance/robo-advisors': roboAdvisorsConfig,
@@ -24,6 +25,7 @@ const REGISTRY: Record<string, TopicConfig> = {
   'ai-tools/ai-tools-finance': aiToolsFinanceConfig,
   'cybersecurity/cybersecurity-smb': cybersecuritySmbConfig,
   'gold-investing/platforms': goldInvestingConfig,
+  'personal-finance/high-yield-savings': highYieldSavingsConfig,
 };
 
 export function getTopicConfig(category: string, topic: string): TopicConfig | null {
