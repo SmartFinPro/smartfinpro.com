@@ -262,10 +262,14 @@ export function BestXIndex({ market, items }: BestXIndexProps) {
       {/* Card grid — image on top (own rounded corners), heading + short blurb below.
           Gapped (not edge-to-edge) so each tile reads as a distinct, organized card. */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-10">
-        {items.map((item) => {
+        {items.map((item, index) => {
           const comingSoon = item.status === 'coming_soon';
           const isLink = !comingSoon && !!item.href;
           const catName = categoryConfig[item.category as Category]?.name ?? item.category;
+          // First row (desktop: 3-col) is visible without scrolling — skip
+          // lazy-loading and preload it like the hero, instead of leaving
+          // browsers to fetch it at default/lazy priority.
+          const isAboveFold = index < 3;
 
           const inner = (
             <>
@@ -274,6 +278,7 @@ export function BestXIndex({ market, items }: BestXIndexProps) {
                   src={item.image}
                   alt={item.label}
                   fill
+                  priority={isAboveFold}
                   sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                   className={`object-cover transition-transform duration-500 group-hover:scale-[1.05] ${comingSoon ? 'opacity-70' : ''}`}
                 />

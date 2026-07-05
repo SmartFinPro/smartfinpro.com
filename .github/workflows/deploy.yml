@@ -105,9 +105,17 @@ jobs:
              fi"
 
       # ── 9. Rsync standalone → VPS ─────────────────────────────
+      # --exclude '.next/cache/': this dir only exists at runtime on the VPS
+      # (sharp-generated AVIF/WebP variants from the image optimizer). It's
+      # never part of the fresh build artifact, so a plain --delete wiped it
+      # on every deploy, forcing every visitor after a deploy to re-pay the
+      # on-demand encode cost for every image/size/format combo. Excluding it
+      # lets --delete clean up everything else while this cache persists and
+      # keeps warming across deploys.
       - name: Deploy standalone to VPS
         run: |
           rsync -avz --delete --no-perms --no-owner --no-group \
+            --exclude='.next/cache/' \
             -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
             .next/standalone/ \
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/home/master/applications/brvnvntpcj/public_html/.next/standalone/ \
@@ -235,6 +243,39 @@ jobs:
             [ "$S" = "200" ] && { echo "  cdn ready"; break; }
             sleep 5
           done
+
+      # ── 11b-warm-img. Pre-warm hero + tile images referenced on `/` ──
+      # The image optimizer (sharp) encodes each image/width/format combo
+      # on first request — expensive (0.3-3s+) and, before the --exclude fix
+      # above, reset to empty on every deploy. Scrapes every `_next/image`
+      # URL out of the just-warmed `/` HTML (no hardcoded image list to rot)
+      # and requests each at the common device widths so visitors after this
+      # deploy land on an already-warm origin cache instead of paying the
+      # encode cost themselves.
+      - name: Warm-up homepage images
+        if: steps.healthcheck.outcome == 'success'
+        continue-on-error: true
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
+            'curl -sf http://localhost:3000/ 2>/dev/null \
+              | grep -oE "/_next/image\?url=[^\"'"'"'&]*" | sort -u > /tmp/warm-urls.txt
+             n=$(wc -l < /tmp/warm-urls.txt)
+             if [ "$n" -eq 0 ]; then
+               echo "  no _next/image URLs found in / — skipping"; exit 0
+             fi
+             echo "  found $n distinct image(s) in / — warming x 3 widths x 2 formats"
+             while read -r path; do
+               for w in 750 1200 1920; do
+                 for accept in "image/avif,image/webp,*/*" "image/webp,*/*"; do
+                   curl -sf -H "Accept: $accept" -o /dev/null \
+                     "http://localhost:3000${path}&w=${w}&q=75" &
+                 done
+               done
+             done < /tmp/warm-urls.txt
+             wait
+             rm -f /tmp/warm-urls.txt
+             echo "  done"'
 
       # ── 11b. Smoke Test — 15 Critical URLs ───────────────────
       # Gate: failure triggers rollback (same as health check failure).
