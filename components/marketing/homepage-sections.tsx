@@ -346,29 +346,10 @@ export function BestXIndex({ market, items }: BestXIndexProps) {
           );
         })}
 
-        {/* Filler removed — credit-card-companies now in BEST_X_MANIFEST (Slice 11) */}
-        {(
-          <Link href="#reports" className="group block no-underline">
-            <div
-              className="relative overflow-hidden rounded-2xl flex items-center justify-center transition-colors duration-200 bg-[var(--sfp-navy)] group-hover:bg-[var(--sfp-navy-dark)]"
-              style={{ aspectRatio: '4 / 3' }}
-            >
-              <BookOpen style={{ width: 32, height: 32, color: 'var(--sfp-gold)' }} aria-hidden="true" />
-            </div>
-            <div style={{ marginTop: '18px' }}>
-              <h3 style={{ margin: 0, color: 'var(--sfp-ink)', fontSize: '19px', fontWeight: 700, letterSpacing: '-0.3px', marginBottom: '6px' }}>
-                Browse all reviews
-              </h3>
-              <p style={{ margin: 0, fontSize: '14px', color: 'var(--sfp-slate)', lineHeight: 1.6 }}>
-                Every report in the research library, in one place.
-              </p>
-            </div>
-          </Link>
-        )}
       </div>
 
       {/* Browse by sector — keep the hub internal links */}
-      <div style={{ textAlign: 'center', marginTop: '32px', fontSize: '13px', color: 'var(--sfp-slate)' }}>
+      <div style={{ textAlign: 'center', marginTop: '16px', fontSize: '13px', color: 'var(--sfp-slate)' }}>
         <span style={{ fontWeight: 600 }}>Browse by sector: </span>
         {sectorCats.map((cat, i) => (
           <span key={cat}>
