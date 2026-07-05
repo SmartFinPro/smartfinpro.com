@@ -35,6 +35,8 @@ import type { BestXIndexItem } from '@/lib/comparison/loader';
 import { FAQSchema } from '@/components/seo/faq-schema';
 import type { FAQ } from '@/types';
 
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://smartfinpro.com';
+
 /* ═══════════════════════════════════════════════════════════════
    ICON MAP — Maps category icon strings to Lucide components
 ═══════════════════════════════════════════════════════════════ */
@@ -792,12 +794,16 @@ interface HomepageFAQSectionProps {
 export function HomepageFAQSection({ market, marketName, categoryCount }: HomepageFAQSectionProps) {
   const faqs: FAQ[] = [
     {
-      question: 'How does SmartFinPro select and rank products?',
+      question: 'What is SmartFinPro?',
+      answer: 'SmartFinPro is an independent financial research platform. We hands-on test and compare AI tools, cybersecurity solutions, trading platforms, forex brokers, and personal and business finance products across the United States, United Kingdom, Canada, and Australia, publishing expert reviews and side-by-side comparisons.',
+    },
+    {
+      question: 'How are products ranked?',
       answer: `Every product is hands-on tested with a real account over 2–4 weeks, then scored on pricing, execution, support quality, and regulatory standing. We verify registration status directly with regulators such as ${regulatorByMarket[market]} before a product is included. Rankings are re-checked monthly, and every report is timestamped so you can see exactly when it was last verified.`,
     },
     {
-      question: 'How is SmartFinPro funded — is this independent research?',
-      answer: 'SmartFinPro earns a commission when readers sign up through some of the links in our reports. This does not affect our rankings or ratings, which are based solely on our editorial testing process. Full details are available in our affiliate disclosure and editorial policy.',
+      question: 'Can commissions influence rankings?',
+      answer: 'No. SmartFinPro earns a commission when readers sign up through some of the links in our reports, but this has no bearing on our rankings or ratings — those are based solely on our editorial testing process. Full details are available in our affiliate disclosure and editorial policy.',
     },
     {
       question: 'Which markets does SmartFinPro cover?',
@@ -809,9 +815,12 @@ export function HomepageFAQSection({ market, marketName, categoryCount }: Homepa
     },
   ];
 
+  // US homepage is served at the bare root — /us itself 308-redirects there.
+  const faqPageUrl = market === 'us' ? `${BASE_URL}/` : `${BASE_URL}/${market}`;
+
   return (
     <section style={{ maxWidth: '840px', margin: '0 auto', padding: '0 40px 112px' }}>
-      <FAQSchema faqs={faqs} />
+      <FAQSchema faqs={faqs} id={`${faqPageUrl}#faq`} />
 
       {/* Section Header */}
       <div style={{ textAlign: 'center', marginBottom: '48px' }}>

@@ -121,10 +121,10 @@ export async function generateMetadata({
   const canonicalUrl = isUS ? `${BASE_URL}/` : `${BASE_URL}/${market}`;
 
   const title = isUS
-    ? 'SmartFinPro - Financial Intelligence for Modern Professionals'
+    ? 'SmartFinPro — Financial Product Reviews & Comparisons'
     : `${config.name} Financial Intelligence Hub — Expert Research Reports | SmartFinPro`;
   const description = isUS
-    ? 'Discover AI-powered tools, cybersecurity solutions, and financial products for modern professionals. Expert reviews, comparisons, and guides across 4 global markets.'
+    ? 'Discover AI-powered tools, cybersecurity solutions, and financial products for modern professionals. Expert reviews and comparisons across 4 global markets.'
     : `Discover AI-powered tools, cybersecurity solutions, and financial products for ${config.name} professionals. ${marketCategories[market as Market].length} market sectors with expert reviews.`;
 
   return {
@@ -156,6 +156,15 @@ export async function generateMetadata({
           alt: 'SmartFinPro',
         },
       ],
+    },
+    // Kept identical to `openGraph` so the messaging layer doesn't fork across
+    // Facebook/LinkedIn (OG) vs. X (Twitter) previews.
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: ['/og-image.png'],
+      creator: '@smartfinpro',
     },
   };
 }
@@ -221,7 +230,10 @@ export default async function MarketHomePage({ params, searchParams }: MarketPag
     }));
 
   return (
-    <main id="main-content">
+    // The `<main id="main-content">` landmark is already provided by the shared
+    // MarketingLayout (app/(marketing)/layout.tsx) — a second one here would
+    // duplicate both the element and the id (invalid HTML, confuses a11y tree).
+    <>
       {/* ═══════════════════════════════════════════════════════════════
           1. HERO SECTION
       ═══════════════════════════════════════════════════════════════ */}
@@ -351,7 +363,7 @@ export default async function MarketHomePage({ params, searchParams }: MarketPag
         </section>
       )}
 
-    </main>
+    </>
   );
 }
 

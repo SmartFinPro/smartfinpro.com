@@ -3,6 +3,8 @@ import type { FAQ } from '@/types';
 
 interface FAQSchemaProps {
   faqs: FAQ[];
+  /** Stable @id so other JSON-LD nodes on the same page can reference this FAQPage. */
+  id?: string;
 }
 
 /**
@@ -23,12 +25,12 @@ interface FAQSchemaProps {
  * ]} />
  * ```
  */
-export function FAQSchema({ faqs }: FAQSchemaProps) {
+export function FAQSchema({ faqs, id }: FAQSchemaProps) {
   if (!faqs || faqs.length === 0) {
     return null;
   }
 
-  const schema = generateFAQSchema(faqs);
+  const schema = generateFAQSchema(faqs, id);
 
   return (
     <script

@@ -137,10 +137,11 @@ function getNextYearDate(): string {
   return date.toISOString().split('T')[0];
 }
 
-export function generateFAQSchema(faqs: FAQ[]) {
+export function generateFAQSchema(faqs: FAQ[], id?: string) {
   return {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
+    ...(id && { '@id': id }),
     mainEntity: faqs.map((faq) => ({
       '@type': 'Question',
       name: faq.question,
@@ -419,6 +420,8 @@ export function generateComparisonItemListSchema(input: {
   title: string;
   description?: string;
   url: string;
+  /** Stable @id so other JSON-LD nodes on the same page (e.g. WebPage.mainEntity) can reference this list. */
+  id?: string;
   products: Array<{
     name: string;
     description?: string;
@@ -431,6 +434,7 @@ export function generateComparisonItemListSchema(input: {
   return {
     '@context': 'https://schema.org',
     '@type': 'ItemList',
+    ...(input.id && { '@id': input.id }),
     name: input.title,
     ...(input.description && { description: input.description }),
     url: input.url,

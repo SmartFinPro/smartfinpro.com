@@ -11,7 +11,7 @@ import MarketHomePage from './[market]/page';
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://smartfinpro.com';
 
-const HOMEPAGE_TITLE = 'SmartFinPro - Financial Intelligence for Modern Professionals';
+const HOMEPAGE_TITLE = 'SmartFinPro — Financial Product Reviews & Comparisons';
 const HOMEPAGE_DESCRIPTION =
   'Discover AI-powered tools, cybersecurity solutions, and financial products for modern professionals. Expert reviews and comparisons across 4 global markets.';
 
@@ -27,9 +27,8 @@ export async function generateMetadata(): Promise<Metadata> {
       canonical: `${BASE_URL}/`,
       languages: alternates,
     },
-    // Page-level `openGraph` fully replaces (not merges with) the layout's
-    // openGraph object in Next.js metadata resolution — every field needed
-    // (image, url, type, siteName) must be repeated here.
+    // Page-level `openGraph`/`twitter` fully replace (not merge with) the layout's
+    // objects in Next.js metadata resolution — every field needed must be repeated here.
     openGraph: {
       type: 'website',
       locale: 'en_US',
@@ -45,6 +44,15 @@ export async function generateMetadata(): Promise<Metadata> {
           alt: 'SmartFinPro',
         },
       ],
+    },
+    // Kept identical to `openGraph` so the messaging layer doesn't fork across
+    // Facebook/LinkedIn (OG) vs. X (Twitter) previews.
+    twitter: {
+      card: 'summary_large_image',
+      title: HOMEPAGE_TITLE,
+      description: HOMEPAGE_DESCRIPTION,
+      images: ['/og-image.png'],
+      creator: '@smartfinpro',
     },
   };
 }
@@ -62,8 +70,10 @@ export default async function RootHomePage() {
     .sort()
     .at(-1);
 
+  const itemListId = `${BASE_URL}/#bestx-itemlist`;
   const itemListSchema = liveItems.length > 0
     ? generateComparisonItemListSchema({
+        id: itemListId,
         title: 'Best-Rated Financial Products — SmartFinPro Compare',
         description: 'Editorially reviewed, currently-leading providers across SmartFinPro\'s comparison categories.',
         url: `${BASE_URL}/`,
@@ -78,19 +88,28 @@ export default async function RootHomePage() {
   return (
     <>
       {/* Page-level JSON-LD: WebPage (referencing the layout-level Organization/WebSite
-          nodes by @id instead of re-embedding full duplicate entities) */}
+          nodes by @id instead of re-embedding full duplicate entities). mainEntity
+          links to the Best-X ItemList — the page's primary content. */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
           __html: JSON.stringify({
             '@context': 'https://schema.org',
             '@type': 'WebPage',
+            '@id': `${BASE_URL}/#webpage`,
             name: HOMEPAGE_TITLE,
             description: HOMEPAGE_DESCRIPTION,
             url: `${BASE_URL}/`,
             ...(dateModified && { dateModified }),
             isPartOf: { '@id': `${BASE_URL}/#website` },
             publisher: { '@id': `${BASE_URL}/#organization` },
+            primaryImageOfPage: {
+              '@type': 'ImageObject',
+              url: `${BASE_URL}/og-image.png`,
+              width: 1200,
+              height: 630,
+            },
+            ...(itemListSchema && { mainEntity: { '@id': itemListId } }),
           }),
         }}
       />
