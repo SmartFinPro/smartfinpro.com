@@ -10,6 +10,14 @@ export function generateOrganizationSchema() {
     name: 'SmartFinPro',
     url: BASE_URL,
     logo: `${BASE_URL}/icon.png`,
+    description:
+      'SmartFinPro is an independent financial product review and comparison platform. Our editorial team publishes expert reviews and side-by-side comparisons of trading platforms, AI tools, cybersecurity software, and personal finance products across the US, UK, Canada, and Australia.',
+    // schema.org property built for exactly this: disambiguating an entity from
+    // similarly-named but unrelated ones. There is an unrelated B2B point-of-sale
+    // financing company at smart-finance.pro that Google's AI Overviews have
+    // conflated us with — this line exists to help search/AI systems tell them apart.
+    disambiguatingDescription:
+      'SmartFinPro (smartfinpro.com) is a consumer-facing financial product review and comparison site — not affiliated with Smart Finance Pro (smart-finance.pro), an unrelated B2B point-of-sale financing platform.',
     sameAs: [
       'https://twitter.com/smartfinpro',
       'https://linkedin.com/company/smartfinpro',
