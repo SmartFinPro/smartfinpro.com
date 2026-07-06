@@ -122,7 +122,9 @@ interface CockpitVerdictProps {
   complianceNotice: string;
 }
 
-/** Tier 1 — compact decision block, rendered above the cockpit. */
+/** Tier 1 — compact decision block, rendered above the cockpit.
+ *  Slim ranked rows in one white container (not a 3-card grid) so the verdict
+ *  reads like an institutional leaderboard and takes ~half the vertical space. */
 export function CockpitVerdict({
   intro,
   picks,
@@ -135,73 +137,90 @@ export function CockpitVerdict({
 }: CockpitVerdictProps) {
   return (
     <section className="mb-6">
-      <h2 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--sfp-ink)' }}>
-        Editor&rsquo;s verdict
-      </h2>
-      <p className="mt-2 text-[15px] leading-relaxed" style={{ color: 'var(--sfp-slate)' }}>
+      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+        <h2 className="text-[22px] font-bold tracking-tight" style={{ color: 'var(--sfp-ink)' }}>
+          Editor&rsquo;s verdict
+        </h2>
+        <p className="m-0 text-xs" style={{ color: 'var(--sfp-slate)' }}>
+          Data verified {fmtDate(verifiedDate)} · Reviewed by {reviewerName}
+          {reviewerCredential ? `, ${reviewerCredential}` : ''} ·{' '}
+          <a href="#how-we-test" className="underline" style={{ color: 'var(--sfp-navy)' }}>
+            How we test
+          </a>
+        </p>
+      </div>
+      <p className="mt-1.5 max-w-3xl text-[14px] leading-relaxed" style={{ color: 'var(--sfp-slate)' }}>
         {intro}
       </p>
 
-      <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
-        {picks.map((p) => (
+      <div className="mt-3 overflow-hidden rounded-2xl border bg-white shadow-sm" style={{ borderColor: BORDER }}>
+        {picks.map((p, i) => (
           <a
             key={p.rank}
             href={p.href}
             {...(p.external ? { target: '_blank', rel: 'nofollow sponsored noopener' } : {})}
-            className="flex flex-col rounded-xl border bg-white p-4 no-underline transition-shadow hover:shadow-md"
-            style={{ borderColor: BORDER }}
+            className="group flex items-center gap-3 px-4 py-3 no-underline transition-colors hover:bg-[#F8FAFD] sm:gap-4 sm:px-5"
+            style={i > 0 ? { borderTop: `1px solid ${BORDER}` } : undefined}
           >
-            <div className="flex items-center justify-between">
-              <span
-                className="inline-flex h-6 min-w-[1.5rem] items-center justify-center rounded-full px-2 text-xs font-bold"
-                style={{
-                  background: p.rank === 1 ? 'var(--sfp-gold)' : 'var(--sfp-sky)',
-                  color: p.rank === 1 ? '#fff' : 'var(--sfp-navy)',
-                }}
-              >
-                #{p.rank}
+            <span
+              className="inline-flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-[12px] font-bold"
+              style={{
+                background: p.rank === 1 ? 'var(--sfp-gold)' : 'var(--sfp-sky)',
+                color: p.rank === 1 ? '#fff' : 'var(--sfp-navy)',
+              }}
+            >
+              {p.rank}
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="flex flex-wrap items-baseline gap-x-2">
+                <span className="text-[15px] font-bold leading-tight" style={{ color: 'var(--sfp-ink)' }}>
+                  {p.name}
+                </span>
+                {p.rank === 1 && (
+                  <span
+                    className="rounded px-1.5 py-0.5 text-[9.5px] font-bold uppercase tracking-[0.8px]"
+                    style={{ background: 'rgba(245,166,35,0.14)', color: 'var(--sfp-gold-dark)' }}
+                  >
+                    Top pick
+                  </span>
+                )}
               </span>
-              <span className="inline-flex items-center gap-1 text-sm font-semibold" style={{ color: 'var(--sfp-ink)' }}>
-                <Star size={13} aria-hidden="true" style={{ color: 'var(--sfp-gold)' }} /> {p.rating.toFixed(1)}
+              <span className="block truncate text-[12.5px] leading-snug" style={{ color: 'var(--sfp-slate)' }}>
+                {p.why}
               </span>
-            </div>
-            <h3 className="mt-2 text-base font-bold" style={{ color: 'var(--sfp-ink)', margin: '0.5rem 0 0' }}>
-              {p.name}
-            </h3>
-            <p className="mt-1 flex-1 text-sm leading-snug" style={{ color: 'var(--sfp-slate)' }}>
-              {p.why}
-            </p>
-            <span className="mt-3 inline-flex items-center gap-1 text-sm font-semibold" style={{ color: 'var(--sfp-navy)' }}>
-              {p.ctaLabel} <ArrowUpRight size={14} aria-hidden="true" />
+            </span>
+            <span
+              className="hidden flex-shrink-0 items-center gap-1 text-[13px] font-semibold sm:inline-flex"
+              style={{ color: 'var(--sfp-ink)' }}
+            >
+              <Star size={12} aria-hidden="true" style={{ color: 'var(--sfp-gold)' }} /> {p.rating.toFixed(1)}
+            </span>
+            <span
+              className="inline-flex flex-shrink-0 items-center gap-1 text-[13px] font-semibold transition-transform group-hover:translate-x-0.5"
+              style={{ color: 'var(--sfp-navy)' }}
+            >
+              {p.ctaLabel} <ArrowUpRight size={13} aria-hidden="true" />
             </span>
           </a>
         ))}
       </div>
 
-      {/* Trust strip */}
-      <p className="mt-4 text-xs" style={{ color: 'var(--sfp-slate)' }}>
-        Data verified {fmtDate(verifiedDate)} · Reviewed by {reviewerName}
-        {reviewerCredential ? `, ${reviewerCredential}` : ''} · {productCount} tested ·{' '}
-        <a href="#how-we-test" className="underline" style={{ color: 'var(--sfp-navy)' }}>
-          How we test
-        </a>
-      </p>
-      {regulators.length > 0 && (
-        <div className="mt-2 flex flex-wrap items-center gap-2">
-          {regulators.map((r) => (
-            <span
-              key={r}
-              className="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium"
-              style={{ background: 'rgba(26,107,58,0.08)', color: 'var(--sfp-green)', border: '1px solid rgba(26,107,58,0.2)' }}
-            >
-              {r}
-            </span>
-          ))}
-          <span className="text-xs italic" style={{ color: 'var(--sfp-slate)' }}>
-            {complianceNotice}
+      {/* Single-line trust footer — regulators + compliance, no second block. */}
+      <p className="mt-2.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs" style={{ color: 'var(--sfp-slate)' }}>
+        <span className="inline-flex items-center gap-1" style={{ color: 'var(--sfp-green)' }}>
+          <CheckCircleIcon size={12} /> {productCount} providers tested
+        </span>
+        {regulators.map((r) => (
+          <span
+            key={r}
+            className="inline-flex items-center rounded-full px-2 py-0.5 text-[10.5px] font-medium"
+            style={{ background: 'rgba(26,107,58,0.08)', color: 'var(--sfp-green)', border: '1px solid rgba(26,107,58,0.2)' }}
+          >
+            {r}
           </span>
-        </div>
-      )}
+        ))}
+        <span className="italic">{complianceNotice}</span>
+      </p>
     </section>
   );
 }

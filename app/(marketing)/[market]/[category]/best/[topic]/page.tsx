@@ -32,7 +32,6 @@ import { BEST_X_MANIFEST } from '@/lib/comparison/topics/manifest';
 import { getMarketExpert } from '@/lib/actions/experts';
 import { ComparisonCockpit } from '@/components/marketing/comparison-cockpit';
 import { CockpitHero, CockpitBody, CockpitVerdict, type VerdictPick } from '@/components/marketing/cockpit-content';
-import { CockpitSummaryTable } from '@/components/marketing/cockpit-summary-table';
 import { RelatedComparisons, type RelatedComparisonItem } from '@/components/marketing/related-comparisons';
 import { AffiliateDisclosure } from '@/components/ui/affiliate-disclosure';
 import type { ProductForComparison } from '@/lib/comparison/types';
@@ -281,10 +280,6 @@ export default async function CockpitPage({ params }: CockpitPageProps) {
           />
         </div>
       )}
-
-      <div className="mx-auto max-w-6xl px-4">
-        <CockpitSummaryTable products={products} specColumns={config.specColumns} label={config.label} />
-      </div>
 
       <div className="mx-auto max-w-6xl px-4 pb-10 pt-6">
         <Suspense fallback={null}>
