@@ -94,7 +94,14 @@ function initSentry() {
   });
 }
 
-if (typeof window !== 'undefined') {
+// Without a DSN the SDK initializes as a no-op client — but the browser
+// still downloads the entire ~584KB (179KB gzip) Sentry chunk first, which
+// PageSpeed flags as the single largest "unused JavaScript" item on every
+// page. NEXT_PUBLIC_* vars are inlined at build time, so when the DSN isn't
+// configured in the CI build env this whole branch compiles to `false` and
+// the chunk is never fetched. Configuring the DSN re-enables loading with
+// no further code change.
+if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_SENTRY_DSN) {
   if ('requestIdleCallback' in window) {
     window.requestIdleCallback(initSentry, { timeout: 4000 });
   } else {
