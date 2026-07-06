@@ -274,9 +274,6 @@ export default async function CockpitPage({ params }: CockpitPageProps) {
             verifiedDate={modified}
             reviewerName={expert.name}
             reviewerCredential={expert.credentials[0]}
-            productCount={products.length}
-            regulators={config.compliance.regulators}
-            complianceNotice={config.compliance.notice}
           />
         </div>
       )}

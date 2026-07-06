@@ -117,23 +117,19 @@ interface CockpitVerdictProps {
   verifiedDate: string; // ISO YYYY-MM-DD
   reviewerName: string;
   reviewerCredential?: string;
-  productCount: number;
-  regulators: string[];
-  complianceNotice: string;
 }
 
 /** Tier 1 — compact decision block, rendered above the cockpit.
  *  Three slim cards side by side (no rank numbers) so the block reads like an
- *  institutional review summary at ~half the original vertical height. */
+ *  institutional review summary at ~half the original vertical height.
+ *  No trust footer here — provider count and regulator pills already sit in the
+ *  hero directly above, duplicating them read as clutter. */
 export function CockpitVerdict({
   intro,
   picks,
   verifiedDate,
   reviewerName,
   reviewerCredential,
-  productCount,
-  regulators,
-  complianceNotice,
 }: CockpitVerdictProps) {
   return (
     <section className="mb-6">
@@ -192,23 +188,6 @@ export function CockpitVerdict({
           </a>
         ))}
       </div>
-
-      {/* Single-line trust footer — regulators + compliance, no second block. */}
-      <p className="mt-2.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs" style={{ color: 'var(--sfp-slate)' }}>
-        <span className="inline-flex items-center gap-1" style={{ color: 'var(--sfp-green)' }}>
-          <CheckCircleIcon size={12} /> {productCount} providers tested
-        </span>
-        {regulators.map((r) => (
-          <span
-            key={r}
-            className="inline-flex items-center rounded-full px-2 py-0.5 text-[10.5px] font-medium"
-            style={{ background: 'rgba(26,107,58,0.08)', color: 'var(--sfp-green)', border: '1px solid rgba(26,107,58,0.2)' }}
-          >
-            {r}
-          </span>
-        ))}
-        <span className="italic">{complianceNotice}</span>
-      </p>
     </section>
   );
 }
