@@ -71,11 +71,14 @@ export function CockpitDecisionBar({
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
         {/* Visually h1/h2-sized, semantically NOT headings — the page's single <h1>
             lives in the hero, and a UI hint is no section heading (audited hierarchy). */}
-        <span style={{ display: 'flex', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
-          <span style={{ fontSize: 'clamp(22px, 2.6vw, 28px)', fontWeight: 800, letterSpacing: '-0.5px', lineHeight: 1.1, color: 'var(--sfp-gold)' }}>
+        <span style={{ display: 'flex', alignItems: 'baseline', gap: 14, flexWrap: 'wrap' }}>
+          {/* Same type treatment as the hero: title mirrors the h1 (font-bold,
+              tracking-tight, 30→38px), the hint mirrors the eyebrow label
+              (11px bold uppercase, 1.5px tracking). */}
+          <span style={{ fontSize: 'clamp(30px, 3.2vw, 38px)', fontWeight: 700, letterSpacing: '-0.025em', lineHeight: 1.12, color: 'var(--sfp-gold)' }}>
             Best-X Compare
           </span>
-          <span style={{ fontSize: 'clamp(14px, 1.7vw, 17px)', fontWeight: 600, lineHeight: 1.2, color: 'var(--sfp-navy)' }}>
+          <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px', color: 'var(--sfp-navy)' }}>
             Choose Table or Compare to make better decisions.
           </span>
         </span>
