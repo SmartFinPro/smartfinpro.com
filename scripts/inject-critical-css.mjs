@@ -19,7 +19,6 @@
 
 import { readFileSync, writeFileSync, existsSync, copyFileSync } from 'fs';
 import { resolve, join } from 'path';
-import { globSync } from 'fs';
 
 // ============================================================
 // CONFIG
