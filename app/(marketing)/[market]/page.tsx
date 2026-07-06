@@ -277,16 +277,16 @@ export default async function MarketHomePage({ params, searchParams }: MarketPag
             <div className="flex-1 min-w-0">
 
               {/* Section Title */}
-              <div className="flex items-center justify-between mb-8">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-8">
                 <div>
                   <span className="block text-[11px] font-bold uppercase tracking-[2px] mb-2" style={{ color: 'var(--sfp-slate)' }}>
                     Research Library
                   </span>
-                  <h2 className="text-2xl font-extrabold" style={{ color: 'var(--sfp-ink)', letterSpacing: '-0.6px' }}>
-                    Latest Reports
+                  <h2 className="text-2xl font-extrabold" style={{ color: 'var(--sfp-ink)', letterSpacing: '-0.6px', lineHeight: 1.2 }}>
+                    Expert Reviews &amp; Ratings for Financial Products
                   </h2>
                 </div>
-                <span className="text-sm font-medium" style={{ color: 'var(--sfp-slate)' }}>
+                <span className="text-sm font-medium shrink-0" style={{ color: 'var(--sfp-slate)' }}>
                   {allReviews.length} reports available
                 </span>
               </div>
