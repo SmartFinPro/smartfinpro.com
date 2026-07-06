@@ -259,6 +259,28 @@ function getCookieConfig(request: NextRequest): { domain?: string; secure: boole
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // ── Canonical host: www → apex (301) ─────────────────────────────
+  // The host-matched next.config redirects() entry works when the Host
+  // header reaches Next intact (verified locally), but in production
+  // Cloudways' nginx sits between Cloudflare and Node and rewrites Host —
+  // the visitor's original host only survives in x-forwarded-host (same
+  // reason getCookieConfig above prefers it). next.config `has` host
+  // matching never sees "www…" there, so the live redirect must happen
+  // here, checking both headers the same way getCookieConfig does.
+  const rawReqHost = (
+    request.headers.get('x-forwarded-host') ||
+    request.headers.get('host') ||
+    ''
+  ).split(',')[0].trim().split(':')[0].toLowerCase();
+  if (rawReqHost === 'www.smartfinpro.com') {
+    const url = request.nextUrl.clone();
+    url.host = 'smartfinpro.com';
+    url.protocol = 'https:';
+    url.port = '';
+    return NextResponse.redirect(url, 301);
+  }
+
   const { domain: cookieDomain, secure: cookieSecure } = getCookieConfig(request);
   const silo = computeSilo(pathname);
 
