@@ -211,6 +211,9 @@ export const COMPETITOR_KEYWORDS: CompetitorKeyword[] = [
   { keyword: 'best financial planning software', market: 'us', category: 'personal-finance' },
   { keyword: 'best tax preparation software', market: 'us', category: 'personal-finance' },
   { keyword: 'best credit card rewards app', market: 'us', category: 'personal-finance' },
+  { keyword: 'best credit card companies', market: 'us', category: 'personal-finance' },
+  { keyword: 'best credit card issuers', market: 'us', category: 'personal-finance' },
+  { keyword: 'best credit card company 2026', market: 'us', category: 'personal-finance' },
   { keyword: 'best expense tracking app', market: 'us', category: 'personal-finance' },
   { keyword: 'best loan management app', market: 'us', category: 'personal-finance' },
   { keyword: 'best refinance app', market: 'us', category: 'personal-finance' },
@@ -617,6 +620,11 @@ export const COMPETITOR_KEYWORDS: CompetitorKeyword[] = [
   { keyword: 'not for profit super fund', market: 'au', category: 'superannuation' },
   { keyword: 'super consolidation', market: 'au', category: 'superannuation' },
   { keyword: 'super fund merger', market: 'au', category: 'superannuation' },
+
+  // ── US GOLD INVESTING ──
+  { keyword: 'best gold investing platforms', market: 'us', category: 'gold-investing' },
+  { keyword: 'best gold ira company', market: 'us', category: 'gold-investing' },
+  { keyword: 'best precious metals dealer', market: 'us', category: 'gold-investing' },
 
   // ── AU GOLD INVESTING (30+ keywords) ──
   { keyword: 'best gold investment australia', market: 'au', category: 'gold-investing' },
