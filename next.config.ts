@@ -570,6 +570,21 @@ const nextConfig: SmartFinNextConfig = {
   // ============================================================
   async redirects() {
     return [
+      // ── Canonical host: www → apex (308) ─────────────────────────────────
+      // www.smartfinpro.com served the full site as a 200 duplicate of the
+      // apex domain (no redirect existed at any layer — Cloudflare passes
+      // www straight through to origin). Canonical tags already point to the
+      // apex, but a permanent redirect is the fix search engines expect; it
+      // also stops PageSpeed/Lighthouse runs against the www URL from
+      // auditing a separate (and during PM2-restart windows, sometimes
+      // 502ing) host. permanent:true emits a 308 — SEO-equivalent to 301.
+      {
+        source: '/:path*',
+        has: [{ type: 'host', value: 'www.smartfinpro.com' }],
+        destination: 'https://smartfinpro.com/:path*',
+        permanent: true,
+      },
+
       // ── Cockpit migration: legacy business-banking /best → topic route ───
       // The 2-segment page is now served by the cockpit topic route. Exact
       // path (no pattern) so it never shadows /best/[topic] or other categories.
