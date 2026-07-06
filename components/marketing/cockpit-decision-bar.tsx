@@ -69,10 +69,15 @@ export function CockpitDecisionBar({
       `}</style>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
-        {/* Visually h1-sized, semantically NOT a heading — the page's single <h1>
-            lives in the hero and must stay unique (audited heading hierarchy). */}
-        <span style={{ fontSize: 'clamp(22px, 2.6vw, 28px)', fontWeight: 800, letterSpacing: '-0.5px', lineHeight: 1.1, color: 'var(--sfp-gold)' }}>
-          Best-X Compare
+        {/* Visually h1/h2-sized, semantically NOT headings — the page's single <h1>
+            lives in the hero, and a UI hint is no section heading (audited hierarchy). */}
+        <span style={{ display: 'flex', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
+          <span style={{ fontSize: 'clamp(22px, 2.6vw, 28px)', fontWeight: 800, letterSpacing: '-0.5px', lineHeight: 1.1, color: 'var(--sfp-gold)' }}>
+            Best-X Compare
+          </span>
+          <span style={{ fontSize: 'clamp(14px, 1.7vw, 17px)', fontWeight: 600, lineHeight: 1.2, color: 'var(--sfp-navy)' }}>
+            Choose Table or Compare to make better decisions.
+          </span>
         </span>
         <button
           type="button"
