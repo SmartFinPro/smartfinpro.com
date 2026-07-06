@@ -86,7 +86,7 @@ export const tradingPlatformsConfig: TopicConfig = {
   category: 'trading',
   label: 'Trading Platforms',
   h1: (y) => `Best trading platforms in ${y}`,
-  metaTitle: (y) => `Best Trading Platforms (${y}) — Compared & Ranked`,
+  metaTitle: (y) => `Best Trading Platforms (${y}) — Compared`,
   metaDescription: (y) =>
     `Compare the best US trading platforms of ${y}: options fees, minimum deposit, crypto access and TradingView support — independent and data-driven.`,
   intro:

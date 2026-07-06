@@ -57,9 +57,9 @@ export const creditCardCompaniesConfig: TopicConfig = {
   category: 'personal-finance',
   label: 'Credit Card Companies',
   h1: (y) => `Best credit card companies in ${y}`,
-  metaTitle: (y) => `Best Credit Card Companies (${y}) — Compared & Ranked`,
+  metaTitle: (y) => `Best Credit Card Companies (${y}) — Compared`,
   metaDescription: (y) =>
-    `Compare the best US credit card issuers of ${y}: welcome bonuses, credit score requirements, rewards types, and card lineups ranked independently. Chase, Amex, Capital One and more — no fluff.`,
+    `Compare the best US credit card issuers of ${y}: welcome bonuses, credit requirements, and rewards — Chase, Amex, Capital One and more, ranked independently.`,
   intro:
     'Independent comparison of the leading US credit card issuers — ranked by welcome bonus value, rewards richness, credit accessibility, and card lineup breadth. All $0-annual-fee options included.',
   publishedDate: '2026-07-05',

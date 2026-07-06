@@ -4,6 +4,8 @@
 // mounts the interactive <ComparisonCockpit> (wrapped in Suspense for URL state).
 
 import { Suspense } from 'react';
+import fs from 'node:fs';
+import path from 'node:path';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import {
@@ -29,9 +31,12 @@ import { getTopicConfig } from '@/lib/comparison/topics/index';
 import { BEST_X_MANIFEST } from '@/lib/comparison/topics/manifest';
 import { getMarketExpert } from '@/lib/actions/experts';
 import { ComparisonCockpit } from '@/components/marketing/comparison-cockpit';
-import { CockpitHero, CockpitBody } from '@/components/marketing/cockpit-content';
+import { CockpitHero, CockpitBody, CockpitVerdict, type VerdictPick } from '@/components/marketing/cockpit-content';
+import { CockpitSummaryTable } from '@/components/marketing/cockpit-summary-table';
+import { RelatedComparisons, type RelatedComparisonItem } from '@/components/marketing/related-comparisons';
 import { AffiliateDisclosure } from '@/components/ui/affiliate-disclosure';
 import type { ProductForComparison } from '@/lib/comparison/types';
+import type { TopicConfig } from '@/lib/comparison/topics/types';
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'https://smartfinpro.com';
 
@@ -47,13 +52,77 @@ function isValidCombo(market: string, category: string): market is Market {
   );
 }
 
+function reviewContentExists(market: string, category: string, slug: string): boolean {
+  return fs.existsSync(path.join(process.cwd(), 'content', market, category, `${slug}.mdx`));
+}
+
 function providerUrl(p: ProductForComparison, market: string, category: string, topic: string): string {
   if (p.ctaMode === 'offer') return `${SITE}/go/${p.slug}`;
-  // External-first: the provider's own site always exists; some review slugs have no
-  // MDX yet, so review-first would emit 404s in JSON-LD/verdict links.
+  // Review-first when the MDX genuinely exists (own page > external domain for
+  // GEO/SEO entity clarity); otherwise fall back to the provider's own site —
+  // some review slugs are set in the DB before the MDX ships, which would
+  // otherwise emit a 404 in JSON-LD.
+  if (p.reviewSlug && reviewContentExists(market, category, p.reviewSlug)) {
+    return `${SITE}/${market}/${category}/${p.reviewSlug}`;
+  }
   if (p.externalUrl) return p.externalUrl;
-  if (p.reviewSlug) return `${SITE}/${market}/${category}/${p.reviewSlug}`;
   return `${SITE}/${market}/${category}/best/${topic}`;
+}
+
+/** Tier-1 answer-block picks — the top pick(s), CTA-gated the same way as the
+ *  card/table/compare components (offer → tracked /go; else external site;
+ *  else internal review). Capped at 3 to keep the block a scannable "answer". */
+function buildVerdictPicks(
+  config: TopicConfig,
+  products: ProductForComparison[],
+  market: string,
+  category: string,
+): VerdictPick[] {
+  const picks: VerdictPick[] = [];
+  for (const pick of config.verdict.picks.slice(0, 3)) {
+    const product = products.find((p) => p.slug === pick.slug);
+    if (!product) continue;
+    const reviewHref = product.reviewSlug ? `/${market}/${category}/${product.reviewSlug}` : null;
+    let href: string;
+    let external = false;
+    let ctaLabel: string;
+    if (product.ctaMode === 'offer') {
+      href = `/go/${product.slug}`;
+      ctaLabel = 'View offer';
+    } else if (product.externalUrl) {
+      href = product.externalUrl;
+      external = true;
+      ctaLabel = 'Visit site';
+    } else if (reviewHref) {
+      href = reviewHref;
+      ctaLabel = 'Read review';
+    } else {
+      href = '#';
+      external = true;
+      ctaLabel = 'Visit site';
+    }
+    picks.push({ rank: picks.length + 1, name: product.displayName, why: pick.label, rating: product.rating, href, external, ctaLabel });
+  }
+  return picks;
+}
+
+/** Cross-links to other live Best-X cockpits — same category first, capped at 3.
+ *  Keeps link equity circulating inside the Best-X silo instead of every cockpit
+ *  linking only back to the homepage hub. */
+function buildRelatedComparisons(market: string, category: string, topic: string): RelatedComparisonItem[] {
+  // Unlike top-level marketing pages, the Best-X cockpit route always requires the
+  // literal market segment — even for 'us' (see getCanonicalUrl, which never special-
+  // cases 'us' to empty). A bare '/personal-finance/best/...' 301s through the proxy.
+  return BEST_X_MANIFEST.filter(
+    (e) => e.market === market && !e.legacy && !(e.category === category && e.topic === topic) && getTopicConfig(e.category, e.topic),
+  )
+    .sort((a, b) => (a.category === category ? 0 : 1) - (b.category === category ? 0 : 1))
+    .slice(0, 3)
+    .map((e) => ({
+      href: `/${e.market}/${e.category}/best/${e.topic}`,
+      label: e.label,
+      categoryLabel: categoryConfig[e.category as Category].name,
+    }));
 }
 
 export async function generateStaticParams() {
@@ -180,6 +249,9 @@ export default async function CockpitPage({ params }: CockpitPageProps) {
   // Per-provider FinancialProduct entities are already carried as the ItemList's
   // itemListElements (above) — a standalone set would duplicate them by URL.
 
+  const verdictPicks = buildVerdictPicks(config, products, market, category);
+  const relatedComparisons = buildRelatedComparisons(market, category, topic);
+
   return (
     <div style={{ background: 'var(--sfp-gray)' }}>
       <div className="mx-auto max-w-6xl px-4 pt-10">
@@ -193,6 +265,25 @@ export default async function CockpitPage({ params }: CockpitPageProps) {
           productCount={products.length}
           regulators={config.compliance.regulators}
         />
+      </div>
+
+      {verdictPicks.length > 0 && (
+        <div className="mx-auto max-w-6xl px-4">
+          <CockpitVerdict
+            intro={config.verdict.intro}
+            picks={verdictPicks}
+            verifiedDate={modified}
+            reviewerName={expert.name}
+            reviewerCredential={expert.credentials[0]}
+            productCount={products.length}
+            regulators={config.compliance.regulators}
+            complianceNotice={config.compliance.notice}
+          />
+        </div>
+      )}
+
+      <div className="mx-auto max-w-6xl px-4">
+        <CockpitSummaryTable products={products} specColumns={config.specColumns} label={config.label} />
       </div>
 
       <div className="mx-auto max-w-6xl px-4 pb-10 pt-6">
@@ -215,6 +306,7 @@ export default async function CockpitPage({ params }: CockpitPageProps) {
           reviewer={expert}
           verifiedDate={modified}
         />
+        <RelatedComparisons items={relatedComparisons} />
       </div>
 
       <div className="mx-auto max-w-6xl px-4 pb-12" id="affiliate-disclosure">

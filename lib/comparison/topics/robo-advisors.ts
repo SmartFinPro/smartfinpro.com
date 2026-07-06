@@ -33,7 +33,7 @@ export const roboAdvisorsConfig: TopicConfig = {
   h1: (y) => `Best robo-advisors in ${y}`,
   metaTitle: (y) => `Best Robo-Advisors (${y}) — Compared & Ranked`,
   metaDescription: (y) =>
-    `Compare the best robo-advisors of ${y} side by side: management fees, account minimums, tax-loss harvesting and a live multi-year cost projection. Independent, data-driven, no fluff.`,
+    `Compare the best robo-advisors of ${y}: management fees, account minimums, tax-loss harvesting and a live multi-year cost projection.`,
   intro:
     'Independent, side-by-side comparison of the leading US robo-advisors — ranked by fees, minimums and features, with a live multi-year cost projection on your own balance.',
   publishedDate: '2026-06-29',
@@ -160,8 +160,13 @@ export const roboAdvisorsConfig: TopicConfig = {
   ],
 
   verdict: {
-    intro: "Our editors' picks for the best robo-advisors right now.",
-    picks: [],
+    intro:
+      "Our top pick, Wealthfront, wins on best-in-class tax-loss harvesting and a 4.5% APY on uninvested cash — the right start for most investors. Betterment is the stronger fit for goal-based planning, and Fidelity Go suits beginners who want a $0-minimum, brand-name robo.",
+    picks: [
+      { slug: 'wealthfront', label: 'Best overall / most investors' },
+      { slug: 'betterment', label: 'Best for goal-based investing' },
+      { slug: 'fidelity-go', label: 'Best for beginners' },
+    ],
   },
   methodology:
     "We compare management fees, account minimums, account types, tax features and SIPC coverage from each provider's official disclosures, re-verified quarterly. Rankings never depend on commissions.",
@@ -177,6 +182,14 @@ export const roboAdvisorsConfig: TopicConfig = {
     {
       h3: 'Tax-loss harvesting',
       body: 'Automated TLH can offset taxable gains; valuable in taxable accounts, irrelevant inside IRAs.',
+    },
+    {
+      h3: 'Account types',
+      body: 'Most robos support taxable brokerage, Traditional/Roth IRA and SEP-IRA; some also add trust and joint accounts. If you need a 529 or a specific account type, confirm it before opening — not every provider covers every type.',
+    },
+    {
+      h3: 'Human advisor access',
+      body: 'A handful of robos bundle limited or on-demand access to a human CFP, usually at a higher fee tier or balance threshold. If you want to talk to someone during a market downturn, this matters more than the headline fee.',
     },
   ],
   faq: [
@@ -195,6 +208,14 @@ export const roboAdvisorsConfig: TopicConfig = {
     {
       q: 'Are robo-advisors safe?',
       a: 'Reputable US robo-advisors are SIPC-insured up to $500,000 (including $250,000 for cash), which protects against broker failure — not market losses. Your capital is still at risk.',
+    },
+    {
+      q: 'What is the difference between a robo-advisor and a target-date fund?',
+      a: 'A target-date fund is a single mutual fund that rebalances toward a fixed retirement year inside any brokerage account. A robo-advisor is a full account wrapper that builds a diversified portfolio around your goals, rebalances automatically, and — on most platforms here — adds tax-loss harvesting a single fund cannot do on its own.',
+    },
+    {
+      q: 'Can I switch robo-advisors later without a tax penalty?',
+      a: 'Inside an IRA, moving providers is a tax-free trustee-to-trustee transfer. In a taxable account, transferring "in kind" (moving the actual holdings) avoids triggering a sale — liquidating to cash first can create a taxable event, so ask the new provider whether they support in-kind transfers before you switch.',
     },
   ],
   compliance: {

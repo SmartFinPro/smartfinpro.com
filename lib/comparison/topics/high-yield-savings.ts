@@ -80,9 +80,9 @@ export const highYieldSavingsConfig: TopicConfig = {
   category: 'personal-finance',
   label: 'High-Yield Savings Accounts',
   h1: (y) => `Best high-yield savings accounts in ${y}`,
-  metaTitle: (y) => `Best High-Yield Savings Accounts (${y}) — Compared & Ranked`,
+  metaTitle: (y) => `Best High-Yield Savings Accounts (${y})`,
   metaDescription: (y) =>
-    `Compare the best US high-yield savings accounts of ${y}: APY rates, FDIC coverage, minimum balances, ATM access, and a side-by-side fee analysis — all FDIC-insured, no fees.`,
+    `Compare the best US high-yield savings accounts of ${y}: APY rates, FDIC coverage, minimum balances and ATM access — all no-fee, FDIC-insured.`,
   intro:
     'Independent comparison of the leading FDIC-insured high-yield savings accounts — ranked by APY, minimum balance requirements, and features. All $0 monthly fees. Rates verified July 2026.',
   publishedDate: '2026-07-05',

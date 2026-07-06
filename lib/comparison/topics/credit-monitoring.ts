@@ -114,9 +114,9 @@ export const creditMonitoringConfig: TopicConfig = {
   category: 'personal-finance',
   label: 'Credit Monitoring',
   h1: (y) => `Best credit monitoring services in ${y}`,
-  metaTitle: (y) => `Best Credit Monitoring Services (${y}) — Compared & Ranked`,
+  metaTitle: (y) => `Best Credit Monitoring Services (${y})`,
   metaDescription: (y) =>
-    `Compare the best US credit monitoring services of ${y}: monthly cost, bureaus monitored, ID theft insurance and free tiers — independent, sourced, and honest about compliance history.`,
+    `Compare the best US credit monitoring services of ${y}: monthly cost, bureaus monitored, ID theft insurance and free tiers — independently sourced.`,
   intro:
     'Independent, side-by-side comparison of the leading US credit monitoring and identity theft protection services — ranked by monthly cost, bureau coverage, insurance and free-tier honesty, with a live yearly cost calculator.',
   publishedDate: '2026-07-03',

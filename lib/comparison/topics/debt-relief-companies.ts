@@ -71,9 +71,9 @@ export const debtReliefCompaniesConfig: TopicConfig = {
   category: 'debt-relief',
   label: 'Debt Relief Companies',
   h1: (y) => `Best debt relief companies in ${y}`,
-  metaTitle: (y) => `Best Debt Relief Companies (${y}) — Compared & Ranked`,
+  metaTitle: (y) => `Best Debt Relief Companies (${y}) — Compared`,
   metaDescription: (y) =>
-    `Compare the best debt relief companies of ${y}: settlement fees, minimum enrolled debt, program length and accreditation — plus a live cost calculator on your own balance.`,
+    `Compare the best debt relief companies of ${y}: settlement fees, minimum enrolled debt, program length and accreditation — plus a live cost calculator.`,
   intro:
     'Independent, side-by-side comparison of the leading US debt relief companies — settlement services ranked by fees, minimum debt and accreditation, alongside a non-profit debt management alternative, with a live cost projection on your own enrolled balance.',
   publishedDate: '2026-07-03',
@@ -209,8 +209,13 @@ export const debtReliefCompaniesConfig: TopicConfig = {
   ],
 
   verdict: {
-    intro: "Our editors' picks for the best debt relief companies right now.",
-    picks: [],
+    intro:
+      'Our top pick, National Debt Relief, is the most trusted overall — but Accredited Debt Relief rates higher for larger balances ($10k+), and GreenPath is the better call if you want to avoid settlement entirely and protect your credit score.',
+    picks: [
+      { slug: 'national-debt-relief', label: 'Most trusted overall' },
+      { slug: 'accredited-debt-relief', label: 'Best for larger debt balances ($10k+)' },
+      { slug: 'greenpath', label: 'Best for avoiding debt settlement / credit-score-conscious' },
+    ],
   },
   methodology:
     "We compare settlement fees, minimum enrolled debt, program length, and industry accreditation (AADR — formerly AFCC — and IAPDA) from each provider's official disclosures and BBB/Trustpilot records, re-verified quarterly. We flag regulatory history where it exists. Where a provider's own site doesn't publish an exact fee percentage (e.g. CuraDebt), we show the industry-standard range as a transparent estimate rather than inventing false precision. Rankings never depend on commissions.",

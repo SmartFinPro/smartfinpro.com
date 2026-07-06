@@ -90,7 +90,7 @@ export const creditRepairCompaniesConfig: TopicConfig = {
   category: 'credit-repair',
   label: 'Credit Repair Companies',
   h1: (y) => `Best credit repair companies in ${y}`,
-  metaTitle: (y) => `Best Credit Repair Companies (${y}) — Compared & Ranked`,
+  metaTitle: (y) => `Best Credit Repair Companies (${y}) — Compared`,
   metaDescription: (y) =>
     `Compare the best US credit repair companies of ${y}: fees, setup costs, guarantees and BBB ratings — independent, sourced, and honest about compliance history.`,
   intro:

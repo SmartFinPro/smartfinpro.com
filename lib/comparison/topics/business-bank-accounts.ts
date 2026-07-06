@@ -28,7 +28,7 @@ export const businessBankAccountsConfig: TopicConfig = {
   category: 'business-banking',
   label: 'Business Bank Accounts',
   h1: (y) => `Best business bank accounts in ${y}`,
-  metaTitle: (y) => `Best Business Bank Accounts (${y}) — Compared & Ranked`,
+  metaTitle: (y) => `Best Business Bank Accounts (${y}) — Compared`,
   metaDescription: (y) =>
     `Compare the best US business bank accounts of ${y}: monthly fees, FDIC coverage, sub-accounts, ATM & wire support, plus a live multi-year cost calculator.`,
   intro:
@@ -191,11 +191,19 @@ export const businessBankAccountsConfig: TopicConfig = {
       h3: 'Cash, wires & foreign fees',
       body: 'Fully digital banks often can’t accept cash deposits and may charge for wires or foreign transactions. Match these to how your business actually moves money.',
     },
+    {
+      h3: 'Bookkeeping & integrations',
+      body: 'Built-in bookkeeping (auto-categorized transactions, invoicing) can replace a separate tool for very small teams; larger ones usually still sync to QuickBooks or Xero. Check the integrations list before assuming a "does everything" account covers what your accountant already uses.',
+    },
   ],
   faq: [
     {
       q: 'What is the best business bank account in 2026?',
       a: 'Mercury is our top overall pick for 2026 — $0 monthly fees with up to $5M in FDIC coverage through its partner-bank sweep network. Novo is best for freelancers and solopreneurs, and Relay is best for teams that need multiple sub-accounts. We re-verify fees and features quarterly, and the ranking never depends on commissions.',
+    },
+    {
+      q: 'Do I need an EIN to open a business bank account?',
+      a: 'Most providers accept a sole proprietorship using your SSN instead of an EIN, but requirements vary by bank and by state. An LLC or corporation almost always needs an EIN plus formation documents (articles of organization/incorporation). Check each provider’s exact document list before applying — it can differ meaningfully between digital-first banks and traditional ones.',
     },
     {
       q: 'How is the multi-year cost calculated?',

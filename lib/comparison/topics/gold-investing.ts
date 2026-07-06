@@ -77,9 +77,9 @@ export const goldInvestingConfig: TopicConfig = {
   category: 'gold-investing',
   label: 'Gold Investing Platforms',
   h1: (y) => `Best gold investing platforms in ${y}`,
-  metaTitle: (y) => `Best Gold Investing Platforms (${y}) — Compared & Ranked`,
+  metaTitle: (y) => `Best Gold Investing Platforms (${y})`,
   metaDescription: (y) =>
-    `Compare the best gold IRA companies and online bullion dealers of ${y} — fees, storage, minimums, and real complaint history, sourced and honest about what each business model actually costs.`,
+    `Compare the best gold IRA companies and online bullion dealers of ${y} — fees, storage, minimums, and real complaint history, independently sourced.`,
   intro:
     'Independent, side-by-side comparison of gold IRA specialists and online bullion dealers — two genuinely different businesses that both get called "gold investing," with real fee and complaint-history differences worth knowing before you call anyone.',
   publishedDate: '2026-07-05',

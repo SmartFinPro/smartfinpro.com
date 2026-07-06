@@ -112,9 +112,9 @@ export const aiToolsFinanceConfig: TopicConfig = {
   category: 'ai-tools',
   label: 'AI Tools for Finance',
   h1: (y) => `Best AI tools for finance in ${y}`,
-  metaTitle: (y) => `Best AI Tools for Finance (${y}) — Compared & Ranked`,
+  metaTitle: (y) => `Best AI Tools for Finance (${y}) — Compared`,
   metaDescription: (y) =>
-    `Compare the best AI-powered finance tools of ${y}: budgeting apps, AI investing automation, business spend management and more — independent, sourced, and honest about what's comparable and what isn't.`,
+    `Compare the best AI-powered finance tools of ${y}: budgeting apps, investing automation, and business spend management — independent and sourced.`,
   intro:
     "Independent, side-by-side comparison of AI tools across personal budgeting, investing & research, and business finance — three genuinely different use cases, never forced into one price-based ranking.",
   publishedDate: '2026-07-04',

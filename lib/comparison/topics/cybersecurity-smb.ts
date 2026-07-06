@@ -88,9 +88,9 @@ export const cybersecuritySmbConfig: TopicConfig = {
   category: 'cybersecurity',
   label: 'Cybersecurity for SMBs',
   h1: (y) => `Best cybersecurity tools for small businesses in ${y}`,
-  metaTitle: (y) => `Best Cybersecurity for SMBs (${y}) — Compared & Ranked`,
+  metaTitle: (y) => `Best Cybersecurity for SMBs (${y}) — Compared`,
   metaDescription: (y) =>
-    `Compare the best cybersecurity tools for small businesses in ${y}: endpoint protection, password managers, network security and email security — independent, sourced, and honest about what each layer actually protects.`,
+    `Compare the best cybersecurity tools for small businesses in ${y}: endpoint protection, password managers, network and email security — independently tested.`,
   intro:
     'Independent, side-by-side comparison across four security layers — endpoints, passwords, network access, and email — because no SMB buys just one tool, and no single winner exists across all four.',
   publishedDate: '2026-07-05',
