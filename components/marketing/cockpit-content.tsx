@@ -150,34 +150,35 @@ export function CockpitVerdict({
       </p>
 
       <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
-        {/* Hover flips each card onto an anthracite gradient — text colors must live
-            in classes (not inline styles) so group-hover variants can override them. */}
+        {/* Hover slides each card onto a light-green gradient (built around #E9F4ED,
+            the cockpit's winner-cell green) — light enough that the ink/slate text
+            stays readable, so no color flips needed. */}
         {picks.map((p) => (
           <a
             key={p.rank}
             href={p.href}
             {...(p.external ? { target: '_blank', rel: 'nofollow sponsored noopener' } : {})}
-            className="group flex flex-col rounded-2xl border bg-white px-4 py-3.5 no-underline shadow-sm transition-all duration-200 hover:border-transparent hover:bg-[linear-gradient(135deg,#333A46_0%,#4A5262_100%)] hover:shadow-md"
+            className="group flex flex-col rounded-2xl border bg-white px-4 py-3.5 no-underline shadow-sm transition-all duration-200 hover:border-[rgba(26,107,58,0.25)] hover:bg-[linear-gradient(135deg,#F0F8F3_0%,#E2F0E7_100%)] hover:shadow-md"
             style={{ borderColor: BORDER }}
           >
             <span className="flex flex-wrap items-baseline gap-x-2">
-              <span className="text-[15px] font-bold leading-tight text-[color:var(--sfp-ink)] transition-colors duration-200 group-hover:text-white">
+              <span className="text-[15px] font-bold leading-tight text-[color:var(--sfp-ink)]">
                 {p.name}
               </span>
               {p.rank === 1 && (
-                <span className="rounded bg-[rgba(245,166,35,0.14)] px-1.5 py-0.5 text-[9.5px] font-bold uppercase tracking-[0.8px] text-[color:var(--sfp-gold-dark)] transition-colors duration-200 group-hover:bg-[rgba(245,166,35,0.22)] group-hover:text-[color:var(--sfp-gold)]">
+                <span className="rounded bg-[rgba(245,166,35,0.14)] px-1.5 py-0.5 text-[9.5px] font-bold uppercase tracking-[0.8px] text-[color:var(--sfp-gold-dark)]">
                   Top pick
                 </span>
               )}
             </span>
-            <span className="mt-0.5 block truncate text-[12.5px] leading-snug text-[color:var(--sfp-slate)] transition-colors duration-200 group-hover:text-[#C9D1DE]">
+            <span className="mt-0.5 block truncate text-[12.5px] leading-snug text-[color:var(--sfp-slate)]">
               {p.why}
             </span>
             <span className="mt-2.5 flex items-center justify-between">
-              <span className="inline-flex items-center gap-1 text-[13px] font-semibold text-[color:var(--sfp-ink)] transition-colors duration-200 group-hover:text-white">
+              <span className="inline-flex items-center gap-1 text-[13px] font-semibold text-[color:var(--sfp-ink)]">
                 <Star size={12} aria-hidden="true" style={{ color: 'var(--sfp-gold)' }} /> {p.rating.toFixed(1)}
               </span>
-              <span className="inline-flex items-center gap-1 text-[13px] font-semibold text-[color:var(--sfp-navy)] transition-all duration-200 group-hover:translate-x-0.5 group-hover:text-white">
+              <span className="inline-flex items-center gap-1 text-[13px] font-semibold text-[color:var(--sfp-navy)] transition-all duration-200 group-hover:translate-x-0.5 group-hover:text-[color:var(--sfp-green)]">
                 {p.ctaLabel} <ArrowUpRight size={13} aria-hidden="true" />
               </span>
             </span>
