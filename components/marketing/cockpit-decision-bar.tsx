@@ -68,7 +68,12 @@ export function CockpitDecisionBar({
         @media (max-width:640px){.ck-root .ck-decision-grid{grid-template-columns:1fr;gap:12px}}
       `}</style>
 
-      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
+        {/* Visually h1-sized, semantically NOT a heading — the page's single <h1>
+            lives in the hero and must stay unique (audited heading hierarchy). */}
+        <span style={{ fontSize: 'clamp(22px, 2.6vw, 28px)', fontWeight: 800, letterSpacing: '-0.5px', lineHeight: 1.1, color: 'var(--sfp-gold)' }}>
+          Best-X Compare
+        </span>
         <button
           type="button"
           className="ck-pill"
