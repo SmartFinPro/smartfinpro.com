@@ -75,7 +75,7 @@ export function CockpitDecisionBar({
           {/* Same type treatment as the hero: title mirrors the h1 (font-bold,
               tracking-tight, 30→38px), the hint mirrors the eyebrow label
               (11px bold uppercase, 1.5px tracking). */}
-          <span style={{ fontSize: 'clamp(30px, 3.2vw, 38px)', fontWeight: 700, letterSpacing: '-0.025em', lineHeight: 1.12, color: 'var(--sfp-gold)' }}>
+          <span style={{ fontSize: 'clamp(30px, 3.2vw, 38px)', fontWeight: 700, letterSpacing: '-0.025em', lineHeight: 1.12, color: 'var(--sfp-ink)' }}>
             Best-X Compare
           </span>
           <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px', color: 'var(--sfp-navy)' }}>
