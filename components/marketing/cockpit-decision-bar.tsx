@@ -71,15 +71,19 @@ export function CockpitDecisionBar({
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
         {/* Visually h1/h2-sized, semantically NOT headings — the page's single <h1>
             lives in the hero, and a UI hint is no section heading (audited hierarchy). */}
-        <span style={{ display: 'flex', alignItems: 'baseline', gap: 14, flexWrap: 'wrap' }}>
-          {/* Same type treatment as the hero: title mirrors the h1 (font-bold,
-              tracking-tight, 30→38px), the hint mirrors the eyebrow label
-              (11px bold uppercase, 1.5px tracking). */}
-          <span style={{ fontSize: 'clamp(30px, 3.2vw, 38px)', fontWeight: 700, letterSpacing: '-0.025em', lineHeight: 1.12, color: 'var(--sfp-ink)' }}>
-            Best-X Compare
+        {/* Section-header pattern (same scale as "Expert Reviews & Ratings"):
+            22px ink title with a slim gold accent bar, sentence-case slate hint
+            below — Table/Compare in navy to echo the actual view buttons. */}
+        <span>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span aria-hidden="true" style={{ display: 'inline-block', width: 4, height: 20, borderRadius: 2, background: 'var(--sfp-gold)', flexShrink: 0 }} />
+            <span style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.025em', lineHeight: 1.15, color: 'var(--sfp-ink)' }}>
+              Best-X Compare
+            </span>
           </span>
-          <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px', color: 'var(--sfp-navy)' }}>
-            Choose Table or Compare to make better decisions.
+          <span style={{ display: 'block', marginTop: 4, paddingLeft: 14, fontSize: 13.5, lineHeight: 1.5, color: C.slate }}>
+            Choose <span style={{ fontWeight: 600, color: 'var(--sfp-navy)' }}>Table</span> or{' '}
+            <span style={{ fontWeight: 600, color: 'var(--sfp-navy)' }}>Compare</span> to make better decisions.
           </span>
         </span>
         <button
