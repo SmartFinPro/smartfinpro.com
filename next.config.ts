@@ -408,19 +408,16 @@ const nextConfig: SmartFinNextConfig = {
         source: '/:path((?!api/widget/).*)',
         headers: [
           ...securityHeaders,
-          // Preconnect hints for critical external resources
-          {
-            key: 'Link',
-            value: [
-              '<https://fonts.googleapis.com>; rel=preconnect',
-              '<https://fonts.gstatic.com>; rel=preconnect; crossorigin',
-              // YouTube — for VideoContainer iframe embeds (faster LCP for video pages)
-              '<https://www.youtube.com>; rel=preconnect',
-              '<https://i.ytimg.com>; rel=preconnect',
-              // Plausible analytics — already dns-prefetched in HTML head
-              '<https://plausible.io>; rel=preconnect',
-            ].join(', '),
-          },
+          // NOTE: previously had a blanket preconnect Link header here for
+          // fonts.googleapis.com/gstatic.com, youtube.com/i.ytimg.com, and
+          // plausible.io — removed after a PageSpeed mobile audit flagged
+          // ">4 preconnect links" and verification showed all 5 were dead:
+          // fonts are self-hosted via next/font/google (no runtime request
+          // to Google's font CDN ever happens), no MDX content uses
+          // VideoContainer/YouTube embeds, and Plausible isn't loaded via
+          // script tag (site uses its own /api/track). Each unused
+          // preconnect still pays a real DNS+TCP+TLS handshake cost on
+          // every page load for nothing.
         ],
       },
 

@@ -91,15 +91,14 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        {/* Preconnect to image CDN for faster LCP */}
-        <link rel="preconnect" href="https://images.smartfinpro.com" crossOrigin="anonymous" />
-        <link rel="dns-prefetch" href="https://images.smartfinpro.com" />
-        {/* Preconnect to Supabase DB for faster TTFB on SSR queries */}
-        {process.env.NEXT_PUBLIC_SUPABASE_URL && (
-          <link rel="preconnect" href={process.env.NEXT_PUBLIC_SUPABASE_URL} crossOrigin="anonymous" />
-        )}
-        {/* Preconnect to analytics */}
-        <link rel="dns-prefetch" href="https://plausible.io" />
+        {/* Removed unused preconnect/dns-prefetch hints after a PageSpeed
+            mobile audit: images.smartfinpro.com is configured as an allowed
+            next/image remote pattern but no content actually references it;
+            Supabase preconnect had no effect since SSR queries run server-to
+            -server (never touches the browser) and no client component calls
+            Supabase directly; plausible.io isn't loaded via script tag (the
+            site posts to its own /api/track instead). Each hint was a real,
+            wasted DNS+TCP+TLS handshake on every single page load. */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{

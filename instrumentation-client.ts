@@ -4,76 +4,108 @@
 //
 // ENV required:
 //   NEXT_PUBLIC_SENTRY_DSN — from Sentry project settings → Client Keys
+//
+// Sentry's SDK (@sentry/nextjs + its BrowserTracing instrumentation) is the
+// single largest JS chunk on the homepage (~475KB uncompressed). Importing
+// and initializing it synchronously on every page load was a major
+// contributor to mobile Total Blocking Time (a PageSpeed audit measured
+// 1,640ms TBT with this as the biggest chunk). Deferred here to browser idle
+// time via a dynamic import — error monitoring still starts within a few
+// seconds on any real device, but no longer competes with the critical
+// rendering path. Trade-off: an error or router transition in the first
+// idle window (before Sentry finishes loading) won't be captured — accepted
+// as worth it given how rarely a crash happens in that window.
 
-import * as Sentry from '@sentry/nextjs';
+import type * as SentryNextjs from '@sentry/nextjs';
 
-Sentry.init({
-  dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
-  environment: process.env.NODE_ENV ?? 'production',
+let sentryModule: typeof SentryNextjs | null = null;
 
-  // ── Performance Tracing ──────────────────────────────────────────────
-  // 5% of sessions traced — enough for P75/P95 without cost explosion
-  tracesSampleRate: 0.05,
+function initSentry() {
+  import('@sentry/nextjs').then((Sentry) => {
+    sentryModule = Sentry;
 
-  // ── F-09: Limit trace propagation to our own origins ─────────────────
-  // Without this, Sentry adds sentry-trace + baggage headers to EVERY
-  // outbound fetch — including 3rd-party endpoints (Resend, Awin, Plausible),
-  // leaking internal trace IDs and potentially sensitive request metadata.
-  // Only attach trace headers to SmartFinPro itself (same-origin API calls).
-  tracePropagationTargets: [
-    'localhost',
-    /^\/(?!\/)/, // any relative URL starting with /
-    /^https:\/\/(www\.)?smartfinpro\.com/,
-  ],
+    Sentry.init({
+      dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
+      environment: process.env.NODE_ENV ?? 'production',
 
-  // ── Session Replay — disabled for privacy (financial platform) ───────
-  replaysSessionSampleRate: 0,
-  replaysOnErrorSampleRate: 0,
+      // ── Performance Tracing ──────────────────────────────────────────────
+      // 5% of sessions traced — enough for P75/P95 without cost explosion
+      tracesSampleRate: 0.05,
 
-  // ── Error Filtering ──────────────────────────────────────────────────
-  // Suppress noisy browser errors that we can't fix
-  ignoreErrors: [
-    // Benign browser quirks
-    'ResizeObserver loop limit exceeded',
-    'ResizeObserver loop completed with undelivered notifications',
-    // Network blips (user went offline mid-request)
-    'Failed to fetch',
-    'Load failed',
-    'NetworkError',
-    'Network request failed',
-    // Safari-specific
-    'Non-Error promise rejection captured',
-    // Ad-blockers killing analytics scripts
-    /^Script error\.?$/,
-    // Hydration warnings (cosmetic, not bugs)
-    'Hydration failed',
-  ],
+      // ── F-09: Limit trace propagation to our own origins ─────────────────
+      // Without this, Sentry adds sentry-trace + baggage headers to EVERY
+      // outbound fetch — including 3rd-party endpoints (Resend, Awin, Plausible),
+      // leaking internal trace IDs and potentially sensitive request metadata.
+      // Only attach trace headers to SmartFinPro itself (same-origin API calls).
+      tracePropagationTargets: [
+        'localhost',
+        /^\/(?!\/)/, // any relative URL starting with /
+        /^https:\/\/(www\.)?smartfinpro\.com/,
+      ],
 
-  // ── Denied URLs — don't capture errors from 3rd-party scripts ────────
-  denyUrls: [
-    /plausible\.io/,
-    /googletagmanager\.com/,
-    /google-analytics\.com/,
-    /extensions\//i,
-    /^chrome:\/\//i,
-  ],
+      // ── Session Replay — disabled for privacy (financial platform) ───────
+      replaysSessionSampleRate: 0,
+      replaysOnErrorSampleRate: 0,
 
-  // ── Tunnel route — avoids ad-blocker interference ────────────────────
-  // All Sentry requests proxied through our own domain via /monitoring
-  tunnel: '/monitoring',
+      // ── Error Filtering ──────────────────────────────────────────────────
+      // Suppress noisy browser errors that we can't fix
+      ignoreErrors: [
+        // Benign browser quirks
+        'ResizeObserver loop limit exceeded',
+        'ResizeObserver loop completed with undelivered notifications',
+        // Network blips (user went offline mid-request)
+        'Failed to fetch',
+        'Load failed',
+        'NetworkError',
+        'Network request failed',
+        // Safari-specific
+        'Non-Error promise rejection captured',
+        // Ad-blockers killing analytics scripts
+        /^Script error\.?$/,
+        // Hydration warnings (cosmetic, not bugs)
+        'Hydration failed',
+      ],
 
-  // ── Release tracking — set during CI/CD ─────────────────────────────
-  release: process.env.NEXT_PUBLIC_SENTRY_RELEASE,
+      // ── Denied URLs — don't capture errors from 3rd-party scripts ────────
+      denyUrls: [
+        /plausible\.io/,
+        /googletagmanager\.com/,
+        /google-analytics\.com/,
+        /extensions\//i,
+        /^chrome:\/\//i,
+      ],
 
-  // ── Breadcrumbs — capture navigation + console errors ───────────────
-  beforeBreadcrumb(breadcrumb) {
-    // Don't log console.debug breadcrumbs (too noisy)
-    if (breadcrumb.category === 'console' && breadcrumb.level === 'debug') {
-      return null;
-    }
-    return breadcrumb;
-  },
-});
+      // ── Tunnel route — avoids ad-blocker interference ────────────────────
+      // All Sentry requests proxied through our own domain via /monitoring
+      tunnel: '/monitoring',
+
+      // ── Release tracking — set during CI/CD ─────────────────────────────
+      release: process.env.NEXT_PUBLIC_SENTRY_RELEASE,
+
+      // ── Breadcrumbs — capture navigation + console errors ───────────────
+      beforeBreadcrumb(breadcrumb) {
+        // Don't log console.debug breadcrumbs (too noisy)
+        if (breadcrumb.category === 'console' && breadcrumb.level === 'debug') {
+          return null;
+        }
+        return breadcrumb;
+      },
+    });
+  });
+}
+
+if (typeof window !== 'undefined') {
+  if ('requestIdleCallback' in window) {
+    window.requestIdleCallback(initSentry, { timeout: 4000 });
+  } else {
+    // Safari has no requestIdleCallback — short timeout still gets this
+    // off the critical path without meaningfully delaying error capture.
+    setTimeout(initSentry, 200);
+  }
+}
 
 // ── Navigation tracing — required for Next.js 16 router transitions ──
-export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;
+// No-ops until the deferred Sentry load above has finished.
+export function onRouterTransitionStart(href: string, navigationType: string) {
+  sentryModule?.captureRouterTransitionStart(href, navigationType);
+}
