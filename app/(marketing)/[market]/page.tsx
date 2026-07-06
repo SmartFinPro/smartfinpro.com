@@ -65,8 +65,8 @@ const marketHeroContent: Record<string, {
   secondaryCta: { text: string; href: string };
 }> = {
   us: {
-    title: 'Smarter Financial Research with\nBEST-X Compare',
-    subtitle: 'Find the financial products that fit your goals, backed by expert research and transparent comparisons.',
+    title: 'Find the\nBest Financial Products for Your Goals',
+    subtitle: 'Compare smarter with Best-X Compare. Make confident financial decisions backed by deep research and build a stronger financial future.',
     primaryCta: { text: 'Start now', href: '#best-x-compare' },
     secondaryCta: { text: 'How We Review', href: '/integrity' },
   },
