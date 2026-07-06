@@ -25,7 +25,18 @@ import { globSync } from 'fs';
 // CONFIG
 // ============================================================
 
-const BUILD_DIR = resolve(process.cwd(), '.next/server/app');
+// output: standalone builds a SEPARATE copy of .next/server/app at build
+// time (before this script runs) — that standalone copy, not .next/server/app,
+// is what actually ships to the VPS (deploy.yml rsyncs .next/standalone/).
+// Writing to .next/server/app silently injects into a directory nobody
+// serves; every "N pages injected" run had been a no-op in production.
+// Fall back to the non-standalone path only for local `npm run build`
+// without a standalone copy (shouldn't happen given next.config.ts, but
+// keeps this script from hard-failing outside CI).
+const STANDALONE_APP_DIR = resolve(process.cwd(), '.next/standalone/.next/server/app');
+const BUILD_DIR = existsSync(STANDALONE_APP_DIR)
+  ? STANDALONE_APP_DIR
+  : resolve(process.cwd(), '.next/server/app');
 const STATIC_DIR = resolve(process.cwd(), '.next/static/chunks');
 
 /**
@@ -343,30 +354,33 @@ function findTargetFiles() {
 function injectIntoHtml(htmlPath, criticalCss) {
   const html = readFileSync(htmlPath, 'utf-8');
 
-  // Find the first <link rel="stylesheet"> tag
-  const stylesheetRegex = /<link\s+rel="stylesheet"\s+href="([^"]+)"\s*[^>]*\/?>/ ;
-  const firstStylesheet = html.match(stylesheetRegex);
+  // Find every <link rel="stylesheet"> tag — pages can ship more than one
+  // CSS chunk (e.g. a small route-level chunk + the main Tailwind bundle).
+  // A previous version only matched/replaced the FIRST occurrence, so any
+  // additional stylesheet link stayed render-blocking.
+  const stylesheetRegex = /<link\s+rel="stylesheet"\s+href="([^"]+)"\s*[^>]*\/?>/g;
+  const matches = [...html.matchAll(stylesheetRegex)];
 
-  if (!firstStylesheet) {
+  if (matches.length === 0) {
     console.warn(`  SKIP: No stylesheet link found in ${htmlPath}`);
     return false;
   }
 
-  // Build the critical CSS <style> tag
+  // Build the critical CSS <style> tag (inserted once, before the first
+  // converted stylesheet link)
   const styleTag = `<style data-critical="true">${criticalCss}</style>`;
 
-  // Convert the first stylesheet to non-blocking:
+  // Convert every stylesheet to non-blocking:
   // <link rel="stylesheet"> → <link rel="preload" as="style" onload="this.rel='stylesheet'">
   // + <noscript><link rel="stylesheet"></noscript> fallback
-  const originalLink = firstStylesheet[0];
-  const href = firstStylesheet[1];
-  const asyncLink = `<link rel="preload" href="${href}" as="style" onload="this.onload=null;this.rel='stylesheet'"/><noscript><link rel="stylesheet" href="${href}"/></noscript>`;
-
-  // Inject: critical <style> + async stylesheet (replace blocking stylesheet)
-  const injectedHtml = html.replace(
-    originalLink,
-    `${styleTag}${asyncLink}`
-  );
+  let injectedHtml = html;
+  matches.forEach((match, i) => {
+    const originalLink = match[0];
+    const href = match[1];
+    const asyncLink = `<link rel="preload" href="${href}" as="style" onload="this.onload=null;this.rel='stylesheet'"/><noscript><link rel="stylesheet" href="${href}"/></noscript>`;
+    const replacement = i === 0 ? `${styleTag}${asyncLink}` : asyncLink;
+    injectedHtml = injectedHtml.replace(originalLink, replacement);
+  });
 
   // Backup original
   copyFileSync(htmlPath, `${htmlPath}.bak`);
