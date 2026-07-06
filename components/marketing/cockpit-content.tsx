@@ -123,8 +123,8 @@ interface CockpitVerdictProps {
 }
 
 /** Tier 1 — compact decision block, rendered above the cockpit.
- *  Slim ranked rows in one white container (not a 3-card grid) so the verdict
- *  reads like an institutional leaderboard and takes ~half the vertical space. */
+ *  Three slim cards side by side (no rank numbers) so the block reads like an
+ *  institutional review summary at ~half the original vertical height. */
 export function CockpitVerdict({
   intro,
   picks,
@@ -139,7 +139,7 @@ export function CockpitVerdict({
     <section className="mb-6">
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
         <h2 className="text-[22px] font-bold tracking-tight" style={{ color: 'var(--sfp-ink)' }}>
-          Editor&rsquo;s verdict
+          Expert Reviews &amp; Ratings
         </h2>
         <p className="m-0 text-xs" style={{ color: 'var(--sfp-slate)' }}>
           Data verified {fmtDate(verifiedDate)} · Reviewed by {reviewerName}
@@ -153,53 +153,41 @@ export function CockpitVerdict({
         {intro}
       </p>
 
-      <div className="mt-3 overflow-hidden rounded-2xl border bg-white shadow-sm" style={{ borderColor: BORDER }}>
-        {picks.map((p, i) => (
+      <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
+        {picks.map((p) => (
           <a
             key={p.rank}
             href={p.href}
             {...(p.external ? { target: '_blank', rel: 'nofollow sponsored noopener' } : {})}
-            className="group flex items-center gap-3 px-4 py-3 no-underline transition-colors hover:bg-[#F8FAFD] sm:gap-4 sm:px-5"
-            style={i > 0 ? { borderTop: `1px solid ${BORDER}` } : undefined}
+            className="group flex flex-col rounded-2xl border bg-white px-4 py-3.5 no-underline shadow-sm transition-colors hover:bg-[#F8FAFD]"
+            style={{ borderColor: BORDER }}
           >
-            <span
-              className="inline-flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-[12px] font-bold"
-              style={{
-                background: p.rank === 1 ? 'var(--sfp-gold)' : 'var(--sfp-sky)',
-                color: p.rank === 1 ? '#fff' : 'var(--sfp-navy)',
-              }}
-            >
-              {p.rank}
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="flex flex-wrap items-baseline gap-x-2">
-                <span className="text-[15px] font-bold leading-tight" style={{ color: 'var(--sfp-ink)' }}>
-                  {p.name}
+            <span className="flex flex-wrap items-baseline gap-x-2">
+              <span className="text-[15px] font-bold leading-tight" style={{ color: 'var(--sfp-ink)' }}>
+                {p.name}
+              </span>
+              {p.rank === 1 && (
+                <span
+                  className="rounded px-1.5 py-0.5 text-[9.5px] font-bold uppercase tracking-[0.8px]"
+                  style={{ background: 'rgba(245,166,35,0.14)', color: 'var(--sfp-gold-dark)' }}
+                >
+                  Top pick
                 </span>
-                {p.rank === 1 && (
-                  <span
-                    className="rounded px-1.5 py-0.5 text-[9.5px] font-bold uppercase tracking-[0.8px]"
-                    style={{ background: 'rgba(245,166,35,0.14)', color: 'var(--sfp-gold-dark)' }}
-                  >
-                    Top pick
-                  </span>
-                )}
-              </span>
-              <span className="block truncate text-[12.5px] leading-snug" style={{ color: 'var(--sfp-slate)' }}>
-                {p.why}
-              </span>
+              )}
             </span>
-            <span
-              className="hidden flex-shrink-0 items-center gap-1 text-[13px] font-semibold sm:inline-flex"
-              style={{ color: 'var(--sfp-ink)' }}
-            >
-              <Star size={12} aria-hidden="true" style={{ color: 'var(--sfp-gold)' }} /> {p.rating.toFixed(1)}
+            <span className="mt-0.5 block truncate text-[12.5px] leading-snug" style={{ color: 'var(--sfp-slate)' }}>
+              {p.why}
             </span>
-            <span
-              className="inline-flex flex-shrink-0 items-center gap-1 text-[13px] font-semibold transition-transform group-hover:translate-x-0.5"
-              style={{ color: 'var(--sfp-navy)' }}
-            >
-              {p.ctaLabel} <ArrowUpRight size={13} aria-hidden="true" />
+            <span className="mt-2.5 flex items-center justify-between">
+              <span className="inline-flex items-center gap-1 text-[13px] font-semibold" style={{ color: 'var(--sfp-ink)' }}>
+                <Star size={12} aria-hidden="true" style={{ color: 'var(--sfp-gold)' }} /> {p.rating.toFixed(1)}
+              </span>
+              <span
+                className="inline-flex items-center gap-1 text-[13px] font-semibold transition-transform group-hover:translate-x-0.5"
+                style={{ color: 'var(--sfp-navy)' }}
+              >
+                {p.ctaLabel} <ArrowUpRight size={13} aria-hidden="true" />
+              </span>
             </span>
           </a>
         ))}
