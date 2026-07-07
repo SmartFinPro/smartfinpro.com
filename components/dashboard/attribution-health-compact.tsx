@@ -14,10 +14,20 @@ interface CompactData {
   providersTotal: number;
   openIncidents: number;
   riskTotal: number;
-  worst: Array<{ provider: string; network: string | null; score: number | null; band: HealthBand }>;
+  worst: Array<{
+    provider: string;
+    market: string | null;
+    category: string | null;
+    network: string | null;
+    score: number | null;
+    band: HealthBand;
+  }>;
   fetchedAt: string;
   error?: string;
 }
+
+// Market flags — same pattern as the Page-Rankings dashboard
+const MARKET_FLAGS: Record<string, string> = { us: '🇺🇸', uk: '🇬🇧', ca: '🇨🇦', au: '🇦🇺' };
 
 export function AttributionHealthCompact() {
   const [data, setData] = useState<CompactData | null>(null);
@@ -112,8 +122,14 @@ export function AttributionHealthCompact() {
           {data.worst.length > 0 && (
             <div className="mt-2.5 pt-2.5 border-t border-slate-100 space-y-1">
               {data.worst.map((w) => (
-                <div key={w.provider} className="flex items-center justify-between text-xs">
-                  <span className="text-slate-600 truncate">{w.provider}</span>
+                <div
+                  key={[w.provider, w.market ?? '', w.category ?? '', w.network ?? ''].join('|')}
+                  className="flex items-center justify-between text-xs"
+                >
+                  <span className="text-slate-600 truncate">
+                    {MARKET_FLAGS[w.market ?? ''] ?? '🌍'} {w.provider}
+                    {w.category && <span className="text-slate-400"> · {w.category}</span>}
+                  </span>
                   <span
                     className={`font-semibold tabular-nums shrink-0 ${
                       w.band === 'critical' ? 'text-red-600' : 'text-amber-600'

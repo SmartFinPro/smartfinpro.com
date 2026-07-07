@@ -27,6 +27,8 @@ export async function GET() {
     .slice(0, 3)
     .map((p) => ({
       provider: p.snapshot.partnerName,
+      market: p.snapshot.market,
+      category: p.snapshot.category,
       network: p.snapshot.network,
       score: p.score.score,
       band: p.score.band,
