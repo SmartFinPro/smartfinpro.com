@@ -45,6 +45,7 @@ function makeSnapshot(overrides: Partial<ProviderSnapshot> = {}): ProviderSnapsh
     lastEventAt: daysAgo(5),
     conversions30d: 3,
     conversions180d: 12,
+    revenueBearingEvents180d: 10,
     revenue180d: 1200,
     connectorConfigured: true,
     connectorSyncOk: true,
@@ -201,13 +202,24 @@ describe('classifyStageFailure', () => {
     expect(classifyStageFailure(snap, T, NOW)).toBeNull();
   });
 
-  it('detects postback_no_revenue when events flow but revenue stays 0', () => {
+  it('detects postback_no_revenue when revenue-bearing events flow but revenue stays 0', () => {
     const snap = makeSnapshot({
       lastEventAt: daysAgo(3),
       conversions180d: 8,
-      revenue180d: 0,
+      revenueBearingEvents180d: 4, // ftd/approved arrived…
+      revenue180d: 0, // …but no value → sync/mapping problem
     });
     expect(classifyStageFailure(snap, T, NOW)?.type).toBe('postback_no_revenue');
+  });
+
+  it('does NOT raise postback_no_revenue for registration/KYC-only funnels', () => {
+    const snap = makeSnapshot({
+      lastEventAt: daysAgo(3),
+      conversions180d: 8, // registrations + KYC events…
+      revenueBearingEvents180d: 0, // …but no ftd/approved yet — normal, not a sync bug
+      revenue180d: 0,
+    });
+    expect(classifyStageFailure(snap, T, NOW)).toBeNull();
   });
 
   it('detects conversion_stalled after 4× window with ongoing traffic', () => {

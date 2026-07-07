@@ -10,6 +10,7 @@ import {
   classifyStageFailure,
   estimateRevenueRisk,
   resolveExpectedWindow,
+  REVENUE_BEARING_EVENT_TYPES,
   type ProviderSnapshot,
   type HealthScoreResult,
   type WatchdogThresholds,
@@ -237,6 +238,30 @@ function shortError(message: string): string {
   return clean.length > 200 ? `${clean.slice(0, 197)}…` : clean;
 }
 
+/**
+ * PostgREST caps every response at ~1000 rows regardless of .limit() —
+ * a single query silently undercounts (observed: 83 of 147 NordVPN clicks).
+ * Page with .range() until short page or ROW_CAP.
+ */
+async function fetchAllRows<T>(
+  label: string,
+  buildQuery: (
+    from: number,
+    to: number,
+  ) => PromiseLike<{ data: unknown; error: { message: string } | null }>,
+): Promise<T[]> {
+  const PAGE = 1000;
+  const rows: T[] = [];
+  for (let from = 0; from < ROW_CAP; from += PAGE) {
+    const { data, error } = await buildQuery(from, from + PAGE - 1);
+    if (error) throw new Error(`${label}: ${shortError(error.message)}`);
+    const page = (data ?? []) as T[];
+    rows.push(...page);
+    if (page.length < PAGE) break;
+  }
+  return rows;
+}
+
 function isMissingRelation(error: { code?: string; message?: string } | null): boolean {
   if (!error) return false;
   return (
@@ -269,6 +294,7 @@ async function gatherProviderData(
   const recentMs = settings.recentDays * 24 * 60 * 60 * 1000;
   const baselineMs = settings.baselineDays * 24 * 60 * 60 * 1000;
   const recentCutoff = new Date(now.getTime() - recentMs).toISOString();
+  const baselineCutoff = new Date(now.getTime() - baselineMs).toISOString();
 
   // 1) Links — expected_conversion_days may not exist until the migration is
   //    applied; degrade gracefully (same defensive style as alert-delivery).
@@ -292,47 +318,70 @@ async function gatherProviderData(
     }
   }
 
-  // 2) Raw rows for in-memory aggregation
-  const [clicksRes, eventsRes, convRes, connRes] = await Promise.all([
-    supabase
-      .from('link_clicks')
-      .select('link_id, click_id, clicked_at')
-      .order('clicked_at', { ascending: true })
-      .limit(ROW_CAP),
-    supabase
-      .from('conversion_events')
-      .select('link_id, event_type, event_value, occurred_at, received_at')
-      .limit(ROW_CAP),
-    supabase
-      .from('conversions')
-      .select('link_id, commission_earned, status, converted_at')
-      .limit(ROW_CAP),
+  // 2) Raw rows for in-memory aggregation.
+  //    Windowed/newest-first + paginated: if a table ever outgrows ROW_CAP we
+  //    lose the OLDEST rows, never the current ones the watchdog decides on.
+  //    Clicks are fetched for the baseline window only; lifetime totals come
+  //    from the offer_funnel_metrics view below.
+  const [clicks, events, conversionsRows, connRes, lifetimeRes] = await Promise.all([
+    fetchAllRows<ClickRow>('link_clicks', (from, to) =>
+      supabase
+        .from('link_clicks')
+        .select('link_id, click_id, clicked_at')
+        .gte('clicked_at', baselineCutoff)
+        .order('clicked_at', { ascending: false })
+        .range(from, to),
+    ),
+    fetchAllRows<EventRow>('conversion_events', (from, to) =>
+      supabase
+        .from('conversion_events')
+        .select('link_id, event_type, event_value, occurred_at, received_at')
+        .order('received_at', { ascending: false })
+        .range(from, to),
+    ),
+    fetchAllRows<ConversionRow>('conversions', (from, to) =>
+      supabase
+        .from('conversions')
+        .select('link_id, commission_earned, status, converted_at')
+        .order('converted_at', { ascending: false })
+        .range(from, to),
+    ).catch(() => [] as ConversionRow[]),
     supabase.from('api_connectors').select('name, is_enabled, last_sync_at, last_sync_status'),
+    supabase.from('offer_funnel_metrics').select('partner_name, total_clicks'),
   ]);
 
-  if (clicksRes.error) throw new Error(`link_clicks: ${shortError(clicksRes.error.message)}`);
-  if (eventsRes.error) throw new Error(`conversion_events: ${shortError(eventsRes.error.message)}`);
-
-  const clicks = (clicksRes.data ?? []) as unknown as ClickRow[];
-  const events = (eventsRes.data ?? []) as unknown as EventRow[];
-  const conversions = (convRes.error ? [] : ((convRes.data ?? []) as unknown as ConversionRow[]));
+  const conversions = conversionsRows;
   const connectors = (connRes.error ? [] : ((connRes.data ?? []) as unknown as ConnectorRow[]));
 
-  // 3) CTA clicks (30d) — display names, matched conservatively by name
-  let ctaCounts = new Map<string, number>();
+  // Lifetime clicks per provider from the view (window-independent);
+  // falls back to windowed counts if the view is unavailable.
+  const lifetimeByProvider = new Map<string, number>();
+  if (!lifetimeRes.error) {
+    for (const row of (lifetimeRes.data ?? []) as Array<{ partner_name: string; total_clicks: number | null }>) {
+      lifetimeByProvider.set(
+        row.partner_name,
+        (lifetimeByProvider.get(row.partner_name) ?? 0) + (row.total_clicks ?? 0),
+      );
+    }
+  }
+
+  // 3) CTA clicks (30d) — display names, matched conservatively by name.
+  //    Best-effort: a failing cta_analytics read only disables the
+  //    cta_no_go check, it never fails the whole run.
+  const ctaCounts = new Map<string, number>();
   {
-    const ctaRes = await supabase
-      .from('cta_analytics')
-      .select('provider')
-      .gte('clicked_at', recentCutoff)
-      .limit(ROW_CAP);
-    if (!ctaRes.error) {
-      ctaCounts = new Map();
-      for (const row of (ctaRes.data ?? []) as Array<{ provider: string }>) {
-        const key = norm(row.provider ?? '');
-        if (!key) continue;
-        ctaCounts.set(key, (ctaCounts.get(key) ?? 0) + 1);
-      }
+    const ctaRows = await fetchAllRows<{ provider: string }>('cta_analytics', (from, to) =>
+      supabase
+        .from('cta_analytics')
+        .select('provider')
+        .gte('clicked_at', recentCutoff)
+        .order('clicked_at', { ascending: false })
+        .range(from, to),
+    ).catch(() => [] as Array<{ provider: string }>);
+    for (const row of ctaRows) {
+      const key = norm(row.provider ?? '');
+      if (!key) continue;
+      ctaCounts.set(key, (ctaCounts.get(key) ?? 0) + 1);
     }
   }
 
@@ -373,16 +422,17 @@ async function gatherProviderData(
 
   // ── Per-provider aggregation ──
   interface Agg {
-    lifetimeClicks: number;
     clicks30d: number;
+    /** All fetched clicks — the fetch itself is windowed to the baseline cutoff */
     clicks180d: number;
     clickId30d: number;
     firstClickAt: string | null;
     lastClickAt: string | null;
-    clickTimes: number[]; // sorted ascending (ms)
+    clickTimes: number[]; // ms, unordered
     lastEventAt: string | null;
     events30d: number;
     events180d: number;
+    revenueBearing180d: number;
     eventRevenue180d: number;
     lastRevenueAt: string | null;
     convRevenue180d: number;
@@ -393,7 +443,6 @@ async function gatherProviderData(
     let a = aggs.get(provider);
     if (!a) {
       a = {
-        lifetimeClicks: 0,
         clicks30d: 0,
         clicks180d: 0,
         clickId30d: 0,
@@ -403,6 +452,7 @@ async function gatherProviderData(
         lastEventAt: null,
         events30d: 0,
         events180d: 0,
+        revenueBearing180d: 0,
         eventRevenue180d: 0,
         lastRevenueAt: null,
         convRevenue180d: 0,
@@ -421,15 +471,14 @@ async function gatherProviderData(
     const a = getAgg(provider);
     const t = new Date(c.clicked_at).getTime();
     if (Number.isNaN(t)) continue;
-    a.lifetimeClicks++;
     a.clickTimes.push(t);
-    if (!a.firstClickAt) a.firstClickAt = c.clicked_at; // rows are sorted ascending
-    a.lastClickAt = c.clicked_at;
+    if (!a.firstClickAt || t < new Date(a.firstClickAt).getTime()) a.firstClickAt = c.clicked_at;
+    if (!a.lastClickAt || t > new Date(a.lastClickAt).getTime()) a.lastClickAt = c.clicked_at;
     if (t >= recentMsCutoff) {
       a.clicks30d++;
       if (c.click_id) a.clickId30d++;
     }
-    if (t >= baselineMsCutoff) a.clicks180d++;
+    a.clicks180d++; // the fetch is already limited to the baseline window
   }
 
   for (const e of events) {
@@ -444,6 +493,9 @@ async function gatherProviderData(
     if (t >= recentMsCutoff && !isNegative) a.events30d++;
     if (t >= baselineMsCutoff && !isNegative) {
       a.events180d++;
+      if ((REVENUE_BEARING_EVENT_TYPES as readonly string[]).includes(e.event_type)) {
+        a.revenueBearing180d++;
+      }
       if ((e.event_value ?? 0) > 0) {
         a.eventRevenue180d += e.event_value ?? 0;
         if (!a.lastRevenueAt || t > new Date(a.lastRevenueAt).getTime()) a.lastRevenueAt = iso;
@@ -511,11 +563,19 @@ async function gatherProviderData(
     const a = getAgg(provider);
     const primary = provLinks[0];
 
+    const lifetimeClicks = Math.max(lifetimeByProvider.get(provider) ?? 0, a.clicks180d);
+    // If the provider has clicks older than the fetched window, its true
+    // first click is at least as old as the cutoff — old enough for every
+    // conversion window (max 45d ≪ 180d), which is all the score needs.
+    const firstClickAt = lifetimeClicks > a.clicks180d ? baselineCutoff : a.firstClickAt;
+
     const lastEventMs = a.lastEventAt ? new Date(a.lastEventAt).getTime() : null;
     const clicksSinceLastEvent =
       lastEventMs === null
-        ? a.lifetimeClicks
-        : a.clickTimes.filter((t) => t > lastEventMs).length;
+        ? lifetimeClicks
+        : lastEventMs < now.getTime() - baselineMs
+          ? a.clicks180d // lower bound: every windowed click is after the event
+          : a.clickTimes.filter((t) => t > lastEventMs).length;
 
     const connector = findConnector(primary.network);
     const connectorSyncOk = connector
@@ -536,15 +596,16 @@ async function gatherProviderData(
       postbackSupported: provLinks.some((l) => l.postback_supported === true),
       expectedConversionDays: primary.expected_conversion_days,
       commissionValue: Math.max(...provLinks.map((l) => l.commission_value ?? 0), 0),
-      lifetimeClicks: a.lifetimeClicks,
+      lifetimeClicks,
       clicks30d: a.clicks30d,
       clicks180d: a.clicks180d,
       clickIdShare30d: a.clicks30d > 0 ? a.clickId30d / a.clicks30d : null,
-      firstClickAt: a.firstClickAt,
+      firstClickAt,
       clicksSinceLastEvent,
       lastEventAt: a.lastEventAt,
       conversions30d: a.events30d,
       conversions180d: a.events180d,
+      revenueBearingEvents180d: a.revenueBearing180d,
       revenue180d: Math.max(a.eventRevenue180d, a.convRevenue180d),
       connectorConfigured: connector !== null,
       connectorSyncOk,

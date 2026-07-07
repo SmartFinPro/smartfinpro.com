@@ -27,6 +27,9 @@ export const CATEGORY_CONVERSION_WINDOWS: Record<string, number> = {
 
 export const DEFAULT_CONVERSION_WINDOW_DAYS = 14;
 
+/** Event types whose postbacks are expected to carry a payout value. */
+export const REVENUE_BEARING_EVENT_TYPES = ['ftd', 'deposit', 'qualified', 'approved'] as const;
+
 export function resolveExpectedWindow(link: {
   expectedConversionDays: number | null;
   category: string | null;
@@ -79,6 +82,10 @@ export interface ProviderSnapshot {
   lastEventAt: string | null;
   conversions30d: number;
   conversions180d: number;
+  /** Events in 180d whose type is expected to carry payout (ftd/deposit/
+   *  qualified/approved) — registration/KYC without value is normal and
+   *  must NOT look like a sync problem */
+  revenueBearingEvents180d: number;
   /** Sum of positive event values / approved commissions in 180d */
   revenue180d: number;
   // Network sync (api_connectors)
@@ -369,11 +376,13 @@ export function classifyStageFailure(
     return { type: 'clicks_no_postback', causeLabel: INCIDENT_CAUSE_LABELS.clicks_no_postback };
   }
 
-  // 3) Events keep arriving but carry no revenue → sync/mapping problem.
+  // 3) Revenue-bearing events (ftd/deposit/qualified/approved) keep arriving
+  //    but carry no value → sync/mapping problem. Registration/KYC-only
+  //    funnels without payout are normal and never fire this.
   if (
     sinceEvent !== null &&
     sinceEvent <= 2 * W &&
-    snap.conversions180d > 0 &&
+    snap.revenueBearingEvents180d > 0 &&
     snap.revenue180d === 0
   ) {
     return { type: 'postback_no_revenue', causeLabel: INCIDENT_CAUSE_LABELS.postback_no_revenue };
