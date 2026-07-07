@@ -19,7 +19,7 @@ export default async function PageRankingsPage() {
       <PageHeader
         icon={FileSearch}
         title="Page Rankings"
-        description="Google-Position jeder indexierten Seite — live aus der Search Console"
+        description="Google-Position & Keywords jeder indexierten Seite — live aus der Search Console"
         actions={
           <Link
             href="/dashboard/ranking"
