@@ -4,7 +4,7 @@ import 'server-only';
 import sitemap from '@/app/sitemap';
 import {
   isGSCConfigured,
-  querySearchAnalytics,
+  querySearchAnalyticsStrict,
   type GSCRow,
 } from '@/lib/seo/google-search-console';
 import { fetchLiveSERP } from '@/lib/actions/ranking';
@@ -166,27 +166,29 @@ export async function getPageRankings(
   if (!base.configured) return base;
 
   try {
+    // Strict queries: a broken GSC integration must surface as `error`
+    // in the result (dashboard banner), not as an empty pages table.
     const [currentRows, prevRows, pageQueryRows, prevPageQueryRows, sitemapPaths] =
       await Promise.all([
-        querySearchAnalytics({
+        querySearchAnalyticsStrict({
           startDate: fmt(start),
           endDate: fmt(end),
           dimensions: ['page'],
           rowLimit: 25000,
         }),
-        querySearchAnalytics({
+        querySearchAnalyticsStrict({
           startDate: fmt(prevStart),
           endDate: fmt(prevEnd),
           dimensions: ['page'],
           rowLimit: 25000,
         }),
-        querySearchAnalytics({
+        querySearchAnalyticsStrict({
           startDate: fmt(start),
           endDate: fmt(end),
           dimensions: ['page', 'query'],
           rowLimit: 25000,
         }),
-        querySearchAnalytics({
+        querySearchAnalyticsStrict({
           startDate: fmt(prevStart),
           endDate: fmt(prevEnd),
           dimensions: ['page', 'query'],
@@ -418,7 +420,9 @@ export async function getPageTrend(
   const escapeRe2 = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const pageRegex = `^https?://(www\\.)?${escapeRe2(host)}${escapeRe2(path === '/' ? '' : path)}/?$`;
 
-  const rows = await querySearchAnalytics({
+  // Strict: the trend API route catches this and returns 500, which the
+  // client renders as its 'error' trend state instead of an empty chart.
+  const rows = await querySearchAnalyticsStrict({
     startDate: fmt(start),
     endDate: fmt(end),
     dimensions: ['date'],

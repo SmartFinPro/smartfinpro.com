@@ -70,6 +70,8 @@ export interface RankingDashboardData {
   losers: WinnerLoser[];
   gscConfigured: boolean;
   gscHasData: boolean;
+  /** Set when a live GSC query failed — shown as dashboard banner */
+  gscError: string | null;
   serperConfigured: boolean;
   source: 'gsc' | 'seeded' | 'mixed';
   lastSyncAt: string | null;
@@ -339,6 +341,14 @@ export async function getRankingData(options?: {
   const market = options?.market;
   const days = options?.days || 7;
 
+  // GSC failures must not blank the dashboard (DB data still renders),
+  // but they have to surface as a banner instead of "no ranking data".
+  let gscError: string | null = null;
+  const recordGscError = (err: unknown, context: string) => {
+    gscError = gscError ?? (err instanceof Error ? err.message : 'GSC query failed');
+    logger.error(`[ranking] ${context} failed`, { error: String(err) });
+  };
+
   const supabase = createServiceClient();
 
   // Helper: build & run the keyword_tracking query
@@ -367,7 +377,12 @@ export async function getRankingData(options?: {
     keywords = stored.map(mapStoredRow);
   } else if (gscConfigured) {
     // Seeding failed — try live GSC
-    const gscKeywords = await getTopKeywords({ days, limit: 100, market });
+    let gscKeywords: KeywordData[] = [];
+    try {
+      gscKeywords = await getTopKeywords({ days, limit: 100, market, strict: true });
+    } catch (err) {
+      recordGscError(err, 'Live keyword fetch');
+    }
     if (gscKeywords.length > 0) {
       keywords = gscKeywords.map((kw: KeywordData) => ({
         id: crypto.randomUUID(),
@@ -433,7 +448,11 @@ export async function getRankingData(options?: {
       .filter((k) => k.clicks > 0)
       .sort((a, b) => b.clicks - a.clicks)[0];
     if (topKw) {
-      trend = await getKeywordTrend(topKw.keyword, 30);
+      try {
+        trend = await getKeywordTrend(topKw.keyword, 30, { strict: true });
+      } catch (err) {
+        recordGscError(err, 'Keyword trend fetch');
+      }
     }
   }
 
@@ -441,25 +460,29 @@ export async function getRankingData(options?: {
   let losers: WinnerLoser[] = [];
 
   if (gscConfigured) {
-    const wl = await getWinnersAndLosers(days);
-    winners = wl.winners.map((w) => ({
-      keyword: w.keyword,
-      page: w.page,
-      market: w.market,
-      position: w.position,
-      positionDelta: (w as unknown as Record<string, number>).positionDelta || 0,
-      clicks: w.clicks,
-      impressions: w.impressions,
-    }));
-    losers = wl.losers.map((l) => ({
-      keyword: l.keyword,
-      page: l.page,
-      market: l.market,
-      position: l.position,
-      positionDelta: (l as unknown as Record<string, number>).positionDelta || 0,
-      clicks: l.clicks,
-      impressions: l.impressions,
-    }));
+    try {
+      const wl = await getWinnersAndLosers(days, { strict: true });
+      winners = wl.winners.map((w) => ({
+        keyword: w.keyword,
+        page: w.page,
+        market: w.market,
+        position: w.position,
+        positionDelta: (w as unknown as Record<string, number>).positionDelta || 0,
+        clicks: w.clicks,
+        impressions: w.impressions,
+      }));
+      losers = wl.losers.map((l) => ({
+        keyword: l.keyword,
+        page: l.page,
+        market: l.market,
+        position: l.position,
+        positionDelta: (l as unknown as Record<string, number>).positionDelta || 0,
+        clicks: l.clicks,
+        impressions: l.impressions,
+      }));
+    } catch (err) {
+      recordGscError(err, 'Winners/losers fetch');
+    }
   }
 
   const gscHasData = keywords.some((kw) => kw.dataSource === 'gsc');
@@ -471,7 +494,7 @@ export async function getRankingData(options?: {
     ? keywords.some((kw) => kw.dataSource !== 'gsc') ? 'mixed' : 'gsc'
     : 'seeded';
 
-  return { keywords, stats, trend, winners, losers, gscConfigured, gscHasData, serperConfigured, source, lastSyncAt };
+  return { keywords, stats, trend, winners, losers, gscConfigured, gscHasData, gscError, serperConfigured, source, lastSyncAt };
 }
 
 // ── Position trend for a specific keyword ───────────────────
@@ -481,7 +504,9 @@ export async function getKeywordPositionTrend(
   days: number = 30,
 ): Promise<PositionTrend[]> {
   if (!isGSCConfigured()) return [];
-  return getKeywordTrend(keyword, days);
+  // Strict: the dashboard API route catches this and returns 500,
+  // so the client can tell "GSC broken" apart from "no trend data".
+  return getKeywordTrend(keyword, days, { strict: true });
 }
 
 // ── Realtime Ranking: Serper.dev → Supabase ─────────────────

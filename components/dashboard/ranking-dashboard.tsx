@@ -524,6 +524,7 @@ interface RankingDashboardProps {
   initialLosers: WinnerLoser[];
   gscConfigured: boolean;
   gscHasData: boolean;
+  gscError?: string | null;
   serperConfigured: boolean;
   initialSource: 'gsc' | 'seeded' | 'mixed';
   initialLastSyncAt: string | null;
@@ -537,6 +538,7 @@ export function RankingDashboard({
   initialLosers,
   gscConfigured,
   gscHasData,
+  gscError,
   serperConfigured,
   initialSource,
   initialLastSyncAt,
@@ -797,7 +799,36 @@ export function RankingDashboard({
         </div>
       )}
 
-      {gscConfigured && !gscHasData && (
+      {/* GSC API failure — data below comes from the last successful sync */}
+      {gscConfigured && gscError && (
+        <div
+          className="rounded-xl p-5 border border-red-200"
+          style={{ background: 'rgba(214,64,69,0.05)' }}
+        >
+          <div className="flex gap-3">
+            <div
+              className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border border-red-200"
+              style={{ background: 'rgba(214,64,69,0.12)' }}
+            >
+              <AlertTriangle className="h-4 w-4" style={{ color: 'var(--sfp-red)' }} />
+            </div>
+            <div>
+              <h3 className="font-semibold text-slate-800 mb-1">
+                GSC-Datenabruf fehlgeschlagen
+              </h3>
+              <p className="text-sm text-slate-500 leading-relaxed">
+                Die Google Search Console API hat einen Fehler zurückgegeben — die angezeigten
+                Rankings stammen aus der letzten erfolgreichen Synchronisation und können veraltet sein.
+              </p>
+              <p className="text-xs font-mono mt-2 break-all" style={{ color: 'var(--sfp-red)' }}>
+                {gscError}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {gscConfigured && !gscHasData && !gscError && (
         <div
           className="rounded-xl p-5 border border-amber-200"
           style={{ background: 'rgba(251,191,36,0.05)' }}
