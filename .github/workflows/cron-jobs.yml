@@ -9,7 +9,8 @@ name: ⏰ Cron Jobs
 #             freshness-check, check-rankings, sync-rankings, affiliate-scout,
 #             send-emails, daily-strategy, backlink-post, backlink-scout,
 #             backlink-verify, sync-revenue, auto-genesis,
-#             auto-executor (05:00), feedback-loop (22:00)
+#             auto-executor (05:00), attribution-watchdog (06:30),
+#             feedback-loop (22:00)
 #   Weekly  — weekly-report (Mon 07:00), insight-engine (Sun 04:00)
 
 on:
@@ -17,6 +18,7 @@ on:
     - cron: '5 * * * *'    # hourly batch — :05 past the hour
     - cron: '0 2 * * *'    # daily batch  — 02:00 UTC
     - cron: '0 5 * * *'    # auto-executor — 05:00 UTC
+    - cron: '30 6 * * *'   # attribution-watchdog — 06:30 UTC
     - cron: '0 22 * * *'   # feedback-loop — 22:00 UTC
     - cron: '0 4 * * 0'    # insight-engine — Sun 04:00 UTC
     - cron: '0 7 * * 1'    # weekly batch — Mon 07:00 UTC
@@ -180,6 +182,20 @@ jobs:
           echo "▶ auto-executor"
           curl -sf --max-time 120 "$SITE_URL/api/cron/auto-executor" \
             -H "Authorization: Bearer $CRON_SECRET" || echo "⚠ auto-executor failed"
+
+  # ─── Attribution Watchdog (daily 06:30 UTC) ──────────────────────────────
+  attribution-watchdog:
+    name: Attribution Watchdog
+    runs-on: ubuntu-latest
+    if: |
+      github.event.schedule == '30 6 * * *' ||
+      github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Attribution Watchdog (silent-failure detection)
+        run: |
+          echo "▶ attribution-watchdog"
+          curl -sf --max-time 120 "$SITE_URL/api/cron/attribution-watchdog" \
+            -H "Authorization: Bearer $CRON_SECRET" || echo "⚠ attribution-watchdog failed"
 
   # ─── Feedback Loop (daily 22:00 UTC) ─────────────────────────────────────
   feedback-loop:
