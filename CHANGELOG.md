@@ -5,6 +5,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [Unreleased]
+
+### Attribution Watchdog (Phase 1) — 2026-07-07
+
+Detects silent revenue-attribution failures per provider (clicks flowing, conversions/revenue not — the "492 clicks, 0 conversions" blind spot).
+
+- **New cron** `/api/cron/attribution-watchdog` (daily 06:30 UTC, `?dryRun=1` for zero-write verification)
+- **Health Score 0–100 per provider** (`lib/attribution/health-score.ts`, pure + unit-tested): tracking config, conversion recency vs. expected window (per-provider/category), clicks since last conversion, CR vs. 180d baseline, click_id share, network sync freshness
+- **Silent-failure incidents** (`attribution_incidents` table): cta_no_go / clicks_no_postback / postback_no_revenue / conversion_stalled, with revenue-risk estimate, type-specific auto-resolve, snoozeable ignore (`ignored_until`), Notification-Center alerts
+- **Dashboard**: full widget on `/dashboard/revenue#attribution-watchdog` (score breakdown, incident actions), compact card on the Command Center
+- **Migration** `20260707120000_attribution_watchdog.sql` (apply manually via `supabase db push`)
+
 ## [release/phase3-premium-polish-2026-03-15] — 2026-03-15
 
 **Branch:** `feat/quality-upgrades-march-2026`

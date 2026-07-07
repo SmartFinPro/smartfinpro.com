@@ -6,11 +6,14 @@ import {
   BarChart3,
   Globe,
   ArrowUpRight,
+  ShieldCheck,
   Target,
   Zap,
   FileText,
 } from 'lucide-react';
 import { getAutoRevenueStats, getRevenueByPage, getAffiliateLinksForMapping, getProfitAndLoss } from '@/lib/actions/revenue';
+import { getAttributionHealth, updateIncidentStatus } from '@/lib/actions/attribution-watchdog';
+import { AttributionHealthWidget } from '@/components/dashboard/attribution-health-widget';
 import { PnlCard } from '@/components/dashboard/pnl-card';
 import { AddConversionForm } from '@/components/dashboard/add-conversion-form';
 import { RevenueByProductTable } from '@/components/dashboard/revenue-by-product';
@@ -32,11 +35,12 @@ function Skeleton({ className }: { className?: string }) {
 }
 
 export default async function RevenuePage() {
-  const [stats, pageStats, affiliateLinks, pnl] = await Promise.all([
+  const [stats, pageStats, affiliateLinks, pnl, attributionHealth] = await Promise.all([
     getAutoRevenueStats(),
     getRevenueByPage(),
     getAffiliateLinksForMapping(),
     getProfitAndLoss(30),
+    getAttributionHealth(),
   ]);
 
   return (
@@ -93,6 +97,26 @@ export default async function RevenuePage() {
       <WidgetErrorBoundary label="Profit & Loss" minHeight="h-40">
         <PnlCard pnl={pnl} days={30} />
       </WidgetErrorBoundary>
+
+      {/* Attribution Watchdog — silent revenue-failure detection */}
+      <div id="attribution-watchdog">
+        <SectionCard
+          title="Attribution Watchdog"
+          icon={ShieldCheck}
+          tone="navy"
+          description="Überwacht den Datenfluss von Klick bis Umsatz pro Provider"
+          contentClassName="p-4"
+        >
+          <WidgetErrorBoundary label="Attribution Watchdog" minHeight="h-48">
+            <Suspense fallback={<Skeleton className="h-48" />}>
+              <AttributionHealthWidget
+                data={attributionHealth}
+                onUpdateStatus={updateIncidentStatus}
+              />
+            </Suspense>
+          </WidgetErrorBoundary>
+        </SectionCard>
+      </div>
 
       {/* Revenue by Market */}
       <div>

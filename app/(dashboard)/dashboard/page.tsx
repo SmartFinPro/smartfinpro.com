@@ -32,6 +32,7 @@ import { GeoIntelligence } from '@/components/dashboard/geo-intelligence';
 import { SystemIntegrityWidget } from '@/components/dashboard/system-integrity-widget';
 import { WebVitalsWidget } from '@/components/dashboard/web-vitals-widget';
 import { RevenueAttributionWidget } from '@/components/dashboard/revenue-attribution-widget';
+import { AttributionHealthCompact } from '@/components/dashboard/attribution-health-compact';
 import { AuditStatusWidget } from '@/components/dashboard/audit-status-widget';
 import { DeployStatusWidget } from '@/components/dashboard/deploy-status-widget';
 import { ExecutiveOverview } from '@/components/dashboard/executive-overview';
@@ -413,6 +414,9 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             </WidgetErrorBoundary>
           </div>
           <div className="flex flex-col gap-6">
+            <WidgetErrorBoundary label="Attribution Watchdog" minHeight="h-48">
+              <AttributionHealthCompact />
+            </WidgetErrorBoundary>
             <WidgetErrorBoundary label="Web Vitals" minHeight="h-48">
               <Suspense fallback={<Skeleton className="h-48" />}>
                 <WebVitalsWidget />
