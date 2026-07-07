@@ -41,6 +41,7 @@ export default async function RankingPage() {
         initialLosers={data.losers}
         gscConfigured={data.gscConfigured}
         gscHasData={data.gscHasData}
+        gscError={data.gscError}
         serperConfigured={data.serperConfigured}
         initialSource={data.source}
         initialLastSyncAt={data.lastSyncAt}

@@ -11,6 +11,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import {
+  AlertTriangle,
   ArrowDown,
   ArrowUp,
   ChevronDown,
@@ -683,6 +684,22 @@ export function PageRankings({ initialData }: { initialData: PageRankingsResult 
 
   return (
     <div className="space-y-6">
+      {/* GSC API failure — without this banner a broken integration looks like "no rankings" */}
+      {data.error && (
+        <div
+          className="rounded-xl border border-red-200 p-4 text-sm flex items-start gap-2.5"
+          style={{ background: 'rgba(214,64,69,0.05)' }}
+        >
+          <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" style={{ color: 'var(--sfp-red)' }} />
+          <div>
+            <p className="font-semibold text-slate-800">
+              Google Search Console Fehler — es werden keine Live-Daten angezeigt
+            </p>
+            <p className="text-slate-500 mt-0.5 break-all font-mono text-xs">{data.error}</p>
+          </div>
+        </div>
+      )}
+
       {/* Stat Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         <StatCard label="Seiten im Ranking" value={data.stats.ranked} icon={FileSearch} color="violet" subtitle={`${data.range.start} – ${data.range.end}`} />

@@ -7,7 +7,7 @@ import { isValidDashboardSessionValue } from '@/lib/auth/dashboard-session';
 import { compareSecret } from '@/lib/security/timing-safe';
 import {
   isGSCConfigured,
-  querySearchAnalytics,
+  querySearchAnalyticsStrict,
   getTopKeywords,
   getWinnersAndLosers,
   countryToMarket,
@@ -81,30 +81,30 @@ export async function GET(request: NextRequest) {
       winnersLosers,
     ] = await Promise.all([
       // 1. Aggregate overview (total clicks, impressions, CTR, position)
-      querySearchAnalytics({
+      querySearchAnalyticsStrict({
         startDate: start,
         endDate: end,
         dimensions: ['country'],
         rowLimit: 10,
       }),
       // 2. Daily trend
-      querySearchAnalytics({
+      querySearchAnalyticsStrict({
         startDate: start,
         endDate: end,
         dimensions: ['date'],
         rowLimit: 100,
       }),
       // 3. Top keywords
-      getTopKeywords({ days: range === '7d' ? 7 : range === '90d' ? 90 : 28, limit: 25, market }),
+      getTopKeywords({ days: range === '7d' ? 7 : range === '90d' ? 90 : 28, limit: 25, market, strict: true }),
       // 4. Top pages by clicks
-      querySearchAnalytics({
+      querySearchAnalyticsStrict({
         startDate: start,
         endDate: end,
         dimensions: ['page'],
         rowLimit: 25,
       }),
       // 5. Winners & Losers
-      getWinnersAndLosers(range === '7d' ? 7 : 14),
+      getWinnersAndLosers(range === '7d' ? 7 : 14, { strict: true }),
     ]);
 
     // ── Aggregate overview KPIs ───────────────────────────

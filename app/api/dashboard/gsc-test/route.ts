@@ -72,8 +72,9 @@ export async function GET(request: NextRequest) {
 
   // ── Live connection test ──────────────────────────────────────
   try {
-    // Fetch the top keyword (lightweight test query)
-    const keywords = await getTopKeywords({ limit: 1, market: 'us' });
+    // Fetch the top keyword (lightweight test query) — strict so broken
+    // credentials land in the catch below instead of "0 rows fetched"
+    const keywords = await getTopKeywords({ limit: 1, market: 'us', strict: true });
     return NextResponse.json({
       configured: true,
       status: 'connected',

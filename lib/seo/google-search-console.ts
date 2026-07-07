@@ -42,6 +42,35 @@ export interface PositionTrend {
   impressions: number;
 }
 
+export interface GSCQueryParams {
+  startDate: string; // YYYY-MM-DD
+  endDate: string;
+  dimensions: ('query' | 'page' | 'country' | 'device' | 'date')[];
+  rowLimit?: number;
+  startRow?: number;
+  dimensionFilterGroups?: Array<{
+    filters: Array<{
+      dimension: string;
+      operator: 'contains' | 'equals' | 'notContains' | 'notEquals' | 'includingRegex' | 'excludingRegex';
+      expression: string;
+    }>;
+  }>;
+}
+
+/**
+ * Thrown by querySearchAnalyticsStrict() so dashboards can distinguish
+ * "GSC is broken" from "no ranking data yet".
+ */
+export class GSCApiError extends Error {
+  readonly status?: number;
+
+  constructor(message: string, status?: number) {
+    super(message);
+    this.name = 'GSCApiError';
+    this.status = status;
+  }
+}
+
 // ── JWT Token Generation ────────────────────────────────────
 
 async function createJWT(): Promise<string> {
@@ -119,62 +148,66 @@ export function countryToMarket(country: string): string {
 const GSC_API = 'https://www.googleapis.com/webmasters/v3';
 
 /**
- * Query GSC Search Analytics.
- * Returns raw rows with the requested dimensions.
+ * Query GSC Search Analytics — strict variant.
+ * Throws GSCApiError on missing config, token exchange failures and
+ * API errors, so callers (dashboards) can show the failure instead of
+ * rendering an empty table.
  */
-export async function querySearchAnalytics(params: {
-  startDate: string; // YYYY-MM-DD
-  endDate: string;
-  dimensions: ('query' | 'page' | 'country' | 'device' | 'date')[];
-  rowLimit?: number;
-  startRow?: number;
-  dimensionFilterGroups?: Array<{
-    filters: Array<{
-      dimension: string;
-      operator: 'contains' | 'equals' | 'notContains' | 'notEquals' | 'includingRegex' | 'excludingRegex';
-      expression: string;
-    }>;
-  }>;
-}): Promise<GSCRow[]> {
+export async function querySearchAnalyticsStrict(
+  params: GSCQueryParams,
+): Promise<GSCRow[]> {
   const siteUrl = process.env.GSC_SITE_URL;
   if (!siteUrl) {
-    console.warn('[GSC] GSC_SITE_URL not configured — returning empty data');
-    return [];
+    throw new GSCApiError('GSC_SITE_URL not configured');
   }
 
-  try {
-    const token = await getAccessToken();
-    const encodedSite = encodeURIComponent(siteUrl);
+  const token = await getAccessToken();
+  const encodedSite = encodeURIComponent(siteUrl);
 
-    const res = await fetch(
-      `${GSC_API}/sites/${encodedSite}/searchAnalytics/query`,
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          startDate: params.startDate,
-          endDate: params.endDate,
-          dimensions: params.dimensions,
-          rowLimit: params.rowLimit || 1000,
-          startRow: params.startRow || 0,
-          ...(params.dimensionFilterGroups && {
-            dimensionFilterGroups: params.dimensionFilterGroups,
-          }),
-        }),
+  const res = await fetch(
+    `${GSC_API}/sites/${encodedSite}/searchAnalytics/query`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
       },
+      body: JSON.stringify({
+        startDate: params.startDate,
+        endDate: params.endDate,
+        dimensions: params.dimensions,
+        rowLimit: params.rowLimit || 1000,
+        startRow: params.startRow || 0,
+        ...(params.dimensionFilterGroups && {
+          dimensionFilterGroups: params.dimensionFilterGroups,
+        }),
+      }),
+    },
+  );
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new GSCApiError(
+      `GSC API error ${res.status}: ${text.slice(0, 500)}`,
+      res.status,
     );
+  }
 
-    if (!res.ok) {
-      const text = await res.text();
-      console.error('[GSC] API error:', res.status, text);
-      return [];
-    }
+  const data: GSCResponse = await res.json();
+  return data.rows || [];
+}
 
-    const data: GSCResponse = await res.json();
-    return data.rows || [];
+/**
+ * Query GSC Search Analytics — soft variant.
+ * Swallows all errors and returns [] so background jobs (crons) degrade
+ * gracefully. Dashboards should use querySearchAnalyticsStrict() (or the
+ * `strict` option on the helpers below) so failures surface in the UI.
+ */
+export async function querySearchAnalytics(
+  params: GSCQueryParams,
+): Promise<GSCRow[]> {
+  try {
+    return await querySearchAnalyticsStrict(params);
   } catch (err) {
     console.error('[GSC] Query failed:', err);
     return [];
@@ -183,14 +216,17 @@ export async function querySearchAnalytics(params: {
 
 /**
  * Fetch top keywords with position & clicks, grouped by market.
+ * With `strict: true`, GSC/API errors throw instead of yielding [].
  */
 export async function getTopKeywords(options?: {
   days?: number;
   limit?: number;
   market?: string;
+  strict?: boolean;
 }): Promise<KeywordData[]> {
   const days = options?.days || 7;
   const limit = options?.limit || 100;
+  const query = options?.strict ? querySearchAnalyticsStrict : querySearchAnalytics;
 
   const end = new Date();
   // GSC data has ~3 day lag
@@ -214,7 +250,7 @@ export async function getTopKeywords(options?: {
       ]
     : undefined;
 
-  const rows = await querySearchAnalytics({
+  const rows = await query({
     startDate: fmt(start),
     endDate: fmt(end),
     dimensions: ['query', 'page', 'country'],
@@ -235,10 +271,12 @@ export async function getTopKeywords(options?: {
 
 /**
  * Get daily position trend for a specific keyword.
+ * With `strict: true`, GSC/API errors throw instead of yielding [].
  */
 export async function getKeywordTrend(
   keyword: string,
   days: number = 30,
+  options?: { strict?: boolean },
 ): Promise<PositionTrend[]> {
   const end = new Date();
   end.setDate(end.getDate() - 3); // GSC data lag
@@ -246,8 +284,9 @@ export async function getKeywordTrend(
   start.setDate(start.getDate() - days);
 
   const fmt = (d: Date) => d.toISOString().split('T')[0];
+  const query = options?.strict ? querySearchAnalyticsStrict : querySearchAnalytics;
 
-  const rows = await querySearchAnalytics({
+  const rows = await query({
     startDate: fmt(start),
     endDate: fmt(end),
     dimensions: ['date'],
@@ -278,11 +317,16 @@ export async function getKeywordTrend(
 /**
  * Detect winners (position improved) and losers (position dropped)
  * by comparing current vs. previous period.
+ * With `strict: true`, GSC/API errors throw instead of yielding empty lists.
  */
-export async function getWinnersAndLosers(days: number = 7): Promise<{
+export async function getWinnersAndLosers(
+  days: number = 7,
+  options?: { strict?: boolean },
+): Promise<{
   winners: KeywordData[];
   losers: KeywordData[];
 }> {
+  const query = options?.strict ? querySearchAnalyticsStrict : querySearchAnalytics;
   const end = new Date();
   end.setDate(end.getDate() - 3);
 
@@ -299,13 +343,13 @@ export async function getWinnersAndLosers(days: number = 7): Promise<{
   const fmt = (d: Date) => d.toISOString().split('T')[0];
 
   const [currentRows, prevRows] = await Promise.all([
-    querySearchAnalytics({
+    query({
       startDate: fmt(currentStart),
       endDate: fmt(end),
       dimensions: ['query', 'page', 'country'],
       rowLimit: 500,
     }),
-    querySearchAnalytics({
+    query({
       startDate: fmt(prevStart),
       endDate: fmt(prevEnd),
       dimensions: ['query', 'page', 'country'],
