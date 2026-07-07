@@ -40,6 +40,18 @@ type UpdateIncidentStatusAction = (
 
 // ── Formatting helpers ──────────────────────────────────────────────────────
 
+// Market flags — same pattern as the Page-Rankings dashboard
+const MARKET_FLAGS: Record<string, string> = { us: '🇺🇸', uk: '🇬🇧', ca: '🇨🇦', au: '🇦🇺' };
+
+function marketFlag(market: string | null): string {
+  return MARKET_FLAGS[market ?? ''] ?? '🌍';
+}
+
+/** Incident identity — providers are aggregated per partner+market+category */
+function incidentIdentity(provider: string, market: string | null, category: string | null): string {
+  return [provider, market ?? '', category ?? ''].join('|');
+}
+
 function formatRelativeDays(iso: string | null): string {
   if (!iso) return 'noch nie';
   const days = Math.floor((Date.now() - new Date(iso).getTime()) / (24 * 60 * 60 * 1000));
@@ -130,7 +142,12 @@ function IncidentCard({
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-semibold text-sm text-slate-800">{incident.provider}</span>
+            <span className="font-semibold text-sm text-slate-800">
+              {marketFlag(incident.market)} {incident.provider}
+            </span>
+            {incident.category && (
+              <span className="text-[11px] text-slate-400">{incident.category}</span>
+            )}
             <span
               className={`px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide ${INCIDENT_STATUS_STYLES[incident.status] ?? INCIDENT_STATUS_STYLES.open}`}
             >
@@ -239,8 +256,17 @@ export function AttributionHealthWidget({
 }) {
   const [expanded, setExpanded] = useState<string | null>(null);
 
+  // Keyed by incident identity (provider+market+category) — with several
+  // network segments per identity the last one wins; the map only feeds
+  // diagnostic deep links on incident cards.
   const providerMap = useMemo(
-    () => new Map(data.providers.map((p) => [p.snapshot.partnerName, p])),
+    () =>
+      new Map(
+        data.providers.map((p) => [
+          incidentIdentity(p.snapshot.partnerName, p.snapshot.market, p.snapshot.category),
+          p,
+        ]),
+      ),
     [data.providers],
   );
 
@@ -286,7 +312,9 @@ export function AttributionHealthWidget({
             <IncidentCard
               key={incident.id}
               incident={incident}
-              provider={providerMap.get(incident.provider)}
+              provider={providerMap.get(
+                incidentIdentity(incident.provider, incident.market, incident.category),
+              )}
               onUpdateStatus={onUpdateStatus}
             />
           ))}
@@ -365,7 +393,14 @@ export function AttributionHealthWidget({
               </thead>
               <tbody>
                 {data.providers.map((p) => {
-                  const key = p.snapshot.partnerName;
+                  // Row identity = full segment (incl. network) — partnerName
+                  // alone is no longer unique across markets/categories.
+                  const key = [
+                    p.snapshot.partnerName,
+                    p.snapshot.market ?? '',
+                    p.snapshot.category ?? '',
+                    p.snapshot.network ?? '',
+                  ].join('|');
                   const isOpen = expanded === key;
                   return (
                     <Fragment key={key}>
@@ -380,7 +415,13 @@ export function AttributionHealthWidget({
                             ) : (
                               <ChevronRight className="h-3.5 w-3.5 text-slate-400" />
                             )}
-                            {key}
+                            <span className="mr-0.5">{marketFlag(p.snapshot.market)}</span>
+                            {p.snapshot.partnerName}
+                            {p.snapshot.category && (
+                              <span className="text-[10px] font-normal text-slate-400">
+                                · {p.snapshot.category}
+                              </span>
+                            )}
                           </span>
                         </td>
                         <td className="px-2 py-2.5 text-xs text-slate-500">
@@ -465,8 +506,8 @@ export function AttributionHealthWidget({
       {/* Footnote */}
       <p className="flex items-center gap-1.5 text-[11px] text-slate-400">
         <ShieldCheck className="h-3 w-3" />
-        Täglicher Check (06:30 UTC). Score gewichtet nur anwendbare Komponenten — „k. A." =
-        zu wenig Traffic für eine Bewertung.
+        Täglicher Check (06:30 UTC). Eine Zeile = Provider pro Markt/Kategorie. Score gewichtet
+        nur anwendbare Komponenten — „k. A." = zu wenig Traffic für eine Bewertung.
         {data.unmatchedCtaProviders.length > 0 &&
           ` ${data.unmatchedCtaProviders.length} CTA-Provider ohne eindeutige Link-Zuordnung (kein cta_no_go-Check).`}
       </p>

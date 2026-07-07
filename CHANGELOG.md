@@ -7,6 +7,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Attribution Watchdog — Segment-Aggregation (P2 review fix) — 2026-07-07
+
+Aggregation key extended from `partner_name` to `partner_name + market + category (+ network)` — multi-market providers (e.g. NordVPN with 8 links across us/uk/ca/au) no longer mix scores, conversion windows and incidents across markets.
+
+- **`lib/actions/attribution-watchdog.ts`**: segments as aggregation unit (59 instead of 47 with current prod data); incident identity = provider+market+category (network excluded so a network migration cannot duplicate a live incident); CTA matching per name+market; lifetime clicks per view triple; alerts + dryRun report carry market/category
+- **Migration** `20260707160000_attribution_incident_segment_dedupe.sql`: partial unique index `uq_attribution_incident_live` rebuilt on `(provider, COALESCE(market,''), COALESCE(category,''), incident_type)` (apply manually via `supabase db push`)
+- **Dashboard**: widget rows + incident cards + compact card show market flag (Page-Rankings pattern) and category; row expansion keyed per segment
+- Pure scoring logic (`lib/attribution/health-score.ts`) unchanged; verified: tsc 0 errors, vitest 388/388, dryRun against prod (NordVPN 63/27/24/33 clicks = 147 raw total, 0 errors, 0 false-positive incidents)
+
 ### Attribution Watchdog (Phase 1) — 2026-07-07
 
 Detects silent revenue-attribution failures per provider (clicks flowing, conversions/revenue not — the "492 clicks, 0 conversions" blind spot).

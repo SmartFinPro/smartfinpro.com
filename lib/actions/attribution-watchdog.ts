@@ -25,6 +25,13 @@ import {
 // lib/attribution/health-score.ts. This module only reads the DB, assembles
 // ProviderSnapshots and persists incidents/alerts.
 //
+// Aggregation unit is a SEGMENT: partner_name + market + category + network.
+// A provider like NordVPN spans 8 links across us/uk/ca/au — grouping by
+// partner_name alone mixed scores, conversion windows and incidents across
+// markets (P2 review finding). Incident identity is coarser on purpose:
+// provider + market + category (matching uq_attribution_incident_live), so
+// a network migration cannot open a duplicate live incident.
+//
 // Traffic volumes are small (hundreds of clicks/month), so we fetch the raw
 // rows once and aggregate in memory instead of firing hundreds of count
 // queries. Row caps below are a memory guard, not a correctness boundary.
@@ -127,15 +134,19 @@ export interface WatchdogRunResult {
   unmatchedCtaProviders: string[];
   candidates: Array<{
     provider: string;
+    market: string | null;
+    category: string | null;
     incidentType: IncidentType;
     healthScore: number | null;
     revenueRisk: number;
     suppressed: boolean;
     suppressedReason?: string;
   }>;
-  /** dryRun only: per-provider snapshot summary for verification */
+  /** dryRun only: per-segment snapshot summary for verification */
   providers?: Array<{
     provider: string;
+    market: string | null;
+    category: string | null;
     network: string | null;
     trackingStatus: string | null;
     band: string;
@@ -236,6 +247,48 @@ function norm(name: string): string {
   return name.toLowerCase().trim();
 }
 
+/** Aggregation unit: one provider in one market/category via one network. */
+function segmentKey(
+  partner: string,
+  market: string | null,
+  category: string | null,
+  network: string | null,
+): string {
+  return [partner, market ?? '', category ?? '', network ?? ''].join('|');
+}
+
+/** Incident identity — mirrors uq_attribution_incident_live
+ *  (provider, market, category, incident_type); network deliberately
+ *  excluded so a network migration cannot duplicate a live incident. */
+function incidentKey(provider: string, market: string | null, category: string | null): string {
+  return [provider, market ?? '', category ?? ''].join('|');
+}
+
+function latestIso(a: string | null, b: string | null): string | null {
+  if (!a) return b;
+  if (!b) return a;
+  return new Date(a).getTime() >= new Date(b).getTime() ? a : b;
+}
+
+/** Best tracking status across a segment's links (same aggregation direction
+ *  as postbackSupported/.some and commissionValue/max): if ANY link has
+ *  verified S2S tracking, postbacks are expected for the segment. */
+const TRACKING_STATUS_RANK = ['verified', 'dashboard_only', 'unverified', 'inactive'] as const;
+function bestTrackingStatus(links: LinkRow[]): string | null {
+  let best: string | null = null;
+  let bestRank = Number.POSITIVE_INFINITY;
+  for (const l of links) {
+    if (!l.tracking_status) continue;
+    const idx = (TRACKING_STATUS_RANK as readonly string[]).indexOf(l.tracking_status);
+    const rank = idx === -1 ? TRACKING_STATUS_RANK.length : idx;
+    if (rank < bestRank) {
+      bestRank = rank;
+      best = l.tracking_status;
+    }
+  }
+  return best;
+}
+
 /** Supabase/Cloudflare errors can carry whole HTML pages — keep messages short. */
 function shortError(message: string): string {
   const clean = message.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
@@ -284,7 +337,8 @@ interface GatherResult {
   unmatchedCtaProviders: string[];
   /** false = conversions table unreadable this run → postback_no_revenue suspended */
   revenueDataComplete: boolean;
-  /** Per provider: latest activity timestamps for incident-specific auto-resolve */
+  /** Per incident identity (incidentKey: provider|market|category, merged
+   *  across networks): latest activity timestamps for auto-resolve */
   activity: Map<
     string,
     { lastClickAt: string | null; lastEventAt: string | null; lastRevenueAt: string | null }
@@ -365,39 +419,47 @@ async function gatherProviderData(
       return [] as ConversionRow[];
     }),
     supabase.from('api_connectors').select('name, is_enabled, last_sync_at, last_sync_status'),
-    supabase.from('offer_funnel_metrics').select('partner_name, total_clicks'),
+    supabase.from('offer_funnel_metrics').select('partner_name, market, category, total_clicks'),
   ]);
 
   const connectors = (connRes.error ? [] : ((connRes.data ?? []) as unknown as ConnectorRow[]));
 
-  // Lifetime clicks per provider from the view (window-independent);
+  // Lifetime clicks per provider+market+category from the view
+  // (window-independent, view groups by exactly this triple);
   // falls back to windowed counts if the view is unavailable.
-  const lifetimeByProvider = new Map<string, number>();
+  const lifetimeByTriple = new Map<string, number>();
   if (!lifetimeRes.error) {
-    for (const row of (lifetimeRes.data ?? []) as Array<{ partner_name: string; total_clicks: number | null }>) {
-      lifetimeByProvider.set(
-        row.partner_name,
-        (lifetimeByProvider.get(row.partner_name) ?? 0) + (row.total_clicks ?? 0),
-      );
+    for (const row of (lifetimeRes.data ?? []) as Array<{
+      partner_name: string;
+      market: string | null;
+      category: string | null;
+      total_clicks: number | null;
+    }>) {
+      const key = incidentKey(row.partner_name, row.market, row.category);
+      lifetimeByTriple.set(key, (lifetimeByTriple.get(key) ?? 0) + (row.total_clicks ?? 0));
     }
   }
 
-  // 3) CTA clicks (30d) — display names, matched conservatively by name.
+  // 3) CTA clicks (30d) — display names, matched conservatively by
+  //    name + market (cta_analytics carries the market of the page).
   //    Best-effort: a failing cta_analytics read only disables the
   //    cta_no_go check, it never fails the whole run.
   const ctaCounts = new Map<string, number>();
   {
-    const ctaRows = await fetchAllRows<{ provider: string }>('cta_analytics', (from, to) =>
-      supabase
-        .from('cta_analytics')
-        .select('provider')
-        .gte('clicked_at', recentCutoff)
-        .order('clicked_at', { ascending: false })
-        .range(from, to),
-    ).catch(() => [] as Array<{ provider: string }>);
+    const ctaRows = await fetchAllRows<{ provider: string; market: string | null }>(
+      'cta_analytics',
+      (from, to) =>
+        supabase
+          .from('cta_analytics')
+          .select('provider, market')
+          .gte('clicked_at', recentCutoff)
+          .order('clicked_at', { ascending: false })
+          .range(from, to),
+    ).catch(() => [] as Array<{ provider: string; market: string | null }>);
     for (const row of ctaRows) {
-      const key = norm(row.provider ?? '');
-      if (!key) continue;
+      const name = norm(row.provider ?? '');
+      if (!name) continue;
+      const key = `${name}|${row.market ?? ''}`;
       ctaCounts.set(key, (ctaCounts.get(key) ?? 0) + 1);
     }
   }
@@ -423,21 +485,30 @@ async function gatherProviderData(
     }
   }
 
-  // ── Group links by provider (partner_name) ──
-  const byProvider = new Map<string, LinkRow[]>();
+  // ── Group links into segments (partner_name + market + category + network) ──
+  const bySegment = new Map<string, LinkRow[]>();
   for (const link of links) {
-    const key = link.partner_name;
-    const arr = byProvider.get(key) ?? [];
+    const key = segmentKey(link.partner_name, link.market, link.category, link.network);
+    const arr = bySegment.get(key) ?? [];
     arr.push(link);
-    byProvider.set(key, arr);
+    bySegment.set(key, arr);
   }
 
-  const linkToProvider = new Map<string, string>();
-  for (const [provider, provLinks] of byProvider) {
-    for (const l of provLinks) linkToProvider.set(l.id, provider);
+  const linkToSegment = new Map<string, string>();
+  for (const [seg, segLinks] of bySegment) {
+    for (const l of segLinks) linkToSegment.set(l.id, seg);
   }
 
-  // ── Per-provider aggregation ──
+  // How many network segments share one provider+market+category triple —
+  // the view's lifetime clicks are only attributable when it is exactly one.
+  const segmentsPerTriple = new Map<string, number>();
+  for (const segLinks of bySegment.values()) {
+    const l = segLinks[0];
+    const t = incidentKey(l.partner_name, l.market, l.category);
+    segmentsPerTriple.set(t, (segmentsPerTriple.get(t) ?? 0) + 1);
+  }
+
+  // ── Per-segment aggregation ──
   interface Agg {
     clicks30d: number;
     /** All fetched clicks — the fetch itself is windowed to the baseline cutoff */
@@ -456,8 +527,8 @@ async function gatherProviderData(
   }
 
   const aggs = new Map<string, Agg>();
-  const getAgg = (provider: string): Agg => {
-    let a = aggs.get(provider);
+  const getAgg = (seg: string): Agg => {
+    let a = aggs.get(seg);
     if (!a) {
       a = {
         clicks30d: 0,
@@ -474,7 +545,7 @@ async function gatherProviderData(
         lastRevenueAt: null,
         convRevenue180d: 0,
       };
-      aggs.set(provider, a);
+      aggs.set(seg, a);
     }
     return a;
   };
@@ -483,9 +554,9 @@ async function gatherProviderData(
   const baselineMsCutoff = now.getTime() - baselineMs;
 
   for (const c of clicks) {
-    const provider = linkToProvider.get(c.link_id);
-    if (!provider) continue;
-    const a = getAgg(provider);
+    const seg = linkToSegment.get(c.link_id);
+    if (!seg) continue;
+    const a = getAgg(seg);
     const t = new Date(c.clicked_at).getTime();
     if (Number.isNaN(t)) continue;
     a.clickTimes.push(t);
@@ -499,9 +570,9 @@ async function gatherProviderData(
   }
 
   for (const e of events) {
-    const provider = e.link_id ? linkToProvider.get(e.link_id) : undefined;
-    if (!provider) continue;
-    const a = getAgg(provider);
+    const seg = e.link_id ? linkToSegment.get(e.link_id) : undefined;
+    if (!seg) continue;
+    const a = getAgg(seg);
     const iso = e.occurred_at ?? e.received_at;
     const t = new Date(iso).getTime();
     if (Number.isNaN(t)) continue;
@@ -521,10 +592,10 @@ async function gatherProviderData(
   }
 
   for (const c of conversions) {
-    const provider = linkToProvider.get(c.link_id);
-    if (!provider) continue;
+    const seg = linkToSegment.get(c.link_id);
+    if (!seg) continue;
     if (c.status !== 'approved') continue;
-    const a = getAgg(provider);
+    const a = getAgg(seg);
     const t = new Date(c.converted_at).getTime();
     if (Number.isNaN(t)) continue;
     if (t >= baselineMsCutoff) a.convRevenue180d += c.commission_earned ?? 0;
@@ -541,23 +612,25 @@ async function gatherProviderData(
   const globalEpc = totalRevenue180d > 0 && totalClicks180d > 0 ? totalRevenue180d / totalClicks180d : null;
   settings.globalEpc = globalEpc;
 
-  // ── CTA matching (conservative): exactly one provider per CTA name ──
-  const providerByNorm = new Map<string, string[]>();
-  for (const provider of byProvider.keys()) {
-    const key = norm(provider);
-    const arr = providerByNorm.get(key) ?? [];
-    arr.push(provider);
-    providerByNorm.set(key, arr);
+  // ── CTA matching (conservative): exactly one segment per CTA name+market ──
+  const segmentsByCtaKey = new Map<string, string[]>();
+  for (const [seg, segLinks] of bySegment) {
+    const l = segLinks[0];
+    const key = `${norm(l.partner_name)}|${l.market ?? ''}`;
+    const arr = segmentsByCtaKey.get(key) ?? [];
+    arr.push(seg);
+    segmentsByCtaKey.set(key, arr);
   }
 
-  const ctaByProvider = new Map<string, number>();
+  const ctaBySegment = new Map<string, number>();
   const unmatchedCtaProviders: string[] = [];
-  for (const [ctaName, count] of ctaCounts) {
-    const matches = providerByNorm.get(ctaName);
+  for (const [ctaKey, count] of ctaCounts) {
+    const matches = segmentsByCtaKey.get(ctaKey);
     if (matches && matches.length === 1) {
-      ctaByProvider.set(matches[0], (ctaByProvider.get(matches[0]) ?? 0) + count);
+      ctaBySegment.set(matches[0], (ctaBySegment.get(matches[0]) ?? 0) + count);
     } else {
-      unmatchedCtaProviders.push(ctaName);
+      const [name, market] = ctaKey.split('|');
+      unmatchedCtaProviders.push(market ? `${name} (${market})` : name);
     }
   }
 
@@ -576,11 +649,18 @@ async function gatherProviderData(
   const providers: ProviderHealth[] = [];
   const activity: GatherResult['activity'] = new Map();
 
-  for (const [provider, provLinks] of byProvider) {
-    const a = getAgg(provider);
-    const primary = provLinks[0];
+  for (const [seg, segLinks] of bySegment) {
+    const a = getAgg(seg);
+    // All links in a segment share partner_name/market/category/network by
+    // key construction — primary only supplies slug/destination diagnostics.
+    const primary = segLinks[0];
+    const triple = incidentKey(primary.partner_name, primary.market, primary.category);
 
-    const lifetimeClicks = Math.max(lifetimeByProvider.get(provider) ?? 0, a.clicks180d);
+    // The view aggregates per provider+market+category; only attributable to
+    // this segment when the triple has exactly one network segment.
+    const viewLifetime =
+      (segmentsPerTriple.get(triple) ?? 0) === 1 ? (lifetimeByTriple.get(triple) ?? 0) : 0;
+    const lifetimeClicks = Math.max(viewLifetime, a.clicks180d);
     // If the provider has clicks older than the fetched window, its true
     // first click is at least as old as the cutoff — old enough for every
     // conversion window (max 45d ≪ 180d), which is all the score needs.
@@ -601,18 +681,26 @@ async function gatherProviderData(
         now.getTime() - new Date(connector.last_sync_at).getTime() < 48 * 60 * 60 * 1000
       : null;
 
-    const ctaClicks = ctaByProvider.get(provider);
+    const ctaClicks = ctaBySegment.get(seg);
+
+    // Longest per-link window override wins — most conservative against
+    // false incidents within the segment.
+    const expectedConversionDays = segLinks.reduce<number | null>(
+      (acc, l) =>
+        l.expected_conversion_days ? Math.max(acc ?? 0, l.expected_conversion_days) : acc,
+      null,
+    );
 
     const snapshot: ProviderSnapshot = {
-      partnerName: provider,
+      partnerName: primary.partner_name,
       network: primary.network,
       market: primary.market,
       category: primary.category,
-      active: provLinks.some((l) => l.active),
-      trackingStatus: primary.tracking_status,
-      postbackSupported: provLinks.some((l) => l.postback_supported === true),
-      expectedConversionDays: primary.expected_conversion_days,
-      commissionValue: Math.max(...provLinks.map((l) => l.commission_value ?? 0), 0),
+      active: segLinks.some((l) => l.active),
+      trackingStatus: bestTrackingStatus(segLinks),
+      postbackSupported: segLinks.some((l) => l.postback_supported === true),
+      expectedConversionDays,
+      commissionValue: Math.max(...segLinks.map((l) => l.commission_value ?? 0), 0),
       lifetimeClicks,
       clicks30d: a.clicks30d,
       clicks180d: a.clicks180d,
@@ -637,10 +725,13 @@ async function gatherProviderData(
       destinationUrl: primary.destination_url,
     });
 
-    activity.set(provider, {
-      lastClickAt: a.lastClickAt,
-      lastEventAt: a.lastEventAt,
-      lastRevenueAt: a.lastRevenueAt,
+    // Auto-resolve identity is coarser than the segment (no network) —
+    // merge activity across network segments of the same triple.
+    const prev = activity.get(triple);
+    activity.set(triple, {
+      lastClickAt: latestIso(prev?.lastClickAt ?? null, a.lastClickAt),
+      lastEventAt: latestIso(prev?.lastEventAt ?? null, a.lastEventAt),
+      lastRevenueAt: latestIso(prev?.lastRevenueAt ?? null, a.lastRevenueAt),
     });
   }
 
@@ -754,7 +845,7 @@ export async function runAttributionWatchdog(opts?: {
       ['open', 'confirmed', 'ignored'].includes(i.status),
     );
     for (const incident of liveIncidents) {
-      const act = activity.get(incident.provider);
+      const act = activity.get(incidentKey(incident.provider, incident.market, incident.category));
       if (!act || !incidentResolvedBy(incident, act)) continue;
 
       incidentsResolved++;
@@ -773,14 +864,22 @@ export async function runAttributionWatchdog(opts?: {
           continue;
         }
         if (incident.status !== 'ignored') {
+          const label = incident.market
+            ? `${incident.provider} (${incident.market.toUpperCase()})`
+            : incident.provider;
           await sendAlert({
             type: 'attribution_watchdog',
             severity: 'success',
-            title: `Attribution wiederhergestellt: ${incident.provider}`,
-            message: `Für ${incident.provider} sind wieder Daten eingetroffen (${incident.incident_type}). Vorfall automatisch geschlossen.`,
+            title: `Attribution wiederhergestellt: ${label}`,
+            message: `Für ${label} sind wieder Daten eingetroffen (${incident.incident_type}). Vorfall automatisch geschlossen.`,
             source: 'attribution-watchdog',
             link_url: '/dashboard/revenue#attribution-watchdog',
-            metadata: { provider: incident.provider, incident_type: incident.incident_type },
+            metadata: {
+              provider: incident.provider,
+              market: incident.market,
+              category: incident.category,
+              incident_type: incident.incident_type,
+            },
           });
           alertsSent++;
         }
@@ -792,9 +891,15 @@ export async function runAttributionWatchdog(opts?: {
       const candidate = classifyStageFailure(snapshot, settings, now);
       if (!candidate) continue;
 
-      // Suppression: live incident of the same type, or snoozed ignore
+      // Suppression: live incident of the same identity+type, or snoozed
+      // ignore. Identity = provider+market+category — same as the partial
+      // unique index, so no 23505 noise from network-only differences.
       const existing = liveIncidents.find(
-        (i) => i.provider === snapshot.partnerName && i.incident_type === candidate.type,
+        (i) =>
+          i.provider === snapshot.partnerName &&
+          (i.market ?? '') === (snapshot.market ?? '') &&
+          (i.category ?? '') === (snapshot.category ?? '') &&
+          i.incident_type === candidate.type,
       );
       let suppressedReason: string | undefined;
       if (candidate.type === 'postback_no_revenue' && !revenueDataComplete) {
@@ -814,6 +919,8 @@ export async function runAttributionWatchdog(opts?: {
       const risk = estimateRevenueRisk(snapshot, settings);
       candidates.push({
         provider: snapshot.partnerName,
+        market: snapshot.market,
+        category: snapshot.category,
         incidentType: candidate.type,
         healthScore: score.score,
         revenueRisk: risk.amount,
@@ -864,19 +971,24 @@ export async function runAttributionWatchdog(opts?: {
       const lastConvText = snapshot.lastEventAt
         ? `am ${new Date(snapshot.lastEventAt).toLocaleDateString('de-DE')}`
         : '(noch nie konvertiert)';
+      const segmentLabel = snapshot.market
+        ? `${snapshot.partnerName} (${snapshot.market.toUpperCase()})`
+        : snapshot.partnerName;
       await sendAlertWithActions(
         {
           type: 'attribution_watchdog',
           severity: score.band === 'critical' ? 'critical' : 'warning',
-          title: `Attribution-Ausfall vermutet: ${snapshot.partnerName}`,
+          title: `Attribution-Ausfall vermutet: ${segmentLabel}`,
           message:
-            `${snapshot.partnerName} (${snapshot.network ?? 'direkt'}): ${snapshot.clicksSinceLastEvent} Klicks seit letzter Conversion ${lastConvText} — erwartet innerhalb von ${W} Tagen. ` +
+            `${segmentLabel} (${snapshot.network ?? 'direkt'}, ${snapshot.category ?? 'ohne Kategorie'}): ${snapshot.clicksSinceLastEvent} Klicks seit letzter Conversion ${lastConvText} — erwartet innerhalb von ${W} Tagen. ` +
             `Verdacht: ${candidate.causeLabel}. Geschätztes Umsatzrisiko: ~$${risk.amount.toFixed(0)}. ` +
             `Health Score: ${score.score ?? 'k. A.'}/100.`,
           source: 'attribution-watchdog',
           link_url: '/dashboard/revenue#attribution-watchdog',
           metadata: {
             provider: snapshot.partnerName,
+            market: snapshot.market,
+            category: snapshot.category,
             incident_type: candidate.type,
             health_score: score.score,
             revenue_risk: risk.amount,
@@ -915,6 +1027,8 @@ export async function runAttributionWatchdog(opts?: {
       ...(dryRun && {
         providers: providers.map((p) => ({
           provider: p.snapshot.partnerName,
+          market: p.snapshot.market,
+          category: p.snapshot.category,
           network: p.snapshot.network,
           trackingStatus: p.snapshot.trackingStatus,
           band: p.score.band,
