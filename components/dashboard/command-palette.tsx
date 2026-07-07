@@ -64,6 +64,7 @@ const NAV_PAGES: { label: string; href: string }[] = [
   { label: 'Auto-Genesis', href: '/dashboard/content/genesis' },
   { label: 'Approval Queue', href: '/dashboard/content/planning' },
   { label: 'Ranking Tracker', href: '/dashboard/ranking' },
+  { label: 'Page Rankings', href: '/dashboard/ranking/pages' },
   { label: 'Competitor Radar', href: '/dashboard/competitors' },
   { label: 'Keyword Gaps', href: '/dashboard/competitors/gaps' },
   { label: 'Backlink Automation', href: '/dashboard/backlinks' },

@@ -1,4 +1,5 @@
-import { Search } from 'lucide-react';
+import Link from 'next/link';
+import { FileSearch, Search } from 'lucide-react';
 import { getRankingData } from '@/lib/actions/ranking';
 import { RankingDashboard } from '@/components/dashboard/ranking-dashboard';
 import { PageHeader } from '@/components/dashboard/ui';
@@ -17,6 +18,15 @@ export default async function RankingPage() {
         icon={Search}
         title="Ranking Tracker"
         description="Google-Positionen & SERP-Monitoring für alle 4 Märkte"
+        actions={
+          <Link
+            href="/dashboard/ranking/pages"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 text-sm font-medium text-slate-600 hover:text-violet-600 hover:border-violet-200 transition-colors"
+          >
+            <FileSearch className="h-4 w-4" />
+            Page Rankings
+          </Link>
+        }
       />
 
       {/* Google Indexing API — fast URL submission */}

@@ -34,6 +34,7 @@ import {
   Bot,
   Droplet,
   Users,
+  FileSearch,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import NotificationBell from '@/components/dashboard/notification-bell';
@@ -84,7 +85,8 @@ const SIDEBAR_GROUPS: NavGroup[] = [
       { name: 'Content Hub', href: '/dashboard/content/hub', icon: FileText },
       { name: 'Auto-Genesis', href: '/dashboard/content/genesis', icon: Rocket },
       { name: 'Approval Queue', href: '/dashboard/content/planning', icon: ClipboardCheck, badgeKey: 'planning' },
-      { name: 'Ranking Tracker', href: '/dashboard/ranking', icon: Search },
+      { name: 'Ranking Tracker', href: '/dashboard/ranking', icon: Search, exact: true },
+      { name: 'Page Rankings', href: '/dashboard/ranking/pages', icon: FileSearch },
       { name: 'Competitor Radar', href: '/dashboard/competitors', icon: Radar, exact: true },
       { name: 'Keyword Gaps', href: '/dashboard/competitors/gaps', icon: Crosshair },
       { name: 'Backlink Automation', href: '/dashboard/backlinks', icon: Globe },
