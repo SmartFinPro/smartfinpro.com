@@ -311,6 +311,16 @@ export function AttributionHealthWidget({
         </div>
       )}
 
+      {!data.revenueDataComplete && !data.error && (
+        <div className="flex items-start gap-2.5 rounded-lg border border-amber-200 bg-amber-50/50 p-3">
+          <AlertTriangle className="h-3.5 w-3.5 text-amber-600 shrink-0 mt-0.5" />
+          <p className="text-xs text-amber-800">
+            Revenue-Daten unvollständig (conversions-Tabelle nicht lesbar) — Umsatzwerte können
+            zu niedrig sein, die postback_no_revenue-Prüfung ist ausgesetzt.
+          </p>
+        </div>
+      )}
+
       {snoozedIncidents.length > 0 && (
         <p className="text-[11px] text-slate-400">
           {snoozedIncidents.length} Vorfall{snoozedIncidents.length > 1 ? 'e' : ''} stummgeschaltet

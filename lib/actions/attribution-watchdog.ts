@@ -108,6 +108,8 @@ export interface AttributionHealthData {
   providers: ProviderHealth[];
   incidents: IncidentRow[];
   unmatchedCtaProviders: string[];
+  /** false = conversions table unreadable → revenue figures incomplete */
+  revenueDataComplete: boolean;
   fetchedAt: string;
   error?: string;
 }
@@ -120,6 +122,8 @@ export interface WatchdogRunResult {
   incidentsOpened: number;
   incidentsResolved: number;
   alertsSent: number;
+  /** false = conversions unreadable this run → postback_no_revenue suspended */
+  revenueDataComplete: boolean;
   unmatchedCtaProviders: string[];
   candidates: Array<{
     provider: string;
@@ -278,6 +282,8 @@ interface GatherResult {
   providers: ProviderHealth[];
   incidents: IncidentRow[];
   unmatchedCtaProviders: string[];
+  /** false = conversions table unreadable this run → postback_no_revenue suspended */
+  revenueDataComplete: boolean;
   /** Per provider: latest activity timestamps for incident-specific auto-resolve */
   activity: Map<
     string,
@@ -323,7 +329,13 @@ async function gatherProviderData(
   //    lose the OLDEST rows, never the current ones the watchdog decides on.
   //    Clicks are fetched for the baseline window only; lifetime totals come
   //    from the offer_funnel_metrics view below.
-  const [clicks, events, conversionsRows, connRes, lifetimeRes] = await Promise.all([
+  //
+  //    A failed conversions read must NOT silently degrade to "no revenue" —
+  //    that would fabricate postback_no_revenue incidents. Instead the run
+  //    continues with revenueDataComplete=false, which suppresses exactly the
+  //    checks that depend on this source.
+  let revenueDataComplete = true;
+  const [clicks, events, conversions, connRes, lifetimeRes] = await Promise.all([
     fetchAllRows<ClickRow>('link_clicks', (from, to) =>
       supabase
         .from('link_clicks')
@@ -345,12 +357,17 @@ async function gatherProviderData(
         .select('link_id, commission_earned, status, converted_at')
         .order('converted_at', { ascending: false })
         .range(from, to),
-    ).catch(() => [] as ConversionRow[]),
+    ).catch((err) => {
+      revenueDataComplete = false;
+      logger.warn('[attribution-watchdog] conversions read failed — postback_no_revenue suspended this run', {
+        error: shortError(err instanceof Error ? err.message : String(err)),
+      });
+      return [] as ConversionRow[];
+    }),
     supabase.from('api_connectors').select('name, is_enabled, last_sync_at, last_sync_status'),
     supabase.from('offer_funnel_metrics').select('partner_name, total_clicks'),
   ]);
 
-  const conversions = conversionsRows;
   const connectors = (connRes.error ? [] : ((connRes.data ?? []) as unknown as ConnectorRow[]));
 
   // Lifetime clicks per provider from the view (window-independent);
@@ -635,7 +652,7 @@ async function gatherProviderData(
       (x.score.score ?? 101) - (y.score.score ?? 101),
   );
 
-  return { providers, incidents, unmatchedCtaProviders, activity, settings };
+  return { providers, incidents, unmatchedCtaProviders, revenueDataComplete, activity, settings };
 }
 
 // ── Widget read ─────────────────────────────────────────────────────────────
@@ -645,12 +662,15 @@ export async function getAttributionHealth(): Promise<AttributionHealthData> {
   try {
     const supabase = createServiceClient();
     const settings = await loadWatchdogSettings(supabase);
-    const { providers, incidents, unmatchedCtaProviders } = await gatherProviderData(
-      supabase,
-      settings,
-      now,
-    );
-    return { providers, incidents, unmatchedCtaProviders, fetchedAt: now.toISOString() };
+    const { providers, incidents, unmatchedCtaProviders, revenueDataComplete } =
+      await gatherProviderData(supabase, settings, now);
+    return {
+      providers,
+      incidents,
+      unmatchedCtaProviders,
+      revenueDataComplete,
+      fetchedAt: now.toISOString(),
+    };
   } catch (err) {
     // Surface the failure — an empty table must not look like "all healthy"
     // (same principle as the GSC strict fix).
@@ -659,6 +679,7 @@ export async function getAttributionHealth(): Promise<AttributionHealthData> {
       providers: [],
       incidents: [],
       unmatchedCtaProviders: [],
+      revenueDataComplete: false,
       fetchedAt: now.toISOString(),
       error: err instanceof Error ? shortError(err.message) : 'Attribution health read failed',
     };
@@ -710,6 +731,7 @@ export async function runAttributionWatchdog(opts?: {
       incidentsOpened: 0,
       incidentsResolved: 0,
       alertsSent: 0,
+      revenueDataComplete: true,
       unmatchedCtaProviders: [],
       candidates: [],
       errors,
@@ -719,11 +741,8 @@ export async function runAttributionWatchdog(opts?: {
   const auditId = dryRun ? null : await startAudit(supabase, 'attribution-watchdog');
 
   try {
-    const { providers, incidents, unmatchedCtaProviders, activity } = await gatherProviderData(
-      supabase,
-      settings,
-      now,
-    );
+    const { providers, incidents, unmatchedCtaProviders, revenueDataComplete, activity } =
+      await gatherProviderData(supabase, settings, now);
 
     let incidentsOpened = 0;
     let incidentsResolved = 0;
@@ -778,7 +797,11 @@ export async function runAttributionWatchdog(opts?: {
         (i) => i.provider === snapshot.partnerName && i.incident_type === candidate.type,
       );
       let suppressedReason: string | undefined;
-      if (existing) {
+      if (candidate.type === 'postback_no_revenue' && !revenueDataComplete) {
+        // conversions unreadable → revenue180d may be falsely 0; a watchdog
+        // must not fabricate incidents from its own broken data source.
+        suppressedReason = 'Revenue-Daten unvollständig (conversions-Lesefehler) — Check ausgesetzt';
+      } else if (existing) {
         if (existing.status === 'ignored') {
           const snoozed =
             existing.ignored_until && new Date(existing.ignored_until).getTime() > now.getTime();
@@ -873,6 +896,7 @@ export async function runAttributionWatchdog(opts?: {
         incidents_opened: incidentsOpened,
         incidents_resolved: incidentsResolved,
         alerts_sent: alertsSent,
+        revenue_data_complete: revenueDataComplete,
         unmatched_cta_providers: unmatchedCtaProviders,
         candidates_suppressed: candidates.filter((c) => c.suppressed).length,
       });
@@ -885,6 +909,7 @@ export async function runAttributionWatchdog(opts?: {
       incidentsOpened,
       incidentsResolved,
       alertsSent,
+      revenueDataComplete,
       unmatchedCtaProviders,
       candidates,
       ...(dryRun && {
@@ -914,6 +939,7 @@ export async function runAttributionWatchdog(opts?: {
       incidentsOpened: 0,
       incidentsResolved: 0,
       alertsSent: 0,
+      revenueDataComplete: false,
       unmatchedCtaProviders: [],
       candidates: [],
       errors: [msg],

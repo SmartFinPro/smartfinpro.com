@@ -58,6 +58,7 @@ export async function GET(request: NextRequest) {
       incidents_opened: result.incidentsOpened,
       incidents_resolved: result.incidentsResolved,
       alerts_sent: result.alertsSent,
+      revenue_data_complete: result.revenueDataComplete,
       candidates: result.candidates,
       ...(dryRun && result.providers && { providers: result.providers }),
       unmatched_cta_providers: result.unmatchedCtaProviders,
