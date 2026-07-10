@@ -100,7 +100,7 @@ function buildVerdictPicks(
       external = true;
       ctaLabel = 'Visit site';
     }
-    picks.push({ rank: picks.length + 1, name: product.displayName, why: pick.label, rating: product.rating, href, external, ctaLabel });
+    picks.push({ rank: picks.length + 1, name: product.displayName, why: pick.label, rating: product.rating, reviewCount: product.reviewCount, href, external, ctaLabel });
   }
   return picks;
 }

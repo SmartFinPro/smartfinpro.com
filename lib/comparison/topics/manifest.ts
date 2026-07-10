@@ -33,4 +33,19 @@ export const BEST_X_MANIFEST: BestXManifestEntry[] = [
   { market: 'us', category: 'cybersecurity', topic: 'cybersecurity-smb', label: 'Best Cybersecurity for SMBs', blurb: 'Security tools for small businesses.', icon: 'Shield', image: '/images/comparison/cybersecurity-smb.webp' },
   { market: 'us', category: 'gold-investing', topic: 'platforms', label: 'Best Gold Investing Platforms', blurb: 'Buy & store gold, by fees & custody.', icon: 'Coins', image: '/images/comparison/gold-investing.webp' },
   { market: 'us', category: 'debt-relief', topic: 'companies', label: 'Best Debt Relief Companies', blurb: 'Settlement & debt management, by fees & accreditation.', icon: 'DollarSign', image: '/images/content/us/debt-relief/hero.webp' },
+
+  // ── Australia (Stage 1 — AU/CA/UK rollout) ──
+  // Tiles activate automatically once the topic's au: config is registered AND
+  // prod rows exist (buildBestXIndex); until then they render "Launching soon".
+  // Images reuse the US counterparts per the design-parity gate; super-funds
+  // uses a documented editorial placeholder (no US counterpart exists).
+  { market: 'au', category: 'personal-finance', topic: 'robo-advisors', label: 'Best Robo-Advisors & Micro-Investing', blurb: 'Australian robo-advice & micro-investing apps, ranked by fees.', icon: 'Sparkles', image: '/images/comparison/robo-advisors.webp' },
+  { market: 'au', category: 'business-banking', topic: 'business-bank-accounts', label: 'Best Business Bank Accounts', blurb: 'Australian business accounts by monthly fee & FCS protection.', icon: 'Building', image: '/images/comparison/business-bank-accounts.webp' },
+  { market: 'au', category: 'savings', topic: 'savings-accounts', label: 'Best High-Interest Savings', blurb: 'Top savings rates (p.a.) from APRA-regulated banks.', icon: 'PiggyBank', image: '/images/comparison/high-yield-savings.webp' },
+  { market: 'au', category: 'trading', topic: 'cfd-brokers', label: 'Best CFD Trading Platforms', blurb: 'ASIC-regulated CFD brokers by spreads & platforms.', icon: 'TrendingUp', image: '/images/comparison/trading-platforms.webp' },
+  { market: 'au', category: 'forex', topic: 'forex-brokers', label: 'Best Forex Brokers', blurb: 'ASIC-regulated FX brokers by all-in trading cost.', icon: 'DollarSign', image: '/images/comparison/forex-brokers.webp' },
+  { market: 'au', category: 'gold-investing', topic: 'platforms', label: 'Best Gold Investing Platforms', blurb: 'Buy & store gold in Australia, by premiums & custody.', icon: 'Coins', image: '/images/comparison/gold-investing.webp' },
+  { market: 'au', category: 'superannuation', topic: 'super-funds', label: 'Best Super Funds', blurb: 'APRA-regulated super funds by fees & long-term returns.', icon: 'Shield', image: '/images/content/au/personal-finance/hero.webp' },
+  { market: 'au', category: 'ai-tools', topic: 'ai-tools-finance', label: 'Best AI Tools for Finance', blurb: 'AI software for Australian finance & business teams.', icon: 'Zap', image: '/images/comparison/ai-tools-finance.webp' },
+  { market: 'au', category: 'cybersecurity', topic: 'cybersecurity-smb', label: 'Best Cybersecurity for SMBs', blurb: 'Security tools for Australian small businesses.', icon: 'Shield', image: '/images/comparison/cybersecurity-smb.webp' },
 ];

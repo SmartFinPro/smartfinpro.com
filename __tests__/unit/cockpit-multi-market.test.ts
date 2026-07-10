@@ -11,6 +11,9 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { getTopicConfig } from '@/lib/comparison/topics/index';
 import { roboAdvisorsConfig } from '@/lib/comparison/topics/robo-advisors';
+import { auRoboAdvisorsConfig } from '@/lib/comparison/topics/au/robo-advisors';
+import { auBusinessBankAccountsConfig } from '@/lib/comparison/topics/au/business-bank-accounts';
+import { auSavingsAccountsConfig } from '@/lib/comparison/topics/au/savings-accounts';
 import { formatMoney, formatCostLabel } from '@/lib/comparison/money';
 import { BEST_X_MANIFEST } from '@/lib/comparison/topics/manifest';
 
@@ -23,13 +26,30 @@ describe('getTopicConfig — market-aware registry', () => {
     expect(getTopicConfig('personal-finance', 'robo-advisors', 'us')).toBe(roboAdvisorsConfig);
   });
 
-  it('NEVER falls back to a US config for a non-US market', () => {
-    // Shared slug exists as a US config — uk/ca/au must get null until their
-    // own market-prefixed config is registered (wrong currency/regulators/picks
-    // otherwise). This is the core stop-condition guard.
+  it('NEVER falls back to a US config for a non-US market lacking its own config', () => {
+    // 'debt-relief/companies' is US-only and not on any UK/CA/AU roadmap —
+    // uk/ca/au must get null, never the US config (wrong currency/regulators/
+    // picks otherwise). This is the core stop-condition guard, kept on a combo
+    // that will never gain a market-prefixed config so this test stays valid.
+    expect(getTopicConfig('debt-relief', 'companies', 'uk')).toBeNull();
+    expect(getTopicConfig('debt-relief', 'companies', 'ca')).toBeNull();
+    expect(getTopicConfig('debt-relief', 'companies', 'au')).toBeNull();
+  });
+
+  it('uk/ca still get null for personal-finance/robo-advisors (only au: is registered so far)', () => {
     expect(getTopicConfig('personal-finance', 'robo-advisors', 'uk')).toBeNull();
     expect(getTopicConfig('personal-finance', 'robo-advisors', 'ca')).toBeNull();
-    expect(getTopicConfig('personal-finance', 'robo-advisors', 'au')).toBeNull();
+  });
+
+  it('resolves the market-specific AU config for personal-finance/robo-advisors — never the US one', () => {
+    const resolved = getTopicConfig('personal-finance', 'robo-advisors', 'au');
+    expect(resolved).toBe(auRoboAdvisorsConfig);
+    expect(resolved).not.toBe(roboAdvisorsConfig);
+  });
+
+  it('resolves the market-specific AU configs for business-bank-accounts and savings-accounts', () => {
+    expect(getTopicConfig('business-banking', 'business-bank-accounts', 'au')).toBe(auBusinessBankAccountsConfig);
+    expect(getTopicConfig('savings', 'savings-accounts', 'au')).toBe(auSavingsAccountsConfig);
   });
 
   it('returns null for an unknown combo in any market', () => {

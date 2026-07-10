@@ -86,8 +86,10 @@ const marketHeroContent: Record<string, {
   au: {
     title: 'Australian Finance\nResearch, Mastered.',
     subtitle: 'ASIC-licensed broker reviews, cybersecurity solutions, and AI tools — expert-reviewed for Australian professionals.',
-    primaryCta: { text: 'Explore AU Reports', href: '/au/trading' },
-    secondaryCta: { text: 'How We Review', href: '/tools' },
+    // Mirrors the US hero: primary CTA anchors to the Best-X tile grid now that
+    // AU has live cockpit tiles (Stage 1 slice 1).
+    primaryCta: { text: 'Start now', href: '#best-x-compare' },
+    secondaryCta: { text: 'How We Review', href: '/integrity' },
   },
 };
 
