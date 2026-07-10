@@ -5,7 +5,7 @@
 
 import { Metadata } from 'next';
 import { generateAlternates } from '@/lib/seo/hreflang';
-import { generateComparisonItemListSchema } from '@/lib/seo/schema';
+import { buildBestXItemListSchema } from '@/lib/seo/best-x-item-list';
 import { getBestXIndex } from '@/lib/comparison/loader';
 import MarketHomePage from './[market]/page';
 
@@ -60,30 +60,8 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function RootHomePage() {
   // Render US market homepage at / (clean URL, no /us prefix)
   const bestX = await getBestXIndex('us');
-  const liveItems = bestX.filter(
-    (item): item is typeof item & { href: string; winner: NonNullable<typeof item.winner> } =>
-      item.status === 'live' && !!item.href && !!item.winner
-  );
-  const dateModified = liveItems
-    .map((item) => item.verifiedAt)
-    .filter((d): d is string => !!d)
-    .sort()
-    .at(-1);
-
-  const itemListId = `${BASE_URL}/#bestx-itemlist`;
-  const itemListSchema = liveItems.length > 0
-    ? generateComparisonItemListSchema({
-        id: itemListId,
-        title: 'Best-Rated Financial Products — SmartFinPro Compare',
-        description: 'Editorially reviewed, currently-leading providers across SmartFinPro\'s comparison categories.',
-        url: `${BASE_URL}/`,
-        products: liveItems.map((item) => ({
-          name: item.winner.name,
-          description: item.label,
-          url: `${BASE_URL}${item.href}`,
-        })),
-      })
-    : null;
+  const itemList = buildBestXItemListSchema('us', bestX);
+  const dateModified = itemList?.dateModified;
 
   return (
     <>
@@ -109,14 +87,14 @@ export default async function RootHomePage() {
               width: 1200,
               height: 630,
             },
-            ...(itemListSchema && { mainEntity: { '@id': itemListId } }),
+            ...(itemList && { mainEntity: { '@id': itemList.id } }),
           }),
         }}
       />
-      {itemListSchema && (
+      {itemList && (
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListSchema) }}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(itemList.schema) }}
         />
       )}
       {await MarketHomePage({ params: Promise.resolve({ market: 'us' }), searchParams: Promise.resolve({}) })}

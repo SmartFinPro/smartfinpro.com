@@ -54,6 +54,7 @@ import {
   HomepageFAQSection,
 } from '@/components/marketing/homepage-sections';
 import { getBestXIndex } from '@/lib/comparison/loader';
+import { buildBestXItemListSchema } from '@/lib/seo/best-x-item-list';
 
 import type { Category } from '@/lib/i18n/config';
 
@@ -205,6 +206,11 @@ export default async function MarketHomePage({ params, searchParams }: MarketPag
   // Best-X Compare Index (homepage): live winners + coming-soon tiles, per market.
   const bestX = await getBestXIndex(marketData);
 
+  // ItemList JSON-LD for non-US market homepages. The US copy is emitted by the
+  // root wrapper (app/(marketing)/page.tsx) which composes this component — the
+  // guard prevents a duplicate ItemList on '/'.
+  const bestXItemList = marketData !== 'us' ? buildBestXItemListSchema(marketData, bestX) : null;
+
   // Editor's Picks — top 6 rated reviews (different categories preferred)
   // 6 picks (up from 3) = stronger Hub→Leaf signal from homepage to leaf review pages.
   // Diversity filter: max 2 per category to ensure broad coverage across 6 categories.
@@ -234,6 +240,12 @@ export default async function MarketHomePage({ params, searchParams }: MarketPag
     // MarketingLayout (app/(marketing)/layout.tsx) — a second one here would
     // duplicate both the element and the id (invalid HTML, confuses a11y tree).
     <>
+      {bestXItemList && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(bestXItemList.schema) }}
+        />
+      )}
       {/* ═══════════════════════════════════════════════════════════════
           1. HERO SECTION
       ═══════════════════════════════════════════════════════════════ */}

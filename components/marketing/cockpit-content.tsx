@@ -42,6 +42,9 @@ interface CockpitHeroProps {
   verifiedDate: string; // ISO YYYY-MM-DD
   productCount: number;
   regulators: string[];
+  /** TopicConfig.compliance.notice — rendered as a small risk/context line
+   *  under the regulator pills (YMYL gate: high-risk topics must show it). */
+  complianceNotice?: string | null;
 }
 
 /** Tier-0 hero — topic image + title + short description so the user is oriented
@@ -55,6 +58,7 @@ export function CockpitHero({
   verifiedDate,
   productCount,
   regulators,
+  complianceNotice,
 }: CockpitHeroProps) {
   return (
     <section className="grid grid-cols-1 gap-8 lg:grid-cols-[1.25fr_1fr] lg:items-center">
@@ -85,6 +89,11 @@ export function CockpitHero({
             </span>
           ))}
         </div>
+        {complianceNotice && (
+          <p className="mt-3 text-xs" style={{ color: 'var(--sfp-slate)' }}>
+            {complianceNotice}
+          </p>
+        )}
         <p className="mt-4 text-xs" style={{ color: 'var(--sfp-slate)' }}>
           Advertising disclosure: some links may earn us a commission at no cost to you — it never affects our rankings.{' '}
           <a href="#affiliate-disclosure" className="underline" style={{ color: 'var(--sfp-navy)' }}>
@@ -203,10 +212,29 @@ interface CockpitBodyProps {
     linkedin_url: string | null;
   };
   verifiedDate: string; // ISO
+  /** Config-authored external authority references (regulator registers,
+   *  official protection-limit/fee pages) — SEO addendum §8. */
+  sources?: { label: string; url: string }[];
+  /** Config-authored internal related guides/tools links — SEO addendum §7. */
+  relatedLinks?: { label: string; href: string }[];
+  /** Per-provider primary data sources (distinct product_attributes.source_url),
+   *  derived by the route from the loaded rows. */
+  dataSources?: { name: string; url: string; verifiedAt: string | null }[];
 }
 
 /** Tier 3 — depth below the cockpit. */
-export function CockpitBody({ label, methodology, buyerGuide, faq, reviewer, verifiedDate }: CockpitBodyProps) {
+export function CockpitBody({
+  label,
+  methodology,
+  buyerGuide,
+  faq,
+  reviewer,
+  verifiedDate,
+  sources,
+  relatedLinks,
+  dataSources,
+}: CockpitBodyProps) {
+  const hasSources = (sources?.length ?? 0) > 0 || (dataSources?.length ?? 0) > 0;
   return (
     <div className="mt-12 space-y-12">
       <section>
@@ -235,6 +263,60 @@ export function CockpitBody({ label, methodology, buyerGuide, faq, reviewer, ver
           ))}
         </div>
       </section>
+
+      {relatedLinks && relatedLinks.length > 0 && (
+        <section>
+          <h2 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--sfp-ink)' }}>
+            Related guides &amp; tools
+          </h2>
+          <ul className="mt-3 space-y-1.5">
+            {relatedLinks.map((l) => (
+              <li key={l.href} className="text-[15px] leading-relaxed">
+                <a href={l.href} className="underline" style={{ color: 'var(--sfp-navy)' }}>
+                  {l.label}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {hasSources && (
+        <section>
+          <h2 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--sfp-ink)' }}>
+            Sources &amp; references
+          </h2>
+          <p className="mt-3 text-[15px] leading-relaxed" style={{ color: 'var(--sfp-slate)' }}>
+            Provider data is collected from official pricing and disclosure pages and re-verified on the
+            dates shown. Regulatory references link to the official register or scheme page.
+          </p>
+          {sources && sources.length > 0 && (
+            <ul className="mt-3 space-y-1.5">
+              {sources.map((s) => (
+                <li key={s.url} className="text-[14px] leading-relaxed" style={{ color: 'var(--sfp-slate)' }}>
+                  {/* Regulator/scheme citations: editorial references, deliberately followed. */}
+                  <a href={s.url} target="_blank" rel="noopener noreferrer" className="underline" style={{ color: 'var(--sfp-navy)' }}>
+                    {s.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          )}
+          {dataSources && dataSources.length > 0 && (
+            <ul className="mt-3 space-y-1.5">
+              {dataSources.map((d) => (
+                <li key={d.url} className="text-[14px] leading-relaxed" style={{ color: 'var(--sfp-slate)' }}>
+                  {/* Provider pricing pages: commercial context → nofollow. */}
+                  <a href={d.url} target="_blank" rel="nofollow noopener noreferrer" className="underline" style={{ color: 'var(--sfp-navy)' }}>
+                    {d.name} — official pricing &amp; terms
+                  </a>
+                  {d.verifiedAt ? ` (verified ${fmtMonthYear(d.verifiedAt)})` : ''}
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      )}
 
       <FAQSection faqs={faq.map((f) => ({ question: f.q, answer: f.a }))} title="Frequently asked questions" includeSchema={false} />
 

@@ -15,9 +15,11 @@ import {
   Plus,
 } from 'lucide-react';
 import { CheckCircleIcon, MinusCircleIcon } from './check-icon';
+import type { Market } from '@/lib/i18n/config';
 import type { ProductForComparison } from '@/lib/comparison/types';
 import type { TopicConfig } from '@/lib/comparison/topics/types';
 import { costOverTime, type CostInputs } from '@/lib/comparison/cost';
+import { formatMoney, formatCostLabel } from '@/lib/comparison/money';
 
 const C = {
   ink: '#1A1F36',
@@ -40,8 +42,6 @@ const C = {
   pill: '#EAEFF9',
 } as const;
 
-const usd = (n: number) => `$${Math.round(n).toLocaleString('en-US')}`;
-
 const badgeColors: Record<string, { bg: string; fg: string }> = {
   gold: { bg: '#F5A623', fg: C.navyDark },
   green: { bg: '#E3F1E8', fg: '#1A6B3A' },
@@ -61,6 +61,7 @@ export interface CockpitCardProps {
   product: ProductForComparison;
   rank: number;
   config: TopicConfig;
+  market: Market;
   inputs: CostInputs;
   isMatch: boolean;
   selected: boolean;
@@ -76,6 +77,7 @@ export function CockpitCard({
   product: p,
   rank,
   config,
+  market,
   inputs,
   isMatch,
   selected,
@@ -217,8 +219,8 @@ export function CockpitCard({
           );
         })}
         <Spec
-          label={config.costModel.kind === 'monthly-plus-setup' ? `${inputs.amount}-mo cost` : `${inputs.years}-yr cost`}
-          value={usd(cost)}
+          label={formatCostLabel(config.costModel, inputs)}
+          value={formatMoney(cost, market)}
           win={isCostWinner(p)}
           subNode={<span style={{ color: C.indigo }}>re-ranks live</span>}
         />

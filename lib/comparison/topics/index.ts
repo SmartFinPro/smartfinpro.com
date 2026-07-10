@@ -1,5 +1,12 @@
 // lib/comparison/topics/index.ts
 // Topic-config registry. New "Best X" page = add one entry here + a seed migration.
+//
+// Keys come in two shapes:
+//   'category/topic'          — US editorial configs (USD, US regulators, US picks)
+//   'market:category/topic'   — market-specific configs (uk:/ca:/au: prefix)
+// getTopicConfig resolves the market-prefixed key first; the unprefixed key is
+// a fallback ONLY for the US market. UK/CA/AU must never receive a US config
+// (wrong currency/regulators/verdict picks — SEO addendum §14 stop condition).
 
 import type { TopicConfig } from './types';
 import { roboAdvisorsConfig } from './robo-advisors';
@@ -30,7 +37,15 @@ const REGISTRY: Record<string, TopicConfig> = {
   'personal-finance/credit-card-companies': creditCardCompaniesConfig,
 };
 
-export function getTopicConfig(category: string, topic: string): TopicConfig | null {
+export function getTopicConfig(category: string, topic: string, market?: string): TopicConfig | null {
+  if (market) {
+    const marketSpecific = REGISTRY[`${market}:${category}/${topic}`];
+    if (marketSpecific) return marketSpecific;
+    // Unprefixed configs are US editorial content — never serve them to
+    // another market. A missing market config means "not launched there yet"
+    // (route 404s / tile stays coming_soon), not "reuse the US page".
+    if (market !== 'us') return null;
+  }
   return REGISTRY[`${category}/${topic}`] ?? null;
 }
 

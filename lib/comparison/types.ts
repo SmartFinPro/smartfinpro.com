@@ -104,6 +104,9 @@ export interface ProductForComparison {
   deepDive: string | null;
   sourceType: 'official' | 'regulator' | 'editorial' | 'user_reviews' | null;
   confidence: 'high' | 'medium' | 'low' | null;
+  /** Primary source URL backing this row's attribute data (drives the
+   *  "Sources & references" list in CockpitBody). */
+  sourceUrl: string | null;
   dataVerifiedAt: string | null; // ISO date (YYYY-MM-DD) of last source re-verification
   /**
    * Attribution transparency for analytics:

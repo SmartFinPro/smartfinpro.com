@@ -115,6 +115,7 @@ function mapRow(row: any, activeOfferSlugs: Set<string>): ProductForComparison {
     deepDive: row.deep_dive ?? null,
     sourceType: row.source_type ?? null,
     confidence: row.confidence ?? null,
+    sourceUrl: row.source_url ?? null,
     dataVerifiedAt: row.data_verified_at ?? null,
     offerAttribution: null,
 
@@ -230,6 +231,7 @@ export function mapCockpitRow(
     deepDive: row.deep_dive ?? null,
     sourceType: row.source_type ?? null,
     confidence: row.confidence ?? null,
+    sourceUrl: row.source_url ?? null,
     dataVerifiedAt: row.data_verified_at ?? null,
     offerAttribution,
 
@@ -330,7 +332,7 @@ export async function getCockpitData(
   category: Category,
   topic: string,
 ): Promise<ProductForComparison[]> {
-  const config = getTopicConfig(category, topic);
+  const config = getTopicConfig(category, topic, market);
   if (!config) return [];
 
   const [linksRes, attrsRes] = await Promise.allSettled([
@@ -379,8 +381,8 @@ export async function getCockpitData(
 export async function getCockpitRouteParams(): Promise<
   { market: string; category: string; topic: string }[]
 > {
-  const registered = (p: { category: string; topic: string }) =>
-    getTopicConfig(p.category, p.topic) !== null;
+  const registered = (p: { market: string; category: string; topic: string }) =>
+    getTopicConfig(p.category, p.topic, p.market) !== null;
   const fromDevSeed = () =>
     Object.keys(DEV_SEED_ROWS)
       .map((k) => k.split('/'))
@@ -448,7 +450,7 @@ async function buildBestXIndex(market: Market): Promise<BestXIndexItem[]> {
       if (e.legacy) {
         return { ...base, status: 'legacy', href: `/${e.market}/${e.category}/best`, count: null, winner: null, winnerReviewHref: null, verifiedAt: null };
       }
-      const config = getTopicConfig(e.category, e.topic);
+      const config = getTopicConfig(e.category, e.topic, e.market);
       if (!config) return { ...base, status: 'coming_soon', href: null, count: null, winner: null, winnerReviewHref: null, verifiedAt: null };
       const products = await getCockpitData(e.market, e.category, e.topic);
       // Activate ONLY with real data — a merged config alone (prod seed may lag) must not light a tile.
