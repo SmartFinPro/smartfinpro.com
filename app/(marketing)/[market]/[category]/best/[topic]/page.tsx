@@ -113,7 +113,7 @@ function buildRelatedComparisons(market: string, category: string, topic: string
   // literal market segment — even for 'us' (see getCanonicalUrl, which never special-
   // cases 'us' to empty). A bare '/personal-finance/best/...' 301s through the proxy.
   return BEST_X_MANIFEST.filter(
-    (e) => e.market === market && !e.legacy && !(e.category === category && e.topic === topic) && getTopicConfig(e.category, e.topic),
+    (e) => e.market === market && !e.legacy && !(e.category === category && e.topic === topic) && getTopicConfig(e.category, e.topic, e.market),
   )
     .sort((a, b) => (a.category === category ? 0 : 1) - (b.category === category ? 0 : 1))
     .slice(0, 3)
@@ -134,7 +134,7 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: CockpitPageProps): Promise<Metadata> {
   const { market, category, topic } = await params;
   if (!isValidCombo(market, category)) return {};
-  const config = getTopicConfig(category, topic);
+  const config = getTopicConfig(category, topic, market);
   if (!config) return {};
 
   const year = new Date().getFullYear();
@@ -189,7 +189,7 @@ export async function generateMetadata({ params }: CockpitPageProps): Promise<Me
 export default async function CockpitPage({ params }: CockpitPageProps) {
   const { market, category, topic } = await params;
   if (!isValidCombo(market, category)) notFound();
-  const config = getTopicConfig(category, topic);
+  const config = getTopicConfig(category, topic, market);
   if (!config) notFound();
 
   const products = await getCockpitData(market as Market, category as Category, topic);
@@ -251,6 +251,14 @@ export default async function CockpitPage({ params }: CockpitPageProps) {
   const verdictPicks = buildVerdictPicks(config, products, market, category);
   const relatedComparisons = buildRelatedComparisons(market, category, topic);
 
+  // "Sources & references" — distinct per-provider primary sources (SEO §8).
+  const seenSourceUrls = new Set<string>();
+  const dataSources = products.flatMap((p) => {
+    if (!p.sourceUrl || seenSourceUrls.has(p.sourceUrl)) return [];
+    seenSourceUrls.add(p.sourceUrl);
+    return [{ name: p.displayName, url: p.sourceUrl, verifiedAt: p.dataVerifiedAt }];
+  });
+
   return (
     <div style={{ background: 'var(--sfp-gray)' }}>
       <div className="mx-auto max-w-6xl px-4 pt-10">
@@ -263,6 +271,7 @@ export default async function CockpitPage({ params }: CockpitPageProps) {
           verifiedDate={modified}
           productCount={products.length}
           regulators={config.compliance.regulators}
+          complianceNotice={config.compliance.notice}
         />
       </div>
 
@@ -297,6 +306,9 @@ export default async function CockpitPage({ params }: CockpitPageProps) {
           faq={config.faq}
           reviewer={expert}
           verifiedDate={modified}
+          sources={config.sources}
+          relatedLinks={config.relatedLinks}
+          dataSources={dataSources}
         />
         <RelatedComparisons items={relatedComparisons} />
       </div>

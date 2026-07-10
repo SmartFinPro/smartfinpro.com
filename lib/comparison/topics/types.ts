@@ -89,6 +89,13 @@ export interface CostModelDef {
    * when omitted. The recurring fee always comes from `p.monthlyFee`.
    */
   setupFeeAccessor?: (p: Pick<ProductForComparison, 'attributes'>) => number | null;
+  /**
+   * Optional static label for the live-cost cell/column/row (e.g. "Spread
+   * cost", "Est. broker fee"). Without it, formatCostLabel
+   * (lib/comparison/money.ts) derives a per-kind default — set this for
+   * `fee-on-amount` topics where "Cost on volume" is too generic.
+   */
+  costLabel?: string;
   amountLabel: string;
   amountMin: number;
   amountMax: number;
@@ -142,4 +149,17 @@ export interface TopicConfig {
   buyerGuide: { h3: string; body: string }[];
   faq: FaqItem[];
   compliance: { notice: string; regulators: string[] };
+  /**
+   * External authority references (regulator registers, official protection-
+   * limit / fee-disclosure pages) rendered as a compact "Sources & references"
+   * list in CockpitBody (SEO addendum §8). Each link must support a concrete
+   * claim on the page — never a bare homepage link.
+   */
+  sources?: { label: string; url: string }[];
+  /**
+   * Internal related links (category pillar, tools/calculators, methodology,
+   * existing reviews) rendered in CockpitBody (SEO addendum §7). Canonical
+   * site-relative hrefs only — no redirecting/legacy variants.
+   */
+  relatedLinks?: { label: string; href: string }[];
 }

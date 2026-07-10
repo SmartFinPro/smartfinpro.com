@@ -40,11 +40,13 @@ export interface ComparisonCockpitProps {
   topic: string;
 }
 
-export function ComparisonCockpit({ products, category, topic }: ComparisonCockpitProps) {
+export function ComparisonCockpit({ products, market, category, topic }: ComparisonCockpitProps) {
   const { trackInteraction } = useComponentTracking('comparison-cockpit');
   // Resolved client-side: the config module is pure (no server imports). The
   // server route has already guaranteed a non-null config (else notFound()).
-  const config = getTopicConfig(category, topic)!;
+  // market MUST be passed — market-only topics (uk:/ca:/au: registry keys)
+  // resolve to null without it, and shared slugs would hydrate the US config.
+  const config = getTopicConfig(category, topic, market)!;
   const cm = config.costModel;
 
   const [amount, setAmount] = useState(cm.amountDefault);
@@ -326,6 +328,7 @@ export function ComparisonCockpit({ products, category, topic }: ComparisonCockp
 
       <CockpitDecisionBar
         config={config}
+        market={market}
         amount={amount}
         years={years}
         onAmount={setAmount}
@@ -407,6 +410,7 @@ export function ComparisonCockpit({ products, category, topic }: ComparisonCockp
         <CockpitTable
           products={visible}
           config={config}
+          market={market}
           inputs={inputs}
           sort={sort}
           dir={dir}
@@ -422,6 +426,7 @@ export function ComparisonCockpit({ products, category, topic }: ComparisonCockp
           all={visible}
           selectedSlugs={[...selection]}
           config={config}
+          market={market}
           inputs={inputs}
           onToggleSelect={toggleSelect}
           onOfferClick={onOfferClick}
@@ -434,6 +439,7 @@ export function ComparisonCockpit({ products, category, topic }: ComparisonCockp
               product={p}
               rank={i + 1}
               config={config}
+              market={market}
               inputs={inputs}
               isMatch={p.slug === matchSlug}
               selected={selection.has(p.slug)}

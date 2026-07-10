@@ -40,7 +40,7 @@ export default async function OpengraphImage({ params }: Props) {
   let topPick: { name: string; rating: number } | null = null;
 
   if (isValidCombo(market, category)) {
-    const config = getTopicConfig(category, topic);
+    const config = getTopicConfig(category, topic, market);
     if (config) {
       title = config.h1(new Date().getFullYear());
       // products is pre-ordered by the loader — index 0 is the top pick, same

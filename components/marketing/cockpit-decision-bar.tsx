@@ -3,8 +3,10 @@
 // quick-sorts, and the live cost sliders that re-rank everything. Config-driven.
 
 import { Sparkles, Zap, Calculator, ArrowRight, Coins, Percent, Wallet, Star, Users, type LucideIcon } from 'lucide-react';
+import type { Market } from '@/lib/i18n/config';
 import type { ProductForComparison } from '@/lib/comparison/types';
 import type { TopicConfig } from '@/lib/comparison/topics/types';
+import { formatMoney } from '@/lib/comparison/money';
 
 const C = {
   ink: '#1A1F36',
@@ -17,7 +19,6 @@ const C = {
 } as const;
 
 const CHIP_ICON: Record<string, LucideIcon> = { Coins, Percent, Wallet, Star, Users };
-const usd = (n: number) => `$${Math.round(n).toLocaleString('en-US')}`;
 
 export interface MatchRow {
   product: ProductForComparison;
@@ -27,6 +28,7 @@ export interface MatchRow {
 
 export interface CockpitDecisionBarProps {
   config: TopicConfig;
+  market: Market;
   amount: number;
   years: number;
   onAmount: (n: number) => void;
@@ -43,6 +45,7 @@ export interface CockpitDecisionBarProps {
 
 export function CockpitDecisionBar({
   config,
+  market,
   amount,
   years,
   onAmount,
@@ -167,7 +170,7 @@ export function CockpitDecisionBar({
                 {/* monthly-plus-setup repurposes this slider as a MONTHS dial, not a
                     dollar amount (credit repair: setup + monthly fee × months) — the
                     other 3 kinds keep the existing $-formatted display unchanged. */}
-                <b style={{ fontWeight: 700, color: C.navy }}>{cm.kind === 'monthly-plus-setup' ? `${amount} months` : usd(amount)}</b>
+                <b style={{ fontWeight: 700, color: C.navy }}>{cm.kind === 'monthly-plus-setup' ? `${amount} months` : formatMoney(amount, market)}</b>
               </div>
               <input className="ck-range" type="range" min={cm.amountMin} max={cm.amountMax} step={cm.amountStep} value={amount} aria-label={cm.amountLabel} onChange={(e) => onAmount(Number(e.target.value))} />
             </>

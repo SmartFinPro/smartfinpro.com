@@ -4,9 +4,11 @@
 // matrix highlights the winning cell per row. Config-driven rows.
 
 import { Plus, Check, X, ArrowRight, Columns3 } from 'lucide-react';
+import type { Market } from '@/lib/i18n/config';
 import type { ProductForComparison } from '@/lib/comparison/types';
 import type { TopicConfig } from '@/lib/comparison/topics/types';
 import { costOverTime, type CostInputs } from '@/lib/comparison/cost';
+import { formatMoney, formatCostLabel } from '@/lib/comparison/money';
 
 const C = {
   ink: '#1A1F36',
@@ -20,8 +22,6 @@ const C = {
   indigo: '#5046E5',
 } as const;
 
-const usd = (n: number) => `$${Math.round(n).toLocaleString('en-US')}`;
-
 interface Row {
   key: string;
   label: string;
@@ -34,18 +34,19 @@ export interface CockpitCompareProps {
   all: ProductForComparison[];
   selectedSlugs: string[];
   config: TopicConfig;
+  market: Market;
   inputs: CostInputs;
   onToggleSelect: (slug: string) => void;
   onOfferClick: (product: ProductForComparison) => void;
 }
 
-export function CockpitCompare({ all, selectedSlugs, config, inputs, onToggleSelect, onOfferClick }: CockpitCompareProps) {
+export function CockpitCompare({ all, selectedSlugs, config, market, inputs, onToggleSelect, onOfferClick }: CockpitCompareProps) {
   const bySlug = new Map(all.map((p) => [p.slug, p]));
   const ps = selectedSlugs.map((s) => bySlug.get(s)).filter((p): p is ProductForComparison => !!p);
 
   const rows: Row[] = [
     { key: 'rating', label: 'Our rating', render: (p) => (p.reviewCount === 0 ? 'Not yet rated' : p.rating.toFixed(1)), score: (p) => p.rating },
-    { key: 'cost', label: config.costModel.kind === 'monthly-plus-setup' ? `${inputs.amount}-mo cost` : `${inputs.years}-yr cost`, render: (p) => usd(costOverTime(p, config.costModel, inputs)), score: (p) => -costOverTime(p, config.costModel, inputs), indigo: true },
+    { key: 'cost', label: formatCostLabel(config.costModel, inputs), render: (p) => formatMoney(costOverTime(p, config.costModel, inputs), market), score: (p) => -costOverTime(p, config.costModel, inputs), indigo: true },
     ...config.compareRows.map((r) => ({ key: r.key, label: r.label, render: r.accessor, score: r.score ?? (() => 0) })),
   ];
 

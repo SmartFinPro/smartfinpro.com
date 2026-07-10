@@ -5,9 +5,11 @@
 
 import { ArrowDown, ArrowUp, Check, Minus, Star, ArrowRight, Award } from 'lucide-react';
 import { CheckCircleIcon } from './check-icon';
+import type { Market } from '@/lib/i18n/config';
 import type { ProductForComparison } from '@/lib/comparison/types';
 import type { TopicConfig } from '@/lib/comparison/topics/types';
 import { costOverTime, type CostInputs } from '@/lib/comparison/cost';
+import { formatMoney, formatCostLabel } from '@/lib/comparison/money';
 
 const C = {
   ink: '#1A1F36',
@@ -21,11 +23,10 @@ const C = {
   sky: '#E8F0FB',
 } as const;
 
-const usd = (n: number) => `$${Math.round(n).toLocaleString('en-US')}`;
-
 export interface CockpitTableProps {
   products: ProductForComparison[];
   config: TopicConfig;
+  market: Market;
   inputs: CostInputs;
   sort: string;
   dir: 'asc' | 'desc';
@@ -75,6 +76,7 @@ function SortHead({
 export function CockpitTable({
   products,
   config,
+  market,
   inputs,
   sort,
   dir,
@@ -103,7 +105,7 @@ export function CockpitTable({
             {config.specColumns.map((col) => (
               <SortHead key={col.key} label={col.label} sortKey={col.sortKey} active={sort === col.sortKey} dir={dir} onSort={onSort} />
             ))}
-            <SortHead label={config.costModel.kind === 'monthly-plus-setup' ? `${inputs.amount}-mo cost` : `${inputs.years}-yr cost`} sortKey="cost" active={sort === 'cost'} dir={dir} onSort={onSort} />
+            <SortHead label={formatCostLabel(config.costModel, inputs)} sortKey="cost" active={sort === 'cost'} dir={dir} onSort={onSort} />
             <th scope="col" style={{ width: 124 }} />
           </tr>
         </thead>
@@ -183,7 +185,7 @@ export function CockpitTable({
                     <span style={{ flex: 1, height: 6, background: '#E1E7F0', borderRadius: 4, overflow: 'hidden', minWidth: 40 }}>
                       <span style={{ display: 'block', height: '100%', width: `${Math.max(6, Math.round((cost / maxCost) * 100))}%`, background: costWin ? C.ctaGreen : C.navy, borderRadius: 4 }} />
                     </span>
-                    <span style={{ fontSize: 11.5, color: costWin ? C.greenDark : C.ink, fontWeight: costWin ? 700 : 400, minWidth: 42, textAlign: 'right' }}>{usd(cost)}</span>
+                    <span style={{ fontSize: 11.5, color: costWin ? C.greenDark : C.ink, fontWeight: costWin ? 700 : 400, minWidth: 42, textAlign: 'right' }}>{formatMoney(cost, market)}</span>
                   </div>
                 </td>
                 <td style={{ padding: '8px' }}>
