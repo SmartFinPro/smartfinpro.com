@@ -44,6 +44,9 @@ import { ukSavingsAccountsConfig } from './uk/savings-accounts';
 import { ukCfdBrokersConfig } from './uk/cfd-brokers';
 import { ukForexBrokersConfig } from './uk/forex-brokers';
 import { ukRemortgageBrokersConfig } from './uk/remortgage-brokers';
+import { ukAiToolsFinanceConfig } from './uk/ai-tools-finance';
+import { ukMoneySavingToolsConfig } from './uk/money-saving-tools';
+import { ukCybersecuritySmbConfig } from './uk/cybersecurity-smb';
 
 const REGISTRY: Record<string, TopicConfig> = {
   'personal-finance/robo-advisors': roboAdvisorsConfig,
@@ -97,6 +100,11 @@ const REGISTRY: Record<string, TopicConfig> = {
   'uk:trading/cfd-brokers': ukCfdBrokersConfig,
   'uk:forex/forex-brokers': ukForexBrokersConfig,
   'uk:remortgaging/remortgage-brokers': ukRemortgageBrokersConfig,
+
+  // ── UK (Stage 3 — AU/CA/UK rollout, Slice UK-3) ──
+  'uk:ai-tools/ai-tools-finance': ukAiToolsFinanceConfig,
+  'uk:cost-of-living/money-saving-tools': ukMoneySavingToolsConfig,
+  'uk:cybersecurity/cybersecurity-smb': ukCybersecuritySmbConfig,
 };
 
 export function getTopicConfig(category: string, topic: string, market?: string): TopicConfig | null {
