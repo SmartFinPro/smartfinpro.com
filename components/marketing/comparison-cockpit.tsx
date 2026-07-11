@@ -16,10 +16,12 @@ import { getTopicConfig } from '@/lib/comparison/topics/index';
 import { costOverTime, orderProducts, type CostInputs } from '@/lib/comparison/cost';
 import { useCockpitTracking } from '@/lib/analytics/cockpit-tracking';
 import type { CockpitCompareToggleSource, CockpitCtaClickMeta } from '@/lib/analytics/cockpit-events';
+import { resolveCockpitCta } from '@/lib/comparison/cta';
 import { CockpitDecisionBar, type MatchRow } from '@/components/marketing/cockpit-decision-bar';
 import { CockpitCard } from '@/components/marketing/cockpit-card';
 import { CockpitTable } from '@/components/marketing/cockpit-table';
 import { CockpitCompare } from '@/components/marketing/cockpit-compare';
+import { CockpitImpression } from '@/components/marketing/cockpit-impression';
 
 const C = {
   ink: '#1A1F36',
@@ -307,6 +309,29 @@ export function ComparisonCockpit({ products, market, category, topic }: Compari
     [],
   );
 
+  // Table/compare list every rendered product at once (horizontal scroll) —
+  // those batch events are honestly labelled impressionKind:'rendered', never
+  // used as a visibility denominator (that is cockpit_view's job).
+  const emitRenderedImpressions = useCallback(
+    (surface: 'table' | 'compare', onlySelected: boolean) => {
+      visibleRef.current.forEach((p, i) => {
+        if (onlySelected && !selection.has(p.slug)) return;
+        const cta = resolveCockpitCta(p);
+        ck.productImpressionOnce({
+          productSlug: p.slug,
+          providerName: p.displayName,
+          surface,
+          impressionKind: 'rendered',
+          rank: i + 1,
+          isTopPick: p.isTopPick,
+          ctaMode: cta.ctaMode,
+          destinationType: cta.destinationType,
+        });
+      });
+    },
+    [ck, selection],
+  );
+
   const views: { key: View; label: string; Icon: typeof LayoutGrid }[] = [
     { key: 'cards', label: 'Cards', Icon: LayoutGrid },
     { key: 'table', label: 'Table', Icon: TableIcon },
@@ -314,6 +339,10 @@ export function ComparisonCockpit({ products, market, category, topic }: Compari
   ];
 
   return (
+    <CockpitImpression
+      threshold={0}
+      onImpress={() => ck.viewOnce('cockpit', { productCount: products.length })}
+    >
     <div className="ck-root" style={{ fontVariantNumeric: 'tabular-nums' }}>
       <style>{`
         .ck-root .ck-cta::after{content:none !important}
@@ -473,49 +502,82 @@ export function ComparisonCockpit({ products, market, category, topic }: Compari
           </button>
         </div>
       ) : view === 'table' ? (
-        <CockpitTable
-          products={visible}
-          config={config}
-          market={market}
-          inputs={inputs}
-          sort={sort}
-          dir={dir}
-          onSort={onHeaderSort}
-          selection={selection}
-          onToggleSelect={toggleSelect}
-          isColWinner={isColWinner}
-          isCostWinner={isCostWinner}
-          onCtaClick={onCtaClick}
-        />
+        <CockpitImpression
+          threshold={0}
+          onImpress={() => {
+            ck.viewOnce('table', { productCount: visibleRef.current.length, view: 'table' });
+            emitRenderedImpressions('table', false);
+          }}
+        >
+          <CockpitTable
+            products={visible}
+            config={config}
+            market={market}
+            inputs={inputs}
+            sort={sort}
+            dir={dir}
+            onSort={onHeaderSort}
+            selection={selection}
+            onToggleSelect={toggleSelect}
+            isColWinner={isColWinner}
+            isCostWinner={isCostWinner}
+            onCtaClick={onCtaClick}
+          />
+        </CockpitImpression>
       ) : view === 'compare' ? (
-        <CockpitCompare
-          all={visible}
-          selectedSlugs={[...selection]}
-          config={config}
-          market={market}
-          inputs={inputs}
-          onToggleSelect={toggleSelect}
-          onCtaClick={onCtaClick}
-        />
+        <CockpitImpression
+          threshold={0}
+          onImpress={() => {
+            ck.viewOnce('compare', { productCount: selection.size, view: 'compare' });
+            emitRenderedImpressions('compare', true);
+          }}
+        >
+          <CockpitCompare
+            all={visible}
+            selectedSlugs={[...selection]}
+            config={config}
+            market={market}
+            inputs={inputs}
+            onToggleSelect={toggleSelect}
+            onCtaClick={onCtaClick}
+          />
+        </CockpitImpression>
       ) : (
         <div>
           {visible.map((p, i) => (
-            <CockpitCard
+            <CockpitImpression
               key={p.slug}
-              product={p}
-              rank={i + 1}
-              config={config}
-              market={market}
-              inputs={inputs}
-              isMatch={p.slug === matchSlug}
-              selected={selection.has(p.slug)}
-              expanded={expanded.has(p.slug)}
-              isColWinner={isColWinner}
-              isCostWinner={isCostWinner}
-              onToggleDetails={toggleDetails}
-              onToggleSelect={toggleSelect}
-              onCtaClick={onCtaClick}
-            />
+              threshold={0.35}
+              onImpress={() => {
+                const cta = resolveCockpitCta(p);
+                ck.productImpressionOnce({
+                  productSlug: p.slug,
+                  providerName: p.displayName,
+                  surface: 'card',
+                  impressionKind: 'viewport',
+                  rank: i + 1,
+                  isTopPick: p.isTopPick,
+                  ctaMode: cta.ctaMode,
+                  destinationType: cta.destinationType,
+                });
+              }}
+            >
+              <CockpitCard
+                product={p}
+                rank={i + 1}
+                config={config}
+                market={market}
+                inputs={inputs}
+                isMatch={p.slug === matchSlug}
+                selected={selection.has(p.slug)}
+                expanded={expanded.has(p.slug)}
+                isColWinner={isColWinner}
+                isCostWinner={isCostWinner}
+                onToggleDetails={toggleDetails}
+                onToggleSelect={toggleSelect}
+                onCtaClick={onCtaClick}
+              />
+            </CockpitImpression>
           ))}
         </div>
       )}
@@ -539,6 +601,7 @@ export function ComparisonCockpit({ products, market, category, topic }: Compari
         </div>
       )}
     </div>
+    </CockpitImpression>
   );
 }
 

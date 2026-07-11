@@ -93,6 +93,11 @@ function buildVerdictPicks(
       href: cta.href,
       external: cta.external,
       ctaLabel: cta.label,
+      productSlug: product.slug,
+      ctaMode: cta.ctaMode,
+      destinationType: cta.destinationType,
+      productCtaMode: product.ctaMode,
+      isTopPick: product.isTopPick,
     });
   }
   return picks;
@@ -251,6 +256,9 @@ export default async function CockpitPage({ params }: CockpitPageProps) {
             verifiedDate={modified}
             reviewerName={expert.name}
             reviewerCredential={expert.credentials[0]}
+            market={market}
+            category={category}
+            topic={topic}
           />
         </div>
       )}
