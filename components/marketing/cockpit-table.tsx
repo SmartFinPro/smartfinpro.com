@@ -11,6 +11,7 @@ import type { TopicConfig } from '@/lib/comparison/topics/types';
 import { costOverTime, type CostInputs } from '@/lib/comparison/cost';
 import { formatMoney, formatCostLabel } from '@/lib/comparison/money';
 import { resolveCockpitCta } from '@/lib/comparison/cta';
+import type { CockpitCompareToggleSource, CockpitCtaClickMeta } from '@/lib/analytics/cockpit-events';
 
 const C = {
   ink: '#1A1F36',
@@ -33,10 +34,10 @@ export interface CockpitTableProps {
   dir: 'asc' | 'desc';
   onSort: (key: string) => void;
   selection: Set<string>;
-  onToggleSelect: (slug: string) => void;
+  onToggleSelect: (slug: string, source?: CockpitCompareToggleSource) => void;
   isColWinner: (colKey: string, p: ProductForComparison) => boolean;
   isCostWinner: (p: ProductForComparison) => boolean;
-  onOfferClick: (product: ProductForComparison) => void;
+  onCtaClick: (product: ProductForComparison, meta: CockpitCtaClickMeta) => void;
 }
 
 function SortHead({
@@ -86,7 +87,7 @@ export function CockpitTable({
   onToggleSelect,
   isColWinner,
   isCostWinner,
-  onOfferClick,
+  onCtaClick,
 }: CockpitTableProps) {
   const costs = products.map((p) => costOverTime(p, config.costModel, inputs));
   const maxCost = Math.max(1, ...costs);
@@ -123,7 +124,7 @@ export function CockpitTable({
                   <button
                     type="button"
                     className="ck-tbl-check"
-                    onClick={() => onToggleSelect(p.slug)}
+                    onClick={() => onToggleSelect(p.slug, 'table')}
                     aria-pressed={selected}
                     aria-label={`Compare ${p.displayName}`}
                     style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
@@ -186,7 +187,7 @@ export function CockpitTable({
                     href={cta.href}
                     className="cmp-cta"
                     {...(cta.external ? { target: '_blank', rel: 'nofollow sponsored noopener' } : {})}
-                    onClick={cta.tracked ? () => onOfferClick(p) : undefined}
+                    onClick={() => onCtaClick(p, { surface: 'table', ctaPosition: 'primary', rank: i + 1, ctaMode: cta.ctaMode, destinationType: cta.destinationType })}
                     style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 4, width: '100%', padding: '7px 10px', borderRadius: 8, fontSize: 12, fontWeight: 600, textDecoration: 'none', whiteSpace: 'nowrap', background: C.ctaGreen, color: '#fff', border: 'none' }}
                   >
                     {cta.label} <ArrowRight size={12} aria-hidden="true" />

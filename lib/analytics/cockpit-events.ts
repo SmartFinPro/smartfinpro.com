@@ -49,6 +49,18 @@ export type CockpitDestinationType =
 
 export type CockpitImpressionKind = 'viewport' | 'rendered';
 
+export type CockpitCompareToggleSource = 'card' | 'table' | 'compare_chip' | 'compare_remove';
+
+/** Click metadata assembled at the call site from the EXACT rendered link
+ *  (primary CTA via resolveCockpitCta, title/secondary via resolveReviewCta). */
+export interface CockpitCtaClickMeta {
+  surface: CockpitSurface;
+  ctaPosition: 'primary' | 'secondary' | 'title';
+  rank?: number;
+  ctaMode: CockpitCtaMode;
+  destinationType: CockpitDestinationType;
+}
+
 export interface CockpitContext {
   market: string;
   category: string;
