@@ -4,6 +4,10 @@
 // applied to Supabase. The loader uses this ONLY when NODE_ENV !== 'production'
 // and the product_attributes query is empty/unavailable — it can never affect
 // production. Once the migration + seed are live, real DB rows take over.
+//
+// No "Most clicked"/"Trending" style badges here — those must come from real
+// cockpit_v1 tracking data (see lib/analytics/cockpit-events.ts) once enough
+// volume exists, never be hand-authored seed text.
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const BUSINESS_BANKING_US: any[] = [
@@ -11,7 +15,7 @@ const BUSINESS_BANKING_US: any[] = [
       slug: 'mercury', market: 'us', category: 'business-banking', display_name: 'Mercury',
       tagline: 'Best business banking for VC-backed startups', logo_url: null, verified: true,
       score: 9.4, rating: 4.5, review_count: 1240, monthly_fee: 0, signup_bonus: 0, fx_fee_pct: 1, atm_fee: 0, apy: 0, clicks: 1240,
-      badges: [{ type: 'gold', label: 'Top pick' }, { type: 'sky', label: 'Most clicked' }],
+      badges: [{ type: 'gold', label: 'Top pick' }],
       chips: ['FDIC up to $5M', 'Opens in ~10 min', 'US LLCs & C-Corps'],
       pros: ['No monthly fees, no minimums', '$5M FDIC via sweep network', 'Free USD wires + treasury option'],
       cons: ['No cash deposits', 'US-registered businesses only'],
@@ -100,7 +104,7 @@ export const DEV_SEED_ROWS: Record<string, any[]> = {
       score: 9.4, rating: 4.6, review_count: 3210, clicks: 3210, management_fee: 0.25, account_minimum: 500,
       attributes: { tlh: true, human_advisor: false, account_types: ['taxable', 'ira', 'roth', 'sep'], sipc: true, frac: true, sri: true, crypto: false },
       source_type: 'official', confidence: 'high', source_url: 'https://www.wealthfront.com/pricing', data_verified_at: '2026-06-28',
-      badges: [{ type: 'gold', label: 'Top pick' }, { type: 'sky', label: 'Most clicked' }],
+      badges: [{ type: 'gold', label: 'Top pick' }],
       chips: ['Auto tax-loss harvesting', '0.25% flat fee', '$500 minimum'],
       pros: ['Best-in-class tax-loss harvesting', 'Huge range of account types incl. 529', '4.5% APY on uninvested cash'],
       cons: ['No human advisor option', '$500 minimum to start'],
