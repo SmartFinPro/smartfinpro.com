@@ -30,7 +30,7 @@ import {
   HelpCircle,
 } from 'lucide-react';
 import type { Market, Category } from '@/lib/i18n/config';
-import { categoryConfig, marketCategories } from '@/lib/i18n/config';
+import { categoryConfig, marketCategories, marketConfig } from '@/lib/i18n/config';
 import type { BestXIndexItem } from '@/lib/comparison/loader';
 import { FAQSchema } from '@/components/seo/faq-schema';
 import type { FAQ } from '@/types';
@@ -255,6 +255,9 @@ export function BestXIndex({ market, items }: BestXIndexProps) {
         <span style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--sfp-slate)', display: 'block', marginBottom: '16px' }}>
           Best-X Comparisons
         </span>
+        <div style={{ fontSize: 'clamp(34px, 4.2vw, 48px)', lineHeight: 1, marginBottom: '10px' }} aria-hidden="true">
+          {marketConfig[market].flag}
+        </div>
         <h2 style={{ fontSize: 'clamp(26px, 3.2vw, 38px)', fontWeight: 800, color: 'var(--sfp-ink)', letterSpacing: '-0.6px', marginBottom: '16px', lineHeight: 1.15 }}>
           Compare the best financial products
         </h2>

@@ -21,6 +21,32 @@ import { cybersecuritySmbConfig } from './cybersecurity-smb';
 import { goldInvestingConfig } from './gold-investing';
 import { highYieldSavingsConfig } from './high-yield-savings';
 import { creditCardCompaniesConfig } from './credit-card-companies';
+import { auRoboAdvisorsConfig } from './au/robo-advisors';
+import { auBusinessBankAccountsConfig } from './au/business-bank-accounts';
+import { auSavingsAccountsConfig } from './au/savings-accounts';
+import { auForexBrokersConfig } from './au/forex-brokers';
+import { auGoldInvestingConfig } from './au/gold-investing';
+import { auCfdBrokersConfig } from './au/cfd-brokers';
+import { auSuperFundsConfig } from './au/super-funds';
+import { auAiToolsFinanceConfig } from './au/ai-tools-finance';
+import { auCybersecuritySmbConfig } from './au/cybersecurity-smb';
+import { caRoboAdvisorsConfig } from './ca/robo-advisors';
+import { caBusinessBankAccountsConfig } from './ca/business-bank-accounts';
+import { caTfsaRrspPlatformsConfig } from './ca/tfsa-rrsp-platforms';
+import { caForexBrokersConfig } from './ca/forex-brokers';
+import { caMortgageBrokersConfig } from './ca/mortgage-brokers';
+import { caGoldInvestingConfig } from './ca/gold-investing';
+import { caAiToolsFinanceConfig } from './ca/ai-tools-finance';
+import { caCybersecuritySmbConfig } from './ca/cybersecurity-smb';
+import { ukInvestingAppsConfig } from './uk/investing-apps';
+import { ukBusinessBankAccountsConfig } from './uk/business-bank-accounts';
+import { ukSavingsAccountsConfig } from './uk/savings-accounts';
+import { ukCfdBrokersConfig } from './uk/cfd-brokers';
+import { ukForexBrokersConfig } from './uk/forex-brokers';
+import { ukRemortgageBrokersConfig } from './uk/remortgage-brokers';
+import { ukAiToolsFinanceConfig } from './uk/ai-tools-finance';
+import { ukMoneySavingToolsConfig } from './uk/money-saving-tools';
+import { ukCybersecuritySmbConfig } from './uk/cybersecurity-smb';
 
 const REGISTRY: Record<string, TopicConfig> = {
   'personal-finance/robo-advisors': roboAdvisorsConfig,
@@ -35,6 +61,50 @@ const REGISTRY: Record<string, TopicConfig> = {
   'gold-investing/platforms': goldInvestingConfig,
   'personal-finance/high-yield-savings': highYieldSavingsConfig,
   'personal-finance/credit-card-companies': creditCardCompaniesConfig,
+
+  // ── Australia (Stage 1 — AU/CA/UK rollout, Slice AU-1) ──
+  'au:personal-finance/robo-advisors': auRoboAdvisorsConfig,
+  'au:business-banking/business-bank-accounts': auBusinessBankAccountsConfig,
+  'au:savings/savings-accounts': auSavingsAccountsConfig,
+
+  // ── Australia (Stage 1 — AU/CA/UK rollout, Slice AU-2) ──
+  'au:forex/forex-brokers': auForexBrokersConfig,
+  'au:gold-investing/platforms': auGoldInvestingConfig,
+  'au:trading/cfd-brokers': auCfdBrokersConfig,
+
+  // ── Australia (Stage 1 — AU/CA/UK rollout, Slice AU-3) ──
+  'au:superannuation/super-funds': auSuperFundsConfig,
+  'au:ai-tools/ai-tools-finance': auAiToolsFinanceConfig,
+  'au:cybersecurity/cybersecurity-smb': auCybersecuritySmbConfig,
+
+  // ── Canada (Stage 2 — AU/CA/UK rollout, Slice CA-1) ──
+  'ca:personal-finance/robo-advisors': caRoboAdvisorsConfig,
+  'ca:business-banking/business-bank-accounts': caBusinessBankAccountsConfig,
+  'ca:tax-efficient-investing/tfsa-rrsp-platforms': caTfsaRrspPlatformsConfig,
+
+  // ── Canada (Stage 2 — AU/CA/UK rollout, Slice CA-2) ──
+  'ca:forex/forex-brokers': caForexBrokersConfig,
+  'ca:housing/mortgage-brokers': caMortgageBrokersConfig,
+  'ca:gold-investing/platforms': caGoldInvestingConfig,
+
+  // ── Canada (Stage 2 — AU/CA/UK rollout, Slice CA-3) ──
+  'ca:ai-tools/ai-tools-finance': caAiToolsFinanceConfig,
+  'ca:cybersecurity/cybersecurity-smb': caCybersecuritySmbConfig,
+
+  // ── UK (Stage 3 — AU/CA/UK rollout, Slice UK-1) ──
+  'uk:personal-finance/investing-apps': ukInvestingAppsConfig,
+  'uk:business-banking/business-bank-accounts': ukBusinessBankAccountsConfig,
+  'uk:savings/savings-accounts': ukSavingsAccountsConfig,
+
+  // ── UK (Stage 3 — AU/CA/UK rollout, Slice UK-2) ──
+  'uk:trading/cfd-brokers': ukCfdBrokersConfig,
+  'uk:forex/forex-brokers': ukForexBrokersConfig,
+  'uk:remortgaging/remortgage-brokers': ukRemortgageBrokersConfig,
+
+  // ── UK (Stage 3 — AU/CA/UK rollout, Slice UK-3) ──
+  'uk:ai-tools/ai-tools-finance': ukAiToolsFinanceConfig,
+  'uk:cost-of-living/money-saving-tools': ukMoneySavingToolsConfig,
+  'uk:cybersecurity/cybersecurity-smb': ukCybersecuritySmbConfig,
 };
 
 export function getTopicConfig(category: string, topic: string, market?: string): TopicConfig | null {

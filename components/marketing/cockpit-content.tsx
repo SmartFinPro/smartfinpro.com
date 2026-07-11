@@ -115,6 +115,7 @@ export interface VerdictPick {
   name: string;
   why: string;
   rating: number;
+  reviewCount: number;
   href: string;
   external: boolean;
   ctaLabel: string;
@@ -185,7 +186,13 @@ export function CockpitVerdict({
             </span>
             <span className="mt-2.5 flex items-center justify-between">
               <span className="inline-flex items-center gap-1 text-[13px] font-semibold text-[color:var(--sfp-ink)]">
-                <Star size={12} aria-hidden="true" style={{ color: 'var(--sfp-gold)' }} /> {p.rating.toFixed(1)}
+                {p.reviewCount === 0 ? (
+                  <span style={{ fontStyle: 'italic', color: 'var(--sfp-slate)' }}>Not yet rated</span>
+                ) : (
+                  <>
+                    <Star size={12} aria-hidden="true" style={{ color: 'var(--sfp-gold)' }} /> {p.rating.toFixed(1)}
+                  </>
+                )}
               </span>
               <span className="inline-flex items-center gap-1 text-[13px] font-semibold text-[color:var(--sfp-navy)] transition-all duration-200 group-hover:translate-x-0.5 group-hover:text-[color:var(--sfp-green)]">
                 {p.ctaLabel} <ArrowUpRight size={13} aria-hidden="true" />

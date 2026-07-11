@@ -72,22 +72,33 @@ const marketHeroContent: Record<string, {
     secondaryCta: { text: 'How We Review', href: '/integrity' },
   },
   uk: {
-    title: 'UK Financial\nIntelligence, Delivered.',
-    subtitle: 'FCA-regulated broker reviews, cybersecurity solutions, and AI-powered tools — expert-reviewed for UK professionals.',
-    primaryCta: { text: 'Explore UK Reports', href: '/uk/trading' },
-    secondaryCta: { text: 'How We Review', href: '/tools' },
+    // Same message as the US hero (find/compare the best, decide with confidence,
+    // backed by research) — reworded per market so the 4 hero variants aren't
+    // literal duplicates of each other, not just a find/replace on the country
+    // name. Verb and subtitle opener differ market to market; the gold accent
+    // word stays "Best" everywhere for visual consistency with the US hero.
+    title: 'Compare the UK\'s\nBest Financial Products',
+    subtitle: 'Compare smarter with Best-X Compare — FCA-regulated broker reviews, cybersecurity solutions and AI tools, independently researched so you can decide with confidence.',
+    // Mirrors the US hero: primary CTA anchors to the Best-X tile grid now that
+    // UK has live cockpit tiles (Stage 3 slice 1).
+    primaryCta: { text: 'Start now', href: '#best-x-compare' },
+    secondaryCta: { text: 'How We Review', href: '/integrity' },
   },
   ca: {
-    title: 'Canadian Finance\nResearch, Simplified.',
-    subtitle: 'CIRO-compliant broker reviews, AI tools, and financial products — expert-reviewed for Canadian professionals.',
-    primaryCta: { text: 'Explore CA Reports', href: '/ca/forex' },
-    secondaryCta: { text: 'How We Review', href: '/tools' },
+    title: 'Explore Canada\'s\nBest Financial Products',
+    subtitle: 'Make smarter decisions with Best-X Compare — CIRO-compliant broker reviews, AI tools and financial products, independently researched so you can decide with confidence.',
+    // Mirrors the US hero: primary CTA anchors to the Best-X tile grid now that
+    // CA has live cockpit tiles (Stage 2 slice 1).
+    primaryCta: { text: 'Start now', href: '#best-x-compare' },
+    secondaryCta: { text: 'How We Review', href: '/integrity' },
   },
   au: {
-    title: 'Australian Finance\nResearch, Mastered.',
-    subtitle: 'ASIC-licensed broker reviews, cybersecurity solutions, and AI tools — expert-reviewed for Australian professionals.',
-    primaryCta: { text: 'Explore AU Reports', href: '/au/trading' },
-    secondaryCta: { text: 'How We Review', href: '/tools' },
+    title: 'Discover Australia\'s\nBest Financial Products',
+    subtitle: 'Find your best fit with Best-X Compare — ASIC-licensed broker reviews, cybersecurity solutions and AI tools, independently researched so you can decide with confidence.',
+    // Mirrors the US hero: primary CTA anchors to the Best-X tile grid now that
+    // AU has live cockpit tiles (Stage 1 slice 1).
+    primaryCta: { text: 'Start now', href: '#best-x-compare' },
+    secondaryCta: { text: 'How We Review', href: '/integrity' },
   },
 };
 

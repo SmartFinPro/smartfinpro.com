@@ -4,14 +4,11 @@
 
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
+import type { RelatedComparisonItem } from '@/lib/comparison/related-comparisons';
+
+export type { RelatedComparisonItem };
 
 const BORDER = '#E1E7F0';
-
-export interface RelatedComparisonItem {
-  href: string;
-  label: string;
-  categoryLabel: string;
-}
 
 interface RelatedComparisonsProps {
   items: RelatedComparisonItem[];
