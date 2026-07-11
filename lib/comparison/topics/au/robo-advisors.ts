@@ -56,9 +56,9 @@ export const auRoboAdvisorsConfig: TopicConfig = {
   h1: (y) => `Best robo-advisors & micro-investing apps in Australia (${y})`,
   metaTitle: (y) => `Best Robo-Advisors Australia (${y})`,
   metaDescription: (y) =>
-    `Compare Australian robo-advisors and micro-investing apps of ${y} by fees, minimums, CHESS vs custodial ownership and features — independent, expert-reviewed.`,
+    `Compare Australian robo-advisors and micro-investing apps of ${y} by fees, minimums, CHESS vs custodial ownership and features, independent, expert-reviewed.`,
   intro:
-    'Independent, side-by-side comparison of Australian robo-advisors and micro-investing apps — ranked by effective cost, ownership model and features, with a live multi-year cost projection.',
+    'Independent, side-by-side comparison of Australian robo-advisors and micro-investing apps, ranked by effective cost, ownership model and features, with a live multi-year cost projection.',
   publishedDate: '2026-07-10',
   attributesSchema: auRoboAdvisorsAttributesSchema,
 
@@ -205,27 +205,27 @@ export const auRoboAdvisorsConfig: TopicConfig = {
     ],
   },
   methodology:
-    "We compare each provider's real fee structure, account minimum, ownership model (CHESS-sponsored vs. custodial/pooled) and features from official pricing and disclosure pages, re-verified quarterly. Because this category mixes flat-fee micro-investing apps with percentage-fee robo-advisors, the \"effective fee\" shown is each provider's own headline cost converted to an annualised percentage at a representative balance — the full real-world mechanics (flat $/month, tiered %, per-trade brokerage) are always shown in the fee detail below the effective figure, never hidden behind it. The multi-year cost projection assumes a 7% p.a. growth rate, a standard long-term diversified-portfolio assumption. Rankings never depend on commissions — every provider on this page is currently a visit-only listing.",
+    "We compare each provider's real fee structure, account minimum, ownership model (CHESS-sponsored vs. custodial/pooled) and features from official pricing and disclosure pages, re-verified quarterly. Because this category mixes flat-fee micro-investing apps with percentage-fee robo-advisors, the \"effective fee\" shown is each provider's own headline cost converted to an annualised percentage at a representative balance: the full real-world mechanics (flat $/month, tiered %, per-trade brokerage) are always shown in the fee detail below the effective figure, never hidden behind it. The multi-year cost projection assumes a 7% p.a. growth rate, a standard long-term diversified-portfolio assumption. Rankings never depend on commissions; every provider on this page is currently a visit-only listing.",
   buyerGuide: [
     {
       h3: 'CHESS-sponsored vs. custodial ownership',
-      body: "Only Stockspot, CommSec Pocket and InvestSMART hold your ETFs on the CHESS subregister under your own Holder Identification Number (HIN) — you directly own the securities. Raiz, Spaceship, Sharesies and Pearler Micro use a pooled managed-fund or custodial/nominee structure — you're the beneficial owner via a trustee, which is a normal and legal structure but a genuinely different risk and portability profile, especially if the provider is ever wound up.",
+      body: "Only Stockspot, CommSec Pocket and InvestSMART hold your ETFs on the CHESS subregister under your own Holder Identification Number (HIN): you directly own the securities. Raiz, Spaceship, Sharesies and Pearler Micro use a pooled managed-fund or custodial/nominee structure. You're the beneficial owner via a trustee, which is a normal and legal structure but a genuinely different risk and portability profile, especially if the provider is ever wound up.",
     },
     {
       h3: 'Micro-investing apps vs. true robo-advisors',
-      body: 'Raiz, Spaceship, CommSec Pocket, Sharesies and Pearler Micro are built around small, automated or round-up investing with flat monthly fees — cheap at larger balances, proportionally expensive on very small ones. Stockspot and InvestSMART are closer to a traditional robo-advisor: a percentage management fee, a real minimum investment, and automatic rebalancing across a full diversified portfolio.',
+      body: 'Raiz, Spaceship, CommSec Pocket, Sharesies and Pearler Micro are built around small, automated or round-up investing with flat monthly fees, cheap at larger balances, proportionally expensive on very small ones. Stockspot and InvestSMART are closer to a traditional robo-advisor: a percentage management fee, a real minimum investment, and automatic rebalancing across a full diversified portfolio.',
     },
     {
       h3: 'Flat fees get expensive on small balances',
-      body: 'A$2–6.50/month sounds trivial, but on a $2,000 balance that is 1.2%–3.9% per year — often more than a percentage-fee robo-advisor would charge on the same amount. Use the calculator above with your real starting balance, not the marketing headline.',
+      body: 'A$2–6.50/month sounds trivial, but on a $2,000 balance that is 1.2%–3.9% per year, often more than a percentage-fee robo-advisor would charge on the same amount. Use the calculator above with your real starting balance, not the marketing headline.',
     },
     {
       h3: 'Linked superannuation products',
-      body: 'Raiz, Spaceship, Stockspot and Pearler all offer a separate, linked super product alongside their investing app. These are different products with their own fees and PDS — comparing them properly belongs on our dedicated super funds page, not folded into this one.',
+      body: 'Raiz, Spaceship, Stockspot and Pearler all offer a separate, linked super product alongside their investing app. These are different products with their own fees and PDS: comparing them properly belongs on our dedicated super funds page, not folded into this one.',
     },
     {
       h3: 'These are General Advice, not personal financial advice',
-      body: 'All 7 providers operate under an ASIC Australian Financial Services Licence (several via an Authorised Representative arrangement rather than their own AFSL — shown per provider). Robo-advice and portfolio suggestions are General or Scaled Advice, not a personal recommendation, and investment values can fall as well as rise.',
+      body: 'All 7 providers operate under an ASIC Australian Financial Services Licence (several via an Authorised Representative arrangement rather than their own AFSL, shown per provider). Robo-advice and portfolio suggestions are General or Scaled Advice, not a personal recommendation, and investment values can fall as well as rise.',
     },
   ],
   faq: [
@@ -235,19 +235,19 @@ export const auRoboAdvisorsConfig: TopicConfig = {
     },
     {
       q: 'Is my money safe if a robo-advisor or micro-investing app fails?',
-      a: "It depends on the ownership model. CHESS-sponsored providers (Stockspot, CommSec Pocket, InvestSMART) hold your ETFs directly in your name — they remain yours regardless of what happens to the provider. Custodial/pooled providers (Raiz, Spaceship, Sharesies, Pearler Micro) hold assets via a trustee or nominee, separated from the provider's own funds, but the wind-down process runs through that custodian rather than being instantly and directly yours. Neither structure is covered by the government's Financial Claims Scheme, which only applies to bank deposits — these are market investments, not deposits.",
+      a: "It depends on the ownership model. CHESS-sponsored providers (Stockspot, CommSec Pocket, InvestSMART) hold your ETFs directly in your name: they remain yours regardless of what happens to the provider. Custodial/pooled providers (Raiz, Spaceship, Sharesies, Pearler Micro) hold assets via a trustee or nominee, separated from the provider's own funds, but the wind-down process runs through that custodian rather than being instantly and directly yours. Neither structure is covered by the government's Financial Claims Scheme, which only applies to bank deposits. These are market investments, not deposits.",
     },
     {
       q: 'How is the multi-year cost calculated?',
-      a: "We convert each provider's real pricing (flat monthly fee, percentage management fee, or a mix) into an effective annual percentage at your chosen balance, then project it forward assuming 7% p.a. portfolio growth and compounding fees. Move the amount and years sliders to see the dollar impact on your own numbers — the ranking updates live.",
+      a: "We convert each provider's real pricing (flat monthly fee, percentage management fee, or a mix) into an effective annual percentage at your chosen balance, then project it forward assuming 7% p.a. portfolio growth and compounding fees. Move the amount and years sliders to see the dollar impact on your own numbers: the ranking updates live.",
     },
     {
       q: 'Do I need a minimum amount to start?',
-      a: "No — several apps have no minimum at all (Spaceship, Sharesies, CommSec Pocket accepts trades from A$50, Raiz and Pearler Micro from A$5). Stockspot requires A$1,000 and InvestSMART requires A$10,000, reflecting their fuller, more traditional robo-advisor model.",
+      a: "No, several apps have no minimum at all (Spaceship, Sharesies, CommSec Pocket accepts trades from A$50, Raiz and Pearler Micro from A$5). Stockspot requires A$1,000 and InvestSMART requires A$10,000, reflecting their fuller, more traditional robo-advisor model.",
     },
     {
       q: 'How current is this data?',
-      a: 'Every fee, minimum and feature on this page was verified against the provider\'s official pricing or disclosure page on 10 July 2026 and is re-checked quarterly. Fee structures and promotions can change — confirm the current terms on the provider\'s site (and its Product Disclosure Statement) before investing.',
+      a: 'Every fee, minimum and feature on this page was verified against the provider\'s official pricing or disclosure page on 10 July 2026 and is re-checked quarterly. Fee structures and promotions can change, so confirm the current terms on the provider\'s site (and its Product Disclosure Statement) before investing.',
     },
   ],
   compliance: {
@@ -257,9 +257,9 @@ export const auRoboAdvisorsConfig: TopicConfig = {
   },
 
   sources: [
-    { label: 'ASIC Moneysmart — robo-advice', url: 'https://moneysmart.gov.au/financial-advice/robo-advice' },
-    { label: 'ASIC — search a financial services licence', url: 'https://connectonline.asic.gov.au/' },
-    { label: 'Morningstar AU — CHESS vs custodian ownership', url: 'https://www.morningstar.com.au/stocks/chess-or-custodian-making-the-right-move-with-your-broker' },
+    { label: 'ASIC Moneysmart: robo-advice', url: 'https://moneysmart.gov.au/financial-advice/robo-advice' },
+    { label: 'ASIC: search a financial services licence', url: 'https://connectonline.asic.gov.au/' },
+    { label: 'Morningstar AU: CHESS vs custodian ownership', url: 'https://www.morningstar.com.au/stocks/chess-or-custodian-making-the-right-move-with-your-broker' },
   ],
   relatedLinks: [
     { label: 'Australia personal finance hub', href: '/au/personal-finance' },

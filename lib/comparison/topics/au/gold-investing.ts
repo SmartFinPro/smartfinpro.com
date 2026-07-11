@@ -65,9 +65,9 @@ export const auGoldInvestingConfig: TopicConfig = {
   h1: (y) => `Best gold investing platforms in Australia (${y})`,
   metaTitle: (y) => `Best Gold Dealers Australia (${y})`,
   metaDescription: (y) =>
-    `Compare Australian gold bullion dealers of ${y} by premium over spot, storage fees and accreditation — independent, expert-reviewed, sourced.`,
+    `Compare Australian gold bullion dealers of ${y} by premium over spot, storage fees and accreditation, independent, expert-reviewed, sourced.`,
   intro:
-    'Independent, side-by-side comparison of Australian physical gold bullion dealers — ranked by premium over spot, storage fees and accreditation, with regulatory context most comparison sites skip.',
+    'Independent, side-by-side comparison of Australian physical gold bullion dealers, ranked by premium over spot, storage fees and accreditation, with regulatory context most comparison sites skip.',
   publishedDate: '2026-07-10',
   attributesSchema: auGoldInvestingAttributesSchema,
 
@@ -184,7 +184,7 @@ export const auGoldInvestingConfig: TopicConfig = {
 
   verdict: {
     intro:
-      "Government-owned, LBMA Good Delivery-accredited, and carrying a resolved, transparently disclosed 2023-25 AUSTRAC compliance matter rather than a hidden one — that mix of pedigree and disclosure makes The Perth Mint, Australia's only government mint, our top pick. Among independent dealers, Ainslie Bullion has the longest track record (trading since 1974) and a clean complaint history. As Good As Gold Australia stands out for a different reason: the strongest independently corroborated customer rating we found in this comparison.",
+      "Government-owned, LBMA Good Delivery-accredited, and carrying a resolved, transparently disclosed 2023-25 AUSTRAC compliance matter rather than a hidden one: that mix of pedigree and disclosure makes The Perth Mint, Australia's only government mint, our top pick. Among independent dealers, Ainslie Bullion has the longest track record (trading since 1974) and a clean complaint history. As Good As Gold Australia stands out for a different reason: the strongest independently corroborated customer rating we found in this comparison.",
     picks: [
       { slug: 'perth-mint', label: 'Best overall / government-backed' },
       { slug: 'ainslie-bullion', label: 'Most established independent dealer' },
@@ -192,41 +192,41 @@ export const auGoldInvestingConfig: TopicConfig = {
     ],
   },
   methodology:
-    "We compare each dealer's premium over spot, storage fee structure, buyback availability and accreditation (government mint, LBMA-accredited refiner, authorised distributor, or unaccredited retail dealer) from official pricing pages and disclosures, cross-checked against independent review platforms. Physical bullion is NOT an ASIC-regulated financial product in Australia — no dealer here requires an AFSL, and AFCA dispute resolution generally does not apply — so we weight accreditation, track record and complaint history more heavily than a typical regulated-product comparison. We disclose real, sourced regulatory and complaint history plainly rather than silently omitting a candidate, and note explicitly wherever a figure (premium %, exact rating) could not be independently confirmed at research time. Rankings never depend on commissions — every provider on this page is currently a visit-only listing.",
+    "We compare each dealer's premium over spot, storage fee structure, buyback availability and accreditation (government mint, LBMA-accredited refiner, authorised distributor, or unaccredited retail dealer) from official pricing pages and disclosures, cross-checked against independent review platforms. Physical bullion is NOT an ASIC-regulated financial product in Australia (no dealer here requires an AFSL, and AFCA dispute resolution generally does not apply), so we weight accreditation, track record and complaint history more heavily than a typical regulated-product comparison. We disclose real, sourced regulatory and complaint history plainly rather than silently omitting a candidate, and note explicitly wherever a figure (premium %, exact rating) could not be independently confirmed at research time. Rankings never depend on commissions; every provider on this page is currently a visit-only listing.",
   buyerGuide: [
     {
       h3: 'Bullion is not a regulated financial product',
       body: "ASIC Moneysmart is explicit: direct physical precious metals investing is not regulated by ASIC as a financial product, unlike shares, managed funds or gold ETFs. No AFSL is required to sell bullion, and buyers generally cannot access AFCA if a dispute arises. Your only real protection is AUSTRAC's AML/CTF reporting-entity regime (identity verification, not consumer protection) plus ordinary consumer law.",
     },
     {
-      h3: 'Premium over spot and storage — the two numbers that matter',
-      body: "The premium over spot (the markup you pay above the live gold price) and any ongoing storage fee (if you don't take physical delivery) are the two real cost drivers. Several dealers in this comparison could not have their current premium independently confirmed at research time — always get a live, dated quote before buying.",
+      h3: 'Premium over spot and storage: the two numbers that matter',
+      body: "The premium over spot (the markup you pay above the live gold price) and any ongoing storage fee (if you don't take physical delivery) are the two real cost drivers. Several dealers in this comparison could not have their current premium independently confirmed at research time. Always get a live, dated quote before buying.",
     },
     {
       h3: 'Allocated vs. unallocated vs. take-delivery storage',
-      body: "Unallocated storage is usually free but means you own a claim on a pooled holding rather than a specific serialised item — a counterparty-risk trade-off. Allocated storage costs more (typically well under 1% p.a.) but the specific bar or coin is legally yours and segregated. Taking physical delivery avoids storage fees entirely but shifts security and insurance risk to you.",
+      body: "Unallocated storage is usually free but means you own a claim on a pooled holding rather than a specific serialised item, a counterparty-risk trade-off. Allocated storage costs more (typically well under 1% p.a.) but the specific bar or coin is legally yours and segregated. Taking physical delivery avoids storage fees entirely but shifts security and insurance risk to you.",
     },
     {
       h3: 'How to spot a legitimate dealer',
-      body: 'Look for AUSTRAC reporting-entity registration (legally mandatory — ask directly, as there is no public per-dealer lookup), sourcing from LBMA Good Delivery-accredited refiners or authorised mint distributorship, a genuine published buyback policy, and an established operating history with a real physical address. Be wary of anything marketed as "digital gold" with passive-return or referral-bonus promises — ASIC has specifically warned this pattern is associated with unlicensed schemes.',
+      body: 'Look for AUSTRAC reporting-entity registration (legally mandatory; ask directly, as there is no public per-dealer lookup), sourcing from LBMA Good Delivery-accredited refiners or authorised mint distributorship, a genuine published buyback policy, and an established operating history with a real physical address. Be wary of anything marketed as "digital gold" with passive-return or referral-bonus promises. ASIC has specifically warned this pattern is associated with unlicensed schemes.',
     },
     {
       h3: 'Why is Gold Stackers ranked last, not excluded?',
-      body: 'A specific, dated (February 2026) customer complaint describes a fully-paid silver order left undelivered for weeks with no tracking, followed by a refusal to refund and an offer to liquidate at buy-back price instead — the most concerning record we found among the 7 dealers researched for this page. We disclose it plainly rather than silently dropping the candidate, and rank it last as a result. If you\'re considering Gold Stackers, get a clear delivery timeline and dispute-resolution process in writing before paying.',
+      body: 'A specific, dated (February 2026) customer complaint describes a fully-paid silver order left undelivered for weeks with no tracking, followed by a refusal to refund and an offer to liquidate at buy-back price instead. This is the most concerning record we found among the 7 dealers researched for this page. We disclose it plainly rather than silently dropping the candidate, and rank it last as a result. If you\'re considering Gold Stackers, get a clear delivery timeline and dispute-resolution process in writing before paying.',
     },
   ],
   faq: [
     {
       q: 'Is buying gold bullion regulated in Australia?',
-      a: "Not as a financial product. ASIC Moneysmart explicitly states direct physical precious metals investing is not ASIC-regulated — no dealer needs an AFSL, and AFCA generally does not cover bullion disputes. The overlapping regulation is AUSTRAC's AML/CTF reporting-entity regime, which governs identity verification, not consumer protection. This is true of every dealer on this page, not just some.",
+      a: "Not as a financial product. ASIC Moneysmart explicitly states direct physical precious metals investing is not ASIC-regulated: no dealer needs an AFSL, and AFCA generally does not cover bullion disputes. The overlapping regulation is AUSTRAC's AML/CTF reporting-entity regime, which governs identity verification, not consumer protection. This is true of every dealer on this page, not just some.",
     },
     {
       q: 'What is the best gold dealer in Australia?',
-      a: "The short answer is The Perth Mint — it is Australia's only government-owned mint (backed by the Western Australian Government) and an LBMA Good Delivery-accredited refiner, the strongest accreditation combination we found among these seven dealers. For an independent alternative, Ainslie Bullion has traded since 1974 with a clean complaint record. And on customer sentiment alone, As Good As Gold Australia posts the strongest independently corroborated rating in the group.",
+      a: "The short answer is The Perth Mint: it is Australia's only government-owned mint (backed by the Western Australian Government) and an LBMA Good Delivery-accredited refiner, the strongest accreditation combination we found among these seven dealers. For an independent alternative, Ainslie Bullion has traded since 1974 with a clean complaint record. And on customer sentiment alone, As Good As Gold Australia posts the strongest independently corroborated rating in the group.",
     },
     {
       q: 'What is a typical premium over spot price?',
-      a: "It varies by dealer, product and live gold price, and several current figures could not be independently confirmed for this comparison at research time — always get a live, dated quote directly from the dealer before buying rather than relying on a historical percentage.",
+      a: "It varies by dealer, product and live gold price, and several current figures could not be independently confirmed for this comparison at research time. Always get a live, dated quote directly from the dealer before buying rather than relying on a historical percentage.",
     },
     {
       q: 'Should I choose allocated storage, unallocated storage, or take delivery?',
@@ -234,19 +234,19 @@ export const auGoldInvestingConfig: TopicConfig = {
     },
     {
       q: 'How current is this data?',
-      a: 'Every fee, accreditation and complaint reference on this page was researched against official sources and independent review platforms on 10 July 2026. Premiums over spot change with the live gold price, effectively daily — always confirm a current quote directly with the dealer before purchasing.',
+      a: 'Every fee, accreditation and complaint reference on this page was researched against official sources and independent review platforms on 10 July 2026. Premiums over spot change with the live gold price, effectively daily, so always confirm a current quote directly with the dealer before purchasing.',
     },
   ],
   compliance: {
     notice:
-      'Not financial advice. Physical bullion is not an ASIC-regulated financial product — no dealer on this page requires an AFSL and AFCA dispute resolution generally does not apply. Confirm current pricing directly with the dealer before purchasing.',
+      'Not financial advice. Physical bullion is not an ASIC-regulated financial product: no dealer on this page requires an AFSL and AFCA dispute resolution generally does not apply. Confirm current pricing directly with the dealer before purchasing.',
     regulators: [],
   },
 
   sources: [
-    { label: 'ASIC Moneysmart — check before you invest', url: 'https://moneysmart.gov.au/check-and-report-scams/check-before-you-invest' },
-    { label: 'ASIC — digital gold vault warning', url: 'https://www.asic.gov.au/about-asic/news-centre/news-items/asic-warns-consumers-of-suspicious-investment-opportunities-in-digital-gold-vaults/' },
-    { label: 'LBMA — Good Delivery current list (gold)', url: 'https://www.lbma.org.uk/good-delivery/gold-current-list' },
+    { label: 'ASIC Moneysmart: check before you invest', url: 'https://moneysmart.gov.au/check-and-report-scams/check-before-you-invest' },
+    { label: 'ASIC: digital gold vault warning', url: 'https://www.asic.gov.au/about-asic/news-centre/news-items/asic-warns-consumers-of-suspicious-investment-opportunities-in-digital-gold-vaults/' },
+    { label: 'LBMA: Good Delivery current list (gold)', url: 'https://www.lbma.org.uk/good-delivery/gold-current-list' },
   ],
   relatedLinks: [
     { label: 'Australia gold investing hub', href: '/au/gold-investing' },

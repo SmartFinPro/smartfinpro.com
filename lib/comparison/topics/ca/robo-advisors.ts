@@ -1,24 +1,24 @@
 // lib/comparison/topics/ca/robo-advisors.ts
-// TopicConfig for "Best Robo-Advisors & Investing Apps (Canada)" —
+// TopicConfig for "Best Robo-Advisors & Investing Apps (Canada)",
 // registered under 'ca:personal-finance/robo-advisors'. Shares the
 // 'personal-finance/robo-advisors' slug with us/au for hreflang clustering;
-// fully independent CA-specific editorial config. Pure module — no
+// fully independent CA-specific editorial config. Pure module: no
 // React/server imports.
 //
 // CA-specific regulatory nuance (SEO addendum §4): CIRO is the investment-
 // dealer regulator; CIPF protects client assets to $1M/category if a MEMBER
 // FIRM becomes insolvent. Several candidates (Justwealth, Nest Wealth, CI
 // Direct Investing) are provincially-registered PORTFOLIO MANAGERS, not CIRO
-// dealers themselves — their CIPF protection flows through a separate
+// dealers themselves; their CIPF protection flows through a separate
 // CIRO/CIPF-member custodian, not the portfolio manager directly. Disclosed
 // per row via `regulator_type`/`custodian_note`, never conflated.
 //
 // Editorial disclosure (not silent exclusion): Moka's pricing is mid-
 // transition (Mogo → Orion Digital rebrand, moka.ai → intelligentinvesting.ai)
 // with a live discrepancy between legacy ($1-4/mo) and current-site ($20/mo)
-// figures — disclosed, ranked last. CI Direct Investing's operational status
+// figures; disclosed, ranked last. CI Direct Investing's operational status
 // (previously ambiguous) is confirmed live/operational under new Mubadala
-// Capital ownership (CI Financial take-private, Aug 2025) — disclosed.
+// Capital ownership (CI Financial take-private, Aug 2025), disclosed.
 
 import { z } from 'zod';
 import type { TopicConfig } from './../types';
@@ -28,7 +28,7 @@ export const caRoboAdvisorsAttributesSchema = z
   .object({
     account_types: z.array(z.string()).min(1),
     regulator_type: z.enum(['ciro_dealer', 'portfolio_manager']),
-    custodian_note: z.string(), // required when regulator_type='portfolio_manager' — names the CIRO/CIPF custodian
+    custodian_note: z.string(), // required when regulator_type='portfolio_manager'; names the CIRO/CIPF custodian
     cipf_protected: z.boolean(),
     auto_rebalancing: z.boolean(),
     tax_loss_harvesting: z.boolean(),
@@ -36,7 +36,7 @@ export const caRoboAdvisorsAttributesSchema = z
     trustpilot_rating: z.number().nullable(),
     trustpilot_count: z.number().nullable(),
     trustpilot_note: z.string(),
-    regulatory_note: z.string().optional(), // material, sourced ownership/status/compliance history — empty if none
+    regulatory_note: z.string().optional(), // material, sourced ownership/status/compliance history; empty if none
   })
   .passthrough();
 
@@ -59,9 +59,9 @@ export const caRoboAdvisorsConfig: TopicConfig = {
   h1: (y) => `Best robo-advisors & investing apps in Canada (${y})`,
   metaTitle: (y) => `Best Robo-Advisors Canada (${y})`,
   metaDescription: (y) =>
-    `Compare Canadian robo-advisors of ${y} by management fee, account minimums, CIRO/CIPF protection and account-type support — independent, sourced.`,
+    `Compare Canadian robo-advisors of ${y} by management fee, account minimums, CIRO/CIPF protection and account-type support, independent, sourced.`,
   intro:
-    'Independent, side-by-side comparison of Canadian robo-advisors — ranked by management fee, account-type support and regulatory structure, with a live multi-year cost projection on your own balance.',
+    'Independent, side-by-side comparison of Canadian robo-advisors: ranked by management fee, account-type support and regulatory structure, with a live multi-year cost projection on your own balance.',
   publishedDate: '2026-07-11',
   attributesSchema: caRoboAdvisorsAttributesSchema,
 
@@ -167,10 +167,10 @@ export const caRoboAdvisorsConfig: TopicConfig = {
   compareRows: [
     { key: 'fee', label: 'Management fee', accessor: (p) => pct(p.managementFee), score: (p) => -p.managementFee },
     { key: 'min', label: 'Minimum to start', accessor: (p) => cad(p.accountMinimum), score: (p) => -p.accountMinimum },
-    { key: 'accounts', label: 'Account types', accessor: (p) => attrArr(p, 'account_types').join(', ') || '—', score: (p) => attrArr(p, 'account_types').length },
-    { key: 'regulator', label: 'Regulatory structure', accessor: (p) => REGULATOR_LABEL[attrStr(p, 'regulator_type')] ?? '—' },
+    { key: 'accounts', label: 'Account types', accessor: (p) => attrArr(p, 'account_types').join(', ') || 'N/A', score: (p) => attrArr(p, 'account_types').length },
+    { key: 'regulator', label: 'Regulatory structure', accessor: (p) => REGULATOR_LABEL[attrStr(p, 'regulator_type')] ?? 'N/A' },
     { key: 'rebalance', label: 'Auto-rebalancing', accessor: (p) => yesNo(attr(p, 'auto_rebalancing')), score: (p) => (attr(p, 'auto_rebalancing') ? 1 : 0) },
-    { key: 'tlh', label: 'Tax-loss harvesting', accessor: (p) => (attr(p, 'tax_loss_harvesting') ? `Yes — ${attrStr(p, 'tlh_note') || 'see detail'}` : 'No'), score: (p) => (attr(p, 'tax_loss_harvesting') ? 1 : 0) },
+    { key: 'tlh', label: 'Tax-loss harvesting', accessor: (p) => (attr(p, 'tax_loss_harvesting') ? `Yes (${attrStr(p, 'tlh_note') || 'see detail'})` : 'No'), score: (p) => (attr(p, 'tax_loss_harvesting') ? 1 : 0) },
     {
       key: 'rating',
       label: 'Consumer rating',
@@ -183,7 +183,7 @@ export const caRoboAdvisorsConfig: TopicConfig = {
   ],
 
   detailRows: [
-    { key: 'custodian', label: 'CIPF custodian (if portfolio manager)', accessor: (p) => attrStr(p, 'custodian_note') || '—' },
+    { key: 'custodian', label: 'CIPF custodian (if portfolio manager)', accessor: (p) => attrStr(p, 'custodian_note') || 'N/A' },
     { key: 'regulatory', label: 'Ownership / regulatory notes', accessor: (p) => attrStr(p, 'regulatory_note') || 'No material issues found at research time.' },
   ],
 
@@ -197,57 +197,57 @@ export const caRoboAdvisorsConfig: TopicConfig = {
     ],
   },
   methodology:
-    "We compare each provider's management fee, account minimum, account-type support, auto-rebalancing and tax-loss harvesting from official pricing pages, and verify CIRO/CIPF protection status directly — noting explicitly where a provider is a provincially-registered portfolio manager (CIPF protection flows through a separate custodian) rather than a CIRO dealer itself. We disclose material ownership changes, status ambiguities and service-continuity concerns plainly rather than omitting them. The cost projection assumes 6% p.a. growth over your chosen time horizon. Rankings never depend on commissions — every provider on this page is currently a visit-only listing.",
+    "We compare each provider's management fee, account minimum, account-type support, auto-rebalancing and tax-loss harvesting from official pricing pages, and verify CIRO/CIPF protection status directly, noting explicitly where a provider is a provincially-registered portfolio manager (CIPF protection flows through a separate custodian) rather than a CIRO dealer itself. We disclose material ownership changes, status ambiguities and service-continuity concerns plainly rather than omitting them. The cost projection assumes 6% p.a. growth over your chosen time horizon. Rankings never depend on commissions; every provider on this page is currently a visit-only listing.",
   buyerGuide: [
     {
-      h3: 'CIRO dealer vs. portfolio manager — the distinction that matters',
-      body: 'Wealthsimple, Questwealth (Questrade) and RBC InvestEase are themselves, or use as direct custodian, CIRO-member investment dealers. Justwealth, Nest Wealth, CI Direct Investing and Moka are provincially-registered portfolio managers — your assets sit with a separate CIRO/CIPF-member custodian (often CI Investment Services, Fidelity Clearing Canada, or National Bank Independent Network). CIPF protection still applies in both cases, but through a different relationship — worth understanding, not a reason to avoid either structure.',
+      h3: 'CIRO dealer vs. portfolio manager: the distinction that matters',
+      body: 'Wealthsimple, Questwealth (Questrade) and RBC InvestEase are themselves, or use as direct custodian, CIRO-member investment dealers. Justwealth, Nest Wealth, CI Direct Investing and Moka are provincially-registered portfolio managers: your assets sit with a separate CIRO/CIPF-member custodian (often CI Investment Services, Fidelity Clearing Canada, or National Bank Independent Network). CIPF protection still applies in both cases, but through a different relationship, worth understanding, not a reason to avoid either structure.',
     },
     {
-      h3: 'TFSA, RRSP, FHSA — mechanics, not advice',
-      body: "TFSA contributions are after-tax with fully tax-free growth and withdrawal (2026 room: C$7,000). RRSP contributions are tax-deductible with tax-deferred growth, taxed on withdrawal (2026 limit: C$33,810 or 18% of prior-year earned income). FHSA combines both benefits but only for a qualifying first-home purchase (C$8,000/year, C$40,000 lifetime). Not every provider here supports every account type — check the account-types row for your specific need, and consult the CRA or a financial advisor for which account fits your situation.",
+      h3: 'TFSA, RRSP, FHSA: mechanics, not advice',
+      body: "TFSA contributions are after-tax with fully tax-free growth and withdrawal (2026 room: C$7,000). RRSP contributions are tax-deductible with tax-deferred growth, taxed on withdrawal (2026 limit: C$33,810 or 18% of prior-year earned income). FHSA combines both benefits but only for a qualifying first-home purchase (C$8,000/year, C$40,000 lifetime). Not every provider here supports every account type; check the account-types row for your specific need, and consult the CRA or a financial advisor for which account fits your situation.",
     },
     {
       h3: 'Fee structures: percentage vs. flat',
-      body: "Most providers charge a percentage management fee (0.20%–0.60%) plus the underlying ETF MER. Nest Wealth uses a flat monthly fee instead, which can be cheaper at larger balances but relatively expensive on small ones — model your own balance with the calculator above rather than comparing headline percentages alone.",
+      body: "Most providers charge a percentage management fee (0.20%–0.60%) plus the underlying ETF MER. Nest Wealth uses a flat monthly fee instead, which can be cheaper at larger balances but relatively expensive on small ones; model your own balance with the calculator above rather than comparing headline percentages alone.",
     },
     {
       h3: 'Why Moka is disclosed, not just listed',
-      body: 'Moka\'s parent company (Mogo) renamed itself Orion Digital Corp in December 2025, and the consumer platform is mid-transition from moka.ai to intelligentinvesting.ai. Current official pricing shows a $20/month membership fee, a significant change from Moka\'s historic $1-4/month round-up-app pricing found on older review sites — we disclose this discrepancy rather than publish a single confident number, and rank Moka last while its pricing remains unsettled.',
+      body: 'Moka\'s parent company (Mogo) renamed itself Orion Digital Corp in December 2025, and the consumer platform is mid-transition from moka.ai to intelligentinvesting.ai. Current official pricing shows a $20/month membership fee, a significant change from Moka\'s historic $1-4/month round-up-app pricing found on older review sites; we disclose this discrepancy rather than publish a single confident number, and rank Moka last while its pricing remains unsettled.',
     },
   ],
   faq: [
     {
       q: 'What is the best robo-advisor in Canada?',
-      a: "Wealthsimple covers the most ground — the broadest account-type support of the seven, FHSA and RESP included, a $0 minimum, and daily rebalancing. For the lowest fee, Questwealth Portfolios (Questrade's robo arm) beats everyone here. Families needing an RDSP have one option: Justwealth, also the widest registered-account menu overall. We re-verify fees regularly, and the ranking never depends on commissions.",
+      a: "Wealthsimple covers the most ground: the broadest account-type support of the seven, FHSA and RESP included, a $0 minimum, and daily rebalancing. For the lowest fee, Questwealth Portfolios (Questrade's robo arm) beats everyone here. Families needing an RDSP have one option: Justwealth, also the widest registered-account menu overall. We re-verify fees regularly, and the ranking never depends on commissions.",
     },
     {
       q: 'Is my money protected with a Canadian robo-advisor?',
-      a: 'All 7 candidates ultimately rely on CIRO/CIPF protection (up to $1M per account category if a member firm becomes insolvent) — either directly, as a CIRO dealer themselves, or indirectly through a CIRO/CIPF-member custodian if the provider is a provincially-registered portfolio manager. CIPF does not protect against market losses, only against the firm holding your assets becoming insolvent.',
+      a: 'All 7 candidates ultimately rely on CIRO/CIPF protection (up to $1M per account category if a member firm becomes insolvent), either directly, as a CIRO dealer themselves, or indirectly through a CIRO/CIPF-member custodian if the provider is a provincially-registered portfolio manager. CIPF does not protect against market losses, only against the firm holding your assets becoming insolvent.',
     },
     {
       q: 'How is the multi-year cost calculated?',
-      a: "We apply each provider's management fee (as a % of your balance) across your chosen time horizon, assuming 6% p.a. portfolio growth and compounding fees. Move the amount and years sliders to see the dollar impact on your own numbers — the ranking updates live.",
+      a: "We apply each provider's management fee (as a % of your balance) across your chosen time horizon, assuming 6% p.a. portfolio growth and compounding fees. Move the amount and years sliders to see the dollar impact on your own numbers; the ranking updates live.",
     },
     {
       q: 'Is CI Direct Investing (formerly WealthBar) still operating?',
-      a: 'Yes — confirmed operational and accepting new clients as of this page\'s last verification. CI Financial (its parent) completed a take-private acquisition by Mubadala Capital in August 2025, and CI Direct Investing continues to operate with actively-maintained client disclosures. We disclose the ownership change for transparency.',
+      a: 'Yes, confirmed operational and accepting new clients as of this page\'s last verification. CI Financial (its parent) completed a take-private acquisition by Mubadala Capital in August 2025, and CI Direct Investing continues to operate with actively-maintained client disclosures. We disclose the ownership change for transparency.',
     },
     {
       q: 'How current is this data?',
-      a: 'Every fee, account type and regulatory status on this page was verified against official provider pages and CIRO/CIPF sources on 11 July 2026. Fee structures and ownership can change — confirm current terms on the provider\'s site before investing, especially for Moka given its active platform transition.',
+      a: 'Every fee, account type and regulatory status on this page was verified against official provider pages and CIRO/CIPF sources on 11 July 2026. Fee structures and ownership can change, so confirm current terms on the provider\'s site before investing, especially for Moka given its active platform transition.',
     },
   ],
   compliance: {
     notice:
-      'Not financial advice. Investment values can fall as well as rise. CIPF protects client assets up to $1M per category if a member firm becomes insolvent — it does not protect against market losses. Confirm current fees before investing.',
+      'Not financial advice. Investment values can fall as well as rise. CIPF protects client assets up to $1M per category if a member firm becomes insolvent; it does not protect against market losses. Confirm current fees before investing.',
     regulators: ['CIRO', 'CIPF'],
   },
 
   sources: [
-    { label: 'CIRO — Dealers We Regulate', url: 'https://www.ciro.ca/office-investor/dealers-we-regulate' },
-    { label: 'CIPF — About CIPF Coverage', url: 'https://www.cipf.ca/cipf-coverage/about-cipf-coverage' },
-    { label: 'CRA — TFSA contribution room', url: 'https://www.canada.ca/en/revenue-agency/services/tax/individuals/topics/tax-free-savings-account/contributing/calculate-room.html' },
+    { label: 'CIRO: Dealers We Regulate', url: 'https://www.ciro.ca/office-investor/dealers-we-regulate' },
+    { label: 'CIPF: About CIPF Coverage', url: 'https://www.cipf.ca/cipf-coverage/about-cipf-coverage' },
+    { label: 'CRA: TFSA contribution room', url: 'https://www.canada.ca/en/revenue-agency/services/tax/individuals/topics/tax-free-savings-account/contributing/calculate-room.html' },
   ],
   relatedLinks: [
     { label: 'Canada personal finance hub', href: '/ca/personal-finance' },

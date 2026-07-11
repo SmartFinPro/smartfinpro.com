@@ -69,9 +69,9 @@ export const auAiToolsFinanceConfig: TopicConfig = {
   h1: (y) => `Best AI tools for finance & business in Australia (${y})`,
   metaTitle: (y) => `Best AI Finance Tools Australia (${y})`,
   metaDescription: (y) =>
-    `Compare AI-powered finance and business tools for Australia in ${y}: budgeting, accounting automation, bookkeeping and payroll — independent, sourced.`,
+    `Compare AI-powered finance and business tools for Australia in ${y}: budgeting, accounting automation, bookkeeping and payroll, independent, sourced.`,
   intro:
-    'Independent, side-by-side comparison of AI tools for Australian personal budgeting, accounting automation and business finance — five genuinely different use cases, never forced into one price-based ranking.',
+    'Independent, side-by-side comparison of AI tools for Australian personal budgeting, accounting automation and business finance: five genuinely different use cases, never forced into one price-based ranking.',
   publishedDate: '2026-07-11',
   attributesSchema: auAiToolsFinanceAttributesSchema,
 
@@ -188,7 +188,7 @@ export const auAiToolsFinanceConfig: TopicConfig = {
 
   verdict: {
     intro:
-      "Xero takes the top spot here: its JAX AI assistant covers bank reconciliation, cashflow insights and natural-language Q&A, and ships free on every plan — even the cheapest — from Australia's largest accounting-software incumbent. For teams that want AI without paying anything, Employment Hero gives the most generous free allowance among the seven (50 free AI-screened interviews, no subscription needed). And on independent review data, Dext comes out ahead for AI-powered receipt and bookkeeping automation.",
+      "Xero takes the top spot here: its JAX AI assistant covers bank reconciliation, cashflow insights and natural-language Q&A, and ships free on every plan (even the cheapest) from Australia's largest accounting-software incumbent. For teams that want AI without paying anything, Employment Hero gives the most generous free allowance among the seven (50 free AI-screened interviews, no subscription needed). And on independent review data, Dext comes out ahead for AI-powered receipt and bookkeeping automation.",
     picks: [
       { slug: 'xero-jax', label: 'Best overall' },
       { slug: 'employment-hero', label: 'Best free AI tier' },
@@ -196,11 +196,11 @@ export const auAiToolsFinanceConfig: TopicConfig = {
     ],
   },
   methodology:
-    "These 7 tools solve genuinely different problems — from personal budgeting to bookkeeping OCR to AI-screened recruitment — so we don't force them into a single price-based ranking. \"Starting price\" shows each vendor's cheapest plan that unlocks the AI feature being compared, labelled with its pricing model (freemium, flat subscription, bundled-into-a-tier, or per-user/usage), since these are not like-for-like dollar figures. We evaluate each tool within its own use case using editorial consensus, feature substance and review data where a credible sample exists — where review data conflicted across sources and couldn't be resolved (Frollo), we say so rather than publish a guessed number. We disclose real, sourced regulatory history plainly rather than omitting it — a fund or fintech under active regulatory review is not treated as a top pick while that review remains open. Rankings never depend on commissions — every provider on this page is currently a visit-only listing.",
+    "These 7 tools solve genuinely different problems, from personal budgeting to bookkeeping OCR to AI-screened recruitment, so we don't force them into a single price-based ranking. \"Starting price\" shows each vendor's cheapest plan that unlocks the AI feature being compared, labelled with its pricing model (freemium, flat subscription, bundled-into-a-tier, or per-user/usage), since these are not like-for-like dollar figures. We evaluate each tool within its own use case using editorial consensus, feature substance and review data where a credible sample exists. Where review data conflicted across sources and couldn't be resolved (Frollo), we say so rather than publish a guessed number. We disclose real, sourced regulatory history plainly rather than omitting it: a fund or fintech under active regulatory review is not treated as a top pick while that review remains open. Rankings never depend on commissions; every provider on this page is currently a visit-only listing.",
   buyerGuide: [
     {
       h3: 'AI tool ≠ financial adviser',
-      body: 'None of these 7 tools is a licensed financial adviser, and none provides personalised financial advice — they automate categorisation, reconciliation, expense-policy checks or interview screening. ASIC has stated that existing, technology-neutral obligations apply regardless of whether AI is used; there is no special AI exemption or extra protection.',
+      body: 'None of these 7 tools is a licensed financial adviser, and none provides personalised financial advice: they automate categorisation, reconciliation, expense-policy checks or interview screening. ASIC has stated that existing, technology-neutral obligations apply regardless of whether AI is used; there is no special AI exemption or extra protection.',
     },
     {
       h3: 'Four pricing models, not one',
@@ -208,7 +208,7 @@ export const auAiToolsFinanceConfig: TopicConfig = {
     },
     {
       h3: 'Open banking and the Consumer Data Right',
-      body: "Frollo and WeMoney connect to your bank accounts under Australia's Consumer Data Right (CDR) framework, the specific consent and security regime governing bank-data sharing in Australia — a more relevant protection to understand than general AI regulation for these two tools specifically.",
+      body: "Frollo and WeMoney connect to your bank accounts under Australia's Consumer Data Right (CDR) framework, the specific consent and security regime governing bank-data sharing in Australia. This is a more relevant protection to understand than general AI regulation for these two tools specifically.",
     },
     {
       h3: 'Why Airwallex is disclosed, not hidden',
@@ -218,34 +218,34 @@ export const auAiToolsFinanceConfig: TopicConfig = {
   faq: [
     {
       q: 'What is the best AI finance tool in Australia?',
-      a: "For most Australian users, the answer is Xero: its JAX AI assistant comes free with every plan, even the $35/month entry tier. If budget is the only constraint, Employment Hero is worth a look first — 50 AI-screened interviews are free with no subscription attached. Dext, meanwhile, posts the strongest independent review score of the group for AI-powered bookkeeping. Pricing and features are re-verified regularly, and nothing here is ranked based on commission.",
+      a: "For most Australian users, the answer is Xero: its JAX AI assistant comes free with every plan, even the $35/month entry tier. If budget is the only constraint, Employment Hero is worth a look first. It offers 50 AI-screened interviews free with no subscription attached. Dext, meanwhile, posts the strongest independent review score of the group for AI-powered bookkeeping. Pricing and features are re-verified regularly, and nothing here is ranked based on commission.",
     },
     {
       q: 'Are any of these tools regulated financial advisers?',
-      a: "No. None of the 7 tools provides personalised financial advice — they automate categorisation, reconciliation, expense-policy review or recruitment screening, which sit outside AFSL advice obligations. ASIC's position is that ordinary, technology-neutral rules apply regardless of AI use.",
+      a: "No. None of the 7 tools provides personalised financial advice; they automate categorisation, reconciliation, expense-policy review or recruitment screening, which sit outside AFSL advice obligations. ASIC's position is that ordinary, technology-neutral rules apply regardless of AI use.",
     },
     {
       q: 'Is my bank data safe if I connect it to an AI budgeting app?',
-      a: "Frollo and WeMoney operate under Australia's Consumer Data Right (CDR) framework, the regulated open-banking consent and security regime. For business tools (Xero, MYOB, Dext, Airwallex), the data flowing to AI is transaction/receipt data rather than direct bank-credential access — always review a vendor's specific data-handling disclosures before connecting financial accounts.",
+      a: "Frollo and WeMoney operate under Australia's Consumer Data Right (CDR) framework, the regulated open-banking consent and security regime. For business tools (Xero, MYOB, Dext, Airwallex), the data flowing to AI is transaction/receipt data rather than direct bank-credential access. Always review a vendor's specific data-handling disclosures before connecting financial accounts.",
     },
     {
       q: 'Why isn\'t Airwallex the top pick despite its scale and funding?',
-      a: "Airwallex is the subject of an active, AUSTRAC-ordered external audit into suspected AML/CTF compliance failures. We disclose this plainly rather than omitting it, and don't feature Airwallex as a top pick while the audit remains open — you should weigh this alongside your own risk tolerance.",
+      a: "Airwallex is the subject of an active, AUSTRAC-ordered external audit into suspected AML/CTF compliance failures. We disclose this plainly rather than omitting it, and don't feature Airwallex as a top pick while the audit remains open. You should weigh this alongside your own risk tolerance.",
     },
     {
       q: 'How current is this data?',
-      a: 'Every price, feature and regulatory disclosure on this page was researched against official vendor sources on 11 July 2026. AI features in this category are shipping fast — several vendors updated their AI offering within weeks of this research — so we re-verify this comparison regularly; confirm current pricing on the vendor\'s own site before subscribing.',
+      a: 'Every price, feature and regulatory disclosure on this page was researched against official vendor sources on 11 July 2026. AI features in this category are shipping fast (several vendors updated their AI offering within weeks of this research), so we re-verify this comparison regularly; confirm current pricing on the vendor\'s own site before subscribing.',
     },
   ],
   compliance: {
     notice:
-      'AI-powered finance tools are not financial advisers and none of the tools on this page provides personalised financial advice. AI-generated categorisation, insights or screening can be wrong — verify before relying on it for a financial decision.',
+      'AI-powered finance tools are not financial advisers and none of the tools on this page provides personalised financial advice. AI-generated categorisation, insights or screening can be wrong; verify before relying on it for a financial decision.',
     regulators: [],
   },
 
   sources: [
-    { label: 'AUSTRAC — Airwallex AML/CTF audit order', url: 'https://www.austrac.gov.au/new-and-media/news/austrac-orders-audit-airwallex-suspected-amlctf-compliance-failures' },
-    { label: 'OAIC / CDR — Consumer Data Right', url: 'https://www.cdr.gov.au/' },
+    { label: 'AUSTRAC: Airwallex AML/CTF audit order', url: 'https://www.austrac.gov.au/new-and-media/news/austrac-orders-audit-airwallex-suspected-amlctf-compliance-failures' },
+    { label: 'OAIC / CDR: Consumer Data Right', url: 'https://www.cdr.gov.au/' },
   ],
   relatedLinks: [
     { label: 'Australia AI tools hub', href: '/au/ai-tools' },

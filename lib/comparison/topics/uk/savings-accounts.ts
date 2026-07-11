@@ -72,9 +72,9 @@ export const ukSavingsAccountsConfig: TopicConfig = {
   h1: (y) => `Best savings accounts & Cash ISAs in the UK (${y})`,
   metaTitle: (y) => `Best UK Savings Accounts & ISAs (${y})`,
   metaDescription: (y) =>
-    `Compare UK savings accounts and Cash ISAs of ${y} by AER, bonus conditions and FSCS protection — independent, expert-reviewed, verified rates.`,
+    `Compare UK savings accounts and Cash ISAs of ${y} by AER, bonus conditions and FSCS protection, independent, expert-reviewed, verified rates.`,
   intro:
-    "Independent, side-by-side comparison of the UK's savings accounts and Cash ISAs — ranked by AER, bonus conditions and FSCS protection, with every conditional and introductory rate shown alongside its real fallback.",
+    "Independent, side-by-side comparison of the UK's savings accounts and Cash ISAs, ranked by AER, bonus conditions and FSCS protection, with every conditional and introductory rate shown alongside its real fallback.",
   publishedDate: '2026-07-11',
   attributesSchema: ukSavingsAttributesSchema,
 
@@ -162,7 +162,7 @@ export const ukSavingsAccountsConfig: TopicConfig = {
     { key: 'conditions', label: 'Rate conditions', accessor: (p) => attrStr(p, 'rate_conditions') || '—' },
     { key: 'baseRate', label: 'Base/fallback rate', accessor: (p) => pct(attrNum(p, 'base_rate_pct')) },
     { key: 'isa', label: 'Cash ISA', accessor: (p) => (attrBool(p, 'cash_isa_available') ? attrStr(p, 'cash_isa_note') || 'Available' : 'Not offered'), score: (p) => (attrBool(p, 'cash_isa_available') ? 1 : 0) },
-    { key: 'fscs', label: 'FSCS protection', accessor: (p) => (attrBool(p, 'fscs_full') ? `Full FSCS, £120,000${attrStr(p, 'fscs_shared_licence_note') ? ' — ' + attrStr(p, 'fscs_shared_licence_note') : ''}` : 'Not independently confirmed') },
+    { key: 'fscs', label: 'FSCS protection', accessor: (p) => (attrBool(p, 'fscs_full') ? `Full FSCS, £120,000${attrStr(p, 'fscs_shared_licence_note') ? ' (' + attrStr(p, 'fscs_shared_licence_note') + ')' : ''}` : 'Not independently confirmed') },
     {
       key: 'rating',
       label: 'Consumer rating',
@@ -180,7 +180,7 @@ export const ukSavingsAccountsConfig: TopicConfig = {
 
   verdict: {
     intro:
-      "Atom Bank leads this comparison on trust — the strongest independently corroborated customer rating here, 4.8-5.0/5 on Trustpilot — backed by a competitive Reward-tier rate and a Cash ISA option; Charter Savings Bank has the best unconditional easy-access rate of the 7, 4.21% AER with no bonus conditions; and Shawbrook Bank is the most consistently well-reviewed long-running fixed-rate option, a fixture of UK best-buy tables since 2017.",
+      "Atom Bank leads this comparison on trust: the strongest independently corroborated customer rating here, 4.8-5.0/5 on Trustpilot, backed by a competitive Reward-tier rate and a Cash ISA option; Charter Savings Bank has the best unconditional easy-access rate of the 7, 4.21% AER with no bonus conditions; and Shawbrook Bank is the most consistently well-reviewed long-running fixed-rate option, a fixture of UK best-buy tables since 2017.",
     picks: [
       { slug: 'atom-bank', label: 'Best overall' },
       { slug: 'charter-savings-bank', label: 'Best unconditional easy-access rate' },
@@ -188,57 +188,57 @@ export const ukSavingsAccountsConfig: TopicConfig = {
     ],
   },
   methodology:
-    "We compare each bank's headline AER, the exact conditions required to earn it, the fallback rate that applies when a condition is missed, Cash ISA availability and FSCS protection status from official rate pages, cross-checked against MoneySavingExpert and Which? where a canonical figure could be independently confirmed. We never show a bonus or introductory rate without its conditions attached — a rate that requires no withdrawals in a given month, or applies only for 12 months to new customers, is materially different from an unconditional rate, and we label each accordingly. We disclose real, sourced regulatory and complaint history plainly rather than omitting it. Rankings never depend on commissions — every provider on this page is currently a visit-only listing.",
+    "We compare each bank's headline AER, the exact conditions required to earn it, the fallback rate that applies when a condition is missed, Cash ISA availability and FSCS protection status from official rate pages, cross-checked against MoneySavingExpert and Which? where a canonical figure could be independently confirmed. We never show a bonus or introductory rate without its conditions attached: a rate that requires no withdrawals in a given month, or applies only for 12 months to new customers, is materially different from an unconditional rate, and we label each accordingly. We disclose real, sourced regulatory and complaint history plainly rather than omitting it. Rankings never depend on commissions. Every provider on this page is currently a visit-only listing.",
   buyerGuide: [
     {
-      h3: 'FSCS £120,000 — bank deposits, not investments',
-      body: 'Since 1 December 2025, UK bank deposits are FSCS-protected up to £120,000 per person, per authorised firm — all 7 banks on this page hold a full UK banking licence and this protection applies. This is a different, higher scheme from the £85,000 limit that covers investments (shares, funds, ETFs) on our separate investing-apps comparison — never assume the two figures are interchangeable.',
+      h3: 'FSCS £120,000: bank deposits, not investments',
+      body: 'Since 1 December 2025, UK bank deposits are FSCS-protected up to £120,000 per person, per authorised firm: all 7 banks on this page hold a full UK banking licence and this protection applies. This is a different, higher scheme from the £85,000 limit that covers investments (shares, funds, ETFs) on our separate investing-apps comparison; never assume the two figures are interchangeable.',
     },
     {
       h3: 'Bonus rates almost always have a catch',
-      body: "Atom Bank's top Reward rate (4.75-4.85% AER) requires making no withdrawal in a given month, dropping to 2.50% the moment you do. Chase UK's Boosted Saver (4.5% AER) only applies for 12 months to new customers, before reverting to the Standard Saver rate. Zopa's higher rate requires an active Biscuit current account. Always check the base/fallback rate — not just the headline — before choosing an account based on rate alone.",
+      body: "Atom Bank's top Reward rate (4.75-4.85% AER) requires making no withdrawal in a given month, dropping to 2.50% the moment you do. Chase UK's Boosted Saver (4.5% AER) only applies for 12 months to new customers, before reverting to the Standard Saver rate. Zopa's higher rate requires an active Biscuit current account. Always check the base/fallback rate (not just the headline) before choosing an account based on rate alone.",
     },
     {
       h3: 'Not every bank offers a Cash ISA',
-      body: 'Chase UK does not currently offer a Cash ISA — a genuine gap if tax-free savings matter to you. The other 6 all offer at least one Cash ISA product, though rates and terms (easy-access vs. fixed) vary. Cash ISA allowances are separate from Stocks & Shares ISA allowances but share the same overall £20,000 annual limit across all ISA types combined.',
+      body: 'Chase UK does not currently offer a Cash ISA: a genuine gap if tax-free savings matter to you. The other 6 all offer at least one Cash ISA product, though rates and terms (easy-access vs. fixed) vary. Cash ISA allowances are separate from Stocks & Shares ISA allowances but share the same overall £20,000 annual limit across all ISA types combined.',
     },
     {
       h3: 'Reading disclosed issues honestly',
-      body: "Marcus's UK Trustpilot score is genuinely weak (2.9/5), driven by 2025 complaints about sudden account closures — disclosed plainly despite Marcus's competitive MoneySavingExpert-listed fixed rate. Shawbrook carries a legacy 2021 timeshare mis-selling case (Financial Ombudsman ruling upheld on High Court judicial review in 2023) that predates this research window but is disclosed for transparency, as related claims reportedly continue.",
+      body: "Marcus's UK Trustpilot score is genuinely weak (2.9/5), driven by 2025 complaints about sudden account closures, disclosed plainly despite Marcus's competitive MoneySavingExpert-listed fixed rate. Shawbrook carries a legacy 2021 timeshare mis-selling case (Financial Ombudsman ruling upheld on High Court judicial review in 2023) that predates this research window but is disclosed for transparency, as related claims reportedly continue.",
     },
   ],
   faq: [
     {
       q: 'What is the best savings account in the UK right now?',
-      a: 'Atom Bank leads overall on trust, combining the strongest customer rating in this comparison with a competitive Reward-tier rate and Cash ISA availability. Charter Savings Bank has the best unconditional rate — 4.21% AER, no conditions attached — and Shawbrook Bank is the strongest long-running fixed-rate option, consistently well-reviewed. Rates are re-verified regularly, and the ranking never depends on commissions.',
+      a: 'Atom Bank leads overall on trust, combining the strongest customer rating in this comparison with a competitive Reward-tier rate and Cash ISA availability. Charter Savings Bank has the best unconditional rate (4.21% AER, no conditions attached) and Shawbrook Bank is the strongest long-running fixed-rate option, consistently well-reviewed. Rates are re-verified regularly, and the ranking never depends on commissions.',
     },
     {
       q: 'Is my money protected if my savings bank fails?',
-      a: 'Yes — all 7 banks on this page hold a full UK banking licence, so deposits are FSCS-protected up to £120,000 per person, per bank (raised from £85,000 in December 2025). Paragon Bank shares its licence with its Spring savings brand, so a combined balance across both counts toward the same £120,000 cap — check the FSCS row for each provider\'s specific position.',
+      a: 'Yes, all 7 banks on this page hold a full UK banking licence, so deposits are FSCS-protected up to £120,000 per person, per bank (raised from £85,000 in December 2025). Paragon Bank shares its licence with its Spring savings brand, so a combined balance across both counts toward the same £120,000 cap: check the FSCS row for each provider\'s specific position.',
     },
     {
       q: 'Do all of these banks offer a Cash ISA?',
-      a: 'No — Chase UK does not currently offer a Cash ISA. The other 6 (Marcus, Zopa, Atom, Paragon, Charter Savings Bank and Shawbrook) all offer at least one Cash ISA product, with rates and terms varying between easy-access and fixed options.',
+      a: 'No, Chase UK does not currently offer a Cash ISA. The other 6 (Marcus, Zopa, Atom, Paragon, Charter Savings Bank and Shawbrook) all offer at least one Cash ISA product, with rates and terms varying between easy-access and fixed options.',
     },
     {
       q: 'What does "AER" mean and how is it different from a headline savings rate?',
-      a: "AER (Annual Equivalent Rate) shows what you'd earn over a full year including the effect of compounding, letting you compare accounts with different interest-payment frequencies on a like-for-like basis. Always check whether a headline AER is unconditional, requires a monthly condition (like Atom Bank's no-withdrawal rule), or is a time-limited introductory rate — we label each account's rate type explicitly.",
+      a: "AER (Annual Equivalent Rate) shows what you'd earn over a full year including the effect of compounding, letting you compare accounts with different interest-payment frequencies on a like-for-like basis. Always check whether a headline AER is unconditional, requires a monthly condition (like Atom Bank's no-withdrawal rule), or is a time-limited introductory rate: we label each account's rate type explicitly.",
     },
     {
       q: 'How current is this data?',
-      a: 'Every rate and disclosure on this page was verified against official bank rate pages, MoneySavingExpert and the Bank of England on 11 July 2026, when the Bank of England base rate stood at 3.75%. Savings rates change frequently — confirm the current rate directly with the provider before opening an account.',
+      a: 'Every rate and disclosure on this page was verified against official bank rate pages, MoneySavingExpert and the Bank of England on 11 July 2026, when the Bank of England base rate stood at 3.75%. Savings rates change frequently: confirm the current rate directly with the provider before opening an account.',
     },
   ],
   compliance: {
     notice:
-      'Not financial advice. FSCS protects UK bank deposits up to £120,000 per person, per authorised firm — a different scheme from investment protection. Savings rates change frequently; confirm current terms before opening an account.',
+      'Not financial advice. FSCS protects UK bank deposits up to £120,000 per person, per authorised firm: a different scheme from investment protection. Savings rates change frequently; confirm current terms before opening an account.',
     regulators: ['FCA', 'FSCS'],
   },
 
   sources: [
-    { label: 'FSCS — deposit protection increase to £120,000', url: 'https://www.fscs.org.uk/media/press/2025/nov/fscs-welcomes-higher-deposit-protection-limit-of-120000--giving-people-confidence-their-money-is-protected/' },
-    { label: 'Bank of England — monetary policy summary', url: 'https://www.bankofengland.co.uk/monetary-policy-summary-and-minutes' },
-    { label: 'MoneySavingExpert — savings accounts best buys', url: 'https://www.moneysavingexpert.com/savings/savings-accounts-best-interest/' },
+    { label: 'FSCS: deposit protection increase to £120,000', url: 'https://www.fscs.org.uk/media/press/2025/nov/fscs-welcomes-higher-deposit-protection-limit-of-120000--giving-people-confidence-their-money-is-protected/' },
+    { label: 'Bank of England: monetary policy summary', url: 'https://www.bankofengland.co.uk/monetary-policy-summary-and-minutes' },
+    { label: 'MoneySavingExpert: savings accounts best buys', url: 'https://www.moneysavingexpert.com/savings/savings-accounts-best-interest/' },
   ],
   relatedLinks: [
     { label: 'UK savings hub', href: '/uk/savings' },

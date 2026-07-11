@@ -55,9 +55,9 @@ export const auSavingsAccountsConfig: TopicConfig = {
   h1: (y) => `Best high-interest savings accounts in Australia (${y})`,
   metaTitle: (y) => `Best Savings Accounts Australia (${y})`,
   metaDescription: (y) =>
-    `Compare Australian high-interest savings accounts of ${y} by rate, bonus conditions and FCS protection — independent, expert-reviewed, verified rates.`,
+    `Compare Australian high-interest savings accounts of ${y} by rate, bonus conditions and FCS protection, independent, expert-reviewed, verified rates.`,
   intro:
-    "Independent, side-by-side comparison of Australia's top savings accounts — ranked by rate, bonus conditions and APRA/FCS protection, with every conditional and introductory rate shown alongside its real fallback.",
+    "Independent, side-by-side comparison of Australia's top savings accounts, ranked by rate, bonus conditions and APRA/FCS protection, with every conditional and introductory rate shown alongside its real fallback.",
   publishedDate: '2026-07-10',
   attributesSchema: auSavingsAttributesSchema,
 
@@ -160,7 +160,7 @@ export const auSavingsAccountsConfig: TopicConfig = {
     { key: 'cap', label: 'Rate applies up to', accessor: (p) => { const c = attrNumOrNull(p, 'max_balance_for_rate'); return c === null ? 'No stated cap' : aud(c); } },
     { key: 'minDeposit', label: 'Minimum deposit', accessor: (p) => aud(attrNum(p, 'min_deposit')), score: (p) => -attrNum(p, 'min_deposit') },
     { key: 'linked', label: 'Linked account required', accessor: (p) => yesNo(attrBool(p, 'linked_account_required')), score: (p) => (attrBool(p, 'linked_account_required') ? 0 : 1) },
-    { key: 'fcs', label: 'FCS protected', accessor: (p) => (attrBool(p, 'adi_fcs') ? 'Yes — to A$250,000' : 'No'), score: (p) => (attrBool(p, 'adi_fcs') ? 1 : 0) },
+    { key: 'fcs', label: 'FCS protected', accessor: (p) => (attrBool(p, 'adi_fcs') ? 'Yes, to A$250,000' : 'No'), score: (p) => (attrBool(p, 'adi_fcs') ? 1 : 0) },
   ],
 
   detailRows: [
@@ -177,7 +177,7 @@ export const auSavingsAccountsConfig: TopicConfig = {
 
   verdict: {
     intro:
-      'A 4-month introductory rate paired with the highest unconditional fallback in the field — 5.00% p.a., no deposit or growth conditions attached — puts Bankwest Easy Saver at the top of this list. If you would rather have a rate that never depends on your behaviour, AMP Bank GO Save is fully unconditional from day one. And Rabobank simply pays the highest headline rate of the seven, for savers willing to switch banks again once the 4-month window closes.',
+      'A 4-month introductory rate paired with the highest unconditional fallback in the field (5.00% p.a., no deposit or growth conditions attached) puts Bankwest Easy Saver at the top of this list. If you would rather have a rate that never depends on your behaviour, AMP Bank GO Save is fully unconditional from day one. And Rabobank simply pays the highest headline rate of the seven, for savers willing to switch banks again once the 4-month window closes.',
     picks: [
       { slug: 'bankwest-easy-saver', label: 'Best overall' },
       { slug: 'amp-go-save', label: 'Best unconditional rate' },
@@ -185,57 +185,57 @@ export const auSavingsAccountsConfig: TopicConfig = {
     ],
   },
   methodology:
-    "We compare each account's maximum advertised rate, its unconditional fallback rate, the exact monthly conditions required, and APRA/FCS protection from official rate sheets, re-verified regularly given how often savings rates change. We never show a maximum rate without its conditions and fallback rate alongside it. All 7 accounts carry $0 monthly fees, so the cost calculator reflects savings — not fees — earned over your chosen balance and time horizon. Rankings never depend on commissions.",
+    "We compare each account's maximum advertised rate, its unconditional fallback rate, the exact monthly conditions required, and APRA/FCS protection from official rate sheets, re-verified regularly given how often savings rates change. We never show a maximum rate without its conditions and fallback rate alongside it. All 7 accounts carry $0 monthly fees, so the cost calculator reflects savings, not fees, earned over your chosen balance and time horizon. Rankings never depend on commissions.",
   buyerGuide: [
     {
       h3: 'Conditional vs. unconditional rates',
-      body: 'Bonus-rate accounts (ING, Ubank, Judo) only pay their headline rate if you meet a monthly condition — a minimum deposit, a balance-growth requirement, or a set number of card transactions. Miss it once, and the whole month reverts to a much lower base rate, sometimes near 0%. Unconditional accounts (AMP GO Save, Macquarie\'s ongoing rate) pay the same rate every month regardless of behaviour.',
+      body: 'Bonus-rate accounts (ING, Ubank, Judo) only pay their headline rate if you meet a monthly condition: a minimum deposit, a balance-growth requirement, or a set number of card transactions. Miss it once, and the whole month reverts to a much lower base rate, sometimes near 0%. Unconditional accounts (AMP GO Save, Macquarie\'s ongoing rate) pay the same rate every month regardless of behaviour.',
     },
     {
       h3: 'Introductory rates have a cliff',
-      body: 'Rabobank, Bankwest and Macquarie pay their highest rate for a fixed introductory window (often 4 months) before reverting to a lower ongoing rate. These can genuinely be the best choice for a rate-hopper willing to switch again — just don\'t assume the advertised headline rate is what you\'ll earn a year from now.',
+      body: 'Rabobank, Bankwest and Macquarie pay their highest rate for a fixed introductory window (often 4 months) before reverting to a lower ongoing rate. These can genuinely be the best choice for a rate-hopper willing to switch again. Just don\'t assume the advertised headline rate is what you\'ll earn a year from now.',
     },
     {
-      h3: 'FCS protection — read the fine print on the brand',
-      body: 'All 7 accounts are protected by the government Financial Claims Scheme up to A$250,000 per account holder — but that limit applies per banking licence, not per brand. Ubank shares National Australia Bank\'s licence and Bankwest shares Commonwealth Bank\'s — if you also hold money directly with NAB or CommBank, your combined balance across both brands counts toward the same $250,000 cap.',
+      h3: 'FCS protection: read the fine print on the brand',
+      body: 'All 7 accounts are protected by the government Financial Claims Scheme up to A$250,000 per account holder, but that limit applies per banking licence, not per brand. Ubank shares National Australia Bank\'s licence and Bankwest shares Commonwealth Bank\'s: if you also hold money directly with NAB or CommBank, your combined balance across both brands counts toward the same $250,000 cap.',
     },
     {
       h3: 'Rate caps on large balances',
-      body: 'Several bonus rates only apply up to a stated balance (often A$100,000–$250,000) — above that ceiling, the rate drops sharply. If you\'re depositing a large sum, check the cap before assuming the headline rate applies to your whole balance.',
+      body: 'Several bonus rates only apply up to a stated balance (often A$100,000–$250,000); above that ceiling, the rate drops sharply. If you\'re depositing a large sum, check the cap before assuming the headline rate applies to your whole balance.',
     },
   ],
   faq: [
     {
       q: 'What is the best savings account in Australia right now?',
-      a: "Right now, that is Bankwest Easy Saver — it combines a strong 4-month introductory rate with the highest unconditional fallback rate we found (5.00% p.a.). Want a rate that holds steady regardless of your behaviour instead? AMP Bank GO Save pays a flat 5.10% p.a. with zero conditions attached, the strongest unconditional option available. All rates are variable and were verified as of 10 July 2026 — confirm the provider's current rate before opening an account.",
+      a: "Right now, that is Bankwest Easy Saver: it combines a strong 4-month introductory rate with the highest unconditional fallback rate we found (5.00% p.a.). Want a rate that holds steady regardless of your behaviour instead? AMP Bank GO Save pays a flat 5.10% p.a. with zero conditions attached, the strongest unconditional option available. All rates are variable and were verified as of 10 July 2026. Confirm the provider's current rate before opening an account.",
     },
     {
       q: 'Is my savings account protected if the bank fails?',
-      a: 'Yes — all 7 accounts are with APRA-licensed Authorised Deposit-taking Institutions (ADIs) and are covered by the government Financial Claims Scheme up to A$250,000 per account holder per ADI. Note that this limit is shared across brands on the same banking licence (e.g. Ubank + NAB, Bankwest + Commonwealth Bank).',
+      a: 'Yes, all 7 accounts are with APRA-licensed Authorised Deposit-taking Institutions (ADIs) and are covered by the government Financial Claims Scheme up to A$250,000 per account holder per ADI. Note that this limit is shared across brands on the same banking licence (e.g. Ubank + NAB, Bankwest + Commonwealth Bank).',
     },
     {
       q: 'Why did my interest rate suddenly drop?',
-      a: "Most likely you missed a bonus condition (a minimum monthly deposit, required balance growth, or a set number of card transactions) and reverted to the account's base rate for that month, or an introductory period ended. Check the conditions column for your account — this is the single most common savings-account complaint we see in customer reviews.",
+      a: "Most likely you missed a bonus condition (a minimum monthly deposit, required balance growth, or a set number of card transactions) and reverted to the account's base rate for that month, or an introductory period ended. Check the conditions column for your account. This is the single most common savings-account complaint we see in customer reviews.",
     },
     {
       q: 'Are these savings account rates guaranteed?',
-      a: 'No. All savings account interest rates are variable and can change at any time, including after Reserve Bank of Australia cash rate movements. The rates shown were verified against each provider\'s official rate sheet on 10 July 2026 — confirm the current rate on the provider\'s site before depositing.',
+      a: 'No. All savings account interest rates are variable and can change at any time, including after Reserve Bank of Australia cash rate movements. The rates shown were verified against each provider\'s official rate sheet on 10 July 2026, so confirm the current rate on the provider\'s site before depositing.',
     },
     {
       q: 'How current is this data?',
-      a: 'Every rate, condition and fee on this page was verified against the provider\'s official pricing page on 10 July 2026. Savings rates change frequently — we re-verify this comparison regularly, but you should always confirm the live rate before opening an account.',
+      a: 'Every rate, condition and fee on this page was verified against the provider\'s official pricing page on 10 July 2026. Savings rates change frequently; we re-verify this comparison regularly, but you should always confirm the live rate before opening an account.',
     },
   ],
   compliance: {
     notice:
-      'Not financial advice. Savings account interest rates are variable and can change at any time. Deposits are Financial Claims Scheme protected up to A$250,000 per account holder per ADI — confirm which licence your provider shares before assuming full separate coverage.',
+      'Not financial advice. Savings account interest rates are variable and can change at any time. Deposits are Financial Claims Scheme protected up to A$250,000 per account holder per ADI. Confirm which licence your provider shares before assuming full separate coverage.',
     regulators: ['APRA'],
   },
 
   sources: [
-    { label: 'Financial Claims Scheme — fcs.gov.au', url: 'https://www.fcs.gov.au/' },
-    { label: 'APRA — Register of Authorised Deposit-taking Institutions', url: 'https://www.apra.gov.au/register-of-authorised-deposit-taking-institutions' },
-    { label: 'ASIC Moneysmart — savings accounts', url: 'https://moneysmart.gov.au/saving/savings-accounts' },
+    { label: 'Financial Claims Scheme: fcs.gov.au', url: 'https://www.fcs.gov.au/' },
+    { label: 'APRA: Register of Authorised Deposit-taking Institutions', url: 'https://www.apra.gov.au/register-of-authorised-deposit-taking-institutions' },
+    { label: 'ASIC Moneysmart: savings accounts', url: 'https://moneysmart.gov.au/saving/savings-accounts' },
   ],
   relatedLinks: [
     { label: 'Australia savings hub', href: '/au/savings' },

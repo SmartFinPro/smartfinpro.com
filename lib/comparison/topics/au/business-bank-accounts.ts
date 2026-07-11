@@ -59,9 +59,9 @@ export const auBusinessBankAccountsConfig: TopicConfig = {
   h1: (y) => `Best business bank accounts in Australia (${y})`,
   metaTitle: (y) => `Best Business Bank Accounts Australia (${y})`,
   metaDescription: (y) =>
-    `Compare Australian business bank accounts of ${y} by monthly fee, APRA/FCS protection and accounting integrations — independent, expert-reviewed.`,
+    `Compare Australian business bank accounts of ${y} by monthly fee, APRA/FCS protection and accounting integrations, independent, expert-reviewed.`,
   intro:
-    'Independent, side-by-side comparison of business bank accounts for Australian sole traders and companies — ranked by monthly fee, APRA/FCS protection and features, with a live multi-year cost projection.',
+    'Independent, side-by-side comparison of business bank accounts for Australian sole traders and companies, ranked by monthly fee, APRA/FCS protection and features, with a live multi-year cost projection.',
   publishedDate: '2026-07-10',
   attributesSchema: auBusinessBankAttributesSchema,
 
@@ -78,7 +78,7 @@ export const auBusinessBankAccountsConfig: TopicConfig = {
       key: 'protection',
       label: 'FCS protected',
       accessor: (p) => (attr(p, 'fcs_protected') ? 1 : 0),
-      format: (v) => (Number(v) ? 'Yes — ADI' : 'No — safeguarded'),
+      format: (v) => (Number(v) ? 'Yes (ADI)' : 'No (safeguarded)'),
       winner: 'max',
     },
     {
@@ -170,7 +170,7 @@ export const auBusinessBankAccountsConfig: TopicConfig = {
   compareRows: [
     { key: 'fee', label: 'Monthly fee', accessor: (p) => perMonth(p.monthlyFee), score: (p) => -p.monthlyFee },
     { key: 'adi', label: 'APRA-licensed ADI', accessor: (p) => yesNo(attr(p, 'adi_status')), score: (p) => (attr(p, 'adi_status') ? 1 : 0) },
-    { key: 'fcs', label: 'FCS protection', accessor: (p) => (attr(p, 'fcs_protected') ? `Yes — to A$250,000` : attrStr(p, 'protection_note') || 'Not FCS-protected') },
+    { key: 'fcs', label: 'FCS protection', accessor: (p) => (attr(p, 'fcs_protected') ? `Yes, to A$250,000` : attrStr(p, 'protection_note') || 'Not FCS-protected') },
     { key: 'interest', label: 'Interest on balance', accessor: (p) => pct(attrNum(p, 'interest_rate_pct')), score: (p) => attrNum(p, 'interest_rate_pct') },
     { key: 'intl', label: 'International payments', accessor: (p) => yesNo(p.supportsIntlWires), score: (p) => (p.supportsIntlWires ? 1 : 0) },
     { key: 'sub', label: 'Sub-accounts', accessor: (p) => yesNo(p.hasSubAccounts), score: (p) => (p.hasSubAccounts ? 1 : 0) },
@@ -187,7 +187,7 @@ export const auBusinessBankAccountsConfig: TopicConfig = {
 
   verdict: {
     intro:
-      'An APRA-licensed bank, a $0 account, FCS protection, Xero/MYOB feeds, same-day EFTPOS settlement — Tyro checks every box and is the pick for most businesses. Setup speed is where Zeller wins instead: under 5 minutes, provided you are comfortable with its non-ADI trust structure rather than a bank licence. For international payments specifically, Airwallex is the strongest of the seven.',
+      'An APRA-licensed bank, a $0 account, FCS protection, Xero/MYOB feeds, same-day EFTPOS settlement: Tyro checks every box and is the pick for most businesses. Setup speed is where Zeller wins instead: under 5 minutes, provided you are comfortable with its non-ADI trust structure rather than a bank licence. For international payments specifically, Airwallex is the strongest of the seven.',
     picks: [
       { slug: 'tyro-business', label: 'Best overall' },
       { slug: 'zeller-business', label: 'Fastest setup' },
@@ -195,11 +195,11 @@ export const auBusinessBankAccountsConfig: TopicConfig = {
     ],
   },
   methodology:
-    "We compare monthly fees, APRA/ADI licensing status, Financial Claims Scheme (FCS) protection, international payment support, sub-accounts and accounting integrations from each provider's official pricing and disclosure pages, re-verified quarterly. The cost projection assumes a representative usage profile over your chosen time horizon. Rankings never depend on commissions — every provider on this page is currently a visit-only listing (no tracked affiliate link yet).",
+    "We compare monthly fees, APRA/ADI licensing status, Financial Claims Scheme (FCS) protection, international payment support, sub-accounts and accounting integrations from each provider's official pricing and disclosure pages, re-verified quarterly. The cost projection assumes a representative usage profile over your chosen time horizon. Rankings never depend on commissions; every provider on this page is currently a visit-only listing (no tracked affiliate link yet).",
   buyerGuide: [
     {
-      h3: 'ADI vs. non-ADI — the most important distinction',
-      body: 'Only APRA-licensed Authorised Deposit-taking Institutions (ADIs) — Judo, Tyro, ANZ and NAB here — carry Financial Claims Scheme protection to A$250,000 per account holder. Zeller, Wise and Airwallex are AFSL-licensed payment providers, not banks: your funds are held in a segregated trust or safeguarding arrangement instead of a government-guaranteed deposit. Both models are legal and widely used, but the risk profile is genuinely different.',
+      h3: 'ADI vs. non-ADI: the most important distinction',
+      body: 'Only APRA-licensed Authorised Deposit-taking Institutions (ADIs) (Judo, Tyro, ANZ and NAB here) carry Financial Claims Scheme protection to A$250,000 per account holder. Zeller, Wise and Airwallex are AFSL-licensed payment providers, not banks: your funds are held in a segregated trust or safeguarding arrangement instead of a government-guaranteed deposit. Both models are legal and widely used, but the risk profile is genuinely different.',
     },
     {
       h3: 'Monthly fees are mostly zero now',
@@ -211,11 +211,11 @@ export const auBusinessBankAccountsConfig: TopicConfig = {
     },
     {
       h3: 'Sub-accounts & bookkeeping',
-      body: 'Multiple named sub-accounts make it easy to set aside GST, PAYG and profit separately. Xero/MYOB bank feeds save manual reconciliation — check this before assuming a "does everything" account already covers what your bookkeeper uses.',
+      body: 'Multiple named sub-accounts make it easy to set aside GST, PAYG and profit separately. Xero/MYOB bank feeds save manual reconciliation, so check this before assuming a "does everything" account already covers what your bookkeeper uses.',
     },
     {
       h3: 'Where to park idle cash',
-      body: "If you're holding a large cash buffer rather than transacting daily, a business savings account with a genuine ADI (Judo Business Savings, for example) can pay meaningfully more interest than leaving the balance in a $0-interest transaction account — just note it typically isn't a day-to-day transacting account.",
+      body: "If you're holding a large cash buffer rather than transacting daily, a business savings account with a genuine ADI (Judo Business Savings, for example) can pay meaningfully more interest than leaving the balance in a $0-interest transaction account. Just note it typically isn't a day-to-day transacting account.",
     },
   ],
   faq: [
@@ -225,31 +225,31 @@ export const auBusinessBankAccountsConfig: TopicConfig = {
     },
     {
       q: 'Is my money protected if my business bank goes under?',
-      a: 'Only if your provider is an APRA-licensed ADI. The Financial Claims Scheme guarantees deposits up to A$250,000 per account holder per ADI — Judo, Tyro, ANZ and NAB qualify. Zeller, Wise and Airwallex are not banks: they safeguard client funds via segregated trust accounts or bank guarantees instead, which is not the same as a government-guaranteed deposit.',
+      a: 'Only if your provider is an APRA-licensed ADI. The Financial Claims Scheme guarantees deposits up to A$250,000 per account holder per ADI; Judo, Tyro, ANZ and NAB qualify. Zeller, Wise and Airwallex are not banks: they safeguard client funds via segregated trust accounts or bank guarantees instead, which is not the same as a government-guaranteed deposit.',
     },
     {
       q: 'How is the multi-year cost calculated?',
-      a: "We apply each account's monthly fee across your chosen time horizon. Move the horizon slider to see the dollar impact — the ranking updates live. This account category has few or no other recurring costs for typical usage, so monthly fee is the main driver.",
+      a: "We apply each account's monthly fee across your chosen time horizon. Move the horizon slider to see the dollar impact: the ranking updates live. This account category has few or no other recurring costs for typical usage, so monthly fee is the main driver.",
     },
     {
       q: 'Do I need an ABN to open a business bank account?',
-      a: 'Most providers require an ABN and, for companies, an ACN plus registration documents. Sole traders can generally open an account with just an ABN. Requirements vary by provider — check the exact document list before applying.',
+      a: 'Most providers require an ABN and, for companies, an ACN plus registration documents. Sole traders can generally open an account with just an ABN. Requirements vary by provider, so check the exact document list before applying.',
     },
     {
       q: 'How current is this data?',
-      a: 'Every fee, rate and feature on this page was verified against the provider\'s official pricing or disclosure page on 10 July 2026 and is re-checked quarterly. Rates and fees can change — confirm the current terms on the provider\'s site before opening an account.',
+      a: 'Every fee, rate and feature on this page was verified against the provider\'s official pricing or disclosure page on 10 July 2026 and is re-checked quarterly. Rates and fees can change, so confirm the current terms on the provider\'s site before opening an account.',
     },
   ],
   compliance: {
     notice:
-      'Not financial advice. Only APRA-licensed ADIs on this page carry Financial Claims Scheme protection to A$250,000 — non-ADI providers safeguard funds differently. Confirm current terms before opening an account.',
+      'Not financial advice. Only APRA-licensed ADIs on this page carry Financial Claims Scheme protection to A$250,000; non-ADI providers safeguard funds differently. Confirm current terms before opening an account.',
     regulators: ['APRA', 'ASIC'],
   },
 
   sources: [
-    { label: 'APRA — Register of Authorised Deposit-taking Institutions', url: 'https://www.apra.gov.au/register-of-authorised-deposit-taking-institutions' },
-    { label: 'Financial Claims Scheme — fcs.gov.au', url: 'https://www.fcs.gov.au/' },
-    { label: 'ASIC Moneysmart — bank accounts', url: 'https://moneysmart.gov.au/banking' },
+    { label: 'APRA: Register of Authorised Deposit-taking Institutions', url: 'https://www.apra.gov.au/register-of-authorised-deposit-taking-institutions' },
+    { label: 'Financial Claims Scheme: fcs.gov.au', url: 'https://www.fcs.gov.au/' },
+    { label: 'ASIC Moneysmart: bank accounts', url: 'https://moneysmart.gov.au/banking' },
   ],
   relatedLinks: [
     { label: 'Australia business banking hub', href: '/au/business-banking' },

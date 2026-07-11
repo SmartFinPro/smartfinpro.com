@@ -71,9 +71,9 @@ export const ukCfdBrokersConfig: TopicConfig = {
   h1: (y) => `Best CFD trading platforms in the UK (${y})`,
   metaTitle: (y) => `Best UK CFD Trading Platforms (${y})`,
   metaDescription: (y) =>
-    `Compare FCA-regulated CFD trading platforms in the UK for ${y} by spread cost, leverage, platforms and regulatory record — independent, sourced.`,
+    `Compare FCA-regulated CFD trading platforms in the UK for ${y} by spread cost, leverage, platforms and regulatory record, independent, sourced.`,
   intro:
-    'Independent, side-by-side comparison of FCA-regulated CFD trading platforms for UK retail traders — ranked by spread cost on your own trading volume, leverage, platforms and regulatory record.',
+    'Independent, side-by-side comparison of FCA-regulated CFD trading platforms for UK retail traders, ranked by spread cost on your own trading volume, leverage, platforms and regulatory record.',
   publishedDate: '2026-07-11',
   attributesSchema: ukCfdBrokersAttributesSchema,
 
@@ -193,7 +193,7 @@ export const ukCfdBrokersConfig: TopicConfig = {
 
   verdict: {
     intro:
-      "Beginners with a small first deposit should start with Capital.com — just £20 to open an account, and the strongest Trustpilot rating of the seven researched. But on pure execution quality, IG is the stronger overall pick: the tightest spread of anything we found, the widest instrument range in this comparison (17,000+ markets), and no confirmed UK FCA enforcement action. Active traders chasing volume are better matched with Pepperstone, whose Razor account delivers ultra-tight raw spreads and the broadest platform lineup (MT4, MT5, cTrader, TradingView).",
+      "Beginners with a small first deposit should start with Capital.com: just £20 to open an account, and the strongest Trustpilot rating of the seven researched. But on pure execution quality, IG is the stronger overall pick: the tightest spread of anything we found, the widest instrument range in this comparison (17,000+ markets), and no confirmed UK FCA enforcement action. Active traders chasing volume are better matched with Pepperstone, whose Razor account delivers ultra-tight raw spreads and the broadest platform lineup (MT4, MT5, cTrader, TradingView).",
     picks: [
       { slug: 'ig-cfd-uk', label: 'Best overall' },
       { slug: 'capital-com', label: 'Best for beginners' },
@@ -201,23 +201,23 @@ export const ukCfdBrokersConfig: TopicConfig = {
     ],
   },
   methodology:
-    "We compare each broker's spread on a standard EUR/USD-style instrument and commission (where applicable), converted to an all-in cost rate on your own annual trading volume, alongside FCA authorisation, leverage caps, platform choice and consumer rating. CFD trading also covers indices, shares and commodities, whose individual spreads differ from the quoted EUR/USD-style figure — this is disclosed on every row rather than implied as the only real cost. Regulatory and legal history is sourced from FCA, ASIC, Danish FSA, Polish KNF and other primary regulators, and disclosed plainly rather than omitted — several matters found during research are group/parent-level actions in other jurisdictions, not UK FCA enforcement against the UK entity, and we preserve that distinction rather than conflating them. Retail-loss percentages (the FCA-mandated 'X% of retail accounts lose money' disclosure) update monthly and are shown only where independently confirmed at research time. Rankings never depend on commissions — every provider on this page is currently a visit-only listing.",
+    "We compare each broker's spread on a standard EUR/USD-style instrument and commission (where applicable), converted to an all-in cost rate on your own annual trading volume, alongside FCA authorisation, leverage caps, platform choice and consumer rating. CFD trading also covers indices, shares and commodities, whose individual spreads differ from the quoted EUR/USD-style figure. This is disclosed on every row rather than implied as the only real cost. Regulatory and legal history is sourced from FCA, ASIC, Danish FSA, Polish KNF and other primary regulators, and disclosed plainly rather than omitted: several matters found during research are group/parent-level actions in other jurisdictions, not UK FCA enforcement against the UK entity, and we preserve that distinction rather than conflating them. Retail-loss percentages (the FCA-mandated 'X% of retail accounts lose money' disclosure) update monthly and are shown only where independently confirmed at research time. Rankings never depend on commissions. Every provider on this page is currently a visit-only listing.",
   buyerGuide: [
     {
       h3: 'CFDs are high-risk, leveraged products',
-      body: 'The FCA requires every UK CFD provider to display the percentage of retail client accounts that lose money trading CFDs with them — typically a majority, sometimes a large majority. This applies to every broker on this page, not just some. Leverage magnifies both gains and losses, and FCA rules cap it at 30:1 on major FX pairs, dropping to 5:1 on individual shares.',
+      body: 'The FCA requires every UK CFD provider to display the percentage of retail client accounts that lose money trading CFDs with them, typically a majority, sometimes a large majority. This applies to every broker on this page, not just some. Leverage magnifies both gains and losses, and FCA rules cap it at 30:1 on major FX pairs, dropping to 5:1 on individual shares.',
     },
     {
       h3: "Spread-only vs. raw spread + commission",
-      body: 'Spread-only accounts (no separate commission) are simpler but usually cost more per trade than a raw/ECN-style account, which pairs a near-zero spread with a flat or per-lot commission. Several brokers on this page (Pepperstone, CMC Markets, FOREX.com, XTB, Admirals) offer both structures — active, high-volume traders generally save money on the raw account.',
+      body: 'Spread-only accounts (no separate commission) are simpler but usually cost more per trade than a raw/ECN-style account, which pairs a near-zero spread with a flat or per-lot commission. Several brokers on this page (Pepperstone, CMC Markets, FOREX.com, XTB, Admirals) offer both structures. Active, high-volume traders generally save money on the raw account.',
     },
     {
       h3: "CFD spreads vary a lot by instrument",
-      body: 'The EUR/USD-style spread shown in our comparison is a standard reference point, but CFD trading also covers indices, individual shares and commodities — each with its own spread, which can be meaningfully wider or narrower than the FX-style figure. Check the specific instrument you plan to trade on the broker\'s own site before assuming the headline number applies everywhere.',
+      body: 'The EUR/USD-style spread shown in our comparison is a standard reference point, but CFD trading also covers indices, individual shares and commodities, each with its own spread, which can be meaningfully wider or narrower than the FX-style figure. Check the specific instrument you plan to trade on the broker\'s own site before assuming the headline number applies everywhere.',
     },
     {
       h3: 'Reading disclosed regulatory history honestly',
-      body: "Every broker on this page has a real, sourced regulatory or legal matter in its recent history at the group or parent-company level — CMC faces an active Australian Federal Court class action, Saxo's Danish parent was fined for AML compliance failures, XTB's Polish parent was fined for MiFID II product-governance failures, Pepperstone self-reported and remediated an ASIC leverage-cap breach, and eToro's US and Italian entities were separately fined. None of these are UK FCA enforcement actions against the UK-regulated entity specifically — we disclose each with that scope distinction preserved, not conflated into a claim about the UK broker itself.",
+      body: "Every broker on this page has a real, sourced regulatory or legal matter in its recent history at the group or parent-company level: CMC faces an active Australian Federal Court class action, Saxo's Danish parent was fined for AML compliance failures, XTB's Polish parent was fined for MiFID II product-governance failures, Pepperstone self-reported and remediated an ASIC leverage-cap breach, and eToro's US and Italian entities were separately fined. None of these are UK FCA enforcement actions against the UK-regulated entity specifically. We disclose each with that scope distinction preserved, not conflated into a claim about the UK broker itself.",
     },
   ],
   faq: [
@@ -227,19 +227,19 @@ export const ukCfdBrokersConfig: TopicConfig = {
     },
     {
       q: 'Are these CFD brokers actually regulated in the UK?',
-      a: "Yes — all 7 hold FCA authorisation, independently verifiable via the FCA Register FRN shown for each. FCA-regulated CFD providers must display the percentage of their own retail clients who lose money, segregate client funds, and cap retail leverage at 30:1 on major FX pairs (lower on other asset classes).",
+      a: "Yes, all 7 hold FCA authorisation, independently verifiable via the FCA Register FRN shown for each. FCA-regulated CFD providers must display the percentage of their own retail clients who lose money, segregate client funds, and cap retail leverage at 30:1 on major FX pairs (lower on other asset classes).",
     },
     {
       q: 'What does the retail-loss percentage actually mean?',
-      a: "It's an FCA-mandated disclosure of what percentage of a broker's own retail clients lost money trading CFDs over a recent period — not a marketing number, and typically a majority across the industry. We only display this figure where we could independently confirm a current number from the broker.",
+      a: "It's an FCA-mandated disclosure of what percentage of a broker's own retail clients lost money trading CFDs over a recent period, not a marketing number, and typically a majority across the industry. We only display this figure where we could independently confirm a current number from the broker.",
     },
     {
       q: 'How is the cost comparison calculated?',
-      a: "We convert each broker's EUR/USD-style spread and commission into an all-in cost rate, then apply it to your own estimated annual trading volume using the slider above — the ranking updates live. This reflects a standard reference cost, not every instrument's actual spread — check the specific market you plan to trade before assuming it applies exactly.",
+      a: "We convert each broker's EUR/USD-style spread and commission into an all-in cost rate, then apply it to your own estimated annual trading volume using the slider above. The ranking updates live. This reflects a standard reference cost, not every instrument's actual spread: check the specific market you plan to trade before assuming it applies exactly.",
     },
     {
       q: 'How current is this data?',
-      a: 'Every spread, commission, FRN and regulatory disclosure on this page was verified against official sources on 11 July 2026. Spreads fluctuate with market conditions and are shown as typical/average figures — confirm live pricing on the broker\'s own site before trading.',
+      a: 'Every spread, commission, FRN and regulatory disclosure on this page was verified against official sources on 11 July 2026. Spreads fluctuate with market conditions and are shown as typical/average figures: confirm live pricing on the broker\'s own site before trading.',
     },
   ],
   compliance: {
@@ -250,7 +250,7 @@ export const ukCfdBrokersConfig: TopicConfig = {
 
   sources: [
     { label: 'FCA Register', url: 'https://register.fca.org.uk/' },
-    { label: 'FCA — CFD leverage/marketing restrictions (PS19/18)', url: 'https://www.fca.org.uk/publication/policy/ps19-18.pdf' },
+    { label: 'FCA: CFD leverage/marketing restrictions (PS19/18)', url: 'https://www.fca.org.uk/publication/policy/ps19-18.pdf' },
   ],
   relatedLinks: [
     { label: 'UK trading hub', href: '/uk/trading' },

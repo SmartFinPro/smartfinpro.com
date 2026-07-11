@@ -53,7 +53,7 @@ const gbp = (n: number) => (n ? `£${n.toFixed(2)}/mo` : 'Free');
 const FSCS_LABEL: Record<string, string> = {
   full_fscs: 'Full FSCS (£120k)',
   safeguarded: 'Safeguarded (not FSCS)',
-  transitional: 'Transitional — see detail',
+  transitional: 'Transitional (see detail)',
 };
 
 export const ukBusinessBankAccountsConfig: TopicConfig = {
@@ -63,9 +63,9 @@ export const ukBusinessBankAccountsConfig: TopicConfig = {
   h1: (y) => `Best business bank accounts in the UK (${y})`,
   metaTitle: (y) => `Best UK Business Bank Accounts (${y})`,
   metaDescription: (y) =>
-    `Compare UK business bank accounts of ${y} by monthly fee, FSCS protection and accounting integrations — independent, expert-reviewed, sourced.`,
+    `Compare UK business bank accounts of ${y} by monthly fee, FSCS protection and accounting integrations, independent, expert-reviewed, sourced.`,
   intro:
-    'Independent, side-by-side comparison of business bank accounts for UK small businesses — ranked by monthly fee, FSCS protection status and features, with a live multi-year cost projection.',
+    'Independent, side-by-side comparison of business bank accounts for UK small businesses, ranked by monthly fee, FSCS protection status and features, with a live multi-year cost projection.',
   publishedDate: '2026-07-11',
   attributesSchema: ukBusinessBankAttributesSchema,
 
@@ -173,7 +173,7 @@ export const ukBusinessBankAccountsConfig: TopicConfig = {
 
   verdict: {
     intro:
-      "For most UK businesses, Starling Bank Business comes out on top: a full banking licence backing unambiguous £120,000 FSCS protection, free UK transfers, and a free Making Tax Digital tool that's actually useful. For lower cost, Mettle by NatWest is hard to beat — a completely free account that includes FreeAgent accounting software, with full FSCS protection via NatWest's licence. Monzo Business, meanwhile, connects to the widest range of accounting software (Xero, QuickBooks, FreeAgent, Sage) of any account here. Both Monzo and Starling carry a real 2025 FCA fine, disclosed in detail below and worth weighing against each bank's other strengths.",
+      "For most UK businesses, Starling Bank Business comes out on top: a full banking licence backing unambiguous £120,000 FSCS protection, free UK transfers, and a free Making Tax Digital tool that's actually useful. For lower cost, Mettle by NatWest is hard to beat: a completely free account that includes FreeAgent accounting software, with full FSCS protection via NatWest's licence. Monzo Business, meanwhile, connects to the widest range of accounting software (Xero, QuickBooks, FreeAgent, Sage) of any account here. Both Monzo and Starling carry a real 2025 FCA fine, disclosed in detail below and worth weighing against each bank's other strengths.",
     picks: [
       { slug: 'starling-business', label: 'Best overall' },
       { slug: 'mettle-natwest', label: 'Best value' },
@@ -181,57 +181,57 @@ export const ukBusinessBankAccountsConfig: TopicConfig = {
     ],
   },
   methodology:
-    "We compare each provider's monthly fee, FSCS protection status, interest rate, international payment support and accounting-software integrations from official pricing pages, distinguishing explicitly between full UK banking licences (FSCS £120,000), e-money safeguarding (not FSCS-backed), and providers mid-transition between the two. We disclose real, sourced regulatory and compliance history plainly — a bank with a confirmed FCA enforcement fine is not automatically excluded, but the fine is disclosed in full and weighed against the provider's other strengths rather than hidden. Rankings never depend on commissions — every provider on this page is currently a visit-only listing.",
+    "We compare each provider's monthly fee, FSCS protection status, interest rate, international payment support and accounting-software integrations from official pricing pages, distinguishing explicitly between full UK banking licences (FSCS £120,000), e-money safeguarding (not FSCS-backed), and providers mid-transition between the two. We disclose real, sourced regulatory and compliance history plainly: a bank with a confirmed FCA enforcement fine is not automatically excluded, but the fine is disclosed in full and weighed against the provider's other strengths rather than hidden. Rankings never depend on commissions. Every provider on this page is currently a visit-only listing.",
   buyerGuide: [
     {
-      h3: 'FSCS £120,000 vs. safeguarding — the distinction that matters most',
-      body: "Since 1 December 2025, UK bank deposits are FSCS-protected up to £120,000 per person, per authorised firm — but ONLY at firms with a full UK banking licence (Starling, Monzo, Barclays, Mettle/NatWest). Tide and Wise are e-money institutions: your funds sit in SAFEGUARDED accounts (segregated, but not FSCS-insured) — a real, lower-assurance protection mechanism, not a technicality. Revolut Business is transitional: it gained a full banking licence in March 2026, but pre-March accounts may remain on the legacy e-money entity until actively migrated — check your account's current status in-app rather than assuming full protection applies.",
+      h3: 'FSCS £120,000 vs. safeguarding: the distinction that matters most',
+      body: "Since 1 December 2025, UK bank deposits are FSCS-protected up to £120,000 per person, per authorised firm, but ONLY at firms with a full UK banking licence (Starling, Monzo, Barclays, Mettle/NatWest). Tide and Wise are e-money institutions: your funds sit in SAFEGUARDED accounts (segregated, but not FSCS-insured), a real, lower-assurance protection mechanism rather than a technicality. Revolut Business is transitional: it gained a full banking licence in March 2026, but pre-March accounts may remain on the legacy e-money entity until actively migrated. Check your account's current status in-app rather than assuming full protection applies.",
     },
     {
       h3: 'Reading the disclosed FCA fines honestly',
-      body: "Starling Bank was fined £28,959,426 by the FCA in October 2024 for financial-crime screening failures (54,000+ accounts opened for high-risk customers in breach of a regulatory requirement). Monzo Bank was fined £21,091,300 in July 2025 for anti-money-laundering system failures spanning 2018-2022. Barclays was fined a combined £42 million in 2025 across two financial-crime risk-management cases. All three banks state the underlying issues have since been remediated — we disclose the fines in full so you can weigh them against each bank's current strengths, rather than presenting any of the three as risk-free.",
+      body: "Starling Bank was fined £28,959,426 by the FCA in October 2024 for financial-crime screening failures (54,000+ accounts opened for high-risk customers in breach of a regulatory requirement). Monzo Bank was fined £21,091,300 in July 2025 for anti-money-laundering system failures spanning 2018-2022. Barclays was fined a combined £42 million in 2025 across two financial-crime risk-management cases. All three banks state the underlying issues have since been remediated; we disclose the fines in full so you can weigh them against each bank's current strengths, rather than presenting any of the three as risk-free.",
     },
     {
       h3: 'Free accounts still cost you something',
-      body: 'Tide, Starling, Mettle and Monzo\'s Lite tier are free — but "free" providers typically monetise through FX fees on international payments, paid add-on tiers, or interest earned on customer balances. Wise and Revolut are explicit fee-per-transaction models instead. Neither approach is inherently better — check the international-payments row if you trade overseas, since fees there vary the most.',
+      body: 'Tide, Starling, Mettle and Monzo\'s Lite tier are free, but "free" providers typically monetise through FX fees on international payments, paid add-on tiers, or interest earned on customer balances. Wise and Revolut are explicit fee-per-transaction models instead. Neither approach is inherently better: check the international-payments row if you trade overseas, since fees there vary the most.',
     },
     {
       h3: 'Why Revolut Business is disclosed, not top-ranked',
-      body: 'Revolut ranked as the UK\'s worst firm for fraud/scam complaints escalated to the Financial Ombudsman for two consecutive years (2024 and 2025), per Which? research, and its EU (Lithuania-licensed) arm had its business activities restricted by the European Central Bank in July 2025 pending an independent risk review — a matter concerning the EU entity specifically, not the new UK bank, but disclosed given the shared brand. Combined with its still-transitional FSCS status, we do not rank Revolut as a top pick while these factors remain current.',
+      body: 'Revolut ranked as the UK\'s worst firm for fraud/scam complaints escalated to the Financial Ombudsman for two consecutive years (2024 and 2025), per Which? research, and its EU (Lithuania-licensed) arm had its business activities restricted by the European Central Bank in July 2025 pending an independent risk review, a matter concerning the EU entity specifically, not the new UK bank, but disclosed given the shared brand. Combined with its still-transitional FSCS status, we do not rank Revolut as a top pick while these factors remain current.',
     },
   ],
   faq: [
     {
       q: 'What is the best business bank account in the UK?',
-      a: "Starling Bank Business tops our list, backed by a full UK banking licence, unambiguous £120,000 FSCS protection and free UK transfers. If you want the lowest cost, Mettle by NatWest gives you a completely free account with FreeAgent accounting software bundled in, while Monzo Business connects to the broadest range of accounting software. Note that Starling, Monzo and Barclays all carry real 2025 FCA fines, which we disclose in full — factor them in alongside each bank's other strengths.",
+      a: "Starling Bank Business tops our list, backed by a full UK banking licence, unambiguous £120,000 FSCS protection and free UK transfers. If you want the lowest cost, Mettle by NatWest gives you a completely free account with FreeAgent accounting software bundled in, while Monzo Business connects to the broadest range of accounting software. Note that Starling, Monzo and Barclays all carry real 2025 FCA fines, which we disclose in full: factor them in alongside each bank's other strengths.",
     },
     {
       q: 'Is my UK business banking money protected up to £120,000?',
-      a: "Only at providers with a full UK banking licence — Starling, Monzo, Barclays and Mettle (via NatWest) all qualify. Tide and Wise are e-money institutions using safeguarding, not FSCS protection — a materially different, lower-assurance mechanism. Revolut Business is transitional following its March 2026 banking licence: check your specific account's migration status in-app rather than assuming full protection.",
+      a: "Only at providers with a full UK banking licence: Starling, Monzo, Barclays and Mettle (via NatWest) all qualify. Tide and Wise are e-money institutions using safeguarding, not FSCS protection, a materially different, lower-assurance mechanism. Revolut Business is transitional following its March 2026 banking licence: check your specific account's migration status in-app rather than assuming full protection.",
     },
     {
       q: 'How is the multi-year cost calculated?',
-      a: "We apply each account's monthly fee across your chosen time horizon. Move the horizon slider to see the dollar impact — the ranking updates live. Most accounts on this page have few other recurring costs for typical domestic usage, so monthly fee is the main driver; international-payment fees can matter more if you trade overseas.",
+      a: "We apply each account's monthly fee across your chosen time horizon. Move the horizon slider to see the dollar impact. The ranking updates live. Most accounts on this page have few other recurring costs for typical domestic usage, so monthly fee is the main driver; international-payment fees can matter more if you trade overseas.",
     },
     {
       q: 'Why aren\'t Starling and Monzo excluded given their FCA fines?',
-      a: 'Financial-crime control failures are serious and disclosed in full on this page — but both banks remain FCA-authorised, state the underlying issues have been remediated, and offer genuinely strong products otherwise. We disclose the fines plainly rather than silently omitting them, and let you weigh the risk alongside each bank\'s other strengths, consistent with our approach across every comparison on this site.',
+      a: 'Financial-crime control failures are serious and disclosed in full on this page, but both banks remain FCA-authorised, state the underlying issues have been remediated, and offer genuinely strong products otherwise. We disclose the fines plainly rather than silently omitting them, and let you weigh the risk alongside each bank\'s other strengths, consistent with our approach across every comparison on this site.',
     },
     {
       q: 'How current is this data?',
-      a: 'Every fee, protection status and disclosure on this page was verified against official provider pages, the FCA Register and FSCS/Bank of England sources on 11 July 2026. Revolut Business\'s FSCS migration status changes as accounts are moved onto the new banking entity — confirm your own account\'s current status directly before relying on this page.',
+      a: 'Every fee, protection status and disclosure on this page was verified against official provider pages, the FCA Register and FSCS/Bank of England sources on 11 July 2026. Revolut Business\'s FSCS migration status changes as accounts are moved onto the new banking entity, so confirm your own account\'s current status directly before relying on this page.',
     },
   ],
   compliance: {
     notice:
-      "Not financial advice. UK bank deposits are FSCS-protected up to £120,000 per person, per authorised firm — this applies only to full banking licences, not e-money safeguarding. Confirm current protection status before opening an account.",
+      "Not financial advice. UK bank deposits are FSCS-protected up to £120,000 per person, per authorised firm; this applies only to full banking licences, not e-money safeguarding. Confirm current protection status before opening an account.",
     regulators: ['FCA', 'FSCS'],
   },
 
   sources: [
-    { label: 'FSCS — deposit protection increase to £120,000', url: 'https://www.fscs.org.uk/media/press/2025/nov/fscs-welcomes-higher-deposit-protection-limit-of-120000--giving-people-confidence-their-money-is-protected/' },
+    { label: 'FSCS: deposit protection increase to £120,000', url: 'https://www.fscs.org.uk/media/press/2025/nov/fscs-welcomes-higher-deposit-protection-limit-of-120000--giving-people-confidence-their-money-is-protected/' },
     { label: 'FCA Register', url: 'https://register.fca.org.uk/' },
-    { label: 'FCA — Starling Bank fine, October 2024', url: 'https://www.fca.org.uk/news/press-releases/fca-fines-starling-bank-failings-financial-crime-systems-and-controls' },
+    { label: 'FCA: Starling Bank fine, October 2024', url: 'https://www.fca.org.uk/news/press-releases/fca-fines-starling-bank-failings-financial-crime-systems-and-controls' },
   ],
   relatedLinks: [
     { label: 'UK business banking hub', href: '/uk/business-banking' },

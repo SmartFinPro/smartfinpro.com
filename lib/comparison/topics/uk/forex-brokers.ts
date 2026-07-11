@@ -55,9 +55,9 @@ export const ukForexBrokersConfig: TopicConfig = {
   h1: (y) => `Best forex brokers in the UK (${y})`,
   metaTitle: (y) => `Best UK Forex Trading Brokers (${y})`,
   metaDescription: (y) =>
-    `Compare FCA-regulated forex brokers in the UK for ${y} by all-in trading cost, leverage, platforms and regulatory record — independent, sourced.`,
+    `Compare FCA-regulated forex brokers in the UK for ${y} by all-in trading cost, leverage, platforms and regulatory record, independent, sourced.`,
   intro:
-    'Independent, side-by-side comparison of FCA-regulated forex brokers for UK retail traders — ranked by all-in trading cost on your own annual volume, leverage, platforms and regulatory record.',
+    'Independent, side-by-side comparison of FCA-regulated forex brokers for UK retail traders, ranked by all-in trading cost on your own annual volume, leverage, platforms and regulatory record.',
   publishedDate: '2026-07-11',
   attributesSchema: ukForexBrokersAttributesSchema,
 
@@ -170,7 +170,7 @@ export const ukForexBrokersConfig: TopicConfig = {
 
   verdict: {
     intro:
-      "Cost is where Pepperstone wins outright — an average 0.12 pips on EUR/USD through its Razor account, the lowest of any broker we researched, notwithstanding a self-reported and since-remediated 2023 leverage-cap breach. Traders who want breadth should look at IG instead: 17,000+ instruments and a history as the largest FCA spread-betting provider dating back to 1974. CMC Markets rounds out the shortlist as the steadiest long-standing option, FCA-regulated since 2001, with 330+ FX pairs and FSCS coverage.",
+      "Cost is where Pepperstone wins outright: an average 0.12 pips on EUR/USD through its Razor account, the lowest of any broker we researched, notwithstanding a self-reported and since-remediated 2023 leverage-cap breach. Traders who want breadth should look at IG instead: 17,000+ instruments and a history as the largest FCA spread-betting provider dating back to 1974. CMC Markets rounds out the shortlist as the steadiest long-standing option, FCA-regulated since 2001, with 330+ FX pairs and FSCS coverage.",
     picks: [
       { slug: 'pepperstone-forex-uk', label: 'Lowest cost' },
       { slug: 'ig-forex-uk', label: 'Widest market range' },
@@ -178,11 +178,11 @@ export const ukForexBrokersConfig: TopicConfig = {
     ],
   },
   methodology:
-    "We compare each broker's spread and commission on their standard or raw/ECN account, converted to an all-in cost rate on your own annual trading volume, alongside FCA authorisation, leverage caps, platform choice and consumer rating. Regulatory and legal history is sourced from the FCA, ASIC, Danish FSA, Polish KNF, CFTC and other primary regulators, and disclosed plainly rather than omitted — several matters found during research are group/parent-level actions in other jurisdictions, not UK FCA enforcement against the UK entity, and we preserve that distinction rather than conflating them. Rankings never depend on commissions — every provider on this page is currently a visit-only listing.",
+    "We compare each broker's spread and commission on their standard or raw/ECN account, converted to an all-in cost rate on your own annual trading volume, alongside FCA authorisation, leverage caps, platform choice and consumer rating. Regulatory and legal history is sourced from the FCA, ASIC, Danish FSA, Polish KNF, CFTC and other primary regulators, and disclosed plainly rather than omitted; several matters found during research are group/parent-level actions in other jurisdictions, not UK FCA enforcement against the UK entity, and we preserve that distinction rather than conflating them. Rankings never depend on commissions. Every provider on this page is currently a visit-only listing.",
   buyerGuide: [
     {
       h3: 'FCA leverage caps and negative balance protection',
-      body: 'The FCA caps leverage for retail clients at 30:1 on major FX pairs (lower on other asset classes), and requires FCA-authorised brokers to hold client funds in segregated accounts and provide negative balance protection. This applies to all 7 brokers on this page — check the FRN against the FCA Register if you want to verify a broker independently.',
+      body: 'The FCA caps leverage for retail clients at 30:1 on major FX pairs (lower on other asset classes), and requires FCA-authorised brokers to hold client funds in segregated accounts and provide negative balance protection. This applies to all 7 brokers on this page. Check the FRN against the FCA Register if you want to verify a broker independently.',
     },
     {
       h3: 'Spread-only vs. raw spread + commission',
@@ -190,44 +190,44 @@ export const ukForexBrokersConfig: TopicConfig = {
     },
     {
       h3: 'Verify Admirals against the genuine FRN before trading',
-      body: 'The FCA has repeatedly warned about fraudulent clone websites impersonating Admirals (Admiral Markets UK Ltd) — always confirm you\'re dealing with the genuine entity, FRN 595450, via the FCA Register before depositing funds, since clone sites offer no FSCS or Financial Ombudsman protection.',
+      body: 'The FCA has repeatedly warned about fraudulent clone websites impersonating Admirals (Admiral Markets UK Ltd): always confirm you\'re dealing with the genuine entity, FRN 595450, via the FCA Register before depositing funds, since clone sites offer no FSCS or Financial Ombudsman protection.',
     },
     {
       h3: 'Reading disclosed regulatory history honestly',
-      body: "Every broker on this page has a real, sourced regulatory or legal matter in its recent history at the group or parent-company level — Saxo's Danish parent was fined for AML compliance failures, XTB's Polish parent was fined for MiFID II product-governance failures, Pepperstone self-reported and remediated an ASIC leverage-cap breach, CMC faces an active Australian Federal Court class action, and StoneX (FOREX.com's parent) has multiple US exchange-level fines. None of these are UK FCA enforcement actions against the UK-regulated entity specifically — we disclose each with that scope distinction preserved.",
+      body: "Every broker on this page has a real, sourced regulatory or legal matter in its recent history at the group or parent-company level: Saxo's Danish parent was fined for AML compliance failures, XTB's Polish parent was fined for MiFID II product-governance failures, Pepperstone self-reported and remediated an ASIC leverage-cap breach, CMC faces an active Australian Federal Court class action, and StoneX (FOREX.com's parent) has multiple US exchange-level fines. None of these are UK FCA enforcement actions against the UK-regulated entity specifically. We disclose each with that scope distinction preserved.",
     },
   ],
   faq: [
     {
       q: 'What is the best forex broker in the UK in 2026?',
-      a: "On cost, Pepperstone wins outright — the lowest overall trading cost of any broker we researched via its Razor account. IG is the better fit for market range, as the UK's largest FCA spread-betting provider, while CMC Markets offers the steadiest track record, FCA-regulated since 2001. Pricing and features are re-verified regularly, and the ranking is never influenced by commissions.",
+      a: "On cost, Pepperstone wins outright, the lowest overall trading cost of any broker we researched via its Razor account. IG is the better fit for market range, as the UK's largest FCA spread-betting provider, while CMC Markets offers the steadiest track record, FCA-regulated since 2001. Pricing and features are re-verified regularly, and the ranking is never influenced by commissions.",
     },
     {
       q: 'Are these brokers actually regulated in the UK?',
-      a: 'Yes — all 7 hold FCA authorisation, independently verifiable via the FCA Register FRN shown for each. FCA-regulated brokers must segregate client funds, cap retail leverage at 30:1 on major FX pairs, and provide negative balance protection.',
+      a: 'Yes, all 7 hold FCA authorisation, independently verifiable via the FCA Register FRN shown for each. FCA-regulated brokers must segregate client funds, cap retail leverage at 30:1 on major FX pairs, and provide negative balance protection.',
     },
     {
       q: 'How is the cost comparison calculated?',
-      a: "We convert each broker's spread and commission into an all-in cost rate, then apply it to your own estimated annual trading volume using the slider above — the ranking updates live. This reflects genuine trading costs, not account fees, since none of these brokers charge a monthly account fee.",
+      a: "We convert each broker's spread and commission into an all-in cost rate, then apply it to your own estimated annual trading volume using the slider above. The ranking updates live. This reflects genuine trading costs, not account fees, since none of these brokers charge a monthly account fee.",
     },
     {
       q: 'Why does the FCA warn about clone firms impersonating Admirals?',
-      a: 'Fraudsters have repeatedly set up fake websites mimicking Admirals\' branding to solicit deposits with no genuine regulatory protection. The real, FCA-authorised entity is Admiral Markets UK Ltd, FRN 595450 — always verify this exact FRN on the FCA Register before depositing funds with any site claiming to be Admirals.',
+      a: 'Fraudsters have repeatedly set up fake websites mimicking Admirals\' branding to solicit deposits with no genuine regulatory protection. The real, FCA-authorised entity is Admiral Markets UK Ltd, FRN 595450: always verify this exact FRN on the FCA Register before depositing funds with any site claiming to be Admirals.',
     },
     {
       q: 'How current is this data?',
-      a: 'Every spread, commission, FRN and regulatory disclosure on this page was verified against official sources on 11 July 2026. Spreads fluctuate with market conditions and are shown as typical/average figures — confirm live pricing on the broker\'s own site before trading.',
+      a: 'Every spread, commission, FRN and regulatory disclosure on this page was verified against official sources on 11 July 2026. Spreads fluctuate with market conditions and are shown as typical/average figures; confirm live pricing on the broker\'s own site before trading.',
     },
   ],
   compliance: {
     notice:
-      'Not financial advice. Forex trading carries a high risk of loss for retail investors. FCA-regulated brokers cap retail leverage and require negative balance protection — confirm current terms before trading.',
+      'Not financial advice. Forex trading carries a high risk of loss for retail investors. FCA-regulated brokers cap retail leverage and require negative balance protection. Confirm current terms before trading.',
     regulators: ['FCA'],
   },
 
   sources: [
     { label: 'FCA Register', url: 'https://register.fca.org.uk/' },
-    { label: 'FCA — Admirals clone-firm warning', url: 'https://www.fca.org.uk/news/warnings/admiral-markets-ltd-clone' },
+    { label: 'FCA: Admirals clone-firm warning', url: 'https://www.fca.org.uk/news/warnings/admiral-markets-ltd-clone' },
   ],
   relatedLinks: [
     { label: 'UK forex hub', href: '/uk/forex' },

@@ -59,9 +59,9 @@ export const auForexBrokersConfig: TopicConfig = {
   h1: (y) => `Best forex brokers in Australia (${y})`,
   metaTitle: (y) => `Best Forex Brokers Australia (${y})`,
   metaDescription: (y) =>
-    `Compare ASIC-regulated forex brokers in Australia for ${y} by all-in trading cost, leverage, platforms and regulatory record — independent, sourced.`,
+    `Compare ASIC-regulated forex brokers in Australia for ${y} by all-in trading cost, leverage, platforms and regulatory record, independent, sourced.`,
   intro:
-    'Independent, side-by-side comparison of ASIC-regulated forex brokers for Australian retail traders — ranked by all-in trading cost on your own annual volume, leverage, platforms and regulatory record.',
+    'Independent, side-by-side comparison of ASIC-regulated forex brokers for Australian retail traders, ranked by all-in trading cost on your own annual volume, leverage, platforms and regulatory record.',
   publishedDate: '2026-07-10',
   attributesSchema: auForexBrokersAttributesSchema,
 
@@ -197,7 +197,7 @@ export const auForexBrokersConfig: TopicConfig = {
 
   verdict: {
     intro:
-      'Tightest raw spreads, the broadest platform lineup of the group (MT4, MT5, cTrader and native TradingView), and a 2023 leverage-cap matter it self-reported and fully remediated under ASIC oversight — Pepperstone leads on that combination. Traders prioritising cost above all else should look at Fusion Markets, which pairs no minimum deposit with the lowest commission in the field. For a long, clean track record, CMC Markets is the safer bet: dual ASIC licences and no regulatory red flags found.',
+      'Tightest raw spreads, the broadest platform lineup of the group (MT4, MT5, cTrader and native TradingView), and a 2023 leverage-cap matter it self-reported and fully remediated under ASIC oversight: Pepperstone leads on that combination. Traders prioritising cost above all else should look at Fusion Markets, which pairs no minimum deposit with the lowest commission in the field. For a long, clean track record, CMC Markets is the safer bet: dual ASIC licences and no regulatory red flags found.',
     picks: [
       { slug: 'pepperstone-au', label: 'Best overall' },
       { slug: 'fusion-markets', label: 'Best value / lowest cost' },
@@ -205,11 +205,11 @@ export const auForexBrokersConfig: TopicConfig = {
     ],
   },
   methodology:
-    "We compare each broker's spread and commission on their raw/ECN account (or standard spread-only account where no raw tier exists), converted to an all-in cost rate on your own annual trading volume, alongside ASIC AFSL licensing, leverage caps, platform choice and consumer rating. Regulatory and legal history is sourced directly from ASIC media releases and court filings where it exists, and disclosed plainly rather than omitted — a disclosed, resolved compliance matter is treated differently from an unresolved one. Retail loss percentages (ASIC's mandated 'X% of retail accounts lose money' disclosure) are shown only where independently confirmed from a live source; where a broker's current figure could not be verified, we say so rather than publish an unconfirmed number. Rankings never depend on commissions — every provider on this page is currently a visit-only listing.",
+    "We compare each broker's spread and commission on their raw/ECN account (or standard spread-only account where no raw tier exists), converted to an all-in cost rate on your own annual trading volume, alongside ASIC AFSL licensing, leverage caps, platform choice and consumer rating. Regulatory and legal history is sourced directly from ASIC media releases and court filings where it exists, and disclosed plainly rather than omitted: a disclosed, resolved compliance matter is treated differently from an unresolved one. Retail loss percentages (ASIC's mandated 'X% of retail accounts lose money' disclosure) are shown only where independently confirmed from a live source; where a broker's current figure could not be verified, we say so rather than publish an unconfirmed number. Rankings never depend on commissions; every provider on this page is currently a visit-only listing.",
   buyerGuide: [
     {
       h3: 'ASIC leverage caps and negative balance protection',
-      body: 'ASIC caps leverage for retail clients at 30:1 on major FX pairs (lower on other asset classes), and requires ASIC-licensed brokers to hold client funds in segregated trust accounts and provide negative balance protection. This applies to all 7 brokers on this page — check the AFSL number against ASIC\'s public register if you want to verify a broker independently.',
+      body: 'ASIC caps leverage for retail clients at 30:1 on major FX pairs (lower on other asset classes), and requires ASIC-licensed brokers to hold client funds in segregated trust accounts and provide negative balance protection. This applies to all 7 brokers on this page. Check the AFSL number against ASIC\'s public register if you want to verify a broker independently.',
     },
     {
       h3: 'Spread-only vs. raw spread + commission',
@@ -217,45 +217,45 @@ export const auForexBrokersConfig: TopicConfig = {
     },
     {
       h3: 'What the retail-loss disclosure means',
-      body: "ASIC-regulated brokers must disclose what percentage of their own retail clients lost money over a trailing period — a regulator-mandated warning, not a marketing claim. Historically this figure runs high across the industry (well above half of retail accounts), underscoring that leveraged forex trading is high-risk. We show this figure only where we could independently confirm a current number.",
+      body: "ASIC-regulated brokers must disclose what percentage of their own retail clients lost money over a trailing period: a regulator-mandated warning, not a marketing claim. Historically this figure runs high across the industry (well above half of retail accounts), underscoring that leveraged forex trading is high-risk. We show this figure only where we could independently confirm a current number.",
     },
     {
       h3: 'Reading disclosed regulatory history honestly',
-      body: "One broker on this page (IC Markets) has an active Federal Court class action related to past CFD sales practices; another (Pepperstone) self-reported and fully remediated a 2023 leverage-cap breach under ASIC oversight, compensating affected clients. We disclose both plainly in the detail view rather than omitting them — a resolved, transparently-handled compliance matter is materially different from an active, unresolved legal action, and we describe each accordingly rather than treating them the same.",
+      body: "One broker on this page (IC Markets) has an active Federal Court class action related to past CFD sales practices; another (Pepperstone) self-reported and fully remediated a 2023 leverage-cap breach under ASIC oversight, compensating affected clients. We disclose both plainly in the detail view rather than omitting them: a resolved, transparently-handled compliance matter is materially different from an active, unresolved legal action, and we describe each accordingly rather than treating them the same.",
     },
   ],
   faq: [
     {
       q: 'What is the best forex broker in Australia in 2026?',
-      a: "Pepperstone, on balance: it combines the tightest raw spreads with the broadest platform choice — MT4, MT5, cTrader and native TradingView. Cost-focused traders tend to prefer Fusion Markets, which has no minimum deposit and the lowest commission of the seven. CMC Markets is the pick for anyone prioritising a long, clean regulatory track record — dual ASIC licences, no red flags found. Pricing and features are re-verified regularly, and commissions never determine the ranking.",
+      a: "Pepperstone, on balance: it combines the tightest raw spreads with the broadest platform choice (MT4, MT5, cTrader and native TradingView). Cost-focused traders tend to prefer Fusion Markets, which has no minimum deposit and the lowest commission of the seven. CMC Markets is the pick for anyone prioritising a long, clean regulatory track record, with dual ASIC licences and no red flags found. Pricing and features are re-verified regularly, and commissions never determine the ranking.",
     },
     {
       q: 'Are these brokers actually regulated in Australia?',
-      a: 'Yes — all 7 hold an ASIC Australian Financial Services Licence (AFSL), independently verifiable on ASIC\'s public Professional Registers Search. ASIC-licensed brokers must segregate client funds, cap retail leverage at 30:1 on major FX pairs, and provide negative balance protection.',
+      a: 'Yes, all 7 hold an ASIC Australian Financial Services Licence (AFSL), independently verifiable on ASIC\'s public Professional Registers Search. ASIC-licensed brokers must segregate client funds, cap retail leverage at 30:1 on major FX pairs, and provide negative balance protection.',
     },
     {
       q: 'What does the retail-loss percentage actually mean?',
-      a: "It's a regulator-mandated disclosure of what percentage of a broker's own retail clients lost money over a recent period — not a marketing number, and historically a majority-or-more figure across the industry. We only display this figure where we could independently confirm a current number from the broker; where we could not, we say so rather than publish an unverified figure.",
+      a: "It's a regulator-mandated disclosure of what percentage of a broker's own retail clients lost money over a recent period, not a marketing number, and historically a majority-or-more figure across the industry. We only display this figure where we could independently confirm a current number from the broker; where we could not, we say so rather than publish an unverified figure.",
     },
     {
       q: 'How is the cost comparison calculated?',
-      a: "We convert each broker's spread and commission into an all-in cost rate, then apply it to your own estimated annual trading volume using the slider above — the ranking updates live. This reflects genuine trading costs, not account fees, since none of these brokers charge a monthly account fee.",
+      a: "We convert each broker's spread and commission into an all-in cost rate, then apply it to your own estimated annual trading volume using the slider above. The ranking updates live. This reflects genuine trading costs, not account fees, since none of these brokers charge a monthly account fee.",
     },
     {
       q: 'How current is this data?',
-      a: 'Every spread, commission, licence number and regulatory disclosure on this page was verified against official sources on 10 July 2026. Spreads fluctuate with market conditions and are shown as typical/average figures — confirm live pricing on the broker\'s own site before trading.',
+      a: 'Every spread, commission, licence number and regulatory disclosure on this page was verified against official sources on 10 July 2026. Spreads fluctuate with market conditions and are shown as typical/average figures, so confirm live pricing on the broker\'s own site before trading.',
     },
   ],
   compliance: {
     notice:
-      'Not financial advice. Forex and CFD trading carries a high risk of loss for retail investors. ASIC-regulated brokers cap retail leverage and require negative balance protection — confirm current terms before trading.',
+      'Not financial advice. Forex and CFD trading carries a high risk of loss for retail investors. ASIC-regulated brokers cap retail leverage and require negative balance protection. Confirm current terms before trading.',
     regulators: ['ASIC'],
   },
 
   sources: [
-    { label: 'ASIC — Professional Registers Search (AFSL lookup)', url: 'https://www.asic.gov.au/online-services/search-asic-registers/professional-registers-search/' },
-    { label: 'ASIC Moneysmart — CFDs investment warning', url: 'https://moneysmart.gov.au/investment-warnings/contracts-for-difference-cfds' },
-    { label: 'ASIC media release 23-298MR — CFD leverage breach remediation', url: 'https://www.asic.gov.au/about-asic/news-centre/find-a-media-release/2023-releases/23-298mr-asic-oversees-more-than-17-4-million-in-compensation-to-retail-investors-by-otc-derivative-issuers/' },
+    { label: 'ASIC: Professional Registers Search (AFSL lookup)', url: 'https://www.asic.gov.au/online-services/search-asic-registers/professional-registers-search/' },
+    { label: 'ASIC Moneysmart: CFDs investment warning', url: 'https://moneysmart.gov.au/investment-warnings/contracts-for-difference-cfds' },
+    { label: 'ASIC media release 23-298MR: CFD leverage breach remediation', url: 'https://www.asic.gov.au/about-asic/news-centre/find-a-media-release/2023-releases/23-298mr-asic-oversees-more-than-17-4-million-in-compensation-to-retail-investors-by-otc-derivative-issuers/' },
   ],
   relatedLinks: [
     { label: 'Australia forex hub', href: '/au/forex' },

@@ -61,9 +61,9 @@ export const auCfdBrokersConfig: TopicConfig = {
   h1: (y) => `Best CFD trading platforms in Australia (${y})`,
   metaTitle: (y) => `Best CFD Brokers Australia (${y})`,
   metaDescription: (y) =>
-    `Compare ASIC-regulated CFD trading platforms in Australia for ${y} by instrument range, leverage caps and regulatory record — independent, sourced.`,
+    `Compare ASIC-regulated CFD trading platforms in Australia for ${y} by instrument range, leverage caps and regulatory record, independent, sourced.`,
   intro:
-    'Independent, side-by-side comparison of ASIC-regulated CFD trading platforms for Australian retail traders — ranked by instrument range, leverage, platform choice and regulatory record. CFDs are complex, high-risk leveraged instruments; a majority of retail accounts lose money trading them.',
+    'Independent, side-by-side comparison of ASIC-regulated CFD trading platforms for Australian retail traders, ranked by instrument range, leverage, platform choice and regulatory record. CFDs are complex, high-risk leveraged instruments; a majority of retail accounts lose money trading them.',
   publishedDate: '2026-07-10',
   attributesSchema: auCfdBrokersAttributesSchema,
 
@@ -191,23 +191,23 @@ export const auCfdBrokersConfig: TopicConfig = {
     ],
   },
   methodology:
-    "We compare each platform's instrument range, leverage caps, minimum deposit, platform choice and consumer rating from official sources and ASIC's own regulatory record, cross-checked against independent review platforms. CFD spreads across these 7 providers are quoted in genuinely incompatible units (index points, floating spreads, or a real percentage commission) — rather than manufacture a misleading single cost figure, we show each provider's real pricing model as text and let you compare like-for-like within your own trading style. Regulatory and legal history is sourced from ASIC media releases and Federal Court filings and disclosed plainly, including active/unresolved matters — a disclosed, resolved compliance issue is described differently from an active, ongoing one. Rankings never depend on commissions — every provider on this page is currently a visit-only listing.",
+    "We compare each platform's instrument range, leverage caps, minimum deposit, platform choice and consumer rating from official sources and ASIC's own regulatory record, cross-checked against independent review platforms. CFD spreads across these 7 providers are quoted in genuinely incompatible units (index points, floating spreads, or a real percentage commission). Rather than manufacture a misleading single cost figure, we show each provider's real pricing model as text and let you compare like-for-like within your own trading style. Regulatory and legal history is sourced from ASIC media releases and Federal Court filings and disclosed plainly, including active/unresolved matters: a disclosed, resolved compliance issue is described differently from an active, ongoing one. Rankings never depend on commissions; every provider on this page is currently a visit-only listing.",
   buyerGuide: [
     {
       h3: 'ASIC leverage caps on CFDs',
-      body: 'ASIC\'s product intervention order (in force since March 2021, extended through at least 2027) caps retail CFD leverage at 30:1 on major FX pairs, 20:1 on minor FX pairs, gold and major stock indices, 10:1 on other commodities and minor indices, 5:1 on shares, and 2:1 on crypto-assets — down from up to 500:1 before the order. All 7 providers here operate under these caps for AU retail clients.',
+      body: 'ASIC\'s product intervention order (in force since March 2021, extended through at least 2027) caps retail CFD leverage at 30:1 on major FX pairs, 20:1 on minor FX pairs, gold and major stock indices, 10:1 on other commodities and minor indices, 5:1 on shares, and 2:1 on crypto-assets. This is down from up to 500:1 before the order. All 7 providers here operate under these caps for AU retail clients.',
     },
     {
       h3: 'What the retail-loss disclosure means',
-      body: "ASIC-licensed CFD issuers must disclose what percentage of their own retail clients lost money over a recent period. ASIC's own January 2026 sector review found 68% of retail CFD investors lost money in FY2024 industry-wide, totaling over $458 million including $73 million in fees — a useful benchmark against any single provider's published figure. We show a provider's own number only where independently confirmed; otherwise we say so rather than guess.",
+      body: "ASIC-licensed CFD issuers must disclose what percentage of their own retail clients lost money over a recent period. ASIC's own January 2026 sector review found 68% of retail CFD investors lost money in FY2024 industry-wide, totaling over $458 million including $73 million in fees. That is a useful benchmark against any single provider's published figure. We show a provider's own number only where independently confirmed; otherwise we say so rather than guess.",
     },
     {
       h3: 'Reading disclosed legal and regulatory history honestly',
-      body: "Two providers on this page carry active, unresolved legal matters: IC Markets faces a consolidated Federal Court class action over past CFD sales practices, and eToro is the subject of ASIC's first Design and Distribution Obligations Federal Court enforcement action, with no judgment in either case as of publication. We disclose both factually in the detail view and do not rank either as a top pick while unresolved — separately, Pepperstone's 2023 leverage-cap breach was self-reported and fully remediated under ASIC oversight, a materially different (resolved) situation we describe accordingly.",
+      body: "Two providers on this page carry active, unresolved legal matters: IC Markets faces a consolidated Federal Court class action over past CFD sales practices, and eToro is the subject of ASIC's first Design and Distribution Obligations Federal Court enforcement action, with no judgment in either case as of publication. We disclose both factually in the detail view and do not rank either as a top pick while unresolved. Separately, Pepperstone's 2023 leverage-cap breach was self-reported and fully remediated under ASIC oversight, a materially different (resolved) situation we describe accordingly.",
     },
     {
       h3: 'Spread-based vs. commission-based pricing',
-      body: "Most providers here price CFDs into the spread (the buy/sell price gap) with no separate commission. Interactive Brokers instead charges a low, transparent percentage commission with tighter raw pricing — usually cheaper for high-volume traders, but its Trader Workstation platform has a steeper learning curve than the proprietary apps most other providers offer.",
+      body: "Most providers here price CFDs into the spread (the buy/sell price gap) with no separate commission. Interactive Brokers instead charges a low, transparent percentage commission with tighter raw pricing, usually cheaper for high-volume traders, but its Trader Workstation platform has a steeper learning curve than the proprietary apps most other providers offer.",
     },
   ],
   faq: [
@@ -217,31 +217,31 @@ export const auCfdBrokersConfig: TopicConfig = {
     },
     {
       q: 'What do the ASIC leverage caps actually limit?',
-      a: 'ASIC caps retail CFD leverage at 30:1 on major FX pairs, 20:1 on minor pairs/gold/major indices, 10:1 on other commodities, 5:1 on shares and 2:1 on crypto — all 7 providers on this page operate under these caps for Australian retail clients, down from up to 500:1 before the 2021 order.',
+      a: 'ASIC caps retail CFD leverage at 30:1 on major FX pairs, 20:1 on minor pairs/gold/major indices, 10:1 on other commodities, 5:1 on shares and 2:1 on crypto. All 7 providers on this page operate under these caps for Australian retail clients, down from up to 500:1 before the 2021 order.',
     },
     {
       q: 'Are IC Markets and eToro safe to use given their legal matters?',
-      a: "Both remain ASIC-licensed and operating. IC Markets faces an active consolidated Federal Court class action over past CFD sales conduct, and eToro is subject to ASIC's first Design and Distribution Obligations enforcement action — neither matter has reached a final judgment as of publication. We disclose both plainly and don't feature either as a top pick while the matters remain unresolved; you should weigh this alongside your own risk tolerance.",
+      a: "Both remain ASIC-licensed and operating. IC Markets faces an active consolidated Federal Court class action over past CFD sales conduct, and eToro is subject to ASIC's first Design and Distribution Obligations enforcement action. Neither matter has reached a final judgment as of publication. We disclose both plainly and don't feature either as a top pick while the matters remain unresolved; you should weigh this alongside your own risk tolerance.",
     },
     {
       q: 'Why isn\'t there a single cost comparison figure?',
-      a: 'CFD pricing across these 7 providers uses genuinely incompatible units — index points, floating spreads, or a real percentage commission — so a single dollar figure would misrepresent the real cost. We show each provider\'s actual pricing model as text instead of forcing an inaccurate ranking.',
+      a: 'CFD pricing across these 7 providers uses genuinely incompatible units: index points, floating spreads, or a real percentage commission. A single dollar figure would misrepresent the real cost, so we show each provider\'s actual pricing model as text instead of forcing an inaccurate ranking.',
     },
     {
       q: 'How current is this data?',
-      a: 'Every licence number, leverage cap and regulatory disclosure on this page was verified against ASIC and official provider sources on 10 July 2026. Spreads and minimum deposits can change — confirm current terms on the provider\'s own site before trading.',
+      a: 'Every licence number, leverage cap and regulatory disclosure on this page was verified against ASIC and official provider sources on 10 July 2026. Spreads and minimum deposits can change, so confirm current terms on the provider\'s own site before trading.',
     },
   ],
   compliance: {
     notice:
-      'Not financial advice. CFDs are complex, leveraged instruments and a majority of retail investor accounts lose money trading them. Two providers on this page carry active, unresolved legal or regulatory matters — see individual profiles for details.',
+      'Not financial advice. CFDs are complex, leveraged instruments and a majority of retail investor accounts lose money trading them. Two providers on this page carry active, unresolved legal or regulatory matters: see individual profiles for details.',
     regulators: ['ASIC'],
   },
 
   sources: [
-    { label: 'ASIC — Professional Registers Search (AFSL lookup)', url: 'https://www.asic.gov.au/online-services/search-asic-registers/professional-registers-search/' },
-    { label: 'ASIC Moneysmart — CFDs investment warning', url: 'https://moneysmart.gov.au/investment-warnings/contracts-for-difference-cfds' },
-    { label: 'ASIC media release 26-004MR — CFD sector review, Jan 2026', url: 'https://www.asic.gov.au/about-asic/news-centre/find-a-media-release/2026-releases/26-004mr-asic-secures-nearly-40-million-in-refunds-to-investors-and-drives-change-after-cfd-sector-falls-short/' },
+    { label: 'ASIC: Professional Registers Search (AFSL lookup)', url: 'https://www.asic.gov.au/online-services/search-asic-registers/professional-registers-search/' },
+    { label: 'ASIC Moneysmart: CFDs investment warning', url: 'https://moneysmart.gov.au/investment-warnings/contracts-for-difference-cfds' },
+    { label: 'ASIC media release 26-004MR: CFD sector review, Jan 2026', url: 'https://www.asic.gov.au/about-asic/news-centre/find-a-media-release/2026-releases/26-004mr-asic-secures-nearly-40-million-in-refunds-to-investors-and-drives-change-after-cfd-sector-falls-short/' },
   ],
   relatedLinks: [
     { label: 'Australia trading hub', href: '/au/trading' },

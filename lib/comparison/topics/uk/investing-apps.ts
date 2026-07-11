@@ -71,9 +71,9 @@ export const ukInvestingAppsConfig: TopicConfig = {
   h1: (y) => `Best investing apps & Stocks & Shares ISA platforms in the UK (${y})`,
   metaTitle: (y) => `Best UK Investing Apps & ISAs (${y})`,
   metaDescription: (y) =>
-    `Compare UK investing apps and Stocks & Shares ISA platforms of ${y} by platform fees, dealing costs and FSCS protection — independent, sourced.`,
+    `Compare UK investing apps and Stocks & Shares ISA platforms of ${y} by platform fees, dealing costs and FSCS protection, independent, sourced.`,
   intro:
-    'Independent, side-by-side comparison of UK investing apps and Stocks & Shares ISA platforms — ranked by fee structure, dealing costs and features, with a live multi-year cost projection on your own portfolio.',
+    'Independent, side-by-side comparison of UK investing apps and Stocks & Shares ISA platforms, ranked by fee structure, dealing costs and features, with a live multi-year cost projection on your own portfolio.',
   publishedDate: '2026-07-11',
   attributesSchema: ukInvestingAppsAttributesSchema,
 
@@ -186,7 +186,7 @@ export const ukInvestingAppsConfig: TopicConfig = {
 
   verdict: {
     intro:
-      "Satisfaction and cost pull in different directions here. AJ Bell earned the highest raw Which? customer-satisfaction score of any platform tested (81%), 2026 Recommended Provider status, and one of the strongest Trustpilot ratings around (4.9/5) — our overall pick. Trading 212 wins on price alone: £0 platform fee, £0 dealing, just a 0.15% FX fee, and the top score in the Which? 2026 survey — though it's excluded from Recommended Provider status because its FCA authorisation carries the standard CFD-arm risk warning. For pure ETF portfolios, InvestEngine is the stronger choice, having held Recommended Provider status three years running.",
+      "Satisfaction and cost pull in different directions here. AJ Bell earned the highest raw Which? customer-satisfaction score of any platform tested (81%), 2026 Recommended Provider status, and one of the strongest Trustpilot ratings around (4.9/5), our overall pick. Trading 212 wins on price alone: £0 platform fee, £0 dealing, just a 0.15% FX fee, and the top score in the Which? 2026 survey, though it's excluded from Recommended Provider status because its FCA authorisation carries the standard CFD-arm risk warning. For pure ETF portfolios, InvestEngine is the stronger choice, having held Recommended Provider status three years running.",
     picks: [
       { slug: 'aj-bell', label: 'Best overall' },
       { slug: 'trading-212', label: 'Lowest cost' },
@@ -194,37 +194,37 @@ export const ukInvestingAppsConfig: TopicConfig = {
     ],
   },
   methodology:
-    "We compare each platform's platform/ISA fee (flat, percentage, or zero), dealing commission, investment universe breadth and independent customer-satisfaction data (Which? 2026 survey, Trustpilot) from official pricing pages and published survey results. Interactive investor's flat monthly fee is shown as an effective percentage on a representative portfolio balance for comparability, with an explicit note that its real cost doesn't change with balance size — genuinely cheaper than percentage-fee platforms above roughly £17,000-20,000, and more expensive below that. FSCS investment protection (£85,000 per person per firm) is a different scheme from the £120,000 UK bank-deposit protection referenced on our savings and business-banking pages — we never conflate the two. We disclose real, sourced regulatory and dispute history plainly rather than omitting it. Rankings never depend on commissions — every provider on this page is currently a visit-only listing.",
+    "We compare each platform's platform/ISA fee (flat, percentage, or zero), dealing commission, investment universe breadth and independent customer-satisfaction data (Which? 2026 survey, Trustpilot) from official pricing pages and published survey results. Interactive investor's flat monthly fee is shown as an effective percentage on a representative portfolio balance for comparability, with an explicit note that its real cost doesn't change with balance size: genuinely cheaper than percentage-fee platforms above roughly £17,000-20,000, and more expensive below that. FSCS investment protection (£85,000 per person per firm) is a different scheme from the £120,000 UK bank-deposit protection referenced on our savings and business-banking pages. We never conflate the two. We disclose real, sourced regulatory and dispute history plainly rather than omitting it. Rankings never depend on commissions. Every provider on this page is currently a visit-only listing.",
   buyerGuide: [
     {
       h3: 'FSCS protection for investments is £85,000, not £120,000',
-      body: 'The UK bank-deposit FSCS limit rose to £120,000 in December 2025 — but that change applies to CASH held at a bank, a completely different protection scheme. Shares, funds and ETFs held with an FCA-regulated investment platform remain protected at £85,000 per person, per firm if the firm itself fails (this does not protect against normal market losses on your investments).',
+      body: 'The UK bank-deposit FSCS limit rose to £120,000 in December 2025, but that change applies to CASH held at a bank, a completely different protection scheme. Shares, funds and ETFs held with an FCA-regulated investment platform remain protected at £85,000 per person, per firm if the firm itself fails (this does not protect against normal market losses on your investments).',
     },
     {
       h3: 'Percentage fee vs. flat fee vs. zero platform fee',
-      body: "Hargreaves Lansdown, AJ Bell and Moneyfarm charge a percentage of your portfolio, which scales with your balance (often capped at a maximum monthly amount). Interactive investor charges a flat monthly fee regardless of balance — cheaper at larger portfolio sizes, more expensive at smaller ones. Trading 212, InvestEngine and Freetrade's entry tier charge no platform fee at all, monetising through FX fees or premium tiers instead. Move the balance slider above to see which structure actually wins for your own portfolio size.",
+      body: "Hargreaves Lansdown, AJ Bell and Moneyfarm charge a percentage of your portfolio, which scales with your balance (often capped at a maximum monthly amount). Interactive investor charges a flat monthly fee regardless of balance: cheaper at larger portfolio sizes, more expensive at smaller ones. Trading 212, InvestEngine and Freetrade's entry tier charge no platform fee at all, monetising through FX fees or premium tiers instead. Move the balance slider above to see which structure actually wins for your own portfolio size.",
     },
     {
       h3: 'Why Trading 212 tops the Which? survey but isn\'t "Recommended"',
-      body: "Trading 212 scored highest overall (83%) in the Which? 2026 investment platform survey, with a perfect fees score. But Which? does not award it \"Recommended Provider\" status, because Trading 212's FCA authorisation covers CFD trading (a separate, leveraged product from ISA investing) and carries the standard high-risk warning required for that activity. This doesn't mean the ISA/investing product itself is risky — but it's a real nuance worth understanding rather than a simple #1 ranking would suggest.",
+      body: "Trading 212 scored highest overall (83%) in the Which? 2026 investment platform survey, with a perfect fees score. But Which? does not award it \"Recommended Provider\" status, because Trading 212's FCA authorisation covers CFD trading (a separate, leveraged product from ISA investing) and carries the standard high-risk warning required for that activity. This doesn't mean the ISA/investing product itself is risky, but it's a real nuance worth understanding rather than a simple #1 ranking would suggest.",
     },
     {
       h3: 'Reading disclosed issues honestly',
-      body: "A ransomware group has claimed a breach of Hargreaves Lansdown's systems (January and April 2026); HL disputes any breach occurred and states it has found no evidence of a cyberattack — we present this as a disputed, unconfirmed claim, not a proven incident. Freetrade received a formal FCA Second Supervisory Notice in 2022 over misleading social-media financial promotions, predating its 2025 acquisition by IG Group — disclosed in full as part of its regulatory history.",
+      body: "A ransomware group has claimed a breach of Hargreaves Lansdown's systems (January and April 2026); HL disputes any breach occurred and states it has found no evidence of a cyberattack. We present this as a disputed, unconfirmed claim, not a proven incident. Freetrade received a formal FCA Second Supervisory Notice in 2022 over misleading social-media financial promotions, predating its 2025 acquisition by IG Group, disclosed in full as part of its regulatory history.",
     },
   ],
   faq: [
     {
       q: 'What is the best investing app or Stocks & Shares ISA platform in the UK?',
-      a: 'Priorities diverge sharply on this one. AJ Bell leads on customer satisfaction, with the highest Which? score of any platform tested and a strong Trustpilot rating. Trading 212 wins on cost — the lowest fee structure and the top score in the Which? survey outright — though it lacks Recommended Provider status because of its CFD-arm risk warning. InvestEngine is the better fit for pure ETF portfolios. Fees and features are re-verified regularly, and the ranking never depends on commissions.',
+      a: 'Priorities diverge sharply on this one. AJ Bell leads on customer satisfaction, with the highest Which? score of any platform tested and a strong Trustpilot rating. Trading 212 wins on cost: the lowest fee structure and the top score in the Which? survey outright, though it lacks Recommended Provider status because of its CFD-arm risk warning. InvestEngine is the better fit for pure ETF portfolios. Fees and features are re-verified regularly, and the ranking never depends on commissions.',
     },
     {
       q: 'Is my money protected if my investing platform fails?',
-      a: 'Yes, up to £85,000 per person, per firm, under the Financial Services Compensation Scheme (FSCS) — this covers the platform itself failing, not normal market losses on your investments. This is a different, unchanged scheme from the £120,000 UK bank-deposit protection you may have seen referenced elsewhere.',
+      a: 'Yes, up to £85,000 per person, per firm, under the Financial Services Compensation Scheme (FSCS): this covers the platform itself failing, not normal market losses on your investments. This is a different, unchanged scheme from the £120,000 UK bank-deposit protection you may have seen referenced elsewhere.',
     },
     {
       q: 'What is a Stocks & Shares ISA?',
-      a: "A UK tax-free wrapper for investments — you can pay in up to £20,000 per tax year (2026/27 allowance) across all your ISAs combined, and any growth or dividends inside the wrapper are free of UK income tax and capital gains tax. This is mechanical information, not personalised advice — consult HMRC or a financial adviser for how it fits your situation.",
+      a: "A UK tax-free wrapper for investments: you can pay in up to £20,000 per tax year (2026/27 allowance) across all your ISAs combined, and any growth or dividends inside the wrapper are free of UK income tax and capital gains tax. This is mechanical information, not personalised advice; consult HMRC or a financial adviser for how it fits your situation.",
     },
     {
       q: 'Is interactive investor\'s flat fee cheaper than a percentage-fee platform?',
@@ -237,14 +237,14 @@ export const ukInvestingAppsConfig: TopicConfig = {
   ],
   compliance: {
     notice:
-      'Not financial advice. Investment values can fall as well as rise. FSCS protects investments up to £85,000 per person, per firm if the platform fails — this does not protect against market losses, and is a separate scheme from UK bank-deposit protection. Confirm current fees before investing.',
+      'Not financial advice. Investment values can fall as well as rise. FSCS protects investments up to £85,000 per person, per firm if the platform fails: this does not protect against market losses, and is a separate scheme from UK bank-deposit protection. Confirm current fees before investing.',
     regulators: ['FCA', 'FSCS'],
   },
 
   sources: [
-    { label: 'FSCS — what is covered (investments)', url: 'https://www.fscs.org.uk/what-we-cover/' },
+    { label: 'FSCS: what is covered (investments)', url: 'https://www.fscs.org.uk/what-we-cover/' },
     { label: 'FCA Register', url: 'https://register.fca.org.uk/' },
-    { label: 'Which? — best and worst investment platforms', url: 'https://www.which.co.uk/money/investing/investment-platforms-and-fund-supermarkets/best-investment-platforms/' },
+    { label: 'Which?: best and worst investment platforms', url: 'https://www.which.co.uk/money/investing/investment-platforms-and-fund-supermarkets/best-investment-platforms/' },
   ],
   relatedLinks: [
     { label: 'UK personal finance hub', href: '/uk/personal-finance' },

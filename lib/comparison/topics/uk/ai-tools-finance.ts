@@ -70,9 +70,9 @@ export const ukAiToolsFinanceConfig: TopicConfig = {
   h1: (y) => `Best AI tools for finance & business in the UK (${y})`,
   metaTitle: (y) => `Best UK AI Finance Tools (${y})`,
   metaDescription: (y) =>
-    `Compare AI-powered finance and business tools for the UK in ${y}: AI budgeting, coaching chatbots, tax automation and enterprise finance — independent, sourced.`,
+    `Compare AI-powered finance and business tools for the UK in ${y}: AI budgeting, coaching chatbots, tax automation and enterprise finance, independent, sourced.`,
   intro:
-    'Independent, side-by-side comparison of AI tools for UK budgeting, sole-trader tax automation and enterprise finance — genuinely different products, never forced into one price-based ranking.',
+    'Independent, side-by-side comparison of AI tools for UK budgeting, sole-trader tax automation and enterprise finance: genuinely different products, never forced into one price-based ranking.',
   publishedDate: '2026-07-11',
   attributesSchema: ukAiToolsFinanceAttributesSchema,
 
@@ -187,7 +187,7 @@ export const ukAiToolsFinanceConfig: TopicConfig = {
 
   verdict: {
     intro:
-      "Three genuinely different jobs, three different winners. For all-round budgeting, Emma leads the pack: a clean regulatory record, genuinely useful AI subscription and duplicate-payment detection, and a large, established UK user base. Automated saving and investing is Plum's strength — its investments carry FSCS protection and no disclosed regulatory issues. Sole traders are better served by ANNA Money, whose AI receipt-scanning and live HMRC tax estimate are recognised for Making Tax Digital.",
+      "Three genuinely different jobs, three different winners. For all-round budgeting, Emma leads the pack: a clean regulatory record, genuinely useful AI subscription and duplicate-payment detection, and a large, established UK user base. Automated saving and investing is Plum's strength. Its investments carry FSCS protection and no disclosed regulatory issues. Sole traders are better served by ANNA Money, whose AI receipt-scanning and live HMRC tax estimate are recognised for Making Tax Digital.",
     picks: [
       { slug: 'emma', label: 'Best overall' },
       { slug: 'plum', label: 'Best for automated saving & investing' },
@@ -195,7 +195,7 @@ export const ukAiToolsFinanceConfig: TopicConfig = {
     ],
   },
   methodology:
-    "These 7 tools solve genuinely different problems — from personal budgeting to sole-trader tax automation to enterprise Excel reconciliation — so we don't force them into a single price-based ranking. \"Starting price\" shows each vendor's cheapest plan that unlocks the AI feature being compared, labelled with its pricing model, since these are not like-for-like purchases. We disclose real, sourced regulatory history plainly rather than omitting it — a tool whose parent company settled a US enforcement action, or whose funds are safeguarded rather than FSCS-protected, is disclosed with that distinction preserved rather than glossed over. Rankings never depend on commissions — every provider on this page is currently a visit-only listing.",
+    "These 7 tools solve genuinely different problems (from personal budgeting to sole-trader tax automation to enterprise Excel reconciliation), so we don't force them into a single price-based ranking. \"Starting price\" shows each vendor's cheapest plan that unlocks the AI feature being compared, labelled with its pricing model, since these are not like-for-like purchases. We disclose real, sourced regulatory history plainly rather than omitting it: a tool whose parent company settled a US enforcement action, or whose funds are safeguarded rather than FSCS-protected, is disclosed with that distinction preserved rather than glossed over. Rankings never depend on commissions. Every provider on this page is currently a visit-only listing.",
   buyerGuide: [
     {
       h3: 'AI tool ≠ financial adviser',
@@ -203,15 +203,15 @@ export const ukAiToolsFinanceConfig: TopicConfig = {
     },
     {
       h3: 'Not every app protects your money the same way',
-      body: "Plum's investments are FSCS-protected up to £85,000. ANNA Money's funds are e-money safeguarded via PayrNet — a real, materially different (and lower-assurance) protection than FSCS. Check the regulatory detail for each provider rather than assuming uniform protection across all 7.",
+      body: "Plum's investments are FSCS-protected up to £85,000. ANNA Money's funds are e-money safeguarded via PayrNet: a real, materially different (and lower-assurance) protection than FSCS. Check the regulatory detail for each provider rather than assuming uniform protection across all 7.",
     },
     {
       h3: 'Reading Cleo\'s disclosed US settlement honestly',
-      body: "In March 2025, the US FTC secured a $17 million settlement against Cleo AI over deceptive cash-advance marketing, undisclosed express fees, and subscription-cancellation dark patterns. This is a US enforcement action — no parallel UK/FCA finding was identified — but it concerns Cleo's cash-advance product, which remains part of its offering, so we disclose it in full rather than omit it because it happened in another jurisdiction.",
+      body: "In March 2025, the US FTC secured a $17 million settlement against Cleo AI over deceptive cash-advance marketing, undisclosed express fees, and subscription-cancellation dark patterns. This is a US enforcement action (no parallel UK/FCA finding was identified), but it concerns Cleo's cash-advance product, which remains part of its offering, so we disclose it in full rather than omit it because it happened in another jurisdiction.",
     },
     {
       h3: "Microsoft Copilot for Finance's real cost",
-      body: 'The £24.70/user/month figure is the entry price for the base Microsoft 365 Copilot licence that includes the Finance agents — not a separately-priced "Copilot for Finance" product. Additional finance-specific agents may require further licensing, and industry guidance suggests a realistic all-in cost of £35-55/user/month for UK SMEs once rollout and governance costs are included.',
+      body: 'The £24.70/user/month figure is the entry price for the base Microsoft 365 Copilot licence that includes the Finance agents, not a separately-priced "Copilot for Finance" product. Additional finance-specific agents may require further licensing, and industry guidance suggests a realistic all-in cost of £35-55/user/month for UK SMEs once rollout and governance costs are included.',
     },
   ],
   faq: [
@@ -221,30 +221,30 @@ export const ukAiToolsFinanceConfig: TopicConfig = {
     },
     {
       q: 'Are any of these tools regulated financial advisers?',
-      a: 'No. None of the 7 tools provides regulated personalised financial advice — they automate categorisation, subscription detection, tax estimation or enterprise reconciliation, which sit outside FCA advice permissions.',
+      a: 'No. None of the 7 tools provides regulated personalised financial advice: they automate categorisation, subscription detection, tax estimation or enterprise reconciliation, which sit outside FCA advice permissions.',
     },
     {
       q: 'Is my money protected if I use one of these apps?',
-      a: "It depends on the provider. Plum's investments are FSCS-protected up to £85,000. ANNA Money's funds are e-money safeguarded via PayrNet — a different, lower-assurance protection than FSCS. Always check a provider's specific protection structure before connecting significant funds.",
+      a: "It depends on the provider. Plum's investments are FSCS-protected up to £85,000. ANNA Money's funds are e-money safeguarded via PayrNet (a different, lower-assurance protection than FSCS). Always check a provider's specific protection structure before connecting significant funds.",
     },
     {
       q: 'Why isn\'t Cleo the top pick despite its scale and popularity?',
-      a: "Cleo's US parent agreed to a $17 million FTC settlement in March 2025 over deceptive cash-advance marketing and subscription-cancellation dark patterns. We disclose this plainly rather than omitting it, and don't feature Cleo as a top pick while weighing this alongside its genuine strengths — you should factor this into your own decision.",
+      a: "Cleo's US parent agreed to a $17 million FTC settlement in March 2025 over deceptive cash-advance marketing and subscription-cancellation dark patterns. We disclose this plainly rather than omitting it, and don't feature Cleo as a top pick while weighing this alongside its genuine strengths; you should factor this into your own decision.",
     },
     {
       q: 'How current is this data?',
-      a: 'Every price, feature and regulatory disclosure on this page was researched against official vendor sources on 11 July 2026. AI features in this category are shipping fast — confirm current pricing and terms on the vendor\'s own site before subscribing.',
+      a: 'Every price, feature and regulatory disclosure on this page was researched against official vendor sources on 11 July 2026. AI features in this category are shipping fast: confirm current pricing and terms on the vendor\'s own site before subscribing.',
     },
   ],
   compliance: {
     notice:
-      'AI-powered finance tools are not financial advisers and none of the tools on this page provides personalised financial advice. AI-generated categorisation, estimates or reconciliation can be wrong — verify before relying on it for a financial decision.',
+      'AI-powered finance tools are not financial advisers and none of the tools on this page provides personalised financial advice. AI-generated categorisation, estimates or reconciliation can be wrong. Verify before relying on it for a financial decision.',
     regulators: ['FCA'],
   },
 
   sources: [
     { label: 'FCA Register', url: 'https://register.fca.org.uk/' },
-    { label: 'Open Banking — regulated providers', url: 'https://www.openbanking.org.uk/regulated-providers/' },
+    { label: 'Open Banking: regulated providers', url: 'https://www.openbanking.org.uk/regulated-providers/' },
   ],
   relatedLinks: [
     { label: 'UK AI tools hub', href: '/uk/ai-tools' },

@@ -72,9 +72,9 @@ export const ukCybersecuritySmbConfig: TopicConfig = {
   h1: (y) => `Best cybersecurity tools for small business in the UK (${y})`,
   metaTitle: (y) => `Best UK Cybersecurity for SMBs (${y})`,
   metaDescription: (y) =>
-    `Compare cybersecurity tools for UK small businesses in ${y}: endpoint protection, password managers and business VPNs — independent, sourced.`,
+    `Compare cybersecurity tools for UK small businesses in ${y}: endpoint protection, password managers and business VPNs, independent, sourced.`,
   intro:
-    'Independent, side-by-side comparison of cybersecurity tools for UK small businesses — spanning endpoint protection, password management and business VPN, three genuinely different categories never forced into one ranking.',
+    'Independent, side-by-side comparison of cybersecurity tools for UK small businesses, spanning endpoint protection, password management and business VPN, three genuinely different categories never forced into one ranking.',
   publishedDate: '2026-07-11',
   attributesSchema: ukCybersecuritySmbAttributesSchema,
 
@@ -186,7 +186,7 @@ export const ukCybersecuritySmbConfig: TopicConfig = {
 
   verdict: {
     intro:
-      "What sets Sophos apart isn't just performance — it's genuinely British, headquartered in Abingdon, Oxfordshire since 1985, a three-category winner at the UK-based SE Labs Awards 2026, and NCSC-assured for Cyber Incident Response — enough to make it our top pick. 1Password leads password management specifically, with transparent pricing and no confirmed platform-level breach. CrowdStrike remains the top-tier enterprise EDR choice, via a London-registered UK entity, though its well-documented July 2024 outage is disclosed in full further down this page.",
+      "What sets Sophos apart isn't just performance: it's genuinely British, headquartered in Abingdon, Oxfordshire since 1985, a three-category winner at the UK-based SE Labs Awards 2026, and NCSC-assured for Cyber Incident Response, enough to make it our top pick. 1Password leads password management specifically, with transparent pricing and no confirmed platform-level breach. CrowdStrike remains the top-tier enterprise EDR choice, via a London-registered UK entity, though its well-documented July 2024 outage is disclosed in full further down this page.",
     picks: [
       { slug: 'sophos-uk', label: 'Best overall / British company' },
       { slug: '1password-business-uk', label: 'Best password manager' },
@@ -194,11 +194,11 @@ export const ukCybersecuritySmbConfig: TopicConfig = {
     ],
   },
   methodology:
-    "We compare each vendor's pricing model, UK market presence, SMB-relevant features and independent review score (G2, Capterra) from official sources, sorted into three genuinely different categories — endpoint protection, password management and business VPN — that are never ranked against each other on price alone. Every one of these 7 vendors has a real, sourced security-relevant incident or concern in its recent history; we disclose it in full for every row rather than presenting any vendor as incident-free by omission. Two vendors (Sophos, ESET) publish no public list price — we show \"contact for pricing\" rather than a fabricated number. None of the 7 publish confirmed native GBP list pricing except a partial Bitdefender storefront — other GBP figures are estimated conversions, disclosed as such. Rankings never depend on commissions — every provider on this page is currently a visit-only listing.",
+    "We compare each vendor's pricing model, UK market presence, SMB-relevant features and independent review score (G2, Capterra) from official sources, sorted into three genuinely different categories (endpoint protection, password management and business VPN) that are never ranked against each other on price alone. Every one of these 7 vendors has a real, sourced security-relevant incident or concern in its recent history; we disclose it in full for every row rather than presenting any vendor as incident-free by omission. Two vendors (Sophos, ESET) publish no public list price, so we show \"contact for pricing\" rather than a fabricated number. None of the 7 publish confirmed native GBP list pricing except a partial Bitdefender storefront; other GBP figures are estimated conversions, disclosed as such. Rankings never depend on commissions. Every provider on this page is currently a visit-only listing.",
   buyerGuide: [
     {
       h3: 'A genuinely British option among global brands',
-      body: 'Sophos was founded in Abingdon, Oxfordshire in 1985 and remains headquartered there, hosting its SophosLabs threat-analysis centre on-site — a genuinely British company among mostly US/global competitors. ESET also runs a dedicated UK office in Bournemouth. Neither fact alone should override product fit, but it\'s a real UK-relevance signal worth knowing.',
+      body: 'Sophos was founded in Abingdon, Oxfordshire in 1985 and remains headquartered there, hosting its SophosLabs threat-analysis centre on-site, a genuinely British company among mostly US/global competitors. ESET also runs a dedicated UK office in Bournemouth. Neither fact alone should override product fit, but it\'s a real UK-relevance signal worth knowing.',
     },
     {
       h3: 'Endpoint protection vs. password manager vs. VPN',
@@ -206,44 +206,44 @@ export const ukCybersecuritySmbConfig: TopicConfig = {
     },
     {
       h3: 'Bitwarden\'s post-Brexit data-residency gap',
-      body: 'Bitwarden offers US and EU server regions for vault data — but UK customers cannot use the EU region post-Brexit, meaning UK users default to the US region unless they self-host. If UK-specific data residency matters to your business, confirm this directly with Bitwarden or consider a vendor with an explicit UK option before committing.',
+      body: 'Bitwarden offers US and EU server regions for vault data, but UK customers cannot use the EU region post-Brexit, meaning UK users default to the US region unless they self-host. If UK-specific data residency matters to your business, confirm this directly with Bitwarden or consider a vendor with an explicit UK option before committing.',
     },
     {
       h3: 'Reading disclosed security incidents honestly',
-      body: "Every vendor in this comparison has a real, documented incident or vulnerability in its recent history — CrowdStrike's July 2024 update caused a catastrophic global outage; a threat actor claimed a January 2026 breach of NordVPN-adjacent infrastructure (NordVPN disputes production impact); Bitdefender was fined by Romania's data protection authority in April 2025; a CVE in ESET's own scanner was actively exploited by an APT group; a malicious Bitwarden CLI package was live for roughly 90 minutes in April 2026; Sophos's Firewall product line (a different product from the Intercept X endpoint tool featured here) has been targeted by a multi-year nation-state campaign. We disclose all of them because a security-product comparison that omits this information isn't a serious one.",
+      body: "Every vendor in this comparison has a real, documented incident or vulnerability in its recent history: CrowdStrike's July 2024 update caused a catastrophic global outage; a threat actor claimed a January 2026 breach of NordVPN-adjacent infrastructure (NordVPN disputes production impact); Bitdefender was fined by Romania's data protection authority in April 2025; a CVE in ESET's own scanner was actively exploited by an APT group; a malicious Bitwarden CLI package was live for roughly 90 minutes in April 2026; Sophos's Firewall product line (a different product from the Intercept X endpoint tool featured here) has been targeted by a multi-year nation-state campaign. We disclose all of them because a security-product comparison that omits this information isn't a serious one.",
     },
   ],
   faq: [
     {
       q: 'What is the best cybersecurity tool for a small business in the UK?',
-      a: 'Which one is best really depends on the category. Sophos is our overall top pick — a genuinely British company (Oxfordshire HQ since 1985) with UK industry-award recognition and NCSC assurance. 1Password stands out specifically for password management, with transparent pricing and no confirmed platform-level breach, while CrowdStrike remains the strongest enterprise EDR option through its London-registered UK entity — despite a well-documented 2024 outage, disclosed in full elsewhere on this page. Match the category — endpoint protection, password management or VPN — to your actual need before picking a name.',
+      a: 'Which one is best really depends on the category. Sophos is our overall top pick: a genuinely British company (Oxfordshire HQ since 1985) with UK industry-award recognition and NCSC assurance. 1Password stands out specifically for password management, with transparent pricing and no confirmed platform-level breach, while CrowdStrike remains the strongest enterprise EDR option through its London-registered UK entity, despite a well-documented 2024 outage, disclosed in full elsewhere on this page. Match the category (endpoint protection, password management or VPN) to your actual need before picking a name.',
     },
     {
       q: 'Is Sophos really a British company?',
-      a: 'Yes — Sophos was founded in Abingdon, Oxfordshire in 1985 and remains headquartered there, hosting its SophosLabs threat-analysis centre on-site. It won three categories at the UK-based SE Labs Awards 2026 and holds NCSC Cyber Incident Response scheme assurance.',
+      a: 'Yes, Sophos was founded in Abingdon, Oxfordshire in 1985 and remains headquartered there, hosting its SophosLabs threat-analysis centre on-site. It won three categories at the UK-based SE Labs Awards 2026 and holds NCSC Cyber Incident Response scheme assurance.',
     },
     {
       q: 'Are any of these security vendors themselves safe to trust, given they\'ve had incidents?',
-      a: 'Every vendor on this page has a real, disclosed incident in its recent history — that\'s true across the security industry, not unique to any one product. We disclose each one specifically (see the detail view per provider) so you can weigh severity and how it was handled, rather than assuming any vendor is risk-free.',
+      a: 'Every vendor on this page has a real, disclosed incident in its recent history; that\'s true across the security industry, not unique to any one product. We disclose each one specifically (see the detail view per provider) so you can weigh severity and how it was handled, rather than assuming any vendor is risk-free.',
     },
     {
       q: 'Why do Sophos and ESET show "contact for pricing"?',
-      a: "Both sell primarily through resellers with no public list price published anywhere, despite having real UK offices (Sophos in Oxfordshire, ESET in Bournemouth). We show \"contact for pricing\" rather than publish a fabricated number — get a direct quote if you're considering either.",
+      a: "Both sell primarily through resellers with no public list price published anywhere, despite having real UK offices (Sophos in Oxfordshire, ESET in Bournemouth). We show \"contact for pricing\" rather than publish a fabricated number. Get a direct quote if you're considering either.",
     },
     {
       q: 'How current is this data?',
-      a: 'Every price, feature and security disclosure on this page was researched against official vendor sources, G2, Capterra and security-incident reporting on 11 July 2026. Pricing and incident status can change — confirm current terms on the vendor\'s own site before subscribing.',
+      a: 'Every price, feature and security disclosure on this page was researched against official vendor sources, G2, Capterra and security-incident reporting on 11 July 2026. Pricing and incident status can change: confirm current terms on the vendor\'s own site before subscribing.',
     },
   ],
   compliance: {
     notice:
-      'Not a substitute for a formal security assessment. Every vendor on this page has a disclosed security-relevant incident in its recent history — review the detail view for each provider before choosing.',
+      'Not a substitute for a formal security assessment. Every vendor on this page has a disclosed security-relevant incident in its recent history. Review the detail view for each provider before choosing.',
     regulators: [],
   },
 
   sources: [
-    { label: 'NCSC — Cyber Incident Response scheme', url: 'https://www.ncsc.gov.uk/section/products-services/ncsc-assured-services/cir' },
-    { label: 'NCSC — Small business guide', url: 'https://www.ncsc.gov.uk/collection/small-business-guide' },
+    { label: 'NCSC: Cyber Incident Response scheme', url: 'https://www.ncsc.gov.uk/section/products-services/ncsc-assured-services/cir' },
+    { label: 'NCSC: Small business guide', url: 'https://www.ncsc.gov.uk/collection/small-business-guide' },
   ],
   relatedLinks: [
     { label: 'UK cybersecurity hub', href: '/uk/cybersecurity' },

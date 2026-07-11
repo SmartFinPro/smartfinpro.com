@@ -64,9 +64,9 @@ export const ukRemortgageBrokersConfig: TopicConfig = {
   h1: (y) => `Best remortgage lenders & brokers in the UK (${y})`,
   metaTitle: (y) => `Best UK Remortgage Brokers (${y})`,
   metaDescription: (y) =>
-    `Compare UK remortgage brokers and comparison platforms of ${y} by lender panel, broker fees and true editorial independence — sourced, verified.`,
+    `Compare UK remortgage brokers and comparison platforms of ${y} by lender panel, broker fees and true editorial independence, sourced, verified.`,
   intro:
-    "Independent, side-by-side comparison of UK remortgage brokers and comparison platforms — most are genuinely free, but \"whole-of-market\" claims and true independence vary more than the marketing suggests.",
+    "Independent, side-by-side comparison of UK remortgage brokers and comparison platforms: most are genuinely free, but \"whole-of-market\" claims and true independence vary more than the marketing suggests.",
   publishedDate: '2026-07-11',
   attributesSchema: ukRemortgageBrokersAttributesSchema,
 
@@ -150,7 +150,7 @@ export const ukRemortgageBrokersConfig: TopicConfig = {
   compareRows: [
     { key: 'model', label: 'Business model', accessor: (p) => attrStr(p, 'business_model_note') || MODEL_LABEL[attrStr(p, 'business_model')] || '—' },
     { key: 'lenders', label: 'Lender panel', accessor: (p) => attrStr(p, 'lender_panel_note') || '—' },
-    { key: 'fee', label: 'Cost to you', accessor: (p) => attrStr(p, 'consumer_fee_note') || (attrNum(p, 'broker_fee_gbp') ? `£${attrNum(p, 'broker_fee_gbp')}` : '£0 — paid by the lender') },
+    { key: 'fee', label: 'Cost to you', accessor: (p) => attrStr(p, 'consumer_fee_note') || (attrNum(p, 'broker_fee_gbp') ? `£${attrNum(p, 'broker_fee_gbp')}` : '£0, paid by the lender') },
     {
       key: 'rating',
       label: 'Consumer rating',
@@ -168,7 +168,7 @@ export const ukRemortgageBrokersConfig: TopicConfig = {
 
   verdict: {
     intro:
-      "L&C (London & Country) Mortgages is the UK's largest fee-free broker, and that scale — plus a strong Trustpilot rating and a transparent \"how we're paid\" disclosure — earns it our overall pick. Prefer a fully digital, whole-of-market experience? Habito fits, with a 95+ lender panel, and now operates under Monzo's ownership (an April 2026 acquisition) while keeping its own brand. Complex cases — guarantor mortgages, shared ownership, income-boosting products — are where generalist brokers often struggle, and that's exactly where Tembo Money specialises.",
+      "L&C (London & Country) Mortgages is the UK's largest fee-free broker, and that scale (plus a strong Trustpilot rating and a transparent \"how we're paid\" disclosure) earns it our overall pick. Prefer a fully digital, whole-of-market experience? Habito fits, with a 95+ lender panel, and now operates under Monzo's ownership (an April 2026 acquisition) while keeping its own brand. Complex cases (guarantor mortgages, shared ownership, income-boosting products) are where generalist brokers often struggle, and that's exactly where Tembo Money specialises.",
     picks: [
       { slug: 'lc-mortgages', label: 'Best overall' },
       { slug: 'habito', label: 'Best digital, whole-of-market broker' },
@@ -176,45 +176,45 @@ export const ukRemortgageBrokersConfig: TopicConfig = {
     ],
   },
   methodology:
-    "We compare each platform's business model (whole-of-market broker, comparison/lead-gen tool, or specialist broker), lender panel breadth, fee structure and consumer rating from official disclosures and independent review platforms. We disclose explicitly where a platform is a pure comparison tool that hands consumers off to a broker, and where that broker is a corporate sister company rather than a genuinely independent partner — a materially different relationship than an editorially independent recommendation. We disclose real, sourced regulatory, acquisition and ownership history plainly rather than omitting it. Rankings never depend on commissions — every provider on this page is currently a visit-only listing.",
+    "We compare each platform's business model (whole-of-market broker, comparison/lead-gen tool, or specialist broker), lender panel breadth, fee structure and consumer rating from official disclosures and independent review platforms. We disclose explicitly where a platform is a pure comparison tool that hands consumers off to a broker, and where that broker is a corporate sister company rather than a genuinely independent partner: a materially different relationship than an editorially independent recommendation. We disclose real, sourced regulatory, acquisition and ownership history plainly rather than omitting it. Rankings never depend on commissions. Every provider on this page is currently a visit-only listing.",
   buyerGuide: [
     {
       h3: 'Broker, comparison tool, or both?',
-      body: 'Habito, L&C, Better.co.uk, Mojo and Tembo are genuine brokers — a qualified adviser reviews your circumstances and recommends specific products. MoneySuperMarket Mortgages and Uswitch Mortgages are pure comparison/lead-gen tools — they don\'t give advice themselves, and hand you off to a broker (L&C for MoneySuperMarket; Mojo for Uswitch) to actually complete. Worth knowing which type of service you\'re using before assuming it\'s independent advice.',
+      body: 'Habito, L&C, Better.co.uk, Mojo and Tembo are genuine brokers: a qualified adviser reviews your circumstances and recommends specific products. MoneySuperMarket Mortgages and Uswitch Mortgages are pure comparison/lead-gen tools: they don\'t give advice themselves, and hand you off to a broker (L&C for MoneySuperMarket; Mojo for Uswitch) to actually complete. Worth knowing which type of service you\'re using before assuming it\'s independent advice.',
     },
     {
       h3: 'Uswitch and Mojo share the same ultimate owner',
-      body: 'Uswitch Mortgages hands consumers to Mojo Mortgages for advice — and both are owned by RVU (part of Zoopla Property Group, majority-owned by US private-equity firm Silver Lake Partners since 2018). Uswitch states it doesn\'t earn money directly from these referrals, but the two are corporate affiliates, not independently competing services — worth knowing if you assumed you were comparing two unrelated options.',
+      body: 'Uswitch Mortgages hands consumers to Mojo Mortgages for advice, and both are owned by RVU (part of Zoopla Property Group, majority-owned by US private-equity firm Silver Lake Partners since 2018). Uswitch states it doesn\'t earn money directly from these referrals, but the two are corporate affiliates, not independently competing services, worth knowing if you assumed you were comparing two unrelated options.',
     },
     {
-      h3: 'Remortgaging is usually free — but not always',
-      body: "Most brokers on this page charge nothing for remortgage advice, earning a commission from the lender instead. Tembo Money's remortgage service is also free, though its standard (new-purchase) mortgage service charges £499, rising to £749 for complex cases like its income-boosting products — a genuine exception worth knowing if you're a first-time buyer rather than remortgaging specifically.",
+      h3: 'Remortgaging is usually free, but not always',
+      body: "Most brokers on this page charge nothing for remortgage advice, earning a commission from the lender instead. Tembo Money's remortgage service is also free, though its standard (new-purchase) mortgage service charges £499, rising to £749 for complex cases like its income-boosting products, a genuine exception worth knowing if you're a first-time buyer rather than remortgaging specifically.",
     },
     {
       h3: 'Reading disclosed acquisitions and ownership changes honestly',
-      body: "Habito was acquired by Monzo, completing 30 April 2026 — but continues operating under its own brand and FCA authorisation; you don't need a Monzo account to use it. Better.co.uk was sold by its struggling US parent (Better Home & Finance Holding, whose Nasdaq-listed stock fell 93% and underwent a 2025 debt restructuring) to UK proptech firm OneDome in mid-2025 — the UK entity itself carries no direct fallout from that US turmoil, and we disclose the ownership change for transparency without implying the UK service is troubled.",
+      body: "Habito was acquired by Monzo, completing 30 April 2026, but continues operating under its own brand and FCA authorisation; you don't need a Monzo account to use it. Better.co.uk was sold by its struggling US parent (Better Home & Finance Holding, whose Nasdaq-listed stock fell 93% and underwent a 2025 debt restructuring) to UK proptech firm OneDome in mid-2025: the UK entity itself carries no direct fallout from that US turmoil, and we disclose the ownership change for transparency without implying the UK service is troubled.",
     },
   ],
   faq: [
     {
       q: 'What is the best remortgage broker in the UK?',
-      a: "L&C (London & Country) Mortgages suits most borrowers best — the UK's largest fee-free broker, with a strong Trustpilot rating behind it. If a fully digital, whole-of-market experience matters more to you, Habito is the stronger choice, and Tembo Money handles complex cases that generalist brokers often can't place. Lender panels and features are re-verified regularly, and the ranking never depends on commissions.",
+      a: "L&C (London & Country) Mortgages suits most borrowers best: the UK's largest fee-free broker, with a strong Trustpilot rating behind it. If a fully digital, whole-of-market experience matters more to you, Habito is the stronger choice, and Tembo Money handles complex cases that generalist brokers often can't place. Lender panels and features are re-verified regularly, and the ranking never depends on commissions.",
     },
     {
       q: 'Do I have to pay a remortgage broker in the UK?',
-      a: 'For most brokers on this page, no — advice is free, funded by a commission from the lender when your remortgage completes. The one exception among these 7 is Tembo Money\'s standard (new-purchase) mortgage service, which charges £499-749 — its remortgage service specifically is free like the others.',
+      a: 'For most brokers on this page, no, advice is free, funded by a commission from the lender when your remortgage completes. The one exception among these 7 is Tembo Money\'s standard (new-purchase) mortgage service, which charges £499-749; its remortgage service specifically is free like the others.',
     },
     {
       q: 'What is the difference between a broker and a comparison site for remortgaging?',
-      a: "A broker (Habito, L&C, Better.co.uk, Mojo, Tembo) gives you actual advice from a qualified adviser reviewing your circumstances. A comparison site (MoneySuperMarket Mortgages, Uswitch Mortgages) doesn't give advice itself — it hands you off to a broker to complete, and in Uswitch's case, that broker (Mojo) is a corporate sister company under the same parent group.",
+      a: "A broker (Habito, L&C, Better.co.uk, Mojo, Tembo) gives you actual advice from a qualified adviser reviewing your circumstances. A comparison site (MoneySuperMarket Mortgages, Uswitch Mortgages) doesn't give advice itself: it hands you off to a broker to complete, and in Uswitch's case, that broker (Mojo) is a corporate sister company under the same parent group.",
     },
     {
       q: 'Is my remortgage broker whole-of-market?',
-      a: '"Whole-of-market" claims vary in how strictly they\'re verified — check the lender panel size for each provider on this page, since even the largest panels (95-100+ lenders) don\'t cover every UK lender, and some direct-only lenders are excluded from every broker\'s panel.',
+      a: '"Whole-of-market" claims vary in how strictly they\'re verified: check the lender panel size for each provider on this page, since even the largest panels (95-100+ lenders) don\'t cover every UK lender, and some direct-only lenders are excluded from every broker\'s panel.',
     },
     {
       q: 'How current is this data?',
-      a: 'Every business-model detail, fee and disclosure on this page was verified against official sources on 11 July 2026. UK mortgage rates change frequently — get a live, dated quote directly from the broker before relying on any historical rate figure.',
+      a: 'Every business-model detail, fee and disclosure on this page was verified against official sources on 11 July 2026. UK mortgage rates change frequently: get a live, dated quote directly from the broker before relying on any historical rate figure.',
     },
   ],
   compliance: {
@@ -225,7 +225,7 @@ export const ukRemortgageBrokersConfig: TopicConfig = {
 
   sources: [
     { label: 'FCA Register', url: 'https://register.fca.org.uk/' },
-    { label: 'MoneySavingExpert — remortgage guide', url: 'https://www.moneysavingexpert.com/mortgages/remortgage-guide/' },
+    { label: 'MoneySavingExpert: remortgage guide', url: 'https://www.moneysavingexpert.com/mortgages/remortgage-guide/' },
   ],
   relatedLinks: [
     { label: 'UK savings hub', href: '/uk/savings' },
