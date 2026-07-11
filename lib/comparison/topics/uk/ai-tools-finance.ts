@@ -187,7 +187,7 @@ export const ukAiToolsFinanceConfig: TopicConfig = {
 
   verdict: {
     intro:
-      "Emma is our top pick — a clean regulatory record, genuinely useful AI subscription/duplicate-payment detection, and a large, established UK user base. Plum offers the best automated saving and investing, with FSCS-protected investments and no disclosed regulatory issues. ANNA Money is the best pick for sole traders, with AI receipt-scanning and a live HMRC tax estimate recognised for Making Tax Digital.",
+      "Three genuinely different jobs, three different winners. For all-round budgeting, Emma leads the pack: a clean regulatory record, genuinely useful AI subscription and duplicate-payment detection, and a large, established UK user base. Automated saving and investing is Plum's strength — its investments carry FSCS protection and no disclosed regulatory issues. Sole traders are better served by ANNA Money, whose AI receipt-scanning and live HMRC tax estimate are recognised for Making Tax Digital.",
     picks: [
       { slug: 'emma', label: 'Best overall' },
       { slug: 'plum', label: 'Best for automated saving & investing' },
@@ -217,7 +217,7 @@ export const ukAiToolsFinanceConfig: TopicConfig = {
   faq: [
     {
       q: 'What is the best AI finance tool in the UK?',
-      a: "Emma is our top pick for its clean regulatory record and genuinely useful AI subscription detection. Plum is best for automated saving and investing with FSCS-protected investments, and ANNA Money is best for sole traders with AI receipt-scanning and live HMRC tax estimates. We re-verify pricing and features regularly, and the ranking never depends on commissions.",
+      a: "Emma, Plum and ANNA Money lead in different areas. Emma leads for general budgeting thanks to a clean regulatory record and useful AI subscription detection; Plum takes the automated saving and investing crown with FSCS-protected investments; and sole traders get the most value from ANNA Money's AI receipt-scanning and live HMRC tax estimates. Pricing and features are re-verified regularly, and nothing here is influenced by commissions.",
     },
     {
       q: 'Are any of these tools regulated financial advisers?',

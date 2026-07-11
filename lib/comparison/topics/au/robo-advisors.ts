@@ -197,7 +197,7 @@ export const auRoboAdvisorsConfig: TopicConfig = {
 
   verdict: {
     intro:
-      'Stockspot is our top pick for most investors — the largest and longest-running Australian robo-advisor, with individually CHESS-sponsored holdings (a genuine rarity in this category) and the lowest full-portfolio entry fee. Raiz remains the best pure spare-change starter app, and CommSec Pocket is the strongest choice for anyone who wants CHESS-sponsored ownership from a big-four bank at a very low starting amount.',
+      'Most investors are best served by Stockspot: it is the largest and longest-running robo-advisor in Australia, holds your ETFs individually under CHESS sponsorship (a genuine rarity in this category), and charges the lowest full-portfolio entry fee of the seven. If you would rather start with spare change than a lump sum, Raiz remains the best pure round-up app. And for CHESS-sponsored ownership backed by a big-four bank at a very low starting amount, CommSec Pocket is hard to beat.',
     picks: [
       { slug: 'stockspot', label: 'Best overall robo-advisor' },
       { slug: 'raiz-invest', label: 'Best for spare-change investing' },
@@ -231,7 +231,7 @@ export const auRoboAdvisorsConfig: TopicConfig = {
   faq: [
     {
       q: 'What is the best robo-advisor in Australia in 2026?',
-      a: "Stockspot is our top overall pick — Australia's largest and longest-running robo-advisor, with individually CHESS-sponsored holdings and the lowest full-portfolio entry fee (A$1/month up to $20,000). Raiz is the best pure spare-change starter app, and CommSec Pocket is the strongest CHESS-sponsored option for a very low starting amount. We re-verify fees and features quarterly, and the ranking never depends on commissions.",
+      a: "For most people, Stockspot is the right starting point: Australia's largest and longest-running robo-advisor, with individually CHESS-sponsored holdings and the lowest full-portfolio entry fee (A$1/month up to $20,000). If spare-change investing suits your style better, Raiz is the strongest pure starter app for that. Want CHESS-sponsored ownership from a big-four bank without a large starting amount? CommSec Pocket is the strongest option. Fees and features are re-verified quarterly, and commissions never factor into the ranking.",
     },
     {
       q: 'Is my money safe if a robo-advisor or micro-investing app fails?',

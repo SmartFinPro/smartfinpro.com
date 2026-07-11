@@ -180,7 +180,7 @@ export const ukSavingsAccountsConfig: TopicConfig = {
 
   verdict: {
     intro:
-      "Atom Bank is our top pick — the strongest independently corroborated customer rating in this comparison (4.8-5.0/5 on Trustpilot), a competitive Reward-tier rate, and a Cash ISA option. Charter Savings Bank has the best unconditional easy-access rate of the 7 (4.21% AER, no bonus conditions), and Shawbrook Bank is the most consistently well-reviewed long-running fixed-rate option, a fixture of UK best-buy tables since 2017.",
+      "Atom Bank leads this comparison on trust — the strongest independently corroborated customer rating here, 4.8-5.0/5 on Trustpilot — backed by a competitive Reward-tier rate and a Cash ISA option; Charter Savings Bank has the best unconditional easy-access rate of the 7, 4.21% AER with no bonus conditions; and Shawbrook Bank is the most consistently well-reviewed long-running fixed-rate option, a fixture of UK best-buy tables since 2017.",
     picks: [
       { slug: 'atom-bank', label: 'Best overall' },
       { slug: 'charter-savings-bank', label: 'Best unconditional easy-access rate' },
@@ -210,7 +210,7 @@ export const ukSavingsAccountsConfig: TopicConfig = {
   faq: [
     {
       q: 'What is the best savings account in the UK right now?',
-      a: 'Atom Bank is our top pick, combining the strongest customer rating in this comparison with a competitive Reward-tier rate and Cash ISA availability. Charter Savings Bank has the best unconditional easy-access rate (4.21% AER, no conditions), and Shawbrook Bank is the most consistently well-reviewed long-running fixed-rate option. We re-verify rates regularly, and the ranking never depends on commissions.',
+      a: 'Atom Bank leads overall on trust, combining the strongest customer rating in this comparison with a competitive Reward-tier rate and Cash ISA availability. Charter Savings Bank has the best unconditional rate — 4.21% AER, no conditions attached — and Shawbrook Bank is the strongest long-running fixed-rate option, consistently well-reviewed. Rates are re-verified regularly, and the ranking never depends on commissions.',
     },
     {
       q: 'Is my money protected if my savings bank fails?',

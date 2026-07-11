@@ -180,7 +180,7 @@ export const caCybersecuritySmbConfig: TopicConfig = {
 
   verdict: {
     intro:
-      "1Password Business is our top pick — a genuine Canadian-founded company (Toronto HQ since 2005), transparent published pricing, and no confirmed platform-level breach of its own found. CrowdStrike remains the strongest enterprise-grade EDR pick despite its well-documented July 2024 outage, which hit Canada hard and which we disclose in full below. Malwarebytes has the cleanest disclosed security record of the 7 alongside the simplest tiered deployment for small teams.",
+      "Founded in Toronto in 2005 and still headquartered there, 1Password Business pairs that Canadian pedigree with transparent pricing and no confirmed platform-level breach of its own — enough to make it our top pick. Enterprise teams needing serious endpoint protection should weigh CrowdStrike instead, the strongest EDR pick here despite the well-documented July 2024 outage that hit Canada hard, disclosed in full below. Malwarebytes has the cleanest disclosed security record of the seven, with the simplest tiered deployment for small teams.",
     picks: [
       { slug: '1password-business-ca', label: 'Best overall / Canadian-founded' },
       { slug: 'crowdstrike-ca-smb', label: 'Best enterprise-grade EDR' },
@@ -210,7 +210,7 @@ export const caCybersecuritySmbConfig: TopicConfig = {
   faq: [
     {
       q: 'What is the best cybersecurity tool for a small business in Canada?',
-      a: '1Password Business is our top pick — a genuine Canadian-founded company (Toronto HQ) with transparent pricing and no confirmed platform-level breach found. CrowdStrike remains the strongest enterprise-grade EDR pick despite a well-documented 2024 outage, which we disclose in full. The right choice depends on which category — endpoint protection, password management or VPN — you actually need.',
+      a: 'It depends on which category — endpoint protection, password management or VPN — actually matches what you need. For an all-round pick, 1Password Business is it: Canadian-founded, Toronto-headquartered, transparently priced, with no confirmed platform-level breach found. CrowdStrike remains the strongest enterprise-grade EDR pick for teams that specifically need endpoint protection, despite its well-documented 2024 outage, which we disclose in full.',
     },
     {
       q: 'Is 1Password really a Canadian company?',

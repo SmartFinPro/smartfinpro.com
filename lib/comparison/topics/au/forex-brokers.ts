@@ -197,7 +197,7 @@ export const auForexBrokersConfig: TopicConfig = {
 
   verdict: {
     intro:
-      'Pepperstone is our top pick — the tightest raw spreads paired with the broadest platform choice (MT4, MT5, cTrader and native TradingView), and a 2023 leverage-cap compliance matter that was self-reported and fully remediated under ASIC oversight. Fusion Markets is the best value pick with no minimum deposit and the lowest commission in the field, and CMC Markets is the safest long-track-record choice with dual ASIC licences and no regulatory red flags found.',
+      'Tightest raw spreads, the broadest platform lineup of the group (MT4, MT5, cTrader and native TradingView), and a 2023 leverage-cap matter it self-reported and fully remediated under ASIC oversight — Pepperstone leads on that combination. Traders prioritising cost above all else should look at Fusion Markets, which pairs no minimum deposit with the lowest commission in the field. For a long, clean track record, CMC Markets is the safer bet: dual ASIC licences and no regulatory red flags found.',
     picks: [
       { slug: 'pepperstone-au', label: 'Best overall' },
       { slug: 'fusion-markets', label: 'Best value / lowest cost' },
@@ -227,7 +227,7 @@ export const auForexBrokersConfig: TopicConfig = {
   faq: [
     {
       q: 'What is the best forex broker in Australia in 2026?',
-      a: "Pepperstone is our top pick, combining the tightest raw spreads in this comparison with the broadest platform choice (MT4, MT5, cTrader, native TradingView). Fusion Markets offers the best value with no minimum deposit and the lowest commission, and CMC Markets is the safest long-track-record choice with no regulatory red flags found and dual ASIC licences. We re-verify pricing and features regularly, and the ranking never depends on commissions.",
+      a: "Pepperstone, on balance: it combines the tightest raw spreads with the broadest platform choice — MT4, MT5, cTrader and native TradingView. Cost-focused traders tend to prefer Fusion Markets, which has no minimum deposit and the lowest commission of the seven. CMC Markets is the pick for anyone prioritising a long, clean regulatory track record — dual ASIC licences, no red flags found. Pricing and features are re-verified regularly, and commissions never determine the ranking.",
     },
     {
       q: 'Are these brokers actually regulated in Australia?',

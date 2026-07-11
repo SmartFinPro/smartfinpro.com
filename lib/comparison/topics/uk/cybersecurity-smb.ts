@@ -186,7 +186,7 @@ export const ukCybersecuritySmbConfig: TopicConfig = {
 
   verdict: {
     intro:
-      "Sophos is our top pick — a genuinely British company headquartered in Abingdon, Oxfordshire since 1985, winner of three categories at the UK-based SE Labs Awards 2026, and NCSC-assured for Cyber Incident Response. 1Password is the strongest password manager with transparent pricing and no confirmed platform-level breach, and CrowdStrike remains a top-tier EDR pick with a London-registered UK entity, despite its well-documented July 2024 outage, disclosed in full below.",
+      "What sets Sophos apart isn't just performance — it's genuinely British, headquartered in Abingdon, Oxfordshire since 1985, a three-category winner at the UK-based SE Labs Awards 2026, and NCSC-assured for Cyber Incident Response — enough to make it our top pick. 1Password leads password management specifically, with transparent pricing and no confirmed platform-level breach. CrowdStrike remains the top-tier enterprise EDR choice, via a London-registered UK entity, though its well-documented July 2024 outage is disclosed in full further down this page.",
     picks: [
       { slug: 'sophos-uk', label: 'Best overall / British company' },
       { slug: '1password-business-uk', label: 'Best password manager' },
@@ -216,7 +216,7 @@ export const ukCybersecuritySmbConfig: TopicConfig = {
   faq: [
     {
       q: 'What is the best cybersecurity tool for a small business in the UK?',
-      a: 'Sophos is our top pick — a genuinely British company (Oxfordshire HQ since 1985) with UK-based industry-award recognition and NCSC assurance. 1Password is the strongest password manager with transparent pricing, and CrowdStrike remains a top-tier EDR pick with a London-registered UK entity, despite a well-documented 2024 outage, which we disclose in full. The right choice depends on which category — endpoint protection, password management or VPN — you actually need.',
+      a: 'Which one is best really depends on the category. Sophos is our overall top pick — a genuinely British company (Oxfordshire HQ since 1985) with UK industry-award recognition and NCSC assurance. 1Password stands out specifically for password management, with transparent pricing and a clean breach record, while CrowdStrike remains the strongest enterprise EDR option through its London-registered UK entity — despite a well-documented 2024 outage, disclosed in full elsewhere on this page. Match the category — endpoint protection, password management or VPN — to your actual need before picking a name.',
     },
     {
       q: 'Is Sophos really a British company?',

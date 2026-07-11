@@ -183,7 +183,7 @@ export const auCfdBrokersConfig: TopicConfig = {
 
   verdict: {
     intro:
-      'CMC Markets is our top pick — the cleanest regulatory record of the 7, dual ASIC licences dating to 1996, 12,000+ instruments and no minimum deposit. Interactive Brokers is the best choice for cost-conscious, high-volume traders with genuinely low commission-based pricing, and Pepperstone offers the broadest platform choice (MT4, MT5, cTrader) with a 2023 compliance matter that was self-reported and fully remediated.',
+      'Dual ASIC licences dating back to 1996, 12,000+ tradable instruments, no minimum deposit, and the cleanest regulatory record among the seven brokers reviewed here: that combination puts CMC Markets at the top. High-volume traders chasing the lowest cost per trade should look at Interactive Brokers instead, whose commission-based pricing beats spread-only models at scale. Pepperstone, meanwhile, spans the widest range of platforms (MT4, MT5 and cTrader) and disclosed a 2023 compliance matter that it self-reported and has since fully remediated.',
     picks: [
       { slug: 'cmc-markets-cfd-au', label: 'Best overall' },
       { slug: 'interactive-brokers-cfd-au', label: 'Best for high-volume traders' },
@@ -213,7 +213,7 @@ export const auCfdBrokersConfig: TopicConfig = {
   faq: [
     {
       q: 'What is the best CFD platform in Australia in 2026?',
-      a: 'CMC Markets is our top pick for its clean regulatory record, dual ASIC licences dating to 1996, and the widest instrument range with no minimum deposit. Interactive Brokers suits cost-conscious, high-volume traders best, and Pepperstone offers the broadest platform choice. We re-verify pricing, leverage and regulatory status regularly, and the ranking never depends on commissions.',
+      a: 'CMC Markets earns the top spot: a clean regulatory record, ASIC licences held since 1996, and the widest instrument range of the group with no minimum deposit required. If you trade often and care most about cost, Interactive Brokers is the better fit thanks to genuinely low commission-based pricing. Pepperstone offers the broadest platform choice among the seven. Pricing, leverage limits and regulatory status are re-verified regularly, and commissions play no role in how these rankings are ordered.',
     },
     {
       q: 'What do the ASIC leverage caps actually limit?',

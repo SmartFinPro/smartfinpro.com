@@ -177,7 +177,7 @@ export const auSavingsAccountsConfig: TopicConfig = {
 
   verdict: {
     intro:
-      'Bankwest Easy Saver is our top pick — it pairs a strong 4-month introductory rate with the highest unconditional fallback rate in the field (5.00% p.a., no deposit or growth conditions required). AMP Bank GO Save is the best fully unconditional account from day one, and Rabobank pays the single highest headline rate if you\'re willing to switch again after 4 months.',
+      'A 4-month introductory rate paired with the highest unconditional fallback in the field — 5.00% p.a., no deposit or growth conditions attached — puts Bankwest Easy Saver at the top of this list. If you would rather have a rate that never depends on your behaviour, AMP Bank GO Save is fully unconditional from day one. And Rabobank simply pays the highest headline rate of the seven, for savers willing to switch banks again once the 4-month window closes.',
     picks: [
       { slug: 'bankwest-easy-saver', label: 'Best overall' },
       { slug: 'amp-go-save', label: 'Best unconditional rate' },
@@ -207,7 +207,7 @@ export const auSavingsAccountsConfig: TopicConfig = {
   faq: [
     {
       q: 'What is the best savings account in Australia right now?',
-      a: "Bankwest Easy Saver is our top overall pick, combining a strong 4-month introductory rate with the highest unconditional fallback rate in our comparison (5.00% p.a.). If you want a rate that never changes based on your behaviour, AMP Bank GO Save's flat 5.10% p.a. with zero conditions is the strongest choice. Rates are variable and verified as of 10 July 2026 — always check the provider's current rate before opening an account.",
+      a: "Right now, that is Bankwest Easy Saver — it combines a strong 4-month introductory rate with the highest unconditional fallback rate we found (5.00% p.a.). Want a rate that holds steady regardless of your behaviour instead? AMP Bank GO Save pays a flat 5.10% p.a. with zero conditions attached, the strongest unconditional option available. All rates are variable and were verified as of 10 July 2026 — confirm the provider's current rate before opening an account.",
     },
     {
       q: 'Is my savings account protected if the bank fails?',

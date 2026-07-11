@@ -186,7 +186,7 @@ export const ukInvestingAppsConfig: TopicConfig = {
 
   verdict: {
     intro:
-      "AJ Bell is our top pick — the highest raw Which? customer-satisfaction score (81%) of any platform tested, a 2026 Which? Recommended Provider, and one of the strongest Trustpilot ratings in this comparison (4.9/5). Trading 212 offers the lowest cost structure (£0 platform fee, £0 dealing, only a 0.15% FX fee) and topped the Which? 2026 survey outright — though it is explicitly not a Which? Recommended Provider due to the standard CFD-arm risk warning its FCA authorisation carries. InvestEngine is the best pick for pure ETF portfolio-builders, with a 3rd consecutive year as a Which? Recommended Provider.",
+      "Satisfaction and cost pull in different directions here. AJ Bell earned the highest raw Which? customer-satisfaction score of any platform tested (81%), 2026 Recommended Provider status, and one of the strongest Trustpilot ratings around (4.9/5) — our overall pick. Trading 212 wins on price alone: £0 platform fee, £0 dealing, just a 0.15% FX fee, and the top score in the Which? 2026 survey — though it's excluded from Recommended Provider status because its FCA authorisation carries the standard CFD-arm risk warning. For pure ETF portfolios, InvestEngine is the stronger choice, having held Recommended Provider status three years running.",
     picks: [
       { slug: 'aj-bell', label: 'Best overall' },
       { slug: 'trading-212', label: 'Lowest cost' },
@@ -216,7 +216,7 @@ export const ukInvestingAppsConfig: TopicConfig = {
   faq: [
     {
       q: 'What is the best investing app or Stocks & Shares ISA platform in the UK?',
-      a: 'AJ Bell is our top pick — the highest Which? customer-satisfaction score of any platform tested and a strong Trustpilot rating. Trading 212 has the lowest cost structure and topped the Which? survey outright (though it lacks Recommended Provider status due to its CFD-arm risk warning), and InvestEngine is the best pick for pure ETF portfolios. We re-verify fees and features regularly, and the ranking never depends on commissions.',
+      a: 'Priorities diverge sharply on this one. AJ Bell leads on customer satisfaction, with the highest Which? score of any platform tested and a strong Trustpilot rating. Trading 212 wins on cost — the lowest fee structure and the top score in the Which? survey outright — though it lacks Recommended Provider status because of its CFD-arm risk warning. InvestEngine is the better fit for pure ETF portfolios. Fees and features are re-verified regularly, and the ranking never depends on commissions.',
     },
     {
       q: 'Is my money protected if my investing platform fails?',

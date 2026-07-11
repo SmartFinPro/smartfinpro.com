@@ -209,7 +209,7 @@ export const caGoldInvestingConfig: TopicConfig = {
 
   verdict: {
     intro:
-      "Silver Gold Bull is our top pick — a BBB A+ rating with zero complaints in the last 3 years, LBMA Affiliate Membership, and the strongest independently corroborated review score in this comparison. BMG (Bullion Management Group) is the best pick for RRSP/TFSA investors, since it's the only Canadian gold product structured as an OSC-regulated mutual fund holding allocated bullion, purpose-built for registered accounts. The Royal Canadian Mint's Gold Exchange-Traded Receipts are the most trust-anchored option — a direct legal claim on Mint-vaulted gold, backed by the Government of Canada, traded on the TSX through any brokerage.",
+      "Not every reader wants the same thing from a gold platform, which is why the top three picks here solve different problems. Silver Gold Bull wins on trust signals for a straightforward bullion purchase — BBB A+, zero complaints in the last three years, LBMA Affiliate Membership, and the strongest independently corroborated review score of the seven. BMG is the only option purpose-built for RRSP/TFSA investors, an OSC-regulated mutual fund holding allocated bullion rather than a typical dealer relationship. And the Royal Canadian Mint's Gold Exchange-Traded Receipts offer the least ambiguous ownership structure of all: a direct legal claim on Mint-vaulted gold, backed by the Government of Canada, tradable on the TSX through any brokerage.",
     picks: [
       { slug: 'silver-gold-bull-ca', label: 'Best overall' },
       { slug: 'bmg-bullionfund', label: 'Best for RRSP/TFSA' },
@@ -239,7 +239,7 @@ export const caGoldInvestingConfig: TopicConfig = {
   faq: [
     {
       q: 'What is the best gold investing platform in Canada?',
-      a: "Silver Gold Bull is our top pick — BBB A+ with zero complaints in 3 years and LBMA Affiliate Membership. BMG is the best pick for RRSP/TFSA investors as an OSC-regulated bullion fund built for registered accounts, and the Royal Canadian Mint's Gold ETR is the most trust-anchored option, backed directly by the Government of Canada. We re-verify pricing and features regularly, and the ranking never depends on commissions.",
+      a: "Silver Gold Bull leads for a standard bullion purchase on trust signals alone: BBB A+, zero complaints in the last three years, LBMA Affiliate Membership. RRSP/TFSA investors should go straight to BMG, the only OSC-regulated mutual fund here holding allocated bullion. And if government backing matters most, the Royal Canadian Mint's Gold ETR offers a direct legal claim on Mint-vaulted gold, traded on the TSX. We re-verify pricing and features regularly, and the ranking never depends on commissions.",
     },
     {
       q: 'Is buying gold bullion regulated in Canada?',

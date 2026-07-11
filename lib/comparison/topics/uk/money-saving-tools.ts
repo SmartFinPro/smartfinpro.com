@@ -165,7 +165,7 @@ export const ukMoneySavingToolsConfig: TopicConfig = {
 
   verdict: {
     intro:
-      "MoneySuperMarket is our top pick — a broad, Ofgem-accredited multi-category comparison hub with a strong Trustpilot rating and no confirmed CMA or FCA enforcement action. TopCashback is the best cashback portal by scale (15M+ UK members), though we disclose a real, recurring payout-delay complaint pattern common to the cashback industry. Compare the Market has the highest independently corroborated customer satisfaction of the 7 (4.9/5 on Trustpilot, 124,500+ reviews).",
+      "By sheer scale, nothing beats TopCashback among cashback portals, with 15M+ UK members — though a recurring payout-delay complaint pattern common across the cashback industry is disclosed below rather than glossed over. For an all-round pick, MoneySuperMarket is our top choice: a broad, Ofgem-accredited multi-category comparison hub with a strong Trustpilot rating and no confirmed CMA or FCA enforcement action. And on pure customer satisfaction, Compare the Market leads outright, with 4.9/5 on Trustpilot across 124,500+ reviews — the highest independently corroborated score of the seven.",
     picks: [
       { slug: 'moneysupermarket', label: 'Best overall' },
       { slug: 'topcashback', label: 'Best cashback portal' },
@@ -195,7 +195,7 @@ export const ukMoneySavingToolsConfig: TopicConfig = {
   faq: [
     {
       q: 'What is the best money-saving tool in the UK?',
-      a: "MoneySuperMarket is our top pick as a broad, Ofgem-accredited comparison hub with no confirmed enforcement action. TopCashback is the best cashback portal by scale, and Compare the Market has the highest independently corroborated customer satisfaction. We re-verify features regularly, and the ranking never depends on commissions.",
+      a: 'MoneySuperMarket is the strongest all-rounder here — a broad, Ofgem-accredited comparison hub with no confirmed enforcement action. TopCashback wins on scale, as the largest cashback portal in this comparison, while Compare the Market posts the highest independently corroborated customer satisfaction score. Features are re-verified regularly, and the ranking never depends on commissions.',
     },
     {
       q: 'Do comparison sites and cashback portals really cost nothing to use?',

@@ -170,7 +170,7 @@ export const ukForexBrokersConfig: TopicConfig = {
 
   verdict: {
     intro:
-      "Pepperstone is our top pick — the lowest overall cost of any broker researched (average 0.12 pips on EUR/USD via its Razor account), a self-reported and remediated 2023 leverage-cap breach notwithstanding. IG offers the widest market range (17,000+ instruments) as the largest FCA spread-betting provider since 1974, and CMC Markets is a well-established, FCA-regulated-since-2001 choice with 330+ FX pairs and FSCS coverage.",
+      "Cost is where Pepperstone wins outright — an average 0.12 pips on EUR/USD through its Razor account, the lowest of any broker we researched, notwithstanding a self-reported and since-remediated 2023 leverage-cap breach. Traders who want breadth should look at IG instead: 17,000+ instruments and a history as the largest FCA spread-betting provider dating back to 1974. CMC Markets rounds out the shortlist as the steadiest long-standing option, FCA-regulated since 2001, with 330+ FX pairs and FSCS coverage.",
     picks: [
       { slug: 'pepperstone-forex-uk', label: 'Lowest cost' },
       { slug: 'ig-forex-uk', label: 'Widest market range' },
@@ -200,7 +200,7 @@ export const ukForexBrokersConfig: TopicConfig = {
   faq: [
     {
       q: 'What is the best forex broker in the UK in 2026?',
-      a: 'Pepperstone is our top pick, with the lowest overall trading cost of any broker researched via its Razor account. IG offers the widest market range as the UK\'s largest FCA spread-betting provider, and CMC Markets is a well-established, FCA-regulated-since-2001 choice. We re-verify pricing and features regularly, and the ranking never depends on commissions.',
+      a: "On cost, Pepperstone wins outright — the lowest overall trading cost of any broker we researched via its Razor account. IG is the better fit for market range, as the UK's largest FCA spread-betting provider, while CMC Markets offers the steadiest track record, FCA-regulated since 2001. Pricing and features are re-verified regularly, and the ranking is never influenced by commissions.",
     },
     {
       q: 'Are these brokers actually regulated in the UK?',

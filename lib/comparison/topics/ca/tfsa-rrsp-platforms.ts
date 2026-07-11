@@ -161,7 +161,7 @@ export const caTfsaRrspPlatformsConfig: TopicConfig = {
 
   verdict: {
     intro:
-      'Wealthsimple is our top pick — $0 commissions, $0 account fee, and the broadest account-type support of the group. Qtrade Direct Investing is the most improved, having eliminated both commissions and its CAD account fee in October 2025 while consistently winning independent satisfaction awards, and Questrade offers the lowest ongoing cost structure for active DIY traders.',
+      'Wealthsimple wins this comparison outright: zero commissions, zero account fee, and broader account-type support than any other candidate. Qtrade Direct Investing is worth watching closely — as of October 2025 it eliminated both its trading commissions and its CAD account fee, on top of a run of independent satisfaction awards. Frequent traders, however, will find the lowest ongoing cost structure at Questrade.',
     picks: [
       { slug: 'wealthsimple-trade', label: 'Best overall' },
       { slug: 'qtrade-direct-investing', label: 'Most improved / best research' },
@@ -191,7 +191,7 @@ export const caTfsaRrspPlatformsConfig: TopicConfig = {
   faq: [
     {
       q: 'What is the best TFSA/RRSP platform in Canada?',
-      a: 'Wealthsimple is our top pick for $0 commissions, $0 account fee and the broadest account-type support. Qtrade Direct Investing is the most improved after eliminating commissions and its account fee in October 2025, and Questrade offers the lowest ongoing cost for active DIY traders. We re-verify pricing regularly, and the ranking never depends on commissions.',
+      a: 'For most people, Wealthsimple: zero commissions, zero account fee, and the widest account-type support here. Qtrade Direct Investing deserves a mention too, having eliminated both commissions and its CAD account fee in October 2025, plus a run of satisfaction awards. Frequent traders come out ahead at Questrade instead, with the lowest ongoing cost. We re-verify pricing regularly, and the ranking never depends on commissions.',
     },
     {
       q: 'Is my money protected at these brokerages?',

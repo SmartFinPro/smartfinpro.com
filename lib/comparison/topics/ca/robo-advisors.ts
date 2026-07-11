@@ -189,7 +189,7 @@ export const caRoboAdvisorsConfig: TopicConfig = {
 
   verdict: {
     intro:
-      "Wealthsimple is our top pick — the broadest account-type support (including FHSA and RESP) with a $0 minimum and daily rebalancing. Questwealth Portfolios (Questrade) offers the lowest management fee in this comparison, and Justwealth has the widest registered-account menu of all, including RDSP, which none of the other 6 candidates support.",
+      "Three investor priorities, three different picks. Breadth: Wealthsimple supports more account types than any candidate, FHSA and RESP included, with no minimum balance and daily rebalancing. Price: Questwealth Portfolios (Questrade) charges the lowest management fee here. Families: Justwealth is the only one of the seven offering an RDSP, plus the widest registered-account menu overall.",
     picks: [
       { slug: 'wealthsimple-invest', label: 'Best overall' },
       { slug: 'questwealth-portfolios', label: 'Best value / lowest fee' },
@@ -219,7 +219,7 @@ export const caRoboAdvisorsConfig: TopicConfig = {
   faq: [
     {
       q: 'What is the best robo-advisor in Canada?',
-      a: "Wealthsimple is our top pick for its broadest account-type support (including FHSA and RESP), $0 minimum and daily rebalancing. Questwealth Portfolios offers the lowest management fee, and Justwealth has the widest registered-account menu of any candidate, including RDSP. We re-verify fees and features regularly, and the ranking never depends on commissions.",
+      a: "Wealthsimple covers the most ground — the broadest account-type support of the seven, FHSA and RESP included, a $0 minimum, and daily rebalancing. For the lowest fee, Questwealth Portfolios (Questrade's robo arm) beats everyone here. Families needing an RDSP have one option: Justwealth, also the widest registered-account menu overall. We re-verify fees regularly, and the ranking never depends on commissions.",
     },
     {
       q: 'Is my money protected with a Canadian robo-advisor?',

@@ -181,7 +181,7 @@ export const caAiToolsFinanceConfig: TopicConfig = {
 
   verdict: {
     intro:
-      "ChatGPT is our top pick — the most-used AI tool among Canadians for money management per a BMO report, with a dedicated personal-finance experience for budgeting Q&A and document analysis. Monarch Money is the best dedicated AI budgeting app, with a genuinely AI-branded assistant delivering weekly summaries, spending-trend detection and cash-flow forecasting, backed by the strongest independent review scores in this comparison. Copilot Money is the best pick for Apple users, with automatic categorization and cash-flow visualization plus Apple Design Award recognition.",
+      "A BMO report found ChatGPT to be the AI tool Canadians turn to most often for money management, and its dedicated personal-finance experience — built for budgeting Q&A and document analysis — earns it the top spot here. For a purpose-built budgeting assistant, Monarch Money pairs weekly summaries, spending-trend detection and cash-flow forecasting with the strongest independent review scores of any tool in this comparison. Apple users are better served by Copilot Money: automatic categorization, cash-flow visualization, and an Apple Design Award to back up the polish.",
     picks: [
       { slug: 'chatgpt', label: 'Best overall / most used' },
       { slug: 'monarch-money', label: 'Best dedicated AI budgeting app' },
@@ -211,7 +211,7 @@ export const caAiToolsFinanceConfig: TopicConfig = {
   faq: [
     {
       q: 'What is the best AI finance tool in Canada?',
-      a: 'ChatGPT is our top pick as the most-used AI tool among Canadians for money management, per a BMO report. Monarch Money is the best dedicated AI budgeting app with the strongest review scores in this comparison, and Copilot Money is the best pick for Apple users. We re-verify pricing and features regularly, and the ranking never depends on commissions.',
+      a: 'Per a BMO report, ChatGPT is the AI tool Canadians reach for most on money questions — enough to make it our top pick. Monarch Money is the better call for a purpose-built budgeting assistant, with the strongest review scores here, and Apple users get the most polished experience from Copilot Money. We re-verify pricing and features regularly, and the ranking never depends on commissions.',
     },
     {
       q: 'Is my financial data safe if I use an AI budgeting app?',

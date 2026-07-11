@@ -168,7 +168,7 @@ export const ukRemortgageBrokersConfig: TopicConfig = {
 
   verdict: {
     intro:
-      "L&C (London & Country) Mortgages is our top pick — the UK's largest fee-free broker, with a strong Trustpilot rating and a transparent \"how we're paid\" disclosure. Habito is the best pick for a fully digital, whole-of-market experience with a 95+ lender panel, now backed by Monzo's April 2026 acquisition while continuing to operate under its own brand. Tembo Money is the best specialist choice for complex cases (guarantor mortgages, shared ownership, income-boosting products) that generalist brokers often can't place.",
+      "L&C (London & Country) Mortgages is the UK's largest fee-free broker, and that scale — plus a strong Trustpilot rating and a transparent \"how we're paid\" disclosure — earns it our overall pick. Prefer a fully digital, whole-of-market experience? Habito fits, with a 95+ lender panel, and now operates under Monzo's ownership (an April 2026 acquisition) while keeping its own brand. Complex cases — guarantor mortgages, shared ownership, income-boosting products — are where generalist brokers often struggle, and that's exactly where Tembo Money specialises.",
     picks: [
       { slug: 'lc-mortgages', label: 'Best overall' },
       { slug: 'habito', label: 'Best digital, whole-of-market broker' },
@@ -198,7 +198,7 @@ export const ukRemortgageBrokersConfig: TopicConfig = {
   faq: [
     {
       q: 'What is the best remortgage broker in the UK?',
-      a: "L&C (London & Country) Mortgages is our top pick — the UK's largest fee-free broker with a strong Trustpilot rating. Habito is the best fully digital, whole-of-market experience, and Tembo Money is the best specialist choice for complex cases generalist brokers often can't place. We re-verify lender panels and features regularly, and the ranking never depends on commissions.",
+      a: "L&C (London & Country) Mortgages suits most borrowers best — the UK's largest fee-free broker, with a strong Trustpilot rating behind it. If a fully digital, whole-of-market experience matters more to you, Habito is the stronger choice, and Tembo Money handles complex cases that generalist brokers often can't place. Lender panels and features are re-verified regularly, and the ranking never depends on commissions.",
     },
     {
       q: 'Do I have to pay a remortgage broker in the UK?',

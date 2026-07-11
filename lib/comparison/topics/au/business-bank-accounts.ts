@@ -187,7 +187,7 @@ export const auBusinessBankAccountsConfig: TopicConfig = {
 
   verdict: {
     intro:
-      'Tyro is our top pick — a genuine APRA-licensed bank with a $0 account, FCS protection, Xero/MYOB feeds and same-day EFTPOS settlement. Zeller wins for the fastest setup (under 5 minutes) if you can accept its non-ADI trust structure, and Airwallex is the strongest choice for businesses paying or getting paid internationally.',
+      'An APRA-licensed bank, a $0 account, FCS protection, Xero/MYOB feeds, same-day EFTPOS settlement — Tyro checks every box and is the pick for most businesses. Setup speed is where Zeller wins instead: under 5 minutes, provided you are comfortable with its non-ADI trust structure rather than a bank licence. For international payments specifically, Airwallex is the strongest of the seven.',
     picks: [
       { slug: 'tyro-business', label: 'Best overall' },
       { slug: 'zeller-business', label: 'Fastest setup' },
@@ -221,7 +221,7 @@ export const auBusinessBankAccountsConfig: TopicConfig = {
   faq: [
     {
       q: 'What is the best business bank account in Australia in 2026?',
-      a: 'Tyro is our top overall pick — a $0/month account from an APRA-licensed bank with FCS protection, Xero/MYOB feeds and same-day EFTPOS settlement. Zeller is the fastest to open (under 5 minutes) if you accept its non-ADI trust structure, and Airwallex is the strongest choice for international payments. We re-verify fees and features quarterly, and the ranking never depends on commissions.',
+      a: 'Tyro, for most businesses: it is a genuine APRA-licensed bank offering a $0/month account with FCS protection, Xero/MYOB feeds and same-day EFTPOS settlement. Need to open an account today? Zeller takes under 5 minutes, though it operates as a non-ADI trust structure rather than a licensed bank. If you are paying or getting paid overseas, Airwallex is the standout. Fees and features are re-verified quarterly, and commissions never influence the ranking.',
     },
     {
       q: 'Is my money protected if my business bank goes under?',

@@ -188,7 +188,7 @@ export const auAiToolsFinanceConfig: TopicConfig = {
 
   verdict: {
     intro:
-      "Xero is our top pick — its JAX AI assistant (bank reconciliation, cashflow insights, natural-language Q&A) is bundled free into every plan including the cheapest, on Australia's largest accounting-software incumbent. Employment Hero offers the most accessible free AI tier of the 7 (50 free AI-screened interviews, no subscription needed), and Dext has the strongest independent review score for AI-powered receipt and bookkeeping automation.",
+      "Xero takes the top spot here: its JAX AI assistant covers bank reconciliation, cashflow insights and natural-language Q&A, and ships free on every plan — even the cheapest — from Australia's largest accounting-software incumbent. For teams that want AI without paying anything, Employment Hero gives the most generous free allowance among the seven (50 free AI-screened interviews, no subscription needed). And on independent review data, Dext comes out ahead for AI-powered receipt and bookkeeping automation.",
     picks: [
       { slug: 'xero-jax', label: 'Best overall' },
       { slug: 'employment-hero', label: 'Best free AI tier' },
@@ -218,7 +218,7 @@ export const auAiToolsFinanceConfig: TopicConfig = {
   faq: [
     {
       q: 'What is the best AI finance tool in Australia?',
-      a: "Xero is our top pick — its JAX AI assistant is bundled free into every plan, including the cheapest ($35/month). Employment Hero has the most accessible free AI tier (50 free AI-screened interviews, no subscription needed), and Dext has the strongest independent review score for AI-powered bookkeeping. We re-verify pricing and features regularly, and the ranking never depends on commissions.",
+      a: "For most Australian users, the answer is Xero: its JAX AI assistant comes free with every plan, even the $35/month entry tier. If budget is the only constraint, Employment Hero is worth a look first — 50 AI-screened interviews are free with no subscription attached. Dext, meanwhile, posts the strongest independent review score of the group for AI-powered bookkeeping. Pricing and features are re-verified regularly, and nothing here is ranked based on commission.",
     },
     {
       q: 'Are any of these tools regulated financial advisers?',

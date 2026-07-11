@@ -171,7 +171,7 @@ export const auCybersecuritySmbConfig: TopicConfig = {
 
   verdict: {
     intro:
-      "1Password Business is our top pick — transparent published pricing, the largest and most consistent review base of the 7, and no confirmed system-level breach of its own platform found. Bitdefender is the strongest endpoint-protection choice with a genuine, newly-opened Melbourne office, and CrowdStrike remains a top-tier EDR pick despite its well-documented July 2024 outage, which we disclose in full below.",
+      "No confirmed breach of its own platform, transparent published pricing, and the largest, most consistent review base of the seven vendors here — on those grounds, 1Password Business takes the top spot. Among endpoint-protection options specifically, Bitdefender stands out for having opened a genuine local office in Melbourne. CrowdStrike still earns a place as a top-tier EDR pick, though its well-documented July 2024 outage is disclosed in full below rather than glossed over.",
     picks: [
       { slug: '1password-business-au', label: 'Best overall' },
       { slug: 'bitdefender-au', label: 'Best endpoint protection with local AU support' },
@@ -201,7 +201,7 @@ export const auCybersecuritySmbConfig: TopicConfig = {
   faq: [
     {
       q: 'What is the best cybersecurity tool for a small business in Australia?',
-      a: '1Password Business is our top pick for transparent pricing and the most consistent review base. Bitdefender is the strongest endpoint-protection choice with a genuine local Melbourne office, and CrowdStrike remains a top-tier EDR pick despite a well-documented 2024 outage, which we disclose in full. The right choice depends on which category — endpoint protection, password management or VPN — you actually need.',
+      a: 'It depends on the category, but 1Password Business is the strongest all-round choice, thanks to transparent pricing and the most consistent review base of the seven. If endpoint protection is what you need, Bitdefender stands out with a genuine local Melbourne office. CrowdStrike remains a credible top-tier EDR option too, despite a well-documented 2024 outage that we disclose in full rather than omit.',
     },
     {
       q: 'What baseline cybersecurity standard should an Australian small business target?',

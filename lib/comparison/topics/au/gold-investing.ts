@@ -184,7 +184,7 @@ export const auGoldInvestingConfig: TopicConfig = {
 
   verdict: {
     intro:
-      "The Perth Mint is our top pick — Australia's only government-owned mint, LBMA Good Delivery-accredited, with a resolved and transparently disclosed 2023-25 AUSTRAC compliance matter behind it. Ainslie Bullion is the most established independent dealer (operating since 1974) with a clean complaint record, and As Good As Gold Australia has the strongest independently corroborated customer rating in this comparison.",
+      "Government-owned, LBMA Good Delivery-accredited, and carrying a resolved, transparently disclosed 2023-25 AUSTRAC compliance matter rather than a hidden one — that mix of pedigree and disclosure makes The Perth Mint, Australia's only government mint, our top pick. Among independent dealers, Ainslie Bullion has the longest track record (trading since 1974) and a clean complaint history. As Good As Gold Australia stands out for a different reason: the strongest independently corroborated customer rating we found in this comparison.",
     picks: [
       { slug: 'perth-mint', label: 'Best overall / government-backed' },
       { slug: 'ainslie-bullion', label: 'Most established independent dealer' },
@@ -222,7 +222,7 @@ export const auGoldInvestingConfig: TopicConfig = {
     },
     {
       q: 'What is the best gold dealer in Australia?',
-      a: "The Perth Mint is our top pick — it's Australia's only government-owned mint (Western Australian Government) and an LBMA Good Delivery-accredited refiner, the strongest accreditation combination in this comparison. Ainslie Bullion is the most established independent dealer (since 1974) with a clean complaint record, and As Good As Gold Australia has the strongest independently corroborated customer rating.",
+      a: "The short answer is The Perth Mint — it is Australia's only government-owned mint (backed by the Western Australian Government) and an LBMA Good Delivery-accredited refiner, the strongest accreditation combination we found among these seven dealers. For an independent alternative, Ainslie Bullion has traded since 1974 with a clean complaint record. And on customer sentiment alone, As Good As Gold Australia posts the strongest independently corroborated rating in the group.",
     },
     {
       q: 'What is a typical premium over spot price?',

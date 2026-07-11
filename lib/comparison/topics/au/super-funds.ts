@@ -174,7 +174,7 @@ export const auSuperFundsConfig: TopicConfig = {
 
   verdict: {
     intro:
-      'Aware Super is our top pick — the only fund in this comparison named SuperRatings Fund of the Year in both 2025 and 2026, with strong 10-year performance, falling admin fees, and no material regulatory history found. Australian Retirement Trust is the strongest value pick with a below-median fee and multiple 2025/26 awards, and Hostplus has the best long-term track record — ranked #1 for 10, 15 and 20-year MySuper performance by SuperRatings.',
+      'SuperRatings named just one fund its Fund of the Year in both 2025 and 2026: Aware Super, which also brings strong 10-year performance, falling admin fees and no material regulatory history found — enough to make it our top pick. On fees specifically, Australian Retirement Trust is the stronger value play, sitting below the median and carrying multiple 2025/26 awards of its own. For sheer long-term performance, Hostplus leads: SuperRatings ranks it #1 across the 10, 15 and 20-year MySuper horizons.',
     picks: [
       { slug: 'aware-super', label: 'Best overall' },
       { slug: 'australian-retirement-trust', label: 'Best value' },
@@ -204,7 +204,7 @@ export const auSuperFundsConfig: TopicConfig = {
   faq: [
     {
       q: 'What is the best superannuation fund in Australia?',
-      a: 'Aware Super is our top pick — the only fund in this comparison named SuperRatings Fund of the Year in both 2025 and 2026, with strong 10-year performance and no material regulatory history found. Australian Retirement Trust offers the strongest value on fees, and Hostplus has the best long-term track record. This is general information, not personal financial advice — your own circumstances matter.',
+      a: 'Aware Super, based on our comparison — it is the only fund here named SuperRatings Fund of the Year in both 2025 and 2026, backed by strong 10-year performance and no material regulatory history found. If fees matter most to you, Australian Retirement Trust offers the strongest value. If it is long-term track record you care about, Hostplus leads. This is general information, not personal financial advice — your own circumstances matter.',
     },
     {
       q: 'How protected is my money in a super fund?',

@@ -188,7 +188,7 @@ export const caForexBrokersConfig: TopicConfig = {
 
   verdict: {
     intro:
-      'Interactive Brokers Canada is our top pick — the tightest pass-through spreads and lowest all-in cost for active traders, backed by a direct CIRO/CIPF membership. CMC Markets Canada is the best all-round choice with 330+ pairs, no minimum deposit and no Canada-specific regulatory issues found, and OANDA Canada is the best pick for beginners with genuinely native CAD accounts and a Toronto office.',
+      'Active traders get the tightest pass-through spreads and lowest all-in cost from Interactive Brokers Canada, a direct CIRO/CIPF member and our top pick for that reason. CMC Markets Canada is the best all-round choice instead, pairing 330+ tradable pairs with no minimum deposit and no Canada-specific regulatory issues found. Beginners tend to do best with OANDA Canada, which offers genuinely native CAD accounts and a Toronto office.',
     picks: [
       { slug: 'interactive-brokers-ca', label: 'Best for active traders' },
       { slug: 'cmc-markets-ca', label: 'Best overall' },
@@ -218,7 +218,7 @@ export const caForexBrokersConfig: TopicConfig = {
   faq: [
     {
       q: 'What is the best forex broker in Canada in 2026?',
-      a: 'Interactive Brokers Canada is our top pick for active traders, with the tightest pass-through spreads and lowest all-in cost. CMC Markets Canada is the best all-round choice with 330+ pairs and no minimum deposit, and OANDA Canada is best for beginners with native CAD accounts and a Toronto office. We re-verify pricing and features regularly, and the ranking never depends on commissions.',
+      a: 'Interactive Brokers Canada, if you trade often — spreads and all-in cost undercut every other candidate, backed by a direct CIRO/CIPF membership. CMC Markets Canada suits a broader range of traders, with 330+ pairs, no minimum deposit, and no Canada-specific regulatory issues found. Beginners fit best with OANDA Canada, running native CAD accounts from a Toronto office. We re-verify pricing and features regularly; the ranking never depends on commissions.',
     },
     {
       q: 'Are these brokers actually regulated in Canada?',

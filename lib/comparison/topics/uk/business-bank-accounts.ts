@@ -173,7 +173,7 @@ export const ukBusinessBankAccountsConfig: TopicConfig = {
 
   verdict: {
     intro:
-      "Starling Bank Business is our top pick — a full UK banking licence with unambiguous £120,000 FSCS protection, free UK transfers, and a genuinely useful free Making Tax Digital tool. Mettle by NatWest is the best value with a completely free account (including free FreeAgent accounting software) and full FSCS backing via NatWest's banking licence. Monzo Business offers the strongest accounting-software integration breadth (Xero, QuickBooks, FreeAgent, Sage) — though we disclose a real 2025 FCA fine for both Monzo and Starling below, and encourage weighing it alongside each bank's other genuine strengths.",
+      "For most UK businesses, Starling Bank Business comes out on top: a full banking licence backing unambiguous £120,000 FSCS protection, free UK transfers, and a free Making Tax Digital tool that's actually useful. For lower cost, Mettle by NatWest is hard to beat — a completely free account that includes FreeAgent accounting software, with full FSCS protection via NatWest's licence. Monzo Business, meanwhile, connects to the widest range of accounting software (Xero, QuickBooks, FreeAgent, Sage) of any account here. Both Monzo and Starling carry a real 2025 FCA fine, disclosed in detail below and worth weighing against each bank's other strengths.",
     picks: [
       { slug: 'starling-business', label: 'Best overall' },
       { slug: 'mettle-natwest', label: 'Best value' },
@@ -203,7 +203,7 @@ export const ukBusinessBankAccountsConfig: TopicConfig = {
   faq: [
     {
       q: 'What is the best business bank account in the UK?',
-      a: 'Starling Bank Business is our top pick — a full UK banking licence with unambiguous £120,000 FSCS protection and free UK transfers. Mettle by NatWest offers the best value with a completely free account including free FreeAgent accounting software, and Monzo Business has the strongest accounting-integration breadth. We disclose real 2025 FCA fines against Starling, Monzo and Barclays in full — weigh these alongside each bank\'s other strengths.',
+      a: "Starling Bank Business tops our list, backed by a full UK banking licence, unambiguous £120,000 FSCS protection and free UK transfers. If you want the lowest cost, Mettle by NatWest gives you a completely free account with FreeAgent accounting software bundled in, while Monzo Business connects to the broadest range of accounting software. Note that Starling, Monzo and Barclays all carry real 2025 FCA fines, which we disclose in full — factor them in alongside each bank's other strengths.",
     },
     {
       q: 'Is my UK business banking money protected up to £120,000?',

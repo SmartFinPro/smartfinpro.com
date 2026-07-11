@@ -168,7 +168,7 @@ export const caMortgageBrokersConfig: TopicConfig = {
 
   verdict: {
     intro:
-      "Ratehub is our top pick — Canada's dominant rate aggregator, having facilitated $15B+ in mortgages since 2015 through its own licensed brokerage (CanWise), with the broadest brand recognition in this comparison. nesto is the best fully-digital experience, Canada's largest all-digital mortgage broker with 450,000+ customers and a rate-match guarantee, and True North Mortgage has the strongest independently corroborated customer rating (4.9/5 on Trustpilot) of any candidate researched.",
+      "Scale is what separates Ratehub from the rest of this list: it has facilitated more than $15 billion in mortgages since 2015 through its own licensed brokerage, CanWise, and carries the broadest brand recognition of any candidate researched. For a completely paperless process, nesto is Canada's largest all-digital mortgage broker, serving 450,000+ customers behind a rate-match guarantee. And on pure customer satisfaction, True North Mortgage stands alone with a 4.9-out-of-5 Trustpilot score, the strongest independently corroborated rating in this comparison.",
     picks: [
       { slug: 'ratehub', label: 'Best overall' },
       { slug: 'nesto', label: 'Best fully-digital experience' },
@@ -198,7 +198,7 @@ export const caMortgageBrokersConfig: TopicConfig = {
   faq: [
     {
       q: 'What is the best mortgage broker in Canada?',
-      a: "Ratehub is our top pick as Canada's dominant rate aggregator with its own licensed brokerage (CanWise) and $15B+ in mortgages facilitated since 2015. nesto is the best fully-digital experience with 450,000+ customers and a rate-match guarantee, and True North Mortgage has the strongest customer rating in this comparison (4.9/5 on Trustpilot). We re-verify licensing and features regularly, and the ranking never depends on commissions.",
+      a: "Ratehub, by scale: $15B+ in mortgages facilitated since 2015 through its own brokerage, CanWise, and the broadest brand recognition of the group — our top pick. nesto fits best for a fully digital process, Canada's largest all-digital broker with 450,000+ customers and a rate-match guarantee. True North Mortgage wins on satisfaction alone, a 4.9/5 Trustpilot score stronger than any other candidate researched. We re-verify licensing regularly, and the ranking never depends on commissions.",
     },
     {
       q: 'Do I have to pay a mortgage broker in Canada?',

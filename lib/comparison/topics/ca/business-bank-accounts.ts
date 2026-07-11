@@ -176,7 +176,7 @@ export const caBusinessBankAccountsConfig: TopicConfig = {
 
   verdict: {
     intro:
-      'RBC is our top pick — a full CDIC-insured bank with the largest branch network and genuine accounting automation (RBC PayEdge). EQ Bank is the best value with a completely free account and a strong interest rate, and Float has the best accounting-software integration of any candidate (QuickBooks, Xero and NetSuite), though its CDIC protection runs indirectly through a Scotiabank trust account rather than a direct bank relationship.',
+      'RBC takes the top spot for readers who want a full-service bank: direct CDIC insurance, the largest branch network here, and real accounting automation via RBC PayEdge. If cost matters most, EQ Bank is hard to beat — no monthly fee, a strong interest rate. Float wins on accounting-software depth instead (QuickBooks, Xero and NetSuite all connect), though its CDIC protection runs indirectly through a Scotiabank trust account rather than a direct bank relationship.',
     picks: [
       { slug: 'rbc-business', label: 'Best overall' },
       { slug: 'eq-bank-business', label: 'Best value' },
@@ -206,7 +206,7 @@ export const caBusinessBankAccountsConfig: TopicConfig = {
   faq: [
     {
       q: 'What is the best business bank account in Canada?',
-      a: 'RBC is our top pick — a full CDIC-insured bank with the largest branch network and genuine accounting automation. EQ Bank offers the best value with a completely free account and strong interest rate, and Float has the deepest accounting-software integration, though its CDIC protection is indirect via a Scotiabank trust account. We re-verify fees and features regularly, and the ranking never depends on commissions.',
+      a: 'RBC tops this list on direct CDIC insurance, the largest branch network of any candidate, and real accounting automation via RBC PayEdge. Cost-conscious owners should look at EQ Bank instead — no monthly fee, a strong interest rate — while Float suits anyone wanting deep accounting-software integration (QuickBooks, Xero, NetSuite), though its CDIC coverage runs indirectly through a Scotiabank trust account. We re-verify fees and features regularly, and the ranking never depends on commissions.',
     },
     {
       q: 'Is my business banking money protected in Canada?',

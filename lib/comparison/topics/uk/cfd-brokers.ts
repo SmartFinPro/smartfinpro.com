@@ -193,7 +193,7 @@ export const ukCfdBrokersConfig: TopicConfig = {
 
   verdict: {
     intro:
-      "IG is our top pick — the tightest spread of any candidate researched, the widest instrument range (17,000+ markets), and no confirmed UK FCA enforcement action found. Capital.com offers the lowest barrier to entry with a £20 minimum deposit and the strongest Trustpilot rating of the 7, and Pepperstone is the best pick for active traders with its Razor account's ultra-tight raw spreads across the broadest platform choice (MT4, MT5, cTrader, TradingView).",
+      "Beginners with a small first deposit should start with Capital.com — just £20 to open an account, and the strongest Trustpilot rating of the seven researched. But on pure execution quality, IG is the stronger overall pick: the tightest spread of anything we found, the widest instrument range in this comparison (17,000+ markets), and no confirmed UK FCA enforcement action. Active traders chasing volume are better matched with Pepperstone, whose Razor account delivers ultra-tight raw spreads and the broadest platform lineup (MT4, MT5, cTrader, TradingView).",
     picks: [
       { slug: 'ig-cfd-uk', label: 'Best overall' },
       { slug: 'capital-com', label: 'Best for beginners' },
@@ -223,7 +223,7 @@ export const ukCfdBrokersConfig: TopicConfig = {
   faq: [
     {
       q: 'What is the best CFD trading platform in the UK?',
-      a: 'IG is our top pick — the tightest spreads researched, the widest instrument range, and no confirmed UK FCA enforcement action found. Capital.com is best for beginners with a £20 minimum deposit and the strongest Trustpilot rating, and Pepperstone is best for active traders with ultra-tight raw spreads across the broadest platform choice. We re-verify pricing and features regularly, and the ranking never depends on commissions.',
+      a: "IG comes out ahead on execution: the tightest spreads we found, the widest instrument range, and no confirmed UK FCA enforcement action. Beginners tend to prefer Capital.com, thanks to a £20 minimum deposit and the strongest Trustpilot rating of the group, while active traders get more value from Pepperstone's ultra-tight raw spreads and broad platform choice. Pricing and features are re-verified regularly, and the ranking is never influenced by commissions.",
     },
     {
       q: 'Are these CFD brokers actually regulated in the UK?',
