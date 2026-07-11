@@ -183,7 +183,7 @@ export const auCfdBrokersConfig: TopicConfig = {
 
   verdict: {
     intro:
-      'Dual ASIC licences dating back to 1996, 12,000+ tradable instruments, no minimum deposit, and the cleanest regulatory record among the seven brokers reviewed here: that combination puts CMC Markets at the top. High-volume traders chasing the lowest cost per trade should look at Interactive Brokers instead, whose commission-based pricing beats spread-only models at scale. Pepperstone, meanwhile, spans the widest range of platforms (MT4, MT5 and cTrader) and disclosed a 2023 compliance matter that it self-reported and has since fully remediated.',
+      'Dual ASIC licences dating back to 1996, 12,000+ tradable instruments, no minimum deposit, and the cleanest regulatory record among the seven brokers reviewed here: that combination puts CMC Markets at the top. High-volume traders chasing the lowest cost per trade should look at Interactive Brokers instead, whose commission-based pricing is genuinely low for frequent, high-volume trading. Pepperstone, meanwhile, spans the widest range of platforms (MT4, MT5 and cTrader) and disclosed a 2023 compliance matter that it self-reported and has since fully remediated.',
     picks: [
       { slug: 'cmc-markets-cfd-au', label: 'Best overall' },
       { slug: 'interactive-brokers-cfd-au', label: 'Best for high-volume traders' },

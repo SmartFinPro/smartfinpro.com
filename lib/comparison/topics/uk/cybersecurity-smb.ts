@@ -216,7 +216,7 @@ export const ukCybersecuritySmbConfig: TopicConfig = {
   faq: [
     {
       q: 'What is the best cybersecurity tool for a small business in the UK?',
-      a: 'Which one is best really depends on the category. Sophos is our overall top pick — a genuinely British company (Oxfordshire HQ since 1985) with UK industry-award recognition and NCSC assurance. 1Password stands out specifically for password management, with transparent pricing and a clean breach record, while CrowdStrike remains the strongest enterprise EDR option through its London-registered UK entity — despite a well-documented 2024 outage, disclosed in full elsewhere on this page. Match the category — endpoint protection, password management or VPN — to your actual need before picking a name.',
+      a: 'Which one is best really depends on the category. Sophos is our overall top pick — a genuinely British company (Oxfordshire HQ since 1985) with UK industry-award recognition and NCSC assurance. 1Password stands out specifically for password management, with transparent pricing and no confirmed platform-level breach, while CrowdStrike remains the strongest enterprise EDR option through its London-registered UK entity — despite a well-documented 2024 outage, disclosed in full elsewhere on this page. Match the category — endpoint protection, password management or VPN — to your actual need before picking a name.',
     },
     {
       q: 'Is Sophos really a British company?',
