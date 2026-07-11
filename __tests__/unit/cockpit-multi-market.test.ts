@@ -17,6 +17,9 @@ import { auSavingsAccountsConfig } from '@/lib/comparison/topics/au/savings-acco
 import { caRoboAdvisorsConfig } from '@/lib/comparison/topics/ca/robo-advisors';
 import { caBusinessBankAccountsConfig } from '@/lib/comparison/topics/ca/business-bank-accounts';
 import { caTfsaRrspPlatformsConfig } from '@/lib/comparison/topics/ca/tfsa-rrsp-platforms';
+import { ukInvestingAppsConfig } from '@/lib/comparison/topics/uk/investing-apps';
+import { ukBusinessBankAccountsConfig } from '@/lib/comparison/topics/uk/business-bank-accounts';
+import { ukSavingsAccountsConfig } from '@/lib/comparison/topics/uk/savings-accounts';
 import { formatMoney, formatCostLabel } from '@/lib/comparison/money';
 import { BEST_X_MANIFEST } from '@/lib/comparison/topics/manifest';
 
@@ -72,8 +75,15 @@ describe('getTopicConfig — market-aware registry', () => {
     expect(getTopicConfig('tax-efficient-investing', 'tfsa-rrsp-platforms', 'au')).toBeNull();
   });
 
+  it('resolves the market-specific UK configs for investing-apps, business-bank-accounts and savings-accounts', () => {
+    expect(getTopicConfig('personal-finance', 'investing-apps', 'uk')).toBe(ukInvestingAppsConfig);
+    expect(getTopicConfig('business-banking', 'business-bank-accounts', 'uk')).toBe(ukBusinessBankAccountsConfig);
+    expect(getTopicConfig('savings', 'savings-accounts', 'uk')).toBe(ukSavingsAccountsConfig);
+    expect(getTopicConfig('savings', 'savings-accounts', 'uk')).not.toBe(auSavingsAccountsConfig);
+  });
+
   it('returns null for an unknown combo in any market', () => {
-    expect(getTopicConfig('savings', 'savings-accounts', 'uk')).toBeNull();
+    expect(getTopicConfig('savings', 'savings-accounts', 'ca')).toBeNull();
     expect(getTopicConfig('nope', 'nope')).toBeNull();
   });
 });

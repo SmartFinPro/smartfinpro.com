@@ -38,6 +38,9 @@ import { caMortgageBrokersConfig } from './ca/mortgage-brokers';
 import { caGoldInvestingConfig } from './ca/gold-investing';
 import { caAiToolsFinanceConfig } from './ca/ai-tools-finance';
 import { caCybersecuritySmbConfig } from './ca/cybersecurity-smb';
+import { ukInvestingAppsConfig } from './uk/investing-apps';
+import { ukBusinessBankAccountsConfig } from './uk/business-bank-accounts';
+import { ukSavingsAccountsConfig } from './uk/savings-accounts';
 
 const REGISTRY: Record<string, TopicConfig> = {
   'personal-finance/robo-advisors': roboAdvisorsConfig,
@@ -81,6 +84,11 @@ const REGISTRY: Record<string, TopicConfig> = {
   // ── Canada (Stage 2 — AU/CA/UK rollout, Slice CA-3) ──
   'ca:ai-tools/ai-tools-finance': caAiToolsFinanceConfig,
   'ca:cybersecurity/cybersecurity-smb': caCybersecuritySmbConfig,
+
+  // ── UK (Stage 3 — AU/CA/UK rollout, Slice UK-1) ──
+  'uk:personal-finance/investing-apps': ukInvestingAppsConfig,
+  'uk:business-banking/business-bank-accounts': ukBusinessBankAccountsConfig,
+  'uk:savings/savings-accounts': ukSavingsAccountsConfig,
 };
 
 export function getTopicConfig(category: string, topic: string, market?: string): TopicConfig | null {

@@ -63,4 +63,20 @@ export const BEST_X_MANIFEST: BestXManifestEntry[] = [
   { market: 'ca', category: 'gold-investing', topic: 'platforms', label: 'Best Gold Investing Platforms', blurb: 'Buy & store gold in Canada, by premiums & accreditation.', icon: 'Coins', image: '/images/comparison/gold-investing.webp' },
   { market: 'ca', category: 'ai-tools', topic: 'ai-tools-finance', label: 'Best AI Tools for Finance', blurb: 'AI software for Canadian finance & business teams.', icon: 'Zap', image: '/images/comparison/ai-tools-finance.webp' },
   { market: 'ca', category: 'cybersecurity', topic: 'cybersecurity-smb', label: 'Best Cybersecurity for SMBs', blurb: 'Security tools for Canadian small businesses.', icon: 'Shield', image: '/images/comparison/cybersecurity-smb.webp' },
+
+  // ── UK (Stage 3 — AU/CA/UK rollout) ──
+  // Tiles activate automatically once the topic's uk: config is registered AND
+  // prod rows exist (buildBestXIndex); until then they render "Launching soon".
+  // remortgage-brokers and money-saving-tools reuse existing UK content-hero
+  // images as documented editorial placeholders (no dedicated topic photo
+  // exists yet), matching the au:super-funds / ca:mortgage-brokers precedent.
+  { market: 'uk', category: 'personal-finance', topic: 'investing-apps', label: 'Best Investing Apps & Stocks & Shares ISAs', blurb: 'UK investing apps and ISA platforms, ranked by fees.', icon: 'Sparkles', image: '/images/comparison/robo-advisors.webp' },
+  { market: 'uk', category: 'business-banking', topic: 'business-bank-accounts', label: 'Best Business Bank Accounts', blurb: 'UK business accounts by monthly fee & FSCS protection.', icon: 'Building', image: '/images/comparison/business-bank-accounts.webp' },
+  { market: 'uk', category: 'savings', topic: 'savings-accounts', label: 'Best Savings Accounts & Cash ISAs', blurb: 'Top UK savings rates (AER) and Cash ISAs.', icon: 'PiggyBank', image: '/images/comparison/high-yield-savings.webp' },
+  { market: 'uk', category: 'trading', topic: 'cfd-brokers', label: 'Best CFD Trading Platforms', blurb: 'FCA-regulated CFD brokers by spreads & platforms.', icon: 'TrendingUp', image: '/images/comparison/trading-platforms.webp' },
+  { market: 'uk', category: 'forex', topic: 'forex-brokers', label: 'Best Forex Brokers', blurb: 'FCA-regulated FX brokers by all-in trading cost.', icon: 'DollarSign', image: '/images/comparison/forex-brokers.webp' },
+  { market: 'uk', category: 'remortgaging', topic: 'remortgage-brokers', label: 'Best Remortgage Brokers', blurb: 'Whole-of-market remortgage brokers, by lender panel & fees.', icon: 'Building', image: '/images/content/uk/business-banking/hero.webp' },
+  { market: 'uk', category: 'cost-of-living', topic: 'money-saving-tools', label: 'Best Money-Saving Tools', blurb: 'Cashback, budgeting & comparison tools for the cost-of-living squeeze.', icon: 'Coins', image: '/images/content/uk/personal-finance/hero.webp' },
+  { market: 'uk', category: 'ai-tools', topic: 'ai-tools-finance', label: 'Best AI Tools for Finance', blurb: 'AI software for UK finance & business teams.', icon: 'Zap', image: '/images/comparison/ai-tools-finance.webp' },
+  { market: 'uk', category: 'cybersecurity', topic: 'cybersecurity-smb', label: 'Best Cybersecurity for SMBs', blurb: 'Security tools for UK small businesses.', icon: 'Shield', image: '/images/comparison/cybersecurity-smb.webp' },
 ];

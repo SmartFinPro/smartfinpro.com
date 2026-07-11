@@ -74,8 +74,10 @@ const marketHeroContent: Record<string, {
   uk: {
     title: 'UK Financial\nIntelligence, Delivered.',
     subtitle: 'FCA-regulated broker reviews, cybersecurity solutions, and AI-powered tools — expert-reviewed for UK professionals.',
-    primaryCta: { text: 'Explore UK Reports', href: '/uk/trading' },
-    secondaryCta: { text: 'How We Review', href: '/tools' },
+    // Mirrors the US hero: primary CTA anchors to the Best-X tile grid now that
+    // UK has live cockpit tiles (Stage 3 slice 1).
+    primaryCta: { text: 'Start now', href: '#best-x-compare' },
+    secondaryCta: { text: 'How We Review', href: '/integrity' },
   },
   ca: {
     title: 'Canadian Finance\nResearch, Simplified.',
