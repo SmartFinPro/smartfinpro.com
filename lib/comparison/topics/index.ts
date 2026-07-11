@@ -24,6 +24,9 @@ import { creditCardCompaniesConfig } from './credit-card-companies';
 import { auRoboAdvisorsConfig } from './au/robo-advisors';
 import { auBusinessBankAccountsConfig } from './au/business-bank-accounts';
 import { auSavingsAccountsConfig } from './au/savings-accounts';
+import { auForexBrokersConfig } from './au/forex-brokers';
+import { auGoldInvestingConfig } from './au/gold-investing';
+import { auCfdBrokersConfig } from './au/cfd-brokers';
 
 const REGISTRY: Record<string, TopicConfig> = {
   'personal-finance/robo-advisors': roboAdvisorsConfig,
@@ -43,6 +46,11 @@ const REGISTRY: Record<string, TopicConfig> = {
   'au:personal-finance/robo-advisors': auRoboAdvisorsConfig,
   'au:business-banking/business-bank-accounts': auBusinessBankAccountsConfig,
   'au:savings/savings-accounts': auSavingsAccountsConfig,
+
+  // ── Australia (Stage 1 — AU/CA/UK rollout, Slice AU-2) ──
+  'au:forex/forex-brokers': auForexBrokersConfig,
+  'au:gold-investing/platforms': auGoldInvestingConfig,
+  'au:trading/cfd-brokers': auCfdBrokersConfig,
 };
 
 export function getTopicConfig(category: string, topic: string, market?: string): TopicConfig | null {
