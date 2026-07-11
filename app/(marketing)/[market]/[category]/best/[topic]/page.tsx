@@ -27,6 +27,7 @@ import {
   generatePersonSchema,
 } from '@/lib/seo/schema';
 import { getCockpitData, getCockpitRouteParams } from '@/lib/comparison/loader';
+import { computeCockpitModifiedDate } from '@/lib/comparison/dates';
 import { getTopicConfig } from '@/lib/comparison/topics/index';
 import { BEST_X_MANIFEST } from '@/lib/comparison/topics/manifest';
 import { getMarketExpert } from '@/lib/actions/experts';
@@ -157,10 +158,7 @@ export async function generateMetadata({ params }: CockpitPageProps): Promise<Me
   // Article dates: publishDate from config; modifiedDate from the latest source re-verify.
   const products = await getCockpitData(market as Market, category as Category, topic);
   const expert = await getMarketExpert(market as Market, category as Category);
-  const latestVerified =
-    products.map((p) => p.dataVerifiedAt).filter(Boolean).sort().at(-1) ?? config.publishedDate;
-  // Never let dateModified precede datePublished (invalid Article schema).
-  const modified = latestVerified < config.publishedDate ? config.publishedDate : latestVerified;
+  const modified = computeCockpitModifiedDate(products, config.publishedDate);
 
   return {
     // Bare title — the root layout template ('%s | SmartFinPro') adds the brand
@@ -218,10 +216,7 @@ export default async function CockpitPage({ params }: CockpitPageProps) {
   const faq = generateFAQSchema(config.faq.map((f) => ({ question: f.q, answer: f.a })));
 
   const expert = await getMarketExpert(market as Market, category as Category);
-  const latestVerified =
-    products.map((p) => p.dataVerifiedAt).filter(Boolean).sort().at(-1) ?? config.publishedDate;
-  // Never let dateModified precede datePublished (invalid Article schema).
-  const modified = latestVerified < config.publishedDate ? config.publishedDate : latestVerified;
+  const modified = computeCockpitModifiedDate(products, config.publishedDate);
 
   const heroImage =
     BEST_X_MANIFEST.find((e) => e.market === market && e.category === category && e.topic === topic)?.image ?? null;

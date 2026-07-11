@@ -13,6 +13,7 @@ import { orderProducts } from './cost';
 import { DEV_SEED_ROWS } from './dev-seed';
 import { unstable_cache } from 'next/cache';
 import { BEST_X_MANIFEST } from './topics/manifest';
+import { computeCockpitModifiedDate } from './dates';
 
 const IS_DEV = process.env.NODE_ENV !== 'production';
 // Throw on invalid seed data only in true local dev; staging/prod log + exclude.
@@ -418,6 +419,32 @@ export async function getCockpitRouteParams(): Promise<
   } catch {
     return IS_DEV ? fromDevSeed() : [];
   }
+}
+
+/** A registered cockpit route paired with its real "last verified" date — the
+ *  same value computeCockpitModifiedDate derives for the page's own metadata
+ *  and JSON-LD. Used by sitemap.ts so lastmod matches what the page shows,
+ *  instead of borrowing an unrelated MDX pillar date. */
+export interface CockpitRouteModifiedDate {
+  market: string;
+  category: string;
+  topic: string;
+  modified: string;
+}
+
+export async function getCockpitRouteParamsWithModifiedDates(): Promise<
+  CockpitRouteModifiedDate[]
+> {
+  const params = await getCockpitRouteParams();
+  const results = await Promise.all(
+    params.map(async ({ market, category, topic }): Promise<CockpitRouteModifiedDate | null> => {
+      const config = getTopicConfig(category, topic, market);
+      if (!config) return null;
+      const products = await getCockpitData(market as Market, category as Category, topic);
+      return { market, category, topic, modified: computeCockpitModifiedDate(products, config.publishedDate) };
+    }),
+  );
+  return results.filter((r): r is CockpitRouteModifiedDate => r !== null);
 }
 
 /* ── Homepage "Best-X Compare Index" ─────────────────────────────────────────
