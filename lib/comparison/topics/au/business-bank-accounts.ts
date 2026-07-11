@@ -59,7 +59,7 @@ export const auBusinessBankAccountsConfig: TopicConfig = {
   h1: (y) => `Best business bank accounts in Australia (${y})`,
   metaTitle: (y) => `Best Business Bank Accounts Australia (${y})`,
   metaDescription: (y) =>
-    `Compare Australian business bank accounts of ${y} by monthly fee, APRA/FCS protection, international payments and accounting integrations — independent, expert-reviewed.`,
+    `Compare Australian business bank accounts of ${y} by monthly fee, APRA/FCS protection and accounting integrations — independent, expert-reviewed.`,
   intro:
     'Independent, side-by-side comparison of business bank accounts for Australian sole traders and companies — ranked by monthly fee, APRA/FCS protection and features, with a live multi-year cost projection.',
   publishedDate: '2026-07-10',
@@ -253,6 +253,7 @@ export const auBusinessBankAccountsConfig: TopicConfig = {
   ],
   relatedLinks: [
     { label: 'Australia business banking hub', href: '/au/business-banking' },
+    { label: 'Best robo-advisors & micro-investing (AU)', href: '/au/personal-finance/best/robo-advisors' },
     { label: 'How SmartFinPro reviews products', href: '/methodology' },
   ],
 };

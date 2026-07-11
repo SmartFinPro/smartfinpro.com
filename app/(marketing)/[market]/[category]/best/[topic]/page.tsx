@@ -105,9 +105,13 @@ function buildVerdictPicks(
   return picks;
 }
 
-/** Cross-links to other live Best-X cockpits — same category first, capped at 3.
+/** Cross-links to other live Best-X cockpits — same category first, capped at 6.
  *  Keeps link equity circulating inside the Best-X silo instead of every cockpit
- *  linking only back to the homepage hub. */
+ *  linking only back to the homepage hub. Combined with each TopicConfig's 2-3
+ *  relatedLinks, this keeps every cockpit page at 8+ in-content internal links
+ *  (SEO addendum §7/8) — raised from an original cap of 3, which fell short of
+ *  that target on its own. RelatedComparisons renders a responsive 3-col grid
+ *  that wraps cleanly at any item count, so this is a pure data change. */
 function buildRelatedComparisons(market: string, category: string, topic: string): RelatedComparisonItem[] {
   // Unlike top-level marketing pages, the Best-X cockpit route always requires the
   // literal market segment — even for 'us' (see getCanonicalUrl, which never special-
@@ -116,7 +120,7 @@ function buildRelatedComparisons(market: string, category: string, topic: string
     (e) => e.market === market && !e.legacy && !(e.category === category && e.topic === topic) && getTopicConfig(e.category, e.topic, e.market),
   )
     .sort((a, b) => (a.category === category ? 0 : 1) - (b.category === category ? 0 : 1))
-    .slice(0, 3)
+    .slice(0, 6)
     .map((e) => ({
       href: `/${e.market}/${e.category}/best/${e.topic}`,
       label: e.label,

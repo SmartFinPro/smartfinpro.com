@@ -62,7 +62,7 @@ export const ukMoneySavingToolsConfig: TopicConfig = {
   h1: (y) => `Best money-saving tools in the UK (${y})`,
   metaTitle: (y) => `Best UK Money-Saving Tools (${y})`,
   metaDescription: (y) =>
-    `Compare UK cost-of-living tools of ${y}: energy comparison, cashback portals and budgeting apps — independent, sourced.`,
+    `Compare UK cost-of-living tools of ${y}: energy comparison sites, cashback portals and free budgeting apps — independent and expert-sourced.`,
   intro:
     'Independent, side-by-side comparison of UK cost-of-living tools — energy and multi-category comparison sites, cashback portals, and budgeting apps — all genuinely free to use.',
   publishedDate: '2026-07-11',

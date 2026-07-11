@@ -70,7 +70,7 @@ export const caAiToolsFinanceConfig: TopicConfig = {
   h1: (y) => `Best AI tools for finance & business in Canada (${y})`,
   metaTitle: (y) => `Best AI Finance Tools Canada (${y})`,
   metaDescription: (y) =>
-    `Compare AI-powered finance and business tools for Canadians in ${y}: budgeting, research and general AI assistants — independent, sourced.`,
+    `Compare AI-powered finance and business tools for Canadians in ${y}: budgeting, general AI assistants and fraud-security infrastructure — independent, sourced.`,
   intro:
     'Independent, side-by-side comparison of AI tools for Canadian budgeting, research and general use — genuinely different products, never forced into one price-based ranking.',
   publishedDate: '2026-07-11',

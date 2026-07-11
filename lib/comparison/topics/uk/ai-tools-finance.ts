@@ -70,7 +70,7 @@ export const ukAiToolsFinanceConfig: TopicConfig = {
   h1: (y) => `Best AI tools for finance & business in the UK (${y})`,
   metaTitle: (y) => `Best UK AI Finance Tools (${y})`,
   metaDescription: (y) =>
-    `Compare AI-powered finance and business tools for the UK in ${y}: budgeting, tax automation and enterprise finance — independent, sourced.`,
+    `Compare AI-powered finance and business tools for the UK in ${y}: AI budgeting, coaching chatbots, tax automation and enterprise finance — independent, sourced.`,
   intro:
     'Independent, side-by-side comparison of AI tools for UK budgeting, sole-trader tax automation and enterprise finance — genuinely different products, never forced into one price-based ranking.',
   publishedDate: '2026-07-11',

@@ -137,3 +137,80 @@ describe('BEST_X_MANIFEST — tile images exist', () => {
     }
   });
 });
+
+// Table-driven guard over every registered, non-legacy AU/CA/UK rollout
+// manifest entry (26 topics — the 12 pre-existing US configs are out of
+// scope here; several predate the SEO addendum's §3/§7/8 gates — e.g. no
+// `sources` field, one metaDescription at 133 chars — and fixing those is a
+// separate undertaking, not part of this rollout). Catches exactly the
+// class of defect the SEO addendum treats as a launch blocker but that no
+// automated gate previously checked: manifest/registry key mismatches,
+// rendered meta-description length outside 140-160 (addendum §3 —
+// check:seo does not scan these TopicConfig .ts files, only MDX content,
+// so this was previously undetected until a manual audit found 6
+// violations across AU/CA/UK), FAQ count below the ≥5 floor (addendum §4),
+// and a missing sources list (addendum §7/8).
+describe('Every BEST_X_MANIFEST entry — registry resolution + config invariants', () => {
+  const liveEntries = BEST_X_MANIFEST.filter((e) => !e.legacy && e.market !== 'us');
+
+  it.each(liveEntries.map((e) => [`${e.market}:${e.category}/${e.topic}`, e] as const))(
+    '%s resolves to a config matching its manifest slug/category',
+    (_label, entry) => {
+      const config = getTopicConfig(entry.category, entry.topic, entry.market);
+      expect(config, `getTopicConfig found no config for ${entry.market}:${entry.category}/${entry.topic} — registry/manifest key mismatch`).not.toBeNull();
+      expect(config!.slug).toBe(entry.topic);
+      expect(config!.category).toBe(entry.category);
+    },
+  );
+
+  it.each(liveEntries.map((e) => [`${e.market}:${e.category}/${e.topic}`, e] as const))(
+    '%s — rendered metaDescription is 140-160 chars (SEO addendum §3)',
+    (_label, entry) => {
+      const config = getTopicConfig(entry.category, entry.topic, entry.market);
+      const rendered = config!.metaDescription(2026);
+      expect(
+        rendered.length,
+        `${entry.market}:${entry.category}/${entry.topic} metaDescription is ${rendered.length} chars, outside 140-160: "${rendered}"`,
+      ).toBeGreaterThanOrEqual(140);
+      expect(rendered.length).toBeLessThanOrEqual(160);
+    },
+  );
+
+  it.each(liveEntries.map((e) => [`${e.market}:${e.category}/${e.topic}`, e] as const))(
+    '%s — rendered <title> (metaTitle + " | SmartFinPro" suffix) is 45-60 chars',
+    (_label, entry) => {
+      const config = getTopicConfig(entry.category, entry.topic, entry.market);
+      const rendered = `${config!.metaTitle(2026)} | SmartFinPro`;
+      expect(
+        rendered.length,
+        `${entry.market}:${entry.category}/${entry.topic} rendered title is ${rendered.length} chars, outside 45-60: "${rendered}"`,
+      ).toBeGreaterThanOrEqual(45);
+      expect(rendered.length).toBeLessThanOrEqual(60);
+    },
+  );
+
+  it.each(liveEntries.map((e) => [`${e.market}:${e.category}/${e.topic}`, e] as const))(
+    '%s has at least 5 FAQ entries (SEO addendum §4)',
+    (_label, entry) => {
+      const config = getTopicConfig(entry.category, entry.topic, entry.market);
+      expect(config!.faq.length).toBeGreaterThanOrEqual(5);
+    },
+  );
+
+  it.each(liveEntries.map((e) => [`${e.market}:${e.category}/${e.topic}`, e] as const))(
+    '%s has a non-empty sources list (SEO addendum §7/8)',
+    (_label, entry) => {
+      const config = getTopicConfig(entry.category, entry.topic, entry.market);
+      expect((config!.sources ?? []).length).toBeGreaterThan(0);
+      expect((config!.relatedLinks ?? []).length).toBeGreaterThan(0);
+    },
+  );
+
+  it('every AU/CA/UK entry has 1-3 verdict picks with valid rank labels', () => {
+    for (const entry of liveEntries) {
+      const config = getTopicConfig(entry.category, entry.topic, entry.market);
+      expect(config!.verdict.picks.length, `${entry.market}:${entry.category}/${entry.topic} has ${config!.verdict.picks.length} verdict picks`).toBeGreaterThan(0);
+      expect(config!.verdict.picks.length).toBeLessThanOrEqual(3);
+    }
+  });
+});

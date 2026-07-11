@@ -250,6 +250,7 @@ export const auGoldInvestingConfig: TopicConfig = {
   ],
   relatedLinks: [
     { label: 'Australia gold investing hub', href: '/au/gold-investing' },
+    { label: 'Best super funds (Australia)', href: '/au/superannuation/best/super-funds' },
     { label: 'How SmartFinPro reviews products', href: '/methodology' },
   ],
 };

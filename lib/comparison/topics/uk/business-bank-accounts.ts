@@ -235,6 +235,7 @@ export const ukBusinessBankAccountsConfig: TopicConfig = {
   ],
   relatedLinks: [
     { label: 'UK business banking hub', href: '/uk/business-banking' },
+    { label: 'Best investing apps & Stocks & Shares ISAs (UK)', href: '/uk/personal-finance/best/investing-apps' },
     { label: 'How SmartFinPro reviews products', href: '/methodology' },
   ],
 };

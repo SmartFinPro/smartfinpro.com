@@ -238,6 +238,7 @@ export const caBusinessBankAccountsConfig: TopicConfig = {
   ],
   relatedLinks: [
     { label: 'Canada business banking hub', href: '/ca/business-banking' },
+    { label: 'Best robo-advisors & investing apps (Canada)', href: '/ca/personal-finance/best/robo-advisors' },
     { label: 'How SmartFinPro reviews products', href: '/methodology' },
   ],
 };

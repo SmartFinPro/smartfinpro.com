@@ -71,7 +71,7 @@ export const ukInvestingAppsConfig: TopicConfig = {
   h1: (y) => `Best investing apps & Stocks & Shares ISA platforms in the UK (${y})`,
   metaTitle: (y) => `Best UK Investing Apps & ISAs (${y})`,
   metaDescription: (y) =>
-    `Compare UK investing apps and Stocks & Shares ISA platforms of ${y} by fees, dealing costs and FSCS protection — independent, sourced.`,
+    `Compare UK investing apps and Stocks & Shares ISA platforms of ${y} by platform fees, dealing costs and FSCS protection — independent, sourced.`,
   intro:
     'Independent, side-by-side comparison of UK investing apps and Stocks & Shares ISA platforms — ranked by fee structure, dealing costs and features, with a live multi-year cost projection on your own portfolio.',
   publishedDate: '2026-07-11',

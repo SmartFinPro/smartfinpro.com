@@ -64,7 +64,7 @@ export const ukRemortgageBrokersConfig: TopicConfig = {
   h1: (y) => `Best remortgage lenders & brokers in the UK (${y})`,
   metaTitle: (y) => `Best UK Remortgage Brokers (${y})`,
   metaDescription: (y) =>
-    `Compare UK remortgage brokers and comparison platforms of ${y} by lender panel, fees and customer rating — independent, sourced.`,
+    `Compare UK remortgage brokers and comparison platforms of ${y} by lender panel, broker fees and true editorial independence — sourced, verified.`,
   intro:
     "Independent, side-by-side comparison of UK remortgage brokers and comparison platforms — most are genuinely free, but \"whole-of-market\" claims and true independence vary more than the marketing suggests.",
   publishedDate: '2026-07-11',
