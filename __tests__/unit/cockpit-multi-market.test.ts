@@ -22,6 +22,7 @@ import { ukBusinessBankAccountsConfig } from '@/lib/comparison/topics/uk/busines
 import { ukSavingsAccountsConfig } from '@/lib/comparison/topics/uk/savings-accounts';
 import { formatMoney, formatCostLabel } from '@/lib/comparison/money';
 import { BEST_X_MANIFEST } from '@/lib/comparison/topics/manifest';
+import { buildRelatedComparisons } from '@/lib/comparison/related-comparisons';
 
 describe('getTopicConfig — market-aware registry', () => {
   it('resolves an unprefixed (US) config without a market argument', () => {
@@ -213,4 +214,33 @@ describe('Every BEST_X_MANIFEST entry — registry resolution + config invariant
       expect(config!.verdict.picks.length).toBeLessThanOrEqual(3);
     }
   });
+});
+
+// Regression guard for the SEO addendum §7/8 "≥8 in-content internal links"
+// gate, scoped to EVERY live market including 'us' — the 12 pre-existing US
+// TopicConfigs set zero `relatedLinks` (not just fewer than AU/CA/UK's 2-3),
+// so this must be checked market-agnostically, not just for the 26 new
+// topics. Caught a real gap: an earlier fix raised the shared cross-cockpit
+// cap from 3 to 6, which cleared the gate for AU/CA/UK (which do set 2-3
+// relatedLinks each) but left US pages at exactly 6 — the cap is now 8
+// (RELATED_COMPARISONS_CAP in lib/comparison/related-comparisons.ts) so
+// every market clears the gate on cross-links alone, with zero reliance on
+// relatedLinks being set at all.
+describe('In-content internal link count — SEO addendum §7/8 (all markets)', () => {
+  const allLiveEntries = BEST_X_MANIFEST.filter((e) => !e.legacy);
+
+  it.each(allLiveEntries.map((e) => [`${e.market}:${e.category}/${e.topic}`, e] as const))(
+    '%s has ≥8 in-content internal links (relatedLinks + cross-cockpit)',
+    (_label, entry) => {
+      const config = getTopicConfig(entry.category, entry.topic, entry.market);
+      expect(config, `no config for ${entry.market}:${entry.category}/${entry.topic}`).not.toBeNull();
+      const relatedLinksCount = (config!.relatedLinks ?? []).length;
+      const crossCockpitCount = buildRelatedComparisons(entry.market, entry.category, entry.topic).length;
+      const total = relatedLinksCount + crossCockpitCount;
+      expect(
+        total,
+        `${entry.market}:${entry.category}/${entry.topic} has only ${total} in-content internal links (${relatedLinksCount} relatedLinks + ${crossCockpitCount} cross-cockpit) — below the ≥8 gate`,
+      ).toBeGreaterThanOrEqual(8);
+    },
+  );
 });

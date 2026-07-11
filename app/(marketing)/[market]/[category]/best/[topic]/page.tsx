@@ -29,10 +29,11 @@ import {
 import { getCockpitData, getCockpitRouteParams } from '@/lib/comparison/loader';
 import { getTopicConfig } from '@/lib/comparison/topics/index';
 import { BEST_X_MANIFEST } from '@/lib/comparison/topics/manifest';
+import { buildRelatedComparisons } from '@/lib/comparison/related-comparisons';
 import { getMarketExpert } from '@/lib/actions/experts';
 import { ComparisonCockpit } from '@/components/marketing/comparison-cockpit';
 import { CockpitHero, CockpitBody, CockpitVerdict, type VerdictPick } from '@/components/marketing/cockpit-content';
-import { RelatedComparisons, type RelatedComparisonItem } from '@/components/marketing/related-comparisons';
+import { RelatedComparisons } from '@/components/marketing/related-comparisons';
 import { AffiliateDisclosure } from '@/components/ui/affiliate-disclosure';
 import type { ProductForComparison } from '@/lib/comparison/types';
 import type { TopicConfig } from '@/lib/comparison/topics/types';
@@ -103,29 +104,6 @@ function buildVerdictPicks(
     picks.push({ rank: picks.length + 1, name: product.displayName, why: pick.label, rating: product.rating, reviewCount: product.reviewCount, href, external, ctaLabel });
   }
   return picks;
-}
-
-/** Cross-links to other live Best-X cockpits — same category first, capped at 6.
- *  Keeps link equity circulating inside the Best-X silo instead of every cockpit
- *  linking only back to the homepage hub. Combined with each TopicConfig's 2-3
- *  relatedLinks, this keeps every cockpit page at 8+ in-content internal links
- *  (SEO addendum §7/8) — raised from an original cap of 3, which fell short of
- *  that target on its own. RelatedComparisons renders a responsive 3-col grid
- *  that wraps cleanly at any item count, so this is a pure data change. */
-function buildRelatedComparisons(market: string, category: string, topic: string): RelatedComparisonItem[] {
-  // Unlike top-level marketing pages, the Best-X cockpit route always requires the
-  // literal market segment — even for 'us' (see getCanonicalUrl, which never special-
-  // cases 'us' to empty). A bare '/personal-finance/best/...' 301s through the proxy.
-  return BEST_X_MANIFEST.filter(
-    (e) => e.market === market && !e.legacy && !(e.category === category && e.topic === topic) && getTopicConfig(e.category, e.topic, e.market),
-  )
-    .sort((a, b) => (a.category === category ? 0 : 1) - (b.category === category ? 0 : 1))
-    .slice(0, 6)
-    .map((e) => ({
-      href: `/${e.market}/${e.category}/best/${e.topic}`,
-      label: e.label,
-      categoryLabel: categoryConfig[e.category as Category].name,
-    }));
 }
 
 export async function generateStaticParams() {
