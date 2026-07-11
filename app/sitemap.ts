@@ -275,14 +275,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // 9c. COMPARISON COCKPIT "/best/{topic}" PAGES — Priority 0.8
     // The 3-segment cockpit money pages. DB-driven (active products only) so
     // every URL resolves 200 — do NOT enumerate the manifest (coming_soon → 404).
+    // lastModified is each route's own real data-verification date (same value
+    // the page's generateMetadata/JSON-LD show), NOT the category's MDX pillar
+    // date — a topic's comparison data has nothing to do with unrelated reviews.
     // ============================================================
     try {
-      const { getCockpitRouteParams } = await import('@/lib/comparison/loader');
-      const cockpitParams = await getCockpitRouteParams();
-      for (const { market, category, topic } of cockpitParams) {
+      const { getCockpitRouteParamsWithModifiedDates } = await import('@/lib/comparison/loader');
+      const cockpitParams = await getCockpitRouteParamsWithModifiedDates();
+      for (const { market, category, topic, modified } of cockpitParams) {
         entries.push({
           url: marketUrl(market, `/${category}/best/${topic}`),
-          lastModified: pillarLastMod.get(`${market}/${category}`) || now,
+          lastModified: new Date(modified),
           changeFrequency: 'weekly',
           priority: 0.8,
         });
