@@ -76,7 +76,7 @@ export const BEST_X_MANIFEST: BestXManifestEntry[] = [
   { market: 'uk', category: 'trading', topic: 'cfd-brokers', label: 'Best CFD Trading Platforms', blurb: 'FCA-regulated CFD brokers by spreads & platforms.', icon: 'TrendingUp', image: '/images/comparison/trading-platforms.webp' },
   { market: 'uk', category: 'forex', topic: 'forex-brokers', label: 'Best Forex Brokers', blurb: 'FCA-regulated FX brokers by all-in trading cost.', icon: 'DollarSign', image: '/images/comparison/forex-brokers.webp' },
   { market: 'uk', category: 'remortgaging', topic: 'remortgage-brokers', label: 'Best Remortgage Brokers', blurb: 'Whole-of-market remortgage brokers, by lender panel & fees.', icon: 'Building', image: '/images/content/uk/business-banking/hero.webp' },
-  { market: 'uk', category: 'cost-of-living', topic: 'money-saving-tools', label: 'Best Money-Saving Tools', blurb: 'Cashback, budgeting & comparison tools for the cost-of-living squeeze.', icon: 'Coins', image: '/images/content/uk/personal-finance/hero.webp' },
+  { market: 'uk', category: 'cost-of-living', topic: 'money-saving-tools', label: 'Best Money-Saving Tools', blurb: 'Cashback, budgeting & comparison tools for the cost-of-living squeeze.', icon: 'Coins', image: '/images/content/us/debt-relief/hero.webp' },
   { market: 'uk', category: 'ai-tools', topic: 'ai-tools-finance', label: 'Best AI Tools for Finance', blurb: 'AI software for UK finance & business teams.', icon: 'Zap', image: '/images/comparison/ai-tools-finance.webp' },
   { market: 'uk', category: 'cybersecurity', topic: 'cybersecurity-smb', label: 'Best Cybersecurity for SMBs', blurb: 'Security tools for UK small businesses.', icon: 'Shield', image: '/images/comparison/cybersecurity-smb.webp' },
 ];
