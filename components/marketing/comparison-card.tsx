@@ -260,10 +260,9 @@ export function ComparisonCard({
       {expanded && (
         <div style={{ background: '#FAFBFD', border: `1px solid ${C.lineSoft}`, borderRadius: 10, padding: '18px 20px', marginTop: 16 }}>
           <div style={{ fontSize: 12, fontWeight: 600, color: C.slate, textTransform: 'uppercase', letterSpacing: '.5px', marginBottom: 13 }}>Our sub-scores</div>
-          <ScoreBar label="Fees" value={p.subScores.fees} />
-          <ScoreBar label="Features" value={p.subScores.features} />
-          <ScoreBar label="UX" value={p.subScores.ux} />
-          <ScoreBar label="Support" value={p.subScores.support} />
+          {Object.entries(p.subScores).map(([key, value]) => (
+            <ScoreBar key={key} label={formatSubScoreLabel(key)} value={value} />
+          ))}
 
           <div style={{ marginTop: 8 }}>
             <SpecRow label="Effective APR" value={p.effectiveApr ?? '—'} />
@@ -319,9 +318,18 @@ function LineItem({ kind, text }: { kind: 'pro' | 'con'; text: string }) {
   );
 }
 
+const SUB_SCORE_LABELS: Record<string, string> = { ux: 'UX' };
+
+/** Sub-score DB keys are topic-specific (fees/features/ux/support for most
+ *  topics, but e.g. trust/rating/coverage for mortgage brokers) — format
+ *  whatever key is present rather than assuming a fixed 4-key shape. */
+function formatSubScoreLabel(key: string): string {
+  return SUB_SCORE_LABELS[key] ?? key.charAt(0).toUpperCase() + key.slice(1);
+}
+
 function ScoreBar({ label, value }: { label: string; value: number }) {
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr 34px', alignItems: 'center', gap: 12, marginBottom: 9 }}>
+    <div style={{ display: 'grid', gridTemplateColumns: '100px 1fr 34px', alignItems: 'center', gap: 12, marginBottom: 9 }}>
       <span style={{ fontSize: 13.5, color: C.ink }}>{label}</span>
       <div style={{ height: 7, background: '#E1E7F0', borderRadius: 4, overflow: 'hidden' }}>
         <span style={{ display: 'block', height: '100%', width: `${Math.max(0, Math.min(100, value * 10))}%`, background: C.navy, borderRadius: 4 }} />

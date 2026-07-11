@@ -25,12 +25,11 @@ export interface Usage {
   atmCount: number;
 }
 
-export interface SubScores {
-  fees: number;
-  features: number;
-  ux: number;
-  support: number;
-}
+/** Topic-specific score dimensions (e.g. fees/features/ux/support for most
+ *  topics, but trust/rating/coverage for mortgage brokers, cost/panel/
+ *  rating/independence for remortgage brokers, etc.) — rendered dynamically,
+ *  not assumed to be a fixed 4-key shape. */
+export type SubScores = Record<string, number>;
 
 export interface Badge {
   type: 'gold' | 'green' | 'sky';

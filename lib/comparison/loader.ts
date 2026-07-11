@@ -37,7 +37,11 @@ function toBadges(v: unknown): Badge[] {
 
 function toSubScores(v: unknown): SubScores {
   const o = (v && typeof v === 'object' ? v : {}) as Record<string, unknown>;
-  return { fees: num(o.fees), features: num(o.features), ux: num(o.ux), support: num(o.support) };
+  const out: SubScores = {};
+  for (const [key, val] of Object.entries(o)) {
+    if (typeof val === 'number') out[key] = val;
+  }
+  return out;
 }
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
