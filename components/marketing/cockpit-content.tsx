@@ -14,6 +14,8 @@ import { Star, ArrowUpRight, Clock } from 'lucide-react';
 import { CheckCircleIcon } from './check-icon';
 import { FAQSection } from './faq-section';
 import { ExpertVerifier } from './expert-verifier';
+import { CockpitVerdictCta } from './cockpit-verdict-cta';
+import type { CockpitCtaMode, CockpitDestinationType } from '@/lib/analytics/cockpit-events';
 
 const BORDER = '#E1E7F0';
 
@@ -119,6 +121,13 @@ export interface VerdictPick {
   href: string;
   external: boolean;
   ctaLabel: string;
+  // cockpit_v1 tracking fields — derived from the rendered link via
+  // resolveCockpitCta in page.tsx buildVerdictPicks.
+  productSlug: string;
+  ctaMode: CockpitCtaMode;
+  destinationType: CockpitDestinationType;
+  productCtaMode: string;
+  isTopPick: boolean;
 }
 
 interface CockpitVerdictProps {
@@ -127,6 +136,9 @@ interface CockpitVerdictProps {
   verifiedDate: string; // ISO YYYY-MM-DD
   reviewerName: string;
   reviewerCredential?: string;
+  market: string;
+  category: string;
+  topic: string;
 }
 
 /** Tier 1 — compact decision block, rendered above the cockpit.
@@ -140,6 +152,9 @@ export function CockpitVerdict({
   verifiedDate,
   reviewerName,
   reviewerCredential,
+  market,
+  category,
+  topic,
 }: CockpitVerdictProps) {
   return (
     <section className="mb-6">
@@ -164,41 +179,7 @@ export function CockpitVerdict({
             the cockpit's winner-cell green) — light enough that the ink/slate text
             stays readable, so no color flips needed. */}
         {picks.map((p) => (
-          <a
-            key={p.rank}
-            href={p.href}
-            {...(p.external ? { target: '_blank', rel: 'nofollow sponsored noopener' } : {})}
-            className="group flex flex-col rounded-2xl border bg-white px-4 py-3.5 no-underline shadow-sm transition-all duration-200 hover:border-[rgba(26,107,58,0.25)] hover:bg-[linear-gradient(135deg,#F0F8F3_0%,#E2F0E7_100%)] hover:shadow-md"
-            style={{ borderColor: BORDER }}
-          >
-            <span className="flex flex-wrap items-baseline gap-x-2">
-              <span className="text-[15px] font-bold leading-tight text-[color:var(--sfp-ink)]">
-                {p.name}
-              </span>
-              {p.rank === 1 && (
-                <span className="rounded bg-[rgba(245,166,35,0.14)] px-1.5 py-0.5 text-[9.5px] font-bold uppercase tracking-[0.8px] text-[color:var(--sfp-gold-dark)]">
-                  Top pick
-                </span>
-              )}
-            </span>
-            <span className="mt-0.5 block truncate text-[12.5px] leading-snug text-[color:var(--sfp-slate)]">
-              {p.why}
-            </span>
-            <span className="mt-2.5 flex items-center justify-between">
-              <span className="inline-flex items-center gap-1 text-[13px] font-semibold text-[color:var(--sfp-ink)]">
-                {p.reviewCount === 0 ? (
-                  <span style={{ fontStyle: 'italic', color: 'var(--sfp-slate)' }}>Not yet rated</span>
-                ) : (
-                  <>
-                    <Star size={12} aria-hidden="true" style={{ color: 'var(--sfp-gold)' }} /> {p.rating.toFixed(1)}
-                  </>
-                )}
-              </span>
-              <span className="inline-flex items-center gap-1 text-[13px] font-semibold text-[color:var(--sfp-navy)] transition-all duration-200 group-hover:translate-x-0.5 group-hover:text-[color:var(--sfp-green)]">
-                {p.ctaLabel} <ArrowUpRight size={13} aria-hidden="true" />
-              </span>
-            </span>
-          </a>
+          <CockpitVerdictCta key={p.rank} {...p} market={market} category={category} topic={topic} />
         ))}
       </div>
     </section>

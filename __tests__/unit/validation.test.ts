@@ -7,12 +7,14 @@
 import { describe, it, expect } from 'vitest';
 import {
   TrackSchema,
+  TrackEventBatchSchema,
   TrackCtaSchema,
   SubscribeSchema,
   WebVitalsSchema,
   VALID_MARKETS,
   assertValidMarket,
 } from '@/lib/validation';
+import { computeTrackRateLimitWeight } from '@/lib/analytics/cockpit-events';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // VALID_MARKETS constant
@@ -49,8 +51,8 @@ describe('TrackSchema', () => {
     expect(r.success).toBe(true);
   });
 
-  it('accepts all four valid event types', () => {
-    const types = ['pageview', 'event', 'scroll', 'time_on_page'] as const;
+  it('accepts all five valid event types', () => {
+    const types = ['pageview', 'event', 'event_batch', 'scroll', 'time_on_page'] as const;
     for (const type of types) {
       const r = TrackSchema.safeParse({ type, sessionId: '12345678', data: {} });
       expect(r.success).toBe(true);
@@ -85,6 +87,150 @@ describe('TrackSchema', () => {
   it('rejects missing type field', () => {
     const r = TrackSchema.safeParse({ sessionId: '12345678', data: {} });
     expect(r.success).toBe(false);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TrackEventBatchSchema  (POST /api/track type:'event_batch' → data.events)
+// Strict cockpit_v1 contract — event_batch is exclusively the cockpit
+// tracker's channel, so this is deliberately NOT a generic "any event" bag.
+// ─────────────────────────────────────────────────────────────────────────────
+describe('TrackEventBatchSchema', () => {
+  const item = {
+    eventName: 'cockpit_cta_click',
+    eventCategory: 'cockpit',
+    eventAction: 'cta_click',
+    eventLabel: 'acme',
+    eventValue: 1,
+    pagePath: '/au/personal-finance/best/robo-advisors',
+    properties: { schemaVersion: 'cockpit_v1', market: 'au' },
+  };
+
+  it('accepts a valid batch of cockpit events', () => {
+    const r = TrackEventBatchSchema.safeParse([
+      item,
+      { eventName: 'cockpit_view', eventCategory: 'cockpit' },
+    ]);
+    expect(r.success).toBe(true);
+  });
+
+  it('rejects an empty batch', () => {
+    expect(TrackEventBatchSchema.safeParse([]).success).toBe(false);
+  });
+
+  it('rejects a batch with more than 20 events', () => {
+    const r = TrackEventBatchSchema.safeParse(Array.from({ length: 21 }, () => item));
+    expect(r.success).toBe(false);
+  });
+
+  it('accepts exactly 20 events (hard cap boundary)', () => {
+    const r = TrackEventBatchSchema.safeParse(Array.from({ length: 20 }, () => item));
+    expect(r.success).toBe(true);
+  });
+
+  it('rejects items without an eventName', () => {
+    expect(TrackEventBatchSchema.safeParse([{ eventCategory: 'cockpit' }]).success).toBe(false);
+  });
+
+  it('rejects an arbitrary/unknown eventName — not a generic write channel', () => {
+    expect(
+      TrackEventBatchSchema.safeParse([{ eventName: 'totally_made_up_event', eventCategory: 'cockpit' }])
+        .success,
+    ).toBe(false);
+  });
+
+  it('rejects a missing or non-"cockpit" eventCategory', () => {
+    expect(TrackEventBatchSchema.safeParse([{ eventName: 'cockpit_view' }]).success).toBe(false);
+    expect(
+      TrackEventBatchSchema.safeParse([{ eventName: 'cockpit_view', eventCategory: 'component_interaction' }])
+        .success,
+    ).toBe(false);
+  });
+
+  it('rejects unknown keys inside properties (.strict())', () => {
+    const r = TrackEventBatchSchema.safeParse([
+      { ...item, properties: { schemaVersion: 'cockpit_v1', evilKey: 'x'.repeat(10_000) } },
+    ]);
+    expect(r.success).toBe(false);
+  });
+
+  it('rejects properties.schemaVersion other than "cockpit_v1"', () => {
+    const r = TrackEventBatchSchema.safeParse([{ ...item, properties: { schemaVersion: 'cockpit_v2' } }]);
+    expect(r.success).toBe(false);
+  });
+
+  it('rejects properties.surface/ctaMode/destinationType outside the known enums', () => {
+    expect(
+      TrackEventBatchSchema.safeParse([
+        { ...item, properties: { schemaVersion: 'cockpit_v1', surface: 'not-a-surface' } },
+      ]).success,
+    ).toBe(false);
+    expect(
+      TrackEventBatchSchema.safeParse([
+        { ...item, properties: { schemaVersion: 'cockpit_v1', ctaMode: 'buy-now' } },
+      ]).success,
+    ).toBe(false);
+  });
+
+  it('accepts the reserved attribution properties (typed, currently unused)', () => {
+    const r = TrackEventBatchSchema.safeParse([
+      {
+        ...item,
+        properties: {
+          schemaVersion: 'cockpit_v1',
+          affiliateNetwork: 'awin',
+          affiliateClickId: 'abc-123',
+          estimatedCommission: 12.5,
+        },
+      },
+    ]);
+    expect(r.success).toBe(true);
+  });
+
+  it('rejects oversized fields (eventName > 80, pagePath > 300)', () => {
+    expect(
+      TrackEventBatchSchema.safeParse([{ eventName: 'x'.repeat(81), eventCategory: 'cockpit' }]).success,
+    ).toBe(false);
+    expect(
+      TrackEventBatchSchema.safeParse([
+        { eventName: 'cockpit_view', eventCategory: 'cockpit', pagePath: '/'.padEnd(301, 'x') },
+      ]).success,
+    ).toBe(false);
+  });
+
+  it('rejects non-finite eventValue', () => {
+    expect(
+      TrackEventBatchSchema.safeParse([
+        { eventName: 'cockpit_view', eventCategory: 'cockpit', eventValue: Infinity },
+      ]).success,
+    ).toBe(false);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// computeTrackRateLimitWeight  (weighted rate limiting for event_batch)
+// ─────────────────────────────────────────────────────────────────────────────
+describe('computeTrackRateLimitWeight()', () => {
+  it('costs 1 token for non-batch types regardless of payload', () => {
+    expect(computeTrackRateLimitWeight('event', undefined)).toBe(1);
+    expect(computeTrackRateLimitWeight('pageview', 99)).toBe(1);
+  });
+
+  it('costs 1 token per event in a batch', () => {
+    expect(computeTrackRateLimitWeight('event_batch', 5)).toBe(5);
+    expect(computeTrackRateLimitWeight('event_batch', 1)).toBe(1);
+  });
+
+  it('clamps batch weight to the hard cap — a batch cannot cost more than EVENT_BATCH_HARD_CAP tokens', () => {
+    expect(computeTrackRateLimitWeight('event_batch', 20)).toBe(20);
+    expect(computeTrackRateLimitWeight('event_batch', 500)).toBe(20);
+  });
+
+  it('is fail-soft against malformed/missing length (minimum 1 token, never 0)', () => {
+    expect(computeTrackRateLimitWeight('event_batch', undefined)).toBe(1);
+    expect(computeTrackRateLimitWeight('event_batch', 0)).toBe(1);
+    expect(computeTrackRateLimitWeight('event_batch', -5)).toBe(1);
+    expect(computeTrackRateLimitWeight('event_batch', 'not-a-number')).toBe(1);
   });
 });
 

@@ -122,11 +122,109 @@ jobs:
     name: Dashboard Smoke Tests (fixture-backed)
     runs-on: ubuntu-latest
     needs: quality-checks
-    # Only run when dashboard files are changed
-    if: |
-      contains(github.event.pull_request.changed_files, 'app/(dashboard)') ||
-      contains(github.event.pull_request.changed_files, 'components/dashboard') ||
-      github.event_name == 'workflow_dispatch'
+    # NOTE: previously gated on `contains(github.event.pull_request.changed_files, ...)`
+    # — changed_files is the PR's file COUNT (a number), not a file list, so that
+    # contains() check could never match and this job silently never ran except
+    # via workflow_dispatch. Replaced with an actual git-diff path check (same
+    # pattern as the "Verify generated indexes" step in quality-checks above).
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect dashboard changes
+        id: dashboard-changed
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            git fetch origin "${{ github.event.pull_request.base.ref }}" --depth=50 2>/dev/null || true
+            if git diff --name-only "origin/${{ github.event.pull_request.base.ref }}...HEAD" 2>/dev/null \
+                | grep -qE '^(app/\(dashboard\)/|components/dashboard/)'; then
+              echo "changed=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "changed=false" >> "$GITHUB_OUTPUT"
+            fi
+          fi
+
+      - name: Setup Node
+        if: steps.dashboard-changed.outputs.changed == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        if: steps.dashboard-changed.outputs.changed == 'true'
+        run: npm ci
+
+      - name: Install Playwright browser
+        if: steps.dashboard-changed.outputs.changed == 'true'
+        run: npx playwright install --with-deps chromium
+
+      - name: Start app (dev)
+        if: steps.dashboard-changed.outputs.changed == 'true'
+        env:
+          # NOTE: previously DASHBOARD_AUTH_DISABLED=true, which globally bypasses
+          # the /dashboard auth gate in proxy.ts — but the "unauthenticated shows
+          # login form" test (dashboard-smoke.spec.ts:65) requires auth to actually
+          # be ENFORCED, and every other test authenticates itself via
+          # injectDashboardCookie() (a cookie carrying DASHBOARD_SECRET, which
+          # proxy.ts's dashboard gate accepts directly — "legacy cookie
+          # compatibility", proxy.ts ~L493). Set DASHBOARD_SECRET here (server)
+          # to match the same value the test process injects as a cookie.
+          DASHBOARD_SECRET: "test-secret"
+          TEST_DASHBOARD_SECRET: "test-secret"
+        run: |
+          PORT=3001 npm run dev:webpack > /tmp/next-smoke.log 2>&1 &
+          echo $! > /tmp/next-smoke.pid
+
+      - name: Wait for app
+        if: steps.dashboard-changed.outputs.changed == 'true'
+        run: |
+          for i in $(seq 1 90); do
+            if curl -sf http://localhost:3001/ > /dev/null; then
+              echo "App is up"
+              exit 0
+            fi
+            sleep 2
+          done
+          cat /tmp/next-smoke.log || true
+          exit 1
+
+      - name: Run dashboard smoke tests
+        if: steps.dashboard-changed.outputs.changed == 'true'
+        env:
+          # localhost, NOT 127.0.0.1: e2e/dashboard-smoke.spec.ts's
+          # injectDashboardCookie() hardcodes `domain: 'localhost'` on the
+          # auth cookie it sets — against 127.0.0.1 that cookie silently
+          # never gets sent (different host), so every test that calls it
+          # would see the auth gate as if unauthenticated.
+          BASE_URL: http://localhost:3001
+          DASHBOARD_SECRET: test-secret
+          TEST_DASHBOARD_SECRET: test-secret
+        run: npm run test:dashboard-smoke
+
+      - name: Upload smoke test report on failure
+        if: failure() && steps.dashboard-changed.outputs.changed == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: dashboard-smoke-report
+          path: playwright-report/
+
+      - name: Stop app
+        if: always() && steps.dashboard-changed.outputs.changed == 'true'
+        run: |
+          if [ -f /tmp/next-smoke.pid ]; then
+            kill "$(cat /tmp/next-smoke.pid)" || true
+          fi
+
+  cockpit-tracking-e2e:
+    name: Cockpit Tracking E2E (cockpit_v1)
+    runs-on: ubuntu-latest
+    needs: quality-checks
 
     steps:
       - name: Checkout
@@ -145,42 +243,50 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Start app (dev)
-        env:
-          DASHBOARD_AUTH_DISABLED: "true"
-          TEST_DASHBOARD_SECRET: "test-secret"
         run: |
-          PORT=3001 npm run dev:webpack > /tmp/next-smoke.log 2>&1 &
-          echo $! > /tmp/next-smoke.pid
+          PORT=3000 npm run dev > /tmp/next-cockpit.log 2>&1 &
+          echo $! > /tmp/next-cockpit.pid
 
       - name: Wait for app
         run: |
           for i in $(seq 1 90); do
-            if curl -sf http://127.0.0.1:3001/ > /dev/null; then
+            if curl -sf http://localhost:3000/ > /dev/null; then
               echo "App is up"
               exit 0
             fi
             sleep 2
           done
-          cat /tmp/next-smoke.log || true
+          echo "App failed to start in time"
+          cat /tmp/next-cockpit.log || true
           exit 1
 
-      - name: Run dashboard smoke tests
+      - name: Run cockpit tracking E2E
         env:
-          BASE_URL: http://127.0.0.1:3001
-          DASHBOARD_SECRET: test-secret
-          TEST_DASHBOARD_SECRET: test-secret
-        run: npm run test:dashboard-smoke
+          # localhost, NOT 127.0.0.1 — empirically confirmed root cause of
+          # run #106's "5/7 failed, zero events observed": on 127.0.0.1 the
+          # cockpit tracker's session bootstrap
+          # (getOrCreateAnalyticsSessionId) never completes and no /api/track
+          # request is ever attempted, while the identical server on
+          # localhost tracks correctly (verified locally with .env.local
+          # removed to match CI's no-Supabase-config environment, both with
+          # and without Turbopack — hostname alone is the variable).
+          BASE_URL: http://localhost:3000
+        run: npm run test:cockpit-tracking
 
-      - name: Upload smoke test report on failure
+      - name: Upload report on failure
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: dashboard-smoke-report
+          name: cockpit-tracking-report
           path: playwright-report/
+
+      - name: Dump app log on failure
+        if: failure()
+        run: cat /tmp/next-cockpit.log || true
 
       - name: Stop app
         if: always()
         run: |
-          if [ -f /tmp/next-smoke.pid ]; then
-            kill "$(cat /tmp/next-smoke.pid)" || true
+          if [ -f /tmp/next-cockpit.pid ]; then
+            kill "$(cat /tmp/next-cockpit.pid)" || true
           fi

@@ -2,27 +2,32 @@ import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/logging';
 import { createServiceClient } from '@/lib/supabase/server';
 import crypto from 'crypto';
-import { validate, TrackSchema } from '@/lib/validation';
+import { validate, TrackSchema, TrackEventBatchSchema } from '@/lib/validation';
+import { isBotUserAgent } from '@/lib/analytics/bot-detect';
+import { computeTrackRateLimitWeight } from '@/lib/analytics/cockpit-events';
 
 // Rate limiting: simple in-memory store (use Redis in production)
 const rateLimitMap = new Map<string, { count: number; timestamp: number }>();
 const RATE_LIMIT_WINDOW = 60000; // 1 minute
-const RATE_LIMIT_MAX = 100; // max requests per window
+const RATE_LIMIT_MAX = 100; // max tokens per window
 
-function checkRateLimit(ip: string): boolean {
+// weight=1 for a normal request; a batch costs one token PER EVENT it
+// carries (see computeTrackRateLimitWeight) so a full 20-event batch can't
+// write 20x the rows for the price of a single-event request.
+function checkRateLimit(ip: string, weight: number): boolean {
   const now = Date.now();
   const record = rateLimitMap.get(ip);
 
   if (!record || now - record.timestamp > RATE_LIMIT_WINDOW) {
-    rateLimitMap.set(ip, { count: 1, timestamp: now });
+    rateLimitMap.set(ip, { count: weight, timestamp: now });
     return true;
   }
 
-  if (record.count >= RATE_LIMIT_MAX) {
+  if (record.count + weight > RATE_LIMIT_MAX) {
     return false;
   }
 
-  record.count++;
+  record.count += weight;
   return true;
 }
 
@@ -31,7 +36,7 @@ function checkRateLimit(ip: string): boolean {
 // ============================================================
 
 interface TrackPayload {
-  type: 'pageview' | 'event' | 'scroll' | 'time_on_page';
+  type: 'pageview' | 'event' | 'event_batch' | 'scroll' | 'time_on_page';
   sessionId: string;
   data: Record<string, unknown>;
 }
@@ -48,15 +53,20 @@ export async function POST(request: NextRequest) {
     const realIp = request.headers.get('x-real-ip');
     const ip = forwardedFor?.split(',')[0] || realIp || 'unknown';
 
-    // Rate limiting
-    if (!checkRateLimit(ip)) {
-      return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 });
-    }
-
     const raw = await request.json();
     const parsed = validate(TrackSchema, raw);
     if (!parsed.ok) return parsed.error;
     const body = parsed.data;
+
+    // Rate limiting — parsed BEFORE the limit check so a batch's true size
+    // (clamped to the hard cap) can be weighed, not just "1 request".
+    const rawEventsLength = Array.isArray((body.data as { events?: unknown[] }).events)
+      ? (body.data as { events: unknown[] }).events.length
+      : undefined;
+    const weight = computeTrackRateLimitWeight(body.type, rawEventsLength);
+    if (!checkRateLimit(ip, weight)) {
+      return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 });
+    }
 
     const supabase = createServiceClient();
     const userAgent = request.headers.get('user-agent') || '';
@@ -107,6 +117,11 @@ export async function POST(request: NextRequest) {
       }
 
       case 'event': {
+        // Bot gate — scoped to cockpit events only so every pre-existing
+        // event category keeps its (bot-inclusive) metric baseline.
+        if ((body.data.eventCategory as string) === 'cockpit' && isBotUserAgent(userAgent)) {
+          return NextResponse.json({ success: true, skipped: true });
+        }
         const { error } = await supabase.from('analytics_events').insert({
           session_id: body.sessionId,
           event_name: (body.data.eventName as string) || 'unknown',
@@ -125,6 +140,47 @@ export async function POST(request: NextRequest) {
 
         if (error) {
           if (process.env.NODE_ENV === 'development') logger.warn('Analytics: event insert failed');
+        }
+
+        return NextResponse.json({ success: true });
+      }
+
+      case 'event_batch': {
+        // Batched events (cockpit tracker ONLY — see TrackEventBatchSchema):
+        // data.events = TrackEventItem[], max 20 per batch, one DB insert.
+        // Rate-limit cost for this request was already weighted by batch
+        // size above (checkRateLimit), so it's not "1 token for N rows".
+        const parsedBatch = TrackEventBatchSchema.safeParse(body.data.events);
+        if (!parsedBatch.success) {
+          return NextResponse.json({ error: 'Invalid event batch' }, { status: 400 });
+        }
+        let events = parsedBatch.data;
+        // Bot gate — every item's eventCategory is the literal 'cockpit'
+        // (schema-enforced), so this drops the whole batch for bot UAs.
+        if (isBotUserAgent(userAgent)) {
+          events = events.filter((e) => e.eventCategory !== 'cockpit');
+        }
+        if (events.length === 0) {
+          return NextResponse.json({ success: true, skipped: true });
+        }
+
+        const rows = events.map((e) => ({
+          session_id: body.sessionId,
+          event_name: e.eventName,
+          event_category: e.eventCategory || null,
+          event_action: e.eventAction || null,
+          event_label: e.eventLabel || null,
+          event_value: e.eventValue ?? null,
+          page_path: e.pagePath || null,
+          properties: e.properties || {},
+          device_type: deviceInfo.deviceType,
+          country_code: countryCode,
+        }));
+
+        const { error } = await supabase.from('analytics_events').insert(rows);
+
+        if (error) {
+          if (process.env.NODE_ENV === 'development') logger.warn('Analytics: event batch insert failed');
         }
 
         return NextResponse.json({ success: true });

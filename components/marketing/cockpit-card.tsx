@@ -20,6 +20,8 @@ import type { ProductForComparison } from '@/lib/comparison/types';
 import type { TopicConfig } from '@/lib/comparison/topics/types';
 import { costOverTime, type CostInputs } from '@/lib/comparison/cost';
 import { formatMoney, formatCostLabel } from '@/lib/comparison/money';
+import { resolveCockpitCta, reviewHrefFor } from '@/lib/comparison/cta';
+import type { CockpitCompareToggleSource, CockpitCtaClickMeta } from '@/lib/analytics/cockpit-events';
 
 const C = {
   ink: '#1A1F36',
@@ -69,8 +71,8 @@ export interface CockpitCardProps {
   isColWinner: (colKey: string, p: ProductForComparison) => boolean;
   isCostWinner: (p: ProductForComparison) => boolean;
   onToggleDetails: (slug: string) => void;
-  onToggleSelect: (slug: string) => void;
-  onOfferClick: (product: ProductForComparison) => void;
+  onToggleSelect: (slug: string, source?: CockpitCompareToggleSource) => void;
+  onCtaClick: (product: ProductForComparison, meta: CockpitCtaClickMeta) => void;
 }
 
 export function CockpitCard({
@@ -86,28 +88,20 @@ export function CockpitCard({
   isCostWinner,
   onToggleDetails,
   onToggleSelect,
-  onOfferClick,
+  onCtaClick,
 }: CockpitCardProps) {
   const isTop = rank === 1;
   const cost = costOverTime(p, config.costModel, inputs);
   const filledTiles = Math.max(0, Math.min(5, Math.round(p.rating)));
   const specCells = config.specColumns.slice(0, 3);
 
-  const reviewHref = p.reviewSlug ? `/${p.market}/${p.category}/${p.reviewSlug}` : null;
+  const reviewHref = reviewHrefFor(p);
   // Primary is always the green "go to provider" button (matches the business-banking
   // engine's offer card). Verified offer → tracked /go; otherwise an external visit to
   // the provider's own site (NO /go — the attribution gate stays intact for unverified
   // providers). "Read review" rides along as the blue secondary whenever a review exists.
-  let primary: { label: string; href: string; external?: boolean; tracked?: boolean };
-  if (p.ctaMode === 'offer') {
-    primary = { label: 'View offer', href: `/go/${p.slug}`, tracked: true };
-  } else if (p.externalUrl) {
-    primary = { label: 'Visit site', href: p.externalUrl, external: true };
-  } else if (reviewHref) {
-    primary = { label: 'Read review', href: reviewHref };
-  } else {
-    primary = { label: 'Visit site', href: '#', external: true };
-  }
+  // Ladder lives in resolveCockpitCta — single source of truth for all surfaces.
+  const primary = resolveCockpitCta(p);
   const showReadReviewInRating = !!reviewHref && primary.href !== reviewHref;
 
   return (
@@ -135,7 +129,11 @@ export function CockpitCard({
             <div style={{ display: 'flex', alignItems: 'center', gap: 9, flexWrap: 'wrap' }}>
               <h3 style={{ fontSize: 22, fontWeight: 700, color: C.ink, letterSpacing: '-.4px', margin: 0, display: 'inline' }}>
                 {reviewHref ? (
-                  <a href={reviewHref} style={{ color: C.ink, textDecoration: 'none' }}>{p.displayName}</a>
+                  <a
+                    href={reviewHref}
+                    style={{ color: C.ink, textDecoration: 'none' }}
+                    onClick={() => onCtaClick(p, { surface: 'card', ctaPosition: 'title', rank, ctaMode: 'review', destinationType: 'internal_review' })}
+                  >{p.displayName}</a>
                 ) : (
                   p.displayName
                 )}
@@ -167,7 +165,7 @@ export function CockpitCard({
             href={primary.href}
             className="cmp-cta ck-card-cta-btn"
             {...(primary.external ? { target: '_blank', rel: 'nofollow sponsored noopener' } : {})}
-            onClick={primary.tracked ? () => onOfferClick(p) : undefined}
+            onClick={() => onCtaClick(p, { surface: 'card', ctaPosition: 'primary', rank, ctaMode: primary.ctaMode, destinationType: primary.destinationType })}
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -188,7 +186,7 @@ export function CockpitCard({
           <div style={{ fontSize: 12.5, color: C.slate, marginTop: 8 }}>on {hostFromUrl(p.externalUrl)}</div>
           <button
             type="button"
-            onClick={() => onToggleSelect(p.slug)}
+            onClick={() => onToggleSelect(p.slug, 'card')}
             aria-pressed={selected}
             style={{ display: 'inline-flex', alignItems: 'center', gap: 5, marginTop: 8, fontSize: 12.5, fontWeight: selected ? 600 : 500, color: selected ? C.greenDark : C.slate, background: 'none', border: 'none', cursor: 'pointer' }}
           >
@@ -256,7 +254,12 @@ export function CockpitCard({
         )}
         <div className="ck-card-rating-actions">
           {showReadReviewInRating && reviewHref && (
-            <a className="cmp-cta" href={reviewHref} style={{ padding: '10px 20px', borderRadius: 8, fontSize: 13.5, fontWeight: 600, textDecoration: 'none', background: C.sky, color: C.checkBlue, border: `1px solid ${C.sky}` }}>
+            <a
+              className="cmp-cta"
+              href={reviewHref}
+              onClick={() => onCtaClick(p, { surface: 'card', ctaPosition: 'secondary', rank, ctaMode: 'review', destinationType: 'internal_review' })}
+              style={{ padding: '10px 20px', borderRadius: 8, fontSize: 13.5, fontWeight: 600, textDecoration: 'none', background: C.sky, color: C.checkBlue, border: `1px solid ${C.sky}` }}
+            >
               Read review
             </a>
           )}

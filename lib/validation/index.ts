@@ -40,11 +40,107 @@ export function validate<T>(schema: ZodSchema<T>, body: unknown): ValidationResu
 
 /** POST /api/track */
 export const TrackSchema = z.object({
-  type: z.enum(['pageview', 'event', 'scroll', 'time_on_page']),
+  type: z.enum(['pageview', 'event', 'event_batch', 'scroll', 'time_on_page']),
   sessionId: z.string().min(8).max(128),
   data: z.record(z.string(), z.unknown()).default({}), // Zod v4: explicit key + value types
 });
 export type TrackPayload = z.infer<typeof TrackSchema>;
+
+/**
+ * POST /api/track `type:'event_batch'` payload (`data.events` array).
+ *
+ * `event_batch` is currently used EXCLUSIVELY by the cockpit_v1 tracker, so
+ * this schema is intentionally the strict cockpit_v1 contract — not a
+ * generic "any analytics event" channel. A loose schema here (arbitrary
+ * eventName/eventCategory/unbounded properties) would let any client write
+ * up to 20 arbitrary rows to analytics_events per request, effectively
+ * multiplying the per-IP rate limit budget by the batch size (see the
+ * weighted limiting in app/api/track/route.ts, which closes the *volume*
+ * side of that gap — this schema closes the *shape* side). If a second
+ * event_batch producer is ever added outside the cockpit, this schema must
+ * be widened deliberately, not silently.
+ */
+const COCKPIT_EVENT_NAMES = [
+  'cockpit_view',
+  'cockpit_product_impression',
+  'cockpit_cta_click',
+  'cockpit_sort_change',
+  'cockpit_filter_change',
+  'cockpit_compare_toggle',
+  'cockpit_details_toggle',
+  'cockpit_matcher_open',
+  'cockpit_matcher_answer',
+  'cockpit_matcher_complete',
+  'cockpit_amount_change',
+  'cockpit_years_change',
+] as const;
+
+/** Strict cockpit_v1 properties bag — unknown keys are rejected (.strict()).
+ *  Keep in sync with CockpitV1Properties in lib/analytics/cockpit-events.ts. */
+const CockpitV1PropertiesSchema = z
+  .object({
+    schemaVersion: z.literal('cockpit_v1'),
+    market: z.string().max(10).optional(),
+    category: z.string().max(60).optional(),
+    topic: z.string().max(80).optional(),
+    view: z.enum(['cards', 'table', 'compare']).optional(),
+    surface: z
+      .enum(['cockpit', 'card', 'table', 'compare', 'verdict', 'sticky', 'decision-bar', 'matcher', 'body'])
+      .optional(),
+    productSlug: z.string().max(200).optional(),
+    providerName: z.string().max(200).optional(),
+    rank: z.number().int().min(0).max(1000).optional(),
+    isTopPick: z.boolean().optional(),
+    impressionKind: z.enum(['viewport', 'rendered']).optional(),
+    productCount: z.number().int().min(0).max(10_000).optional(),
+    ctaMode: z.enum(['offer', 'visit', 'review', 'unavailable']).optional(),
+    destinationType: z.enum(['affiliate', 'outbound', 'internal_review', 'unavailable']).optional(),
+    productCtaMode: z.string().max(20).optional(),
+    ctaPosition: z.enum(['primary', 'secondary', 'title']).optional(),
+    sortKey: z.string().max(60).optional(),
+    dir: z.enum(['asc', 'desc']).optional(),
+    trigger: z.enum(['dropdown', 'table_header', 'intent_chip']).optional(),
+    filterKey: z.string().max(60).optional(),
+    enabled: z.boolean().optional(),
+    activeFilters: z.array(z.string().max(60)).max(50).optional(),
+    resultCount: z.number().int().min(0).max(100_000).optional(),
+    selected: z.boolean().optional(),
+    selectionCount: z.number().int().min(0).max(100).optional(),
+    source: z.enum(['card', 'table', 'compare_chip', 'compare_remove']).optional(),
+    expanded: z.boolean().optional(),
+    matcherQuestion: z.string().max(80).optional(),
+    matcherAnswer: z.string().max(200).optional(),
+    answeredCount: z.number().int().min(0).max(1000).optional(),
+    topMatchSlug: z.string().max(200).optional(),
+    fitScore: z.number().min(0).max(1000).optional(),
+    amount: z.number().finite().optional(),
+    years: z.number().finite().optional(),
+    costModelKind: z.string().max(60).optional(),
+    // Reserved attribution fields — typed now, never populated in v1.
+    affiliateNetwork: z.string().max(60).optional(),
+    affiliateProgramId: z.string().max(100).optional(),
+    affiliateClickId: z.string().max(100).optional(),
+    campaignId: z.string().max(100).optional(),
+    subId: z.string().max(100).optional(),
+    subId2: z.string().max(100).optional(),
+    payoutType: z.string().max(40).optional(),
+    estimatedCommission: z.number().finite().optional(),
+  })
+  .strict();
+
+export const TrackEventItemSchema = z.object({
+  eventName: z.enum(COCKPIT_EVENT_NAMES),
+  eventCategory: z.literal('cockpit'),
+  eventAction: z.string().max(40).optional(),
+  eventLabel: z.string().max(200).optional(),
+  eventValue: z.number().finite().optional(),
+  pagePath: z.string().max(300).optional(),
+  properties: CockpitV1PropertiesSchema.optional(),
+});
+export type TrackEventItem = z.infer<typeof TrackEventItemSchema>;
+
+/** Hard cap must stay in sync with EVENT_BATCH_HARD_CAP in lib/analytics/cockpit-events.ts */
+export const TrackEventBatchSchema = z.array(TrackEventItemSchema).min(1).max(20);
 
 /** POST /api/track-cta */
 export const TrackCtaSchema = z.object({

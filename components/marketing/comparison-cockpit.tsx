@@ -14,11 +14,14 @@ import type { Market, Category } from '@/lib/i18n/config';
 import type { ProductForComparison } from '@/lib/comparison/types';
 import { getTopicConfig } from '@/lib/comparison/topics/index';
 import { costOverTime, orderProducts, type CostInputs } from '@/lib/comparison/cost';
-import { useComponentTracking } from '@/lib/hooks/use-component-tracking';
+import { useCockpitTracking } from '@/lib/analytics/cockpit-tracking';
+import type { CockpitCompareToggleSource, CockpitCtaClickMeta } from '@/lib/analytics/cockpit-events';
+import { resolveCockpitCta } from '@/lib/comparison/cta';
 import { CockpitDecisionBar, type MatchRow } from '@/components/marketing/cockpit-decision-bar';
 import { CockpitCard } from '@/components/marketing/cockpit-card';
 import { CockpitTable } from '@/components/marketing/cockpit-table';
 import { CockpitCompare } from '@/components/marketing/cockpit-compare';
+import { CockpitImpression } from '@/components/marketing/cockpit-impression';
 
 const C = {
   ink: '#1A1F36',
@@ -41,7 +44,7 @@ export interface ComparisonCockpitProps {
 }
 
 export function ComparisonCockpit({ products, market, category, topic }: ComparisonCockpitProps) {
-  const { trackInteraction } = useComponentTracking('comparison-cockpit');
+  const ck = useCockpitTracking({ market, category, topic });
   // Resolved client-side: the config module is pure (no server imports). The
   // server route has already guaranteed a non-null config (else notFound()).
   // market MUST be passed — market-only topics (uk:/ca:/au: registry keys)
@@ -60,6 +63,10 @@ export function ComparisonCockpit({ products, market, category, topic }: Compari
   const [matcherOpen, setMatcherOpen] = useState(false);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [matchResult, setMatchResult] = useState<MatchRow[] | null>(null);
+  // Which of table/compare have become visible at least once this mount —
+  // gates the "re-emit on data change" effects below so we never emit rendered
+  // impressions for a surface the user hasn't actually scrolled to yet.
+  const [visibleSurfaces, setVisibleSurfaces] = useState<Set<'table' | 'compare'>>(new Set());
 
   const inputs: CostInputs = { amount, years };
 
@@ -115,36 +122,74 @@ export function ComparisonCockpit({ products, market, category, topic }: Compari
     [winners, cm, amount, years],
   );
 
-  const toggleDetails = useCallback((slug: string) => {
-    setExpanded((prev) => {
-      const next = new Set(prev);
-      next.has(slug) ? next.delete(slug) : next.add(slug);
-      return next;
-    });
-  }, []);
-
-  const toggleSelect = useCallback(
+  const toggleDetails = useCallback(
     (slug: string) => {
-      setSelection((prev) => {
+      const willExpand = !expanded.has(slug);
+      setExpanded((prev) => {
         const next = new Set(prev);
-        if (next.has(slug)) {
-          if (view === 'compare' && next.size <= 2) return prev; // keep ≥2 in compare
-          next.delete(slug);
-        } else {
-          if (next.size >= 4) return prev; // max 4
-          next.add(slug);
-        }
+        next.has(slug) ? next.delete(slug) : next.add(slug);
         return next;
       });
+      const idx = visibleRef.current.findIndex((p) => p.slug === slug);
+      ck.track('cockpit_details_toggle', {
+        productSlug: slug,
+        expanded: willExpand,
+        rank: idx >= 0 ? idx + 1 : undefined,
+        view,
+      });
     },
-    [view],
+    [expanded, ck, view],
   );
 
-  const onOfferClick = useCallback(
-    (p: ProductForComparison) => {
-      trackInteraction('offer_click', p.slug, { ctaMode: p.ctaMode, attribution: p.offerAttribution });
+  const toggleSelect = useCallback(
+    (slug: string, source: CockpitCompareToggleSource = 'card') => {
+      // Outcome computed OUTSIDE the state updater (updater stays pure) —
+      // no-op rejections (max-4 / keep-≥2-in-compare) do NOT emit an event.
+      const next = new Set(selection);
+      let selectedNow: boolean;
+      if (next.has(slug)) {
+        if (view === 'compare' && next.size <= 2) return; // keep ≥2 in compare
+        next.delete(slug);
+        selectedNow = false;
+      } else {
+        if (next.size >= 4) return; // max 4
+        next.add(slug);
+        selectedNow = true;
+      }
+      setSelection(next);
+      ck.track('cockpit_compare_toggle', {
+        productSlug: slug,
+        selected: selectedNow,
+        selectionCount: next.size,
+        source,
+        view,
+      });
     },
-    [trackInteraction],
+    [selection, view, ck],
+  );
+
+  const onCtaClick = useCallback(
+    (p: ProductForComparison, meta: CockpitCtaClickMeta) => {
+      // Fire-and-forget beacon flushed immediately — never preventDefault,
+      // never blocks the navigation (offer /go, outbound visit or review).
+      ck.track(
+        'cockpit_cta_click',
+        {
+          productSlug: p.slug,
+          providerName: p.displayName,
+          surface: meta.surface,
+          ctaPosition: meta.ctaPosition,
+          rank: meta.rank,
+          ctaMode: meta.ctaMode,
+          destinationType: meta.destinationType,
+          productCtaMode: p.ctaMode,
+          isTopPick: p.isTopPick,
+          view,
+        },
+        { immediate: true },
+      );
+    },
+    [ck, view],
   );
 
   const setView = useCallback(
@@ -157,46 +202,48 @@ export function ComparisonCockpit({ products, market, category, topic }: Compari
         );
       }
       setViewState(v);
-      trackInteraction('view', v);
     },
-    [trackInteraction],
+    [],
   );
 
   const onIntent = useCallback(
     (sortKey: string) => {
-      if (sort === sortKey) {
-        setSort('smart');
-        setDir('desc');
-      } else {
-        setSort(sortKey);
-        setDir('desc');
-        trackInteraction('intent', sortKey);
-      }
+      const nextSort = sort === sortKey ? 'smart' : sortKey;
+      setSort(nextSort);
+      setDir('desc');
+      ck.track('cockpit_sort_change', { sortKey: nextSort, dir: 'desc', trigger: 'intent_chip', view });
     },
-    [sort, trackInteraction],
+    [sort, ck, view],
   );
 
   const onHeaderSort = useCallback(
     (key: string) => {
-      if (sort === key) setDir((d) => (d === 'desc' ? 'asc' : 'desc'));
-      else {
+      if (sort === key) {
+        const nextDir = dir === 'desc' ? 'asc' : 'desc';
+        setDir(nextDir);
+        ck.track('cockpit_sort_change', { sortKey: key, dir: nextDir, trigger: 'table_header', view });
+      } else {
         setSort(key);
         setDir('desc');
+        ck.track('cockpit_sort_change', { sortKey: key, dir: 'desc', trigger: 'table_header', view });
       }
     },
-    [sort],
+    [sort, dir, ck, view],
   );
 
   const toggleFilter = useCallback(
     (key: string) => {
-      setFilters((prev) => {
-        const next = new Set(prev);
-        next.has(key) ? next.delete(key) : next.add(key);
-        return next;
-      });
-      trackInteraction('filter', key);
+      const next = new Set(filters);
+      const enabled = !next.has(key);
+      enabled ? next.add(key) : next.delete(key);
+      setFilters(next);
+      const active = [...next];
+      const resultCount = products.filter((p) =>
+        active.every((k) => config.filters.find((f) => f.key === k)?.predicate(p) ?? true),
+      ).length;
+      ck.track('cockpit_filter_change', { filterKey: key, enabled, activeFilters: active, resultCount, view });
     },
-    [trackInteraction],
+    [filters, products, config, ck, view],
   );
 
   const runMatch = useCallback(() => {
@@ -223,10 +270,12 @@ export function ComparisonCockpit({ products, market, category, topic }: Compari
     scored.sort((a, b) => b.fitScore - a.fitScore || b.product.score - a.product.score);
     const top = scored.slice(0, 3);
     setMatchResult(top);
-    trackInteraction('find_match', top[0]?.product.slug, {
-      answered: Object.keys(answers).filter((k) => answers[k]).length,
+    ck.track('cockpit_matcher_complete', {
+      topMatchSlug: top[0]?.product.slug,
+      fitScore: top[0]?.fitScore,
+      answeredCount: Object.keys(answers).filter((k) => answers[k]).length,
     });
-  }, [products, config, answers, trackInteraction]);
+  }, [products, config, answers, ck]);
 
   // Write current state to the URL (shareable + restorable). Client-only effect.
   useEffect(() => {
@@ -264,6 +313,46 @@ export function ComparisonCockpit({ products, market, category, topic }: Compari
     [],
   );
 
+  // Table/compare list every rendered product at once (horizontal scroll) —
+  // those batch events are honestly labelled impressionKind:'rendered', never
+  // used as a visibility denominator (that is cockpit_view's job). Rank is
+  // recomputed fresh on every call, and productImpressionOnce's dedupe key
+  // includes rank — so re-sort/re-filter or a changed compare selection
+  // naturally produces impressions for products/ranks not seen before.
+  const emitRenderedImpressions = useCallback(
+    (surface: 'table' | 'compare', onlySelected: boolean) => {
+      visibleRef.current.forEach((p, i) => {
+        if (onlySelected && !selection.has(p.slug)) return;
+        const cta = resolveCockpitCta(p);
+        ck.productImpressionOnce({
+          productSlug: p.slug,
+          providerName: p.displayName,
+          surface,
+          impressionKind: 'rendered',
+          rank: i + 1,
+          isTopPick: p.isTopPick,
+          ctaMode: cta.ctaMode,
+          destinationType: cta.destinationType,
+        });
+      });
+    },
+    [ck, selection],
+  );
+
+  // Re-emit rendered impressions whenever the underlying product set changes
+  // AFTER the surface has already become visible once (e.g. a product added
+  // to Compare via the chip bar, or Table re-sorted while already on screen)
+  // — the CockpitImpression wrapper itself only fires on the FIRST time the
+  // surface enters the viewport, so without this, later changes would never
+  // get impressioned. No-ops (deduped) when nothing new to report.
+  useEffect(() => {
+    if (view === 'table' && visibleSurfaces.has('table')) emitRenderedImpressions('table', false);
+  }, [view, visible, visibleSurfaces, emitRenderedImpressions]);
+
+  useEffect(() => {
+    if (view === 'compare' && visibleSurfaces.has('compare')) emitRenderedImpressions('compare', true);
+  }, [view, selection, visibleSurfaces, emitRenderedImpressions]);
+
   const views: { key: View; label: string; Icon: typeof LayoutGrid }[] = [
     { key: 'cards', label: 'Cards', Icon: LayoutGrid },
     { key: 'table', label: 'Table', Icon: TableIcon },
@@ -271,6 +360,10 @@ export function ComparisonCockpit({ products, market, category, topic }: Compari
   ];
 
   return (
+    <CockpitImpression
+      threshold={0}
+      onImpress={() => ck.viewOnce('cockpit', { productCount: products.length })}
+    >
     <div className="ck-root" style={{ fontVariantNumeric: 'tabular-nums' }}>
       <style>{`
         .ck-root .ck-cta::after{content:none !important}
@@ -331,14 +424,36 @@ export function ComparisonCockpit({ products, market, category, topic }: Compari
         market={market}
         amount={amount}
         years={years}
-        onAmount={setAmount}
-        onYears={setYears}
+        onAmount={(v) => {
+          setAmount(v);
+          ck.trackAmountDebounced(v, cm.kind);
+        }}
+        onYears={(v) => {
+          setYears(v);
+          ck.trackYearsDebounced(v, cm.kind);
+        }}
         activeSort={sort}
         onIntent={onIntent}
         matcherOpen={matcherOpen}
-        onToggleMatcher={() => setMatcherOpen((v) => !v)}
+        onToggleMatcher={() => {
+          const opening = !matcherOpen;
+          setMatcherOpen((v) => !v);
+          if (opening) {
+            ck.track('cockpit_matcher_open', {
+              answeredCount: Object.keys(answers).filter((k) => answers[k]).length,
+            });
+          }
+        }}
         answers={answers}
-        onAnswer={(qid, val) => setAnswers((prev) => ({ ...prev, [qid]: val }))}
+        onAnswer={(qid, val) => {
+          setAnswers((prev) => ({ ...prev, [qid]: val }));
+          const nextAnswers = { ...answers, [qid]: val };
+          ck.track('cockpit_matcher_answer', {
+            matcherQuestion: qid,
+            matcherAnswer: val,
+            answeredCount: Object.keys(nextAnswers).filter((k) => nextAnswers[k]).length,
+          });
+        }}
         onRunMatch={runMatch}
         matchResult={matchResult}
       />
@@ -374,6 +489,7 @@ export function ComparisonCockpit({ products, market, category, topic }: Compari
               onChange={(e) => {
                 setSort(e.target.value);
                 setDir('desc');
+                ck.track('cockpit_sort_change', { sortKey: e.target.value, dir: 'desc', trigger: 'dropdown', view });
               }}
               style={{ border: `1px solid ${C.border}`, borderRadius: 9, padding: '7px 10px', background: '#fff', color: C.ink, fontSize: 13, cursor: 'pointer' }}
             >
@@ -407,49 +523,91 @@ export function ComparisonCockpit({ products, market, category, topic }: Compari
           </button>
         </div>
       ) : view === 'table' ? (
-        <CockpitTable
-          products={visible}
-          config={config}
-          market={market}
-          inputs={inputs}
-          sort={sort}
-          dir={dir}
-          onSort={onHeaderSort}
-          selection={selection}
-          onToggleSelect={toggleSelect}
-          isColWinner={isColWinner}
-          isCostWinner={isCostWinner}
-          onOfferClick={onOfferClick}
-        />
+        // Explicit key: without it, React reuses the SAME instance (and its
+        // internal `fired` ref) when the ternary swaps between the table and
+        // compare branches, so switching table→compare would silently never
+        // fire the compare surface's impression.
+        <CockpitImpression
+          key="ck-surface-table"
+          threshold={0}
+          onImpress={() => {
+            ck.viewOnce('table', { productCount: visibleRef.current.length, view: 'table' });
+            emitRenderedImpressions('table', false);
+            setVisibleSurfaces((prev) => (prev.has('table') ? prev : new Set(prev).add('table')));
+          }}
+        >
+          <CockpitTable
+            products={visible}
+            config={config}
+            market={market}
+            inputs={inputs}
+            sort={sort}
+            dir={dir}
+            onSort={onHeaderSort}
+            selection={selection}
+            onToggleSelect={toggleSelect}
+            isColWinner={isColWinner}
+            isCostWinner={isCostWinner}
+            onCtaClick={onCtaClick}
+          />
+        </CockpitImpression>
       ) : view === 'compare' ? (
-        <CockpitCompare
-          all={visible}
-          selectedSlugs={[...selection]}
-          config={config}
-          market={market}
-          inputs={inputs}
-          onToggleSelect={toggleSelect}
-          onOfferClick={onOfferClick}
-        />
+        <CockpitImpression
+          key="ck-surface-compare"
+          threshold={0}
+          onImpress={() => {
+            ck.viewOnce('compare', { productCount: selection.size, view: 'compare' });
+            emitRenderedImpressions('compare', true);
+            setVisibleSurfaces((prev) => (prev.has('compare') ? prev : new Set(prev).add('compare')));
+          }}
+        >
+          <CockpitCompare
+            all={visible}
+            selectedSlugs={[...selection]}
+            config={config}
+            market={market}
+            inputs={inputs}
+            onToggleSelect={toggleSelect}
+            onCtaClick={onCtaClick}
+          />
+        </CockpitImpression>
       ) : (
         <div>
           {visible.map((p, i) => (
-            <CockpitCard
+            <CockpitImpression
               key={p.slug}
-              product={p}
-              rank={i + 1}
-              config={config}
-              market={market}
-              inputs={inputs}
-              isMatch={p.slug === matchSlug}
-              selected={selection.has(p.slug)}
-              expanded={expanded.has(p.slug)}
-              isColWinner={isColWinner}
-              isCostWinner={isCostWinner}
-              onToggleDetails={toggleDetails}
-              onToggleSelect={toggleSelect}
-              onOfferClick={onOfferClick}
-            />
+              threshold={0.35}
+              resetKey={i + 1}
+              onImpress={() => {
+                const cta = resolveCockpitCta(p);
+                ck.productImpressionOnce({
+                  productSlug: p.slug,
+                  providerName: p.displayName,
+                  surface: 'card',
+                  impressionKind: 'viewport',
+                  rank: i + 1,
+                  isTopPick: p.isTopPick,
+                  ctaMode: cta.ctaMode,
+                  destinationType: cta.destinationType,
+                });
+              }}
+            >
+              <CockpitCard
+                product={p}
+                rank={i + 1}
+                config={config}
+                market={market}
+                inputs={inputs}
+                isMatch={p.slug === matchSlug}
+                selected={selection.has(p.slug)}
+                expanded={expanded.has(p.slug)}
+                isColWinner={isColWinner}
+                isCostWinner={isCostWinner}
+                onToggleDetails={toggleDetails}
+                onToggleSelect={toggleSelect}
+                onCtaClick={onCtaClick}
+              />
+            </CockpitImpression>
           ))}
         </div>
       )}
@@ -473,6 +631,7 @@ export function ComparisonCockpit({ products, market, category, topic }: Compari
         </div>
       )}
     </div>
+    </CockpitImpression>
   );
 }
 

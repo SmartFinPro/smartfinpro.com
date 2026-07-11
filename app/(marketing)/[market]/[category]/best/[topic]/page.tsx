@@ -38,6 +38,7 @@ import { RelatedComparisons } from '@/components/marketing/related-comparisons';
 import { AffiliateDisclosure } from '@/components/ui/affiliate-disclosure';
 import type { ProductForComparison } from '@/lib/comparison/types';
 import type { TopicConfig } from '@/lib/comparison/topics/types';
+import { resolveCockpitCta } from '@/lib/comparison/cta';
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'https://smartfinpro.com';
 
@@ -76,33 +77,28 @@ function providerUrl(p: ProductForComparison, market: string, category: string, 
 function buildVerdictPicks(
   config: TopicConfig,
   products: ProductForComparison[],
-  market: string,
-  category: string,
 ): VerdictPick[] {
   const picks: VerdictPick[] = [];
   for (const pick of config.verdict.picks.slice(0, 3)) {
     const product = products.find((p) => p.slug === pick.slug);
     if (!product) continue;
-    const reviewHref = product.reviewSlug ? `/${market}/${category}/${product.reviewSlug}` : null;
-    let href: string;
-    let external = false;
-    let ctaLabel: string;
-    if (product.ctaMode === 'offer') {
-      href = `/go/${product.slug}`;
-      ctaLabel = 'View offer';
-    } else if (product.externalUrl) {
-      href = product.externalUrl;
-      external = true;
-      ctaLabel = 'Visit site';
-    } else if (reviewHref) {
-      href = reviewHref;
-      ctaLabel = 'Read review';
-    } else {
-      href = '#';
-      external = true;
-      ctaLabel = 'Visit site';
-    }
-    picks.push({ rank: picks.length + 1, name: product.displayName, why: pick.label, rating: product.rating, reviewCount: product.reviewCount, href, external, ctaLabel });
+    // Ladder lives in resolveCockpitCta — single source of truth for all surfaces.
+    const cta = resolveCockpitCta(product);
+    picks.push({
+      rank: picks.length + 1,
+      name: product.displayName,
+      why: pick.label,
+      rating: product.rating,
+      reviewCount: product.reviewCount,
+      href: cta.href,
+      external: cta.external,
+      ctaLabel: cta.label,
+      productSlug: product.slug,
+      ctaMode: cta.ctaMode,
+      destinationType: cta.destinationType,
+      productCtaMode: product.ctaMode,
+      isTopPick: product.isTopPick,
+    });
   }
   return picks;
 }
@@ -225,7 +221,7 @@ export default async function CockpitPage({ params }: CockpitPageProps) {
   // Per-provider FinancialProduct entities are already carried as the ItemList's
   // itemListElements (above) — a standalone set would duplicate them by URL.
 
-  const verdictPicks = buildVerdictPicks(config, products, market, category);
+  const verdictPicks = buildVerdictPicks(config, products);
   const relatedComparisons = buildRelatedComparisons(market, category, topic);
 
   // "Sources & references" — distinct per-provider primary sources (SEO §8).
@@ -260,6 +256,9 @@ export default async function CockpitPage({ params }: CockpitPageProps) {
             verifiedDate={modified}
             reviewerName={expert.name}
             reviewerCredential={expert.credentials[0]}
+            market={market}
+            category={category}
+            topic={topic}
           />
         </div>
       )}
