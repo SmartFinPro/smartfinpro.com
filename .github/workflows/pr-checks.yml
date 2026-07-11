@@ -167,7 +167,15 @@ jobs:
       - name: Start app (dev)
         if: steps.dashboard-changed.outputs.changed == 'true'
         env:
-          DASHBOARD_AUTH_DISABLED: "true"
+          # NOTE: previously DASHBOARD_AUTH_DISABLED=true, which globally bypasses
+          # the /dashboard auth gate in proxy.ts — but the "unauthenticated shows
+          # login form" test (dashboard-smoke.spec.ts:65) requires auth to actually
+          # be ENFORCED, and every other test authenticates itself via
+          # injectDashboardCookie() (a cookie carrying DASHBOARD_SECRET, which
+          # proxy.ts's dashboard gate accepts directly — "legacy cookie
+          # compatibility", proxy.ts ~L493). Set DASHBOARD_SECRET here (server)
+          # to match the same value the test process injects as a cookie.
+          DASHBOARD_SECRET: "test-secret"
           TEST_DASHBOARD_SECRET: "test-secret"
         run: |
           PORT=3001 npm run dev:webpack > /tmp/next-smoke.log 2>&1 &
@@ -177,7 +185,7 @@ jobs:
         if: steps.dashboard-changed.outputs.changed == 'true'
         run: |
           for i in $(seq 1 90); do
-            if curl -sf http://127.0.0.1:3001/ > /dev/null; then
+            if curl -sf http://localhost:3001/ > /dev/null; then
               echo "App is up"
               exit 0
             fi
@@ -189,7 +197,12 @@ jobs:
       - name: Run dashboard smoke tests
         if: steps.dashboard-changed.outputs.changed == 'true'
         env:
-          BASE_URL: http://127.0.0.1:3001
+          # localhost, NOT 127.0.0.1: e2e/dashboard-smoke.spec.ts's
+          # injectDashboardCookie() hardcodes `domain: 'localhost'` on the
+          # auth cookie it sets — against 127.0.0.1 that cookie silently
+          # never gets sent (different host), so every test that calls it
+          # would see the auth gate as if unauthenticated.
+          BASE_URL: http://localhost:3001
           DASHBOARD_SECRET: test-secret
           TEST_DASHBOARD_SECRET: test-secret
         run: npm run test:dashboard-smoke
@@ -237,7 +250,7 @@ jobs:
       - name: Wait for app
         run: |
           for i in $(seq 1 90); do
-            if curl -sf http://127.0.0.1:3000/ > /dev/null; then
+            if curl -sf http://localhost:3000/ > /dev/null; then
               echo "App is up"
               exit 0
             fi
@@ -249,7 +262,15 @@ jobs:
 
       - name: Run cockpit tracking E2E
         env:
-          BASE_URL: http://127.0.0.1:3000
+          # localhost, NOT 127.0.0.1 — empirically confirmed root cause of
+          # run #106's "5/7 failed, zero events observed": on 127.0.0.1 the
+          # cockpit tracker's session bootstrap
+          # (getOrCreateAnalyticsSessionId) never completes and no /api/track
+          # request is ever attempted, while the identical server on
+          # localhost tracks correctly (verified locally with .env.local
+          # removed to match CI's no-Supabase-config environment, both with
+          # and without Turbopack — hostname alone is the variable).
+          BASE_URL: http://localhost:3000
         run: npm run test:cockpit-tracking
 
       - name: Upload report on failure

@@ -293,6 +293,16 @@ export async function getCockpitAnalytics(
       const { data, error } = await q;
       return { data: data as PageViewRow[] | null, error };
     }, PAGE_SIZE, HARD_CAP);
+    if (pvResult.queryError) {
+      // Mirror the events path: a missing/empty page_views table is
+      // tolerated (zero pageviews), any other error is NOT — silently
+      // treating a real query failure as "0 pageviews" would corrupt every
+      // CTR and health status derived from it.
+      if (pvResult.queryError.code !== 'PGRST204' && pvResult.queryError.code !== '42P01') {
+        logger.error('[Cockpit Analytics] Pageviews query error:', pvResult.queryError.message);
+        return { success: false, data: null, error: pvResult.queryError.message };
+      }
+    }
     if (pvResult.truncated) truncated = true;
     const pvData = pvResult.rows;
 
@@ -537,8 +547,12 @@ export async function getCockpitAnalytics(
       const path = `/${rMarket}/${category}/best/${topic}`;
       const pageviews = pvByPath.get(path) || 0;
       const h = eventsByPath.get(path) || { events: 0, clicks: 0 };
+      // events>0 must win regardless of pageview count — a route with 1
+      // pageview that DID produce an event is proven to be reporting, not
+      // "too little traffic to judge". Only routes with zero events fall
+      // through to the pageview-volume-based classification.
       const status: CockpitHealthStatus =
-        pageviews === 0 ? 'no_traffic' : pageviews < 5 ? 'low_traffic' : h.events === 0 ? 'silent' : 'reporting';
+        h.events > 0 ? 'reporting' : pageviews >= 5 ? 'silent' : pageviews > 0 ? 'low_traffic' : 'no_traffic';
       return {
         pagePath: path,
         market: rMarket,

@@ -321,8 +321,11 @@ export default function DashboardLayout({
           <div className="flex-1" />
 
           <div className="flex items-center gap-3">
-            {/* Account Selector */}
-            <button aria-label="Account selector" className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-slate-100 transition-colors">
+            {/* Account Selector — desktop only; the mobile hamburger+logo
+                block above already establishes brand identity, and this
+                button's text label overflowed the 390px viewport alongside
+                it (dashboard-smoke mobile test). */}
+            <button aria-label="Account selector" className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-slate-100 transition-colors">
               <div className="w-2 h-2 rounded-full bg-emerald-500" />
               <span className="text-sm font-medium text-slate-700">SmartFinPro Analytics</span>
               <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
