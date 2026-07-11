@@ -48,4 +48,19 @@ export const BEST_X_MANIFEST: BestXManifestEntry[] = [
   { market: 'au', category: 'superannuation', topic: 'super-funds', label: 'Best Super Funds', blurb: 'APRA-regulated super funds by fees & long-term returns.', icon: 'Shield', image: '/images/content/au/personal-finance/hero.webp' },
   { market: 'au', category: 'ai-tools', topic: 'ai-tools-finance', label: 'Best AI Tools for Finance', blurb: 'AI software for Australian finance & business teams.', icon: 'Zap', image: '/images/comparison/ai-tools-finance.webp' },
   { market: 'au', category: 'cybersecurity', topic: 'cybersecurity-smb', label: 'Best Cybersecurity for SMBs', blurb: 'Security tools for Australian small businesses.', icon: 'Shield', image: '/images/comparison/cybersecurity-smb.webp' },
+
+  // ── Canada (Stage 2 — AU/CA/UK rollout) ──
+  // Tiles activate automatically once the topic's ca: config is registered AND
+  // prod rows exist (buildBestXIndex); until then they render "Launching soon".
+  // Images reuse the US counterparts per the design-parity gate where one
+  // exists; tfsa-rrsp-platforms and mortgage-brokers reuse existing CA
+  // content-hero images (debt-relief precedent for content-path manifest images).
+  { market: 'ca', category: 'personal-finance', topic: 'robo-advisors', label: 'Best Robo-Advisors & Investing Apps', blurb: 'Canadian robo-advisors, ranked by fees & account types.', icon: 'Sparkles', image: '/images/comparison/robo-advisors.webp' },
+  { market: 'ca', category: 'business-banking', topic: 'business-bank-accounts', label: 'Best Business Bank Accounts', blurb: 'Canadian business accounts by monthly fee & CDIC protection.', icon: 'Building', image: '/images/comparison/business-bank-accounts.webp' },
+  { market: 'ca', category: 'tax-efficient-investing', topic: 'tfsa-rrsp-platforms', label: 'Best TFSA/RRSP Platforms', blurb: 'Self-directed discount brokerages by commission & fees.', icon: 'PiggyBank', image: '/images/content/ca/tax-efficient-investing/hero.webp' },
+  { market: 'ca', category: 'forex', topic: 'forex-brokers', label: 'Best Forex Brokers', blurb: 'CIRO-regulated FX brokers by all-in trading cost.', icon: 'DollarSign', image: '/images/comparison/forex-brokers.webp' },
+  { market: 'ca', category: 'housing', topic: 'mortgage-brokers', label: 'Best Mortgage Brokers', blurb: 'Rate-comparison platforms & brokers, by lender panel & rate.', icon: 'Building', image: '/images/content/ca/housing/hero.webp' },
+  { market: 'ca', category: 'gold-investing', topic: 'platforms', label: 'Best Gold Investing Platforms', blurb: 'Buy & store gold in Canada, by premiums & accreditation.', icon: 'Coins', image: '/images/comparison/gold-investing.webp' },
+  { market: 'ca', category: 'ai-tools', topic: 'ai-tools-finance', label: 'Best AI Tools for Finance', blurb: 'AI software for Canadian finance & business teams.', icon: 'Zap', image: '/images/comparison/ai-tools-finance.webp' },
+  { market: 'ca', category: 'cybersecurity', topic: 'cybersecurity-smb', label: 'Best Cybersecurity for SMBs', blurb: 'Security tools for Canadian small businesses.', icon: 'Shield', image: '/images/comparison/cybersecurity-smb.webp' },
 ];

@@ -30,6 +30,9 @@ import { auCfdBrokersConfig } from './au/cfd-brokers';
 import { auSuperFundsConfig } from './au/super-funds';
 import { auAiToolsFinanceConfig } from './au/ai-tools-finance';
 import { auCybersecuritySmbConfig } from './au/cybersecurity-smb';
+import { caRoboAdvisorsConfig } from './ca/robo-advisors';
+import { caBusinessBankAccountsConfig } from './ca/business-bank-accounts';
+import { caTfsaRrspPlatformsConfig } from './ca/tfsa-rrsp-platforms';
 
 const REGISTRY: Record<string, TopicConfig> = {
   'personal-finance/robo-advisors': roboAdvisorsConfig,
@@ -59,6 +62,11 @@ const REGISTRY: Record<string, TopicConfig> = {
   'au:superannuation/super-funds': auSuperFundsConfig,
   'au:ai-tools/ai-tools-finance': auAiToolsFinanceConfig,
   'au:cybersecurity/cybersecurity-smb': auCybersecuritySmbConfig,
+
+  // ── Canada (Stage 2 — AU/CA/UK rollout, Slice CA-1) ──
+  'ca:personal-finance/robo-advisors': caRoboAdvisorsConfig,
+  'ca:business-banking/business-bank-accounts': caBusinessBankAccountsConfig,
+  'ca:tax-efficient-investing/tfsa-rrsp-platforms': caTfsaRrspPlatformsConfig,
 };
 
 export function getTopicConfig(category: string, topic: string, market?: string): TopicConfig | null {

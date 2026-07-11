@@ -80,8 +80,10 @@ const marketHeroContent: Record<string, {
   ca: {
     title: 'Canadian Finance\nResearch, Simplified.',
     subtitle: 'CIRO-compliant broker reviews, AI tools, and financial products — expert-reviewed for Canadian professionals.',
-    primaryCta: { text: 'Explore CA Reports', href: '/ca/forex' },
-    secondaryCta: { text: 'How We Review', href: '/tools' },
+    // Mirrors the US hero: primary CTA anchors to the Best-X tile grid now that
+    // CA has live cockpit tiles (Stage 2 slice 1).
+    primaryCta: { text: 'Start now', href: '#best-x-compare' },
+    secondaryCta: { text: 'How We Review', href: '/integrity' },
   },
   au: {
     title: 'Australian Finance\nResearch, Mastered.',

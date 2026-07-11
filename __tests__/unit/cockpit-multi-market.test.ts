@@ -14,6 +14,9 @@ import { roboAdvisorsConfig } from '@/lib/comparison/topics/robo-advisors';
 import { auRoboAdvisorsConfig } from '@/lib/comparison/topics/au/robo-advisors';
 import { auBusinessBankAccountsConfig } from '@/lib/comparison/topics/au/business-bank-accounts';
 import { auSavingsAccountsConfig } from '@/lib/comparison/topics/au/savings-accounts';
+import { caRoboAdvisorsConfig } from '@/lib/comparison/topics/ca/robo-advisors';
+import { caBusinessBankAccountsConfig } from '@/lib/comparison/topics/ca/business-bank-accounts';
+import { caTfsaRrspPlatformsConfig } from '@/lib/comparison/topics/ca/tfsa-rrsp-platforms';
 import { formatMoney, formatCostLabel } from '@/lib/comparison/money';
 import { BEST_X_MANIFEST } from '@/lib/comparison/topics/manifest';
 
@@ -36,9 +39,8 @@ describe('getTopicConfig — market-aware registry', () => {
     expect(getTopicConfig('debt-relief', 'companies', 'au')).toBeNull();
   });
 
-  it('uk/ca still get null for personal-finance/robo-advisors (only au: is registered so far)', () => {
+  it('uk still gets null for personal-finance/robo-advisors (au: and ca: are registered, uk: is not yet)', () => {
     expect(getTopicConfig('personal-finance', 'robo-advisors', 'uk')).toBeNull();
-    expect(getTopicConfig('personal-finance', 'robo-advisors', 'ca')).toBeNull();
   });
 
   it('resolves the market-specific AU config for personal-finance/robo-advisors — never the US one', () => {
@@ -50,6 +52,24 @@ describe('getTopicConfig — market-aware registry', () => {
   it('resolves the market-specific AU configs for business-bank-accounts and savings-accounts', () => {
     expect(getTopicConfig('business-banking', 'business-bank-accounts', 'au')).toBe(auBusinessBankAccountsConfig);
     expect(getTopicConfig('savings', 'savings-accounts', 'au')).toBe(auSavingsAccountsConfig);
+  });
+
+  it('resolves the market-specific CA config for personal-finance/robo-advisors — never the US or AU one', () => {
+    const resolved = getTopicConfig('personal-finance', 'robo-advisors', 'ca');
+    expect(resolved).toBe(caRoboAdvisorsConfig);
+    expect(resolved).not.toBe(roboAdvisorsConfig);
+    expect(resolved).not.toBe(auRoboAdvisorsConfig);
+  });
+
+  it('resolves the market-specific CA configs for business-bank-accounts and the CA-exclusive tfsa-rrsp-platforms', () => {
+    expect(getTopicConfig('business-banking', 'business-bank-accounts', 'ca')).toBe(caBusinessBankAccountsConfig);
+    expect(getTopicConfig('tax-efficient-investing', 'tfsa-rrsp-platforms', 'ca')).toBe(caTfsaRrspPlatformsConfig);
+  });
+
+  it('tfsa-rrsp-platforms is CA-exclusive — every other market gets null', () => {
+    expect(getTopicConfig('tax-efficient-investing', 'tfsa-rrsp-platforms', 'us')).toBeNull();
+    expect(getTopicConfig('tax-efficient-investing', 'tfsa-rrsp-platforms', 'uk')).toBeNull();
+    expect(getTopicConfig('tax-efficient-investing', 'tfsa-rrsp-platforms', 'au')).toBeNull();
   });
 
   it('returns null for an unknown combo in any market', () => {
