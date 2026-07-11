@@ -9,6 +9,7 @@ import type { ProductForComparison } from '@/lib/comparison/types';
 import type { TopicConfig } from '@/lib/comparison/topics/types';
 import { costOverTime, type CostInputs } from '@/lib/comparison/cost';
 import { formatMoney, formatCostLabel } from '@/lib/comparison/money';
+import { resolveCockpitCta } from '@/lib/comparison/cta';
 
 const C = {
   ink: '#1A1F36',
@@ -87,16 +88,8 @@ export function CockpitCompare({ all, selectedSlugs, config, market, inputs, onT
           {/* Header row */}
           <div className="ck-cmp-corner" style={{ background: C.navy, color: '#fff', padding: '12px', display: 'flex', alignItems: 'flex-end', fontSize: 12.5, fontWeight: 600 }}>Side-by-side</div>
           {ps.map((p) => {
-            const reviewHref = p.reviewSlug ? `/${p.market}/${p.category}/${p.reviewSlug}` : null;
             // Mirror the card's primary CTA: always green, never /go for unverified.
-            const cta =
-              p.ctaMode === 'offer'
-                ? { label: 'View offer', href: `/go/${p.slug}`, external: false, tracked: true }
-                : p.externalUrl
-                  ? { label: 'Visit site', href: p.externalUrl, external: true, tracked: false }
-                  : reviewHref
-                    ? { label: 'Read review', href: reviewHref, external: false, tracked: false }
-                    : { label: 'Visit site', href: '#', external: true, tracked: false };
+            const cta = resolveCockpitCta(p);
             return (
               <div key={p.slug} style={{ background: C.navy, color: '#fff', padding: '12px', textAlign: 'center', position: 'relative' }}>
                 {ps.length > 2 && (

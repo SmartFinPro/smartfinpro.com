@@ -40,11 +40,27 @@ export function validate<T>(schema: ZodSchema<T>, body: unknown): ValidationResu
 
 /** POST /api/track */
 export const TrackSchema = z.object({
-  type: z.enum(['pageview', 'event', 'scroll', 'time_on_page']),
+  type: z.enum(['pageview', 'event', 'event_batch', 'scroll', 'time_on_page']),
   sessionId: z.string().min(8).max(128),
   data: z.record(z.string(), z.unknown()).default({}), // Zod v4: explicit key + value types
 });
 export type TrackPayload = z.infer<typeof TrackSchema>;
+
+/** One event inside a POST /api/track `type:'event_batch'` payload
+ *  (`data.events` array). Same columns as the single `event` case. */
+export const TrackEventItemSchema = z.object({
+  eventName: z.string().min(1).max(80),
+  eventCategory: z.string().max(40).optional(),
+  eventAction: z.string().max(40).optional(),
+  eventLabel: z.string().max(200).optional(),
+  eventValue: z.number().finite().optional(),
+  pagePath: z.string().max(300).optional(),
+  properties: z.record(z.string(), z.unknown()).optional(),
+});
+export type TrackEventItem = z.infer<typeof TrackEventItemSchema>;
+
+/** Hard cap must stay in sync with EVENT_BATCH_HARD_CAP in lib/analytics/cockpit-events.ts */
+export const TrackEventBatchSchema = z.array(TrackEventItemSchema).min(1).max(20);
 
 /** POST /api/track-cta */
 export const TrackCtaSchema = z.object({

@@ -10,6 +10,7 @@ import type { ProductForComparison } from '@/lib/comparison/types';
 import type { TopicConfig } from '@/lib/comparison/topics/types';
 import { costOverTime, type CostInputs } from '@/lib/comparison/cost';
 import { formatMoney, formatCostLabel } from '@/lib/comparison/money';
+import { resolveCockpitCta } from '@/lib/comparison/cta';
 
 const C = {
   ink: '#1A1F36',
@@ -114,16 +115,8 @@ export function CockpitTable({
             const cost = costs[i];
             const selected = selection.has(p.slug);
             const costWin = isCostWinner(p);
-            const reviewHref = p.reviewSlug ? `/${p.market}/${p.category}/${p.reviewSlug}` : null;
             // Mirror the card's primary CTA: always green, never /go for unverified.
-            const cta =
-              p.ctaMode === 'offer'
-                ? { label: 'View offer', href: `/go/${p.slug}`, external: false, tracked: true }
-                : p.externalUrl
-                  ? { label: 'Visit site', href: p.externalUrl, external: true, tracked: false }
-                  : reviewHref
-                    ? { label: 'Read review', href: reviewHref, external: false, tracked: false }
-                    : { label: 'Visit site', href: '#', external: true, tracked: false };
+            const cta = resolveCockpitCta(p);
             return (
               <tr key={p.slug} style={{ borderTop: `1px solid ${C.border}`, background: p.isTopPick ? '#FBFCFE' : '#fff' }}>
                 <td className="ck-sticky-c1 ck-checkcol">

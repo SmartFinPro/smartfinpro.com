@@ -2,22 +2,16 @@
 
 import { useCallback, useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
+import { getOrCreateAnalyticsSessionId } from '@/lib/analytics/session';
 
 // ============================================================
 // Session Management
 // ============================================================
 
+// Central sfp_session_id logic lives in lib/analytics/session.ts (shared with
+// the cockpit tracker). Kept as a local alias so call sites stay unchanged.
 function getSessionId(): string {
-  if (typeof window === 'undefined') return '';
-
-  let sessionId = sessionStorage.getItem('sfp_session_id');
-
-  if (!sessionId) {
-    sessionId = crypto.randomUUID();
-    sessionStorage.setItem('sfp_session_id', sessionId);
-  }
-
-  return sessionId;
+  return getOrCreateAnalyticsSessionId() ?? '';
 }
 
 // ============================================================

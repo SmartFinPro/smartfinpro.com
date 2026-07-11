@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/logging';
 import { createServiceClient } from '@/lib/supabase/server';
 import crypto from 'crypto';
-import { validate, TrackSchema } from '@/lib/validation';
+import { validate, TrackSchema, TrackEventBatchSchema } from '@/lib/validation';
+import { isBotUserAgent } from '@/lib/analytics/bot-detect';
 
 // Rate limiting: simple in-memory store (use Redis in production)
 const rateLimitMap = new Map<string, { count: number; timestamp: number }>();
@@ -31,7 +32,7 @@ function checkRateLimit(ip: string): boolean {
 // ============================================================
 
 interface TrackPayload {
-  type: 'pageview' | 'event' | 'scroll' | 'time_on_page';
+  type: 'pageview' | 'event' | 'event_batch' | 'scroll' | 'time_on_page';
   sessionId: string;
   data: Record<string, unknown>;
 }
@@ -107,6 +108,11 @@ export async function POST(request: NextRequest) {
       }
 
       case 'event': {
+        // Bot gate — scoped to cockpit events only so every pre-existing
+        // event category keeps its (bot-inclusive) metric baseline.
+        if ((body.data.eventCategory as string) === 'cockpit' && isBotUserAgent(userAgent)) {
+          return NextResponse.json({ success: true, skipped: true });
+        }
         const { error } = await supabase.from('analytics_events').insert({
           session_id: body.sessionId,
           event_name: (body.data.eventName as string) || 'unknown',
@@ -125,6 +131,44 @@ export async function POST(request: NextRequest) {
 
         if (error) {
           if (process.env.NODE_ENV === 'development') logger.warn('Analytics: event insert failed');
+        }
+
+        return NextResponse.json({ success: true });
+      }
+
+      case 'event_batch': {
+        // Batched events (cockpit tracker): data.events = TrackEventItem[],
+        // max 20 per batch — one rate-limit token, one DB insert.
+        const parsedBatch = TrackEventBatchSchema.safeParse(body.data.events);
+        if (!parsedBatch.success) {
+          return NextResponse.json({ error: 'Invalid event batch' }, { status: 400 });
+        }
+        let events = parsedBatch.data;
+        // Bot gate — scoped to cockpit events only (see 'event' case).
+        if (isBotUserAgent(userAgent)) {
+          events = events.filter((e) => e.eventCategory !== 'cockpit');
+        }
+        if (events.length === 0) {
+          return NextResponse.json({ success: true, skipped: true });
+        }
+
+        const rows = events.map((e) => ({
+          session_id: body.sessionId,
+          event_name: e.eventName,
+          event_category: e.eventCategory || null,
+          event_action: e.eventAction || null,
+          event_label: e.eventLabel || null,
+          event_value: e.eventValue ?? null,
+          page_path: e.pagePath || null,
+          properties: e.properties || {},
+          device_type: deviceInfo.deviceType,
+          country_code: countryCode,
+        }));
+
+        const { error } = await supabase.from('analytics_events').insert(rows);
+
+        if (error) {
+          if (process.env.NODE_ENV === 'development') logger.warn('Analytics: event batch insert failed');
         }
 
         return NextResponse.json({ success: true });

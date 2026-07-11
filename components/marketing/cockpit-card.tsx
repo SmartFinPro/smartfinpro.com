@@ -20,6 +20,7 @@ import type { ProductForComparison } from '@/lib/comparison/types';
 import type { TopicConfig } from '@/lib/comparison/topics/types';
 import { costOverTime, type CostInputs } from '@/lib/comparison/cost';
 import { formatMoney, formatCostLabel } from '@/lib/comparison/money';
+import { resolveCockpitCta, reviewHrefFor } from '@/lib/comparison/cta';
 
 const C = {
   ink: '#1A1F36',
@@ -93,21 +94,13 @@ export function CockpitCard({
   const filledTiles = Math.max(0, Math.min(5, Math.round(p.rating)));
   const specCells = config.specColumns.slice(0, 3);
 
-  const reviewHref = p.reviewSlug ? `/${p.market}/${p.category}/${p.reviewSlug}` : null;
+  const reviewHref = reviewHrefFor(p);
   // Primary is always the green "go to provider" button (matches the business-banking
   // engine's offer card). Verified offer → tracked /go; otherwise an external visit to
   // the provider's own site (NO /go — the attribution gate stays intact for unverified
   // providers). "Read review" rides along as the blue secondary whenever a review exists.
-  let primary: { label: string; href: string; external?: boolean; tracked?: boolean };
-  if (p.ctaMode === 'offer') {
-    primary = { label: 'View offer', href: `/go/${p.slug}`, tracked: true };
-  } else if (p.externalUrl) {
-    primary = { label: 'Visit site', href: p.externalUrl, external: true };
-  } else if (reviewHref) {
-    primary = { label: 'Read review', href: reviewHref };
-  } else {
-    primary = { label: 'Visit site', href: '#', external: true };
-  }
+  // Ladder lives in resolveCockpitCta — single source of truth for all surfaces.
+  const primary = resolveCockpitCta(p);
   const showReadReviewInRating = !!reviewHref && primary.href !== reviewHref;
 
   return (

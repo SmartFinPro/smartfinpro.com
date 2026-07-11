@@ -7,6 +7,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   TrackSchema,
+  TrackEventBatchSchema,
   TrackCtaSchema,
   SubscribeSchema,
   WebVitalsSchema,
@@ -49,8 +50,8 @@ describe('TrackSchema', () => {
     expect(r.success).toBe(true);
   });
 
-  it('accepts all four valid event types', () => {
-    const types = ['pageview', 'event', 'scroll', 'time_on_page'] as const;
+  it('accepts all five valid event types', () => {
+    const types = ['pageview', 'event', 'event_batch', 'scroll', 'time_on_page'] as const;
     for (const type of types) {
       const r = TrackSchema.safeParse({ type, sessionId: '12345678', data: {} });
       expect(r.success).toBe(true);
@@ -85,6 +86,55 @@ describe('TrackSchema', () => {
   it('rejects missing type field', () => {
     const r = TrackSchema.safeParse({ sessionId: '12345678', data: {} });
     expect(r.success).toBe(false);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TrackEventBatchSchema  (POST /api/track type:'event_batch' → data.events)
+// ─────────────────────────────────────────────────────────────────────────────
+describe('TrackEventBatchSchema', () => {
+  const item = {
+    eventName: 'cockpit_cta_click',
+    eventCategory: 'cockpit',
+    eventAction: 'cta_click',
+    eventLabel: 'acme',
+    eventValue: 1,
+    pagePath: '/au/personal-finance/best/robo-advisors',
+    properties: { schemaVersion: 'cockpit_v1', market: 'au' },
+  };
+
+  it('accepts a valid batch of cockpit events', () => {
+    const r = TrackEventBatchSchema.safeParse([item, { eventName: 'cockpit_view' }]);
+    expect(r.success).toBe(true);
+  });
+
+  it('rejects an empty batch', () => {
+    expect(TrackEventBatchSchema.safeParse([]).success).toBe(false);
+  });
+
+  it('rejects a batch with more than 20 events', () => {
+    const r = TrackEventBatchSchema.safeParse(Array.from({ length: 21 }, () => item));
+    expect(r.success).toBe(false);
+  });
+
+  it('accepts exactly 20 events (hard cap boundary)', () => {
+    const r = TrackEventBatchSchema.safeParse(Array.from({ length: 20 }, () => item));
+    expect(r.success).toBe(true);
+  });
+
+  it('rejects items without an eventName', () => {
+    expect(TrackEventBatchSchema.safeParse([{ eventCategory: 'cockpit' }]).success).toBe(false);
+  });
+
+  it('rejects oversized fields (eventName > 80, pagePath > 300)', () => {
+    expect(TrackEventBatchSchema.safeParse([{ eventName: 'x'.repeat(81) }]).success).toBe(false);
+    expect(
+      TrackEventBatchSchema.safeParse([{ eventName: 'ok', pagePath: '/'.padEnd(301, 'x') }]).success,
+    ).toBe(false);
+  });
+
+  it('rejects non-finite eventValue', () => {
+    expect(TrackEventBatchSchema.safeParse([{ eventName: 'ok', eventValue: Infinity }]).success).toBe(false);
   });
 });
 
