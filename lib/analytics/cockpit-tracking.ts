@@ -161,7 +161,9 @@ export function trackCockpitViewOnce(
   }
 }
 
-/** Product-level impression — fires once per session+page+surface+product. */
+/** Product-level impression — fires once per session+page+surface+product+rank
+ *  (a re-sort/re-filter that changes a product's rank produces a fresh
+ *  impression at the new rank; see impressionKey doc). */
 export function trackCockpitProductImpressionOnce(
   ctx: CockpitContext,
   pagePath: string,
@@ -169,7 +171,7 @@ export function trackCockpitProductImpressionOnce(
 ): void {
   if (!isEnabled()) return;
   try {
-    if (!getDeduper().markSeen(impressionKey(pagePath, props.surface, props.productSlug))) return;
+    if (!getDeduper().markSeen(impressionKey(pagePath, props.surface, props.productSlug, props.rank))) return;
     trackCockpitEvent(ctx, pagePath, 'cockpit_product_impression', props);
   } catch {
     // fail-soft

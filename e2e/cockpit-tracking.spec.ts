@@ -153,6 +153,61 @@ test.describe(`Cockpit tracking: ${COCKPIT_PAGE}`, () => {
     expect(props.sortKey).toBe(value);
   });
 
+  test('REGRESSION: switching table→compare fires a distinct cockpit_view for EACH surface', async ({ page }) => {
+    // Without a distinct `key` per branch, React reuses the same
+    // CockpitImpression instance across the ternary, so the compare surface
+    // would never fire after table already had (fired.current stays true).
+    const batches = await interceptTrack(page);
+    await page.goto(COCKPIT_PAGE, { waitUntil: 'networkidle' });
+    await revealCockpit(page);
+
+    await page.locator('.ck-seg', { hasText: 'Table' }).click();
+    await page.waitForTimeout(1200);
+    const tableViews = allEvents(batches).filter(
+      (e) => e.eventName === 'cockpit_view' && (e.properties as Record<string, unknown>)?.surface === 'table',
+    );
+    expect(tableViews.length, 'table surface view fired').toBeGreaterThan(0);
+
+    await page.locator('.ck-seg', { hasText: 'Compare' }).click();
+    await page.waitForTimeout(1200);
+    const compareViews = allEvents(batches).filter(
+      (e) => e.eventName === 'cockpit_view' && (e.properties as Record<string, unknown>)?.surface === 'compare',
+    );
+    expect(compareViews.length, 'compare surface view ALSO fired after switching from table').toBeGreaterThan(0);
+  });
+
+  test('REGRESSION: adding a product to Compare after it is already visible still gets impressioned', async ({
+    page,
+  }) => {
+    const batches = await interceptTrack(page);
+    await page.goto(COCKPIT_PAGE, { waitUntil: 'networkidle' });
+    await revealCockpit(page);
+
+    await page.locator('.ck-seg', { hasText: 'Compare' }).click();
+    await page.waitForTimeout(1200);
+
+    const before = allEvents(batches).filter(
+      (e) =>
+        e.eventName === 'cockpit_product_impression' &&
+        (e.properties as Record<string, unknown>)?.surface === 'compare',
+    );
+
+    // Add one more provider via the chip bar (a button not already selected/on).
+    const addable = page.locator('button[aria-pressed="false"]').first();
+    await addable.scrollIntoViewIfNeeded();
+    await addable.click();
+    await page.waitForTimeout(1200);
+
+    const after = allEvents(batches).filter(
+      (e) =>
+        e.eventName === 'cockpit_product_impression' &&
+        (e.properties as Record<string, unknown>)?.surface === 'compare',
+    );
+    expect(after.length, 'a fresh impression fires for the newly-added compare product').toBeGreaterThan(
+      before.length,
+    );
+  });
+
   test('tracking failure never blocks the page (route errors swallowed)', async ({ page }) => {
     await page.route('**/api/track', (route) => route.abort());
     const errors: string[] = [];

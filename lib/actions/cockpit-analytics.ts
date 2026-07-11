@@ -18,7 +18,7 @@ import { parseCockpitPath } from '@/lib/analytics/cockpit-events';
 export type CockpitTimeRange = '24h' | '7d' | '30d';
 
 const PAGE_SIZE = 10_000;
-const MAX_PAGES = 10; // hard cap 100k events per window → truncated:true beyond
+const HARD_CAP = 100_000; // per window, per query — beyond this: truncated:true
 
 export interface CockpitTopicRow {
   pagePath: string;
@@ -48,6 +48,12 @@ export interface CockpitSurfaceRow {
   ctr: number | null;
 }
 
+/** 'no_traffic' = expected live route, 0 pageviews this window (can't judge
+ *  tracking yet). 'low_traffic' = 1-4 pageviews (too few to call it silent
+ *  with confidence). 'silent' = ≥5 pageviews, 0 cockpit events — the strong,
+ *  actionable "tracking is broken here" signal. 'reporting' = events > 0. */
+export type CockpitHealthStatus = 'reporting' | 'silent' | 'low_traffic' | 'no_traffic';
+
 export interface CockpitHealthRow {
   pagePath: string;
   market: string;
@@ -55,7 +61,7 @@ export interface CockpitHealthRow {
   pageviews: number;
   events: number;
   clicks: number;
-  silent: boolean;
+  status: CockpitHealthStatus;
 }
 
 export interface CockpitDeviceRow {
@@ -77,7 +83,15 @@ export interface CockpitAnalyticsData {
     prevEventCount: number;
     volumeDeltaPct: number | null;
     zeroVolume: boolean;
+    /** Total live cockpit routes expected this window (from the topic
+     *  registry × active DB rows) — the denominator "all instrumented pages
+     *  reporting" must be checked against, not just paths that happened to
+     *  have traffic. */
+    expectedTotal: number;
+    reportingCount: number;
     silentCount: number;
+    lowTrafficCount: number;
+    noTrafficCount: number;
   };
   byTopic: CockpitTopicRow[];
   bySurface: CockpitSurfaceRow[];
@@ -103,6 +117,52 @@ interface EventRow {
   page_path: string | null;
   device_type: string | null;
   properties: Record<string, unknown> | null;
+  occurred_at: string;
+}
+
+interface PageViewRow {
+  page_path: string;
+  device_type: string | null;
+}
+
+interface SupabaseQueryError {
+  code?: string;
+  message: string;
+}
+
+/**
+ * Fetches ALL rows matching a query via .range() pagination — defensively
+ * correct even if PostgREST/Supabase caps a single response BELOW the width
+ * requested (a real risk: a naive "returned < requested ⇒ done" loop would
+ * misread a capped response as end-of-data and silently drop the remaining
+ * rows in that same range). We never treat a short response as EOF — we
+ * always advance the cursor by the ACTUAL rows returned and re-query from
+ * there; the only valid end-of-data signal is a genuinely EMPTY page.
+ * Bounded by hardCap and a generous iteration ceiling as a backstop against
+ * an unexpectedly small per-request cap.
+ */
+async function fetchAllPaged<T>(
+  runQuery: (offset: number, limit: number) => Promise<{ data: T[] | null; error: SupabaseQueryError | null }>,
+  pageSize: number,
+  hardCap: number,
+): Promise<{ rows: T[]; truncated: boolean; queryError: SupabaseQueryError | null }> {
+  const rows: T[] = [];
+  let offset = 0;
+  let queryError: SupabaseQueryError | null = null;
+  const maxIterations = Math.ceil(hardCap / 100) + 10;
+  for (let i = 0; i < maxIterations && offset < hardCap; i++) {
+    const limit = Math.min(pageSize, hardCap - offset);
+    const { data, error } = await runQuery(offset, limit);
+    if (error) {
+      queryError = error;
+      break;
+    }
+    const batch = data || [];
+    rows.push(...batch);
+    if (batch.length === 0) break; // true EOF
+    offset += batch.length; // advance by ACTUAL rows — never assume the full page arrived
+  }
+  return { rows, truncated: offset >= hardCap, queryError };
 }
 
 const NEW_MARKETS = new Set(['au', 'ca', 'uk']);
@@ -129,7 +189,11 @@ function emptyData(timeRange: CockpitTimeRange): CockpitAnalyticsData {
       prevEventCount: 0,
       volumeDeltaPct: null,
       zeroVolume: false,
+      expectedTotal: 0,
+      reportingCount: 0,
       silentCount: 0,
+      lowTrafficCount: 0,
+      noTrafficCount: 0,
     },
     byTopic: [],
     bySurface: [],
@@ -169,45 +233,72 @@ export async function getCockpitAnalytics(
       prevSince.setDate(prevSince.getDate() - 60);
     }
 
-    // ── A: cockpit events, paged (no silent truncation) ─────────────────────
-    const events: EventRow[] = [];
-    let truncated = false;
-    for (let page = 0; page < MAX_PAGES; page++) {
+    // ── A: cockpit events, robustly paginated (no silent truncation) ────────
+    // order by occurred_at + id: batched inserts (event_batch) can share the
+    // SAME occurred_at across many rows (one NOW() per INSERT statement) —
+    // without a secondary deterministic tiebreaker, .range() pagination over
+    // ties is undefined and can skip or duplicate rows across page boundaries.
+    const eventsResult = await fetchAllPaged<EventRow>(async (offset, limit) => {
       let q = supabase
         .from('analytics_events')
-        .select('session_id, event_name, event_label, event_value, page_path, device_type, properties')
+        .select('session_id, event_name, event_label, event_value, page_path, device_type, properties, occurred_at')
         .eq('event_category', 'cockpit')
         .gte('occurred_at', since.toISOString())
         .order('occurred_at', { ascending: true })
-        .range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
+        .order('id', { ascending: true })
+        .range(offset, offset + limit - 1);
       if (marketFilter) q = q.like('page_path', `/${marketFilter}/%`);
-
       const { data, error } = await q;
-      if (error) {
-        if (error.code === 'PGRST204' || error.code === '42P01') {
-          return { success: true, data: emptyData(timeRange), error: null };
-        }
-        logger.error('[Cockpit Analytics] Events query error:', error.message);
-        return { success: false, data: null, error: error.message };
+      return { data: data as EventRow[] | null, error };
+    }, PAGE_SIZE, HARD_CAP);
+
+    if (eventsResult.queryError) {
+      if (eventsResult.queryError.code === 'PGRST204' || eventsResult.queryError.code === '42P01') {
+        return { success: true, data: emptyData(timeRange), error: null };
       }
-      const rows = (data || []) as EventRow[];
-      events.push(...rows);
-      if (rows.length < PAGE_SIZE) break;
-      if (page === MAX_PAGES - 1) truncated = true;
+      logger.error('[Cockpit Analytics] Events query error:', eventsResult.queryError.message);
+      return { success: false, data: null, error: eventsResult.queryError.message };
+    }
+    const events = eventsResult.rows;
+    let truncated = eventsResult.truncated;
+
+    // Exact-count cross-check — a defense-in-depth safety net independent of
+    // the pagination loop's own EOF detection (e.g. RLS/visibility quirks
+    // between the count and data queries). Non-fatal if it errors.
+    {
+      let countQ = supabase
+        .from('analytics_events')
+        .select('id', { count: 'exact', head: true })
+        .eq('event_category', 'cockpit')
+        .gte('occurred_at', since.toISOString());
+      if (marketFilter) countQ = countQ.like('page_path', `/${marketFilter}/%`);
+      const { count: exactEventCount } = await countQ;
+      if (typeof exactEventCount === 'number' && events.length < Math.min(exactEventCount, HARD_CAP)) {
+        truncated = true;
+      }
     }
 
-    // ── B: cockpit pageviews (denominators + silent detection) ──────────────
-    let pvQuery = supabase
-      .from('page_views')
-      .select('page_path, device_type')
-      .gte('viewed_at', since.toISOString())
-      .like('page_path', '%/best/%');
-    if (marketFilter) pvQuery = pvQuery.like('page_path', `/${marketFilter}/%`);
-    const { data: pvData } = await pvQuery.limit(50_000);
+    // ── B: cockpit pageviews (denominators + silent detection), same robust
+    //      pagination — this is the CTR denominator, so under-fetching it
+    //      would be worse than under-fetching events. ─────────────────────
+    const pvResult = await fetchAllPaged<PageViewRow>(async (offset, limit) => {
+      let q = supabase
+        .from('page_views')
+        .select('page_path, device_type')
+        .gte('viewed_at', since.toISOString())
+        .like('page_path', '%/best/%')
+        .order('id', { ascending: true })
+        .range(offset, offset + limit - 1);
+      if (marketFilter) q = q.like('page_path', `/${marketFilter}/%`);
+      const { data, error } = await q;
+      return { data: data as PageViewRow[] | null, error };
+    }, PAGE_SIZE, HARD_CAP);
+    if (pvResult.truncated) truncated = true;
+    const pvData = pvResult.rows;
 
     // Pageviews per cockpit path (parseCockpitPath filters non-cockpit /best/ hits)
     const pvByPath = new Map<string, number>();
-    for (const row of pvData || []) {
+    for (const row of pvData) {
       const parsed = parseCockpitPath(row.page_path);
       if (!parsed) continue;
       const path = row.page_path.split('?')[0].replace(/\/$/, '');
@@ -328,41 +419,67 @@ export async function getCockpitAnalytics(
     // Engagement → CTA rates
     const isWinner = (e: EventRow) => e.event_value === 1 || prop(e, 'isTopPick') === true || prop(e, 'rank') === 1;
     const winnerImpr = viewportImpressions.filter(isWinner).length;
-    const winnerClicks = clicks.filter(isWinner).length;
+    // Scope clicks to the SAME population as winnerImpr (card/verdict
+    // viewport surfaces only) — table/compare clicks have no viewport-
+    // impression counterpart in that denominator, so including them here
+    // could push this rate over 100% and misidentify the "winner".
+    const WINNER_CLICK_SURFACES = new Set(['card', 'verdict']);
+    const winnerClicks = clicks.filter(
+      (e) => isWinner(e) && WINNER_CLICK_SURFACES.has(String(prop(e, 'surface'))),
+    ).length;
 
     const cardImpr = viewportImpressions.filter((e) => prop(e, 'surface') === 'card').length;
     const cardClicks = surfaceClicks.get('card') || 0;
 
+    // Matcher-complete / compare-usage → CTA are TEMPORALLY ordered: a click
+    // only counts as a conversion if it happened AT OR AFTER the qualifying
+    // signal within the same session — a click that preceded the matcher
+    // completion (or preceded ever touching Compare) is not caused by it.
+    // Caveat: event_batch inserts share ONE occurred_at per batch (Postgres
+    // evaluates NOW() once per INSERT statement), so a signal and a click
+    // flushed in the SAME batch can carry an identical timestamp; those are
+    // counted as "at" the signal (>=) rather than dropped, which slightly
+    // favors counting over strict causality for same-batch pairs.
     const sessionKey = (e: EventRow) => `${e.session_id}|${normPath(e.page_path)}`;
-    const sessions = new Map<string, { complete: boolean; compareUsage: boolean; click: boolean }>();
+    interface SessionSignal {
+      completeAt: number | null;
+      compareUsageAt: number | null;
+      clickTimes: number[];
+    }
+    const sessions = new Map<string, SessionSignal>();
     for (const e of events) {
       const key = sessionKey(e);
       let s = sessions.get(key);
       if (!s) {
-        s = { complete: false, compareUsage: false, click: false };
+        s = { completeAt: null, compareUsageAt: null, clickTimes: [] };
         sessions.set(key, s);
       }
-      if (e.event_name === 'cockpit_matcher_complete') s.complete = true;
-      if (
-        e.event_name === 'cockpit_compare_toggle' ||
-        (e.event_name === 'cockpit_view' && prop(e, 'surface') === 'compare')
-      ) {
-        s.compareUsage = true;
+      const t = Date.parse(e.occurred_at);
+      if (Number.isNaN(t)) continue;
+      if (e.event_name === 'cockpit_matcher_complete' && (s.completeAt === null || t < s.completeAt)) {
+        s.completeAt = t;
       }
-      if (e.event_name === 'cockpit_cta_click') s.click = true;
+      if (
+        (e.event_name === 'cockpit_compare_toggle' ||
+          (e.event_name === 'cockpit_view' && prop(e, 'surface') === 'compare')) &&
+        (s.compareUsageAt === null || t < s.compareUsageAt)
+      ) {
+        s.compareUsageAt = t;
+      }
+      if (e.event_name === 'cockpit_cta_click') s.clickTimes.push(t);
     }
     let completeSessions = 0;
     let completeAndClick = 0;
     let compareSessions = 0;
     let compareAndClick = 0;
     for (const s of sessions.values()) {
-      if (s.complete) {
+      if (s.completeAt !== null) {
         completeSessions += 1;
-        if (s.click) completeAndClick += 1;
+        if (s.clickTimes.some((t) => t >= s.completeAt!)) completeAndClick += 1;
       }
-      if (s.compareUsage) {
+      if (s.compareUsageAt !== null) {
         compareSessions += 1;
-        if (s.click) compareAndClick += 1;
+        if (s.clickTimes.some((t) => t >= s.compareUsageAt!)) compareAndClick += 1;
       }
     }
 
@@ -386,8 +503,14 @@ export async function getCockpitAnalytics(
       })
       .sort((a, b) => b.clicks - a.clicks);
 
-    // Health — silent cockpit detection (pageviews are NOT bot-filtered while
-    // cockpit events are, hence the ≥5 pageview floor before "silent" counts)
+    // Health — built from the FULL manifest of currently-live cockpit routes
+    // (topic registry × active DB rows via getCockpitRouteParams), not just
+    // paths that happened to have pageviews/events THIS window. Otherwise a
+    // cockpit with zero traffic never appears at all, and a "0 silent" count
+    // would falsely read as "all cockpits reporting" when most were simply
+    // absent from the sample. Pageviews are NOT bot-filtered while cockpit
+    // events are, hence the ≥5 pageview floor before "silent" (vs
+    // "low_traffic") counts as the strong, actionable broken-tracking signal.
     const eventsByPath = new Map<string, { events: number; clicks: number }>();
     for (const e of events) {
       const path = normPath(e.page_path);
@@ -399,24 +522,34 @@ export async function getCockpitAnalytics(
       h.events += 1;
       if (e.event_name === 'cockpit_cta_click') h.clicks += 1;
     }
-    const healthPaths = new Set<string>([...pvByPath.keys(), ...eventsByPath.keys()]);
-    const health: CockpitHealthRow[] = [];
-    for (const path of healthPaths) {
-      const parsed = parseCockpitPath(path);
-      if (!parsed) continue;
+
+    const { getCockpitRouteParams } = await import('@/lib/comparison/loader');
+    const liveRoutes = await getCockpitRouteParams();
+    const expectedRoutes = marketFilter ? liveRoutes.filter((r) => r.market === marketFilter) : liveRoutes;
+
+    const STATUS_ORDER: Record<CockpitHealthStatus, number> = {
+      silent: 0,
+      no_traffic: 1,
+      low_traffic: 2,
+      reporting: 3,
+    };
+    const health: CockpitHealthRow[] = expectedRoutes.map(({ market: rMarket, category, topic }) => {
+      const path = `/${rMarket}/${category}/best/${topic}`;
       const pageviews = pvByPath.get(path) || 0;
       const h = eventsByPath.get(path) || { events: 0, clicks: 0 };
-      health.push({
+      const status: CockpitHealthStatus =
+        pageviews === 0 ? 'no_traffic' : pageviews < 5 ? 'low_traffic' : h.events === 0 ? 'silent' : 'reporting';
+      return {
         pagePath: path,
-        market: parsed.market,
-        isNewMarket: NEW_MARKETS.has(parsed.market),
+        market: rMarket,
+        isNewMarket: NEW_MARKETS.has(rMarket),
         pageviews,
         events: h.events,
         clicks: h.clicks,
-        silent: pageviews >= 5 && h.events === 0,
-      });
-    }
-    health.sort((a, b) => Number(b.silent) - Number(a.silent) || b.pageviews - a.pageviews);
+        status,
+      };
+    });
+    health.sort((a, b) => STATUS_ORDER[a.status] - STATUS_ORDER[b.status] || b.pageviews - a.pageviews);
 
     const totalPageviews = [...pvByPath.values()].reduce((a, b) => a + b, 0);
     const eventCount = events.length;
@@ -432,7 +565,11 @@ export async function getCockpitAnalytics(
         prevEventCount,
         volumeDeltaPct: prevEventCount > 0 ? Math.round(((eventCount - prevEventCount) / prevEventCount) * 100) : null,
         zeroVolume: eventCount === 0 && totalPageviews > 0,
-        silentCount: health.filter((h) => h.silent).length,
+        expectedTotal: expectedRoutes.length,
+        reportingCount: health.filter((h) => h.status === 'reporting').length,
+        silentCount: health.filter((h) => h.status === 'silent').length,
+        lowTrafficCount: health.filter((h) => h.status === 'low_traffic').length,
+        noTrafficCount: health.filter((h) => h.status === 'no_traffic').length,
       },
       byTopic,
       bySurface,

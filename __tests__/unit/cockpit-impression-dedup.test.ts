@@ -22,14 +22,24 @@ function makeFakeStorage(initial: Record<string, string> = {}): KeyValueStorage 
 }
 
 describe('impressionKey()', () => {
-  it('is page|surface|slug', () => {
-    expect(impressionKey('/au/forex/best/forex-brokers', 'card', 'pepperstone')).toBe(
-      '/au/forex/best/forex-brokers|card|pepperstone',
+  it('is page|surface|slug|rank', () => {
+    expect(impressionKey('/au/forex/best/forex-brokers', 'card', 'pepperstone', 1)).toBe(
+      '/au/forex/best/forex-brokers|card|pepperstone|1',
     );
   });
 
-  it('omits slug for surface-level impressions', () => {
-    expect(impressionKey('/p', 'cockpit')).toBe('/p|cockpit|');
+  it('omits slug and rank for surface-level impressions', () => {
+    expect(impressionKey('/p', 'cockpit')).toBe('/p|cockpit||');
+  });
+
+  it('a rank change produces a DIFFERENT key for the same product+surface — the fix for stale rank cohorts after a re-sort', () => {
+    const rank1 = impressionKey('/p', 'card', 'stake', 1);
+    const rank7 = impressionKey('/p', 'card', 'stake', 7);
+    expect(rank1).not.toBe(rank7);
+  });
+
+  it('the same rank produces the same key (still deduped across re-renders at an unchanged position)', () => {
+    expect(impressionKey('/p', 'card', 'stake', 3)).toBe(impressionKey('/p', 'card', 'stake', 3));
   });
 });
 

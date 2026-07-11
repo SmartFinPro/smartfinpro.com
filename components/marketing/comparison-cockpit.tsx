@@ -63,6 +63,10 @@ export function ComparisonCockpit({ products, market, category, topic }: Compari
   const [matcherOpen, setMatcherOpen] = useState(false);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [matchResult, setMatchResult] = useState<MatchRow[] | null>(null);
+  // Which of table/compare have become visible at least once this mount —
+  // gates the "re-emit on data change" effects below so we never emit rendered
+  // impressions for a surface the user hasn't actually scrolled to yet.
+  const [visibleSurfaces, setVisibleSurfaces] = useState<Set<'table' | 'compare'>>(new Set());
 
   const inputs: CostInputs = { amount, years };
 
@@ -311,7 +315,10 @@ export function ComparisonCockpit({ products, market, category, topic }: Compari
 
   // Table/compare list every rendered product at once (horizontal scroll) —
   // those batch events are honestly labelled impressionKind:'rendered', never
-  // used as a visibility denominator (that is cockpit_view's job).
+  // used as a visibility denominator (that is cockpit_view's job). Rank is
+  // recomputed fresh on every call, and productImpressionOnce's dedupe key
+  // includes rank — so re-sort/re-filter or a changed compare selection
+  // naturally produces impressions for products/ranks not seen before.
   const emitRenderedImpressions = useCallback(
     (surface: 'table' | 'compare', onlySelected: boolean) => {
       visibleRef.current.forEach((p, i) => {
@@ -331,6 +338,20 @@ export function ComparisonCockpit({ products, market, category, topic }: Compari
     },
     [ck, selection],
   );
+
+  // Re-emit rendered impressions whenever the underlying product set changes
+  // AFTER the surface has already become visible once (e.g. a product added
+  // to Compare via the chip bar, or Table re-sorted while already on screen)
+  // — the CockpitImpression wrapper itself only fires on the FIRST time the
+  // surface enters the viewport, so without this, later changes would never
+  // get impressioned. No-ops (deduped) when nothing new to report.
+  useEffect(() => {
+    if (view === 'table' && visibleSurfaces.has('table')) emitRenderedImpressions('table', false);
+  }, [view, visible, visibleSurfaces, emitRenderedImpressions]);
+
+  useEffect(() => {
+    if (view === 'compare' && visibleSurfaces.has('compare')) emitRenderedImpressions('compare', true);
+  }, [view, selection, visibleSurfaces, emitRenderedImpressions]);
 
   const views: { key: View; label: string; Icon: typeof LayoutGrid }[] = [
     { key: 'cards', label: 'Cards', Icon: LayoutGrid },
@@ -502,11 +523,17 @@ export function ComparisonCockpit({ products, market, category, topic }: Compari
           </button>
         </div>
       ) : view === 'table' ? (
+        // Explicit key: without it, React reuses the SAME instance (and its
+        // internal `fired` ref) when the ternary swaps between the table and
+        // compare branches, so switching table→compare would silently never
+        // fire the compare surface's impression.
         <CockpitImpression
+          key="ck-surface-table"
           threshold={0}
           onImpress={() => {
             ck.viewOnce('table', { productCount: visibleRef.current.length, view: 'table' });
             emitRenderedImpressions('table', false);
+            setVisibleSurfaces((prev) => (prev.has('table') ? prev : new Set(prev).add('table')));
           }}
         >
           <CockpitTable
@@ -526,10 +553,12 @@ export function ComparisonCockpit({ products, market, category, topic }: Compari
         </CockpitImpression>
       ) : view === 'compare' ? (
         <CockpitImpression
+          key="ck-surface-compare"
           threshold={0}
           onImpress={() => {
             ck.viewOnce('compare', { productCount: selection.size, view: 'compare' });
             emitRenderedImpressions('compare', true);
+            setVisibleSurfaces((prev) => (prev.has('compare') ? prev : new Set(prev).add('compare')));
           }}
         >
           <CockpitCompare
@@ -548,6 +577,7 @@ export function ComparisonCockpit({ products, market, category, topic }: Compari
             <CockpitImpression
               key={p.slug}
               threshold={0.35}
+              resetKey={i + 1}
               onImpress={() => {
                 const cta = resolveCockpitCta(p);
                 ck.productImpressionOnce({

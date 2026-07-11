@@ -230,14 +230,25 @@ export function parseCockpitPath(
 }
 
 // ── Impression dedup ─────────────────────────────────────────────────────────
-// One impression per session + page + surface (+ product). sessionStorage is
-// per-tab-session, matching the sfp_session_id lifetime exactly.
+// One impression per session + page + surface (+ product + rank). Rank is
+// part of the key for product-level impressions so a re-sort/re-filter that
+// moves a product to a new rank produces a FRESH impression at that rank —
+// otherwise a click at the new rank would have no matching impression at
+// that rank (the impression would still show the stale first-seen rank),
+// corrupting rank-based CTR cohorts (e.g. Top-3 vs Rest). Surface-level
+// impressions (cockpit_view) omit rank. sessionStorage is per-tab-session,
+// matching the sfp_session_id lifetime exactly.
 
 export const IMPRESSION_STORAGE_KEY = 'sfp_ck_imp_v1';
 const IMPRESSION_CAP = 500;
 
-export function impressionKey(pagePath: string, surface: string, productSlug?: string): string {
-  return `${pagePath}|${surface}|${productSlug ?? ''}`;
+export function impressionKey(
+  pagePath: string,
+  surface: string,
+  productSlug?: string,
+  rank?: number,
+): string {
+  return `${pagePath}|${surface}|${productSlug ?? ''}|${rank ?? ''}`;
 }
 
 export interface KeyValueStorage {
@@ -295,6 +306,20 @@ export function createImpressionDeduper(storage?: KeyValueStorage | null): Impre
 
 /** Server-side hard cap per batch — keep in sync with TrackEventBatchSchema. */
 export const EVENT_BATCH_HARD_CAP = 20;
+
+/**
+ * Rate-limit weight for a POST /api/track request. A single-event request
+ * ('event'/'pageview'/'scroll'/'time_on_page') costs 1 token, matching the
+ * existing per-request limiter. A batch costs one token PER EVENT it carries
+ * (clamped to the hard cap) — otherwise one request could write up to
+ * EVENT_BATCH_HARD_CAP rows for the price of a single token, silently
+ * multiplying the effective per-IP write budget by that factor.
+ */
+export function computeTrackRateLimitWeight(type: string, rawEventsLength: unknown): number {
+  if (type !== 'event_batch') return 1;
+  const n = typeof rawEventsLength === 'number' && Number.isFinite(rawEventsLength) ? rawEventsLength : 0;
+  return Math.max(1, Math.min(n, EVENT_BATCH_HARD_CAP));
+}
 
 type TimerHandle = ReturnType<typeof setTimeout> | number | object;
 

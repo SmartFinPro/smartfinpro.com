@@ -172,11 +172,11 @@ export function CockpitAnalytics({
           }
         />
         <StatCard
-          label="Silent cockpits"
-          value={k.silentCount}
-          subtext={k.silentCount > 0 ? 'pages with traffic but no events' : 'all instrumented pages reporting'}
+          label="Cockpit coverage"
+          value={`${k.reportingCount}/${k.expectedTotal}`}
+          subtext={`${k.silentCount} silent · ${k.lowTrafficCount} low-traffic · ${k.noTrafficCount} no-traffic`}
           icon={AlertTriangle}
-          tone={k.silentCount > 0 ? 'red' : 'green'}
+          tone={k.silentCount > 0 ? 'red' : k.reportingCount === k.expectedTotal ? 'green' : 'gold'}
         />
       </div>
 
@@ -324,7 +324,7 @@ export function CockpitAnalytics({
       {/* Block 5 — Health panel */}
       <SectionCard
         title="Tracking health"
-        description="cockpit events are bot-filtered, pageviews are not — pages need ≥5 pageviews before counting as silent"
+        description={`${k.expectedTotal} live cockpit routes expected this window — cockpit events are bot-filtered, pageviews are not, so pages need ≥5 pageviews before "silent" is meaningful (below that: "low-traffic")`}
         icon={Wrench}
         tone={k.silentCount > 0 ? 'red' : 'green'}
         contentClassName="p-0"
@@ -344,7 +344,7 @@ export function CockpitAnalytics({
               {data.health.length === 0 && (
                 <tr>
                   <td colSpan={5} className="px-4 py-8 text-center text-slate-400">
-                    No cockpit traffic in this window.
+                    No live cockpit routes registered for this filter.
                   </td>
                 </tr>
               )}
@@ -363,14 +363,16 @@ export function CockpitAnalytics({
                   <td className="px-3 py-2.5 text-right tabular-nums">{h.events.toLocaleString('en-US')}</td>
                   <td className="px-3 py-2.5 text-right tabular-nums">{h.clicks.toLocaleString('en-US')}</td>
                   <td className="px-3 py-2.5 text-right">
-                    {h.silent ? (
+                    {h.status === 'silent' ? (
                       <span className="inline-flex items-center gap-1 rounded bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700">
                         <AlertTriangle className="h-3 w-3" /> silent
                       </span>
-                    ) : h.events > 0 ? (
-                      <span className="rounded bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700">ok</span>
-                    ) : (
+                    ) : h.status === 'reporting' ? (
+                      <span className="rounded bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700">reporting</span>
+                    ) : h.status === 'low_traffic' ? (
                       <span className="rounded bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500">low traffic</span>
+                    ) : (
+                      <span className="rounded bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-400">no traffic</span>
                     )}
                   </td>
                 </tr>

@@ -14,6 +14,7 @@
     "check:hydration": "bash scripts/check-hydration-safety.sh",
     "check:hydration:all": "bash scripts/check-hydration-safety.sh --all",
     "test:hydration": "npx playwright test e2e/hydration.spec.ts",
+    "test:cockpit-tracking": "npx playwright test e2e/cockpit-tracking.spec.ts",
     "ci": "npm run check:types && npm run check:imports && npm run lint:p1p5 && npm run test",
     "ci:full": "npm run ci && npm run check:comparison && npm run check:freshness && (npm run check:hydration && echo '✅ hydration check clean' || echo '⚠️  hydration check has findings (non-blocking)') && (npm run lint:repo && echo '✅ lint:repo clean' || echo '⚠️  lint:repo has findings (non-blocking)')",
     "check:experts": "bash scripts/verify-expert-images.sh",
