@@ -255,25 +255,11 @@ export function BestXIndex({ market, items }: BestXIndexProps) {
         <span style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--sfp-slate)', display: 'block', marginBottom: '16px' }}>
           Best-X Comparisons
         </span>
-        <h2 style={{ fontSize: 'clamp(26px, 3.2vw, 38px)', fontWeight: 800, color: 'var(--sfp-ink)', letterSpacing: '-0.6px', marginBottom: '16px', lineHeight: 1.15, position: 'relative' }}>
-          <span
-            aria-hidden="true"
-            style={{
-              position: 'absolute',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              fontSize: 'clamp(64px, 9vw, 110px)',
-              lineHeight: 1,
-              opacity: 0.12,
-              zIndex: 0,
-              pointerEvents: 'none',
-              filter: 'grayscale(0.15)',
-            }}
-          >
-            {marketConfig[market].flag}
-          </span>
-          <span style={{ position: 'relative', zIndex: 1 }}>Compare the best financial products</span>
+        <div style={{ fontSize: 'clamp(34px, 4.2vw, 48px)', lineHeight: 1, marginBottom: '10px' }} aria-hidden="true">
+          {marketConfig[market].flag}
+        </div>
+        <h2 style={{ fontSize: 'clamp(26px, 3.2vw, 38px)', fontWeight: 800, color: 'var(--sfp-ink)', letterSpacing: '-0.6px', marginBottom: '16px', lineHeight: 1.15 }}>
+          Compare the best financial products
         </h2>
         <p style={{ fontSize: '16px', color: 'var(--sfp-slate)', maxWidth: '520px', margin: '0 auto', lineHeight: 1.7 }}>
           Side-by-side comparison cockpits for every category — ranked by our methodology, re-verified monthly, never by commission.
