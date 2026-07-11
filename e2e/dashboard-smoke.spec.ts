@@ -15,6 +15,11 @@
 
 import { test, expect } from '@playwright/test';
 
+// playwright.config.ts disables JS globally (fast redirect-only tests) — these
+// tests exercise client components (LiveClicksFeed, LiveDashboardBar, hamburger
+// menu) that need hydration, so override it for this whole file.
+test.use({ javaScriptEnabled: true });
+
 // ── Test Fixtures ─────────────────────────────────────────────────────────────
 
 const DASHBOARD_STATS_FIXTURE = {
