@@ -1,4 +1,5 @@
 <title>FDL Prototyp — Wealth Horizon (GuidedJourney)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
   :root{ --desk:#eef1f5; --paper:#fff; --wire:#8a97a8; --wire-soft:#c6cfda; --ink:#25303e; --note:#c2410c; --fill:#f3f5f8; --navy:#1b4f8c; --gold:#b8860b; --good:#1a6b3a; --sky:#e8f0fb; }
   :root[data-theme="dark"]{ --desk:#1b2028 } :root[data-theme="light"]{ --desk:#eef1f5 }
@@ -99,9 +100,9 @@
               <button type="button" class="est" data-set="bal:50000">I'm not sure — use $50k</button>
             </div>
           </div>
-          <div class="field"><label for="contrib">Monthly contribution</label>
-            <div class="frow"><span aria-hidden="true">$</span><input type="number" id="contrib" value="900" min="0" max="2041" step="50" inputmode="numeric"><input type="range" min="0" max="2041" step="50" value="900" data-pair="contrib" aria-label="Monthly contribution slider"></div>
-            <span class="hint">Capped at $2,041/mo = 2026 401(k) limit $24,500 ÷ 12 (IRS). <span class="redline">clamp aus getRule('us','k401Limit')</span></span>
+          <div class="field"><label for="contrib">Monthly contribution (all accounts)</label>
+            <div class="frow"><span aria-hidden="true">$</span><input type="number" id="contrib" value="900" min="0" step="50" inputmode="numeric"><input type="range" min="0" max="6000" step="50" value="900" data-pair="contrib" aria-label="Monthly contribution slider"></div>
+            <span class="hint">Above the 2026 401(k) limit ($24,500/yr, IRS)? Fine — amounts beyond tax-advantaged caps are assumed to go to taxable accounts. <span class="redline">Simple mode clampet NIE (SPEC 8.3); Konto-Clamps nur im Account breakdown mit YTD/Room</span></span>
           </div>
           <div class="field"><label for="fees">Annual fees</label>
             <div class="frow"><input type="number" id="fees" value="0.6" min="0" max="3" step="0.1" inputmode="decimal"><span>%</span><input type="range" min="0" max="3" step="0.1" value="0.6" data-pair="fees" aria-label="Annual fees slider"></div>
@@ -113,10 +114,13 @@
           <div class="field"><label for="target">Target monthly income (today's money)</label>
             <div class="frow"><span aria-hidden="true">$</span><input type="number" id="target" value="4500" min="500" step="100" inputmode="numeric"></div>
           </div>
-          <div class="field"><label>Include Social Security (flat estimate $1,800/mo)</label>
-            <div class="seg" role="group" aria-label="State support">
-              <button type="button" id="ssOn" aria-pressed="true">Include</button><button type="button" id="ssOff" aria-pressed="false">Exclude</button>
-            </div>
+          <div class="field"><label for="benefit">Expected monthly benefit — optional (today's money)</label>
+            <div class="frow"><span aria-hidden="true">$</span><input type="number" id="benefit" value="0" min="0" step="50" inputmode="numeric"></div>
+            <span class="hint">We never estimate Social Security for you — enter your own figure from the <u>SSA benefits estimator</u>. Eligibility and amounts are individual. Default: 0.</span>
+          </div>
+          <div class="field"><label for="benefitStart">Benefit starts at age</label>
+            <div class="frow"><input type="number" id="benefitStart" value="67" min="55" max="75" inputmode="numeric"></div>
+            <span class="hint"><span class="redline">Vor startsAtAge zählt der Benefit in Projektion, FI-Datum und Lücke exakt 0 (SPEC Benefit-Vertrag)</span></span>
           </div>
           <div class="field"><label for="wr">Illustrative withdrawal rate</label>
             <div class="frow"><input type="number" id="wr" value="4.0" min="2.5" max="5.0" step="0.1" inputmode="decimal"><span>%</span><input type="range" min="2.5" max="5" step="0.1" value="4" data-pair="wr" aria-label="Withdrawal rate slider"></div>
@@ -151,7 +155,7 @@
           </div>
           <details id="meth" style="margin-top:10px">
             <summary>Assumptions &amp; sources</summary>
-            <p style="margin:6px 0 0">All figures in <strong>today's purchasing power</strong>. Real returns: conservative 3.0% · base 5.0% · optimistic 6.5% p.a. (derived from long-run nominal returns minus 2.5% assumed inflation — applied once, never twice). Withdrawal is an <em>illustrative</em> rate you control. Educational tool, not financial advice.</p>
+            <p style="margin:6px 0 0">All figures in <strong>today's purchasing power</strong>. Real returns: conservative 3.0% · base 5.0% · optimistic 6.5% p.a. (derived from long-run nominal returns minus 2.5% assumed inflation — applied once, never twice). Contributions stop at your retirement age. State or workplace benefits are <strong>never estimated for you</strong> — only the amount and start age you enter count, and they count as 0 before that age. Withdrawal is an <em>illustrative</em> rate you control. Educational tool, not financial advice.</p>
             <p class="src">Sources: IRS Notice 2025-67 (2026 limits) — effective 2026-01-01, verified 2026-07-12 · Editorial long-run return assumption — verified 2026-07-12</p>
           </details>
           <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
@@ -179,8 +183,7 @@
 (function(){
   'use strict';
   const $ = (id) => document.getElementById(id);
-  const state = { step: 1, started: false, firstResult: false, qualified: false, ssInclude: true, inputChanges: 0 };
-  const SS_FLAT = 1800;
+  const state = { step: 1, started: false, firstResult: false, qualified: false, inputChanges: 0 };
 
   // ---------- Event-Vertrag (Prototyp-Ticker) ----------
   const fired = new Set(['tool_view']);
@@ -203,7 +206,9 @@
       age: +$('age').value || 38, retire: +$('retire').value || 67,
       bal: +$('bal').value || 0, contrib: +$('contrib').value || 0,
       fees: (+$('fees').value || 0)/100, target: +$('target').value || 4500,
-      wr: (+$('wr').value || 4)/100, ss: state.ssInclude ? SS_FLAT : 0
+      wr: (+$('wr').value || 4)/100,
+      benefit: +$('benefit').value || 0,            // NUR Nutzereingabe — nie automatisch geschätzt
+      benefitStart: +$('benefitStart').value || 67  // vor diesem Alter zählt der Benefit exakt 0
     };
   }
   function project(inp, real, retireAge){
@@ -211,17 +216,21 @@
     const rNet = real - inp.fees;
     for (let a = inp.age; a <= Math.max(retireAge, 75); a++){
       rows.push({ age: a, bal: b });
-      b = b * (1 + rNet) + inp.contrib * 12;   // jährlicher Schritt, real, EINMALIGE Bereinigung
+      const contributing = a < retireAge;          // Beiträge enden mit dem Rentenalter (SPEC-Fix)
+      b = b * (1 + rNet) + (contributing ? inp.contrib * 12 : 0); // real, EINMALIGE Bereinigung
     }
     return rows;
   }
+  function benefitAt(inp, age){ return age >= inp.benefitStart ? inp.benefit : 0; }
   function scenario(inp, key, retireAge){
-    const rows = project(inp, REAL[key], retireAge ?? inp.retire);
     const ra = retireAge ?? inp.retire;
+    const rows = project(inp, REAL[key], ra);
     const atRetire = (rows.find(r => r.age === ra) || rows[rows.length-1]).bal;
     const withdraw = atRetire * inp.wr / 12;
-    const fiRow = rows.find(r => (r.bal * inp.wr / 12 + inp.ss) >= inp.target);
-    return { rows, atRetire, withdraw, gap: inp.target - (withdraw + inp.ss), fiAge: fiRow ? fiRow.age : null };
+    const fiRow = rows.find(r => (r.bal * inp.wr / 12 + benefitAt(inp, r.age)) >= inp.target);
+    return { rows, atRetire, withdraw,
+             gap: inp.target - (withdraw + benefitAt(inp, ra)),
+             fiAge: fiRow ? fiRow.age : null };
   }
   const fmtK = (v) => v >= 1e6 ? '$' + (v/1e6).toFixed(2) + 'm' : '$' + Math.round(v/1000) + 'k';
 
@@ -234,7 +243,10 @@
     const path = (rows) => rows.map((r,i) => (i?'L':'M') + x(r.age).toFixed(1) + ',' + y(r.bal).toFixed(1)).join(' ');
     const area = path(opt.rows) + ' ' + cons.rows.slice().reverse().map(r => 'L' + x(r.age).toFixed(1) + ',' + y(r.bal).toFixed(1)).join(' ') + ' Z';
     const fi = base.fiAge;
+    const altText = 'By age ' + inp.retire + ', savings range ' + fmtK(cons.atRetire) + ' to ' + fmtK(opt.atRetire) +
+      ' in today\'s money; base scenario ' + fmtK(base.atRetire) + (fi ? '; financial independence around ' + (2026 + fi - inp.age) : '') + '.';
     svg.innerHTML =
+      '<title id="chartAlt">' + altText + '</title>' +   // Title MUSS Teil des innerHTML sein — sonst zerstört das Re-Render die a11y-Alternative
       '<rect x="'+L+'" y="'+T+'" width="'+(W-L-R)+'" height="'+(H-T-B)+'" fill="none" stroke="#c6cfda"/>' +
       '<path d="'+area+'" fill="#8a97a8" opacity="0.16"/>' +
       '<path d="'+path(cons.rows)+'" fill="none" stroke="#8a97a8" stroke-width="1.5" stroke-dasharray="2 3"/>' +
@@ -247,8 +259,6 @@
       '<text x="'+L+'" y="'+(H-6)+'" fill="#5b6878">age '+inp.age+'</text>' +
       '<text x="'+(W-R-40)+'" y="'+(H-6)+'" fill="#5b6878">75</text>' +
       '<text x="'+(L+4)+'" y="'+(y(base.atRetire)-4)+'" fill="#25303e">base '+fmtK(base.atRetire)+'</text>';
-    $('chartAlt').textContent = 'By age ' + inp.retire + ', savings range ' + fmtK(cons.atRetire) + ' to ' + fmtK(opt.atRetire) +
-      ' in today\'s money; base scenario ' + fmtK(base.atRetire) + (fi ? '; financial independence around ' + (2026 + fi - inp.age) : '') + '.';
   }
 
   // ---------- Render ----------
@@ -262,7 +272,7 @@
     } else {
       const fiYear = base.fiAge ? (2026 + base.fiAge - inp.age) : null;
       $('answer').innerHTML = fiYear
-        ? '<strong>1 ·</strong> You could reach financial independence around <strong>' + fiYear + '</strong> (base scenario' + (inp.ss ? ', incl. Social Security estimate' : '') + ').'
+        ? '<strong>1 ·</strong> You could reach financial independence around <strong>' + fiYear + '</strong> (base scenario' + (inp.benefit > 0 ? ', incl. your entered benefit from age ' + inp.benefitStart : ', without state benefits') + ').'
         : '<strong>1 ·</strong> On these inputs the illustrative withdrawal doesn\'t reach your target by 75 — the levers below move it most.';
       $('lv1d').textContent = '+' + fmtK(scenario({...inp, fees: 0.001},'base').atRetire - base.atRetire) + ' at ' + inp.retire;
       $('lv2d').textContent = '+' + fmtK(scenario({...inp, contrib: inp.contrib + 200},'base').atRetire - base.atRetire) + ' at ' + inp.retire;
@@ -317,8 +327,7 @@
     if (!state.started){ state.started = true; track('tool_start'); }
     state.inputChanges++; render('input');
   }));
-  $('ssOn').addEventListener('click', () => { state.ssInclude = true; $('ssOn').setAttribute('aria-pressed','true'); $('ssOff').setAttribute('aria-pressed','false'); render('input'); });
-  $('ssOff').addEventListener('click', () => { state.ssInclude = false; $('ssOn').setAttribute('aria-pressed','false'); $('ssOff').setAttribute('aria-pressed','true'); render('input'); });
+  // Kein automatischer Staats-Benefit: Betrag + Startalter kommen ausschließlich aus den Feldern oben.
 
   // ---------- Levers / Share / Report / Bridge ----------
   $('lv1').addEventListener('click', () => { $('fees').value = 0.1; track('tool_input_change','controlRole:lever fees'); maybeQualify('lever'); render('lever'); });

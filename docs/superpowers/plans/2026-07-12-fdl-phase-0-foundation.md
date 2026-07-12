@@ -62,44 +62,65 @@ scripts/check-rule-freshness.mjs               # NEU Task 4
 **Files:**
 - Create: `.github/workflows/pr-build.yml`
 
+**Sicherheits- und Zuverlässigkeitsvertrag (bindend, Review 12.07.2026):**
+1. **Keine privaten Produktions-Secrets in PR-Builds.** `pull_request`-Builds führen ungemergten Code aus; private Keys (`SUPABASE_SERVICE_KEY`, `ANTHROPIC_API_KEY`, `RESEND_API_KEY`, `CRON_SECRET`, `SERPER_API_KEY`, `GOOGLE_INDEXING_JSON`) bekommen **Platzhalterwerte**. Nur `NEXT_PUBLIC_*`-Werte dürfen echt sein — sie sind by design öffentlich (landen im Client-Bundle). Konsequenz: SSG-Abschnitte, die Build-Zeit-DB-Zugriff über den Service-Key brauchen (Cockpit-Loader), rendern im PR-Build ggf. leer — der Deploy-Build auf `main` bleibt das Full-Fidelity-Gate; der PR-Build fängt App-/Typ-/Prerender-Brüche.
+2. **Der Check muss auf JEDEM PR erscheinen** (Required-Check-tauglich): kein `paths:`-Filter am Trigger (sonst „hängt" der Required Check bei nicht passenden PRs dauerhaft auf pending). Stattdessen entscheidet ein In-Job-Diff-Filter, ob wirklich gebaut wird; bei irrelevanten Pfaden endet der Job schnell und grün („skip-but-pass"). Der Filter schließt `.github/workflows/pr-build.yml` selbst ein, damit Workflow-Änderungen sich selbst testen.
+
 - [ ] **Step 1: Workflow-Datei schreiben**
 
 ```yaml
 # .github/workflows/pr-build.yml
 name: PR Production Build
 on:
-  pull_request:
-    paths:
-      - 'app/**'
-      - 'components/tools/**'
-      - 'lib/calc/**'
-      - 'lib/rules/**'
-      - 'lib/tools/**'
-      - 'lib/decision/**'
-      - 'lib/seo/**'
-      - 'next.config.ts'
-      - 'package.json'
+  pull_request:        # bewusst OHNE paths-Filter — Check erscheint auf jedem PR
 jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Detect relevant changes
+        id: filter
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          if git diff --name-only "$BASE_SHA"...HEAD | grep -E '^(app/|components/tools/|lib/(calc|rules|tools|decision|seo)/|next\.config\.ts|package(-lock)?\.json|\.github/workflows/pr-build\.yml)'; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+            echo "Keine build-relevanten Pfade geändert — Build übersprungen, Check besteht."
+          fi
       - uses: actions/setup-node@v4
+        if: steps.filter.outputs.run == 'true'
         with:
           node-version: 20
           cache: npm
       - run: npm ci
-      - name: Production build
+        if: steps.filter.outputs.run == 'true'
+      - name: Production build (ohne private Secrets)
+        if: steps.filter.outputs.run == 'true'
         run: npm run build
         env:
-          NEXT_PUBLIC_SITE_URL: https://smartfinpro.com
+          NODE_OPTIONS: "--max-old-space-size=3072"
+          NEXT_PUBLIC_SITE_URL: ${{ secrets.NEXT_PUBLIC_SITE_URL }}
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SUPABASE_SERVICE_KEY: "ci-placeholder"
+          ANTHROPIC_API_KEY: "ci-placeholder"
+          RESEND_API_KEY: "ci-placeholder"
+          CRON_SECRET: "ci-placeholder"
+          SERPER_API_KEY: "ci-placeholder"
+          GOOGLE_INDEXING_JSON: "{}"
 ```
 
-Vorher prüfen: `grep -n "NEXT_PUBLIC_SUPABASE" .github/workflows/deploy.yml` — exakt dieselben Secret-Namen und ggf. weitere Build-Zeit-Envs aus dem Build-Step von deploy.yml übernehmen (deploy.yml ist die Referenz dafür, welche Envs `npm run build` braucht; fehlt eine, bricht der CI-Build so ab wie ein Deploy-Build es täte — das ist gewollt gleiches Verhalten).
+- [ ] **Step 1b: Platzhalter-Verträglichkeit EMPIRISCH beweisen (Pflicht vor Commit)**
+
+Lokal exakt die CI-Bedingungen simulieren — Prozess-Env überschreibt `.env.local` in Next.js:
+
+Run: `SUPABASE_SERVICE_KEY=ci-placeholder ANTHROPIC_API_KEY=ci-placeholder RESEND_API_KEY=ci-placeholder CRON_SECRET=ci-placeholder SERPER_API_KEY=ci-placeholder GOOGLE_INDEXING_JSON='{}' npm run build`
+Expected: Build erfolgreich. Falls FEHLSCHLAG: exakte Fehlstelle dokumentieren (welcher Loader/welche Route braucht den Service-Key zur Build-Zeit) und STOPPEN — Eskalation statt Workaround; keine echten privaten Secrets als „Fix".
 
 - [ ] **Step 2: YAML lokal validieren**
 
@@ -172,10 +193,14 @@ export interface ToolDefinition {
   shellMode: ShellMode;
   icon: string;              // lucide-Key, wie BEST_X_MANIFEST
   blurb: string;             // Hub-Karten-Copy, EN, 1 Satz
-  variants: ToolRouteVariant[];   // dieses Array IST der hreflang-Cluster (1 Variante = self-only)
+  variants: ToolRouteVariant[];   // SEO-Varianten: eigene indexierbare Routen = hreflang-Cluster
+  availableMarkets?: ToolMarket[]; // FUNKTIONALE Verfügbarkeit (SPEC 4.2): ein globaler Pfad darf
+                                   // mehrere Märkte bedienen; Default = Märkte der variants
   legacyPaths?: string[];    // 308-Quellen; Test prüft gegen next.config.ts-Redirects
 }
 ```
+
+**Vertrags-Kern (SPEC 4.2, bindend):** `variants[]` (SEO) und `availableMarkets[]` (Funktion) sind getrennt. Die drei globalen Broker-Tools (`broker-finder`, `trading-cost`, `broker-comparison`) erhalten `availableMarkets: ['us','uk','ca','au']` — sie erscheinen auf allen Markt-Hubs, aber über die globale Route mit validiertem `?market=`-Parameter (`getToolEntryHref`), ohne lokalisierte Duplikat-Routen. Canonical/OG bleiben parameterlos (Metadata nutzt weiterhin nur `variants`). Alle anderen Tools lassen `availableMarkets` weg (Default = variants-Märkte) — dadurch verschwinden die US-zentrischen Tools (loan, rewards, ai-roi) aus UK/CA/AU-Navigation: **beabsichtigte Verhaltensänderung „ehrliche Marktverfügbarkeit"** (SPEC In-Scope), im PR-Text von Task 6 explizit ausweisen.
 
 - [ ] **Step 2: Failing Test schreiben (fs-Parity + Integrität)**
 
@@ -185,7 +210,7 @@ import { readdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, it, expect } from 'vitest';
 import { TOOL_REGISTRY } from '@/lib/tools/registry/registry';
-import { getAllVariants, countLiveTools, getToolsForMarket } from '@/lib/tools/registry';
+import { getAllVariants, countLiveConcepts, countLiveRoutes, getToolsForMarket, getToolEntryHref } from '@/lib/tools/registry';
 
 const MARKETING = join(process.cwd(), 'app', '(marketing)');
 
@@ -243,11 +268,32 @@ describe('registry data integrity', () => {
       expect(v.path.startsWith(expectedPrefix), `${v.path} vs market ${v.market}`).toBe(true);
     }
   });
-  it('counts match the audited state (20 routes, 17 concepts)', () => {
+  it('counts: 20 Routen, 17 Konzepte — getrennte Zählfunktionen', () => {
     expect(getAllVariants().length).toBe(20);
     expect(Object.keys(TOOL_REGISTRY).length).toBe(17);
-    expect(countLiveTools()).toBeGreaterThanOrEqual(17); // live-Variants gesamt
-    expect(getToolsForMarket('uk').length).toBeGreaterThanOrEqual(3);
+    expect(countLiveRoutes()).toBe(20);      // interne Kennzahl (Manifest/Health)
+    expect(countLiveConcepts()).toBe(17);    // öffentliche Kennzahl (Homepage)
+  });
+});
+
+describe('market availability contract (SPEC 4.2)', () => {
+  it('broker triple is functionally available in all 4 markets via global route + ?market=', () => {
+    for (const id of ['broker-finder', 'trading-cost', 'broker-comparison'] as const) {
+      expect(getToolEntryHref(id, 'us')).not.toContain('?market=');
+      expect(getToolEntryHref(id, 'uk')).toMatch(/^\/tools\/.+\?market=uk$/);
+      expect(getToolEntryHref(id, 'ca')).toMatch(/\?market=ca$/);
+      expect(getToolEntryHref(id, 'au')).toMatch(/\?market=au$/);
+    }
+  });
+  it('localized variant wins over global route', () => {
+    expect(getToolEntryHref('money-leak-scanner', 'uk')).toBe('/uk/tools/money-leak-scanner');
+  });
+  it('US-centric tools are NOT offered to other markets (ehrliche Marktverfügbarkeit)', () => {
+    for (const id of ['loan', 'credit-card-rewards', 'ai-roi'] as const) {
+      expect(getToolEntryHref(id, 'uk')).toBeNull();
+    }
+    expect(getToolsForMarket('uk').some((t) => t.id === 'broker-finder')).toBe(true);
+    expect(getToolsForMarket('uk').some((t) => t.id === 'loan')).toBe(false);
   });
 });
 ```
@@ -311,13 +357,32 @@ export function getVariant(id: ToolId, market: ToolMarket): ToolRouteVariant | n
   return TOOL_REGISTRY[id]?.variants.find((v) => v.market === market) ?? null;
 }
 
-export function getToolsForMarket(market: ToolMarket): (ToolDefinition & { variant: ToolRouteVariant })[] {
-  return Object.values(TOOL_REGISTRY)
-    .map((t) => ({ ...t, variant: t.variants.find((v) => v.market === market)! }))
-    .filter((t) => t.variant);
+export function getAvailableMarkets(t: ToolDefinition): ToolMarket[] {
+  return t.availableMarkets ?? Array.from(new Set(t.variants.map((v) => v.market)));
 }
 
-export function countLiveTools(): number {
+/** Einstiegs-URL für einen Markt: lokale Variante, sonst globale Route + validierter ?market=-Param (SPEC 4.2). */
+export function getToolEntryHref(id: ToolId, market: ToolMarket): string | null {
+  const tool = TOOL_REGISTRY[id];
+  const local = tool.variants.find((v) => v.market === market);
+  if (local) return local.path;
+  if (!getAvailableMarkets(tool).includes(market)) return null;
+  const global = tool.variants.find((v) => v.market === 'us') ?? tool.variants[0];
+  return market === 'us' ? global.path : `${global.path}?market=${market}`;
+}
+
+export function getToolsForMarket(market: ToolMarket): (ToolDefinition & { entryHref: string; localized: boolean })[] {
+  return Object.values(TOOL_REGISTRY)
+    .filter((t) => getAvailableMarkets(t).includes(market))
+    .map((t) => ({ ...t, entryHref: getToolEntryHref(t.id, market)!, localized: t.variants.some((v) => v.market === market) }));
+}
+
+/** Öffentliche Kennzahl (Homepage): Konzepte mit ≥1 Live-Variante. */
+export function countLiveConcepts(): number {
+  return Object.values(TOOL_REGISTRY).filter((t) => t.variants.some((v) => v.status === 'live')).length;
+}
+/** Interne Kennzahl (Manifest/Health): Anzahl Live-Routen-Varianten. */
+export function countLiveRoutes(): number {
   return getAllVariants().filter((v) => v.status === 'live').length;
 }
 
@@ -335,8 +400,11 @@ export function getSitemapToolEntries(): { url: string }[] {
 
 export function getFooterToolLinks(market: ToolMarket): { label: string; href: string }[] {
   return getToolsForMarket(market)
-    .filter((t) => t.variant.status === 'live' && t.variant.indexable)
-    .map((t) => ({ label: t.name, href: t.variant.path }));
+    .filter((t) => {
+      const v = t.variants.find((x) => x.market === market) ?? t.variants.find((x) => x.market === 'us') ?? t.variants[0];
+      return v.status === 'live' && v.indexable;
+    })
+    .map((t) => ({ label: t.name, href: t.entryHref }));
 }
 
 export function getLlmsToolLines(): string[] {
@@ -734,10 +802,10 @@ it('sitemap entries derive from registry (no hardcoded tool list drift)', async 
 - [ ] **Step 2: Konsumenten umstellen (Export-Namen stabil halten)**
 
 - `config/navigation.ts`: `globalToolLinks`/`marketToolLinks`/`getSiloToolLinks` intern auf `getFooterToolLinks(market)` umstellen; Signaturen der Exporte unverändert lassen (Header/Footer-Komponenten bleiben unberührt). Footer verliert damit automatisch die noindex-Tools (debt-payoff, credit-score, remortgage) — im PR-Text explizit erwähnen.
-- 4 Hub-Pages: `const tools = [...]`-Arrays ersetzen durch `getToolsForMarket(market)`-Mapping auf die bestehende Kartenstruktur (`title→name, description→blurb, href→variant.path, icon→icon`); Kartendesign/JSX bleibt in diesem PR unverändert (Decision Launcher kommt erst Phase 2.4).
+- 4 Hub-Pages: `const tools = [...]`-Arrays ersetzen durch `getToolsForMarket(market)`-Mapping auf die bestehende Kartenstruktur (`title→name, description→blurb, href→entryHref, icon→icon`). **Zwei ausgewiesene Verhaltensänderungen (SPEC 4.2, im PR-Text dokumentieren):** (a) das Broker-Triple erscheint auf UK/CA/AU-Hubs über `?market=`-Links; (b) US-zentrische Tools (loan, rewards, ai-roi) verschwinden aus UK/CA/AU-Hubs und -Nav („ehrliche Marktverfügbarkeit"). Kartendesign/JSX bleibt in diesem PR unverändert (Decision Launcher kommt erst Phase 2.4).
 - `app/sitemap.ts`: hardcodiertes `toolPages`-Array (inkl. auskommentierter Zeilen) löschen → `getSitemapToolEntries()`.
 - `app/llms.txt/route.ts`: Sektion `## Tools & Calculators` aus `getLlmsToolLines()` einfügen.
-- Homepage: `<PlatformStats totalReviews={...} totalTools={countLiveTools()} />` — den Default `9` in `homepage-sections.tsx` entfernen (Pflicht-Prop machen), damit der Drift nicht zurückkommt.
+- Homepage: `<PlatformStats totalReviews={...} totalTools={countLiveConcepts()} />` — **Konzepte, nicht Routen** (öffentliche Kennzahl; `countLiveRoutes()` bleibt intern für Manifest/Health). Den Default `9` in `homepage-sections.tsx` entfernen (Pflicht-Prop machen), damit der Drift nicht zurückkommt.
 - Header: „Get Started"-CTA + Tools-Menü-Basislink auf `getHubPathForMarket(market)`.
 
 - [ ] **Step 3: Grün + committen**
@@ -814,6 +882,12 @@ git add -A && git commit -m "feat(seo): WebApplication- und FAQPage-JSON-LD für
 `0.0` unabhängig (zuerst mergen — schützt alle Folge-PRs) · `0.1` unabhängig · `0.2 ← 0.1` · `0.3 ← 0.2` (Page nutzt schon buildToolMetadata) · `0.4` unabhängig · `0.5 ← 0.1` (kanonische Namen) · `0.6 ← 0.1 + 0.3 + 0.5` · `0.7 ← 0.2`.
 
 **Kein De-noindex in Phase 0** — Indexability Gate (SPEC 11) entscheidet je Tool später.
+
+## Revision v1.1 (12.07.2026, nach externer Review)
+
+- **Task 0 neu geschnitten:** keine privaten Produktions-Secrets in PR-Builds (Platzhalter + empirischer Beweis-Step 1b); Trigger ohne `paths:`-Filter, In-Job-Diff-Filter mit skip-but-pass → Required Check erscheint auf jedem PR und testet Workflow-Änderungen selbst. PR #74 wird auf diesen Stand nachgezogen und erst nach einem tatsächlich gelaufenen grünen Build-Job gemerged.
+- **Task 1 auf SPEC-4.2-Vertrag gehoben:** `variants[]` (SEO) getrennt von `availableMarkets[]` (Funktion); `getToolEntryHref()` mit validiertem `?market=`-Param für das Broker-Triple; `countLiveConcepts()`/`countLiveRoutes()` statt einem mehrdeutigen `countLiveTools()`; Markt-Vertragstests ergänzt. PR #75 wird entsprechend erweitert.
+- **Task 6:** Hub/Nav über `entryHref`; zwei dokumentierte Verhaltensänderungen (Broker-Triple auf allen Hubs, US-zentrische Tools nur noch US).
 
 ## Self-Review-Ergebnis (Plan gegen SPEC Kapitel 11, Phase 0)
 

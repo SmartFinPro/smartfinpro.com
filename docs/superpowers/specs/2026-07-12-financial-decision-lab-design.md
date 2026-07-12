@@ -815,7 +815,7 @@ Gates je PR: `npx tsc --noEmit` · relevante Vitest-Suiten · lokales `npm run b
 | **0.3** | **gold-roi ATOMAR**: neue Route `/au/tools/gold-roi-calculator` + 308 von `/tools/gold-roi-calculator` + korrekter Canonical + hreflang + Registry- + Sitemap-Eintrag + AU-Hub-Link + Redirect-/Canonical-/Route-Tests | 2 Pages, `next.config.ts`, Registry, `sitemap.ts` | e2e-Redirect-Assertion; kein inkonsistenter Zwischenstand |
 | **0.4** | `lib/rules/` + Testvektoren + Stale-Fixes: Super 11,5→12 % + Cap-Copy, TFSA/RRSP-2026-Werte, ISA-CGT-Copy (10 %→18/24) + Label 2026/27 | `lib/rules/*`, 3 Widgets, 2 Page-Copies, `__tests__/unit/rules.test.ts` | Fable-Entwurf → Sonnet → **Opus-Review** |
 | **0.5** | Naming-Drift (Wealthsimple Fee Savings; „5 questions") + statische „Popular"-Badges entfernt | Hub-Arrays, `config/navigation.ts`, 2 Pages | kein De-noindex (Gate!) |
-| **0.6** | Übrige Registry-Konsumenten: Nav/Footer, 4 Hubs datenseitig, Sitemap + Markt-Hub-URLs, `llms.txt`-Tools-Sektion, Homepage `totalTools={countLiveTools()}` | `config/navigation.ts`, 4 Hub-Pages, `sitemap.ts`, `app/llms.txt/route.ts`, Homepage | fs-Parity-Test ist der Wächter |
+| **0.6** | Übrige Registry-Konsumenten: Nav/Footer, 4 Hubs datenseitig, Sitemap + Markt-Hub-URLs, `llms.txt`-Tools-Sektion, Homepage `totalTools={countLiveConcepts()}` (**Konzepte als öffentliche Kennzahl**; `countLiveRoutes()` bleibt intern für Manifest/Health) | `config/navigation.ts`, 4 Hub-Pages, `sitemap.ts`, `app/llms.txt/route.ts`, Homepage | fs-Parity-Test ist der Wächter |
 | **0.7** | `generateWebApplicationSchema` + FAQPage-JSON-LD auf Tool-Seiten mit sichtbarer FAQ | `lib/seo/schema.ts`, `components/seo/web-application-schema.tsx`, Tool-Pages | JSON-LD-Parse-Assertion in e2e (JS-off) |
 | **1.1** | tool_v1 Core: `tool-events.ts`, `event-queue.ts`, Validation-Schemas, `/api/track`-Case | `lib/analytics/*`, `lib/validation/index.ts`, `app/api/track/route.ts` | Fable-Entwurf → Sonnet → **Opus-Review**; vitest tool-events/validation |
 | **1.2** | Client-Binding `tool-tracking.ts` + Session-Key-Konsolidierung (5 Komponenten) | `lib/analytics/tool-tracking.ts`, 5 Komponenten | `e2e/tool-tracking.spec.ts` (JS-on, route-intercept) |
@@ -836,7 +836,7 @@ Abhängigkeiten: 0.2/0.3/0.5/0.6 ← 0.1 · 0.5 ← 0.4 · 1.2 ← 1.1 · 1.3 �
 
 ## 12. Acceptance Criteria je Phase
 
-**Phase 0:** Kein Tool-Title enthält doppeltes `| SmartFinPro` (e2e-bewiesen) · alle 28 Ziel-Routen (soweit existent) haben self-Canonical · kein hreflang-Ziel 404t · gold-roi: alter Pfad 308t, neuer Pfad 200, Sitemap führt nur den neuen · Super-Widget zeigt 12 %/A$32.500, TFSA/RRSP 2026-Werte, ISA-Copy 18/24 % + 2026/27 · Sitemap enthält 3 Markt-Hubs · llms.txt listet Live-Tools · Homepage-Zahl == `countLiveTools()` · fs-Parity-Test grün · CI-Build Required Check aktiv.
+**Phase 0:** Kein Tool-Title enthält doppeltes `| SmartFinPro` (e2e-bewiesen) · alle 28 Ziel-Routen (soweit existent) haben self-Canonical · kein hreflang-Ziel 404t · gold-roi: alter Pfad 308t, neuer Pfad 200, Sitemap führt nur den neuen · Super-Widget zeigt 12 %/A$32.500, TFSA/RRSP 2026-Werte, ISA-Copy 18/24 % + 2026/27 · Sitemap enthält 3 Markt-Hubs · llms.txt listet Live-Tools · Homepage-Zahl == `countLiveConcepts()` (17, nicht 20) · fs-Parity-Test grün · CI-Build Required Check aktiv und auf jedem PR erscheinend, ohne private Produktions-Secrets.
 
 **Phase 1:** `event_batch` (cockpit) verhält sich byte-identisch (Regressions-e2e) · `tool_event_batch` validiert strikt, Bots verworfen, Feld-Cap 40 und separater Lever-Cap 10 greifen (Unit) · alle Funnel-Stufen nutzen denselben `sessionId+toolId+market+variantPath`-Dedupe-Key · 20-Sekunden-Fallback zählt nur qualifiziert sichtbare Resultatzeit (Visibility-/Intersection-Tests) · Money-Leak-Events landen in `analytics_events` statt 400 · alle 5 Komponenten nutzen `sfp_session_id` · Dashboard-Tab rendert mit leeren Daten fehlerfrei · Baseline-Fenster dokumentiert (Start/Ende im Dashboard annotiert).
 
@@ -901,7 +901,7 @@ Abhängigkeiten: 0.2/0.3/0.5/0.6 ← 0.1 · 0.5 ← 0.4 · 1.2 ← 1.1 · 1.3 �
 |---|---|---|---|
 | `CLAUDE.md` | „Tailwind CSS v4 … Konfiguration in `tailwind.css`, KEINE tailwind.config.js" | **v3.4.19**, `tailwind.config.ts`, `@tailwind`-Direktiven in `app/globals.css` | Tech-Stack-Tabelle + Fallstricke-Zeile berichtigen |
 | `CLAUDE.md` | „Interaktive Tools: 9" | 20 Routen / 17 Konzepte (nach Phase 4: 24 Routen) | Zahl durch Verweis auf Registry ersetzen |
-| Homepage `PlatformStats` | „9 Interactive Tools" (Default) | s. o. | `totalTools={countLiveTools()}` (PR 0.6) |
+| Homepage `PlatformStats` | „9 Interactive Tools" (Default) | s. o. | `totalTools={countLiveConcepts()}` — Konzepte, nicht Routen (PR 0.6) |
 | `components/ui/answer-block.tsx` | Kommentar „Linked to FAQPage Schema" | emittiert kein JSON-LD | Kommentar fixen bzw. Schema via `ToolJsonLd` real machen (0.7) |
 | Cron-/Routen-Zahlen in CLAUDE.md vs. `memory/generated/` | 19/23 Crons uneinheitlich | `npm run refresh:agent-context` ist Quelle | im selben Mini-PR aktualisieren |
 

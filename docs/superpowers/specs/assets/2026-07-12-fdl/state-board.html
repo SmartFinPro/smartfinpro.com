@@ -1,4 +1,5 @@
 <title>FDL State Board — ResultPanel-Zustände</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
   :root{ --desk:#eef1f5; --paper:#fff; --wire:#8a97a8; --wire-soft:#c6cfda; --ink:#25303e; --note:#c2410c; --fill:#f3f5f8; --warnbg:#fff8e6; --warnbd:#e8c978; --warnfg:#8a5a00; --err:#d64045; --good:#1a6b3a; --sky:#e8f0fb; --navy:#1b4f8c; }
   :root[data-theme="dark"]{ --desk:#1b2028 } :root[data-theme="light"]{ --desk:#eef1f5 }
@@ -10,7 +11,7 @@
   @media (prefers-color-scheme: dark){ header h1,header p{color:#dfe5ee} }
   :root[data-theme="dark"] header h1,:root[data-theme="dark"] header p{color:#dfe5ee}
   :root[data-theme="light"] header h1{color:#25303e} :root[data-theme="light"] header p{color:#6b7788}
-  .matrix{max-width:1200px;margin:20px auto 0;display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:20px}
+  .matrix{max-width:1200px;margin:20px auto 0;display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),1fr));gap:20px}
   .card{background:var(--paper);border:1px solid var(--wire);border-radius:4px;padding:14px;display:flex;flex-direction:column;gap:8px}
   .card h2{font-size:13px;margin:0;font-family:ui-monospace,Menlo,monospace;color:var(--note)}
   .card .allowed{font:10px ui-monospace,monospace;color:#5b6878}
@@ -64,9 +65,9 @@
 
   <div class="card">
     <h2>3 · calculating</h2>
-    <span class="allowed">Chips: wie Vorzustand · Dauer 180–240 ms · reduced-motion: sofort</span>
+    <span class="allowed">Chip = Vorzustand: VOR dem ersten eigenen Resultat „Example", danach „Your result" · Dauer 180–240 ms · reduced-motion: sofort</span>
     <div class="panel">
-      <span class="chip yours">Your result</span>
+      <span class="chip example">Example result</span>
       <div class="skel" aria-hidden="true"></div>
       <div class="hatch" style="opacity:.5">Visual bleibt stehen (dimmt), KEIN Spinner-Overlay</div>
       <span class="note">Skeleton NUR im Zahlenbereich · Breiten reserviert → kein Shift</span>
@@ -134,7 +135,7 @@
   <strong>Übergangs-Regeln (bindend):</strong>
   <ul>
     <li>initial → ready → calculating → result ist der Normalpfad; calculating dauert 180–240 ms (CSS-Transition), unter <code>prefers-reduced-motion</code> 0 ms.</li>
-    <li>Example → Yours: beim ersten echten Input (<code>tool_start</code>); nie zurück zu Example innerhalb der Session.</li>
+    <li>Example → Yours: mit dem ersten EIGENEN Resultat (<code>tool_first_result</code>) — der Chip beschreibt das angezeigte Ergebnis, nicht die Eingaben; Eingaben allein (<code>tool_start</code>) wechseln den Chip nicht. Nie zurück zu Example innerhalb der Session.</li>
     <li>Shared gilt nur bei gültigem Fragment-Payload; jede Bearbeitung wechselt auf Yours.</li>
     <li>stale-data ist ein Overlay-Zustand von result (Ergebnis + Warnbanner), kein Ersatz.</li>
     <li>insufficient-data und error zeigen NIE Zahlenwerte; ResultMiniBar (mobil) erscheint in diesen Zuständen nicht.</li>

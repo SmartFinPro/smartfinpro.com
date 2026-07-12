@@ -1,8 +1,9 @@
 <title>FDL Lo-Fi Wireframes — Hub & 4 Major Tools</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
   :root{
     --desk:#eef1f5; --paper:#ffffff; --wire:#8a97a8; --wire-soft:#c6cfda;
-    --ink:#25303e; --muted:#5b6views;--muted:#5b6878; --note:#c2410c; --fill:#f3f5f8;
+    --ink:#25303e; --muted:#5b6878; --note:#c2410c; --fill:#f3f5f8;
     --good:#1a6b3a;
   }
   @media (prefers-color-scheme: dark){
@@ -75,7 +76,7 @@
 <!-- ============ 01 HUB ============ -->
 <section class="screen" id="hub">
   <h2>01 · Hub „Decision Launcher" — /tools (+ 3 Markt-Hubs)</h2>
-  <p class="sub">AK: Bei 1280×720 sind alle 4 Major Decisions erkennbar. Kein Hero, kein Gradient. Miniaturen = echte Mini-Charts aus Worked-Example-Daten, jede mit „Example"-Chip.</p>
+  <p class="sub">AK: Bei 1280×720 sind alle Major Decisions des aktiven Markts erkennbar — <strong>US: exakt 3</strong> (kein Home-Panel, solange kein US-Home-Tool existiert; keine Ersatzroute), <strong>UK/CA/AU: 4</strong>. Kein Hero, kein Gradient. Miniaturen = echte Mini-Charts aus Worked-Example-Daten, jede mit „Example"-Chip. Frame unten zeigt den US-Hub.</p>
   <div class="frames">
     <div class="frame-wrap">
     <figure class="frame w1280">
@@ -92,42 +93,37 @@
         </div>
         <div class="note">↑ H1-Bereich gesamt ≤ 220 px · Marktumschalter 44 px hoch</div>
         <div class="grid12">
-          <div class="wire col" style="grid-column:span 3;min-height:150px">
+          <div class="wire col" style="grid-column:span 4;min-height:150px">
             <span class="lbl">Find where my money is going</span>
             <strong>Money Leak Scanner</strong>
             <div class="hatch" style="height:56px">mini: Kategorie-Leisten</div>
             <div class="row" style="justify-content:space-between;align-items:center"><span class="chip ex">Example</span><span class="btnw">Start →</span></div>
           </div>
-          <div class="wire col" style="grid-column:span 3;min-height:150px">
+          <div class="wire col" style="grid-column:span 4;min-height:150px">
             <span class="lbl">Plan my financial future</span>
             <strong>Wealth Horizon</strong>
             <div class="hatch" style="height:56px">mini: Szenariokorridor</div>
             <div class="row" style="justify-content:space-between;align-items:center"><span class="chip ex">Example</span><span class="btnw">Start →</span></div>
           </div>
-          <div class="wire col" style="grid-column:span 3;min-height:150px">
+          <div class="wire col" style="grid-column:span 4;min-height:150px">
             <span class="lbl">Choose the right broker</span>
             <strong>Broker Decision Journey</strong>
             <div class="hatch" style="height:56px">mini: Match + Kosten</div>
             <div class="row" style="justify-content:space-between;align-items:center"><span class="chip ex">Example</span><span class="btnw">Start →</span></div>
           </div>
-          <div class="wire col" style="grid-column:span 3;min-height:150px">
-            <span class="lbl">Understand what home I can afford</span>
-            <strong>Home Decision Lab</strong>
-            <div class="hatch" style="height:56px">mini: Affordability Range</div>
-            <div class="row" style="justify-content:space-between;align-items:center"><span class="chip ex">Example</span><span class="btnw">Start →</span></div>
-          </div>
         </div>
-        <div class="note">4 Decision-Panels · 1440: 4×1 à ~272 px · 1280: hier 4×1 kompakt, alternativ 2×2 à 560×200 px · Miniatur ~120×64 px · Radius 8 px</div>
+        <div class="wire soft" style="border-style:dashed;font-size:11px"><strong>Nur UK/CA/AU:</strong> viertes Panel „Understand what home I can afford" → Home Lab des Markts (UK Remortgage / CA Affordability / AU Mortgage); Broker-Panel verlinkt dort <code>/tools/broker-finder?market=uk|ca|au</code> (validiert, US = Default ohne Param)</div>
+        <div class="note">US: 3 Panels à span-4 · UK/CA/AU: 4 Panels à span-3 (1440: 4×1 à ~272 px) · Miniatur ~120×64 px · Radius 8 px · Panel-Set = Major-Decision-Tabelle SPEC 4.2 (bindend)</div>
         <div class="sp"></div>
         <div class="wire soft col">
           <span class="lbl">Supporting tools — grouped by goal (nur Gruppen mit Tools im aktiven Markt)</span>
           <div class="row" style="flex-wrap:wrap">
-            <div class="wire col" style="width:220px"><span class="lbl">Retirement &amp; investing</span><span>· Superannuation</span><span>· TFSA vs RRSP</span><span>· ISA Tax Savings</span></div>
-            <div class="wire col" style="width:220px"><span class="lbl">Debt &amp; credit</span><span>· Debt Payoff</span><span>· Credit Utilization</span><span>· Loan</span></div>
-            <div class="wire col" style="width:220px"><span class="lbl">Trading &amp; brokers</span><span>· Trading Cost</span><span>· Broker Comparison</span></div>
-            <div class="wire col" style="width:220px"><span class="lbl">Home &amp; mortgages</span><span>· AU Mortgage</span><span>· CA Affordability</span><span>· UK Remortgage</span></div>
+            <div class="wire col" style="width:220px"><span class="lbl">Retirement &amp; investing</span><span>· Superannuation <em style="font-size:9px">(AU)</em></span><span>· TFSA vs RRSP <em style="font-size:9px">(CA)</em></span><span>· ISA Tax Savings <em style="font-size:9px">(UK)</em></span></div>
+            <div class="wire col" style="width:220px"><span class="lbl">Debt &amp; credit</span><span>· Debt Payoff <em style="font-size:9px">(US)</em></span><span>· Credit Utilization <em style="font-size:9px">(US)</em></span><span>· Loan <em style="font-size:9px">(US)</em></span></div>
+            <div class="wire col" style="width:220px"><span class="lbl">Trading &amp; brokers</span><span>· Trading Cost <em style="font-size:9px">(alle, ?market=)</em></span><span>· Broker Comparison <em style="font-size:9px">(alle, ?market=)</em></span></div>
+            <div class="wire col" style="width:220px"><span class="lbl">Home &amp; mortgages</span><span>· AU Mortgage <em style="font-size:9px">(AU)</em></span><span>· CA Affordability <em style="font-size:9px">(CA)</em></span><span>· UK Remortgage <em style="font-size:9px">(UK)</em></span></div>
           </div>
-          <div class="note">KEINE „Popular"-Badges bis Mindeststichprobe (≥500 tool_view / 28 Tage)</div>
+          <div class="note">Superset-Ansicht zur Übersicht — real filtert jeder Hub nach availableMarkets: US-Hub zeigt KEINE Super/TFSA/ISA/Home-Tools; UK/CA/AU zeigen KEINE US-only-Tools (loan, rewards, ai-roi). KEINE „Popular"-Badges bis Mindeststichprobe (≥500 tool_view / 28 Tage)</div>
         </div>
       </div>
     </figure>
@@ -150,11 +146,11 @@
           <div class="col" style="flex:1;gap:2px"><span class="lbl">Choose the right broker</span><strong style="font-size:12px">Broker Journey</strong><span class="chip ex">Example</span></div>
           <div class="hatch" style="width:96px;height:52px;flex:0 0 auto">mini</div>
         </div>
-        <div class="wire row" style="align-items:center;min-height:64px">
-          <div class="col" style="flex:1;gap:2px"><span class="lbl">What home can I afford</span><strong style="font-size:12px">Home Decision Lab</strong><span class="chip ex">Example</span></div>
+        <div class="wire row" style="align-items:center;min-height:64px;border-style:dashed">
+          <div class="col" style="flex:1;gap:2px"><span class="lbl">What home can I afford — NUR UK/CA/AU</span><strong style="font-size:12px">Home Decision Lab</strong><span class="chip ex">Example</span></div>
           <div class="hatch" style="width:96px;height:52px;flex:0 0 auto">mini</div>
         </div>
-        <div class="note">Panels ~132 px · alle 4 in ≤1,5 Screens · Touch ≥44 px</div>
+        <div class="note">US: 3 Panels · UK/CA/AU: 4 Panels (gestrichelt = markt-konditional) · ~132 px je Panel · Touch ≥44 px</div>
       </div>
     </figure>
     </div>
@@ -303,10 +299,10 @@
     <figcaption>Fluss + Schlüssel-Wires · Routen bleiben SEO-stabil</figcaption>
     <div class="row" style="align-items:stretch">
       <div class="wire col" style="flex:1">
-        <span class="lbl">1 · /tools/broker-finder</span>
+        <span class="lbl">1 · /tools/broker-finder<em>?market=uk|ca|au</em></span>
         <strong style="font-size:12px">Quiz (5 Fragen)</strong>
         <div class="wire fill" style="font-size:11px">Q3: How often do you trade? [<u>Weekly</u>] [Monthly] [Rarely]</div>
-        <div class="note">schreibt broker.profile + quizAnswers</div>
+        <div class="note">validierter ?market= (Default us) → broker.market + profile + quizAnswers; Anbieter/Regulierung/Kosten je Markt gefiltert (availableMarkets)</div>
       </div>
       <div style="align-self:center" class="note">→</div>
       <div class="wire col" style="flex:1.2">

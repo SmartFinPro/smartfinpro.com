@@ -1,4 +1,5 @@
 <title>FDL Prototyp — Broker Decision Journey (GuidedJourney über Routen)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
   :root{ --desk:#eef1f5; --paper:#fff; --wire:#8a97a8; --wire-soft:#c6cfda; --ink:#25303e; --note:#c2410c; --fill:#f3f5f8; --navy:#1b4f8c; --good:#1a6b3a; --sky:#e8f0fb; }
   :root[data-theme="dark"]{ --desk:#1b2028 } :root[data-theme="light"]{ --desk:#eef1f5 }
@@ -79,9 +80,15 @@
 <div class="app">
   <!-- SCREEN 1: QUIZ -->
   <section class="screen on" id="sc1" aria-label="Quiz">
-    <div class="route">Route: /tools/broker-finder · schreibt broker.quizAnswers + profile</div>
+    <div class="route">Route: /tools/broker-finder?market=… · schreibt broker.market + quizAnswers + profile</div>
     <h2 class="t">Which broker actually fits how you trade?</h2>
     <p class="sub">Five quick questions — your answers travel with you through the whole journey.</p>
+    <div class="q"><label>0 · Entering from hub (simuliert den validierten <code>?market=</code>-Parameter; Default US)</label>
+      <div class="opts" data-market>
+        <button data-m="us" aria-pressed="true">US hub</button><button data-m="uk">UK hub</button><button data-m="ca">CA hub</button><button data-m="au">AU hub</button>
+      </div>
+      <div class="route" style="margin:6px 0 0" id="regnote">Regulator context: SEC/FINRA · providers filtered by availableMarkets</div>
+    </div>
     <div class="q"><label>1 · How experienced are you?</label>
       <div class="opts" data-k="experience"><button>New to trading</button><button>Some experience</button><button>Advanced</button></div></div>
     <div class="q"><label>2 · What do you mainly want to trade?</label>
@@ -148,13 +155,16 @@
 (function(){
   'use strict';
   const $ = (id) => document.getElementById(id);
+  // availableMarkets je Anbieter (SPEC 4.2): ohne nachgewiesene Marktverfügbarkeit KEINE Empfehlung.
   const BROKERS = [
-    { slug:'alphatrade', name:'AlphaTrade',  perTrade:1.0, spreadPct:0.05, strengths:['Lowest fees','Forex','CFDs'],       education:2, platform:4 },
-    { slug:'novainvest',  name:'NovaInvest', perTrade:0.0, spreadPct:0.12, strengths:['Learning & support','Stocks & ETFs'],education:5, platform:3 },
-    { slug:'proterminal', name:'ProTerminal',perTrade:2.5, spreadPct:0.03, strengths:['Best platform','Advanced','Stocks & ETFs'], education:2, platform:5 },
-    { slug:'everymarket', name:'EveryMarket',perTrade:0.8, spreadPct:0.08, strengths:['All-round','Forex','Stocks & ETFs'], education:3, platform:4 },
+    { slug:'alphatrade', name:'AlphaTrade',  perTrade:1.0, spreadPct:0.05, strengths:['Lowest fees','Forex','CFDs'],        education:2, platform:4, availableMarkets:['us','uk','au'] },
+    { slug:'novainvest',  name:'NovaInvest', perTrade:0.0, spreadPct:0.12, strengths:['Learning & support','Stocks & ETFs'], education:5, platform:3, availableMarkets:['us','ca'] },
+    { slug:'proterminal', name:'ProTerminal',perTrade:2.5, spreadPct:0.03, strengths:['Best platform','Advanced','Stocks & ETFs'], education:2, platform:5, availableMarkets:['us'] },
+    { slug:'everymarket', name:'EveryMarket',perTrade:0.8, spreadPct:0.08, strengths:['All-round','Forex','Stocks & ETFs'],  education:3, platform:4, availableMarkets:['us','uk','ca','au'] },
   ];
-  const state = { answers:{}, shortlist:[], started:false, firstResult:false, qualified:false };
+  const REGULATORS = { us:'SEC/FINRA', uk:'FCA', ca:'CIRO', au:'ASIC' };
+  const state = { market:'us', answers:{}, shortlist:[], started:false, firstResult:false, qualified:false };
+  function marketBrokers(){ return BROKERS.filter(b => b.availableMarkets.includes(state.market)); }
   const fired = new Set(['tool_view']);
   function track(n, meta){
     const once = ['tool_start','tool_first_result','tool_qualified_decision'];
@@ -167,7 +177,8 @@
   // DecisionStateV1-Spiegel (echtes sessionStorage, Key wie Spec 8.6)
   function persist(){
     const v1 = { v:1, updatedAt:new Date().toISOString().slice(0,19),
-      broker:{ quizAnswers: state.answers,
+      broker:{ market: state.market,
+        quizAnswers: state.answers,
         profile:{ experience: state.answers.experience || null, instruments:[state.answers.instrument].filter(Boolean),
                   tradesPerMonth:+state.answers.tradesPerMonth || null, avgTradeSize:+state.answers.avgTradeSize || null,
                   priorities:[state.answers.priority].filter(Boolean) },
@@ -200,6 +211,13 @@
       const b = e.target.closest('button'); if(!b) return;
       g.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed','false'));
       b.setAttribute('aria-pressed','true');
+      if (g.hasAttribute('data-market')){
+        state.market = b.dataset.m;                      // validierter ?market= aus dem Hub; ungültig/fehlt → us
+        state.shortlist = [];                            // Shortlist gilt nur je Markt
+        $('regnote').textContent = 'Regulator context: ' + REGULATORS[state.market] + ' · providers filtered by availableMarkets';
+        track('tool_input_change','market=' + state.market);
+        persist(); return;
+      }
       state.answers[g.dataset.k] = b.dataset.v ?? b.textContent.trim();
       if (!state.started){ state.started = true; track('tool_start'); }
       track('tool_input_change', g.dataset.k);
@@ -227,7 +245,7 @@
     return Math.max(48, Math.min(97, Math.round(s)));
   }
   function renderCards(){
-    const ranked = BROKERS.map(b=>({ b, score: matchScore(b), cost: yearlyCost(b) })).sort((x,y)=>y.score-x.score);
+    const ranked = marketBrokers().map(b=>({ b, score: matchScore(b), cost: yearlyCost(b) })).sort((x,y)=>y.score-x.score);
     $('cards').innerHTML = ranked.map((r,i)=>`
       <div class="bcard${i===0?' top':''}">
         <div style="display:flex;justify-content:space-between;align-items:baseline"><strong>${r.b.name}</strong><span class="match">${r.score}%</span></div>
@@ -249,7 +267,7 @@
 
   function renderCosts(prefill){
     if (prefill){ $('tpm').value = state.answers.tradesPerMonth || 6; $('size').value = state.answers.avgTradeSize || 1000; }
-    const list = BROKERS.filter(b=>state.shortlist.includes(b.slug)).map(b=>({b, c: yearlyCost(b)})).sort((x,y)=>x.c-y.c);
+    const list = marketBrokers().filter(b=>state.shortlist.includes(b.slug)).map(b=>({b, c: yearlyCost(b)})).sort((x,y)=>x.c-y.c);
     const max = Math.max(...list.map(x=>x.c), 1);
     $('costbars').innerHTML = list.map((x,i)=>`
       <div class="brow"><span class="nm">${x.b.name}</span><div class="bar${i===0?' me':''}" style="width:${Math.max(8, x.c/max*55)}%"></div><span class="val">$${x.c.toLocaleString()}/yr${i===0?' · cheapest':''}</span></div>`).join('');
@@ -260,14 +278,14 @@
   $('back4').addEventListener('click',()=>go(3));
 
   function renderCompare(){
-    const list = BROKERS.filter(b=>state.shortlist.includes(b.slug));
+    const list = marketBrokers().filter(b=>state.shortlist.includes(b.slug));
     $('cmp').innerHTML = `<tr><th>Broker</th><th>Match</th><th>Est. cost/yr (yours)</th><th>Per trade</th><th>Spread</th><th>Platform</th><th>Education</th></tr>` +
       list.map(b=>`<tr><td class="on"><strong>${b.name}</strong> <span style="font-size:10px">(shortlist ✓)</span></td><td>${matchScore(b)}%</td><td>$${yearlyCost(b).toLocaleString()}</td><td>$${b.perTrade.toFixed(2)}</td><td>${b.spreadPct}%</td><td>${'★'.repeat(b.platform)}</td><td>${'★'.repeat(b.education)}</td></tr>`).join('');
   }
   $('toFinish').addEventListener('click',()=>go(5));
 
   function renderSummary(){
-    const list = BROKERS.filter(b=>state.shortlist.includes(b.slug)).map(b=>({b, c:yearlyCost(b), m:matchScore(b)})).sort((x,y)=>y.m-x.m);
+    const list = marketBrokers().filter(b=>state.shortlist.includes(b.slug)).map(b=>({b, c:yearlyCost(b), m:matchScore(b)})).sort((x,y)=>y.m-x.m);
     const top = list[0];
     $('summary').innerHTML = top
       ? `Based on your answers, <strong>${top.b.name}</strong> fits best (${top.m}% match, est. $${top.c.toLocaleString()}/yr). Your shortlist: ${list.map(x=>x.b.name).join(', ')}.`
