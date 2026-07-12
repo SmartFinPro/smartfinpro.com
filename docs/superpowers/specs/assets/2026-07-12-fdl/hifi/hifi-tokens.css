@@ -151,7 +151,11 @@ input[type="range"] { flex: 1; min-height: 44px; accent-color: var(--sfp-navy); 
 .result-chip {
   display: inline-flex; align-items: center; gap: 6px; border-radius: 999px;
   font-size: 12px; font-weight: 600; padding: 3px 10px; line-height: 18px;
+  white-space: nowrap; flex: 0 0 auto; /* never let a flex row squeeze the pill text onto 2 lines */
 }
+/* Row pairing a result-chip with adjacent meta text: chip keeps its shape,
+   meta wraps as a whole to the next line on narrow viewports instead. */
+.chip-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .result-chip.example { border: 1px dashed var(--tool-border-strong); color: var(--sfp-slate); }
 .result-chip.yours { background: var(--sfp-navy); color: #fff; }
 .result-chip.shared { background: var(--sfp-sky); color: var(--sfp-navy); border: 1px solid var(--sfp-navy); }
@@ -255,8 +259,16 @@ details.assumptions .src { color: var(--sfp-slate); font-size: 13px; margin: 8px
   padding: 8px 16px; min-height: 56px; box-shadow: 0 -1px 2px rgb(16 24 40 / 0.06);
 }
 @media (max-width: 720px) { .mini-bar { display: flex; } }
-.mini-bar .v { font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; }
-.mini-bar .l { font-size: 12px; color: var(--sfp-slate); }
+.mini-bar .summary { display: flex; flex-direction: column; min-width: 0; flex: 1 1 auto; gap: 1px; }
+.mini-bar .v {
+  font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; /* one line, always — copy stays short by design */
+}
+.mini-bar .l {
+  font-size: 12px; color: var(--sfp-slate);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.mini-bar .btn { flex: 0 0 auto; }
 
 /* ---------- GuidedJourney ---------- */
 .progress { display: flex; gap: 6px; margin-bottom: 8px; }
