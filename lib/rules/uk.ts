@@ -4,18 +4,12 @@
 // (SPEC 1.5 + 8.4). verifiedAt reflects the date these figures were
 // last checked against the primary source (2026-07-12).
 //
-// NOTE on cashIsaAllowance's 2027-04-06 entry: SPEC 1.5 cites this change
-// to "gov.uk/individual-savings-accounts + gov.uk 'ISA reform 2027'
-// Factsheet (Autumn Budget 2025)" but does not give a distinct URL for the
-// factsheet itself. We reuse the general ISA allowance page URL below
-// (a real, already-cited gov.uk source) rather than fabricate a specific
-// factsheet link. Flagged for follow-up verification once a stable
-// factsheet URL is confirmed.
-
 import type { RulePack } from './types';
 import { ASSUMPTION_RULES } from './assumptions';
 
 const ISA_SOURCE = 'https://www.gov.uk/individual-savings-accounts';
+const ISA_2027_REFORM_SOURCE =
+  'https://www.gov.uk/government/publications/fiscal-events-2026-factsheets/isa-reform-2027-anti-circumvention-rules-factsheet';
 const CGT_SOURCE = 'https://www.gov.uk/capital-gains-tax/rates';
 const VERIFIED_AT = '2026-07-12';
 
@@ -43,7 +37,7 @@ export const UK_RULES: RulePack = {
     {
       value: 12000,
       effectiveFrom: '2027-04-06',
-      sourceUrl: ISA_SOURCE,
+      sourceUrl: ISA_2027_REFORM_SOURCE,
       verifiedAt: VERIFIED_AT,
       label: 'Cash ISA allowance (under 65, from Autumn Budget 2025 reform)',
       category: 'limit',
