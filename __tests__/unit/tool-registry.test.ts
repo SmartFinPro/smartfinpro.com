@@ -106,3 +106,14 @@ describe('legacy path redirect coverage (FDL 0.3)', () => {
     }
   });
 });
+
+describe('registry consumers (FDL 0.6)', () => {
+  it('sitemap entries derive from registry (no hardcoded tool list drift)', async () => {
+    const { getSitemapToolEntries } = await import('@/lib/tools/registry');
+    const urls = getSitemapToolEntries().map((e) => e.url);
+    expect(urls).toContain('/uk/tools');            // Markt-Hubs drin
+    expect(urls).toContain('/au/tools/gold-roi-calculator');
+    expect(urls).not.toContain('/tools/gold-roi-calculator');   // legacy raus
+    expect(urls).not.toContain('/tools/debt-payoff-calculator'); // noindex raus
+  });
+});

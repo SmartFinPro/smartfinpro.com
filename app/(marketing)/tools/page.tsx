@@ -1,6 +1,11 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
-import { Calculator, CreditCard, DollarSign, Scale, TrendingUp, ArrowRight, Sparkles, Target, BarChart3, Home, PiggyBank, Droplet } from 'lucide-react';
+import {
+  Calculator, CreditCard, Scale, ArrowRight, Sparkles, Target,
+  ScanSearch, Compass, Columns3, Bot, Banknote, TrendingDown, Gauge,
+  type LucideIcon,
+} from 'lucide-react';
+import { getToolsForMarket, type DecisionCategory } from '@/lib/tools/registry';
 
 export const metadata: Metadata = {
   title: 'Free Financial Tools & Calculators | SmartFinPro',
@@ -11,120 +16,40 @@ export const metadata: Metadata = {
   },
 };
 
-const tools = [
-  {
-    title: 'Money Leak Scanner',
-    description: 'Drag sliders to find how much your household is overpaying across banking fees, subscriptions, credit-card interest, insurance, investing, and FX. Live results, no sign-up.',
-    icon: Droplet,
-    href: '/tools/money-leak-scanner',
-    category: 'Personal Finance',
-    badge: 'New',
-  },
-  {
-    title: 'Broker Finder Quiz',
-    description: 'Answer 4 quick questions and get personalized broker recommendations with match scores. Find your perfect trading platform in under a minute.',
-    icon: Target,
-    href: '/tools/broker-finder',
-    category: 'Trading',
-    badge: null,
-  },
-  {
-    title: 'Trading Cost Calculator',
-    description: 'Compare real trading costs across top brokers. See spreads, commissions, and overnight fees — discover how much you could save.',
-    icon: BarChart3,
-    href: '/tools/trading-cost-calculator',
-    category: 'Trading',
-    badge: 'New',
-  },
-  {
-    title: 'Broker Comparison',
-    description: 'Compare forex and CFD brokers side by side. Filter by features, regulation, and find the best broker for your trading needs.',
-    icon: Scale,
-    href: '/tools/broker-comparison',
-    category: 'Trading',
-    badge: 'Compare',
-  },
-  {
-    title: 'Wealthsimple Fee Savings Calculator',
-    description: 'See how much you could save by switching from traditional bank mutual funds. Compare fee drag over 10, 20, and 30 years.',
-    icon: DollarSign,
-    href: '/ca/tools/wealthsimple-calculator',
-    category: 'Investing',
-    badge: 'New',
-  },
-  {
-    title: 'AI ROI Calculator',
-    description: 'Calculate the return on investment for AI tools. Includes Content & Marketing mode for teams plus a Financial Coaching sector with client capacity projections.',
-    icon: TrendingUp,
-    href: '/tools/ai-roi-calculator',
-    category: 'Productivity',
-    badge: 'Updated',
-  },
-  {
-    title: 'Debt Payoff Calculator',
-    description: 'Create a customized debt payoff plan using avalanche or snowball methods. See when you\'ll be debt-free and how much interest you\'ll save.',
-    icon: Calculator,
-    href: '/tools/debt-payoff-calculator',
-    category: 'Personal Finance',
-    badge: null,
-  },
-  {
-    title: 'Loan Calculator',
-    description: 'Calculate monthly payments, total interest, and see a full amortization schedule for personal loans, debt consolidation, and more.',
-    icon: Calculator,
-    href: '/tools/loan-calculator',
-    category: 'Personal Finance',
-    badge: null,
-  },
-  {
-    title: 'Credit Score Simulator',
-    description: 'Predict how different actions affect your credit score. See the impact of paying off debt, opening new accounts, or making late payments.',
-    icon: TrendingUp,
-    href: '/tools/credit-score-simulator',
-    category: 'Personal Finance',
-    badge: null,
-  },
-  {
-    title: 'AU Mortgage Calculator',
-    description: 'Calculate Australian home loan repayments, LVR, offset account savings, and stamp duty. Compare Big Four vs fintech rates.',
-    icon: Home,
-    href: '/au/tools/au-mortgage-calculator',
-    category: 'Personal Finance',
-    badge: 'New',
-  },
-  {
-    title: 'UK Remortgage Calculator',
-    description: 'Calculate your new monthly payment after remortgaging. Compare fixed vs tracker rates and see how much you could save by switching.',
-    icon: Home,
-    href: '/uk/tools/remortgage-calculator',
-    category: 'Personal Finance',
-    badge: null,
-  },
-  {
-    title: 'ISA Tax Savings Calculator',
-    description: 'See how much you could save in capital gains tax and dividend tax by investing inside a Stocks & Shares ISA vs a General Investment Account.',
-    icon: PiggyBank,
-    href: '/uk/tools/isa-tax-savings-calculator',
-    category: 'Personal Finance',
-    badge: 'New',
-  },
-  {
-    title: 'Credit Card Rewards Calculator',
-    description: 'Compare Amex Gold, Chase Sapphire Preferred, and cashback cards side by side. Find which card earns the most based on your spending.',
-    icon: CreditCard,
-    href: '/tools/credit-card-rewards-calculator',
-    category: 'Personal Finance',
-    badge: 'New',
-  },
-  {
-    title: 'CA Mortgage Affordability Calculator',
-    description: 'Find out how much home you can afford in Canada. GDS/TDS ratios, OSFI stress test, CMHC insurance, and first-time buyer incentives.',
-    icon: Home,
-    href: '/ca/tools/ca-mortgage-affordability-calculator',
-    category: 'Personal Finance',
-    badge: 'New',
-  },
-];
+// Registry icon key (SPEC 9.1, lucide-Key) → Lucide component.
+const iconMap: Record<string, LucideIcon> = {
+  'scan-search': ScanSearch,
+  compass: Compass,
+  calculator: Calculator,
+  'columns-3': Columns3,
+  bot: Bot,
+  banknote: Banknote,
+  'trending-down': TrendingDown,
+  gauge: Gauge,
+  'credit-card': CreditCard,
+};
+
+// Display label for decisionCategory (registry taxonomy) — grouping label only,
+// not a data source in itself.
+const categoryLabel: Record<DecisionCategory, string> = {
+  spend: 'Personal Finance',
+  retire: 'Personal Finance',
+  broker: 'Trading',
+  home: 'Personal Finance',
+  debt: 'Personal Finance',
+  'credit-cards': 'Personal Finance',
+  fees: 'Investing',
+  niche: 'Investing',
+  business: 'Productivity',
+};
+
+const tools = getToolsForMarket('us').map((t) => ({
+  title: t.name,
+  description: t.blurb,
+  icon: iconMap[t.icon] ?? Calculator,
+  href: t.entryHref,
+  category: categoryLabel[t.decisionCategory],
+}));
 
 export default function ToolsPage() {
   return (
@@ -168,11 +93,6 @@ export default function ToolsPage() {
                   href={tool.href}
                   className="group relative rounded-2xl border border-gray-200 p-6 transition-all duration-300 hover:translate-y-[-4px] hover:shadow-lg bg-white"
                 >
-                  {tool.badge && (
-                    <span className="absolute top-4 right-4 text-[10px] px-2 py-0.5 rounded-full font-semibold" style={{ background: 'var(--sfp-sky)', color: 'var(--sfp-navy)' }}>
-                      {tool.badge}
-                    </span>
-                  )}
                   <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-4" style={{ background: 'var(--sfp-sky)', color: 'var(--sfp-navy)' }}>
                     <tool.icon className="h-6 w-6" />
                   </div>

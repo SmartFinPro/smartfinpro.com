@@ -6,7 +6,13 @@
 // client-side, so non-JS AI crawlers can miss deep content. This file gives them
 // an explicit, curated map of the most important pages and what they cover.
 
+import { getLlmsToolLines } from '@/lib/tools/registry';
+
 export const dynamic = 'force-static';
+
+// Registry-derived (FDL 0.6): only live + indexable tool routes, same source
+// as the sitemap — no separately hand-maintained tool list to drift.
+const TOOLS_SECTION = `## Tools & Calculators\n${getLlmsToolLines().join('\n')}\n`;
 
 const BODY = `# SmartFinPro
 
@@ -36,6 +42,7 @@ const BODY = `# SmartFinPro
 - [Canada](https://smartfinpro.com/ca)
 - [Australia](https://smartfinpro.com/au)
 
+${TOOLS_SECTION}
 ## Trust & Editorial
 - [Review Methodology](https://smartfinpro.com/methodology): how products are tested and scored.
 - [Affiliate Disclosure](https://smartfinpro.com/affiliate-disclosure): how SmartFinPro is funded and how independence is maintained.

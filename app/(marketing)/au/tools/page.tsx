@@ -1,7 +1,12 @@
 // app/(marketing)/au/tools/page.tsx
 import { Metadata } from 'next';
 import Link from 'next/link';
-import { Calculator, Home, TrendingUp, ArrowRight, Sparkles, Droplet, Coins } from 'lucide-react';
+import {
+  Calculator, ArrowRight, Sparkles,
+  ScanSearch, Compass, Columns3, Coins, Sunrise, House,
+  type LucideIcon,
+} from 'lucide-react';
+import { getToolsForMarket } from '@/lib/tools/registry';
 
 export const metadata: Metadata = {
   title: 'Free Australian Financial Tools & Calculators | SmartFinPro',
@@ -16,36 +21,23 @@ export const metadata: Metadata = {
   },
 };
 
-const tools = [
-  {
-    title: 'Money Leak Scanner',
-    description: 'Find how much your household is overpaying across banking fees, subscriptions, credit cards, insurance, investing and FX — live, in 60 seconds.',
-    icon: Droplet,
-    href: '/au/tools/money-leak-scanner',
-    badge: 'New',
-  },
-  {
-    title: 'Superannuation Calculator',
-    description: 'Project your super balance at retirement. Model employer contributions, salary sacrifice, government co-contributions, and investment returns.',
-    icon: TrendingUp,
-    href: '/au/tools/superannuation-calculator',
-    badge: null,
-  },
-  {
-    title: 'AU Mortgage Calculator',
-    description: 'Calculate Australian home loan repayments, LVR, offset account savings, and stamp duty. Compare Big Four vs fintech lender rates.',
-    icon: Home,
-    href: '/au/tools/au-mortgage-calculator',
-    badge: 'New',
-  },
-  {
-    title: 'Gold ROI Calculator',
-    description: 'Model gold investment returns across conservative to optimistic scenarios and compare against inflation, equities and bonds.',
-    icon: Coins,
-    href: '/au/tools/gold-roi-calculator',
-    badge: null,
-  },
-];
+// Registry icon key (SPEC 9.1, lucide-Key) → Lucide component.
+const iconMap: Record<string, LucideIcon> = {
+  'scan-search': ScanSearch,
+  compass: Compass,
+  calculator: Calculator,
+  'columns-3': Columns3,
+  coins: Coins,
+  sunrise: Sunrise,
+  house: House,
+};
+
+const tools = getToolsForMarket('au').map((t) => ({
+  title: t.name,
+  description: t.blurb,
+  icon: iconMap[t.icon] ?? Calculator,
+  href: t.entryHref,
+}));
 
 export default function AUToolsPage() {
   return (
@@ -97,11 +89,6 @@ export default function AUToolsPage() {
                 href={tool.href}
                 className="group relative rounded-2xl border border-gray-200 p-6 transition-all duration-300 hover:translate-y-[-4px] hover:shadow-lg bg-white"
               >
-                {tool.badge && (
-                  <span className="absolute top-4 right-4 text-[10px] px-2 py-0.5 rounded-full font-semibold" style={{ background: 'var(--sfp-sky)', color: 'var(--sfp-navy)' }}>
-                    {tool.badge}
-                  </span>
-                )}
                 <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-4" style={{ background: 'var(--sfp-sky)', color: 'var(--sfp-navy)' }}>
                   <tool.icon className="h-6 w-6" />
                 </div>

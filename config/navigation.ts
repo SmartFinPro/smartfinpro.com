@@ -7,6 +7,7 @@
 
 import type { Market, Category } from '@/lib/i18n/config';
 import { marketCategories, categoryConfig, marketConfig } from '@/lib/i18n/config';
+import { getFooterToolLinks } from '@/lib/tools/registry';
 
 // ── Types ────────────────────────────────────────────────────
 
@@ -88,50 +89,20 @@ export const hubLinks: NavLink[] = [
   { label: 'All Tools', href: '/tools' },
 ];
 
-/** Global tools shown in every market's footer */
-export const globalToolLinks: NavLink[] = [
-  { label: 'Broker Finder Quiz', href: '/tools/broker-finder' },
-  { label: 'Trading Cost Calculator', href: '/tools/trading-cost-calculator' },
-  { label: 'AI ROI Calculator', href: '/tools/ai-roi-calculator' },
-  { label: 'Loan Calculator', href: '/tools/loan-calculator' },
-  { label: 'Credit Score Simulator', href: '/tools/credit-score-simulator' },
-  { label: 'Debt Payoff Calculator', href: '/tools/debt-payoff-calculator' },
-  { label: 'Broker Comparison', href: '/tools/broker-comparison' },
-];
-
-/** Market-specific tools — only shown in the matching market's footer */
-const marketToolLinks: Record<Market, NavLink[]> = {
-  us: [
-    { label: 'Money Leak Scanner', href: '/tools/money-leak-scanner' },
-  ],
-  uk: [
-    { label: 'ISA Tax Savings Calculator', href: '/uk/tools/isa-tax-savings-calculator' },
-    { label: 'Remortgage Calculator', href: '/uk/tools/remortgage-calculator' },
-    { label: 'Money Leak Scanner', href: '/uk/tools/money-leak-scanner' },
-  ],
-  ca: [
-    { label: 'TFSA/RRSP Calculator', href: '/ca/tools/tfsa-rrsp-calculator' },
-    { label: 'Wealthsimple Fee Savings Calculator', href: '/ca/tools/wealthsimple-calculator' },
-    { label: 'Mortgage Affordability Calculator', href: '/ca/tools/ca-mortgage-affordability-calculator' },
-    { label: 'Money Leak Scanner', href: '/ca/tools/money-leak-scanner' },
-  ],
-  au: [
-    { label: 'Superannuation Calculator', href: '/au/tools/superannuation-calculator' },
-    { label: 'Mortgage Calculator', href: '/au/tools/au-mortgage-calculator' },
-    { label: 'Money Leak Scanner', href: '/au/tools/money-leak-scanner' },
-  ],
-};
-
 /**
  * Get silo-isolated tool links for a market.
- * Returns global tools + market-specific tools, never cross-market.
+ * Derived from the tool registry (@/lib/tools/registry) — single source of
+ * truth for which tools are live/indexable per market (FDL 0.6). Never
+ * cross-market: a US-centric tool (loan, credit-card-rewards, ai-roi) will
+ * not appear for uk/ca/au, and noindex "Coming Soon" tools (debt-payoff,
+ * credit-score, remortgage) are excluded automatically.
  */
 export function getSiloToolLinks(market: Market): NavLink[] {
-  return [...globalToolLinks, ...(marketToolLinks[market] || [])];
+  return getFooterToolLinks(market);
 }
 
 /** @deprecated Use getSiloToolLinks(market) for silo isolation */
-export const toolLinks: NavLink[] = globalToolLinks;
+export const toolLinks: NavLink[] = getFooterToolLinks('us');
 
 export const socialLinks: NavLink[] = [
   { label: 'LinkedIn', href: 'https://linkedin.com/company/smartfinpro' },

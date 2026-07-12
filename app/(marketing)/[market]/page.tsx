@@ -56,6 +56,7 @@ import {
 import { getBestXIndex } from '@/lib/comparison/loader';
 import { buildBestXItemListSchema } from '@/lib/seo/best-x-item-list';
 import { getMarketHomeHeroImage } from '@/lib/images/market-home-hero';
+import { countLiveConcepts } from '@/lib/tools/registry';
 
 import type { Category } from '@/lib/i18n/config';
 
@@ -272,7 +273,7 @@ export default async function MarketHomePage({ params, searchParams }: MarketPag
       {/* ═══════════════════════════════════════════════════════════════
           2. PLATFORM STATS — Key numbers bar
       ═══════════════════════════════════════════════════════════════ */}
-      <PlatformStats totalReviews={allReviews.length} />
+      <PlatformStats totalReviews={allReviews.length} totalTools={countLiveConcepts()} />
 
       {/* ═══════════════════════════════════════════════════════════════
           3. COMPLIANCE BAR — Regulatory trust signals

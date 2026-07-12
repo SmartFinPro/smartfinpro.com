@@ -4,34 +4,9 @@ import { markets, marketCategories, Market } from '@/lib/i18n/config';
 // Categories that have actual overview content (must stay in sync with lib/data/overview-content.ts)
 const overviewCategories = new Set(['remortgaging', 'savings', 'superannuation', 'housing']);
 import { pillarHeroImages, reviewImages } from '@/lib/images/asset-registry';
+import { getSitemapToolEntries } from '@/lib/tools/registry';
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://smartfinpro.com';
-
-// Static tool pages (not market-prefixed)
-const toolPages = [
-  '/tools',
-  '/tools/broker-finder',
-  '/tools/trading-cost-calculator',
-  '/tools/ai-roi-calculator',
-  '/tools/loan-calculator',
-  '/tools/broker-comparison',
-  '/ca/tools/wealthsimple-calculator',
-  '/au/tools/au-mortgage-calculator',
-  '/uk/tools/isa-tax-savings-calculator',
-  '/tools/credit-card-rewards-calculator',
-  // Excluded: "Coming Soon" placeholder tools — no real content yet
-  // '/tools/debt-payoff-calculator',
-  // '/uk/tools/remortgage-calculator',
-  // '/tools/credit-score-simulator',
-  '/au/tools/superannuation-calculator',
-  '/ca/tools/tfsa-rrsp-calculator',
-  '/au/tools/gold-roi-calculator',
-  '/ca/tools/ca-mortgage-affordability-calculator',
-  '/tools/money-leak-scanner',
-  '/uk/tools/money-leak-scanner',
-  '/ca/tools/money-leak-scanner',
-  '/au/tools/money-leak-scanner',
-];
 
 // Cross-market hub pages (not market-prefixed)
 const hubPages = [
@@ -219,15 +194,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
 
     // ============================================================
-    // 7. TOOL PAGES — Priority 0.75
+    // 7. TOOL PAGES — Priority 0.75 (0.8 for the 4 market hubs)
+    // Registry-derived (FDL 0.6): includes all 4 market hubs, only
+    // live+indexable tool routes — no hand-maintained list to drift.
     // ============================================================
 
-    for (const path of toolPages) {
+    const hubUrls = new Set(['/tools', '/uk/tools', '/ca/tools', '/au/tools']);
+    for (const { url } of getSitemapToolEntries()) {
       entries.push({
-        url: `${BASE_URL}${path}`,
+        url: `${BASE_URL}${url}`,
         lastModified: now,
         changeFrequency: 'monthly',
-        priority: path === '/tools' ? 0.8 : 0.75,
+        priority: hubUrls.has(url) ? 0.8 : 0.75,
       });
     }
 
