@@ -105,7 +105,7 @@ export default function Hero({
         {/* Main Headline */}
         <h1
           style={{
-            fontSize: 'clamp(34px, 5.5vw, 62px)',
+            fontSize: 'clamp(34px, 5.5vw, 60px)', // 60px-Cap: "Find and compare the" (607px @62px) muss in die 600px-Spalte — sichert den 3-Zeilen-Satz
             fontWeight: 700,
             color: '#fff',
             lineHeight: 1.06,
@@ -122,6 +122,12 @@ export default function Hero({
               {restOfSecondLine}
             </>
           )}
+          {lines.slice(2).map((line, i) => (
+            <span key={i}>
+              <br />
+              {line}
+            </span>
+          ))}
         </h1>
 
         {/* Subheadline */}
