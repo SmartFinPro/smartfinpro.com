@@ -59,6 +59,7 @@ const NAV_PAGES: { label: string; href: string }[] = [
   { label: 'Analytics', href: '/dashboard/analytics' },
   { label: 'CTA Heatmap', href: '/dashboard/analytics/heatmap' },
   { label: 'Cockpit Analytics', href: '/dashboard/analytics/cockpits' },
+  { label: 'Tool Analytics', href: '/dashboard/analytics/tools' },
   { label: 'AI-Optimizer', href: '/dashboard/analytics/optimize' },
   { label: 'Revenue', href: '/dashboard/revenue' },
   { label: 'Content Hub', href: '/dashboard/content/hub' },
