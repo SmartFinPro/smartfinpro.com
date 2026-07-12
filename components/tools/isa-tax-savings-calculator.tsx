@@ -25,8 +25,8 @@ interface TaxSavingsResult {
 }
 
 const TAX_BANDS = [
-  { name: 'Basic Rate (20%)', cgtRate: 0.18, dividendRate: 0.0875 },
-  { name: 'Higher Rate (40%)', cgtRate: 0.24, dividendRate: 0.3375 },
+  { name: 'Basic Rate (20%)', cgtRate: 0.18, dividendRate: 0.1075 },
+  { name: 'Higher Rate (40%)', cgtRate: 0.24, dividendRate: 0.3575 },
   { name: 'Additional Rate (45%)', cgtRate: 0.24, dividendRate: 0.3935 },
 ];
 
