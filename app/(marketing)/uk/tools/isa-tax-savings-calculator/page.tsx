@@ -86,7 +86,7 @@ export default function ISATaxSavingsCalculatorPage() {
                     24% (higher rate) on profits above £3,000 annual allowance
                   </li>
                   <li>
-                    <strong style={{ color: 'var(--sfp-ink)' }}>Dividend Tax:</strong> 8.75% (basic), 33.75%
+                    <strong style={{ color: 'var(--sfp-ink)' }}>Dividend Tax:</strong> 10.75% (basic), 35.75%
                     (higher), or 39.35% (additional) above £500 annual allowance
                   </li>
                   <li>
