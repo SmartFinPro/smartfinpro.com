@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Home Decision Lab — Mortgage Affordability (CA) · High-Fi Referenz</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="hifi-tokens.css">
+</head>
+<body>
+
+<div class="workspace">
+  <nav class="breadcrumb" aria-label="Breadcrumb"><a href="/">Home</a> › <a href="/ca/tools">Tools</a> › Mortgage Affordability</nav>
+
+  <div class="page-head">
+    <h1 class="t-h1">Canadian Mortgage Affordability Calculator</h1>
+    <p class="sub">GDS, TDS and the stress test — explained with your numbers, not jargon.</p>
+  </div>
+
+  <div class="trust-strip">
+    <span>🇨🇦 <strong>CA</strong></span>
+    <span>~4 min</span>
+    <span><strong>Data verified 2026-07-12</strong></span>
+    <span class="links"><a href="#methodology">Methodology</a><a href="#methodology">Privacy</a></span>
+  </div>
+
+  <div class="grid">
+    <!-- Worksheet-Formular · col-5 -->
+    <div class="col-5 panel">
+      <div class="section">
+        <p class="section-label">1 · Income &amp; debts</p>
+        <div class="field">
+          <label for="inc">Household income / year</label>
+          <div class="control-row"><span class="input-wrap"><span class="unit">C$</span><input id="inc" type="number" inputmode="numeric" value="145000"></span></div>
+        </div>
+        <div class="field">
+          <label for="debt">Monthly debt payments</label>
+          <div class="control-row">
+            <span class="input-wrap"><span class="unit">C$</span><input id="debt" type="number" inputmode="numeric" value="450"></span>
+            <button class="chip-btn" type="button">I’m not sure — typical</button>
+          </div>
+          <span class="help">Car loans, student loans, credit card minimums.</span>
+        </div>
+      </div>
+      <div class="section">
+        <p class="section-label">2 · Property &amp; loan</p>
+        <div class="field">
+          <label for="down">Down payment</label>
+          <div class="control-row"><span class="input-wrap"><span class="unit">C$</span><input id="down" type="number" inputmode="numeric" value="90000"></span></div>
+        </div>
+        <div class="field">
+          <label for="amort">Amortization</label>
+          <div class="control-row">
+            <span class="input-wrap"><input id="amort" type="number" inputmode="numeric" value="25" style="width:70px"><span class="unit">years</span></span>
+          </div>
+        </div>
+      </div>
+      <div class="section">
+        <p class="section-label">3 · Rates &amp; fees</p>
+        <div class="field">
+          <label for="rate">Contract rate</label>
+          <div class="control-row">
+            <span class="input-wrap"><input id="rate" type="number" inputmode="decimal" value="4.6" step="0.1" style="width:70px"><span class="unit">%</span></span>
+          </div>
+          <span class="help">Context: 5-yr fixed rates ~4.4–4.9% (Bank of Canada data, verified 2026-07-12). Always editable — never a “live rate” claim.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Ergebnis · col-7, Reihenfolge 1→6 -->
+    <div class="col-7 panel">
+      <div class="section" style="display:flex;flex-direction:column;gap:14px">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+          <span class="result-chip yours">Your result</span>
+          <span class="t-meta">Assumptions: GDS ≤ 32% · TDS ≤ 44% · stress test +2pp · CMHC tiers — <a href="#assump" style="color:var(--sfp-navy)">details</a></span>
+        </div>
+
+        <p class="answer"><strong>You can likely afford a home around C$520k–C$610k.</strong> The stress test — not the sticker rate — sets your ceiling.</p>
+
+        <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">
+          <span class="t-num-hero">C$565k</span>
+          <span class="range-note">midpoint · comfortable range <span class="num">C$520k–C$610k</span></span>
+        </div>
+
+        <div>
+          <p class="section-label" style="margin-bottom:8px">Your affordability range</p>
+          <div class="range-track" role="img" aria-label="Affordability range from 400 thousand to 700 thousand Canadian dollars; your comfortable zone spans 520 to 610 thousand; your target of 575 thousand sits inside it.">
+            <div class="range-fill" style="left:34%;width:26%"></div>
+            <div class="range-marker" style="left:50%"></div>
+          </div>
+          <div class="range-labels"><span>C$400k</span><span><strong style="color:var(--sfp-navy)">your target C$575k ▲</strong></span><span>C$700k</span></div>
+        </div>
+
+        <div>
+          <p class="section-label" style="margin-bottom:8px">Monthly payment at C$565k</p>
+          <div class="stack-bar" role="img" aria-label="Monthly payment stack: principal 1240 dollars, interest 1610 dollars, property tax and fees 420 dollars, CMHC insurance 130 dollars — total about 3400 dollars.">
+            <span style="flex:1240;background:#1B4F8C">P</span>
+            <span style="flex:1610;background:#4A76AD">I</span>
+            <span style="flex:420;background:#8AA6C9;color:#1A1A2E">T</span>
+            <span style="flex:130;background:#B6C0D2;color:#1A1A2E">C</span>
+          </div>
+          <div class="stack-legend num">
+            <span><i style="background:#1B4F8C"></i>Principal C$1,240</span>
+            <span><i style="background:#4A76AD"></i>Interest C$1,610</span>
+            <span><i style="background:#8AA6C9"></i>Tax &amp; fees C$420</span>
+            <span><i style="background:#B6C0D2"></i>CMHC C$130</span>
+            <span style="margin-left:auto"><strong style="color:var(--sfp-ink)">≈ C$3,400/mo</strong></span>
+          </div>
+        </div>
+
+        <p class="t-body num" style="margin:0"><span class="positive">✓ Risk buffer:</span> at the stress rate (+2pp) your payment rises to <strong>C$4,050/mo</strong> — still within your TDS limit.</p>
+
+        <div class="warning-block" role="note">
+          <span class="ico" aria-hidden="true">⚠</span>
+          <span>Your TDS sits at <strong class="num">41%</strong> — close to the 44% ceiling. A C$100/mo debt increase would shrink your range by about C$25k.</span>
+        </div>
+
+        <div>
+          <p class="section-label" style="margin-bottom:8px">Three levers, in order of impact</p>
+          <div class="levers">
+            <button class="lever" type="button"><span class="t">Add C$20k down payment</span><span class="d">range +C$28k</span></button>
+            <button class="lever" type="button"><span class="t">Clear the C$450/mo debt</span><span class="d">range +C$36k</span></button>
+            <button class="lever" type="button"><span class="t">Extend amortization to 30y</span><span class="d">range +C$41k · more interest</span></button>
+          </div>
+        </div>
+
+        <details class="assumptions" id="assump">
+          <summary>Assumptions &amp; sources</summary>
+          <p style="margin:8px 0 0">GDS ≤ 32% and TDS ≤ 44% (lender guidelines), minimum qualifying rate = contract +2pp, CMHC premium tiers by down-payment ratio. Property tax estimated at 1% of value. Educational tool, not mortgage advice.</p>
+          <p class="src">CMHC premium schedule — effective 2025-07-01, verified 2026-07-12 · OSFI B-20 qualifying rate — verified 2026-07-12 · Bank of Canada rate context — verified 2026-07-12</p>
+        </details>
+
+        <div class="next-action">
+          <div>
+            <a href="/ca/housing/best/mortgage-brokers">Talk numbers with a pro: compare Canada’s best mortgage brokers →</a>
+            <div class="why">A broker can often beat the posted rate — your biggest single lever.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="below-fold">
+    <section id="methodology">
+      <h2 class="t-h2">Methodology</h2>
+      <p>We solve for the largest purchase price where both ratios hold at the stress-tested rate: housing costs within 32% of gross income (GDS) and all debt within 44% (TDS). CMHC insurance is added for down payments under 20%.</p>
+    </section>
+    <section>
+      <h2 class="t-h2">Worked example</h2>
+      <p class="muted">C$145,000 income, C$450/mo debts, C$90,000 down, 25 years at 4.6%: qualifying at 6.6% caps the price at ~C$565k midpoint, with a comfortable range of C$520k–C$610k.</p>
+    </section>
+    <section>
+      <h2 class="t-h2">Frequently asked questions</h2>
+      <div class="faq-item"><h3>Why is the stress test my ceiling?</h3><p>Lenders must qualify you at contract +2pp. Your real payment is lower — but approval is decided at the stressed rate.</p></div>
+      <div class="faq-item"><h3>Is the range guaranteed?</h3><p>No — lender policies differ. The range shows where approval is likely, not promised.</p></div>
+    </section>
+  </div>
+</div>
+
+<div class="mini-bar" role="region" aria-label="Result summary">
+  <span><span class="v">C$520k–C$610k</span> <span class="l">affordable · TDS 41%</span></span>
+  <a class="btn btn-primary" style="min-height:40px" href="#top">View result</a>
+</div>
+
+</body>
+</html>

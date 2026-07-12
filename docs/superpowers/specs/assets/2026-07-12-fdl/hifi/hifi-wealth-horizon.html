@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wealth Horizon — Retirement Calculator (US) · High-Fi Referenz</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="hifi-tokens.css">
+</head>
+<body>
+
+<div class="workspace">
+  <nav class="breadcrumb" aria-label="Breadcrumb"><a href="/">Home</a> › <a href="/tools">Tools</a> › Retirement Calculator</nav>
+
+  <div class="page-head">
+    <h1 class="t-h1">Retirement &amp; Financial Freedom Calculator</h1>
+    <p class="sub">Your realistic range, your financial independence date — and the three levers that move it.</p>
+  </div>
+
+  <div class="trust-strip">
+    <span>🇺🇸 <strong>US</strong></span>
+    <span>~3 min</span>
+    <span><strong>Data verified 2026-07-12</strong></span>
+    <span class="links"><a href="#methodology">Methodology</a><a href="#methodology">Privacy</a></span>
+  </div>
+
+  <div class="grid">
+    <!-- Eingaben-Zusammenfassung nach Schritt 3 · col-5 -->
+    <div class="col-5 panel">
+      <div class="section">
+        <div class="progress" aria-hidden="true"><i class="on"></i><i class="on"></i><i class="on"></i></div>
+        <p class="step-label">Your plan · all 3 steps complete</p>
+        <table class="data-table" aria-label="Your inputs">
+          <tr><td>Age → retire at</td><td style="text-align:right"><strong id="sum-age">38 → 67</strong> <a href="#" style="color:var(--sfp-navy);font-size:13px">edit</a></td></tr>
+          <tr><td>Current savings</td><td style="text-align:right"><strong id="sum-bal">$105,000</strong> <a href="#" style="color:var(--sfp-navy);font-size:13px">edit</a></td></tr>
+          <tr><td>Monthly contribution</td><td style="text-align:right"><strong id="sum-contrib">$900</strong> <a href="#" style="color:var(--sfp-navy);font-size:13px">edit</a></td></tr>
+          <tr><td>Annual fees</td><td style="text-align:right"><strong id="sum-fees">0.6%</strong> <a href="#" style="color:var(--sfp-navy);font-size:13px">edit</a></td></tr>
+          <tr><td>Target income (today’s $)</td><td style="text-align:right"><strong id="sum-target">$4,500/mo</strong> <a href="#" style="color:var(--sfp-navy);font-size:13px">edit</a></td></tr>
+          <tr><td>Your entered benefit</td><td style="text-align:right"><strong id="sum-benefit">$1,500/mo from 70</strong> <a href="#" style="color:var(--sfp-navy);font-size:13px">edit</a></td></tr>
+        </table>
+      </div>
+      <div class="section">
+        <div class="field">
+          <label id="wr-label">Illustrative withdrawal rate</label>
+          <div class="seg" role="group" aria-labelledby="wr-label">
+            <button aria-pressed="false">3.0%</button><button aria-pressed="false">3.5%</button><button aria-pressed="true">4.0%</button><button aria-pressed="false">4.5%</button>
+          </div>
+          <span class="help">An illustration you control — not a guarantee, not advice.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Ergebnis-Canvas · col-7, Reihenfolge 1→6 -->
+    <div class="col-7 panel">
+      <div class="section" style="display:flex;flex-direction:column;gap:14px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span class="result-chip yours">Your result</span>
+          <span class="t-meta">All figures in today’s money</span>
+        </div>
+
+        <p class="answer" id="answer"><strong>You could reach financial independence around <span id="fi-year">2058</span></strong> (base scenario, incl. your entered benefit from age 70).</p>
+
+        <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">
+          <span class="t-num-hero" id="hero-range">$654k–$1.34M</span>
+          <span class="range-note">at 67 · conservative to optimistic scenario</span>
+        </div>
+
+        <svg id="corridor" viewBox="0 0 640 240" width="100%" role="img" aria-labelledby="corridor-alt">
+          <title id="corridor-alt">Scenario corridor loading</title>
+        </svg>
+
+        <div>
+          <p class="section-label" style="margin-bottom:8px">Three levers, in order of impact</p>
+          <div class="levers">
+            <button class="lever" type="button"><span class="t">Cut fees to 0.1%</span><span class="d" id="lv1">+$74k at 67</span></button>
+            <button class="lever" type="button"><span class="t">Add $200/month</span><span class="d" id="lv2">+$58k at 67</span></button>
+            <button class="lever" type="button"><span class="t">Retire 2 years later</span><span class="d" id="lv3">+$96k at 69</span></button>
+          </div>
+        </div>
+
+        <details class="assumptions">
+          <summary>Assumptions &amp; sources</summary>
+          <p style="margin:8px 0 0">Everything is calculated in <strong>today’s purchasing power</strong> with real returns of 3.0% / 5.0% / 6.5% p.a. (long-run nominal returns minus an assumed 2.5% inflation — applied once, never twice). Contributions stop at your retirement age. We never estimate Social Security for you: only the amount and start age you enter count, and they count as zero before that age — check yours at the <a href="https://www.ssa.gov/prepare/get-benefits-estimate" style="color:var(--sfp-navy)">SSA benefits estimator</a>. Withdrawal is an illustrative rate you control. Educational tool, not financial advice.</p>
+          <p class="src">IRS Notice 2025-67, 2026 contribution limits — effective 2026-01-01, verified 2026-07-12 · Long-run return assumption (editorial) — verified 2026-07-12</p>
+        </details>
+
+        <div class="next-action">
+          <div>
+            <a href="/us/personal-finance/best/robo-advisors">Put the plan on autopilot: compare the best robo-advisors →</a>
+            <div class="why">Low fees were your biggest lever — robo-advisors compete on exactly that.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="below-fold">
+    <section id="methodology">
+      <h2 class="t-h2">Methodology</h2>
+      <p>Three deterministic scenarios project your combined savings year by year at real (inflation-adjusted) returns, net of your fee input. The financial-independence year is the first year in which the illustrative withdrawal plus any benefit you entered covers your target income. Ranges are shown because the future is a corridor, not a line.</p>
+    </section>
+    <section>
+      <h2 class="t-h2">Worked example</h2>
+      <p class="muted">Age 38, retiring at 67, $105,000 saved, $900/month, 0.6% fees, $4,500 target with a $1,500 benefit from 70: the base scenario reaches independence around 2058, with $654k–$1.34M at 67 across scenarios (base ~$976k).</p>
+    </section>
+    <section>
+      <h2 class="t-h2">Frequently asked questions</h2>
+      <div class="faq-item"><h3>Why don’t you estimate my Social Security?</h3><p>Because eligibility and amounts are personal. We link the official estimator and use only the figure you enter, from the start age you enter.</p></div>
+      <div class="faq-item"><h3>Is 4% a safe withdrawal rate?</h3><p>It’s an illustration, not a guarantee — that’s why you can set it between 2.5% and 5% and see the sensitivity yourself.</p></div>
+    </section>
+  </div>
+</div>
+
+<div class="mini-bar" role="region" aria-label="Result summary">
+  <span><span class="v" id="mini-v">FI ~2049</span> <span class="l" id="mini-l">$610k–$890k at 67</span></span>
+  <a class="btn btn-primary" style="min-height:40px" href="#top">View result</a>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  // Deterministisches Realwert-Modell — identisch zum Lo-Fi-Prototyp (SPEC 8.3).
+  var extreme = new URLSearchParams(location.search).get('extreme') === '1';
+  var inp = extreme
+    ? { age: 45, retire: 67, bal: 1250000, contrib: 4800, fees: 0.004, target: 21500, wr: 0.04, benefit: 3800, benefitStart: 70 }
+    : { age: 38, retire: 67, bal: 105000, contrib: 900, fees: 0.006, target: 4500, wr: 0.04, benefit: 1500, benefitStart: 70 };
+  var REAL = { c: 0.03, b: 0.05, o: 0.065 };
+
+  function project(real, retireAge) {
+    var rows = [], b = inp.bal, rNet = real - inp.fees;
+    for (var a = inp.age; a <= Math.max(retireAge, 75); a++) {
+      rows.push({ age: a, bal: b });
+      b = b * (1 + rNet) + (a < retireAge ? inp.contrib * 12 : 0);
+    }
+    return rows;
+  }
+  function benefitAt(age) { return age >= inp.benefitStart ? inp.benefit : 0; }
+  function scen(real, retireAge) {
+    var ra = retireAge || inp.retire, rows = project(real, ra);
+    var at = rows.filter(function (r) { return r.age === ra; })[0].bal;
+    var fi = null;
+    rows.some(function (r) { if (r.bal * inp.wr / 12 + benefitAt(r.age) >= inp.target) { fi = r.age; return true; } return false; });
+    return { rows: rows, at: at, fi: fi };
+  }
+  function fmtK(v) { return v >= 1e6 ? '$' + (v / 1e6).toFixed(2) + 'M' : '$' + Math.round(v / 1000) + 'k'; }
+
+  var c = scen(REAL.c), b = scen(REAL.b), o = scen(REAL.o);
+
+  // Zusammenfassung + Hero
+  var loc = function (n) { return n.toLocaleString('en-US'); };
+  document.getElementById('sum-age').textContent = inp.age + ' → ' + inp.retire;
+  document.getElementById('sum-bal').textContent = '$' + loc(inp.bal);
+  document.getElementById('sum-contrib').textContent = '$' + loc(inp.contrib);
+  document.getElementById('sum-fees').textContent = (inp.fees * 100).toFixed(1) + '%';
+  document.getElementById('sum-target').textContent = '$' + loc(inp.target) + '/mo';
+  document.getElementById('sum-benefit').textContent = '$' + loc(inp.benefit) + '/mo from ' + inp.benefitStart;
+  document.getElementById('hero-range').textContent = fmtK(c.at) + '–' + fmtK(o.at);
+  var fiYear = b.fi ? 2026 + (b.fi - inp.age) : null;
+  document.getElementById('fi-year').textContent = fiYear || '—';
+  document.getElementById('mini-v').textContent = fiYear ? 'FI ~' + fiYear : 'Range ready';
+  document.getElementById('mini-l').textContent = fmtK(c.at) + '–' + fmtK(o.at) + ' at ' + inp.retire;
+  if (!fiYear) document.getElementById('answer').innerHTML = '<strong>On these inputs the illustrative withdrawal doesn’t reach your target by 75</strong> — the levers below move it most.';
+
+  // Levers (echte Deltas)
+  var lever1 = (function () { var save = inp.fees; inp.fees = 0.001; var s = scen(REAL.b); inp.fees = save; return s.at - b.at; })();
+  var lever2 = (function () { var save = inp.contrib; inp.contrib += 200; var s = scen(REAL.b); inp.contrib = save; return s.at - b.at; })();
+  var lever3 = scen(REAL.b, inp.retire + 2).at - b.at;
+  document.getElementById('lv1').textContent = '+' + fmtK(lever1) + ' at ' + inp.retire;
+  document.getElementById('lv2').textContent = '+' + fmtK(lever2) + ' at ' + inp.retire;
+  document.getElementById('lv3').textContent = '+' + fmtK(lever3) + ' at ' + (inp.retire + 2);
+
+  // Korridor-Chart (pures SVG; Linienstile unterscheiden Szenarien, nie nur Farbe)
+  var svg = document.getElementById('corridor');
+  var W = 640, H = 240, L = 56, R = 14, T = 20, B = 34;
+  var maxY = o.rows[o.rows.length - 1].bal * 1.05;
+  var x = function (age) { return L + (age - inp.age) / (75 - inp.age) * (W - L - R); };
+  var y = function (v) { return H - B - (v / maxY) * (H - T - B); };
+  var path = function (rows) { return rows.map(function (r, i) { return (i ? 'L' : 'M') + x(r.age).toFixed(1) + ',' + y(r.bal).toFixed(1); }).join(' '); };
+  var area = path(o.rows) + ' ' + c.rows.slice().reverse().map(function (r) { return 'L' + x(r.age).toFixed(1) + ',' + y(r.bal).toFixed(1); }).join(' ') + ' Z';
+  var alt = 'By age ' + inp.retire + ', savings range ' + fmtK(c.at) + ' to ' + fmtK(o.at) + " in today's money; base scenario " + fmtK(b.at) + (fiYear ? '; financial independence around ' + fiYear : '') + '.';
+  var gridY = [0.25, 0.5, 0.75].map(function (f) {
+    return '<line x1="' + L + '" y1="' + y(maxY * f) + '" x2="' + (W - R) + '" y2="' + y(maxY * f) + '" stroke="#D9DEE8" stroke-width="1"/>' +
+           '<text x="' + (L - 8) + '" y="' + (y(maxY * f) + 4) + '" font-size="11" text-anchor="end" fill="#555555">' + fmtK(maxY * f) + '</text>';
+  }).join('');
+  svg.innerHTML =
+    '<title id="corridor-alt">' + alt + '</title>' +
+    '<g font-family="Inter, sans-serif">' + gridY +
+    '<path d="' + area + '" fill="#1B4F8C" opacity="0.10"/>' +
+    '<path d="' + path(c.rows) + '" fill="none" stroke="#555555" stroke-width="1.5" stroke-dasharray="2 4"/>' +
+    '<path d="' + path(o.rows) + '" fill="none" stroke="#555555" stroke-width="1.5" stroke-dasharray="7 4"/>' +
+    '<path d="' + path(b.rows) + '" fill="none" stroke="#1B4F8C" stroke-width="2.5"/>' +
+    '<line x1="' + x(inp.retire) + '" y1="' + T + '" x2="' + x(inp.retire) + '" y2="' + (H - B) + '" stroke="#B6C0D2"/>' +
+    '<text x="' + (x(inp.retire) + 4) + '" y="' + (T + 10) + '" font-size="11" fill="#555555">retire ' + inp.retire + '</text>' +
+    (b.fi ? '<line x1="' + x(b.fi) + '" y1="' + T + '" x2="' + x(b.fi) + '" y2="' + (H - B) + '" stroke="#F5A623" stroke-width="2.5"/>' +
+            '<text x="' + (x(b.fi) + 4) + '" y="' + (H - B - 8) + '" font-size="12" font-weight="700" fill="#8A5A00">FI ' + fiYear + '</text>' : '') +
+    '<text x="' + L + '" y="' + (H - 10) + '" font-size="11" fill="#555555">age ' + inp.age + '</text>' +
+    '<text x="' + (W - R) + '" y="' + (H - 10) + '" font-size="11" text-anchor="end" fill="#555555">75</text>' +
+    '<text x="' + (x(75) - 4) + '" y="' + (y(b.rows[b.rows.length - 1].bal) - 6) + '" font-size="12" font-weight="600" text-anchor="end" fill="#1B4F8C">base ' + fmtK(b.at) + '</text>' +
+    '<text x="' + L + '" y="' + (T - 6) + '" font-size="11" fill="#555555">conservative ┄ · base ── · optimistic ╍ (line styles, not just color)</text>' +
+    '</g>';
+})();
+</script>
+
+</body>
+</html>
