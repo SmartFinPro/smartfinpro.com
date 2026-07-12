@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Financial Decision Lab — Hub (US) · High-Fi Referenz</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="hifi-tokens.css">
+</head>
+<body>
+
+<div class="workspace">
+  <!-- H1-Bereich ≤220px: H1 + Subline + Marktumschalter -->
+  <div class="hub-head">
+    <div>
+      <h1 class="t-h1">What financial decision are you making today?</h1>
+      <p class="sub" style="margin:6px 0 0;color:var(--sfp-slate)">One question at a time — free, data-verified tools. No account needed.</p>
+    </div>
+    <div class="seg" role="group" aria-label="Market">
+      <button aria-pressed="true">US</button>
+      <button aria-pressed="false">UK</button>
+      <button aria-pressed="false">CA</button>
+      <button aria-pressed="false">AU</button>
+    </div>
+  </div>
+
+  <!-- US: exakt 3 Major Decisions (SPEC 4.2) -->
+  <div class="decision-grid">
+    <a class="decision-card" href="/tools/money-leak-scanner" style="text-decoration:none;color:inherit">
+      <span class="q">Find where my money is going</span>
+      <span class="name">Money Leak Scanner</span>
+      <div class="mini">
+        <svg viewBox="0 0 220 74" width="100%" height="74" role="img" aria-label="Example: three spending leak categories, insurance largest">
+          <text x="0" y="12" font-size="10" fill="#555555">Example result</text>
+          <rect x="0" y="20" width="150" height="12" rx="2" fill="#1B4F8C"/><text x="156" y="30" font-size="10" fill="#1A1A2E">Insurance $95</text>
+          <rect x="0" y="38" width="96" height="12" rx="2" fill="#1B4F8C" opacity="0.75"/><text x="102" y="48" font-size="10" fill="#1A1A2E">Subs $38</text>
+          <rect x="0" y="56" width="52" height="12" rx="2" fill="#1B4F8C" opacity="0.5"/><text x="58" y="66" font-size="10" fill="#1A1A2E">Banking $18</text>
+        </svg>
+      </div>
+      <div class="foot">
+        <span class="result-chip example">Example</span>
+        <span class="btn btn-primary" style="min-height:38px;padding:0 14px">Start →</span>
+      </div>
+    </a>
+
+    <a class="decision-card" href="/tools/retirement-calculator" style="text-decoration:none;color:inherit">
+      <span class="q">Plan my financial future</span>
+      <span class="name">Wealth Horizon</span>
+      <div class="mini">
+        <svg viewBox="0 0 220 74" width="100%" height="74" role="img" aria-label="Example: retirement scenario corridor with FI marker">
+          <text x="0" y="12" font-size="10" fill="#555555">Example result</text>
+          <path d="M8,66 C70,60 140,44 212,18 L212,52 C140,60 70,66 8,68 Z" fill="#B6C0D2" opacity="0.35"/>
+          <path d="M8,67 C70,62 140,52 212,36" fill="none" stroke="#1A1A2E" stroke-width="2"/>
+          <line x1="168" y1="16" x2="168" y2="70" stroke="#F5A623" stroke-width="2"/>
+          <text x="146" y="12" font-size="10" font-weight="700" fill="#8A5A00">FI 2049</text>
+        </svg>
+      </div>
+      <div class="foot">
+        <span class="result-chip example">Example</span>
+        <span class="btn btn-primary" style="min-height:38px;padding:0 14px">Start →</span>
+      </div>
+    </a>
+
+    <a class="decision-card" href="/tools/broker-finder" style="text-decoration:none;color:inherit">
+      <span class="q">Choose the right broker</span>
+      <span class="name">Broker Decision Journey</span>
+      <div class="mini">
+        <svg viewBox="0 0 220 74" width="100%" height="74" role="img" aria-label="Example: 92 percent broker match with estimated yearly costs">
+          <text x="0" y="12" font-size="10" fill="#555555">Example result</text>
+          <text x="0" y="46" font-size="26" font-weight="700" fill="#1B4F8C">92%</text>
+          <text x="62" y="34" font-size="10" fill="#1A1A2E">match · low FX fees</text>
+          <text x="62" y="48" font-size="10" fill="#1A1A2E">est. $240–$310/yr</text>
+          <rect x="0" y="58" width="130" height="8" rx="2" fill="#1A6B3A" opacity="0.8"/>
+          <rect x="0" y="58" width="212" height="8" rx="2" fill="none" stroke="#D9DEE8"/>
+        </svg>
+      </div>
+      <div class="foot">
+        <span class="result-chip example">Example</span>
+        <span class="btn btn-primary" style="min-height:38px;padding:0 14px">Start →</span>
+      </div>
+    </a>
+  </div>
+
+  <!-- Supporting: US-gefiltert (availableMarkets) -->
+  <div class="tool-group">
+    <h2 class="t-h2">Debt &amp; credit</h2>
+    <div class="tool-list">
+      <a class="tool-row" href="/tools/debt-payoff-calculator"><span class="ic">↓</span><span><span class="nm">Debt Payoff Calculator</span><br><span class="bl">Your debt-free date and the plan behind it</span></span></a>
+      <a class="tool-row" href="/tools/credit-score-simulator"><span class="ic">◔</span><span><span class="nm">Credit Utilization Explorer</span><br><span class="bl">Score impact in honest ranges</span></span></a>
+      <a class="tool-row" href="/tools/loan-calculator"><span class="ic">$</span><span><span class="nm">Loan Calculator</span><br><span class="bl">Payments, interest and payoff time</span></span></a>
+    </div>
+  </div>
+
+  <div class="tool-group">
+    <h2 class="t-h2">Trading &amp; brokers</h2>
+    <div class="tool-list">
+      <a class="tool-row" href="/tools/trading-cost-calculator"><span class="ic">Σ</span><span><span class="nm">Trading Cost Calculator</span><br><span class="bl">Your yearly costs across brokers</span></span></a>
+      <a class="tool-row" href="/tools/broker-comparison"><span class="ic">⇄</span><span><span class="nm">Broker Comparison Tool</span><br><span class="bl">Your shortlist, side by side</span></span></a>
+    </div>
+  </div>
+
+  <div class="tool-group">
+    <h2 class="t-h2">Cards &amp; rewards</h2>
+    <div class="tool-list">
+      <a class="tool-row" href="/tools/credit-card-rewards-calculator"><span class="ic">▣</span><span><span class="nm">Credit Card Rewards Calculator</span><br><span class="bl">Which card pays you back the most</span></span></a>
+    </div>
+  </div>
+
+  <div class="tool-group">
+    <h2 class="t-h2">Business</h2>
+    <div class="tool-list">
+      <a class="tool-row" href="/tools/ai-roi-calculator"><span class="ic">◇</span><span><span class="nm">AI ROI Calculator</span><br><span class="bl">Payback period for AI tools, realistically</span></span></a>
+    </div>
+  </div>
+
+  <p class="t-meta" style="margin-top:36px">Every tool shows its data sources and a verified date. Educational tools, not financial advice.</p>
+</div>
+
+</body>
+</html>
