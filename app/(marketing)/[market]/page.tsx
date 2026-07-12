@@ -55,6 +55,7 @@ import {
 } from '@/components/marketing/homepage-sections';
 import { getBestXIndex } from '@/lib/comparison/loader';
 import { buildBestXItemListSchema } from '@/lib/seo/best-x-item-list';
+import { getMarketHomeHeroImage } from '@/lib/images/market-home-hero';
 
 import type { Category } from '@/lib/i18n/config';
 
@@ -263,6 +264,7 @@ export default async function MarketHomePage({ params, searchParams }: MarketPag
       <Hero
         title={heroContent.title}
         subtitle={heroContent.subtitle}
+        backgroundImageSrc={getMarketHomeHeroImage(marketData)}
         primaryCta={heroContent.primaryCta}
         secondaryCta={heroContent.secondaryCta}
       />
