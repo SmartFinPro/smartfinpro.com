@@ -89,3 +89,6 @@ export function getExpectedTrackingManifest(): { toolId: ToolId; path: string; m
     }),
   );
 }
+
+/** Runtime tuple of all ToolIds for z.enum — single source, no duplicate list. */
+export const TOOL_ID_VALUES = Object.keys(TOOL_REGISTRY) as [ToolId, ...ToolId[]];
