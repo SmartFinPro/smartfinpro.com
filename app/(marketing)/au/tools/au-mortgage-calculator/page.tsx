@@ -3,12 +3,14 @@ import { ArrowLeft, Home, Lightbulb, Shield } from 'lucide-react';
 import { DynamicAUMortgageCalculator } from '@/components/tools/dynamic-calculators';
 import { ToolRelatedReviews } from '@/components/marketing/tool-related-reviews';
 import { buildToolMetadata } from '@/lib/tools/registry/metadata';
+import { ToolJsonLd } from '@/components/tools/shell/tool-json-ld';
 
 export const metadata = buildToolMetadata('au-mortgage', 'au');
 
 export default function AUMortgageCalculatorPage() {
   return (
     <div className="min-h-screen" style={{ background: 'var(--sfp-gray)' }}>
+      <ToolJsonLd toolId="au-mortgage" market="au" />
       {/* Breadcrumb */}
       <div className="container mx-auto px-4 py-6">
         <Link

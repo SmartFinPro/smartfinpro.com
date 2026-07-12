@@ -3,15 +3,48 @@ import { GoldROICalculator } from '@/components/tools/gold-roi-calculator';
 import { AnswerBlock } from '@/components/ui/answer-block';
 import { AffiliateDisclosure } from '@/components/ui/affiliate-disclosure';
 import { buildToolMetadata } from '@/lib/tools/registry/metadata';
+import { ToolJsonLd } from '@/components/tools/shell/tool-json-ld';
+import type { FAQ } from '@/types';
 
 // Registry-Variante ist Ist-Zustand: Pfad noch '/tools/gold-roi-calculator' (US-Pfad),
 // Markt bereits 'au' (Task 0.1 KNOWN_MISPLACED-Ausnahme). Self-Canonical bleibt daher
 // hier korrekt; der physische Umzug nach /au/tools/ folgt erst in PR 0.3.
 export const metadata = buildToolMetadata('gold-roi', 'au');
 
+// Mirrors the visible "FAQ: Gold ROI Calculator" section below verbatim — never add
+// questions here that aren't rendered on the page.
+const FAQ_ITEMS: FAQ[] = [
+  {
+    question: 'Should I buy gold at current prices?',
+    answer:
+      "Timing the gold market is difficult. If you believe in gold's long-term inflation-hedging role, buy consistent amounts over time (dollar-cost averaging) rather than trying to time the market. Start with 5-10% allocation.",
+  },
+  {
+    question: 'Is allocated gold the same as owning physical gold?',
+    answer:
+      'Allocated gold is held in your name but stored by a custodian (Perth Mint). You have direct ownership but not physical possession. This is actually safer than storing gold yourself and costs less than private vaults.',
+  },
+  {
+    question: 'How accurate is this gold ROI calculator?',
+    answer:
+      'This calculator uses standard return projections based on historical averages. Gold returns are volatile and unpredictable year-to-year. Results are illustrative — actual returns may differ significantly, especially over shorter time periods.',
+  },
+  {
+    question: 'What about gold mining stocks instead of physical gold?',
+    answer:
+      'Gold mining stocks have leveraged exposure to gold prices (stock moves 1.5-2x gold) but carry company-specific risk. Better for trading/speculation. Physical gold or ETFs are simpler for core portfolio allocation.',
+  },
+  {
+    question: 'Tax on gold in Australia?',
+    answer:
+      "Capital gains tax applies to gold held 12+ months (50% discount). No GST on bullion. Allocated accounts don't trigger CGT until sold. Consult a tax accountant for your specific situation.",
+  },
+];
+
 export default function GoldRoiCalculatorPage() {
   return (
     <main className="min-h-screen bg-white">
+      <ToolJsonLd toolId="gold-roi" market="au" faq={FAQ_ITEMS} />
       {/* Hero */}
       <section
         className="relative py-20 px-6"

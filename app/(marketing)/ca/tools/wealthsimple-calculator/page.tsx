@@ -3,12 +3,14 @@ import { ArrowLeft, Calculator, Lightbulb, Shield, TrendingUp } from 'lucide-rea
 import { DynamicWealthsimpleCalculator } from '@/components/tools/dynamic-calculators';
 import { ToolRelatedReviews } from '@/components/marketing/tool-related-reviews';
 import { buildToolMetadata } from '@/lib/tools/registry/metadata';
+import { ToolJsonLd } from '@/components/tools/shell/tool-json-ld';
 
 export const metadata = buildToolMetadata('wealthsimple-fees', 'ca');
 
 export default function WealthsimpleCalculatorPage() {
   return (
     <div className="min-h-screen" style={{ background: 'var(--sfp-gray)' }}>
+      <ToolJsonLd toolId="wealthsimple-fees" market="ca" />
       {/* Breadcrumb */}
       <div className="container mx-auto px-4 py-6">
         <Link

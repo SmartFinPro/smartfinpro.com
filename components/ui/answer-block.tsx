@@ -14,7 +14,9 @@ interface AnswerBlockProps {
  * - Concise Q&A format (max 50 words)
  * - Structured for AI parsing
  * - Prominent visual design
- * - Linked to FAQPage Schema
+ * - Uses Question/Answer microdata (itemScope/itemType) — this does NOT emit
+ *   FAQPage JSON-LD. For JSON-LD, see FAQSchema (components/seo/faq-schema.tsx)
+ *   / ToolJsonLd (components/tools/shell/tool-json-ld.tsx).
  *
  * Usage:
  * <AnswerBlock

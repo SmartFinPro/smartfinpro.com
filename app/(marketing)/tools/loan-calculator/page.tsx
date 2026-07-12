@@ -3,12 +3,14 @@ import { ArrowLeft, Calculator, Lightbulb, Shield } from 'lucide-react';
 import { DynamicLoanCalculator } from '@/components/tools/dynamic-calculators';
 import { ToolRelatedReviews } from '@/components/marketing/tool-related-reviews';
 import { buildToolMetadata } from '@/lib/tools/registry/metadata';
+import { ToolJsonLd } from '@/components/tools/shell/tool-json-ld';
 
 export const metadata = buildToolMetadata('loan', 'us');
 
 export default function LoanCalculatorPage() {
   return (
     <div className="min-h-screen" style={{ background: 'var(--sfp-gray)' }}>
+      <ToolJsonLd toolId="loan" market="us" />
       {/* Breadcrumb */}
       <div className="container mx-auto px-4 py-6">
         <Link
