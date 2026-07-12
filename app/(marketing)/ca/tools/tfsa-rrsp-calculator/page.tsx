@@ -91,12 +91,12 @@ export default function TfsaRrspCalculatorPage() {
             The TFSA is a registered account where you can save any amount without paying income tax on growth or withdrawals. Introduced in 2009, it's a uniquely Canadian advantage for tax-efficient wealth building.
           </p>
 
-          <h3 style={{ color: 'var(--sfp-navy)' }}>2024-2025 TFSA Contribution Limits</h3>
+          <h3 style={{ color: 'var(--sfp-navy)' }}>2026 TFSA Contribution Limits</h3>
           <ul style={{ color: 'var(--sfp-ink)' }}>
-            <li>2024 annual limit: CAD $7,000</li>
+            <li>2026 annual limit: CAD $7,000</li>
             <li>Unused contribution room carries forward indefinitely</li>
             <li>Withdrawals add back to your contribution limit the next year</li>
-            <li>Lifetime room for those 18+ since 2009: CAD $95,000 (as of 2024)</li>
+            <li>Lifetime room for those 18+ since 2009: CAD $109,000 (as of 2026)</li>
           </ul>
 
           <h3 style={{ color: 'var(--sfp-navy)' }}>TFSA Key Advantages</h3>
@@ -123,9 +123,9 @@ export default function TfsaRrspCalculatorPage() {
             The RRSP is a registered savings account that provides an immediate tax deduction. Contributions reduce your taxable income, giving you a tax refund. Withdrawals in retirement are taxed as income, usually at a lower rate.
           </p>
 
-          <h3 style={{ color: 'var(--sfp-navy)' }}>2024-2025 RRSP Contribution Limits</h3>
+          <h3 style={{ color: 'var(--sfp-navy)' }}>2026 RRSP Contribution Limits</h3>
           <ul style={{ color: 'var(--sfp-ink)' }}>
-            <li>18% of previous year's earned income, up to CAD $31,560 (2024)</li>
+            <li>18% of previous year's earned income, up to CAD $33,810 (2026)</li>
             <li>Unused contribution room carries forward indefinitely</li>
             <li>Spousal RRSPs allow income splitting in retirement</li>
             <li>Home Buyers' Plan allows up to CAD $35,000 withdrawal for first home</li>

@@ -47,7 +47,7 @@ export function SuperannuationCalculator() {
   const [currentAge, setCurrentAge] = useState(35);
   const [currentBalance, setCurrentBalance] = useState(150000);
   const [annualSalary, setAnnualSalary] = useState(90000);
-  const [contributionRate, setContributionRate] = useState(11.5);
+  const [contributionRate, setContributionRate] = useState(12);
   const [additionalMonthly, setAdditionalMonthly] = useState(0);
 
   const results: SuperannuationResults = useMemo(() => {
@@ -281,11 +281,11 @@ export function SuperannuationCalculator() {
               />
               <div className="flex justify-between text-xs mt-1" style={{ color: 'var(--sfp-slate)' }}>
                 <span>9.5% (SG)</span>
-                <span>11.5% (Current)</span>
+                <span>12% (current since July 2025)</span>
                 <span>15%</span>
               </div>
               <p className="text-xs mt-2" style={{ color: 'var(--sfp-slate)' }}>
-                SG (Superannuation Guarantee) is 11.5% from July 2024, increasing to 12% by 2025.
+                SG (Superannuation Guarantee): the legislated 12% rate applies since 1 July 2025.
               </p>
             </div>
 
@@ -321,7 +321,7 @@ export function SuperannuationCalculator() {
               </div>
               <p className="text-xs mt-2" style={{ color: 'var(--sfp-slate)' }}>
                 Salary sacrifice contributions can reduce your taxable income. Annual concessional
-                contribution limit: A$27,500 (2024-25).
+                contribution limit: A$32,500 (2026-27).
               </p>
             </div>
           </div>

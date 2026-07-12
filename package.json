@@ -25,6 +25,7 @@
     "check:comparison": "node scripts/check-comparison-quality.mjs",
     "check:freshness": "node scripts/check-content-freshness.mjs",
     "check:freshness:warn": "node scripts/check-content-freshness.mjs --warn-only",
+    "check:rules": "npx tsx scripts/check-rule-freshness.mts",
     "test:e2e:comparison": "playwright test e2e/comparison-page.spec.ts",
     "check:seo": "node scripts/check-seo-quality.mjs --report",
     "seo:baseline": "node scripts/check-seo-quality.mjs --baseline",

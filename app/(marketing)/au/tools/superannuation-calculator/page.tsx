@@ -71,7 +71,7 @@ export default function SuperannuationCalculatorPage() {
               <strong style={{ color: 'var(--sfp-navy)' }}>Input Your Current Age & Retirement Age:</strong> Typically 67 for current workers, but you can retire from 60 if you meet requirements
             </li>
             <li>
-              <strong style={{ color: 'var(--sfp-navy)' }}>Add Your Annual Salary:</strong> This determines employer contributions (currently 11.5% of ordinary time earnings)
+              <strong style={{ color: 'var(--sfp-navy)' }}>Add Your Annual Salary:</strong> This determines employer contributions (currently 12% of ordinary time earnings)
             </li>
             <li>
               <strong style={{ color: 'var(--sfp-navy)' }}>Include Salary Sacrifice Contributions:</strong> Pre-tax contributions save up to 32% in taxes versus post-tax contributions
@@ -88,7 +88,7 @@ export default function SuperannuationCalculatorPage() {
 
           <h3 style={{ color: 'var(--sfp-navy)' }}>Compulsory Employer Contributions (Super Guarantee)</h3>
           <p style={{ color: 'var(--sfp-ink)' }}>
-            Since 1 July 2025, employers must contribute 11.5% of ordinary time earnings into your super. This rate is legislated to increase to 12% in 2025-26. This is compulsory and separate from your salary — employers pay it directly to your super fund.
+            Since 1 July 2025, employers must contribute 12% of ordinary time earnings into your super — the final legislated step of the Super Guarantee phase-in. This is compulsory and separate from your salary — employers pay it directly to your super fund.
           </p>
 
           <h3 style={{ color: 'var(--sfp-navy)' }}>Salary Sacrifice Contributions</h3>
