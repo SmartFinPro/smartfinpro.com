@@ -33,6 +33,7 @@ import type {
   ScanResponse,
 } from '@/lib/money-leak/types';
 import type { Market } from '@/types';
+import { getOrCreateAnalyticsSessionId } from '@/lib/analytics/session';
 
 interface MoneyLeakScannerProps {
   market: Market;
@@ -64,17 +65,6 @@ const DEFAULT_LIFESTYLE: LeakLifestyle = {
   comparesInsuranceAnnually: false,
   investsRegularly: false,
 };
-
-function getOrCreateSessionId(): string {
-  if (typeof window === 'undefined') return '';
-  const key = 'sfp_session_id';
-  let id = window.sessionStorage.getItem(key);
-  if (!id) {
-    id = crypto.randomUUID();
-    window.sessionStorage.setItem(key, id);
-  }
-  return id;
-}
 
 function track(event: string, payload: Record<string, unknown> = {}): void {
   fetch('/api/track-cta', {
@@ -141,7 +131,7 @@ export function MoneyLeakScanner({ market }: MoneyLeakScannerProps) {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            sessionId: getOrCreateSessionId(),
+            sessionId: getOrCreateAnalyticsSessionId() ?? '',
             market,
             currency: currency.code,
             monthlyIncome: income,
