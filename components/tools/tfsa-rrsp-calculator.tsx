@@ -34,11 +34,11 @@ interface ChartDataPoint {
 const formatCAD = (value: number) =>
   `$${value.toLocaleString('en-CA', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
 
-// TFSA lifetime limit: $88,000 (cumulative since 2009)
-const TFSA_LIFETIME_LIMIT = 88000;
+// TFSA lifetime limit: $109,000 (cumulative since 2009, as of 2026; canada.ca)
+const TFSA_LIFETIME_LIMIT = 109000;
 
-// RRSP annual limit: 18% of previous year income, max $31,560 (2024)
-const RRSP_MAX_ANNUAL = 31560;
+// RRSP annual limit: 18% of previous year income, max $33,810 (2026)
+const RRSP_MAX_ANNUAL = 33810;
 const RRSP_PERCENTAGE = 0.18;
 
 // FHSA: $8,000 per year, max $40,000 lifetime
@@ -324,7 +324,7 @@ export function TfsaRrspCalculator() {
               <AlertTriangle className="h-5 w-5 shrink-0 mt-0.5" style={{ color: 'var(--sfp-red)' }} />
               <div className="text-xs text-slate-700">
                 <strong style={{ color: 'var(--sfp-red)' }}>Disclaimer:</strong> This calculator provides
-                estimates based on 2024 CRA limits and tax brackets. Actual contribution room may differ based
+                estimates based on 2026 CRA limits and tax brackets. Actual contribution room may differ based
                 on your Notice of Assessment. Consult a tax professional for personalized advice.
               </div>
             </div>

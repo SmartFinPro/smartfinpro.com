@@ -95,8 +95,8 @@ export default function ISATaxSavingsCalculatorPage() {
                 <h3 className="font-semibold mb-3" style={{ color: 'var(--sfp-ink)' }}>Taxes Sheltered by an ISA</h3>
                 <ul className="space-y-2 text-sm" style={{ color: 'var(--sfp-slate)' }}>
                   <li>
-                    <strong style={{ color: 'var(--sfp-ink)' }}>Capital Gains Tax:</strong> 10% (basic) or
-                    24% (higher/additional) on profits above £3,000 annual allowance
+                    <strong style={{ color: 'var(--sfp-ink)' }}>Capital Gains Tax:</strong> 18% (basic rate) or
+                    24% (higher rate) on profits above £3,000 annual allowance
                   </li>
                   <li>
                     <strong style={{ color: 'var(--sfp-ink)' }}>Dividend Tax:</strong> 8.75% (basic), 33.75%
@@ -113,7 +113,7 @@ export default function ISATaxSavingsCalculatorPage() {
                 </ul>
               </div>
               <div className="rounded-xl p-6 border border-gray-200 bg-white shadow-sm">
-                <h3 className="font-semibold mb-3" style={{ color: 'var(--sfp-ink)' }}>Key ISA Rules (2025/26)</h3>
+                <h3 className="font-semibold mb-3" style={{ color: 'var(--sfp-ink)' }}>Key ISA Rules (2026/27)</h3>
                 <ul className="space-y-2 text-sm" style={{ color: 'var(--sfp-slate)' }}>
                   <li>
                     <strong style={{ color: 'var(--sfp-ink)' }}>Annual Allowance:</strong> £20,000 across all
@@ -130,6 +130,11 @@ export default function ISATaxSavingsCalculatorPage() {
                   <li>
                     <strong style={{ color: 'var(--sfp-ink)' }}>FSCS Protection:</strong> Up to £85,000 per
                     provider if the firm fails
+                  </li>
+                  <li>
+                    <strong style={{ color: 'var(--sfp-ink)' }}>Cash ISA Change (2027):</strong> From 6 April
+                    2027 the cash ISA allowance falls to £12,000 for under-65s, while the overall £20,000
+                    ISA allowance stays unchanged.
                   </li>
                 </ul>
               </div>
