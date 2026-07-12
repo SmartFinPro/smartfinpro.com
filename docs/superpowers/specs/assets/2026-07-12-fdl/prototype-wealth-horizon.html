@@ -316,7 +316,8 @@
     el.addEventListener('input', () => {
       if (!state.started){ state.started = true; track('tool_start'); $('phase').textContent = 'state: ready'; }
       if (el.dataset.pair) $(el.dataset.pair).value = el.value;
-      const pair = document.querySelector('input[data-pair="' + el.id + '"]'); if (pair) pair.value = el.value;
+      const pair = document.querySelector('input[data-pair="' + el.id + '"]');
+      if (pair){ if (+el.value > +pair.max) pair.max = el.value; pair.value = el.value; } // dynamisches Max, kein visueller Clamp
       clearTimeout(timers[el.id]);
       timers[el.id] = setTimeout(() => { state.inputChanges++; render('input'); }, 600);
       render('preview-immediate'); // Preview darf sofort zeichnen; EVENT ist gedrosselt
@@ -330,11 +331,16 @@
   // Kein automatischer Staats-Benefit: Betrag + Startalter kommen ausschließlich aus den Feldern oben.
 
   // ---------- Levers / Share / Report / Bridge ----------
-  // setField hält Zahlenfeld UND gekoppelten Slider synchron; Levers clampen NIE (Simple mode, SPEC 8.3)
+  // setField hält Zahlenfeld UND gekoppelten Slider synchron; Levers clampen NIE (Simple mode, SPEC 8.3).
+  // Übersteigt der Wert das Slider-Maximum, wächst das Maximum mit — der Range-Control darf nie stiller
+  // visueller Clamp sein (Review R5).
   function setField(id, value){
     $(id).value = value;
     const pair = document.querySelector('input[data-pair="' + id + '"]');
-    if (pair) pair.value = value; // Slider-max ist reine UX-Skala, kein fachlicher Clamp
+    if (pair){
+      if (+value > +pair.max) pair.max = value;
+      pair.value = value;
+    }
   }
   $('lv1').addEventListener('click', () => { setField('fees', 0.1); track('tool_input_change','controlRole:lever fees'); maybeQualify('lever'); render('lever'); });
   $('lv2').addEventListener('click', () => { setField('contrib', +$('contrib').value + 200); track('tool_input_change','controlRole:lever contrib'); maybeQualify('lever'); render('lever'); });

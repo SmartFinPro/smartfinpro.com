@@ -96,7 +96,8 @@
     <div class="q"><label>3 · How often do you expect to trade?</label>
       <div class="opts" data-k="tradesPerMonth"><button data-v="2">A few times a year</button><button data-v="6">Monthly</button><button data-v="12">Weekly</button><button data-v="40">Most days</button></div></div>
     <div class="q"><label>4 · Typical trade size?</label>
-      <div class="opts" data-k="avgTradeSize"><button data-v="250">~$250</button><button data-v="1000">~$1,000</button><button data-v="5000">~$5,000</button></div></div>
+      <div class="opts" data-k="avgTradeSize"><button data-v="250">~$250</button><button data-v="1000">~$1,000</button><button data-v="5000">~$5,000</button></div>
+      <div class="route" style="margin:6px 0 0">Beträge folgen der Markt-Währung (MARKETS.cur)</div></div>
     <div class="q"><label>5 · What matters most?</label>
       <div class="opts" data-k="priority"><button>Lowest fees</button><button>Best platform</button><button>Learning &amp; support</button></div></div>
     <div class="nav"><button class="b primary" id="toShortlist" disabled>See my matches →</button></div>
@@ -118,7 +119,7 @@
     <h2 class="t">Trading Cost Calculator</h2>
     <div class="prefill show" id="prefill">Using your quiz answers — <a href="#" id="editPrefill">edit</a> <span class="redline">(Transparenz + Korrigierbarkeit, Spec 5.3)</span></div>
     <div class="field"><label for="tpm">Trades per month</label><input type="number" id="tpm" min="1" max="60" inputmode="numeric"></div>
-    <div class="field"><label for="size">Average trade size ($)</label><input type="number" id="size" min="50" step="50" inputmode="numeric"></div>
+    <div class="field"><label for="size" id="sizeLabel">Average trade size ($)</label><input type="number" id="size" min="50" step="50" inputmode="numeric"></div>
     <div class="bars" id="costbars" aria-live="polite"></div>
     <div class="redline">Jahreskosten je Shortlist-Broker · direkt beschriftet · tabular-nums</div>
     <div class="nav"><button class="b" id="back3">‹ Shortlist</button><button class="b primary" id="toCompare">Compare side by side →</button></div>
@@ -139,7 +140,7 @@
     <h2 class="t">Your decision, summarized</h2>
     <p class="sub" id="summary"></p>
     <div class="next">
-      <a href="#" id="bridge">See the full US trading platform ranking →</a>
+      <a href="/us/trading/best/trading-platforms" id="bridge">See the full US trading platform ranking →</a>
       <span class="redline" id="bridgeNote">/us/trading/best/trading-platforms · tool_cockpit_cta_click</span>
     </div>
     <div class="nav"><button class="b" id="restart">Start over (clears sfp_decision_v1)</button></div>
@@ -225,7 +226,12 @@
         state.shortlist = [];                            // Shortlist gilt nur je Markt
         $('regnote').textContent = 'Regulator context: ' + mkt().regulator + ' · costs in ' + mkt().cur + ' · providers filtered by availableMarkets';
         $('bridge').textContent = mkt().bridgeLabel;     // Abschlussbrücke je Markt (SPEC 4.5)
+        $('bridge').href = mkt().bridge;                 // ECHTER href, nicht nur Text (Review R5)
         $('bridgeNote').textContent = mkt().bridge + ' · tool_cockpit_cta_click';
+        $('sizeLabel').textContent = 'Average trade size (' + mkt().cur + ')';
+        document.querySelectorAll('.opts[data-k="avgTradeSize"] button').forEach((x) => {
+          x.textContent = '~' + money(+x.dataset.v);     // Quiz-Beträge in Markt-Währung
+        });
         track('tool_input_change','market=' + state.market);
         persist(); return;
       }
@@ -302,7 +308,7 @@
       ? `Based on your answers, <strong>${top.b.name}</strong> fits best (${top.m}% match, est. ${money(top.c)}/yr, ${mkt().regulator}-regulated market). Your shortlist: ${list.map(x=>x.b.name).join(', ')}.`
       : 'No shortlist yet — go back to step 2.';
   }
-  $('bridge').addEventListener('click',(e)=>{ e.preventDefault(); track('tool_next_action_click'); track('tool_cockpit_cta_click','bridge'); qualify('next_action'); });
+  $('bridge').addEventListener('click',(e)=>{ e.preventDefault(); /* Prototyp: href bleibt inspizierbar */ track('tool_next_action_click'); track('tool_cockpit_cta_click', mkt().bridge); qualify('next_action'); });
   $('restart').addEventListener('click',()=>{ try{ sessionStorage.removeItem('sfp_decision_v1'); }catch(e){}; location.reload(); });
 
   persist();
