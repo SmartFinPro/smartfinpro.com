@@ -20,3 +20,9 @@ for (const v of getAllVariants().filter((x) => x.status === 'live')) {
     expect(hasWebApplication, `no WebApplication JSON-LD node on "${v.path}"`).toBe(true);
   });
 }
+
+test('gold-roi legacy path 308s to /au/tools/', async ({ request }) => {
+  const res = await request.get('/tools/gold-roi-calculator', { maxRedirects: 0 });
+  expect(res.status()).toBe(308);
+  expect(res.headers()['location']).toContain('/au/tools/gold-roi-calculator');
+});

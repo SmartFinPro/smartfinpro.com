@@ -673,6 +673,15 @@ const nextConfig: SmartFinNextConfig = {
         permanent: true,
       },
 
+      // ── gold-roi-calculator moved from /tools/ to /au/tools/ (FDL 0.3) ────
+      // Tool is AU-only content; the page physically moved, so the legacy
+      // US-style path now 308s to the correct market-prefixed route.
+      {
+        source: '/tools/gold-roi-calculator',
+        destination: '/au/tools/gold-roi-calculator',
+        permanent: true,
+      },
+
       // ── AU-only categories crawled with /us/ prefix ───────────────────────
       {
         source: '/us/superannuation/:slug*',

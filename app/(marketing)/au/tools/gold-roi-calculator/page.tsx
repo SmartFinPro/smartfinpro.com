@@ -1,4 +1,4 @@
-// app/(marketing)/tools/gold-roi-calculator/page.tsx
+// app/(marketing)/au/tools/gold-roi-calculator/page.tsx
 import { GoldROICalculator } from '@/components/tools/gold-roi-calculator';
 import { AnswerBlock } from '@/components/ui/answer-block';
 import { AffiliateDisclosure } from '@/components/ui/affiliate-disclosure';
@@ -6,9 +6,10 @@ import { buildToolMetadata } from '@/lib/tools/registry/metadata';
 import { ToolJsonLd } from '@/components/tools/shell/tool-json-ld';
 import type { FAQ } from '@/types';
 
-// Registry-Variante ist Ist-Zustand: Pfad noch '/tools/gold-roi-calculator' (US-Pfad),
-// Markt bereits 'au' (Task 0.1 KNOWN_MISPLACED-Ausnahme). Self-Canonical bleibt daher
-// hier korrekt; der physische Umzug nach /au/tools/ folgt erst in PR 0.3.
+// Moved from /tools/gold-roi-calculator to /au/tools/gold-roi-calculator (Task 0.3).
+// Registry variant.path now matches this file's location, so canonical/hreflang
+// from buildToolMetadata() are correct without further edits here. The old path
+// 308s here via next.config.ts (see legacyPaths on the gold-roi ToolDefinition).
 export const metadata = buildToolMetadata('gold-roi', 'au');
 
 // Mirrors the visible "FAQ: Gold ROI Calculator" section below verbatim — never add
