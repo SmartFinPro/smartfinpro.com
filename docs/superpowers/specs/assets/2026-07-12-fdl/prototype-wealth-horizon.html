@@ -330,9 +330,15 @@
   // Kein automatischer Staats-Benefit: Betrag + Startalter kommen ausschließlich aus den Feldern oben.
 
   // ---------- Levers / Share / Report / Bridge ----------
-  $('lv1').addEventListener('click', () => { $('fees').value = 0.1; track('tool_input_change','controlRole:lever fees'); maybeQualify('lever'); render('lever'); });
-  $('lv2').addEventListener('click', () => { $('contrib').value = Math.min(+$('contrib').value + 200, 2041); track('tool_input_change','controlRole:lever contrib'); maybeQualify('lever'); render('lever'); });
-  $('lv3').addEventListener('click', () => { $('retire').value = Math.min(+$('retire').value + 2, 75); track('tool_input_change','controlRole:lever retireAge'); maybeQualify('lever'); render('lever'); });
+  // setField hält Zahlenfeld UND gekoppelten Slider synchron; Levers clampen NIE (Simple mode, SPEC 8.3)
+  function setField(id, value){
+    $(id).value = value;
+    const pair = document.querySelector('input[data-pair="' + id + '"]');
+    if (pair) pair.value = value; // Slider-max ist reine UX-Skala, kein fachlicher Clamp
+  }
+  $('lv1').addEventListener('click', () => { setField('fees', 0.1); track('tool_input_change','controlRole:lever fees'); maybeQualify('lever'); render('lever'); });
+  $('lv2').addEventListener('click', () => { setField('contrib', +$('contrib').value + 200); track('tool_input_change','controlRole:lever contrib'); maybeQualify('lever'); render('lever'); });
+  $('lv3').addEventListener('click', () => { setField('retire', Math.min(+$('retire').value + 2, 75)); track('tool_input_change','controlRole:lever retireAge'); maybeQualify('lever'); render('lever'); });
   $('shareBtn').addEventListener('click', () => { $('share').classList.toggle('open'); });
   $('copyBtn').addEventListener('click', () => { track('tool_result_share','allowlist preview shown first'); maybeQualify('share'); $('copyBtn').textContent = 'Copied ✓'; });
   $('reportBtn').addEventListener('click', () => { track('tool_report_email'); maybeQualify('report'); $('reportBtn').textContent = 'Report requested ✓'; });

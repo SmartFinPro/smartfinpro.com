@@ -139,10 +139,17 @@ git add .github/workflows/pr-build.yml
 git commit -m "ci: production build als PR-Check für App-/Tool-/Lib-Pfade (FDL 0.0)"
 ```
 
-- [ ] **Step 5: Nach Merge — Required Check aktivieren (manueller Schritt / gh)**
+- [ ] **Step 5: Nach Merge — Required Check ADDITIV aktivieren (niemals ersetzend)**
 
-Run: `gh api -X PATCH "repos/SmartFinPro/smartfinpro.com/branches/main/protection/required_status_checks" -f 'contexts[]=build' 2>&1 || echo "MANUELL: GitHub → Settings → Branches → main → Required status checks → 'build' hinzufügen"`
-Erwartung: Entweder Erfolg oder dokumentierter manueller Schritt im PR-Text. Dieser Schritt darf NICHT stillschweigend übersprungen werden.
+⚠️ **Verboten:** `PATCH …/protection/required_status_checks` mit `contexts[]=build` — dieser Endpunkt ERSETZT die komplette Context-Liste und würde vorhandene Required Checks (z. B. „PR Checks") löschen.
+
+Sicherer Ablauf (in dieser Reihenfolge):
+1. Ist-Zustand sichern: `gh api "repos/SmartFinPro/smartfinpro.com/branches/main/protection/required_status_checks" > /tmp/req-checks-before.json 2>/dev/null || echo "keine Branch-Protection-API-Rechte → UI-Weg"`
+2. **Bevorzugt additiv per API:** `gh api -X POST "repos/SmartFinPro/smartfinpro.com/branches/main/protection/required_status_checks/contexts" -f 'contexts[]=build'` — der `contexts`-Unterendpunkt mit POST fügt hinzu, ohne bestehende Einträge zu entfernen.
+3. **Fallback UI:** GitHub → Settings → Branches → main (bzw. Rulesets, falls das Repo Rulesets statt klassischer Protection nutzt — vorher prüfen!) → Required status checks → „build" ZUSÄTZLICH ankreuzen; vorhandene Checks unangetastet lassen.
+4. Verifizieren: erneuter GET wie in 1. — Liste muss alle vorherigen Contexts PLUS `build` enthalten. Ergebnis (vorher/nachher) im PR-Text dokumentieren.
+
+Dieser Schritt darf NICHT stillschweigend übersprungen werden.
 
 ---
 
@@ -295,6 +302,12 @@ describe('market availability contract (SPEC 4.2)', () => {
     expect(getToolsForMarket('uk').some((t) => t.id === 'broker-finder')).toBe(true);
     expect(getToolsForMarket('uk').some((t) => t.id === 'loan')).toBe(false);
   });
+  it('tracking manifest expands availableMarkets (29 funktionale Einträge, nicht 20 Routen)', () => {
+    const manifest = getExpectedTrackingManifest();
+    expect(manifest.length).toBe(29); // 20 Routen + Broker-Triple × uk/ca/au
+    expect(manifest).toContainEqual({ toolId: 'broker-finder', path: '/tools/broker-finder', market: 'uk' });
+    expect(manifest).toContainEqual({ toolId: 'trading-cost', path: '/tools/trading-cost-calculator', market: 'au' });
+  });
 });
 ```
 
@@ -413,10 +426,21 @@ export function getLlmsToolLines(): string[] {
     .map((v) => `- ${v.title}: https://smartfinpro.com${v.path}`);
 }
 
+/**
+ * Tracking-Manifest = FUNKTIONALE Tool-Markt-Matrix (nicht nur SEO-Routen):
+ * expandiert availableMarkets, damit z. B. Broker-Finder-Silence auf UK/CA/AU
+ * erkannt wird, obwohl alle vier Märkte dieselbe US-Route nutzen.
+ * Erwarteter Ist-Umfang: 29 Einträge (20 Routen + Broker-Triple × uk/ca/au).
+ */
 export function getExpectedTrackingManifest(): { toolId: ToolId; path: string; market: ToolMarket }[] {
-  return getAllVariants()
-    .filter((v) => v.status === 'live')
-    .map((v) => ({ toolId: v.toolId, path: v.path, market: v.market }));
+  return Object.values(TOOL_REGISTRY).flatMap((t) =>
+    getAvailableMarkets(t).flatMap((m) => {
+      const v = t.variants.find((x) => x.market === m)
+        ?? t.variants.find((x) => x.market === 'us')
+        ?? t.variants[0];
+      return v.status === 'live' ? [{ toolId: t.id, path: v.path, market: m }] : [];
+    }),
+  );
 }
 ```
 

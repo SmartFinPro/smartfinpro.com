@@ -139,8 +139,8 @@
     <h2 class="t">Your decision, summarized</h2>
     <p class="sub" id="summary"></p>
     <div class="next">
-      <a href="#" id="bridge">See the full trading platform ranking →</a>
-      <span class="redline">/us/trading/best/trading-platforms · tool_cockpit_cta_click</span>
+      <a href="#" id="bridge">See the full US trading platform ranking →</a>
+      <span class="redline" id="bridgeNote">/us/trading/best/trading-platforms · tool_cockpit_cta_click</span>
     </div>
     <div class="nav"><button class="b" id="restart">Start over (clears sfp_decision_v1)</button></div>
   </section>
@@ -162,8 +162,17 @@
     { slug:'proterminal', name:'ProTerminal',perTrade:2.5, spreadPct:0.03, strengths:['Best platform','Advanced','Stocks & ETFs'], education:2, platform:5, availableMarkets:['us'] },
     { slug:'everymarket', name:'EveryMarket',perTrade:0.8, spreadPct:0.08, strengths:['All-round','Forex','Stocks & ETFs'],  education:3, platform:4, availableMarkets:['us','uk','ca','au'] },
   ];
-  const REGULATORS = { us:'SEC/FINRA', uk:'FCA', ca:'CIRO', au:'ASIC' };
+  // Markt-Konfiguration (SPEC 4.2 + Brücken aus SPEC 4.5): Währung, Kostenkontext, Cockpit-Ziel.
+  // costFactor ist ein Lo-Fi-Platzhalter — real kommen Kostenannahmen aus lib/rules je Markt.
+  const MARKETS = {
+    us: { regulator:'SEC/FINRA', cur:'$',  costFactor:1.00, bridge:'/us/trading/best/trading-platforms', bridgeLabel:'See the full US trading platform ranking →' },
+    uk: { regulator:'FCA',       cur:'£',  costFactor:0.90, bridge:'/uk/trading/best/cfd-brokers',       bridgeLabel:'See the full UK CFD broker ranking →' },
+    ca: { regulator:'CIRO',      cur:'C$', costFactor:1.05, bridge:'/ca/forex/best/forex-brokers',       bridgeLabel:'See the full Canadian forex broker ranking →' },
+    au: { regulator:'ASIC',      cur:'A$', costFactor:1.10, bridge:'/au/trading/best/cfd-brokers',       bridgeLabel:'See the full Australian CFD broker ranking →' },
+  };
   const state = { market:'us', answers:{}, shortlist:[], started:false, firstResult:false, qualified:false };
+  function mkt(){ return MARKETS[state.market] || MARKETS.us; }
+  function money(v){ return mkt().cur + v.toLocaleString(); }
   function marketBrokers(){ return BROKERS.filter(b => b.availableMarkets.includes(state.market)); }
   const fired = new Set(['tool_view']);
   function track(n, meta){
@@ -214,7 +223,9 @@
       if (g.hasAttribute('data-market')){
         state.market = b.dataset.m;                      // validierter ?market= aus dem Hub; ungültig/fehlt → us
         state.shortlist = [];                            // Shortlist gilt nur je Markt
-        $('regnote').textContent = 'Regulator context: ' + REGULATORS[state.market] + ' · providers filtered by availableMarkets';
+        $('regnote').textContent = 'Regulator context: ' + mkt().regulator + ' · costs in ' + mkt().cur + ' · providers filtered by availableMarkets';
+        $('bridge').textContent = mkt().bridgeLabel;     // Abschlussbrücke je Markt (SPEC 4.5)
+        $('bridgeNote').textContent = mkt().bridge + ' · tool_cockpit_cta_click';
         track('tool_input_change','market=' + state.market);
         persist(); return;
       }
@@ -232,7 +243,7 @@
   function yearlyCost(b){
     const tpm = +($('tpm').value || state.answers.tradesPerMonth || 6);
     const size = +($('size').value || state.answers.avgTradeSize || 1000);
-    return Math.round((b.perTrade + size * b.spreadPct/100) * tpm * 12);
+    return Math.round((b.perTrade + size * b.spreadPct/100) * tpm * 12 * mkt().costFactor);
   }
   function matchScore(b){
     let s = 55;
@@ -250,7 +261,7 @@
       <div class="bcard${i===0?' top':''}">
         <div style="display:flex;justify-content:space-between;align-items:baseline"><strong>${r.b.name}</strong><span class="match">${r.score}%</span></div>
         <ul class="why">${r.b.strengths.slice(0,2).map(s=>`<li>${s}</li>`).join('')}<li>fits „${state.answers.priority}"</li></ul>
-        <span class="cost">est. <strong>$${(r.cost*0.85|0).toLocaleString()}–$${(r.cost*1.15|0).toLocaleString()}</strong>/yr for your pattern</span>
+        <span class="cost">est. <strong>${money(r.cost*0.85|0)}–${money(r.cost*1.15|0)}</strong>/yr for your pattern</span>
         <button class="add" data-slug="${r.b.slug}" aria-pressed="${state.shortlist.includes(r.b.slug)}">${state.shortlist.includes(r.b.slug)?'On shortlist ✓':'+ Add to shortlist'}</button>
       </div>`).join('');
     $('cards').querySelectorAll('.add').forEach(btn=>btn.addEventListener('click',()=>{
@@ -270,7 +281,7 @@
     const list = marketBrokers().filter(b=>state.shortlist.includes(b.slug)).map(b=>({b, c: yearlyCost(b)})).sort((x,y)=>x.c-y.c);
     const max = Math.max(...list.map(x=>x.c), 1);
     $('costbars').innerHTML = list.map((x,i)=>`
-      <div class="brow"><span class="nm">${x.b.name}</span><div class="bar${i===0?' me':''}" style="width:${Math.max(8, x.c/max*55)}%"></div><span class="val">$${x.c.toLocaleString()}/yr${i===0?' · cheapest':''}</span></div>`).join('');
+      <div class="brow"><span class="nm">${x.b.name}</span><div class="bar${i===0?' me':''}" style="width:${Math.max(8, x.c/max*55)}%"></div><span class="val">${money(x.c)}/yr${i===0?' · cheapest':''}</span></div>`).join('');
   }
   ['tpm','size'].forEach(id=>$(id).addEventListener('input',()=>{ track('tool_input_change', id+' (edited prefill)'); renderCosts(false); persist(); }));
   $('editPrefill').addEventListener('click',(e)=>{ e.preventDefault(); $('tpm').focus(); });
@@ -280,7 +291,7 @@
   function renderCompare(){
     const list = marketBrokers().filter(b=>state.shortlist.includes(b.slug));
     $('cmp').innerHTML = `<tr><th>Broker</th><th>Match</th><th>Est. cost/yr (yours)</th><th>Per trade</th><th>Spread</th><th>Platform</th><th>Education</th></tr>` +
-      list.map(b=>`<tr><td class="on"><strong>${b.name}</strong> <span style="font-size:10px">(shortlist ✓)</span></td><td>${matchScore(b)}%</td><td>$${yearlyCost(b).toLocaleString()}</td><td>$${b.perTrade.toFixed(2)}</td><td>${b.spreadPct}%</td><td>${'★'.repeat(b.platform)}</td><td>${'★'.repeat(b.education)}</td></tr>`).join('');
+      list.map(b=>`<tr><td class="on"><strong>${b.name}</strong> <span style="font-size:10px">(shortlist ✓)</span></td><td>${matchScore(b)}%</td><td>${money(yearlyCost(b))}</td><td>${money(+b.perTrade.toFixed(2))}</td><td>${b.spreadPct}%</td><td>${'★'.repeat(b.platform)}</td><td>${'★'.repeat(b.education)}</td></tr>`).join('');
   }
   $('toFinish').addEventListener('click',()=>go(5));
 
@@ -288,7 +299,7 @@
     const list = marketBrokers().filter(b=>state.shortlist.includes(b.slug)).map(b=>({b, c:yearlyCost(b), m:matchScore(b)})).sort((x,y)=>y.m-x.m);
     const top = list[0];
     $('summary').innerHTML = top
-      ? `Based on your answers, <strong>${top.b.name}</strong> fits best (${top.m}% match, est. $${top.c.toLocaleString()}/yr). Your shortlist: ${list.map(x=>x.b.name).join(', ')}.`
+      ? `Based on your answers, <strong>${top.b.name}</strong> fits best (${top.m}% match, est. ${money(top.c)}/yr, ${mkt().regulator}-regulated market). Your shortlist: ${list.map(x=>x.b.name).join(', ')}.`
       : 'No shortlist yet — go back to step 2.';
   }
   $('bridge').addEventListener('click',(e)=>{ e.preventDefault(); track('tool_next_action_click'); track('tool_cockpit_cta_click','bridge'); qualify('next_action'); });
