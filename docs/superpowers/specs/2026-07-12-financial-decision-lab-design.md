@@ -85,7 +85,7 @@ Legende: **Render** CL = Client-only via `dynamic-calculators.tsx` (`ssr:false`,
 
 | Markt | Wert | Korrekt (heute) | Quelle |
 |---|---|---|---|
-| US | 401(k)-Limit 2026 | **$24.500** (Catch-up 50+: $8.000) | irs.gov/newsroom/401k-limit-increases-to-24500-for-2026-ira-limit-increases-to-7500 (Notice 2025-67) |
+| US | 401(k)-Limit 2026 | **$24.500** Arbeitnehmer-Deferral; Catch-up 50+ **$8.000**, Alter 60–63 **$11.250**; Gesamtbeitrag inkl. Arbeitgeber **$72.000**; Roth-Catch-up-Wage-Threshold **$150.000** | IRS Notice 2025-67 |
 | US | IRA-Limit 2026 | **$7.500** (Catch-up: $1.100) | ebd. |
 | CA | TFSA-Limit 2026 | **$7.000/Jahr**, kumulativ **$109.000** | canada.ca …/mp-rrsp-dpsp-tfsa-limits-ympe.html |
 | CA | RRSP-Limit 2026 | **$33.810** | ebd. |
@@ -127,11 +127,11 @@ Die Begründung stützt sich auf strukturelle Defizite (keine Journeys, kein Res
 ```
 Financial Decision Lab
 ├── Hub (Decision Launcher)            /tools · /uk/tools · /ca/tools · /au/tools
-│   ├── 4 Major Decisions (erster Viewport, mit „Example"-Miniaturen)
+│   ├── Marktverfügbare Major Decisions (erster Viewport, mit „Example"-Miniaturen)
 │   │   ├── "Find where my money is going"        → Money Leak Scanner        (LiveCanvas)
 │   │   ├── "Plan my financial future"            → Wealth Horizon            (GuidedJourney)
-│   │   ├── "Choose the right broker"             → Broker Decision Journey   (GuidedJourney)
-│   │   └── "Understand what home I can afford"   → Home Decision Lab         (PrecisionWorksheet)
+│   │   ├── "Choose the right broker"             → Broker Decision Journey   (GuidedJourney; alle Märkte)
+│   │   └── "Understand what home I can afford"   → Home Decision Lab         (UK/CA/AU)
 │   └── Supporting Tools, gruppiert nach decisionCategory (unterhalb des ersten Viewports)
 ├── Tool-Seiten (20 bestehende + 4 Wealth-Horizon-Routen)
 ├── Cockpit-Brücken (NextBestAction, genau EINE pro Ergebnis)
@@ -152,7 +152,18 @@ Financial Decision Lab
 | `niche` | Specialist | Gold ROI (AU) |
 | `business` | Business | AI ROI |
 
-Jede Gruppe erscheint nur in Märkten, die mindestens ein Tool darin haben (Registry-Filter über `variants[].market`).
+Jede Supporting-Gruppe erscheint nur in Märkten, die mindestens ein Tool darin haben. Die Registry trennt deshalb **SEO-Varianten** (`variants[]`: eigene indexierbare Route) von **funktionaler Marktverfügbarkeit** (`availableMarkets[]`: ein globaler Pfad darf mehrere Märkte bedienen).
+
+**Major-Decision-Verfügbarkeit (bindend):**
+
+| Hub | Sichtbare Major Decisions | Routing-Vertrag |
+|---|---|---|
+| `/tools` (US/x-default) | Money Leak · Wealth Horizon · Broker Journey | Kein Home-Panel, solange kein US-Home-Tool existiert; keine tote oder fachfremde Ersatzroute |
+| `/uk/tools` | Money Leak · Wealth Horizon · Broker Journey · Home Lab | Broker → `/tools/broker-finder?market=uk`; Home → UK Remortgage |
+| `/ca/tools` | Money Leak · Wealth Horizon · Broker Journey · Home Lab | Broker → `/tools/broker-finder?market=ca`; Home → CA Affordability |
+| `/au/tools` | Money Leak · Wealth Horizon · Broker Journey · Home Lab | Broker → `/tools/broker-finder?market=au`; Home → AU Mortgage |
+
+Die drei globalen Broker-Routen bleiben aus SEO-Sicht self-canonical und erhalten **keine** künstlichen lokalisierten Duplikate. Der nicht-sensitive `market`-Queryparameter steuert nur Produktauswahl, Regulierungstexte, Kostenannahmen und die spätere Cockpit-Brücke; `getToolEntryHref(tool, market)` erzeugt ihn, `DecisionStateV1.broker.market` persistiert ihn. Fehlt oder ist er ungültig, gilt `us`. Alle Broker-Ergebnisse müssen Anbieter anhand `availableMarkets` filtern; ein Anbieter ohne nachgewiesene Marktverfügbarkeit darf nicht empfohlen werden. Canonical und Open Graph URL bleiben parameterlos.
 
 ### 4.3 Markt-Hubs und Navigation
 
@@ -177,7 +188,7 @@ Registry-Feld `bridge: Partial<Record<Market, {href, label}>>`; Build-Test valid
 | Money Leak | `/us/personal-finance/best/high-yield-savings` | `/uk/cost-of-living/best/money-saving-tools` | `/ca/tax-efficient-investing/best/tfsa-rrsp-platforms` | `/au/savings/best/savings-accounts` |
 | Wealth Horizon | `/us/personal-finance/best/robo-advisors` | `/uk/personal-finance/best/investing-apps` | `/ca/tax-efficient-investing/best/tfsa-rrsp-platforms` | `/au/superannuation/best/super-funds` |
 | Broker Journey (Abschluss) | `/us/trading/best/trading-platforms` | `/uk/trading/best/cfd-brokers` | `/ca/forex/best/forex-brokers` | `/au/trading/best/cfd-brokers` |
-| Home Lab | — (kein US-Tool) | `/uk/remortgaging/best/remortgage-brokers` | `/ca/housing/best/mortgage-brokers` | `/au/savings/best/savings-accounts` (Offset/Deposit; AU-Mortgage-Cockpit existiert nicht) |
+| Home Lab | — (bewusst kein US-Panel bis zu einem eigenen Tool) | `/uk/remortgaging/best/remortgage-brokers` | `/ca/housing/best/mortgage-brokers` | `/au/savings/best/savings-accounts` (Offset/Deposit; AU-Mortgage-Cockpit existiert nicht) |
 | Debt Payoff | `/us/debt-relief/best/companies` | — | — | — |
 | Credit Utilization | `/us/personal-finance/best/credit-monitoring` | — | — | — |
 | Credit Card Rewards | `/us/personal-finance/best/credit-card-companies` | — | — | — |
@@ -209,7 +220,7 @@ Einstieg: SEO („money leak", „where does my money go"), Hub-Decision „Find
 | 2 | Erstes Ergebnis | Antwortsatz („You may be leaking ~$X–$Y/month") + Kategorie-Leisten (Signatur-Visual) + Gesamtverlust | `result` × `yours` | `tool_first_result` |
 | 3 | Vertiefung | 3 Impact-Levers (priorisierte Fixes), Kategorien auf-/zuklappen | ebd. | `tool_input_change` (`controlRole:'lever'`) → ggf. `tool_qualified_decision` |
 | 4 | Optionaler Bericht | E-Mail-Unlock **erst nach sichtbarem Ergebnis** (bestehender `/api/tools/money-leak/unlock`-Flow bleibt) | ebd. | `tool_report_email` |
-| 5 | Nächste Aktion | Genau eine Brücke (4.5), markt-spezifisch | ebd. | `tool_next_action_click` / `tool_cockpit_cta_click` |
+| 5 | Nächste Aktion | Genau eine Brücke (4.5), markt-spezifisch | ebd. | immer `tool_next_action_click`; bei Cockpit-Ziel zusätzlich `tool_cockpit_cta_click` |
 | Alt | Zu wenig Angaben | < Mindestinputs → erklärender Zustand statt leerer Zahlen | `insufficient-data` | — |
 | Alt | Share-Link geöffnet | `#s=`-Payload dekodiert, Chip **„Shared scenario"** | `result` × `shared` | `tool_view` |
 
@@ -220,25 +231,25 @@ Einstieg: SEO („retirement calculator", „pension calculator uk", …), Hub �
 | # | Schritt | UI | State | Events |
 |---|---|---|---|---|
 | 0 | Landung | H1 + Nutzen + TrustStrip; Schritt 1/3 sichtbar; rechts Worked Example (Szenariokorridor) mit „Example result" | `initial`→`ready`; Ergebnis `example` | `tool_view` |
-| 1 | Schritt 1 „About you" | Alter, geplantes Rentenalter (`IntegerField`/`DurationField`), Markt-Kontozuordnung wird erklärt (US: 401(k)/IRA/Roth · UK: ISA/SIPP · CA: TFSA/RRSP · AU: Super) | `ready` | `tool_start`, `tool_input_change` |
-| 2 | Schritt 2 „Savings & contributions" | Bestände (`CurrencyField` + „I'm not sure"-Schätzchips), Monatsbeitrag, Arbeitgeber-%/SG (AU: 12 % aus Rules vorbelegt), Gebühren-% (`PercentageField`); Zwischenergebnis-Badge („on track towards ~…") | `ready` mit Zwischenergebnis | `tool_input_change` |
-| 3 | Schritt 3 „Target income" | Ziel-Monatseinkommen heute (`CurrencyField`), Staatsleistung ein/aus (`SegmentedControl`), Entnahmerate 2,5–5,0 % (Default 4,0 %) | `calculating` → `result` × `yours` | `tool_first_result` |
+| 1 | Schritt 1 „About you" | Alter, geplantes Rentenalter (`IntegerField`/`DurationField`), Markt-Kontotypen werden erklärt (US: 401(k)/IRA/Roth · UK: ISA/SIPP · CA: TFSA/RRSP · AU: Super) | `ready` | `tool_start`, `tool_input_change` |
+| 2 | Schritt 2 „Savings & contributions" | Default **Simple mode**: Gesamtbestand, eigener Monatsbeitrag, optionaler Arbeitgeberbeitrag als Monatsbetrag, Gebühren-%; keine automatische Cap-Anwendung. Optional **Account breakdown**: je Konto Typ, Bestand, eigener/Arbeitgeberbeitrag, YTD-Beitrag und persönlich verfügbarer Beitragsraum. AU-Helfer kann aus anrechenbarem Jahresgehalt × SG 12 % einen editierbaren Arbeitgeber-Monatsbetrag berechnen. Zwischenergebnis „on track towards ~…" | `ready` mit Zwischenergebnis | `tool_input_change` |
+| 3 | Schritt 3 „Target income" | Ziel-Monatseinkommen heute (`CurrencyField`), optional erwartete staatliche/betriebliche Leistung als **vom Nutzer eingegebener** Monatsbetrag in heutiger Kaufkraft + Startalter (Default aus/0; Links zu offiziellen Estimatoren), Entnahmerate 2,5–5,0 % (Default 4,0 %) | `calculating` → `result` × `yours` | `tool_first_result` |
 | 4 | Ergebnis-Canvas | Fixe Reihenfolge: (1) Antwortsatz inkl. FI-Jahr, (2) Vermögensbandbreite bei Rentenalter („in today's money"), (3) Szenariokorridor + FI-Datum + Meilensteine, (4) 3 Levers (Fees −0,5 pp / +$X mtl. / +2 Jahre), (5) Annahmen+Quellen (AssumptionsDrawer), (6) eine Brücke | `result` × `yours` | `tool_scenario_compare` (Szenario-Toggle), Lever-Events → `tool_qualified_decision` |
 | 5 | Teilen/Bericht | Share mit Allowlist-Vorschau; optionaler Report nach Ergebnis | ebd. | `tool_result_share`, `tool_report_*` |
-| Alt | Caps überschritten | Beitrag > Rules-Cap → Clamp + Warning-Token-Hinweis mit Quelle | `result` + Warnhinweis | `tool_input_change` |
-| Alt | Regel-Fenster abgelaufen (SLA) | TrustStrip zeigt Stale-Zustand, Ergebnis bleibt nutzbar mit Hinweis | `stale-data` | `tool_calculation_error`? nein — kein Fehler; nur UI-Zustand |
+| Alt | Beitragsgrenze | Simple mode → nur informativer Hinweis, nie Clamp. Account breakdown → Clamp nur bei eindeutigem, konto-spezifischem Limit und bekanntem YTD/`availableRoom`; personalisierte Räume (TFSA/RRSP, AU Carry-forward) werden nie aus nationalen Maxima erfunden. Jeder Clamp ist sichtbar, begründet und editierbar | `result` + Warnhinweis | `tool_input_change` |
+| Alt | Regel-Fenster abgelaufen (SLA) | TrustStrip zeigt Stale-Zustand, Ergebnis bleibt nutzbar mit Hinweis | `stale-data` | kein Error-Event; nur UI-Zustand |
 
 ### 5.3 Broker Decision Journey (GuidedJourney über bestehende Routen — Phase 3)
 
-Quiz → Shortlist → persönliche Kosten → Vergleich → Review/Anbieter. Bestehende SEO-Routen bleiben; der Zustand wandert via `DecisionStateV1.broker` mit.
+Quiz → Shortlist → persönliche Kosten → Vergleich → Review/Anbieter. Bestehende SEO-Routen bleiben; der Zustand wandert via `DecisionStateV1.broker` mit. Einstieg aus einem Markt-Hub setzt `?market=uk|ca|au` (US ist Default), validiert den Wert gegen `availableMarkets` und schreibt ihn als erste Aktion in den Store. Jede Stufe filtert Anbieter, Gebühren, Regulierungs- und Risikotexte nach diesem Markt.
 
 | # | Schritt | Route | Verhalten | Events |
 |---|---|---|---|---|
-| 1 | Quiz | `/tools/broker-finder` | Bestehende 5 Fragen; bei Abschluss schreibt der Quiz `broker.quizAnswers` + abgeleitetes `profile` (experience, instruments, tradesPerMonth, avgTradeSize, priorities) in den Store | bestehende quiz_* bleiben; zusätzlich `tool_view`/`tool_start`/`tool_first_result` (Shortlist = erstes Ergebnis) |
+| 1 | Quiz | `/tools/broker-finder?market={market}` | Bestehende 5 Fragen; bei Abschluss schreibt der Quiz `broker.market`, `broker.quizAnswers` + abgeleitetes `profile` (experience, instruments, tradesPerMonth, avgTradeSize, priorities) in den Store; die Shortlist enthält nur im Markt verfügbare Anbieter | bestehende quiz_* bleiben; zusätzlich `tool_view`/`tool_start`/`tool_first_result` (Shortlist = erstes Ergebnis) |
 | 2 | Shortlist | Quiz-Ergebnis | Match-Karten (Signatur-Visual: Match-Begründung + geschätzte Jahreskosten), Shortlist-Auswahl → `broker.shortlistSlugs` | `tool_qualified_decision` bei Shortlist-Interaktion |
 | 3 | Persönliche Kosten | `/tools/trading-cost-calculator` | **Prefill** aus `profile` (tradesPerMonth, avgTradeSize) → startet in `ready` statt `initial`; Nutzer verfeinert | `tool_view`, `tool_first_result` sofort möglich |
 | 4 | Vergleich | `/tools/broker-comparison` | Shortlist prä-selektiert; Jahreskosten aus Schritt 3 eingeblendet | `tool_scenario_compare` |
-| 5 | Abschluss | Brücke → Trading-Cockpit des Markts (4.5) oder Review/`/go/*` | genau eine NextBestAction | `tool_cockpit_cta_click` / `tool_next_action_click` |
+| 5 | Abschluss | Brücke → Trading-Cockpit des Markts (4.5) oder Review/`/go/*` | genau eine NextBestAction | immer `tool_next_action_click`; bei Cockpit-Ziel zusätzlich `tool_cockpit_cta_click` |
 
 Kein Nutzer gibt dieselben Angaben zweimal ein: jeder Schritt liest den Namespace, zeigt eine „Using your quiz answers — edit"-Zeile (Transparenz + Korrigierbarkeit).
 
@@ -252,7 +263,7 @@ Drei Markt-Tools unter einer UX (Routen bleiben): AU Repayments/LVR/Offset · CA
 | 1 | Abschnitt 1–3 ausfüllen | `CurrencyField`/`PercentageField`/`DurationField`; Zinssatz-Feld mit Quelle+Datum aus Rules („RBA cash rate context, verified {date}") — nie erfundene Live-Zinsen | `ready` → `calculating` | `tool_start`, `tool_input_change` |
 | 2 | Ergebnis | (1) Antwortsatz („You can likely afford ~$X–$Y"), (2) Affordability Range, (3) **Payment Stack** (Principal/Interest/Fees/Insurance) + **Risikopuffer** (Stress-Szenario +2 pp bzw. Markt-Regel), (4) 3 Levers, (5) Annahmen/Quellen, (6) eine Brücke | `result` × `yours` | `tool_first_result`, `tool_scenario_compare` (Stress-Toggle) |
 | 3 | Grenzfälle | GDS/TDS überschritten (CA) oder LVR>95 (AU) → Warning-Token-Block mit Erklärung statt roher Zahlen | `result` + Warnung bzw. `insufficient-data` | `tool_input_change` |
-| 4 | Abschluss | Brücke: CA→mortgage-brokers-Cockpit, UK→remortgage-brokers-Cockpit, AU→savings-accounts (Offset/Deposit) | ebd. | `tool_cockpit_cta_click` |
+| 4 | Abschluss | Brücke: CA→mortgage-brokers-Cockpit, UK→remortgage-brokers-Cockpit, AU→savings-accounts (Offset/Deposit) | ebd. | `tool_next_action_click` + `tool_cockpit_cta_click` |
 
 ---
 
@@ -304,11 +315,11 @@ Verbindliche Breakpoints: **1440 / 1280 / 1024 / 390 / 360 px**. High-Fi-Referen
 
 ### 6.3 Hub „Decision Launcher"
 
-| Viewport | Erster Viewport (kritisch: bei 1280×720 alle 4 Decisions erkennbar) |
+| Viewport | Erster Viewport (kritisch: bei 1280×720 alle marktverfügbaren Decisions erkennbar) |
 |---|---|
-| ≥1280 | H1-Bereich **≤220 px** gesamt: H1 „What financial decision are you making today?" (40/48) + 1 Zeile Subline + Marktumschalter (SegmentedControl US/UK/CA/AU, 44 px hoch, rechtsbündig auf gleicher Zeile wie Subline). Darunter 4 Decision-Panels im Raster 4×1 (1440: 4 nebeneinander à ~272 px) bzw. 2×2 (1280: à ~560×200 px): je Panel = Decision-Frage (EN, 22/28) + Tool-Name + **Ergebnis-Miniatur** (echtes Mini-SVG aus `chart-geometry` mit Worked-Example-Daten, ~120×64 px, Chip „Example") + „Start →". Kein Hero, kein Gradient, kein Punktmuster. |
-| 1024 | 2×2-Raster, H1-Bereich ≤200 px |
-| 390/360 | H1 (30/38) + Marktumschalter (volle Breite) + 4 Decision-Panels gestapelt (je ~132 px, Miniatur rechts 96×52 px); alle 4 per Scroll innerhalb ~1,5 Screens erreichbar, Panel 1 vollständig im ersten Viewport |
+| ≥1280 | H1-Bereich **≤220 px** gesamt: markt-lokale Kategorie-H1 (US: „Financial Decision Tools & Calculators", UK/CA/AU entsprechend lokalisiert, 40/48) + sichtbare Launcher-Frage „What financial decision are you making today?" (22/28) + Marktumschalter (SegmentedControl US/UK/CA/AU, 44 px). Darunter alle **marktverfügbaren** Decision-Panels: US 3 Spalten, UK/CA/AU 4 Spalten bei 1440 bzw. 2×2 bei 1280. Je Panel = Decision-Frage + Tool-Name + **Ergebnis-Miniatur** (echtes Mini-SVG aus `chart-geometry` mit Worked-Example-Daten, ~120×64 px, Chip „Example") + „Start →". Kein Hero, kein Gradient, kein Punktmuster. |
+| 1024 | US 3 Panels in einem stabilen Raster; UK/CA/AU 2×2; H1-Bereich ≤200 px |
+| 390/360 | Kategorie-H1 (30/38) + Launcher-Frage + Marktumschalter (volle Breite) + marktverfügbare Decision-Panels gestapelt (je ~132 px, Miniatur rechts 96×52 px); Panel 1 vollständig im ersten Viewport |
 
 **Unterhalb:** Supporting-Tools gruppiert nach decisionCategory (4.2): Gruppen-H2 (22/28) + kompakte Listen-Cards (Icon + Name + 1-Zeilen-Blurb + Markt-Badge falls markt-spezifisch). Reihenfolge der Gruppen: Retirement & investing → Debt & credit → Trading & brokers → Home & mortgages → Cards & rewards → Fees & costs → Business → Specialist. **Keine „Popular"/„Most clicked"-Badges**, bis tool_v1 eine Mindeststichprobe liefert (Schwelle: ≥500 `tool_view` im 28-Tage-Fenster, dann datengetrieben via Dashboard-Export — Phase ≥3, separater Beschluss).
 
@@ -337,7 +348,7 @@ Verbindliche Breakpoints: **1440 / 1280 / 1024 / 390 / 360 px**. High-Fi-Referen
 
 ### 6.6 Design-Abnahmekriterien (Checkliste je Screen/Prototyp)
 
-- [ ] 1280×720: Hub zeigt alle 4 Major Decisions erkennbar; Major-Tool-Seite zeigt H1+Nutzen, TrustStrip, erste relevante Eingabe UND Beginn des Ergebnisbereichs
+- [ ] 1280×720: Hub zeigt alle marktverfügbaren Major Decisions erkennbar (US 3, UK/CA/AU 4); Major-Tool-Seite zeigt H1+Nutzen, TrustStrip, erste relevante Eingabe UND Beginn des Ergebnisbereichs
 - [ ] 1440/1280/1024/390/360: keine Überlappung, keine abgeschnittenen Zahlen, kein horizontales Scrollen
 - [ ] Extremwerte getestet (z. B. $9.999.999 Balance, 45 Jahre Laufzeit, 12-stellige Ergebniszahl) — tabular-nums + reservierte Breiten verhindern Layout Shift
 - [ ] Tastatur: vollständige Bedienbarkeit, sichtbarer Fokus-Ring (2 px Navy, 2 px Offset), logische Tab-Reihenfolge
@@ -461,36 +472,80 @@ export interface Lever {
 
 ### 8.3 Wealth-Horizon-Modell (mathematisch bindend)
 
-**Durchgängiges Realwert-Modell.** Alle Beträge in heutiger Kaufkraft; Wachstum mit **realen Renditen** (konservativ 3,0 % · Basis 5,0 % · optimistisch 6,5 %, jährlich, `lib/rules/assumptions.ts` mit Quelle + verifiedAt). **Keine zweite Inflationsbereinigung an irgendeiner Stelle.** Die Inflationsannahme (2,5 %) dient ausschließlich der dokumentierten Herleitung (nominal ≈ real + Inflation) im AssumptionsDrawer; v1 zeigt nur reale Werte, UI-Label „in today's money" prominent am Ergebnis.
+**Durchgängiges Realwert-Modell.** Alle Beträge in heutiger Kaufkraft; Wachstum mit **realen Renditen** (konservativ 3,0 % · Basis 5,0 % · optimistisch 6,5 %, jährlich). **Keine zweite Inflationsbereinigung an irgendeiner Stelle.** Die Inflationsannahme (2,5 %) dient ausschließlich der dokumentierten Herleitung (nominal ≈ real + Inflation) im AssumptionsDrawer; v1 zeigt nur reale Werte, UI-Label „in today's money" prominent am Ergebnis.
+
+Die drei Renditen sind ausdrücklich **redaktionelle Planungsszenarien, keine Prognosen und keine regulatorischen Werte**. Sie werden in `lib/rules/assumptions.ts` als gerundete Realwert-Szenarien dokumentiert und mindestens jährlich gegen drei aktuelle Primärpublikationen der jeweiligen Research-Anbieter geprüft: [Vanguard Capital Markets Model forecasts](https://corporate.vanguard.com/content/corporatesite/us/en/corp/vemo/vemo-return-forecasts.html), [BlackRock Capital Market Assumptions](https://www.blackrock.com/institutions/en-global/institutional-insights/thought-leadership/capital-market-assumptions) und [J.P. Morgan 2026 Long-Term Capital Market Assumptions](https://am.jpmorgan.com/us/en/asset-management/adv/insights/portfolio-insights/ltcma/). Methodik: publizierte nominale Bandbreiten diversifizierter Portfolios triangulieren → 2,5 % dokumentierte Inflation abziehen → auf die drei bewusst breiten Szenarien runden. `annualFeePct` wird danach exakt einmal in der Engine abgezogen. Es werden keine Wahrscheinlichkeiten behauptet; Quellen, Datenstand, Ableitung und Unsicherheit erscheinen im AssumptionsDrawer. Ändern die Research-Quellen die Plausibilitätsbandbreite wesentlich, ist ein eigener fachlich reviewter Rules-PR nötig, keine stille Content-Änderung.
 
 ```ts
-export interface RetirementInputs {
+export type RetirementAccountType =
+  | 'us-401k' | 'us-traditional-ira' | 'us-roth-ira' | 'us-taxable'
+  | 'uk-isa' | 'uk-sipp' | 'uk-taxable'
+  | 'ca-tfsa' | 'ca-rrsp' | 'ca-taxable'
+  | 'au-super' | 'au-taxable';
+
+export interface RetirementAccountInput {
+  id: string;
+  type: RetirementAccountType;
+  balance: number;
+  employeeContributionMonthly: number;
+  employerContributionMonthly?: number;
+  contributedYtd?: number;
+  availableRoom?: number;           // nur Nutzereingabe/offizieller persönlicher Wert; nie aus nationalem Maximum abgeleitet
+}
+
+export interface RetirementBaseInputs {
   market: Market; currentAge: number; retireAge: number;
-  balances: { taxAdvantaged: number; taxable: number };
-  monthlyContribution: number;
-  employerRate?: number;            // AU: SG 12 % aus Rules vorbelegt; US: Match-%
   annualFeePct: number;
   targetMonthlyIncomeToday: number;
-  includeStateSupport: boolean;     // pauschale, bequellte Schätzung (SS/State Pension/CPP+OAS/Age Pension)
+  expectedRetirementBenefit?: {
+    monthlyAmountToday: number;     // vom Nutzer aus offiziellem Estimator/Statement übernommen
+    startsAtAge: number;
+    source: 'user-estimate';        // Engine schätzt Anspruch/Höhe nie automatisch
+  };
   withdrawalRatePct: number;        // 2.5–5.0, Default 4.0 — einstellbar, Teil der Inputs
 }
+
+export type RetirementInputs = RetirementBaseInputs & (
+  | {
+      contributionMode: 'simple';
+      simple: {
+        taxAdvantagedBalance: number; taxableBalance: number;
+        employeeContributionMonthly: number;
+        employerContributionMonthly?: number;
+      };
+      accounts?: never;
+    }
+  | {
+      contributionMode: 'account-breakdown';
+      accounts: [RetirementAccountInput, ...RetirementAccountInput[]];
+      simple?: never;
+    }
+);
 
 export interface ScenarioResult {
   key: 'conservative' | 'base' | 'optimistic';
   rows: { age: number; balance: number }[];         // real, jährlich
   balanceAtRetire: number;
   illustrativeMonthlyWithdrawal: number;            // balance × withdrawalRate / 12 — NIE "sustainable"/Garantie-Wording
-  incomeGapMonthly: number;                         // target − (withdrawal + stateSupport)
-  fiDate: string | null;                            // erstes Jahr, in dem withdrawal + support ≥ target
+  incomeGapMonthly: number;                         // target − withdrawal − Benefit, aber Benefit erst ab startsAtAge
+  fiDate: string | null;                            // erstes Jahr, in dem withdrawal + ggf. bereits gestarteter Benefit ≥ target
 }
 
 export interface EngineResult {
   scenarios: [ScenarioResult, ScenarioResult, ScenarioResult];
   levers: [Lever, Lever, Lever];                    // Fees −0,5 pp · +$X/Monat · Rentenalter +2 J (Priorität nach Delta)
-  contributionClamps: { ruleKey: string; capApplied: boolean }[];  // 401k/IRA/ISA/TFSA/RRSP/Concessional aus getRule
+  contributionChecks: {
+    accountId?: string; ruleKey?: string;
+    status: 'not-applicable' | 'ok' | 'warning' | 'clamped';
+    amountApplied: number; message: string;
+  }[];
   bands?: PercentileBand[];                         // Phase-6-Slot (Monte Carlo), v1 ungenutzt
 }
 ```
+
+**Contribution-Vertrag:** Simple mode nutzt die eingegebenen Gesamtwerte ohne automatische Cap-Anwendung und zeigt nur einen Hinweis auf mögliche kontoabhängige Grenzen. Account breakdown prüft jedes Konto separat. Ein festes gesetzliches Limit darf nur mit passendem Kontotyp und `contributedYtd` angewendet werden; ein persönlicher Raum (insbesondere TFSA/RRSP und AU-Carry-forward) nur mit `availableRoom`. Arbeitgeberbeiträge werden als Monatsbetrag an die Engine übergeben und nie aus einem Prozentsatz ohne anrechenbares Einkommen erfunden. Für AU darf ein UI-Helfer `annualEligibleEarnings × SG rate / 12` rechnen; sein Ergebnis bleibt editierbar. Für US unterscheidet die Rules-Schicht Arbeitnehmer-Deferral, Catch-up und Gesamtbeitrag einschließlich Arbeitgeber.
+
+**Benefit-Vertrag:** v1 berechnet weder Social Security noch State Pension, CPP/OAS oder Age Pension automatisch. Der optionale Betrag und sein Startalter stammen vom Nutzer; die UI verlinkt marktbezogen auf [SSA Get a benefits estimate](https://www.ssa.gov/prepare/get-benefits-estimate), [GOV.UK Check your State Pension forecast](https://www.gov.uk/check-state-pension), den [Canadian Retirement Income Calculator](https://www.canada.ca/en/services/benefits/publicpensions/cpp/retirement-income-calculator.html) beziehungsweise [Moneysmart Prepare to retire](https://moneysmart.gov.au/retirement-income/prepare-to-retire) und erklärt, dass Anspruch und Höhe individuell sind. Vor `startsAtAge` ist der Benefit in Projektion, FI-Datum und Einkommenslücke exakt 0.
 
 UI-Pflichten: Entnahme heißt überall **„Illustrative retirement withdrawal"**; Ergebnis als Bandbreite über die drei Szenarien; Entnahmerate sichtbar einstellbar; Sensitivität über die Levers erlebbar; Edukations-/Kein-Beratungs-Hinweis im AssumptionsDrawer und Footer der Ergebnis-Sektion.
 
@@ -528,9 +583,10 @@ Initiale Einträge (Auszug; Quellen aus 1.5; Alt-Einträge bleiben für asOf-Kor
 | `uk` | `cgtBasicRate` / `cgtHigherRate` | **0.18 / 0.24 @ 2024-10-30** | tax |
 | `uk` | `cgtAllowance` / `dividendAllowance` | 3000 / 500 @ 2024-04-06 | tax |
 | `us` | `k401Limit` / `k401CatchUp` | 23500/7500 @ 2025-01-01 · **24500/8000 @ 2026-01-01** | limit |
+| `us` | `k401CatchUpAge60To63` / `k401TotalContributionLimit` / `rothCatchUpWageThreshold` | **11250 / 72000 / 150000 @ 2026-01-01** | limit |
 | `us` | `iraLimit` / `iraCatchUp` | 7000/1000 @ 2025-01-01 · **7500/1100 @ 2026-01-01** | limit |
-| `*` | `realReturnConservative/Base/Optimistic` | 0.03 / 0.05 / 0.065 @ 2026-07-12 | assumption |
-| `*` | `inflationAssumption` | 0.025 @ 2026-07-12 (nur Doku-Herleitung, 8.3) | assumption |
+| `*` | `realReturnConservative/Base/Optimistic` | 0.03 / 0.05 / 0.065 @ 2026-07-12; redaktionelle Szenarien nach Methodik 8.3, nicht als regulatorisch/garantiert labeln | assumption |
+| `*` | `inflationAssumption` | 0.025 @ 2026-07-12 (nur Doku-Herleitung, 8.3; kein zweiter Engine-Abzug) | assumption |
 | `au/ca/uk` | Hypotheken-Kontextzinsen | nur mit sourceUrl + verifiedAt; Input bleibt editierbar; nie „Live-Zins" behaupten | rate |
 
 ### 8.5 Freshness-Semantik (bindend)
@@ -546,7 +602,7 @@ Initiale Einträge (Auszug; Quellen aus 1.5; Alt-Einträge bleiben für asOf-Kor
 ```ts
 export interface DecisionStateV1 {
   v: 1; updatedAt: string;
-  broker?: { quizAnswers: Record<string, string>;
+  broker?: { market: Market; quizAnswers: Record<string, string>;
              profile: { experience: string; instruments: string[]; tradesPerMonth: number;
                         avgTradeSize: number; priorities: string[] };
              shortlistSlugs: string[]; costInputs?: Record<string, number> };
@@ -577,9 +633,9 @@ Explizit ausgeschlossen: exaktes Einkommen, exakte Schulden-/Kontostände, E-Mai
 
 Fixture-Format: `{ name, source, sourceType, asOf, inputs, expected, tolerance }` mit **`sourceType`**:
 
-- `official` — regulatorische Limits + veröffentlichte Behördenbeispiele (ATO-SG-Beispiele, CRA-RRSP-Raum, IRS-Limits, gov.uk-CGT-Sätze). Nur diese dürfen „offiziell" heißen.
+- `official` — regulatorische Limits + veröffentlichte Behördenbeispiele (ATO-SG-Beispiele, CRA-RRSP-Raum, IRS-Limits inkl. 60–63-Catch-up/Gesamtbeitrag/Roth-Threshold, gov.uk-CGT-Sätze). Nur diese dürfen „offiziell" heißen.
 - `reference` — unabhängig nachgerechnete Golden Fixtures (z. B. Wealth-Horizon-Projektionen, per Tabellenkalkulation doppelt gerechnet, Rechenweg im Fixture-Kommentar).
-- `invariant` — mathematische Eigenschaften: Realwert-/Nominalwert-Trennung (eine Projektion mit Inflations-Doppelanwendung MUSS vom Erwartungswert abweichen — Guard gegen Doppelbereinigung), Monotonie (mehr Beitrag ⇒ nie weniger Endvermögen), Nullrendite-Grenzfall, Rundung (Locale-stabil), Entnahmerate (2,5 % ⇒ Entnahme < 4 %-Fall), Fenster-Boundaries (asOf 2026-06-30 vs. 2026-07-01 flippt AU-Cap), Überlappungsfreiheit aller RulePack-Fenster.
+- `invariant` — mathematische Eigenschaften: Realwert-/Nominalwert-Trennung (eine Projektion mit Inflations-Doppelanwendung MUSS vom Erwartungswert abweichen — Guard gegen Doppelbereinigung), Monotonie (mehr Beitrag ⇒ nie weniger Endvermögen), Nullrendite-Grenzfall, Rundung (Locale-stabil), Entnahmerate (2,5 % ⇒ Entnahme < 4 %-Fall), Simple mode clampet nie, Account breakdown clampet nie ohne passende Konto-/YTD-/Room-Daten, Benefit zählt vor `startsAtAge` exakt 0, Fenster-Boundaries (asOf 2026-06-30 vs. 2026-07-01 flippt AU-Cap), Überlappungsfreiheit aller RulePack-Fenster.
 
 ### 8.9 aria-live-Vertrag
 
@@ -595,10 +651,10 @@ Zielzustand: 28 Routen (4 Hubs · 20 bestehende Tool-Routen inkl. gold-roi am ne
 
 | Route | H1 (EN) | Title (bare, EN) | Description (EN) |
 |---|---|---|---|
-| `/tools` | What financial decision are you making today? | Financial Decision Lab: Free Money Decision Tools | Make one financial decision at a time with free, data-verified tools for budgeting, retirement, broker choice and home affordability decisions. |
-| `/uk/tools` | What financial decision are you making today? | UK Financial Decision Tools: ISA, Pension & Money | Free UK money tools with verified data: scan household spending, project your pension, compare remortgage savings and plan your ISA tax shield. |
-| `/ca/tools` | What financial decision are you making today? | Canadian Financial Tools: TFSA, RRSP & Mortgages | Free Canadian money tools with verified data: compare TFSA and RRSP, check mortgage affordability, cut investing fees and find spending leaks. |
-| `/au/tools` | What financial decision are you making today? | Australian Financial Tools: Super, Loans & Savings | Free Australian money tools with verified data: project your super, plan home loan repayments, track gold returns and find hidden overspend. |
+| `/tools` | Financial Decision Tools & Calculators | Financial Decision Lab: Free Money Decision Tools | Make one financial decision at a time with free, data-verified tools for budgeting, retirement, broker choice, trading costs and debt planning. |
+| `/uk/tools` | UK Financial Decision Tools & Calculators | UK Financial Decision Tools: ISA, Pension & Money | Free UK money tools with verified data: scan household spending, project your pension, compare remortgage savings and plan your ISA tax shield. |
+| `/ca/tools` | Canadian Financial Decision Tools & Calculators | Canadian Financial Tools: TFSA, RRSP & Mortgages | Free Canadian money tools with verified data: compare TFSA and RRSP, check mortgage affordability, cut investing fees and find spending leaks. |
+| `/au/tools` | Australian Financial Decision Tools & Calculators | Australian Financial Tools: Super, Loans & Savings | Free Australian money tools with verified data: project your super, plan home loan repayments, track gold returns and find hidden overspend. |
 | `/tools/money-leak-scanner` | Money Leak Scanner | Money Leak Scanner: Find Hidden Household Overspend | Scan your household budget in two minutes to reveal hidden money leaks, see your biggest cost drains and get three prioritized fixes with savings. |
 | `/uk/tools/money-leak-scanner` | Money Leak Scanner UK | Money Leak Scanner UK: Find Hidden Household Waste | Scan your UK household budget in two minutes to reveal hidden money leaks from subscriptions to insurance, with three prioritized fixes and savings. |
 | `/ca/tools/money-leak-scanner` | Money Leak Scanner Canada | Money Leak Scanner Canada: Find Hidden Overspend | Scan your Canadian household budget in two minutes to reveal hidden money leaks from banking fees to insurance, with three prioritized fixes. |
@@ -654,7 +710,7 @@ Canonical ist in **allen** Fällen self-referenziell auf die eigene Route via `g
 
 | Route | Interne Links (min.) | Externe Autoritätsquellen | Content-Abgrenzung |
 |---|---|---|---|
-| Hubs | 4 Major Decisions + gruppierte Supporting-Tools + Markt-Hub-Geschwister | — | Hub = Entscheidungs-Einstieg; keine Berechnung, kein Ratgeber-Longform (Abgrenzung zu Pillar-Seiten) |
+| Hubs | marktverfügbare Major Decisions (US 3, UK/CA/AU 4) + gruppierte Supporting-Tools + Markt-Hub-Geschwister | — | Hub = Entscheidungs-Einstieg; keine Berechnung, kein Ratgeber-Longform (Abgrenzung zu Pillar-Seiten) |
 | Money Leak ×4 | Hub, Wealth Horizon (Ersparnis investieren), Brücke 4.5, 2 Reviews | markt-spezifische Verbraucherseiten (CFPB / MoneyHelper / FCAC / Moneysmart) | Ausgaben-Diagnose; NICHT Budget-Planner oder Debt-Tool |
 | Wealth Horizon ×4 | Hub, jeweiliger Supporting-Sparrechner (Deep-Link), Brücke 4.5, Pillar Personal Finance | IRS n-25-67 / gov.uk Pension+ISA / canada.ca Limits / ato.gov.au Caps + SG | Ganzheitliche Projektion + FI-Datum; Supporting-Rechner = Einzelkonto-Mechanik (siehe deren Zeilen) |
 | Broker Finder | Trading Cost (Journey-Schritt 3), Broker Comparison, Trading-Cockpit, 2 Broker-Reviews | Regulatoren (SEC/FINRA bzw. FCA/ASIC/CIRO je Markt-Kontext) | Matching-Quiz; NICHT Vergleichstabelle (das ist broker-comparison) und NICHT Kostenrechner |
@@ -685,21 +741,22 @@ Canonical ist in **allen** Fällen self-referenziell auf die eigene Route via `g
 - Reuse unverändert: `lib/analytics/session.ts` (`sfp_session_id`), `lib/analytics/bot-detect.ts` (Bot-Gate verwirft den ganzen Batch, da alle Items category `tool`), `createImpressionDeduper` (eigener Storage-Key `sfp_tool_seen_v1`).
 - Neu: `lib/analytics/event-queue.ts` (generische Queue + Trailing-Debounce; die cockpit-eigenen Kopien bleiben eingefroren), `lib/analytics/tool-events.ts` (pure core), `lib/analytics/tool-tracking.ts` (`'use client'`, sendBeacon → fetch-keepalive, Killswitch `NEXT_PUBLIC_ENABLE_ANALYTICS`).
 - Rate-Limit: bestehendes gewichtetes IP-Limit; `computeToolBatchWeight` analog cockpit (1 Token/Event, Batch-Cap 20).
+- **Einheitlicher Funnel-Dedupe-Key:** `sessionId + toolId + market + variantPath`, wobei `variantPath` immer der kanonische Pathname ohne Query oder Fragment ist. `tool_view`, `tool_start`, `tool_first_result` und `tool_qualified_decision` verwenden exakt denselben Scope, damit Markt-/Varianten-Nenner und -Zähler nicht auseinanderlaufen; dies trennt insbesondere die globalen Broker-Routen bei einem Marktwechsel korrekt.
 
 ### 10.2 Die 12 Events (`eventCategory: 'tool'`, `schemaVersion: 'tool_v1'`)
 
 | Event | Trigger | Dedupe | Besondere Properties |
 |---|---|---|---|
-| `tool_view` | Tool-Seite sichtbar (einmal je Session+Pfad, Deduper) | 1×/Session+Pfad | `resultState:'example'` initial |
-| `tool_start` | erste echte Nutzer-Interaktion mit einem Input | 1×/Session+Tool | `inputKey` des ersten Felds |
-| `tool_input_change` | Feldänderung, **600 ms Trailing-Debounce pro Feld**; Werte NUR als Buckets (`inputBucket`), nie Rohbeträge; **Hard-Cap 40/Session/Tool** (danach still verworfen); Lever-Klicks senden `controlRole:'lever'` | Cap 40 | `inputKey`, `inputBucket`, `controlRole?: 'field'\|'lever'\|'scenario'` |
-| `tool_first_result` | erster Wechsel in State `result` × `yours` | 1×/Session+Tool | `ttfvMs` (Zeit seit `tool_view`) |
-| `tool_qualified_decision` | Prädikat 10.3 | 1×/Session+Tool | `qualifiedVia` |
+| `tool_view` | Tool-Seite sichtbar | 1×/Funnel-Dedupe-Key | `resultState:'example'` initial |
+| `tool_start` | erste echte Nutzer-Interaktion mit einem Input | 1×/Funnel-Dedupe-Key | `inputKey` des ersten Felds |
+| `tool_input_change` | Feldänderung, **600 ms Trailing-Debounce pro Feld**; Werte NUR als Buckets (`inputBucket`), nie Rohbeträge. `controlRole:'field'`: Hard-Cap 40/Funnel-Key. `controlRole:'lever'`: separater Cap 10/Funnel-Key und nie vom Feld-Cap blockiert | rollenabhängiger Cap | `inputKey`, `inputBucket`, `controlRole?: 'field'\|'lever'` |
+| `tool_first_result` | erster Wechsel in State `result` × `yours` | 1×/Funnel-Dedupe-Key | `ttfvMs` (Zeit seit `tool_view`) |
+| `tool_qualified_decision` | Prädikat 10.3 | 1×/Funnel-Dedupe-Key | `qualifiedVia` |
 | `tool_scenario_compare` | Szenario-Umschaltung/Stress-Toggle | — | `scenario` |
 | `tool_result_share` | Share-Link kopiert (nach Vorschau) | — | `shareFieldCount` |
 | `tool_report_download` / `tool_report_email` | Bericht erzeugt/angefordert (immer NACH Ergebnis) | — | `format` |
 | `tool_next_action_click` | Klick auf NextBestAction | — | `nextActionKind: 'cockpit'\|'review'\|'provider'\|'tool'` |
-| `tool_cockpit_cta_click` | Spezialfall: NextBestAction-Ziel ist ein Cockpit (Name kollidiert bewusst NICHT mit cockpit_v1s `cockpit_cta_click`) | — | `bridgeHref` |
+| `tool_cockpit_cta_click` | Zusatzsignal, wenn NextBestAction-Ziel ein Cockpit ist; derselbe Klick feuert **zuerst `tool_next_action_click`, danach zusätzlich dieses Event**, damit Result-to-Action vollständig bleibt (Name kollidiert bewusst NICHT mit cockpit_v1s `cockpit_cta_click`) | — | `bridgeHref` |
 | `tool_calculation_error` | Engine wirft / State `error` | — | `errorKind` (ohne PII/Stacktrace) |
 
 `ToolV1PropertiesSchema` (in `lib/validation/index.ts`, `.strict()`): `schemaVersion: z.literal('tool_v1')`, `toolId` (Registry-Enum), `market`, `variantPath`, `shellMode`, `resultState`, plus die Event-spezifischen Felder oben; Batch-Schema `TrackToolEventBatchSchema` max 20, `eventName: z.enum(TOOL_EVENT_NAMES)`, `eventCategory: z.literal('tool')`.
@@ -714,7 +771,7 @@ Canonical ist in **allen** Fällen self-referenziell auf die eigene Route via `g
 - `tool_report_download`
 - `tool_report_email`
 
-**Alternativ:** Resultat ≥ 20 Sekunden sichtbar UND ≥ 3 qualifizierende Inputs. Auslösung **maximal einmal pro Session und Tool**. Das Dashboard zählt ausschließlich das Event, es re-deriviert nie.
+**Alternativ:** Resultat ≥ 20 Sekunden **qualifiziert sichtbar** UND ≥ 3 qualifizierende Inputs. Qualifiziert sichtbar bedeutet: `document.visibilityState === 'visible'` und mindestens 50 % des ResultPanel liegen per IntersectionObserver im Viewport. Der Timer startet erst bei erfüllten Bedingungen, pausiert sofort bei Tab-Hintergrund/Unterschreiten der Schwelle und setzt danach fort; Hintergrundzeit zählt nie. Auslösung **maximal einmal pro Funnel-Dedupe-Key**. Das Dashboard zählt ausschließlich das Event, es re-deriviert nie.
 
 GA-Mirror: nur `tool_view`, `tool_qualified_decision`, `tool_cockpit_cta_click` (Quota-Disziplin; keine Legacy-Aliase).
 
@@ -753,7 +810,7 @@ Gates je PR: `npx tsc --noEmit` · relevante Vitest-Suiten · lokales `npm run b
 | PR | Inhalt | Kern-Dateien | Zusätzliche Gates |
 |---|---|---|---|
 | **0.0** | CI-Production-Build: echter `npm run build` im Runner für PRs, die `app/`, `components/tools/`, `lib/{calc,rules,tools,decision}/`, SEO-Schemas oder `next.config.ts` berühren; Required Check; Nightly ergänzend | `.github/workflows/*` | Umsetzung Sonnet; Opus nur bei Env-Fallbacks |
-| **0.1** | Tool-Registry + fs-Parity-Test | `lib/tools/registry/*`, `__tests__/unit/tool-registry.test.ts` | nur neue Dateien — risikofrei |
+| **0.1** | Tool-Registry + fs-Parity-Test; `variants[]` (SEO-Routen) und `availableMarkets[]` (funktionale Verfügbarkeit) getrennt; `getToolEntryHref()` erzeugt bei globalen marktübergreifenden Tools den validierten Marktparameter | `lib/tools/registry/*`, `__tests__/unit/tool-registry.test.ts` | nur neue Dateien — risikofrei |
 | **0.2** | `buildToolMetadata()` auf alle 20 Tool-Seiten: Doppel-Suffix weg, 7 fehlende Canonicals, 4 falsche hreflang-Cluster ersetzt | 20 × `page.tsx`, `lib/tools/registry/metadata.ts` | neu: `e2e/tool-seo.spec.ts` (JS-off: genau 1 Brand-Suffix, self-Canonical); `npm run check:seo` |
 | **0.3** | **gold-roi ATOMAR**: neue Route `/au/tools/gold-roi-calculator` + 308 von `/tools/gold-roi-calculator` + korrekter Canonical + hreflang + Registry- + Sitemap-Eintrag + AU-Hub-Link + Redirect-/Canonical-/Route-Tests | 2 Pages, `next.config.ts`, Registry, `sitemap.ts` | e2e-Redirect-Assertion; kein inkonsistenter Zwischenstand |
 | **0.4** | `lib/rules/` + Testvektoren + Stale-Fixes: Super 11,5→12 % + Cap-Copy, TFSA/RRSP-2026-Werte, ISA-CGT-Copy (10 %→18/24) + Label 2026/27 | `lib/rules/*`, 3 Widgets, 2 Page-Copies, `__tests__/unit/rules.test.ts` | Fable-Entwurf → Sonnet → **Opus-Review** |
@@ -768,8 +825,8 @@ Gates je PR: `npx tsc --noEmit` · relevante Vitest-Suiten · lokales `npm run b
 | **2.2** | Pilot Money Leak → LiveCanvas-Shell | Money-Leak-Pages/-Komponenten | no-JS-e2e (H1/Methodik/FAQ/Worked-Example/Verified-Date), `test:hydration`, Design-AK 6.6 |
 | **2.3** | Debt Payoff → PrecisionWorksheet (Calc-Extraktion `lib/calc/debt/`, Fragment-Share) · danach eigener **Gate-PR** (De-noindex bei bestandener Checkliste) | Widget, `lib/calc/debt/*` | vitest-Vektoren; Gate-Checkliste im PR-Text |
 | **2.4** | Hub → Decision Launcher (alle 4 Märkte) | `app/(marketing)/{tools,uk/tools,ca/tools,au/tools}/page.tsx`, `components/tools/hub/*` | Design-AK 1280×720; e2e-Hub-Assertions |
-| **3.1–3.4** | `lib/decision/*` + Codec-Tests → Quiz schreibt Profile → Trading-Cost-Prefill + Comparison-Shortlist → Cockpit-Brücke + Journey-e2e | `lib/decision/*`, 3 Widgets | Fable: 3.1-Entwurf; Journey-e2e JS-on mehrseitig |
-| **4.1–4.4** | Retirement-Engine + Vektoren (Realwert-Invariante!) → US-Route (volle Shell) → UK/CA/AU + hreflang-Cluster → Supporting-Deep-Links | `lib/calc/retirement/*`, 4 neue Page-Trees | **Fable + unabhängiger Opus-Review der Engine vor Merge** |
+| **3.1–3.4** | `lib/decision/*` + Codec-Tests → Hub-Marktparameter validieren/persistieren → Quiz schreibt marktgefiltertes Profile → Trading-Cost-Prefill + Comparison-Shortlist → marktgerechte Cockpit-Brücke + Journey-e2e | `lib/decision/*`, 3 Widgets | Fable: 3.1-Entwurf; Journey-e2e JS-on mehrseitig für US/UK/CA/AU; Canonical bleibt parameterlos |
+| **4.1–4.4** | Retirement-Engine + Vektoren (Realwert-Invariante, Simple-vs.-Account-Modus, Benefit-Startalter, account-spezifische Caps) → US-Route (volle Shell) → UK/CA/AU + hreflang-Cluster → Supporting-Deep-Links | `lib/calc/retirement/*`, 4 neue Page-Trees | **Fable + unabhängiger Opus-Review der Engine vor Merge** |
 | **5.1–5.3** | Mortgage-Engines ×3 + Vektoren → Home-Lab-Shell (3 Märkte; URLs bleiben) + **Gate-PR uk/remortgage** → Rest-Migrationen: Credit Utilization Explorer (neuer Slug + 308 + Band-Typ) + **Gate-PR**, AI-ROI-Repositionierung, Loan-Kontext, Wealthsimple + Rewards in Shell | `lib/calc/mortgage/*`, Widgets | **Fable + Opus-Review der Engines**; Gate-Checklisten |
 | **6.x** | Decision Passport (localStorage-Opt-in) + Monte-Carlo-Bands | — | nur nach validiertem Bedarf (QDR-Daten) + gesonderter Freigabe |
 
@@ -781,13 +838,13 @@ Abhängigkeiten: 0.2/0.3/0.5/0.6 ← 0.1 · 0.5 ← 0.4 · 1.2 ← 1.1 · 1.3 �
 
 **Phase 0:** Kein Tool-Title enthält doppeltes `| SmartFinPro` (e2e-bewiesen) · alle 28 Ziel-Routen (soweit existent) haben self-Canonical · kein hreflang-Ziel 404t · gold-roi: alter Pfad 308t, neuer Pfad 200, Sitemap führt nur den neuen · Super-Widget zeigt 12 %/A$32.500, TFSA/RRSP 2026-Werte, ISA-Copy 18/24 % + 2026/27 · Sitemap enthält 3 Markt-Hubs · llms.txt listet Live-Tools · Homepage-Zahl == `countLiveTools()` · fs-Parity-Test grün · CI-Build Required Check aktiv.
 
-**Phase 1:** `event_batch` (cockpit) verhält sich byte-identisch (Regressions-e2e) · `tool_event_batch` validiert strikt, Bots verworfen, Cap 40 greift (Unit) · Money-Leak-Events landen in `analytics_events` statt 400 · alle 5 Komponenten nutzen `sfp_session_id` · Dashboard-Tab rendert mit leeren Daten fehlerfrei · Baseline-Fenster dokumentiert (Start/Ende im Dashboard annotiert).
+**Phase 1:** `event_batch` (cockpit) verhält sich byte-identisch (Regressions-e2e) · `tool_event_batch` validiert strikt, Bots verworfen, Feld-Cap 40 und separater Lever-Cap 10 greifen (Unit) · alle Funnel-Stufen nutzen denselben `sessionId+toolId+market+variantPath`-Dedupe-Key · 20-Sekunden-Fallback zählt nur qualifiziert sichtbare Resultatzeit (Visibility-/Intersection-Tests) · Money-Leak-Events landen in `analytics_events` statt 400 · alle 5 Komponenten nutzen `sfp_session_id` · Dashboard-Tab rendert mit leeren Daten fehlerfrei · Baseline-Fenster dokumentiert (Start/Ende im Dashboard annotiert).
 
-**Phase 2:** Pilot-Seiten bestehen no-JS-e2e (H1, Intro, initialer Zustand, Worked Example inkl. SVG, Methodik, FAQ, Quellen, Verified-Datum sichtbar) · Hydration-Suite grün · Design-AK 6.6 vollständig abgehakt (inkl. 1280×720-Checks) · First-Load-JS der migrierten Routen ≤ Vorher-Wert (build-Vergleich) · Hub zeigt 4 Decisions mit „Example"-Miniaturen · CI-Guards decken `components/tools` ab.
+**Phase 2:** Pilot-Seiten bestehen no-JS-e2e (H1, Intro, initialer Zustand, Worked Example inkl. SVG, Methodik, FAQ, Quellen, Verified-Datum sichtbar) · Hydration-Suite grün · Design-AK 6.6 vollständig abgehakt (inkl. 1280×720-Checks) · First-Load-JS der migrierten Routen ≤ Vorher-Wert (build-Vergleich) · Hubs zeigen alle marktverfügbaren Decisions mit „Example"-Miniaturen (US 3, UK/CA/AU 4) · CI-Guards decken `components/tools` ab.
 
-**Phase 3:** Quiz→Kosten→Vergleich ohne Doppeleingabe (e2e) · „Using your quiz answers"-Zeile sichtbar+editierbar · Cockpit unverändert (kein Import aus `lib/decision` in Cockpit-Code, Grep-Gate) · `tool_cockpit_cta_click` feuert an der Brücke.
+**Phase 3:** Hub-Marktparameter wird validiert und in `broker.market` persistiert · Quiz→Kosten→Vergleich ohne Doppeleingabe (e2e je US/UK/CA/AU) · Shortlist enthält ausschließlich im gewählten Markt verfügbare Anbieter · Regulierung/Kosten/Brücke entsprechen dem Markt · Canonical/OG bleiben parameterlos · „Using your quiz answers"-Zeile sichtbar+editierbar · Cockpit unverändert (kein Import aus `lib/decision` in Cockpit-Code, Grep-Gate) · jeder Cockpit-Klick feuert `tool_next_action_click` plus `tool_cockpit_cta_click`.
 
-**Phase 4:** Alle Engine-Vektoren grün (official/reference/invariant, inkl. Realwert-Invariante + Boundary 1.7.) · 4 Routen live mit korrektem Cluster · Entnahme überall „Illustrative retirement withdrawal" mit einstellbarer Rate · Caps clampen mit Quellen-Hinweis · Opus-Review-Protokoll im PR.
+**Phase 4:** Alle Engine-Vektoren grün (official/reference/invariant, inkl. Realwert-Invariante + Boundary 1.7.) · 4 Routen live mit korrektem Cluster · Entnahme überall „Illustrative retirement withdrawal" mit einstellbarer Rate · Simple mode clampet nie; Account breakdown prüft Konto/YTD/persönlichen Raum und zeigt jeden zulässigen Clamp mit Quelle · Benefit wird nur aus Nutzereingabe und erst ab Startalter berücksichtigt · US-Age-60–63-/Gesamtbeitrags-Regeln getestet · Opus-Review-Protokoll im PR.
 
 **Phase 5:** 3 Mortgage-Engines mit Vektoren · Payment Stack + Risikopuffer gerendert · Gate-PRs nur bei 10/10-Checkliste · Credit Utilization liefert ausschließlich Bänder (Typ-erzwungen) · alte credit-score-URL 308t.
 
@@ -821,21 +878,22 @@ Abhängigkeiten: 0.2/0.3/0.5/0.6 ← 0.1 · 0.5 ← 0.4 · 1.2 ← 1.1 · 1.3 �
 | 1 | Turbopack-Trap: Client-Widget importiert Server Action | mittel | hoch (Build-Crash) | Guard-Ausweitung in 2.1; Widget→Server nur `fetch` | Sonnet |
 | 2 | Hydration-Mismatch beim `ssr:false`-Ausstieg | mittel | hoch | Exemption entfernen; Dates/Rules nur als String-Props; `test:hydration` je Tool | Sonnet + Opus-Review |
 | 3 | cockpit_v1-Kontamination | niedrig | sehr hoch | Sibling-Typ, `tool_`-Prefix, eigene `.strict()`-Schemas, Regressions-e2e, GA-Aliase unangetastet | Opus-Review |
-| 4 | analytics_events-Volumenexplosion durch input_change | mittel | mittel | Debounce 600 ms, Cap 40, Buckets, Batch-Gewichtung, Volumen-Kachel, Killswitch | Sonnet |
+| 4 | analytics_events-Volumenexplosion durch input_change | mittel | mittel | Debounce 600 ms, Feld-Cap 40, separater Lever-Cap 10, Buckets, Batch-Gewichtung, Volumen-Kachel, Killswitch | Sonnet |
 | 5 | Stichtags-Stale (1.1./6.4./1.7.) auf statischen Seiten | hoch | mittel | zukunftsdatierte RuleEntries, `revalidate 86400`, SLA-Script mit Stichtags-Vorwarnung, `stale-data`-State | Sonnet |
 | 6 | SEO-Fehltritt bei De-noindex/Umzug | mittel | hoch | Indexability Gate (10 Kriterien), gold-roi atomar (0.3), Sitemap/Canonical/Redirect aus einer Registry | Opus-Review |
-| 7 | Doppelte Inflationsbereinigung / Modellfehler Wealth Horizon | niedrig | sehr hoch (YMYL) | Realwert-Modell bindend (8.3), Invariant-Vektor, unabhängiger Opus-Review vor Merge | Fable + Opus |
+| 7 | Doppelte Inflationsbereinigung, falscher Cap oder zu früh eingerechneter Benefit in Wealth Horizon | niedrig | sehr hoch (YMYL) | Realwert-Modell bindend (8.3), Simple/Account-Vertrag, keine automatische Benefit-Schätzung, offizielle+Reference+Invariant-Vektoren, unabhängiger Opus-Review vor Merge | Fable + Opus |
 | 8 | Session-Key-Konsolidierung bricht Same-Session-Joins am Deploy-Tag | sicher (einmalig) | niedrig | vor Baseline-Fenster shippen (1.2), Dashboards annotieren | Sonnet |
 | 9 | Bundle-/CWV-Regression durch SSR-Widgets | mittel | mittel | `next/dynamic` mit SSR, pures SVG statt recharts, First-Load-JS-Vergleich je Migration | Sonnet |
 | 10 | Design-Drift zwischen den 3 Modi | mittel | mittel | gemeinsamer Rahmen + eine Token-Quelle; State Board + High-Fi-Screens als Abnahme-Artefakte | Fable |
 | 11 | Share-Link-Missbrauch/Privacy-Regression | niedrig | hoch | Fragment-only, per-Tool-Allowlist, Buckets, zod+Clamps, sichtbare Vorschau | Opus-Review |
 | 12 | CI-Lücke lässt kaputten Build durch | niedrig (nach 0.0) | hoch | PR 0.0 Required Check; lokales Build bleibt Vorab-Gate | Sonnet |
+| 13 | Broker aus falschem Markt empfohlen / falsche Regulierungs- oder Kostenannahme | mittel | hoch | `availableMarkets`, validierter Marktparameter, marktgefilterte Fixtures, Journey-e2e für alle 4 Märkte, parameterloser Canonical | Fable + Sonnet |
 
 ## 15. In-Scope / Out-of-Scope
 
-**In-Scope:** Tool-Registry + alle 5 Konsumenten · Phase-0-SEO-/Daten-Fixes · tool_v1 + Dashboard-Tab · ToolShell mit 3 Modi + Financial-Field-Familie · Pilot Money Leak + Debt Payoff · Decision Launcher Hub · Broker Journey (Shared State) · Wealth Horizon v1 (4 Märkte, deterministisch) · Home Decision Lab (3 Märkte) · Supporting-Migrationen inkl. Credit-Utilization-Umbau · Indexability-Gate-PRs · Lo-Fi/Prototypen/State-Board/High-Fi-Artefakte.
+**In-Scope:** Tool-Registry + alle 5 Konsumenten · Phase-0-SEO-/Daten-Fixes · tool_v1 + Dashboard-Tab · ToolShell mit 3 Modi + Financial-Field-Familie · Pilot Money Leak + Debt Payoff · Decision Launcher Hub mit ehrlicher Marktverfügbarkeit · Broker Journey (Shared State + marktgefilterte globale Routen) · Wealth Horizon v1 (4 Märkte, deterministisch; Simple/Account-Modus; nutzereingegebener Benefit) · Home Decision Lab (3 Märkte) · Supporting-Migrationen inkl. Credit-Utilization-Umbau · Indexability-Gate-PRs · Lo-Fi/Prototypen/State-Board/High-Fi-Artefakte.
 
-**Out-of-Scope (v1):** Monte Carlo (nur typisierter `bands?`-Slot) · Accounts, Login, E-Mail-Zwang vor Mehrwert · Decision Passport (Phase 6, gesonderte Freigabe) · neue Rechner rein zur Keyword-Abdeckung · jegliche Änderung an cockpit_v1/Cockpit-UI · DB-Migrationen · Microsites · Query-Param-Share-Links · Nominalwert-Anzeigen in Wealth Horizon · Affiliate-Postback-Integration (eigenes Vorhaben; Dashboard zeigt nur „pending"-Kacheln) · automatische „Popular"-Badges vor Mindeststichprobe.
+**Out-of-Scope (v1):** Monte Carlo (nur typisierter `bands?`-Slot) · Accounts, Login, E-Mail-Zwang vor Mehrwert · Decision Passport (Phase 6, gesonderte Freigabe) · neue Rechner rein zur Keyword-Abdeckung, insbesondere kein fachlich unvorbereiteter US-Home-Rechner nur für ein symmetrisches Hub-Raster · automatische Schätzung von Social Security/State Pension/CPP-OAS/Age Pension · jegliche Änderung an cockpit_v1/Cockpit-UI · DB-Migrationen · Microsites · Query-Param-Share-Links (der nicht-sensitive Broker-Marktparameter ist kein Share-Payload) · Nominalwert-Anzeigen in Wealth Horizon · Affiliate-Postback-Integration (eigenes Vorhaben; Dashboard zeigt nur „pending"-Kacheln) · automatische „Popular"-Badges vor Mindeststichprobe.
 
 ## 16. Dokumentations-Drift (Korrektur-Empfehlung, eigener Mini-PR)
 
