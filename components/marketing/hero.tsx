@@ -3,10 +3,12 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { Shield, Users, DollarSign } from 'lucide-react';
+import { defaultMarketHomeHeroImage } from '@/lib/images/market-home-hero';
 
 interface HeroProps {
   title?: string;
   subtitle?: string;
+  backgroundImageSrc?: string;
   primaryCta?: {
     text: string;
     href: string;
@@ -26,6 +28,7 @@ const trustBadges = [
 export default function Hero({
   title = 'Financial Product\nResearch, Simplified.',
   subtitle = '108+ expert-reviewed products across trading, AI, cybersecurity, and personal finance. Independent analysis. 4 regulated markets.',
+  backgroundImageSrc = defaultMarketHomeHeroImage,
   primaryCta = { text: 'Explore Reports', href: '/us/ai-tools' },
   secondaryCta = { text: 'How We Review', href: '/tools' },
 }: HeroProps) {
@@ -51,7 +54,7 @@ export default function Hero({
       {/* Hero Background Image */}
       <div className="absolute inset-0" aria-hidden="true">
         <Image
-          src="/images/header002.webp"
+          src={backgroundImageSrc}
           alt=""
           fill
           priority
