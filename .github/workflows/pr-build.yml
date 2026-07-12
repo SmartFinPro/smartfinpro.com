@@ -1,0 +1,39 @@
+name: PR Production Build
+
+on:
+  pull_request:
+    paths:
+      - 'app/**'
+      - 'components/tools/**'
+      - 'lib/calc/**'
+      - 'lib/rules/**'
+      - 'lib/tools/**'
+      - 'lib/decision/**'
+      - 'lib/seo/**'
+      - 'next.config.ts'
+      - 'package.json'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Production build
+        run: npm run build
+        env:
+          NODE_OPTIONS: "--max-old-space-size=3072"
+          NEXT_PUBLIC_SITE_URL: ${{ secrets.NEXT_PUBLIC_SITE_URL }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          SERPER_API_KEY: ${{ secrets.SERPER_API_KEY }}
+          GOOGLE_INDEXING_JSON: ${{ secrets.GOOGLE_INDEXING_JSON }}
