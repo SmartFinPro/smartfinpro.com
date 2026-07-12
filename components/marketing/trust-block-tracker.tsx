@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { getOrCreateAnalyticsSessionId } from '@/lib/analytics/session';
 
 /**
  * Invisible tracking pixel that fires an analytics event when a trust
@@ -67,11 +68,5 @@ export function TrustBlockTracker({
 
 /** Stable per-session ID (survives SPA navigations, resets on tab close) */
 function getSessionId(): string {
-  if (typeof window === 'undefined') return 'ssr';
-  let id = sessionStorage.getItem('sfp_sid');
-  if (!id) {
-    id = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`; // safe — sessionStorage branch, client-only
-    sessionStorage.setItem('sfp_sid', id);
-  }
-  return id;
+  return getOrCreateAnalyticsSessionId() ?? 'ssr';
 }
