@@ -110,6 +110,19 @@ describe('POST /api/track — tool_event_batch case', () => {
     for (const row of rows) expect(row.event_category).toBe('tool');
   });
 
+  it('a full 20-event batch → still exactly 1 insert call, with 20 rows', async () => {
+    const { POST } = await import('@/app/api/track/route');
+    const batch = Array.from({ length: 20 }, () => toolItem());
+    const req = makeRequest(
+      { type: 'tool_event_batch', sessionId: 'session-abc12345', data: { events: batch } },
+      { 'x-forwarded-for': freshIp(), 'user-agent': NORMAL_UA },
+    );
+    const res = (await POST(req)) as unknown as MockedTrackResponse;
+    expect(res.status).toBe(200);
+    expect(insertMock).toHaveBeenCalledTimes(1);
+    expect((insertMock.mock.calls[0][0] as unknown[])).toHaveLength(20);
+  });
+
   it('a bot User-Agent (Googlebot) → 200 {success:true, skipped:true}, 0 insert calls', async () => {
     const { POST } = await import('@/app/api/track/route');
     const batch = [toolItem()];

@@ -4,7 +4,8 @@
 // TrackToolEventItemSchema and the additive TrackSchema.type enum entry.
 
 import { describe, it, expect } from 'vitest';
-import { TrackSchema, TrackToolEventBatchSchema } from '@/lib/validation';
+import { TrackSchema, TrackToolEventBatchSchema, TrackToolEventItemSchema } from '@/lib/validation';
+import { TOOL_EVENT_NAMES } from '@/lib/analytics/tool-events';
 import { TOOL_ID_VALUES } from '@/lib/tools/registry';
 
 function toolItem(overrides: Record<string, unknown> = {}) {
@@ -80,5 +81,9 @@ describe('TrackToolEventBatchSchema', () => {
     delete (item as Record<string, unknown>).properties;
     const result = TrackToolEventBatchSchema.safeParse([item]);
     expect(result.success).toBe(false);
+  });
+
+  it('the schema eventName enum matches TOOL_EVENT_NAMES exactly (drift guard between the two lists)', () => {
+    expect(TrackToolEventItemSchema.shape.eventName.options).toEqual([...TOOL_EVENT_NAMES]);
   });
 });
