@@ -1,17 +1,11 @@
 // __tests__/unit/tool-registry.test.ts
-import { readdirSync, existsSync } from 'node:fs';
+import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, it, expect } from 'vitest';
 import { TOOL_REGISTRY } from '@/lib/tools/registry/registry';
 import { getAllVariants, countLiveConcepts, countLiveRoutes, getToolsForMarket, getToolEntryHref, getExpectedTrackingManifest } from '@/lib/tools/registry';
 
 const MARKETING = join(process.cwd(), 'app', '(marketing)');
-
-// FDL 0.1 known deviation: gold-roi is registered with market 'au' but still lives
-// at its pre-move US path ('/tools/gold-roi-calculator') because Task 1 must reflect
-// the audited Ist-Zustand for fs-parity. Task 0.3 moves the page to /au/tools/ and
-// removes this exception.
-const KNOWN_MISPLACED = ['/tools/gold-roi-calculator'];
 
 function pageFileForPath(routePath: string): string {
   // '/tools/x' → app/(marketing)/tools/x/page.tsx ; '/uk/tools/x' → app/(marketing)/uk/tools/x/page.tsx
@@ -63,7 +57,6 @@ describe('registry data integrity', () => {
   });
   it('market prefix matches variant market', () => {
     for (const v of getAllVariants()) {
-      if (KNOWN_MISPLACED.includes(v.path)) continue; // gold-roi pre-move exception, see Task 0.3
       const expectedPrefix = v.market === 'us' ? '/tools/' : `/${v.market}/tools/`;
       expect(v.path.startsWith(expectedPrefix), `${v.path} vs market ${v.market}`).toBe(true);
     }
@@ -100,5 +93,16 @@ describe('market availability contract (SPEC 4.2)', () => {
     expect(manifest.length).toBe(29); // 20 Routen + Broker-Triple × uk/ca/au
     expect(manifest).toContainEqual({ toolId: 'broker-finder', path: '/tools/broker-finder', market: 'uk' });
     expect(manifest).toContainEqual({ toolId: 'trading-cost', path: '/tools/trading-cost-calculator', market: 'au' });
+  });
+});
+
+describe('legacy path redirect coverage (FDL 0.3)', () => {
+  it('legacyPaths sind in next.config redirects abgedeckt', () => {
+    const cfg = readFileSync(join(process.cwd(), 'next.config.ts'), 'utf8');
+    for (const t of Object.values(TOOL_REGISTRY)) {
+      for (const legacy of t.legacyPaths ?? []) {
+        expect(cfg.includes(`'${legacy}'`), `redirect fehlt für ${legacy}`).toBe(true);
+      }
+    }
   });
 });

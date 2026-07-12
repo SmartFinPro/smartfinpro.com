@@ -25,7 +25,7 @@ const toolPages = [
   // '/tools/credit-score-simulator',
   '/au/tools/superannuation-calculator',
   '/ca/tools/tfsa-rrsp-calculator',
-  '/tools/gold-roi-calculator',
+  '/au/tools/gold-roi-calculator',
   '/ca/tools/ca-mortgage-affordability-calculator',
   '/tools/money-leak-scanner',
   '/uk/tools/money-leak-scanner',
