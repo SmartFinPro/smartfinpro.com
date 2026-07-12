@@ -77,6 +77,9 @@ export const TOOL_REGISTRY: Record<ToolId, ToolDefinition> = {
     shellMode: 'guided-journey',
     icon: 'compass',
     blurb: 'Answer five quick questions and get a matched broker shortlist with clear reasoning.',
+    // SPEC 4.2: globales Broker-Triple — funktional in allen 4 Märkten via
+    // getToolEntryHref() + validiertem ?market=-Param, keine lokalisierten Duplikat-Routen.
+    availableMarkets: ['us', 'uk', 'ca', 'au'],
     variants: [
       {
         market: 'us',
@@ -99,6 +102,9 @@ export const TOOL_REGISTRY: Record<ToolId, ToolDefinition> = {
     shellMode: 'precision-worksheet',
     icon: 'calculator',
     blurb: 'Estimate yearly trading costs and compare spreads, commissions and fees across brokers.',
+    // SPEC 4.2: globales Broker-Triple — funktional in allen 4 Märkten via
+    // getToolEntryHref() + validiertem ?market=-Param, keine lokalisierten Duplikat-Routen.
+    availableMarkets: ['us', 'uk', 'ca', 'au'],
     variants: [
       {
         market: 'us',
@@ -121,6 +127,9 @@ export const TOOL_REGISTRY: Record<ToolId, ToolDefinition> = {
     shellMode: 'live-canvas',
     icon: 'columns-3',
     blurb: 'Compare forex and CFD brokers side by side on spreads, fees, platforms and regulation.',
+    // SPEC 4.2: globales Broker-Triple — funktional in allen 4 Märkten via
+    // getToolEntryHref() + validiertem ?market=-Param, keine lokalisierten Duplikat-Routen.
+    availableMarkets: ['us', 'uk', 'ca', 'au'],
     variants: [
       {
         market: 'us',

@@ -17,13 +17,32 @@ export function getVariant(id: ToolId, market: ToolMarket): ToolRouteVariant | n
   return TOOL_REGISTRY[id]?.variants.find((v) => v.market === market) ?? null;
 }
 
-export function getToolsForMarket(market: ToolMarket): (ToolDefinition & { variant: ToolRouteVariant })[] {
-  return Object.values(TOOL_REGISTRY)
-    .map((t) => ({ ...t, variant: t.variants.find((v) => v.market === market)! }))
-    .filter((t) => t.variant);
+export function getAvailableMarkets(t: ToolDefinition): ToolMarket[] {
+  return t.availableMarkets ?? Array.from(new Set(t.variants.map((v) => v.market)));
 }
 
-export function countLiveTools(): number {
+/** Einstiegs-URL für einen Markt: lokale Variante, sonst globale Route + validierter ?market=-Param (SPEC 4.2). */
+export function getToolEntryHref(id: ToolId, market: ToolMarket): string | null {
+  const tool = TOOL_REGISTRY[id];
+  const local = tool.variants.find((v) => v.market === market);
+  if (local) return local.path;
+  if (!getAvailableMarkets(tool).includes(market)) return null;
+  const global = tool.variants.find((v) => v.market === 'us') ?? tool.variants[0];
+  return market === 'us' ? global.path : `${global.path}?market=${market}`;
+}
+
+export function getToolsForMarket(market: ToolMarket): (ToolDefinition & { entryHref: string; localized: boolean })[] {
+  return Object.values(TOOL_REGISTRY)
+    .filter((t) => getAvailableMarkets(t).includes(market))
+    .map((t) => ({ ...t, entryHref: getToolEntryHref(t.id, market)!, localized: t.variants.some((v) => v.market === market) }));
+}
+
+/** Öffentliche Kennzahl (Homepage): Konzepte mit ≥1 Live-Variante. */
+export function countLiveConcepts(): number {
+  return Object.values(TOOL_REGISTRY).filter((t) => t.variants.some((v) => v.status === 'live')).length;
+}
+/** Interne Kennzahl (Manifest/Health): Anzahl Live-Routen-Varianten. */
+export function countLiveRoutes(): number {
   return getAllVariants().filter((v) => v.status === 'live').length;
 }
 
@@ -41,8 +60,11 @@ export function getSitemapToolEntries(): { url: string }[] {
 
 export function getFooterToolLinks(market: ToolMarket): { label: string; href: string }[] {
   return getToolsForMarket(market)
-    .filter((t) => t.variant.status === 'live' && t.variant.indexable)
-    .map((t) => ({ label: t.name, href: t.variant.path }));
+    .filter((t) => {
+      const v = t.variants.find((x) => x.market === market) ?? t.variants.find((x) => x.market === 'us') ?? t.variants[0];
+      return v.status === 'live' && v.indexable;
+    })
+    .map((t) => ({ label: t.name, href: t.entryHref }));
 }
 
 export function getLlmsToolLines(): string[] {

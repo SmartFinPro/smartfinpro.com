@@ -34,6 +34,8 @@ export interface ToolDefinition {
   shellMode: ShellMode;
   icon: string;              // lucide-Key, wie BEST_X_MANIFEST
   blurb: string;             // Hub-Karten-Copy, EN, 1 Satz
-  variants: ToolRouteVariant[];   // dieses Array IST der hreflang-Cluster (1 Variante = self-only)
+  variants: ToolRouteVariant[];   // SEO-Varianten: eigene indexierbare Routen = hreflang-Cluster
+  availableMarkets?: ToolMarket[]; // FUNKTIONALE Verfügbarkeit (SPEC 4.2): ein globaler Pfad darf
+                                   // mehrere Märkte bedienen; Default = Märkte der variants
   legacyPaths?: string[];    // 308-Quellen; Test prüft gegen next.config.ts-Redirects
 }

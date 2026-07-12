@@ -3,7 +3,7 @@ import { readdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, it, expect } from 'vitest';
 import { TOOL_REGISTRY } from '@/lib/tools/registry/registry';
-import { getAllVariants, countLiveTools, getToolsForMarket } from '@/lib/tools/registry';
+import { getAllVariants, countLiveConcepts, countLiveRoutes, getToolsForMarket, getToolEntryHref } from '@/lib/tools/registry';
 
 const MARKETING = join(process.cwd(), 'app', '(marketing)');
 
@@ -68,10 +68,31 @@ describe('registry data integrity', () => {
       expect(v.path.startsWith(expectedPrefix), `${v.path} vs market ${v.market}`).toBe(true);
     }
   });
-  it('counts match the audited state (20 routes, 17 concepts)', () => {
+  it('counts: 20 Routen, 17 Konzepte — getrennte Zählfunktionen', () => {
     expect(getAllVariants().length).toBe(20);
     expect(Object.keys(TOOL_REGISTRY).length).toBe(17);
-    expect(countLiveTools()).toBeGreaterThanOrEqual(17); // live-Variants gesamt
-    expect(getToolsForMarket('uk').length).toBeGreaterThanOrEqual(3);
+    expect(countLiveRoutes()).toBe(20);      // interne Kennzahl (Manifest/Health)
+    expect(countLiveConcepts()).toBe(17);    // öffentliche Kennzahl (Homepage)
+  });
+});
+
+describe('market availability contract (SPEC 4.2)', () => {
+  it('broker triple is functionally available in all 4 markets via global route + ?market=', () => {
+    for (const id of ['broker-finder', 'trading-cost', 'broker-comparison'] as const) {
+      expect(getToolEntryHref(id, 'us')).not.toContain('?market=');
+      expect(getToolEntryHref(id, 'uk')).toMatch(/^\/tools\/.+\?market=uk$/);
+      expect(getToolEntryHref(id, 'ca')).toMatch(/\?market=ca$/);
+      expect(getToolEntryHref(id, 'au')).toMatch(/\?market=au$/);
+    }
+  });
+  it('localized variant wins over global route', () => {
+    expect(getToolEntryHref('money-leak-scanner', 'uk')).toBe('/uk/tools/money-leak-scanner');
+  });
+  it('US-centric tools are NOT offered to other markets (ehrliche Marktverfügbarkeit)', () => {
+    for (const id of ['loan', 'credit-card-rewards', 'ai-roi'] as const) {
+      expect(getToolEntryHref(id, 'uk')).toBeNull();
+    }
+    expect(getToolsForMarket('uk').some((t) => t.id === 'broker-finder')).toBe(true);
+    expect(getToolsForMarket('uk').some((t) => t.id === 'loan')).toBe(false);
   });
 });
