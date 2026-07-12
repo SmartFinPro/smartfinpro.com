@@ -32,6 +32,7 @@ import {
   Users,
 } from 'lucide-react';
 import { FeaturedPartnerOffer } from './featured-partner-offer';
+import { getOrCreateAnalyticsSessionId } from '@/lib/analytics/session';
 
 // Local type definitions — mirror the server-side types without importing server-only modules
 type AbVariant = 'A' | 'B';
@@ -93,16 +94,7 @@ function getOrAssignVariant(hubId: string): AbVariant {
 }
 
 function getSessionId(): string {
-  try {
-    let sid = sessionStorage.getItem('sfp_session');
-    if (!sid) {
-      sid = `s_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`; // safe — sessionStorage branch
-      sessionStorage.setItem('sfp_session', sid);
-    }
-    return sid;
-  } catch {
-    return `s_${Date.now()}`; // safe — catch fallback, never during SSR
-  }
+  return getOrCreateAnalyticsSessionId() ?? `s_${Date.now()}`; // fallback matches prior catch-branch shape
 }
 
 // ── Main Component ──────────────────────────────────────────

@@ -1,8 +1,11 @@
 // lib/analytics/session.ts
 // Single source of truth for the first-party analytics session id.
-// Used by lib/hooks/use-analytics.ts (pageviews) and
-// lib/analytics/cockpit-tracking.ts (cockpit events) — do NOT reimplement
-// the sfp_session_id logic anywhere else.
+// Used by lib/hooks/use-analytics.ts (pageviews), lib/analytics/
+// cockpit-tracking.ts (cockpit events), lib/analytics/tool-tracking.ts
+// (tool_v1 events) and the marketing components that fire ad-hoc /api/track
+// events (tracked-affiliate-link, trust-block-tracker, comparison-hub,
+// xray-score) — do NOT reimplement the sfp_session_id logic anywhere else.
+// (broker-finder-quiz.tsx keeps its own duplicate until PR 3.2 — documented there.)
 
 export const SESSION_STORAGE_KEY = 'sfp_session_id';
 
