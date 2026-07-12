@@ -3,7 +3,7 @@ import { readdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, it, expect } from 'vitest';
 import { TOOL_REGISTRY } from '@/lib/tools/registry/registry';
-import { getAllVariants, countLiveConcepts, countLiveRoutes, getToolsForMarket, getToolEntryHref } from '@/lib/tools/registry';
+import { getAllVariants, countLiveConcepts, countLiveRoutes, getToolsForMarket, getToolEntryHref, getExpectedTrackingManifest } from '@/lib/tools/registry';
 
 const MARKETING = join(process.cwd(), 'app', '(marketing)');
 
@@ -94,5 +94,11 @@ describe('market availability contract (SPEC 4.2)', () => {
     }
     expect(getToolsForMarket('uk').some((t) => t.id === 'broker-finder')).toBe(true);
     expect(getToolsForMarket('uk').some((t) => t.id === 'loan')).toBe(false);
+  });
+  it('tracking manifest expands availableMarkets (29 funktionale Einträge, nicht 20 Routen)', () => {
+    const manifest = getExpectedTrackingManifest();
+    expect(manifest.length).toBe(29); // 20 Routen + Broker-Triple × uk/ca/au
+    expect(manifest).toContainEqual({ toolId: 'broker-finder', path: '/tools/broker-finder', market: 'uk' });
+    expect(manifest).toContainEqual({ toolId: 'trading-cost', path: '/tools/trading-cost-calculator', market: 'au' });
   });
 });

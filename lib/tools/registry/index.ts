@@ -73,8 +73,19 @@ export function getLlmsToolLines(): string[] {
     .map((v) => `- ${v.title}: https://smartfinpro.com${v.path}`);
 }
 
+/**
+ * Tracking-Manifest = FUNKTIONALE Tool-Markt-Matrix (SPEC 4.2), nicht nur SEO-Routen:
+ * expandiert availableMarkets, damit z. B. Broker-Finder-Silence auf UK/CA/AU erkannt
+ * wird, obwohl alle vier Märkte dieselbe globale US-Route nutzen.
+ * Erwarteter Ist-Umfang: 29 Einträge (20 Routen + Broker-Triple × uk/ca/au).
+ */
 export function getExpectedTrackingManifest(): { toolId: ToolId; path: string; market: ToolMarket }[] {
-  return getAllVariants()
-    .filter((v) => v.status === 'live')
-    .map((v) => ({ toolId: v.toolId, path: v.path, market: v.market }));
+  return Object.values(TOOL_REGISTRY).flatMap((t) =>
+    getAvailableMarkets(t).flatMap((m) => {
+      const v = t.variants.find((x) => x.market === m)
+        ?? t.variants.find((x) => x.market === 'us')
+        ?? t.variants[0];
+      return v.status === 'live' ? [{ toolId: t.id, path: v.path, market: m }] : [];
+    }),
+  );
 }
