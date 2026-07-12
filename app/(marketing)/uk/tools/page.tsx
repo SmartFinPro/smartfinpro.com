@@ -1,7 +1,12 @@
 // app/(marketing)/uk/tools/page.tsx
 import { Metadata } from 'next';
 import Link from 'next/link';
-import { Calculator, PiggyBank, Home, ArrowRight, Sparkles, Droplet } from 'lucide-react';
+import {
+  Calculator, ArrowRight, Sparkles,
+  ScanSearch, Compass, Columns3, PiggyBank, House,
+  type LucideIcon,
+} from 'lucide-react';
+import { getToolsForMarket } from '@/lib/tools/registry';
 
 export const metadata: Metadata = {
   title: 'Free UK Financial Tools & Calculators | SmartFinPro',
@@ -16,29 +21,22 @@ export const metadata: Metadata = {
   },
 };
 
-const tools = [
-  {
-    title: 'Money Leak Scanner',
-    description: 'Find how much your household is overpaying across banking fees, subscriptions, credit cards, insurance, investing and FX — live, in 60 seconds.',
-    icon: Droplet,
-    href: '/uk/tools/money-leak-scanner',
-    badge: 'New',
-  },
-  {
-    title: 'ISA Tax Savings Calculator',
-    description: 'See how much you could save in capital gains tax and dividend tax by investing inside a Stocks & Shares ISA vs a General Investment Account.',
-    icon: PiggyBank,
-    href: '/uk/tools/isa-tax-savings-calculator',
-    badge: null,
-  },
-  {
-    title: 'Remortgage Calculator',
-    description: 'Calculate your new monthly payment after remortgaging. Compare fixed vs tracker rates and see how much you could save by switching.',
-    icon: Home,
-    href: '/uk/tools/remortgage-calculator',
-    badge: 'New',
-  },
-];
+// Registry icon key (SPEC 9.1, lucide-Key) → Lucide component.
+const iconMap: Record<string, LucideIcon> = {
+  'scan-search': ScanSearch,
+  compass: Compass,
+  calculator: Calculator,
+  'columns-3': Columns3,
+  'piggy-bank': PiggyBank,
+  house: House,
+};
+
+const tools = getToolsForMarket('uk').map((t) => ({
+  title: t.name,
+  description: t.blurb,
+  icon: iconMap[t.icon] ?? Calculator,
+  href: t.entryHref,
+}));
 
 export default function UKToolsPage() {
   return (
@@ -90,11 +88,6 @@ export default function UKToolsPage() {
                 href={tool.href}
                 className="group relative rounded-2xl border border-gray-200 p-6 transition-all duration-300 hover:translate-y-[-4px] hover:shadow-lg bg-white"
               >
-                {tool.badge && (
-                  <span className="absolute top-4 right-4 text-[10px] px-2 py-0.5 rounded-full font-semibold" style={{ background: 'var(--sfp-sky)', color: 'var(--sfp-navy)' }}>
-                    {tool.badge}
-                  </span>
-                )}
                 <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-4" style={{ background: 'var(--sfp-sky)', color: 'var(--sfp-navy)' }}>
                   <tool.icon className="h-6 w-6" />
                 </div>

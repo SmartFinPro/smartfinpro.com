@@ -64,7 +64,8 @@ const iconMap: Record<string, React.ElementType> = {
 interface PlatformStatsProps {
   totalReviews: number;
   totalMarkets?: number;
-  totalTools?: number;
+  /** Public tool-concept count (FDL 0.6) — pass countLiveConcepts() from @/lib/tools/registry, never hardcode. */
+  totalTools: number;
 }
 
 const statsItems = (reviews: number, markets: number, tools: number) => [
@@ -77,7 +78,7 @@ const statsItems = (reviews: number, markets: number, tools: number) => [
 export function PlatformStats({
   totalReviews,
   totalMarkets = 4,
-  totalTools = 9,
+  totalTools,
 }: PlatformStatsProps) {
   const items = statsItems(totalReviews, totalMarkets, totalTools);
 

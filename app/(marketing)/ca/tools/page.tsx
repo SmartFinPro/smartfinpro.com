@@ -1,7 +1,12 @@
 // app/(marketing)/ca/tools/page.tsx
 import { Metadata } from 'next';
 import Link from 'next/link';
-import { Calculator, DollarSign, Home, ArrowRight, Sparkles, PiggyBank, Droplet } from 'lucide-react';
+import {
+  Calculator, ArrowRight, Sparkles,
+  ScanSearch, Compass, Columns3, Scale, Percent, Home,
+  type LucideIcon,
+} from 'lucide-react';
+import { getToolsForMarket } from '@/lib/tools/registry';
 
 export const metadata: Metadata = {
   title: 'Free Canadian Financial Tools & Calculators | SmartFinPro',
@@ -16,36 +21,23 @@ export const metadata: Metadata = {
   },
 };
 
-const tools = [
-  {
-    title: 'Money Leak Scanner',
-    description: 'Find how much your household is overpaying across banking fees, subscriptions, credit cards, insurance, investing and FX — live, in 60 seconds.',
-    icon: Droplet,
-    href: '/ca/tools/money-leak-scanner',
-    badge: 'New',
-  },
-  {
-    title: 'TFSA vs RRSP Calculator',
-    description: 'Compare TFSA and RRSP side by side. See which account maximises your after-tax retirement savings based on your income, tax bracket, and timeline.',
-    icon: PiggyBank,
-    href: '/ca/tools/tfsa-rrsp-calculator',
-    badge: null,
-  },
-  {
-    title: 'Wealthsimple Fee Savings Calculator',
-    description: 'See how much you could save by switching from traditional bank mutual funds to low-cost ETFs. Compare fee drag over 10, 20, and 30 years.',
-    icon: DollarSign,
-    href: '/ca/tools/wealthsimple-calculator',
-    badge: 'New',
-  },
-  {
-    title: 'Mortgage Affordability Calculator',
-    description: 'Find out how much home you can afford in Canada. GDS/TDS ratios, OSFI stress test, CMHC insurance, and first-time buyer incentives.',
-    icon: Home,
-    href: '/ca/tools/ca-mortgage-affordability-calculator',
-    badge: 'New',
-  },
-];
+// Registry icon key (SPEC 9.1, lucide-Key) → Lucide component.
+const iconMap: Record<string, LucideIcon> = {
+  'scan-search': ScanSearch,
+  compass: Compass,
+  calculator: Calculator,
+  'columns-3': Columns3,
+  scale: Scale,
+  percent: Percent,
+  home: Home,
+};
+
+const tools = getToolsForMarket('ca').map((t) => ({
+  title: t.name,
+  description: t.blurb,
+  icon: iconMap[t.icon] ?? Calculator,
+  href: t.entryHref,
+}));
 
 export default function CAToolsPage() {
   return (
@@ -97,11 +89,6 @@ export default function CAToolsPage() {
                 href={tool.href}
                 className="group relative rounded-2xl border border-gray-200 p-6 transition-all duration-300 hover:translate-y-[-4px] hover:shadow-lg bg-white"
               >
-                {tool.badge && (
-                  <span className="absolute top-4 right-4 text-[10px] px-2 py-0.5 rounded-full font-semibold" style={{ background: 'var(--sfp-sky)', color: 'var(--sfp-navy)' }}>
-                    {tool.badge}
-                  </span>
-                )}
                 <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-4" style={{ background: 'var(--sfp-sky)', color: 'var(--sfp-navy)' }}>
                   <tool.icon className="h-6 w-6" />
                 </div>
