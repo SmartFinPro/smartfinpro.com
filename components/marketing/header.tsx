@@ -87,7 +87,7 @@ interface ToolCard {
 const allToolCards: ToolCard[] = [
   { name: 'Broker Finder Quiz', description: 'Personalized broker match in 60 seconds', href: '/tools/broker-finder', icon: Target, badge: 'New', markets: 'all' },
   { name: 'Trading Cost Calculator', description: 'Compare fees across top brokers', href: '/tools/trading-cost-calculator', icon: BarChart3, badge: 'New', markets: 'all' },
-  { name: 'Fee Savings Calculator', description: 'See how much you save vs bank funds', href: '/ca/tools/wealthsimple-calculator', icon: DollarSign, badge: 'New', markets: ['ca'] },
+  { name: 'Wealthsimple Fee Savings Calculator', description: 'See how much you save vs bank funds', href: '/ca/tools/wealthsimple-calculator', icon: DollarSign, badge: 'New', markets: ['ca'] },
   { name: 'AI ROI Calculator', description: 'Calculate AI tool investment returns', href: '/tools/ai-roi-calculator', icon: TrendingUp, badge: null, markets: 'all' },
   { name: 'Loan Calculator', description: 'Monthly payments & amortization', href: '/tools/loan-calculator', icon: Calculator, badge: null, markets: 'all' },
   { name: 'AU Mortgage Calculator', description: 'Home loan repayments, LVR & offset', href: '/au/tools/au-mortgage-calculator', icon: Home, badge: 'New', markets: ['au'] },

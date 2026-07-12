@@ -29,7 +29,7 @@ const tools = [
     description: 'Project your super balance at retirement. Model employer contributions, salary sacrifice, government co-contributions, and investment returns.',
     icon: TrendingUp,
     href: '/au/tools/superannuation-calculator',
-    badge: 'Popular',
+    badge: null,
   },
   {
     title: 'AU Mortgage Calculator',

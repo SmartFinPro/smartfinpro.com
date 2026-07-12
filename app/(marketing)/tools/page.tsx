@@ -22,11 +22,11 @@ const tools = [
   },
   {
     title: 'Broker Finder Quiz',
-    description: 'Answer 5 quick questions and get personalized broker recommendations with match scores. Find your perfect trading platform in under a minute.',
+    description: 'Answer 4 quick questions and get personalized broker recommendations with match scores. Find your perfect trading platform in under a minute.',
     icon: Target,
     href: '/tools/broker-finder',
     category: 'Trading',
-    badge: 'Popular',
+    badge: null,
   },
   {
     title: 'Trading Cost Calculator',
@@ -45,7 +45,7 @@ const tools = [
     badge: 'Compare',
   },
   {
-    title: 'Fee Savings Calculator',
+    title: 'Wealthsimple Fee Savings Calculator',
     description: 'See how much you could save by switching from traditional bank mutual funds. Compare fee drag over 10, 20, and 30 years.',
     icon: DollarSign,
     href: '/ca/tools/wealthsimple-calculator',
@@ -66,7 +66,7 @@ const tools = [
     icon: Calculator,
     href: '/tools/debt-payoff-calculator',
     category: 'Personal Finance',
-    badge: 'Coming Soon',
+    badge: null,
   },
   {
     title: 'Loan Calculator',
@@ -82,7 +82,7 @@ const tools = [
     icon: TrendingUp,
     href: '/tools/credit-score-simulator',
     category: 'Personal Finance',
-    badge: 'Coming Soon',
+    badge: null,
   },
   {
     title: 'AU Mortgage Calculator',
@@ -98,7 +98,7 @@ const tools = [
     icon: Home,
     href: '/uk/tools/remortgage-calculator',
     category: 'Personal Finance',
-    badge: 'Coming Soon',
+    badge: null,
   },
   {
     title: 'ISA Tax Savings Calculator',

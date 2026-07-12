@@ -111,7 +111,7 @@ const marketToolLinks: Record<Market, NavLink[]> = {
   ],
   ca: [
     { label: 'TFSA/RRSP Calculator', href: '/ca/tools/tfsa-rrsp-calculator' },
-    { label: 'Fee Savings Calculator', href: '/ca/tools/wealthsimple-calculator' },
+    { label: 'Wealthsimple Fee Savings Calculator', href: '/ca/tools/wealthsimple-calculator' },
     { label: 'Mortgage Affordability Calculator', href: '/ca/tools/ca-mortgage-affordability-calculator' },
     { label: 'Money Leak Scanner', href: '/ca/tools/money-leak-scanner' },
   ],

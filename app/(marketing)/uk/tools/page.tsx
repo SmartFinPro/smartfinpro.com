@@ -29,7 +29,7 @@ const tools = [
     description: 'See how much you could save in capital gains tax and dividend tax by investing inside a Stocks & Shares ISA vs a General Investment Account.',
     icon: PiggyBank,
     href: '/uk/tools/isa-tax-savings-calculator',
-    badge: 'Popular',
+    badge: null,
   },
   {
     title: 'Remortgage Calculator',

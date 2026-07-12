@@ -29,10 +29,10 @@ const tools = [
     description: 'Compare TFSA and RRSP side by side. See which account maximises your after-tax retirement savings based on your income, tax bracket, and timeline.',
     icon: PiggyBank,
     href: '/ca/tools/tfsa-rrsp-calculator',
-    badge: 'Popular',
+    badge: null,
   },
   {
-    title: 'Fee Savings Calculator',
+    title: 'Wealthsimple Fee Savings Calculator',
     description: 'See how much you could save by switching from traditional bank mutual funds to low-cost ETFs. Compare fee drag over 10, 20, and 30 years.',
     icon: DollarSign,
     href: '/ca/tools/wealthsimple-calculator',
