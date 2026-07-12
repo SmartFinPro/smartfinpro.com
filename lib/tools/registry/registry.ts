@@ -5,10 +5,11 @@
 // dokumentiert. indexable folgt SPEC Kapitel 9.2.
 //
 // Bekannte Ist-Zustand-Abweichungen (Parity-Pflicht, siehe Plan Task 1):
-// - gold-roi: market 'au', aber der Pfad ist noch der alte US-Pfad
-//   '/tools/gold-roi-calculator' (Umzug erst Task 0.3). Titel kommt daher von der
-//   BESTEHENDEN Page (app/(marketing)/tools/gold-roi-calculator/page.tsx), nicht aus
-//   SPEC 9.1 — H1/Description sind pfadunabhängig korrekt und kommen aus SPEC.
+// - gold-roi: Umzug nach /au/tools/gold-roi-calculator ist mit Task 0.3
+//   abgeschlossen (vorher: alter US-Pfad '/tools/gold-roi-calculator', siehe
+//   legacyPaths + next.config.ts-Redirect). Titel kommt weiterhin von der
+//   BESTEHENDEN Page, nicht aus SPEC 9.1 — H1/Description sind pfadunabhängig
+//   korrekt und kommen aus SPEC.
 // - credit-utilization: registriert unter dem alten Slug
 //   '/tools/credit-score-simulator' (Slug-Wechsel erst Phase 5). Titel kommt daher von
 //   der BESTEHENDEN Page (app/(marketing)/tools/credit-score-simulator/page.tsx),
@@ -244,12 +245,13 @@ export const TOOL_REGISTRY: Record<ToolId, ToolDefinition> = {
     shellMode: 'live-canvas',
     icon: 'coins',
     blurb: 'Model gold investment returns for Australian investors across three scenarios.',
+    legacyPaths: ['/tools/gold-roi-calculator'],
     variants: [
       {
         market: 'au',
-        // Ist-Pfad (Umzug nach /au/tools/gold-roi-calculator erst Task 0.3) — siehe
-        // KNOWN_MISPLACED-Ausnahme im Markt-Prefix-Integritätstest.
-        path: '/tools/gold-roi-calculator',
+        // Moved to /au/tools/ in Task 0.3 (was '/tools/gold-roi-calculator');
+        // the old path now 308s here, see legacyPaths + next.config.ts redirects.
+        path: '/au/tools/gold-roi-calculator',
         status: 'live',
         indexable: true,
         // Ist-Title der bestehenden Page (bare) — NICHT der SPEC-9.1-Title für den

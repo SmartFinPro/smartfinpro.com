@@ -1,7 +1,7 @@
 // app/(marketing)/au/tools/page.tsx
 import { Metadata } from 'next';
 import Link from 'next/link';
-import { Calculator, Home, TrendingUp, ArrowRight, Sparkles, Droplet } from 'lucide-react';
+import { Calculator, Home, TrendingUp, ArrowRight, Sparkles, Droplet, Coins } from 'lucide-react';
 
 export const metadata: Metadata = {
   title: 'Free Australian Financial Tools & Calculators | SmartFinPro',
@@ -37,6 +37,13 @@ const tools = [
     icon: Home,
     href: '/au/tools/au-mortgage-calculator',
     badge: 'New',
+  },
+  {
+    title: 'Gold ROI Calculator',
+    description: 'Model gold investment returns across conservative to optimistic scenarios and compare against inflation, equities and bonds.',
+    icon: Coins,
+    href: '/au/tools/gold-roi-calculator',
+    badge: null,
   },
 ];
 

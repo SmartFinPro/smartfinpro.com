@@ -13,3 +13,9 @@ for (const v of getAllVariants().filter((x) => x.status === 'live')) {
     if (!v.indexable) expect(robots ?? '').toContain('noindex');
   });
 }
+
+test('gold-roi legacy path 308s to /au/tools/', async ({ request }) => {
+  const res = await request.get('/tools/gold-roi-calculator', { maxRedirects: 0 });
+  expect(res.status()).toBe(308);
+  expect(res.headers()['location']).toContain('/au/tools/gold-roi-calculator');
+});
