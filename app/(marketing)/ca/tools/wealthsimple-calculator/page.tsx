@@ -1,23 +1,10 @@
-import { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowLeft, Calculator, Lightbulb, Shield, TrendingUp } from 'lucide-react';
 import { DynamicWealthsimpleCalculator } from '@/components/tools/dynamic-calculators';
 import { ToolRelatedReviews } from '@/components/marketing/tool-related-reviews';
+import { buildToolMetadata } from '@/lib/tools/registry/metadata';
 
-export const metadata: Metadata = {
-  title: 'Wealthsimple Fee Calculator — How Much Could You Save? | SmartFinPro',
-  description:
-    'Calculate how much you could save by switching from traditional bank mutual funds to Wealthsimple. Compare fee drag over 10, 20, and 30 years with our free calculator.',
-  alternates: {
-    canonical: 'https://smartfinpro.com/ca/tools/wealthsimple-calculator',
-  },
-  openGraph: {
-    title: 'Wealthsimple Fee Calculator — How Much Could You Save?',
-    description:
-      'Free calculator to estimate investment fee savings with Wealthsimple vs traditional banks.',
-    url: 'https://smartfinpro.com/ca/tools/wealthsimple-calculator',
-  },
-};
+export const metadata = buildToolMetadata('wealthsimple-fees', 'ca');
 
 export default function WealthsimpleCalculatorPage() {
   return (

@@ -1,32 +1,11 @@
 // app/(marketing)/uk/tools/remortgage-calculator/page.tsx
-import { Metadata } from 'next';
 import { RemortgageCalculator } from '@/components/tools/remortgage-calculator';
 import { AnswerBlock } from '@/components/ui/answer-block';
 import { AffiliateDisclosure } from '@/components/ui/affiliate-disclosure';
+import { buildToolMetadata } from '@/lib/tools/registry/metadata';
 
-export const metadata: Metadata = {
-  title: 'Remortgage Calculator UK 2026 | Calculate Interest Savings',
-  description:
-    'Use our free remortgage calculator to see if remortgaging your home will save you money. Compare rates, calculate savings, and find the best remortgage deal for your situation.',
-  // noindex: "Coming Soon" placeholder — remove once fully built
-  robots: { index: false, follow: true },
-  alternates: {
-    canonical: 'https://smartfinpro.com/uk/tools/remortgage-calculator',
-    languages: {
-      'en-US': 'https://smartfinpro.com/tools/debt-payoff-calculator',
-      'en-GB': 'https://smartfinpro.com/uk/tools/remortgage-calculator',
-      'en-CA': 'https://smartfinpro.com/ca/tools/debt-payoff-calculator',
-      'en-AU': 'https://smartfinpro.com/au/tools/debt-payoff-calculator',
-    },
-  },
-  openGraph: {
-    title: 'Remortgage Calculator UK 2026 | SmartFinPro',
-    description:
-      'Calculate your remortgage savings with our free tool. See if switching to a better rate will save you money.',
-    url: 'https://smartfinpro.com/uk/tools/remortgage-calculator',
-    type: 'website',
-  },
-};
+// noindex kommt jetzt aus der Registry (indexable: false) — siehe SPEC 9.2
+export const metadata = buildToolMetadata('remortgage', 'uk');
 
 export default function RemortgageCalculatorPage() {
   return (

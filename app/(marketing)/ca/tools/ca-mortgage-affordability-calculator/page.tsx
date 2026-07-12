@@ -1,23 +1,10 @@
-import { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowLeft, Home, Lightbulb, Shield } from 'lucide-react';
 import { DynamicCAMortgageAffordabilityCalculator } from '@/components/tools/dynamic-calculators';
 import { ToolRelatedReviews } from '@/components/marketing/tool-related-reviews';
+import { buildToolMetadata } from '@/lib/tools/registry/metadata';
 
-export const metadata: Metadata = {
-  title: 'Canadian Mortgage Affordability Calculator 2026: GDS, TDS & Stress Test | SmartFinPro',
-  description:
-    'Free Canadian mortgage affordability calculator for first-time home buyers. Calculate GDS/TDS ratios, CMHC insurance, stress test qualification, and first-time buyer incentives (FHSA, HBP).',
-  alternates: {
-    canonical: 'https://smartfinpro.com/ca/tools/ca-mortgage-affordability-calculator',
-  },
-  openGraph: {
-    title: 'Canadian Mortgage Affordability Calculator — GDS, TDS & Stress Test',
-    description:
-      'Free calculator for Canadian first-time home buyers. GDS/TDS ratios, CMHC insurance, OSFI stress test, and buyer incentives.',
-    url: 'https://smartfinpro.com/ca/tools/ca-mortgage-affordability-calculator',
-  },
-};
+export const metadata = buildToolMetadata('ca-affordability', 'ca');
 
 export default function CAMortgageAffordabilityCalculatorPage() {
   return (

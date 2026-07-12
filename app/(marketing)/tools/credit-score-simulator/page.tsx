@@ -1,32 +1,11 @@
 // app/(marketing)/tools/credit-score-simulator/page.tsx
-import { Metadata } from 'next';
 import { CreditScoreSimulator } from '@/components/tools/credit-score-simulator';
 import { AnswerBlock } from '@/components/ui/answer-block';
 import { AffiliateDisclosure } from '@/components/ui/affiliate-disclosure';
+import { buildToolMetadata } from '@/lib/tools/registry/metadata';
 
-export const metadata: Metadata = {
-  title: 'Credit Score Simulator 2026 | See How Actions Affect Your Score',
-  description:
-    'Simulate how different financial actions affect your credit score. Understand what helps and hurts your score, and see the impact of paying down debt, on-time payments, and credit inquiries.',
-  // noindex: "Coming Soon" placeholder — remove once fully built
-  robots: { index: false, follow: true },
-  alternates: {
-    canonical: 'https://smartfinpro.com/tools/credit-score-simulator',
-    languages: {
-      'en-US': 'https://smartfinpro.com/tools/credit-score-simulator',
-      'en-GB': 'https://smartfinpro.com/tools/credit-score-simulator',
-      'en-CA': 'https://smartfinpro.com/tools/credit-score-simulator',
-      'en-AU': 'https://smartfinpro.com/tools/credit-score-simulator',
-    },
-  },
-  openGraph: {
-    title: 'Credit Score Simulator 2026 | SmartFinPro',
-    description:
-      'See how your financial decisions impact your credit score in real-time with our free simulator tool.',
-    url: 'https://smartfinpro.com/tools/credit-score-simulator',
-    type: 'website',
-  },
-};
+// noindex kommt jetzt aus der Registry (indexable: false) — siehe SPEC 9.2
+export const metadata = buildToolMetadata('credit-utilization', 'us');
 
 export default function CreditScoreSimulatorPage() {
   return (

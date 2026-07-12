@@ -1,30 +1,13 @@
 // app/(marketing)/tools/gold-roi-calculator/page.tsx
-import { Metadata } from 'next';
 import { GoldROICalculator } from '@/components/tools/gold-roi-calculator';
 import { AnswerBlock } from '@/components/ui/answer-block';
 import { AffiliateDisclosure } from '@/components/ui/affiliate-disclosure';
+import { buildToolMetadata } from '@/lib/tools/registry/metadata';
 
-export const metadata: Metadata = {
-  title: 'Gold ROI Calculator Australia 2026 | Investment Returns Analysis',
-  description:
-    'Calculate your gold investment returns with our free calculator. Project growth, compare against inflation and other assets, and analyse gold as a hedge against market volatility.',
-  alternates: {
-    canonical: 'https://smartfinpro.com/au/tools/gold-roi-calculator',
-    languages: {
-      'en-US': 'https://smartfinpro.com/tools/debt-payoff-calculator',
-      'en-GB': 'https://smartfinpro.com/uk/tools/remortgage-calculator',
-      'en-CA': 'https://smartfinpro.com/ca/tools/tfsa-rrsp-calculator',
-      'en-AU': 'https://smartfinpro.com/au/tools/gold-roi-calculator',
-    },
-  },
-  openGraph: {
-    title: 'Gold ROI Calculator Australia 2026 | SmartFinPro',
-    description:
-      'Analyse your gold investment returns. See how gold performs against inflation and compare with other asset classes.',
-    url: 'https://smartfinpro.com/au/tools/gold-roi-calculator',
-    type: 'website',
-  },
-};
+// Registry-Variante ist Ist-Zustand: Pfad noch '/tools/gold-roi-calculator' (US-Pfad),
+// Markt bereits 'au' (Task 0.1 KNOWN_MISPLACED-Ausnahme). Self-Canonical bleibt daher
+// hier korrekt; der physische Umzug nach /au/tools/ folgt erst in PR 0.3.
+export const metadata = buildToolMetadata('gold-roi', 'au');
 
 export default function GoldRoiCalculatorPage() {
   return (

@@ -1,30 +1,10 @@
 // app/(marketing)/ca/tools/tfsa-rrsp-calculator/page.tsx
-import { Metadata } from 'next';
 import { TfsaRrspCalculator } from '@/components/tools/tfsa-rrsp-calculator';
 import { AnswerBlock } from '@/components/ui/answer-block';
 import { AffiliateDisclosure } from '@/components/ui/affiliate-disclosure';
+import { buildToolMetadata } from '@/lib/tools/registry/metadata';
 
-export const metadata: Metadata = {
-  title: 'TFSA vs RRSP Calculator Canada 2026 | Tax-Efficient Savings',
-  description:
-    'Compare TFSA and RRSP savings strategies with our free calculator. Determine which account structure maximises your after-tax wealth in Canada.',
-  alternates: {
-    canonical: 'https://smartfinpro.com/ca/tools/tfsa-rrsp-calculator',
-    languages: {
-      'en-US': 'https://smartfinpro.com/tools/debt-payoff-calculator',
-      'en-GB': 'https://smartfinpro.com/uk/tools/remortgage-calculator',
-      'en-CA': 'https://smartfinpro.com/ca/tools/tfsa-rrsp-calculator',
-      'en-AU': 'https://smartfinpro.com/au/tools/superannuation-calculator',
-    },
-  },
-  openGraph: {
-    title: 'TFSA vs RRSP Calculator Canada 2026 | SmartFinPro',
-    description:
-      'Find the optimal TFSA and RRSP strategy for your situation. See which account structure maximises your wealth accumulation.',
-    url: 'https://smartfinpro.com/ca/tools/tfsa-rrsp-calculator',
-    type: 'website',
-  },
-};
+export const metadata = buildToolMetadata('tfsa-rrsp', 'ca');
 
 export default function TfsaRrspCalculatorPage() {
   return (

@@ -1,17 +1,10 @@
-import { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowLeft, Target, Lightbulb, Shield, Zap, Users } from 'lucide-react';
 import { DynamicBrokerFinderQuiz } from '@/components/tools/dynamic-calculators';
 import { ToolRelatedReviews } from '@/components/marketing/tool-related-reviews';
+import { buildToolMetadata } from '@/lib/tools/registry/metadata';
 
-export const metadata: Metadata = {
-  title: 'Broker Finder Quiz - Find Your Perfect Trading Platform | SmartFinPro',
-  description: 'Answer 4 quick questions and get personalized broker recommendations with match scores. Compare eToro, Capital.com, IBKR, and more.',
-  openGraph: {
-    title: 'Broker Finder Quiz - Find Your Perfect Trading Platform',
-    description: 'Personalized broker recommendations in under a minute. Free quiz, no sign-up required.',
-  },
-};
+export const metadata = buildToolMetadata('broker-finder', 'us');
 
 export default function BrokerFinderPage() {
   return (

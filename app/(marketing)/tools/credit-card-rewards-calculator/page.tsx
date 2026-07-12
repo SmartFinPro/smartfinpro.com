@@ -1,19 +1,10 @@
-import { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowLeft, CreditCard, Lightbulb, AlertTriangle, Shield } from 'lucide-react';
 import { DynamicCreditCardRewardsCalculator } from '@/components/tools/dynamic-calculators';
 import { ToolRelatedReviews } from '@/components/marketing/tool-related-reviews';
+import { buildToolMetadata } from '@/lib/tools/registry/metadata';
 
-export const metadata: Metadata = {
-  title: 'Credit Card Rewards Calculator 2026: Find Your Best Card | SmartFinPro',
-  description:
-    'Free credit card rewards calculator. Compare Amex Gold, Chase Sapphire Preferred, and cashback cards side by side. See which card earns the most based on your spending habits.',
-  openGraph: {
-    title: 'Credit Card Rewards Calculator — Find Your Best Rewards Card',
-    description:
-      'Compare credit card rewards based on your actual spending. See first-year bonuses, ongoing value, and the best card for your wallet.',
-  },
-};
+export const metadata = buildToolMetadata('credit-card-rewards', 'us');
 
 export default function CreditCardRewardsCalculatorPage() {
   return (
