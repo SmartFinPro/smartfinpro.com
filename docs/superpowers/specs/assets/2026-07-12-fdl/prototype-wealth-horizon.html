@@ -1,0 +1,335 @@
+<title>FDL Prototyp — Wealth Horizon (GuidedJourney)</title>
+<style>
+  :root{ --desk:#eef1f5; --paper:#fff; --wire:#8a97a8; --wire-soft:#c6cfda; --ink:#25303e; --note:#c2410c; --fill:#f3f5f8; --navy:#1b4f8c; --gold:#b8860b; --good:#1a6b3a; --sky:#e8f0fb; }
+  :root[data-theme="dark"]{ --desk:#1b2028 } :root[data-theme="light"]{ --desk:#eef1f5 }
+  @media (prefers-color-scheme: dark){ :root{ --desk:#1b2028 } }
+  *{box-sizing:border-box}
+  body{background:var(--desk);color:var(--ink);font:14px/1.5 ui-sans-serif,system-ui,sans-serif;margin:0;padding:20px}
+  .head{max-width:1060px;margin:0 auto 14px}
+  .head h1{font-size:20px;margin:0} .head p{margin:2px 0 0;color:#6b7788;font-size:13px}
+  @media (prefers-color-scheme: dark){ .head h1,.head p{color:#dfe5ee} }
+  :root[data-theme="dark"] .head h1,:root[data-theme="dark"] .head p{color:#dfe5ee}
+  :root[data-theme="light"] .head h1{color:#25303e} :root[data-theme="light"] .head p{color:#6b7788}
+  .app{max-width:1060px;margin:0 auto;background:var(--paper);border:1px solid var(--wire);border-radius:4px;padding:16px;color:var(--ink)}
+  .crumb{font-size:11px;color:#5b6878}
+  .h1row{font-size:19px;font-weight:700;margin:2px 0}
+  .h1row small{font-size:12px;font-weight:400;color:#5b6878}
+  .trust{display:flex;gap:12px;flex-wrap:wrap;border:1px solid var(--wire-soft);border-radius:4px;background:var(--fill);padding:6px 10px;font-size:11px;margin:8px 0 14px}
+  .trust a{color:var(--navy)}
+  .cols{display:grid;grid-template-columns:5fr 7fr;gap:24px}
+  @media(max-width:760px){.cols{grid-template-columns:1fr}}
+  .progress{display:flex;gap:4px;margin-bottom:8px}
+  .progress i{flex:1;height:4px;border-radius:2px;background:var(--wire-soft)}
+  .progress i.on{background:var(--navy)}
+  .steplbl{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:#5b6878;margin-bottom:6px}
+  fieldset{border:1.5px solid var(--wire);border-radius:4px;padding:10px;margin:0 0 10px;display:flex;flex-direction:column;gap:10px}
+  legend{font-size:11px;padding:0 4px;color:#5b6878}
+  .field{display:flex;flex-direction:column;gap:4px}
+  .field label{font-size:12px;font-weight:600}
+  .frow{display:flex;gap:8px;align-items:center}
+  input[type=number]{font:inherit;font-variant-numeric:tabular-nums;padding:9px;border:1.5px solid var(--wire);border-radius:3px;width:120px;min-height:44px;background:var(--paper);color:var(--ink)}
+  input[type=range]{flex:1;min-height:44px;accent-color:var(--navy)}
+  input:focus-visible,button:focus-visible{outline:2px solid var(--navy);outline-offset:2px}
+  .est{border:1px solid var(--wire);border-radius:999px;background:var(--paper);padding:4px 10px;font-size:11px;cursor:pointer;min-height:32px}
+  .hint{font-size:10.5px;color:#5b6878}
+  .nav{display:flex;gap:8px;margin-top:4px}
+  button.b{font:inherit;border:1.5px solid var(--ink);border-radius:3px;background:var(--fill);padding:10px 14px;cursor:pointer;min-height:44px;color:var(--ink)}
+  button.b.primary{border-width:2px;border-color:var(--navy);color:var(--navy);font-weight:600;flex:1}
+  .chip{border:1px solid var(--wire);border-radius:999px;padding:1px 9px;font-size:10px;display:inline-block}
+  .chip.example{border-style:dashed;color:#5b6878}
+  .chip.yours{background:var(--navy);border-color:var(--navy);color:#fff}
+  .panel{border:1.5px solid var(--wire);border-radius:4px;padding:12px;display:flex;flex-direction:column;gap:10px}
+  .answer{font-size:15px}
+  .num{font-size:32px;font-weight:700;font-variant-numeric:tabular-nums;min-width:230px}
+  .num small{font-size:12px;font-weight:400}
+  .levers{display:flex;gap:8px;flex-wrap:wrap}
+  .lever{flex:1;min-width:150px;border:1.5px solid var(--ink);border-radius:3px;background:var(--fill);padding:8px;font-size:11.5px;cursor:pointer;text-align:left;min-height:44px;color:var(--ink)}
+  .lever b{display:block;color:var(--good)}
+  details{border:1px solid var(--wire-soft);border-radius:4px;padding:8px;font-size:12px}
+  summary{cursor:pointer;font-weight:600;font-size:12px}
+  .src{font-size:11px;color:#5b6878;margin:4px 0 0}
+  .next{border:2px solid var(--navy);border-radius:4px;padding:10px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+  .next a{color:var(--navy);font-weight:600;text-decoration:none;font-size:13px}
+  .share{border:1px dashed var(--wire);border-radius:4px;padding:8px;font-size:11.5px;display:none}
+  .share.open{display:block}
+  .seg{display:flex;border:1.5px solid var(--wire);border-radius:3px;overflow:hidden;width:fit-content}
+  .seg button{font:inherit;font-size:11.5px;border:0;background:var(--paper);padding:8px 10px;cursor:pointer;min-height:40px;color:var(--ink)}
+  .seg button[aria-pressed=true]{background:var(--navy);color:#fff}
+  .ticker{max-width:1060px;margin:12px auto 0;font:11px ui-monospace,Menlo,monospace;color:var(--note);background:var(--paper);border:1px dashed var(--note);border-radius:4px;padding:8px 10px;min-height:36px}
+  .redline{font:10.5px ui-monospace,monospace;color:var(--note)}
+  svg text{font:10px ui-sans-serif,system-ui}
+  .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+  @media (prefers-reduced-motion: no-preference){ .panel,.lever{transition:opacity .2s} }
+</style>
+
+<div class="head">
+  <h1>Prototyp: Wealth Horizon — GuidedJourney (US-Variante, Lo-Fi)</h1>
+  <p>Validiert: 3-Schritt-Fluss, Zwischenergebnis, Realwert-Engine (3/5/6,5 % real), Ergebnisreihenfolge 1→6, Levers, Share-Allowlist-Vorschau, Event-Vertrag. Zahlen sind echt gerechnet (deterministisch, heutige Kaufkraft).</p>
+</div>
+
+<div class="app">
+  <div class="crumb">Home › Tools › Retirement Calculator</div>
+  <div class="h1row">Retirement &amp; Financial Freedom Calculator <small>— See your realistic range, FI date and what moves it.</small></div>
+  <div class="trust">
+    <span>🇺🇸 US</span><span>~3 min</span><span><strong>Data verified 2026-07-12</strong> <span class="redline">= min(verifiedAt kritischer Rules)</span></span>
+    <span style="margin-left:auto"><a href="#meth">Methodology</a> · <a href="#meth">Privacy</a></span>
+  </div>
+
+  <div class="cols">
+    <div>
+      <div class="progress" aria-hidden="true"><i id="p1" class="on"></i><i id="p2"></i><i id="p3"></i></div>
+      <div class="steplbl" id="steplbl">Step 1 of 3 · About you</div>
+
+      <form id="f" onsubmit="return false">
+        <fieldset id="s1">
+          <legend>About you</legend>
+          <div class="field"><label for="age">Your age</label>
+            <div class="frow"><input type="number" id="age" value="38" min="18" max="70" inputmode="numeric"><input type="range" min="18" max="70" value="38" data-pair="age" aria-label="Your age slider"></div>
+          </div>
+          <div class="field"><label for="retire">Retire at</label>
+            <div class="frow"><input type="number" id="retire" value="67" min="45" max="75" inputmode="numeric"><input type="range" min="45" max="75" value="67" data-pair="retire" aria-label="Retire at slider"></div>
+            <span class="hint">401(k), IRA and taxable savings are covered in the next step.</span>
+          </div>
+        </fieldset>
+
+        <fieldset id="s2" hidden>
+          <legend>Savings &amp; contributions</legend>
+          <div class="field"><label for="bal">Current savings (401(k) + IRA + taxable)</label>
+            <div class="frow"><span aria-hidden="true">$</span><input type="number" id="bal" value="105000" min="0" step="1000" inputmode="numeric">
+              <button type="button" class="est" data-set="bal:50000">I'm not sure — use $50k</button>
+            </div>
+          </div>
+          <div class="field"><label for="contrib">Monthly contribution</label>
+            <div class="frow"><span aria-hidden="true">$</span><input type="number" id="contrib" value="900" min="0" max="2041" step="50" inputmode="numeric"><input type="range" min="0" max="2041" step="50" value="900" data-pair="contrib" aria-label="Monthly contribution slider"></div>
+            <span class="hint">Capped at $2,041/mo = 2026 401(k) limit $24,500 ÷ 12 (IRS). <span class="redline">clamp aus getRule('us','k401Limit')</span></span>
+          </div>
+          <div class="field"><label for="fees">Annual fees</label>
+            <div class="frow"><input type="number" id="fees" value="0.6" min="0" max="3" step="0.1" inputmode="decimal"><span>%</span><input type="range" min="0" max="3" step="0.1" value="0.6" data-pair="fees" aria-label="Annual fees slider"></div>
+          </div>
+        </fieldset>
+
+        <fieldset id="s3" hidden>
+          <legend>Target income</legend>
+          <div class="field"><label for="target">Target monthly income (today's money)</label>
+            <div class="frow"><span aria-hidden="true">$</span><input type="number" id="target" value="4500" min="500" step="100" inputmode="numeric"></div>
+          </div>
+          <div class="field"><label>Include Social Security (flat estimate $1,800/mo)</label>
+            <div class="seg" role="group" aria-label="State support">
+              <button type="button" id="ssOn" aria-pressed="true">Include</button><button type="button" id="ssOff" aria-pressed="false">Exclude</button>
+            </div>
+          </div>
+          <div class="field"><label for="wr">Illustrative withdrawal rate</label>
+            <div class="frow"><input type="number" id="wr" value="4.0" min="2.5" max="5.0" step="0.1" inputmode="decimal"><span>%</span><input type="range" min="2.5" max="5" step="0.1" value="4" data-pair="wr" aria-label="Withdrawal rate slider"></div>
+            <span class="hint">Illustration only — not a guarantee or advice. Adjustable 2.5–5.0%.</span>
+          </div>
+        </fieldset>
+
+        <div class="nav">
+          <button type="button" class="b" id="back" hidden>‹ Back</button>
+          <button type="button" class="b primary" id="cont">Continue →</button>
+        </div>
+      </form>
+    </div>
+
+    <div>
+      <div class="panel" id="panel" aria-describedby="live">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span class="chip example" id="stateChip">Example result</span>
+          <span class="redline" id="phase">state: initial → ready</span>
+        </div>
+        <div class="answer" id="answer">A saver like this example could reach financial independence around <strong>2049</strong>.</div>
+        <div class="num" id="num">$610k–$890k <small>at 67, in today's money</small></div>
+        <svg id="chart" viewBox="0 0 560 190" role="img" aria-labelledby="chartAlt" style="max-width:100%">
+          <title id="chartAlt">Scenario corridor chart</title>
+        </svg>
+        <div class="redline">Korridor conservative→optimistic · Basislinie · FI-Marker (Gold, einziger Premium-Akzent) · Linienstile ≠ nur Farbe</div>
+        <div id="fullResult" hidden>
+          <div class="levers" role="group" aria-label="Three prioritized levers">
+            <button class="lever" id="lv1"><span>Cut fees to 0.1%</span><b id="lv1d">…</b></button>
+            <button class="lever" id="lv2"><span>Add $200/mo</span><b id="lv2d">…</b></button>
+            <button class="lever" id="lv3"><span>Retire 2 years later</span><b id="lv3d">…</b></button>
+          </div>
+          <details id="meth" style="margin-top:10px">
+            <summary>Assumptions &amp; sources</summary>
+            <p style="margin:6px 0 0">All figures in <strong>today's purchasing power</strong>. Real returns: conservative 3.0% · base 5.0% · optimistic 6.5% p.a. (derived from long-run nominal returns minus 2.5% assumed inflation — applied once, never twice). Withdrawal is an <em>illustrative</em> rate you control. Educational tool, not financial advice.</p>
+            <p class="src">Sources: IRS Notice 2025-67 (2026 limits) — effective 2026-01-01, verified 2026-07-12 · Editorial long-run return assumption — verified 2026-07-12</p>
+          </details>
+          <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+            <button class="b" id="shareBtn">Share result</button>
+            <button class="b" id="reportBtn">Email me the report</button>
+          </div>
+          <div class="share" id="share">
+            <strong>This link includes:</strong> age range (35–40), savings range ($100k–$125k), fee level (0.5–0.75%), withdrawal rate and selected scenario. <em>It never includes exact amounts you typed.</em>
+            <div style="margin-top:6px"><button class="b" id="copyBtn">Copy link</button> <span class="redline">#s=… Fragment — verlässt den Browser nicht</span></div>
+          </div>
+          <div class="next" style="margin-top:10px">
+            <a href="#" id="bridge">Compare the best robo-advisors for hands-off investing →</a>
+            <span class="redline">GENAU 1 Brücke · tool_cockpit_cta_click</span>
+          </div>
+        </div>
+      </div>
+      <p class="sr" aria-live="polite" id="live"></p>
+    </div>
+  </div>
+</div>
+
+<div class="ticker" id="ticker">tool_v1 ▶ tool_view</div>
+
+<script>
+(function(){
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  const state = { step: 1, started: false, firstResult: false, qualified: false, ssInclude: true, inputChanges: 0 };
+  const SS_FLAT = 1800;
+
+  // ---------- Event-Vertrag (Prototyp-Ticker) ----------
+  const fired = new Set(['tool_view']);
+  let lastAnnounce = 0;
+  function track(name, meta){
+    const once = ['tool_start','tool_first_result','tool_qualified_decision'];
+    if (once.includes(name) && fired.has(name)) return;
+    fired.add(name);
+    const t = $('ticker');
+    t.textContent = 'tool_v1 ▶ ' + Array.from(fired).join(' · ') + (meta ? '   [' + meta + ']' : '');
+  }
+  function maybeQualify(via){
+    if (state.firstResult && !state.qualified){ state.qualified = true; track('tool_qualified_decision', 'via ' + via); }
+  }
+
+  // ---------- Realwert-Engine (deterministisch) ----------
+  const REAL = { conservative: 0.03, base: 0.05, optimistic: 0.065 };
+  function readInputs(){
+    return {
+      age: +$('age').value || 38, retire: +$('retire').value || 67,
+      bal: +$('bal').value || 0, contrib: +$('contrib').value || 0,
+      fees: (+$('fees').value || 0)/100, target: +$('target').value || 4500,
+      wr: (+$('wr').value || 4)/100, ss: state.ssInclude ? SS_FLAT : 0
+    };
+  }
+  function project(inp, real, retireAge){
+    const rows = []; let b = inp.bal;
+    const rNet = real - inp.fees;
+    for (let a = inp.age; a <= Math.max(retireAge, 75); a++){
+      rows.push({ age: a, bal: b });
+      b = b * (1 + rNet) + inp.contrib * 12;   // jährlicher Schritt, real, EINMALIGE Bereinigung
+    }
+    return rows;
+  }
+  function scenario(inp, key, retireAge){
+    const rows = project(inp, REAL[key], retireAge ?? inp.retire);
+    const ra = retireAge ?? inp.retire;
+    const atRetire = (rows.find(r => r.age === ra) || rows[rows.length-1]).bal;
+    const withdraw = atRetire * inp.wr / 12;
+    const fiRow = rows.find(r => (r.bal * inp.wr / 12 + inp.ss) >= inp.target);
+    return { rows, atRetire, withdraw, gap: inp.target - (withdraw + inp.ss), fiAge: fiRow ? fiRow.age : null };
+  }
+  const fmtK = (v) => v >= 1e6 ? '$' + (v/1e6).toFixed(2) + 'm' : '$' + Math.round(v/1000) + 'k';
+
+  // ---------- Chart (pures SVG, Lo-Fi) ----------
+  function drawChart(cons, base, opt, inp){
+    const svg = $('chart'); const W=560,H=190,L=40,R=10,T=14,B=24;
+    const maxY = Math.max(opt.rows[opt.rows.length-1].bal, inp.target*12/inp.wr, 1);
+    const x = (age) => L + (age - inp.age) / (75 - inp.age) * (W-L-R);
+    const y = (v) => H - B - (v / maxY) * (H-T-B);
+    const path = (rows) => rows.map((r,i) => (i?'L':'M') + x(r.age).toFixed(1) + ',' + y(r.bal).toFixed(1)).join(' ');
+    const area = path(opt.rows) + ' ' + cons.rows.slice().reverse().map(r => 'L' + x(r.age).toFixed(1) + ',' + y(r.bal).toFixed(1)).join(' ') + ' Z';
+    const fi = base.fiAge;
+    svg.innerHTML =
+      '<rect x="'+L+'" y="'+T+'" width="'+(W-L-R)+'" height="'+(H-T-B)+'" fill="none" stroke="#c6cfda"/>' +
+      '<path d="'+area+'" fill="#8a97a8" opacity="0.16"/>' +
+      '<path d="'+path(cons.rows)+'" fill="none" stroke="#8a97a8" stroke-width="1.5" stroke-dasharray="2 3"/>' +
+      '<path d="'+path(opt.rows)+'" fill="none" stroke="#8a97a8" stroke-width="1.5" stroke-dasharray="6 3"/>' +
+      '<path d="'+path(base.rows)+'" fill="none" stroke="#25303e" stroke-width="2"/>' +
+      '<line x1="'+x(inp.retire)+'" y1="'+T+'" x2="'+x(inp.retire)+'" y2="'+(H-B)+'" stroke="#c6cfda"/>' +
+      '<text x="'+(x(inp.retire)+3)+'" y="'+(T+10)+'" fill="#5b6878">retire '+inp.retire+'</text>' +
+      (fi ? '<line x1="'+x(fi)+'" y1="'+T+'" x2="'+x(fi)+'" y2="'+(H-B)+'" stroke="#b8860b" stroke-width="2"/>' +
+            '<text x="'+(x(fi)+3)+'" y="'+(H-B-6)+'" fill="#b8860b" font-weight="700">FI '+(2026 + (fi - inp.age))+'</text>' : '') +
+      '<text x="'+L+'" y="'+(H-6)+'" fill="#5b6878">age '+inp.age+'</text>' +
+      '<text x="'+(W-R-40)+'" y="'+(H-6)+'" fill="#5b6878">75</text>' +
+      '<text x="'+(L+4)+'" y="'+(y(base.atRetire)-4)+'" fill="#25303e">base '+fmtK(base.atRetire)+'</text>';
+    $('chartAlt').textContent = 'By age ' + inp.retire + ', savings range ' + fmtK(cons.atRetire) + ' to ' + fmtK(opt.atRetire) +
+      ' in today\'s money; base scenario ' + fmtK(base.atRetire) + (fi ? '; financial independence around ' + (2026 + fi - inp.age) : '') + '.';
+  }
+
+  // ---------- Render ----------
+  function render(reason){
+    const inp = readInputs();
+    const cons = scenario(inp,'conservative'), base = scenario(inp,'base'), opt = scenario(inp,'optimistic');
+    drawChart(cons, base, opt, inp);
+    $('num').innerHTML = fmtK(cons.atRetire) + '–' + fmtK(opt.atRetire) + ' <small>at ' + inp.retire + ', in today\'s money</small>';
+    if (state.step < 3 && !state.firstResult){
+      $('answer').innerHTML = 'On track towards <strong>' + fmtK(cons.atRetire) + '–' + fmtK(opt.atRetire) + '</strong> — finish step 3 for your full answer.';
+    } else {
+      const fiYear = base.fiAge ? (2026 + base.fiAge - inp.age) : null;
+      $('answer').innerHTML = fiYear
+        ? '<strong>1 ·</strong> You could reach financial independence around <strong>' + fiYear + '</strong> (base scenario' + (inp.ss ? ', incl. Social Security estimate' : '') + ').'
+        : '<strong>1 ·</strong> On these inputs the illustrative withdrawal doesn\'t reach your target by 75 — the levers below move it most.';
+      $('lv1d').textContent = '+' + fmtK(scenario({...inp, fees: 0.001},'base').atRetire - base.atRetire) + ' at ' + inp.retire;
+      $('lv2d').textContent = '+' + fmtK(scenario({...inp, contrib: inp.contrib + 200},'base').atRetire - base.atRetire) + ' at ' + inp.retire;
+      $('lv3d').textContent = '+' + fmtK(scenario(inp,'base', inp.retire + 2).atRetire - base.atRetire) + ' at ' + (inp.retire + 2);
+    }
+    // aria-live gedrosselt: max 1 Announcement/s, zusammengefasster Satz
+    const now = Date.now();
+    if (now - lastAnnounce > 1000){ lastAnnounce = now; $('live').textContent = $('answer').textContent; }
+    if (reason === 'input' && state.firstResult) track('tool_input_change', state.inputChanges + ' changes, debounced+bucketed');
+  }
+
+  // ---------- Steps ----------
+  function showStep(n){
+    state.step = n;
+    ['s1','s2','s3'].forEach((id,i)=>{ $(id).hidden = (i+1) !== n; });
+    [1,2,3].forEach(i => $('p'+i).classList.toggle('on', i <= n));
+    $('steplbl').textContent = 'Step ' + n + ' of 3 · ' + ['About you','Savings & contributions','Target income'][n-1];
+    $('back').hidden = n === 1;
+    $('cont').textContent = n === 3 ? 'See my result' : 'Continue →';
+    $('phase').textContent = 'state: ready · step ' + n + '/3';
+  }
+  $('cont').addEventListener('click', () => {
+    if (state.step < 3){ showStep(state.step + 1); return; }
+    // calculating → result (180–240 ms)
+    $('phase').textContent = 'state: calculating';
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    setTimeout(() => {
+      state.firstResult = true;
+      $('stateChip').textContent = 'Your result'; $('stateChip').className = 'chip yours';
+      $('fullResult').hidden = false;
+      $('phase').textContent = 'state: result × yours';
+      track('tool_first_result','ttfv demo');
+      render('result');
+    }, reduce ? 0 : 210);
+  });
+  $('back').addEventListener('click', () => showStep(Math.max(1, state.step - 1)));
+
+  // ---------- Inputs (debounce 600 ms pro Feld) ----------
+  const timers = {};
+  document.querySelectorAll('input').forEach((el) => {
+    el.addEventListener('input', () => {
+      if (!state.started){ state.started = true; track('tool_start'); $('phase').textContent = 'state: ready'; }
+      if (el.dataset.pair) $(el.dataset.pair).value = el.value;
+      const pair = document.querySelector('input[data-pair="' + el.id + '"]'); if (pair) pair.value = el.value;
+      clearTimeout(timers[el.id]);
+      timers[el.id] = setTimeout(() => { state.inputChanges++; render('input'); }, 600);
+      render('preview-immediate'); // Preview darf sofort zeichnen; EVENT ist gedrosselt
+    });
+  });
+  document.querySelectorAll('.est').forEach((b) => b.addEventListener('click', () => {
+    const [id, v] = b.dataset.set.split(':'); $(id).value = v;
+    if (!state.started){ state.started = true; track('tool_start'); }
+    state.inputChanges++; render('input');
+  }));
+  $('ssOn').addEventListener('click', () => { state.ssInclude = true; $('ssOn').setAttribute('aria-pressed','true'); $('ssOff').setAttribute('aria-pressed','false'); render('input'); });
+  $('ssOff').addEventListener('click', () => { state.ssInclude = false; $('ssOn').setAttribute('aria-pressed','false'); $('ssOff').setAttribute('aria-pressed','true'); render('input'); });
+
+  // ---------- Levers / Share / Report / Bridge ----------
+  $('lv1').addEventListener('click', () => { $('fees').value = 0.1; track('tool_input_change','controlRole:lever fees'); maybeQualify('lever'); render('lever'); });
+  $('lv2').addEventListener('click', () => { $('contrib').value = Math.min(+$('contrib').value + 200, 2041); track('tool_input_change','controlRole:lever contrib'); maybeQualify('lever'); render('lever'); });
+  $('lv3').addEventListener('click', () => { $('retire').value = Math.min(+$('retire').value + 2, 75); track('tool_input_change','controlRole:lever retireAge'); maybeQualify('lever'); render('lever'); });
+  $('shareBtn').addEventListener('click', () => { $('share').classList.toggle('open'); });
+  $('copyBtn').addEventListener('click', () => { track('tool_result_share','allowlist preview shown first'); maybeQualify('share'); $('copyBtn').textContent = 'Copied ✓'; });
+  $('reportBtn').addEventListener('click', () => { track('tool_report_email'); maybeQualify('report'); $('reportBtn').textContent = 'Report requested ✓'; });
+  $('bridge').addEventListener('click', (e) => { e.preventDefault(); track('tool_next_action_click'); track('tool_cockpit_cta_click','/us/personal-finance/best/robo-advisors'); maybeQualify('next_action'); });
+
+  showStep(1);
+  render('init');
+})();
+</script>

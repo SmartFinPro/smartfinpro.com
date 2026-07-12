@@ -1,0 +1,281 @@
+<title>FDL Prototyp — Broker Decision Journey (GuidedJourney über Routen)</title>
+<style>
+  :root{ --desk:#eef1f5; --paper:#fff; --wire:#8a97a8; --wire-soft:#c6cfda; --ink:#25303e; --note:#c2410c; --fill:#f3f5f8; --navy:#1b4f8c; --good:#1a6b3a; --sky:#e8f0fb; }
+  :root[data-theme="dark"]{ --desk:#1b2028 } :root[data-theme="light"]{ --desk:#eef1f5 }
+  @media (prefers-color-scheme: dark){ :root{ --desk:#1b2028 } }
+  *{box-sizing:border-box}
+  body{background:var(--desk);color:var(--ink);font:14px/1.5 ui-sans-serif,system-ui,sans-serif;margin:0;padding:20px}
+  .head{max-width:1060px;margin:0 auto 14px}
+  .head h1{font-size:20px;margin:0} .head p{margin:2px 0 0;color:#6b7788;font-size:13px}
+  @media (prefers-color-scheme: dark){ .head h1,.head p{color:#dfe5ee} }
+  :root[data-theme="dark"] .head h1,:root[data-theme="dark"] .head p{color:#dfe5ee}
+  :root[data-theme="light"] .head h1{color:#25303e} :root[data-theme="light"] .head p{color:#6b7788}
+  .flow{max-width:1060px;margin:0 auto 10px;display:flex;gap:6px;flex-wrap:wrap}
+  .flow button{font:11px ui-monospace,Menlo,monospace;border:1px solid var(--wire);border-radius:3px;background:var(--paper);padding:6px 9px;cursor:pointer;color:var(--ink);min-height:36px}
+  .flow button[aria-current=step]{border-color:var(--navy);border-width:2px;color:var(--navy);font-weight:700}
+  .flow button:disabled{opacity:.45;cursor:not-allowed}
+  .app{max-width:1060px;margin:0 auto;background:var(--paper);border:1px solid var(--wire);border-radius:4px;padding:16px;color:var(--ink)}
+  .route{font:11px ui-monospace,monospace;color:var(--note);margin-bottom:8px}
+  h2.t{font-size:17px;margin:0 0 2px}
+  p.sub{margin:0 0 12px;font-size:12.5px;color:#5b6878}
+  .prefill{border:1px dashed var(--wire);background:var(--sky);border-radius:4px;padding:6px 10px;font-size:12px;margin-bottom:10px;display:none}
+  .prefill.show{display:block}
+  .prefill a{color:var(--navy)}
+  .q{border:1.5px solid var(--wire);border-radius:4px;padding:10px;margin-bottom:10px}
+  .q label{font-weight:600;font-size:13px;display:block;margin-bottom:8px}
+  .opts{display:flex;gap:8px;flex-wrap:wrap}
+  .opts button{font:inherit;font-size:12.5px;border:1.5px solid var(--wire);border-radius:3px;background:var(--paper);padding:9px 12px;cursor:pointer;min-height:44px;color:var(--ink)}
+  .opts button[aria-pressed=true]{border-color:var(--navy);border-width:2px;color:var(--navy);font-weight:600;background:var(--sky)}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+  .bcard{border:1.5px solid var(--wire);border-radius:4px;padding:10px;display:flex;flex-direction:column;gap:6px}
+  .bcard.top{border-color:var(--navy);border-width:2px}
+  .match{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
+  .why{font-size:11.5px;color:#3d4a5c;margin:0;padding-left:16px}
+  .cost{font-size:12px;font-variant-numeric:tabular-nums}
+  .add{font:inherit;font-size:12px;border:1.5px solid var(--ink);border-radius:3px;background:var(--fill);padding:8px;cursor:pointer;min-height:40px;color:var(--ink)}
+  .add[aria-pressed=true]{background:var(--navy);border-color:var(--navy);color:#fff}
+  .field{display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:13px}
+  .field label{width:170px;font-weight:600}
+  input[type=number]{font:inherit;font-variant-numeric:tabular-nums;padding:9px;border:1.5px solid var(--wire);border-radius:3px;width:110px;min-height:44px;background:var(--paper);color:var(--ink)}
+  input:focus-visible,button:focus-visible{outline:2px solid var(--navy);outline-offset:2px}
+  .bars{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+  .brow{display:flex;align-items:center;gap:8px;font-size:12px}
+  .brow .nm{width:90px}
+  .brow .bar{height:16px;background:var(--wire-soft);border:1px solid var(--wire);border-radius:2px}
+  .brow .bar.me{background:var(--navy);border-color:var(--navy)}
+  .brow .val{font-variant-numeric:tabular-nums;min-width:86px}
+  table{border-collapse:collapse;width:100%;font-size:12.5px}
+  th,td{border:1px solid var(--wire-soft);padding:7px 9px;text-align:left}
+  th{background:var(--fill);font-size:11px;text-transform:uppercase;letter-spacing:.04em}
+  td.on{background:var(--sky)}
+  .nav{display:flex;gap:8px;margin-top:14px}
+  .b{font:inherit;border:1.5px solid var(--ink);border-radius:3px;background:var(--fill);padding:10px 14px;cursor:pointer;min-height:44px;color:var(--ink)}
+  .b.primary{border-width:2px;border-color:var(--navy);color:var(--navy);font-weight:600;flex:1}
+  .b:disabled{opacity:.45;cursor:not-allowed}
+  .next{border:2px solid var(--navy);border-radius:4px;padding:12px;display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:12px}
+  .next a{color:var(--navy);font-weight:600;text-decoration:none}
+  .redline{font:10.5px ui-monospace,monospace;color:var(--note)}
+  .inspector{max-width:1060px;margin:12px auto 0;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:760px){.inspector{grid-template-columns:1fr}}
+  .ibox{font:11px ui-monospace,Menlo,monospace;background:var(--paper);border:1px dashed var(--note);border-radius:4px;padding:8px 10px;color:var(--note);overflow-x:auto}
+  .ibox b{color:var(--ink)}
+  .ibox pre{margin:4px 0 0;white-space:pre-wrap;color:#3d4a5c}
+  .screen{display:none} .screen.on{display:block}
+</style>
+
+<div class="head">
+  <h1>Prototyp: Broker Decision Journey — Quiz → Shortlist → Kosten → Vergleich → Brücke</h1>
+  <p>Validiert: Zustandsfluss über die realen Routen ohne Doppeleingabe (DecisionStateV1), Prefill-Transparenz, Match/Kosten/Begründung-Visual, genau eine Brücke. Broker-Daten sind Demo-Platzhalter.</p>
+</div>
+
+<div class="flow" role="navigation" aria-label="Journey steps">
+  <button id="n1" aria-current="step">1 · broker-finder (Quiz)</button>
+  <button id="n2" disabled>2 · Shortlist</button>
+  <button id="n3" disabled>3 · trading-cost-calculator</button>
+  <button id="n4" disabled>4 · broker-comparison</button>
+  <button id="n5" disabled>5 · Abschluss</button>
+</div>
+
+<div class="app">
+  <!-- SCREEN 1: QUIZ -->
+  <section class="screen on" id="sc1" aria-label="Quiz">
+    <div class="route">Route: /tools/broker-finder · schreibt broker.quizAnswers + profile</div>
+    <h2 class="t">Which broker actually fits how you trade?</h2>
+    <p class="sub">Five quick questions — your answers travel with you through the whole journey.</p>
+    <div class="q"><label>1 · How experienced are you?</label>
+      <div class="opts" data-k="experience"><button>New to trading</button><button>Some experience</button><button>Advanced</button></div></div>
+    <div class="q"><label>2 · What do you mainly want to trade?</label>
+      <div class="opts" data-k="instrument"><button>Stocks &amp; ETFs</button><button>Forex</button><button>CFDs</button></div></div>
+    <div class="q"><label>3 · How often do you expect to trade?</label>
+      <div class="opts" data-k="tradesPerMonth"><button data-v="2">A few times a year</button><button data-v="6">Monthly</button><button data-v="12">Weekly</button><button data-v="40">Most days</button></div></div>
+    <div class="q"><label>4 · Typical trade size?</label>
+      <div class="opts" data-k="avgTradeSize"><button data-v="250">~$250</button><button data-v="1000">~$1,000</button><button data-v="5000">~$5,000</button></div></div>
+    <div class="q"><label>5 · What matters most?</label>
+      <div class="opts" data-k="priority"><button>Lowest fees</button><button>Best platform</button><button>Learning &amp; support</button></div></div>
+    <div class="nav"><button class="b primary" id="toShortlist" disabled>See my matches →</button></div>
+    <div class="redline">Events: tool_view · tool_start (1. Antwort) · tool_first_result (Shortlist)</div>
+  </section>
+
+  <!-- SCREEN 2: SHORTLIST -->
+  <section class="screen" id="sc2" aria-label="Shortlist">
+    <div class="route">Quiz-Ergebnis (gleiche Route) · Auswahl schreibt broker.shortlistSlugs</div>
+    <h2 class="t">Your matches</h2>
+    <p class="sub">Match + why + estimated yearly cost for <em>your</em> trading pattern. Pick up to 3 for the shortlist.</p>
+    <div class="cards" id="cards"></div>
+    <div class="nav"><button class="b" id="back2">‹ Edit answers</button><button class="b primary" id="toCosts" disabled>Check my real costs →</button></div>
+  </section>
+
+  <!-- SCREEN 3: COSTS -->
+  <section class="screen" id="sc3" aria-label="Trading costs">
+    <div class="route">Route: /tools/trading-cost-calculator · startet in State „ready" (Prefill)</div>
+    <h2 class="t">Trading Cost Calculator</h2>
+    <div class="prefill show" id="prefill">Using your quiz answers — <a href="#" id="editPrefill">edit</a> <span class="redline">(Transparenz + Korrigierbarkeit, Spec 5.3)</span></div>
+    <div class="field"><label for="tpm">Trades per month</label><input type="number" id="tpm" min="1" max="60" inputmode="numeric"></div>
+    <div class="field"><label for="size">Average trade size ($)</label><input type="number" id="size" min="50" step="50" inputmode="numeric"></div>
+    <div class="bars" id="costbars" aria-live="polite"></div>
+    <div class="redline">Jahreskosten je Shortlist-Broker · direkt beschriftet · tabular-nums</div>
+    <div class="nav"><button class="b" id="back3">‹ Shortlist</button><button class="b primary" id="toCompare">Compare side by side →</button></div>
+  </section>
+
+  <!-- SCREEN 4: COMPARE -->
+  <section class="screen" id="sc4" aria-label="Comparison">
+    <div class="route">Route: /tools/broker-comparison · Shortlist prä-selektiert ✓</div>
+    <h2 class="t">Broker Comparison</h2>
+    <p class="sub">Your shortlist is pre-selected; yearly costs come from step 3 — nothing re-entered.</p>
+    <div style="overflow-x:auto"><table id="cmp"></table></div>
+    <div class="nav"><button class="b" id="back4">‹ Costs</button><button class="b primary" id="toFinish">Decide →</button></div>
+  </section>
+
+  <!-- SCREEN 5: FINISH -->
+  <section class="screen" id="sc5" aria-label="Decision">
+    <div class="route">Abschluss · genau EINE NextBestAction · Cockpit liest den Store NICHT</div>
+    <h2 class="t">Your decision, summarized</h2>
+    <p class="sub" id="summary"></p>
+    <div class="next">
+      <a href="#" id="bridge">See the full trading platform ranking →</a>
+      <span class="redline">/us/trading/best/trading-platforms · tool_cockpit_cta_click</span>
+    </div>
+    <div class="nav"><button class="b" id="restart">Start over (clears sfp_decision_v1)</button></div>
+  </section>
+</div>
+
+<div class="inspector">
+  <div class="ibox"><b>sessionStorage · sfp_decision_v1</b> <span>(zod-validiert, korrupt → verworfen)</span><pre id="store">{}</pre></div>
+  <div class="ibox"><b>tool_v1 ▶</b> <pre id="ticker">tool_view</pre></div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  const BROKERS = [
+    { slug:'alphatrade', name:'AlphaTrade',  perTrade:1.0, spreadPct:0.05, strengths:['Lowest fees','Forex','CFDs'],       education:2, platform:4 },
+    { slug:'novainvest',  name:'NovaInvest', perTrade:0.0, spreadPct:0.12, strengths:['Learning & support','Stocks & ETFs'],education:5, platform:3 },
+    { slug:'proterminal', name:'ProTerminal',perTrade:2.5, spreadPct:0.03, strengths:['Best platform','Advanced','Stocks & ETFs'], education:2, platform:5 },
+    { slug:'everymarket', name:'EveryMarket',perTrade:0.8, spreadPct:0.08, strengths:['All-round','Forex','Stocks & ETFs'], education:3, platform:4 },
+  ];
+  const state = { answers:{}, shortlist:[], started:false, firstResult:false, qualified:false };
+  const fired = new Set(['tool_view']);
+  function track(n, meta){
+    const once = ['tool_start','tool_first_result','tool_qualified_decision'];
+    if (once.includes(n) && fired.has(n)) return;
+    fired.add(n);
+    $('ticker').textContent = Array.from(fired).join(' · ') + (meta ? '  [' + meta + ']' : '');
+  }
+  function qualify(via){ if (state.firstResult && !state.qualified){ state.qualified = true; track('tool_qualified_decision','via ' + via); } }
+
+  // DecisionStateV1-Spiegel (echtes sessionStorage, Key wie Spec 8.6)
+  function persist(){
+    const v1 = { v:1, updatedAt:new Date().toISOString().slice(0,19),
+      broker:{ quizAnswers: state.answers,
+        profile:{ experience: state.answers.experience || null, instruments:[state.answers.instrument].filter(Boolean),
+                  tradesPerMonth:+state.answers.tradesPerMonth || null, avgTradeSize:+state.answers.avgTradeSize || null,
+                  priorities:[state.answers.priority].filter(Boolean) },
+        shortlistSlugs: state.shortlist } };
+    try { sessionStorage.setItem('sfp_decision_v1', JSON.stringify(v1)); } catch(e){}
+    $('store').textContent = JSON.stringify(v1, null, 1);
+  }
+
+  // ---------- Screens ----------
+  const screens = ['sc1','sc2','sc3','sc4','sc5'];
+  function go(n){
+    screens.forEach((id,i)=>$(id).classList.toggle('on', i === n-1));
+    screens.forEach((_,i)=>{ const b=$('n'+(i+1)); b.disabled = (i+1) > maxStep(); b.setAttribute('aria-current', i===n-1 ? 'step' : 'false'); });
+    if (n===2) renderCards();
+    if (n===3) renderCosts(true);
+    if (n===4) renderCompare();
+    if (n===5) renderSummary();
+  }
+  function maxStep(){
+    if (!quizDone()) return 1;
+    if (!state.shortlist.length) return 2;
+    return 5;
+  }
+  screens.forEach((_,i)=>$('n'+(i+1)).addEventListener('click',()=>go(i+1)));
+
+  // ---------- Quiz ----------
+  function quizDone(){ return ['experience','instrument','tradesPerMonth','avgTradeSize','priority'].every(k => state.answers[k] != null); }
+  document.querySelectorAll('.opts').forEach((g)=>{
+    g.addEventListener('click',(e)=>{
+      const b = e.target.closest('button'); if(!b) return;
+      g.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed','false'));
+      b.setAttribute('aria-pressed','true');
+      state.answers[g.dataset.k] = b.dataset.v ?? b.textContent.trim();
+      if (!state.started){ state.started = true; track('tool_start'); }
+      track('tool_input_change', g.dataset.k);
+      $('toShortlist').disabled = !quizDone();
+      persist();
+    });
+  });
+  $('toShortlist').addEventListener('click',()=>{ state.firstResult = true; track('tool_first_result','shortlist shown'); go(2); });
+  $('back2').addEventListener('click',()=>go(1));
+
+  // ---------- Matching + Kosten ----------
+  function yearlyCost(b){
+    const tpm = +($('tpm').value || state.answers.tradesPerMonth || 6);
+    const size = +($('size').value || state.answers.avgTradeSize || 1000);
+    return Math.round((b.perTrade + size * b.spreadPct/100) * tpm * 12);
+  }
+  function matchScore(b){
+    let s = 55;
+    if (b.strengths.includes(state.answers.instrument)) s += 18;
+    if (state.answers.priority === 'Lowest fees') s += Math.max(0, 16 - yearlyCost(b)/40);
+    if (state.answers.priority === 'Best platform') s += (b.platform - 3) * 8;
+    if (state.answers.priority === 'Learning & support') s += (b.education - 3) * 8;
+    if (state.answers.experience === 'New to trading') s += (b.education - 3) * 4;
+    if (state.answers.experience === 'Advanced') s += (b.platform - 3) * 4;
+    return Math.max(48, Math.min(97, Math.round(s)));
+  }
+  function renderCards(){
+    const ranked = BROKERS.map(b=>({ b, score: matchScore(b), cost: yearlyCost(b) })).sort((x,y)=>y.score-x.score);
+    $('cards').innerHTML = ranked.map((r,i)=>`
+      <div class="bcard${i===0?' top':''}">
+        <div style="display:flex;justify-content:space-between;align-items:baseline"><strong>${r.b.name}</strong><span class="match">${r.score}%</span></div>
+        <ul class="why">${r.b.strengths.slice(0,2).map(s=>`<li>${s}</li>`).join('')}<li>fits „${state.answers.priority}"</li></ul>
+        <span class="cost">est. <strong>$${(r.cost*0.85|0).toLocaleString()}–$${(r.cost*1.15|0).toLocaleString()}</strong>/yr for your pattern</span>
+        <button class="add" data-slug="${r.b.slug}" aria-pressed="${state.shortlist.includes(r.b.slug)}">${state.shortlist.includes(r.b.slug)?'On shortlist ✓':'+ Add to shortlist'}</button>
+      </div>`).join('');
+    $('cards').querySelectorAll('.add').forEach(btn=>btn.addEventListener('click',()=>{
+      const s = btn.dataset.slug;
+      state.shortlist = state.shortlist.includes(s) ? state.shortlist.filter(x=>x!==s) : [...state.shortlist, s].slice(0,3);
+      track('tool_input_change','shortlist'); qualify('shortlist');
+      persist(); renderCards();
+      $('toCosts').disabled = !state.shortlist.length;
+    }));
+    $('toCosts').disabled = !state.shortlist.length;
+  }
+  $('toCosts').addEventListener('click',()=>go(3));
+  $('back3').addEventListener('click',()=>go(2));
+
+  function renderCosts(prefill){
+    if (prefill){ $('tpm').value = state.answers.tradesPerMonth || 6; $('size').value = state.answers.avgTradeSize || 1000; }
+    const list = BROKERS.filter(b=>state.shortlist.includes(b.slug)).map(b=>({b, c: yearlyCost(b)})).sort((x,y)=>x.c-y.c);
+    const max = Math.max(...list.map(x=>x.c), 1);
+    $('costbars').innerHTML = list.map((x,i)=>`
+      <div class="brow"><span class="nm">${x.b.name}</span><div class="bar${i===0?' me':''}" style="width:${Math.max(8, x.c/max*55)}%"></div><span class="val">$${x.c.toLocaleString()}/yr${i===0?' · cheapest':''}</span></div>`).join('');
+  }
+  ['tpm','size'].forEach(id=>$(id).addEventListener('input',()=>{ track('tool_input_change', id+' (edited prefill)'); renderCosts(false); persist(); }));
+  $('editPrefill').addEventListener('click',(e)=>{ e.preventDefault(); $('tpm').focus(); });
+  $('toCompare').addEventListener('click',()=>{ track('tool_scenario_compare','side-by-side'); qualify('scenario_compare'); go(4); });
+  $('back4').addEventListener('click',()=>go(3));
+
+  function renderCompare(){
+    const list = BROKERS.filter(b=>state.shortlist.includes(b.slug));
+    $('cmp').innerHTML = `<tr><th>Broker</th><th>Match</th><th>Est. cost/yr (yours)</th><th>Per trade</th><th>Spread</th><th>Platform</th><th>Education</th></tr>` +
+      list.map(b=>`<tr><td class="on"><strong>${b.name}</strong> <span style="font-size:10px">(shortlist ✓)</span></td><td>${matchScore(b)}%</td><td>$${yearlyCost(b).toLocaleString()}</td><td>$${b.perTrade.toFixed(2)}</td><td>${b.spreadPct}%</td><td>${'★'.repeat(b.platform)}</td><td>${'★'.repeat(b.education)}</td></tr>`).join('');
+  }
+  $('toFinish').addEventListener('click',()=>go(5));
+
+  function renderSummary(){
+    const list = BROKERS.filter(b=>state.shortlist.includes(b.slug)).map(b=>({b, c:yearlyCost(b), m:matchScore(b)})).sort((x,y)=>y.m-x.m);
+    const top = list[0];
+    $('summary').innerHTML = top
+      ? `Based on your answers, <strong>${top.b.name}</strong> fits best (${top.m}% match, est. $${top.c.toLocaleString()}/yr). Your shortlist: ${list.map(x=>x.b.name).join(', ')}.`
+      : 'No shortlist yet — go back to step 2.';
+  }
+  $('bridge').addEventListener('click',(e)=>{ e.preventDefault(); track('tool_next_action_click'); track('tool_cockpit_cta_click','bridge'); qualify('next_action'); });
+  $('restart').addEventListener('click',()=>{ try{ sessionStorage.removeItem('sfp_decision_v1'); }catch(e){}; location.reload(); });
+
+  persist();
+})();
+</script>
