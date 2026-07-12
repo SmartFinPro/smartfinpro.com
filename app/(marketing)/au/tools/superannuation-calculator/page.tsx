@@ -3,12 +3,45 @@ import { SuperannuationCalculator } from '@/components/tools/superannuation-calc
 import { AnswerBlock } from '@/components/ui/answer-block';
 import { AffiliateDisclosure } from '@/components/ui/affiliate-disclosure';
 import { buildToolMetadata } from '@/lib/tools/registry/metadata';
+import { ToolJsonLd } from '@/components/tools/shell/tool-json-ld';
+import type { FAQ } from '@/types';
 
 export const metadata = buildToolMetadata('superannuation', 'au');
+
+// Mirrors the visible "FAQ: Superannuation Calculator" section below verbatim — never
+// add questions here that aren't rendered on the page.
+const FAQ_ITEMS: FAQ[] = [
+  {
+    question: 'How accurate is this superannuation calculator?',
+    answer:
+      'This calculator uses standard retirement projection models with published assumptions for investment returns and inflation. Results are estimates and depend heavily on your actual investment performance. Consult a licensed financial adviser for personalised advice.',
+  },
+  {
+    question: 'Can I access my super early?',
+    answer:
+      'Limited circumstances allow early access: severe financial hardship, permanent incapacity, and a few others. Generally, super is locked in until you reach preservation age (60) or retirement age (67+). First Home Super Saver Scheme allows limited withdrawals for home purchases.',
+  },
+  {
+    question: 'Do I need to worry about super fees?',
+    answer:
+      "Absolutely. Over 30 years, a difference of 0.5% in annual fees can reduce your super balance by 15-20%. Compare your provider's fees (admin fee + investment fee + insurance fees). Many public sector super schemes have very low fees.",
+  },
+  {
+    question: 'What happens to my super when I change jobs?',
+    answer:
+      "Your super remains in your existing fund unless you choose to move it. You'll get a new employer account when you start a new job. Most people consolidate into one fund, but don't auto-consolidate without reviewing fees and performance first.",
+  },
+  {
+    question: 'Is super income-tested in retirement?',
+    answer:
+      'Super pensions are not income-tested for Age Pension purposes (after reaching age 60), but lump sums and earnings are. Work with a financial planner to structure your retirement income tax-efficiently.',
+  },
+];
 
 export default function SuperannuationCalculatorPage() {
   return (
     <main className="min-h-screen bg-white">
+      <ToolJsonLd toolId="superannuation" market="au" faq={FAQ_ITEMS} />
       {/* Hero */}
       <section
         className="relative py-20 px-6"

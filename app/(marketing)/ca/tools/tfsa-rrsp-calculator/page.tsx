@@ -3,12 +3,45 @@ import { TfsaRrspCalculator } from '@/components/tools/tfsa-rrsp-calculator';
 import { AnswerBlock } from '@/components/ui/answer-block';
 import { AffiliateDisclosure } from '@/components/ui/affiliate-disclosure';
 import { buildToolMetadata } from '@/lib/tools/registry/metadata';
+import { ToolJsonLd } from '@/components/tools/shell/tool-json-ld';
+import type { FAQ } from '@/types';
 
 export const metadata = buildToolMetadata('tfsa-rrsp', 'ca');
+
+// Mirrors the visible "FAQ: TFSA vs RRSP Calculator" section below verbatim — never add
+// questions here that aren't rendered on the page.
+const FAQ_ITEMS: FAQ[] = [
+  {
+    question: "What if my tax rate doesn't change in retirement?",
+    answer:
+      'If your tax rate stays roughly the same, TFSA becomes more attractive because you get tax-free growth forever and no forced withdrawals. RRSP only defers tax, not avoids it. Government employees often fall into this category.',
+  },
+  {
+    question: 'Can I have both TFSA and RRSP?',
+    answer:
+      'Yes! Most Canadians benefit from maximising both. They serve different purposes: RRSP defers tax and gives immediate refunds; TFSA provides tax-free growth and flexibility. The calculator shows the combined benefit.',
+  },
+  {
+    question: 'What happens to my TFSA if I leave Canada?',
+    answer:
+      'You cannot contribute to a TFSA as a non-resident, but existing balances remain tax-free. Investment growth continues untaxed. Withdraw before leaving to avoid non-resident withholding taxes.',
+  },
+  {
+    question: 'How accurate is this calculator?',
+    answer:
+      "This calculator uses standard tax assumptions and projection models. Provincial tax rates vary, and future tax law changes aren't predicted. Consult a Canadian tax accountant for personalised advice specific to your situation.",
+  },
+  {
+    question: 'Should I withdraw from RRSP to pay off debt?',
+    answer:
+      "Generally no. RRSP withdrawals trigger withholding tax (30%+) plus income tax on withdrawal. It's usually better to take a low-interest loan and keep your RRSP growing tax-deferred. Exception: extremely high-interest debt (credit cards at 20%+).",
+  },
+];
 
 export default function TfsaRrspCalculatorPage() {
   return (
     <main className="min-h-screen bg-white">
+      <ToolJsonLd toolId="tfsa-rrsp" market="ca" faq={FAQ_ITEMS} />
       {/* Hero */}
       <section
         className="relative py-20 px-6"

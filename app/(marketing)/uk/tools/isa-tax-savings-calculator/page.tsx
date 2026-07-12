@@ -3,12 +3,14 @@ import { ArrowLeft, Shield, Lightbulb, AlertTriangle } from 'lucide-react';
 import { DynamicISATaxSavingsCalculator } from '@/components/tools/dynamic-calculators';
 import { ToolRelatedReviews } from '@/components/marketing/tool-related-reviews';
 import { buildToolMetadata } from '@/lib/tools/registry/metadata';
+import { ToolJsonLd } from '@/components/tools/shell/tool-json-ld';
 
 export const metadata = buildToolMetadata('isa', 'uk');
 
 export default function ISATaxSavingsCalculatorPage() {
   return (
     <div className="min-h-screen" style={{ background: 'var(--sfp-gray)' }}>
+      <ToolJsonLd toolId="isa" market="uk" />
       {/* Breadcrumb */}
       <div className="container mx-auto px-4 py-6">
         <Link

@@ -3,13 +3,46 @@ import { RemortgageCalculator } from '@/components/tools/remortgage-calculator';
 import { AnswerBlock } from '@/components/ui/answer-block';
 import { AffiliateDisclosure } from '@/components/ui/affiliate-disclosure';
 import { buildToolMetadata } from '@/lib/tools/registry/metadata';
+import { ToolJsonLd } from '@/components/tools/shell/tool-json-ld';
+import type { FAQ } from '@/types';
 
 // noindex kommt jetzt aus der Registry (indexable: false) — siehe SPEC 9.2
 export const metadata = buildToolMetadata('remortgage', 'uk');
 
+// Mirrors the visible "FAQ: Remortgage Calculator" section below verbatim — never add
+// questions here that aren't rendered on the page.
+const FAQ_ITEMS: FAQ[] = [
+  {
+    question: 'How accurate is this remortgage calculator?',
+    answer:
+      'This calculator uses standard amortisation formulas and is accurate for illustrative purposes. Actual monthly payments may vary slightly depending on your lender and exact terms. Always request a formal illustration before committing.',
+  },
+  {
+    question: 'Can I remortgage while in a fixed-rate period?',
+    answer:
+      "Yes, but you'll pay an early repayment charge (ERC), typically 1-5% of your balance. This fee often outweighs the savings from a better rate unless you're remortgaging significantly lower.",
+  },
+  {
+    question: 'Will remortgaging affect my credit score?',
+    answer:
+      'A remortgage requires a hard credit check, which may temporarily lower your score by 5-10 points. However, the impact is minimal and recovers within weeks. Multiple applications for different lenders count as one search if done within 14 days.',
+  },
+  {
+    question: 'How long does remortgaging take?',
+    answer:
+      'Typically 4-8 weeks from application to completion. Start the process at least 6 weeks before your current term expires to avoid the SVR.',
+  },
+  {
+    question: 'Can I get a remortgage with bad credit?',
+    answer:
+      'Most remortgages require credit scores above 650-700. If your score is lower, focus on improving it for 6-12 months before remortgaging. Checking your score with Experian or Equifax is free.',
+  },
+];
+
 export default function RemortgageCalculatorPage() {
   return (
     <main className="min-h-screen bg-white">
+      <ToolJsonLd toolId="remortgage" market="uk" faq={FAQ_ITEMS} />
       {/* Hero */}
       <section
         className="relative py-20 px-6"

@@ -145,6 +145,32 @@ function getNextYearDate(): string {
   return date.toISOString().split('T')[0];
 }
 
+/**
+ * WebApplication Schema - For interactive tool/calculator pages (FDL 0.7).
+ *
+ * aggregateRating intentionally omitted (same rationale as generateReviewSchema):
+ * SmartFinPro does not ingest user reviews for tools from a verified source, so no
+ * `aggregateRating` key is emitted here — never fabricate a rating count.
+ */
+export function generateWebApplicationSchema(input: {
+  name: string;
+  url: string;
+  description: string;
+  applicationCategory: 'FinanceApplication';
+}) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'WebApplication',
+    name: input.name,
+    url: input.url,
+    description: input.description,
+    applicationCategory: input.applicationCategory,
+    operatingSystem: 'Web',
+    offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+    publisher: { '@type': 'Organization', name: 'SmartFinPro', url: BASE_URL },
+  };
+}
+
 export function generateFAQSchema(faqs: FAQ[], id?: string) {
   return {
     '@context': 'https://schema.org',

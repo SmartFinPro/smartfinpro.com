@@ -3,12 +3,14 @@ import { ArrowLeft, CreditCard, Lightbulb, AlertTriangle, Shield } from 'lucide-
 import { DynamicCreditCardRewardsCalculator } from '@/components/tools/dynamic-calculators';
 import { ToolRelatedReviews } from '@/components/marketing/tool-related-reviews';
 import { buildToolMetadata } from '@/lib/tools/registry/metadata';
+import { ToolJsonLd } from '@/components/tools/shell/tool-json-ld';
 
 export const metadata = buildToolMetadata('credit-card-rewards', 'us');
 
 export default function CreditCardRewardsCalculatorPage() {
   return (
     <div className="min-h-screen" style={{ background: 'var(--sfp-gray)' }}>
+      <ToolJsonLd toolId="credit-card-rewards" market="us" />
       {/* Breadcrumb */}
       <div className="container mx-auto px-4 py-6">
         <Link

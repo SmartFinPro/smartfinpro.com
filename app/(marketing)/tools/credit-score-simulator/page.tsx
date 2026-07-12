@@ -3,13 +3,46 @@ import { CreditScoreSimulator } from '@/components/tools/credit-score-simulator'
 import { AnswerBlock } from '@/components/ui/answer-block';
 import { AffiliateDisclosure } from '@/components/ui/affiliate-disclosure';
 import { buildToolMetadata } from '@/lib/tools/registry/metadata';
+import { ToolJsonLd } from '@/components/tools/shell/tool-json-ld';
+import type { FAQ } from '@/types';
 
 // noindex kommt jetzt aus der Registry (indexable: false) — siehe SPEC 9.2
 export const metadata = buildToolMetadata('credit-utilization', 'us');
 
+// Mirrors the visible "FAQ: Credit Score Simulator" section below verbatim — never add
+// questions here that aren't rendered on the page.
+const FAQ_ITEMS: FAQ[] = [
+  {
+    question: 'How accurate is this credit score simulator?',
+    answer:
+      'This simulator uses credit industry standard models based on published FICO factor weights. However, credit scoring is complex with non-linear adjustments. Your actual score change may vary by 5-20 points. Always check your real FICO score at MyFICO.com for accuracy.',
+  },
+  {
+    question: 'How long does it take to improve my credit score?',
+    answer:
+      'It depends on your starting point. On-time payments start building immediately but take 3-6 months to show significant movement. Paying down debt shows impact within 1-2 months. Old negatives take 7 years to fall off, but their impact decreases after 2-3 years.',
+  },
+  {
+    question: 'Will checking my credit score hurt it?',
+    answer:
+      'No. Checking your own score is a "soft inquiry" and doesn\'t affect your score. Only hard inquiries (when you apply for credit) impact your score.',
+  },
+  {
+    question: 'How often should I check my credit score?',
+    answer:
+      'Check at least annually and before major financial decisions (buying a home, getting a car loan). You can check for free at AnnualCreditReport.com once per year. CreditKarma.com and other services offer free score monitoring year-round.',
+  },
+  {
+    question: "What's the difference between FICO and Vantage Score?",
+    answer:
+      'FICO is used by 90% of lenders; Vantage Score is used primarily by lenders and credit monitoring services. FICO scores range 300-850; Vantage Scores range 300-850. FICO is more widely recognized and used for credit decisions.',
+  },
+];
+
 export default function CreditScoreSimulatorPage() {
   return (
     <main className="min-h-screen bg-white">
+      <ToolJsonLd toolId="credit-utilization" market="us" faq={FAQ_ITEMS} />
       {/* Hero */}
       <section
         className="relative py-20 px-6"

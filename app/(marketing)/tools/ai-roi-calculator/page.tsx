@@ -3,12 +3,14 @@ import { ArrowLeft, TrendingUp, Lightbulb } from 'lucide-react';
 import { DynamicAIROICalculator } from '@/components/tools/dynamic-calculators';
 import { ToolRelatedReviews } from '@/components/marketing/tool-related-reviews';
 import { buildToolMetadata } from '@/lib/tools/registry/metadata';
+import { ToolJsonLd } from '@/components/tools/shell/tool-json-ld';
 
 export const metadata = buildToolMetadata('ai-roi', 'us');
 
 export default function AIROICalculatorPage() {
   return (
     <div className="min-h-screen" style={{ background: 'var(--sfp-gray)' }}>
+      <ToolJsonLd toolId="ai-roi" market="us" />
       {/* Breadcrumb */}
       <div className="container mx-auto px-4 py-6">
         <Link href="/tools" className="inline-flex items-center gap-2 text-sm transition-colors" style={{ color: 'var(--sfp-slate)' }}>
