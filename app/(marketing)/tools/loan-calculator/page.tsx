@@ -1,17 +1,10 @@
-import { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowLeft, Calculator, Lightbulb, Shield } from 'lucide-react';
 import { DynamicLoanCalculator } from '@/components/tools/dynamic-calculators';
 import { ToolRelatedReviews } from '@/components/marketing/tool-related-reviews';
+import { buildToolMetadata } from '@/lib/tools/registry/metadata';
 
-export const metadata: Metadata = {
-  title: 'Loan Calculator - Calculate Monthly Payments & Interest | SmartFinPro',
-  description: 'Free loan calculator with amortization schedule. Calculate monthly payments, total interest, and payoff date for personal loans, debt consolidation, and more.',
-  openGraph: {
-    title: 'Loan Calculator - Calculate Monthly Payments & Interest',
-    description: 'Free calculator to estimate loan payments and see full amortization schedule.',
-  },
-};
+export const metadata = buildToolMetadata('loan', 'us');
 
 export default function LoanCalculatorPage() {
   return (

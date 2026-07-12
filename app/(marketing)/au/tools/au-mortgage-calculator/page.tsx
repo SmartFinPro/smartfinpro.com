@@ -1,26 +1,10 @@
-import { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowLeft, Home, Lightbulb, Shield } from 'lucide-react';
 import { DynamicAUMortgageCalculator } from '@/components/tools/dynamic-calculators';
 import { ToolRelatedReviews } from '@/components/marketing/tool-related-reviews';
+import { buildToolMetadata } from '@/lib/tools/registry/metadata';
 
-export const metadata: Metadata = {
-  title: 'Australian Home Loan Calculator 2026: Repayments, LVR & Offset | SmartFinPro',
-  description:
-    'Free AU mortgage calculator. Calculate monthly repayments, LVR, offset savings, and stamp duty estimates for Australian home loans. Compare rates from 25+ lenders.',
-  alternates: {
-    canonical: 'https://smartfinpro.com/au/tools/au-mortgage-calculator',
-    languages: {
-      'en-AU': 'https://smartfinpro.com/au/tools/au-mortgage-calculator',
-    },
-  },
-  openGraph: {
-    title: 'Australian Home Loan Calculator — Repayments, LVR & Offset',
-    description:
-      'Free calculator for Australian home loan repayments with LVR analysis and offset account savings.',
-    url: 'https://smartfinpro.com/au/tools/au-mortgage-calculator',
-  },
-};
+export const metadata = buildToolMetadata('au-mortgage', 'au');
 
 export default function AUMortgageCalculatorPage() {
   return (

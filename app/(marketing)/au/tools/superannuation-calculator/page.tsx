@@ -1,30 +1,10 @@
 // app/(marketing)/au/tools/superannuation-calculator/page.tsx
-import { Metadata } from 'next';
 import { SuperannuationCalculator } from '@/components/tools/superannuation-calculator';
 import { AnswerBlock } from '@/components/ui/answer-block';
 import { AffiliateDisclosure } from '@/components/ui/affiliate-disclosure';
+import { buildToolMetadata } from '@/lib/tools/registry/metadata';
 
-export const metadata: Metadata = {
-  title: 'Superannuation Calculator AU 2026 | Retirement Savings Projection',
-  description:
-    'Use our free superannuation calculator to project your retirement savings. See how contributions, returns, and time affect your super balance and retirement income.',
-  alternates: {
-    canonical: 'https://smartfinpro.com/au/tools/superannuation-calculator',
-    languages: {
-      'en-US': 'https://smartfinpro.com/tools/debt-payoff-calculator',
-      'en-GB': 'https://smartfinpro.com/uk/tools/remortgage-calculator',
-      'en-CA': 'https://smartfinpro.com/ca/tools/debt-payoff-calculator',
-      'en-AU': 'https://smartfinpro.com/au/tools/superannuation-calculator',
-    },
-  },
-  openGraph: {
-    title: 'Superannuation Calculator AU 2026 | SmartFinPro',
-    description:
-      'Project your retirement savings with our free super calculator. See how contributions and investment returns build your nest egg.',
-    url: 'https://smartfinpro.com/au/tools/superannuation-calculator',
-    type: 'website',
-  },
-};
+export const metadata = buildToolMetadata('superannuation', 'au');
 
 export default function SuperannuationCalculatorPage() {
   return (

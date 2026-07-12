@@ -1,32 +1,11 @@
 // app/(marketing)/tools/debt-payoff-calculator/page.tsx
-import { Metadata } from 'next';
 import { DebtPayoffCalculator } from '@/components/tools/debt-payoff-calculator';
 import { AnswerBlock } from '@/components/ui/answer-block';
 import { AffiliateDisclosure } from '@/components/ui/affiliate-disclosure';
+import { buildToolMetadata } from '@/lib/tools/registry/metadata';
 
-export const metadata: Metadata = {
-  title: 'Debt Payoff Calculator 2026 | Free Debt Paydown Timeline Tool',
-  description:
-    'Calculate how long it will take to pay off your debt. Free debt payoff calculator shows payment schedules, total interest, and strategies to become debt-free faster.',
-  // noindex: "Coming Soon" placeholder — remove once fully built
-  robots: { index: false, follow: true },
-  alternates: {
-    canonical: 'https://smartfinpro.com/tools/debt-payoff-calculator',
-    languages: {
-      'en-US': 'https://smartfinpro.com/tools/debt-payoff-calculator',
-      'en-GB': 'https://smartfinpro.com/tools/debt-payoff-calculator',
-      'en-CA': 'https://smartfinpro.com/tools/debt-payoff-calculator',
-      'en-AU': 'https://smartfinpro.com/tools/debt-payoff-calculator',
-    },
-  },
-  openGraph: {
-    title: 'Debt Payoff Calculator 2026 | SmartFinPro',
-    description:
-      'Calculate how long it will take to pay off your debt with our free tool. See payment schedules and interest savings.',
-    url: 'https://smartfinpro.com/tools/debt-payoff-calculator',
-    type: 'website',
-  },
-};
+// noindex kommt jetzt aus der Registry (indexable: false) — siehe SPEC 9.2
+export const metadata = buildToolMetadata('debt-payoff', 'us');
 
 export default function DebtPayoffCalculatorPage() {
   return (

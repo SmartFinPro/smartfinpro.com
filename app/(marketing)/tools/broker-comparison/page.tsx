@@ -1,17 +1,10 @@
-import { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowLeft, Scale, Lightbulb, Shield } from 'lucide-react';
 import { DynamicBrokerComparison } from '@/components/tools/dynamic-calculators';
 import { ToolRelatedReviews } from '@/components/marketing/tool-related-reviews';
+import { buildToolMetadata } from '@/lib/tools/registry/metadata';
 
-export const metadata: Metadata = {
-  title: 'Broker Comparison Tool - Compare Forex & CFD Brokers | SmartFinPro',
-  description: 'Compare forex and CFD brokers side by side. Filter by regulation, features, minimum deposit, and spreads to find the best broker for your trading needs.',
-  openGraph: {
-    title: 'Broker Comparison Tool - Compare Forex & CFD Brokers',
-    description: 'Free tool to compare trading brokers by features, regulation, and costs.',
-  },
-};
+export const metadata = buildToolMetadata('broker-comparison', 'us');
 
 export default function BrokerComparisonPage() {
   return (

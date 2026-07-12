@@ -1,23 +1,10 @@
-import { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowLeft, Shield, Lightbulb, AlertTriangle } from 'lucide-react';
 import { DynamicISATaxSavingsCalculator } from '@/components/tools/dynamic-calculators';
 import { ToolRelatedReviews } from '@/components/marketing/tool-related-reviews';
+import { buildToolMetadata } from '@/lib/tools/registry/metadata';
 
-export const metadata: Metadata = {
-  title: 'ISA Tax Savings Calculator 2026: See Your Tax Shield | SmartFinPro',
-  description:
-    'Free ISA tax savings calculator. See how much you could save in capital gains tax and dividend tax by investing inside a Stocks and Shares ISA vs a General Investment Account.',
-  alternates: {
-    canonical: 'https://smartfinpro.com/uk/tools/isa-tax-savings-calculator',
-  },
-  openGraph: {
-    title: 'ISA Tax Savings Calculator — Visualise Your Tax Shield',
-    description:
-      'Calculate the tax advantage of investing inside a Stocks and Shares ISA over 5, 10, and 20 years.',
-    url: 'https://smartfinpro.com/uk/tools/isa-tax-savings-calculator',
-  },
-};
+export const metadata = buildToolMetadata('isa', 'uk');
 
 export default function ISATaxSavingsCalculatorPage() {
   return (
