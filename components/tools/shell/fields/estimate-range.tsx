@@ -26,7 +26,7 @@ export function EstimateRangeField({ value, onChange, options, ...baseProps }: E
         <div
           id={inputId}
           role="radiogroup"
-          aria-labelledby={undefined}
+          aria-label={baseProps.label}
           aria-describedby={[helpId, errorId].filter(Boolean).join(' ') || undefined}
           className="flex flex-wrap gap-2"
         >
