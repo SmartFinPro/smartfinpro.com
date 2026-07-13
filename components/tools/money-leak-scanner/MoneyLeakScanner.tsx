@@ -34,9 +34,12 @@ import type {
 } from '@/lib/money-leak/types';
 import type { Market } from '@/types';
 import { getOrCreateAnalyticsSessionId } from '@/lib/analytics/session';
+import { useToolTracking } from '@/lib/analytics/tool-tracking';
+import type { ToolContext } from '@/lib/analytics/tool-events';
 
 interface MoneyLeakScannerProps {
   market: Market;
+  toolContext: ToolContext;
 }
 
 const MARKET_CURRENCY: Record<
@@ -66,19 +69,14 @@ const DEFAULT_LIFESTYLE: LeakLifestyle = {
   investsRegularly: false,
 };
 
-function track(event: string, payload: Record<string, unknown> = {}): void {
-  fetch('/api/track-cta', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ event, ...payload }),
-    keepalive: true,
-  }).catch(() => {
-    // Silent — analytics must never block UX.
-  });
-}
-
-export function MoneyLeakScanner({ market }: MoneyLeakScannerProps) {
+export function MoneyLeakScanner({ market, toolContext }: MoneyLeakScannerProps) {
   const currency = MARKET_CURRENCY[market];
+  // tool_v1 (FDL 1.3): replaces the old `track()` helper, whose every call
+  // hit the legacy CTA-tracking endpoint with a 400 (missing required
+  // slug/provider fields) — those calls were removed entirely, not
+  // translated 1:1. See the mapping at each call site below for what each
+  // old event becomes.
+  const tracker = useToolTracking(toolContext);
 
   // ── Inputs ──────────────────────────────────────────────────────────────
   const [income, setIncome] = useState<number>(DEFAULT_INCOME);
@@ -115,9 +113,25 @@ export function MoneyLeakScanner({ market }: MoneyLeakScannerProps) {
   }, [market]);
 
   // ── One-shot loaded event ───────────────────────────────────────────────
+  // Was: track('leak_scanner_loaded', { market }) → the legacy CTA-tracking
+  // endpoint (400, missing slug/provider). Now: tool_view (deduped 1×/funnel
+  // key inside the tracker itself, so this effect can safely re-run on
+  // `tracker` identity).
   useEffect(() => {
-    track('leak_scanner_loaded', { market });
-  }, [market]);
+    tracker.trackView();
+  }, [tracker]);
+
+  // ── First live result (client-side, from user input) ───────────────────
+  // Money Leak is shellMode 'live-canvas' — `result` above already
+  // recomputes on every slider/toggle change, well before the debounced
+  // persist below round-trips. tool_first_result therefore fires off the
+  // LIVE computed result, not the server round-trip. trackFirstResult()
+  // dedupes internally (fires once per funnel key), so gating on
+  // `interactedRef.current` here just avoids tracking the default/untouched
+  // state that every visitor starts from identically.
+  useEffect(() => {
+    if (interactedRef.current) tracker.trackFirstResult();
+  }, [result, tracker]);
 
   // ── Debounced persist ───────────────────────────────────────────────────
   useEffect(() => {
@@ -145,12 +159,13 @@ export function MoneyLeakScanner({ market }: MoneyLeakScannerProps) {
         if (!res.ok || !('ok' in json) || !json.ok) return;
         setScanId(json.scanId);
         setRecommendations(json.recommendations ?? []);
-        track('leak_scanner_persisted', {
-          market,
-          scanId: json.scanId,
-          severity: json.preview.overallSeverity,
-          annualLeak: json.preview.totalAnnualLeak,
-        });
+        // Was: track('leak_scanner_persisted', {...}) → the legacy
+        // CTA-tracking endpoint (400). Dropped ersatzlos (no tool_v1
+        // equivalent) — this event only ever reported severity/annualLeak
+        // for the server round-trip, which tool_first_result (fired from
+        // the live client-side result above) already covers from a funnel
+        // perspective. The state changes (setScanId/setRecommendations)
+        // this effect exists for are unaffected.
       } catch {
         // Silent — the UI stays functional, we just don't have a scanId.
       }
@@ -160,23 +175,33 @@ export function MoneyLeakScanner({ market }: MoneyLeakScannerProps) {
   }, [income, expenses, lifestyle, market, currency.code]);
 
   // ── Interaction tracker ─────────────────────────────────────────────────
-  const markInteracted = useCallback(() => {
-    if (!interactedRef.current) {
-      interactedRef.current = true;
-      track('leak_scanner_interacted', { market });
-    }
-  }, [market]);
+  // Was: track('leak_scanner_interacted', { market }) → the legacy
+  // CTA-tracking endpoint. Now: tool_start(inputKey) — the tracker dedupes
+  // to one tool_start per funnel key regardless of which field started it
+  // (Spec 10.2).
+  const markInteracted = useCallback(
+    (inputKey: string) => {
+      if (!interactedRef.current) {
+        interactedRef.current = true;
+      }
+      tracker.trackStart(inputKey);
+    },
+    [tracker],
+  );
 
   const updateIncome = (v: number) => {
-    markInteracted();
+    markInteracted('monthlyIncome');
+    tracker.trackInputChange('monthlyIncome', v, 'currency');
     setIncome(v);
   };
   const updateExpense = (key: keyof LeakExpenses) => (v: number) => {
-    markInteracted();
+    markInteracted(key);
+    tracker.trackInputChange(key, v, 'currency');
     setExpenses((prev) => ({ ...prev, [key]: v }));
   };
   const updateLifestyle = (key: keyof LeakLifestyle) => (v: boolean) => {
-    markInteracted();
+    markInteracted(key);
+    tracker.trackInputChange(key, v ? 1 : 0, 'count');
     setLifestyle((prev) => ({ ...prev, [key]: v }));
   };
 
@@ -206,7 +231,12 @@ export function MoneyLeakScanner({ market }: MoneyLeakScannerProps) {
         );
       }
       setEmailState('success');
-      track('leak_scanner_email_submitted', { market, scanId });
+      // Was: track('leak_scanner_email_submitted', {...}) → the legacy
+      // CTA-tracking endpoint. Now: tool_report_email — the user just had
+      // their report emailed to them, which is exactly what
+      // trackReport('email') models (and feeds the qualified-decision
+      // 'report' signal, Spec 10.3).
+      tracker.trackReport('email');
     } catch (err) {
       setEmailState('error');
       setEmailError(err instanceof Error ? err.message : 'Unexpected error');
@@ -215,12 +245,14 @@ export function MoneyLeakScanner({ market }: MoneyLeakScannerProps) {
 
   // ── Recommendation click ────────────────────────────────────────────────
   const handleRecommendationClick = (rec: Recommendation) => {
-    track('leak_scanner_recommendation_clicked', {
-      market,
-      scanId,
-      partnerSlug: rec.slug,
-      matchedCategory: rec.matchedCategory,
-    });
+    // Was: track('leak_scanner_recommendation_clicked', {...}) → the legacy
+    // CTA-tracking endpoint. Now: tool_next_action_click, kind 'provider' —
+    // the recommendation opens an external affiliate/partner link
+    // (RecommendationCard's `href`, reconstructed identically here since
+    // the click handler only receives the `rec`, not the rendered anchor's
+    // resolved href).
+    const href = `${rec.trackUrl}?utm_source=money-leak&utm_medium=scanner&utm_campaign=${scanId}`;
+    tracker.trackNextAction('provider', href);
   };
 
   // ── Smooth scroll for mobile sticky CTA ─────────────────────────────────

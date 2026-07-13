@@ -55,6 +55,14 @@ export interface ToolTracker {
   trackStart(inputKey: string): void;
   /** 600ms trailing debounce PER inputKey; gated (FIELD_INPUT_CAP/LEVER_INPUT_CAP); value is bucketed, never raw. */
   trackInputChange(inputKey: string, rawValue: number, kind: InputBucketKind, role?: ControlRole): void;
+  /**
+   * Same debounce/gate/qualified-decision plumbing as trackInputChange, but
+   * for a value that is ALREADY a bucket (e.g. a quiz answer slug like
+   * 'beginner') — added in PR 1.3 because numeric toInputBucket() bucketing
+   * would destroy a categorical answer's identity (Spec 10.2: inputBucket is
+   * a bucket, never a raw value; a categorical slug already IS the bucket).
+   */
+  trackCategoricalInputChange(inputKey: string, bucket: string, role?: ControlRole): void;
   /** dedupe 1×/funnelKey; ttfvMs = now − viewAt. */
   trackFirstResult(): void;
   trackScenarioCompare(scenario: string): void;
@@ -172,6 +180,8 @@ export function createToolTracker(ctx: ToolContext): ToolTracker {
   const changedInputKeys = new Set<string>();
   const gate = createInputChangeGate();
   const debouncers = new Map<string, (value: { rawValue: number; kind: InputBucketKind; role: ControlRole }) => void>();
+  /** Separate debouncer map for trackCategoricalInputChange (PR 1.3) — keyed the same way, disjoint values. */
+  const categoricalDebouncers = new Map<string, (value: { bucket: string; role: ControlRole }) => void>();
   let qualifiedInterval: ReturnType<typeof setInterval> | null = null;
 
   function currentFunnelKey(): string {
@@ -270,6 +280,37 @@ export function createToolTracker(ctx: ToolContext): ToolTracker {
         debouncers.set(inputKey, debounced);
       }
       debounced({ rawValue, kind, role });
+    } catch {
+      // fail-soft
+    }
+  }
+
+  function trackCategoricalInputChange(
+    inputKey: string,
+    bucket: string,
+    role: ControlRole = 'field',
+  ): void {
+    if (!isEnabled()) return;
+    try {
+      let debounced = categoricalDebouncers.get(inputKey);
+      if (!debounced) {
+        debounced = createTrailingDebounce<{ bucket: string; role: ControlRole }>(
+          (value) => {
+            if (!gate.allow(value.role)) return;
+            changedInputKeys.add(inputKey);
+            if (value.role === 'lever') leverUsed = true;
+            enqueue('tool_input_change', {
+              inputKey,
+              inputBucket: value.bucket,
+              controlRole: value.role,
+            });
+            checkQualified();
+          },
+          INPUT_DEBOUNCE_MS,
+        );
+        categoricalDebouncers.set(inputKey, debounced);
+      }
+      debounced({ bucket, role });
     } catch {
       // fail-soft
     }
@@ -399,6 +440,7 @@ export function createToolTracker(ctx: ToolContext): ToolTracker {
     trackView,
     trackStart,
     trackInputChange,
+    trackCategoricalInputChange,
     trackFirstResult,
     trackScenarioCompare,
     trackShare,
