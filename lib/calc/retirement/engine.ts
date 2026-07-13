@@ -228,7 +228,7 @@ export function buildContributionChecks(inputs: RetirementInputs, rules: RuleSna
 
 // ── Levers (deterministic, ranked by base-scenario delta) ────────────────────
 
-const LEVER_EXTRA_MONTHLY = 200;   // in today's money units of the tool's market currency
+export const LEVER_EXTRA_MONTHLY = 200;   // in today's money units of the tool's market currency
 
 function projectAll(inputs: RetirementInputs, rules: RuleSnapshot): { scenarios: [ScenarioResult, ScenarioResult, ScenarioResult] } {
   const contrib = totalContributions(inputs, rules);
@@ -247,6 +247,19 @@ function projectAll(inputs: RetirementInputs, rules: RuleSnapshot): { scenarios:
  *  action, not a per-account allocation decision; precise per-account
  *  targeting is a GuidedJourney/4.2 UI concern, out of scope for this pure
  *  engine PR). */
+/**
+ * Applies a Lever's `apply` patch to inputs. This is the ONLY sanctioned way
+ * to consume `Lever.apply` — a naive `for (k,v) of apply: setField(k,v)`
+ * would misinterpret `employeeContributionMonthly` as an ABSOLUTE value
+ * (unlike the scalar keys, which ARE absolute), silently turning "Add
+ * $200/mo" into "set contribution to $200/mo" for a user already
+ * contributing more than that. Consumers (e.g. PR 4.2's GuidedJourney)
+ * MUST call this function rather than reimplementing patch application.
+ */
+export function applyLever(inputs: RetirementInputs, lever: Lever): RetirementInputs {
+  return lever.apply ? mutateInputs(inputs, lever.apply) : inputs;
+}
+
 function mutateInputs(inputs: RetirementInputs, patch: Partial<Record<string, number>>): RetirementInputs {
   const scalarKeys: (keyof RetirementInputs)[] = ['currentAge', 'retireAge', 'annualFeePct', 'targetMonthlyIncomeToday', 'withdrawalRatePct'];
   let next: RetirementInputs = { ...inputs };

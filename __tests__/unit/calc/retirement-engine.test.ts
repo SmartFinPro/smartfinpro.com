@@ -13,6 +13,8 @@ import {
   buildContributionChecks,
   resolveAccountContribution,
   validateInputs,
+  applyLever,
+  LEVER_EXTRA_MONTHLY,
 } from '@/lib/calc/retirement/engine';
 import type { RetirementInputs } from '@/lib/calc/retirement/types';
 import { OFFICIAL_LIMIT_FIXTURES } from './fixtures/retirement/official';
@@ -281,5 +283,42 @@ describe('retirement engine — validation + lever shape', () => {
     expect(result.levers).toHaveLength(3);
     const keys = result.levers.map((l) => l.key).sort();
     expect(keys).toEqual(['contribution', 'fees', 'retire-later']);
+  });
+
+  it('applyLever(contribution) on simple mode adds the delta (not absolute) to the existing contribution', () => {
+    const lever = projectRetirement(BASE_SIMPLE_INPUTS, rules).levers.find((l) => l.key === 'contribution')!;
+    const before = BASE_SIMPLE_INPUTS.simple.employeeContributionMonthly;
+    const applied = applyLever(BASE_SIMPLE_INPUTS, lever) as typeof BASE_SIMPLE_INPUTS;
+    expect(applied.simple.employeeContributionMonthly).toBe(before + LEVER_EXTRA_MONTHLY);
+    // The realized delta must actually match what deltaLabel promises: applying
+    // the lever must raise balanceAtRetire by the same amount buildLevers used
+    // to rank it (guards against silent divergence between ranking and application).
+    const baseBalance = projectRetirement(BASE_SIMPLE_INPUTS, rules).scenarios.find((s) => s.key === 'base')!.balanceAtRetire;
+    const appliedBalance = projectRetirement(applied, rules).scenarios.find((s) => s.key === 'base')!.balanceAtRetire;
+    expect(appliedBalance).toBeGreaterThan(baseBalance);
+  });
+
+  it('applyLever(contribution) on account-breakdown mode adds the delta to the first account only', () => {
+    const breakdownInputs: RetirementInputs = {
+      ...BASE_SIMPLE_INPUTS,
+      contributionMode: 'account-breakdown',
+      accounts: [
+        { id: 'acc-1', type: 'us-401k', balance: 50000, employeeContributionMonthly: 300 },
+        { id: 'acc-2', type: 'us-taxable', balance: 20000, employeeContributionMonthly: 100 },
+      ],
+      simple: undefined,
+    } as RetirementInputs;
+    const lever = projectRetirement(breakdownInputs, rules).levers.find((l) => l.key === 'contribution')!;
+    const applied = applyLever(breakdownInputs, lever) as typeof breakdownInputs;
+    expect(applied.accounts![0].employeeContributionMonthly).toBe(300 + LEVER_EXTRA_MONTHLY);
+    expect(applied.accounts![1].employeeContributionMonthly).toBe(100); // untouched
+  });
+
+  it('applyLever(fees) and applyLever(retire-later) apply absolute scalar values unchanged', () => {
+    const levers = projectRetirement(BASE_SIMPLE_INPUTS, rules).levers;
+    const feesLever = levers.find((l) => l.key === 'fees')!;
+    const retireLever = levers.find((l) => l.key === 'retire-later')!;
+    expect(applyLever(BASE_SIMPLE_INPUTS, feesLever).annualFeePct).toBe(feesLever.apply!.annualFeePct);
+    expect(applyLever(BASE_SIMPLE_INPUTS, retireLever).retireAge).toBe(BASE_SIMPLE_INPUTS.retireAge + 2);
   });
 });
