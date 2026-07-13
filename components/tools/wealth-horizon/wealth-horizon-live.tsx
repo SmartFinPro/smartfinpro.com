@@ -181,7 +181,13 @@ function GoldPill({ children }: { children: ReactNode }) {
     <span
       data-testid="fi-pill"
       className="inline-flex w-fit items-center rounded-full px-3 py-1 text-xs font-semibold"
-      style={{ background: 'color-mix(in srgb, var(--sfp-gold) 12%, transparent)', color: 'var(--sfp-gold)' }}
+      style={{
+        background: 'color-mix(in srgb, var(--sfp-gold) 14%, transparent)',
+        border: '1px solid color-mix(in srgb, var(--sfp-gold) 45%, transparent)',
+        // --sfp-warning-foreground (#8A5A00) statt reinem Gold: #F5A623 auf
+        // hellem Tint hat nur ~1.9:1 Kontrast — dunkles Amber ist AA-fest.
+        color: 'var(--sfp-warning-foreground)',
+      }}
     >
       {children}
     </span>
@@ -631,6 +637,7 @@ export function WealthHorizonLive({
           <NumberedStep n={1} title="Starting amount">
             <CurrencyField
               label="Starting amount"
+              hideLabel
               inputKey="startingAmount"
               value={startingAmount}
               currency={currency}
@@ -655,6 +662,7 @@ export function WealthHorizonLive({
           <NumberedStep n={2} title="Monthly contribution">
             <CurrencyField
               label="Monthly contribution"
+              hideLabel
               inputKey="monthlyContribution"
               value={monthlyContribution}
               currency={currency}
@@ -685,7 +693,7 @@ export function WealthHorizonLive({
         <NumberedStep n={1} title="Your accounts">{accountBreakdownEditor}</NumberedStep>
       )}
 
-      <NumberedStep n={3} title="Your age today & at retirement">
+      <NumberedStep n={mode === 'simple' ? 3 : 2} title="Your age today & at retirement">
         <div className="flex gap-3">
           <div className="flex-1">
             <IntegerField
@@ -718,9 +726,10 @@ export function WealthHorizonLive({
         </div>
       </NumberedStep>
 
-      <NumberedStep n={4} title="Expected annual return">
+      <NumberedStep n={mode === 'simple' ? 4 : 3} title="Expected annual return">
         <PercentageField
           label="Expected annual return"
+          hideLabel
           inputKey="returnNominalPct"
           value={returnNominalPct}
           min={0}
@@ -742,9 +751,10 @@ export function WealthHorizonLive({
         <p className="m-0 text-xs text-[var(--sfp-slate)]">Nominal, before inflation.</p>
       </NumberedStep>
 
-      <NumberedStep n={5} title="Expected inflation">
+      <NumberedStep n={mode === 'simple' ? 5 : 4} title="Expected inflation">
         <PercentageField
           label="Expected inflation"
+          hideLabel
           inputKey="inflationPct"
           value={inflationPct}
           min={0}

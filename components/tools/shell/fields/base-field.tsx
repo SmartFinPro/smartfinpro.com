@@ -15,17 +15,21 @@ export interface BaseFieldProps {
   error?: string | null;
   notSureHint?: string;                   // renders an "I'm not sure" estimate affordance
   required?: boolean;
+  /** Visually hide the label (kept for screen readers). Use when a visible
+   *  heading right above the field already says the same thing — e.g. the
+   *  numbered-step titles in Wealth Horizon v3 — so the text isn't doubled. */
+  hideLabel?: boolean;
   children: (ids: { inputId: string; helpId?: string; errorId?: string }) => React.ReactNode;
 }
 
-export function BaseField({ label, help, error, notSureHint, required, children }: BaseFieldProps) {
+export function BaseField({ label, help, error, notSureHint, required, hideLabel, children }: BaseFieldProps) {
   const inputId = useId();
   const helpId = help ? `${inputId}-help` : undefined;
   const errorId = error ? `${inputId}-err` : undefined;
   return (
     <div className="field flex flex-col gap-1.5">
-      <div className="flex items-center justify-between gap-2">
-        <label htmlFor={inputId} className="text-sm font-medium text-[var(--sfp-ink)]">
+      <div className={hideLabel && !notSureHint ? 'sr-only' : 'flex items-center justify-between gap-2'}>
+        <label htmlFor={inputId} className={hideLabel ? 'sr-only' : 'text-sm font-medium text-[var(--sfp-ink)]'}>
           {label}{required ? <span aria-hidden="true"> *</span> : null}
         </label>
         {notSureHint ? (
