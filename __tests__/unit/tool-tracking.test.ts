@@ -167,6 +167,26 @@ describe('createToolTracker()', () => {
     expect((income.properties as Record<string, unknown>).inputBucket).toBe('2500-5000'); // settled value 4300
   });
 
+  it('trackCategoricalInputChange sends the bucket value verbatim (never numeric-bucketed) and shares the gate with trackInputChange', async () => {
+    const env = stubBrowserEnv();
+    const { createToolTracker } = await freshModule();
+    const tracker = createToolTracker(CTX);
+
+    // PR 1.3: the Broker Finder Quiz answers are categorical slugs
+    // ('beginner', 'growth', ...) — bucketing them through toInputBucket()
+    // would destroy their identity, so this path skips it entirely.
+    tracker.trackCategoricalInputChange('experience', 'beginner');
+    vi.advanceTimersByTime(600); // per-inputKey debounce
+    vi.advanceTimersByTime(800); // shared queue trailing flush
+
+    const inputEvents = allEvents(env).filter((e) => e.eventName === 'tool_input_change');
+    expect(inputEvents).toHaveLength(1);
+    const props = inputEvents[0].properties as Record<string, unknown>;
+    expect(props.inputKey).toBe('experience');
+    expect(props.inputBucket).toBe('beginner');
+    expect(props.controlRole).toBe('field');
+  });
+
   it('input-change gate: field cap (40) blocks the 41st change silently', async () => {
     const env = stubBrowserEnv();
     const { createToolTracker } = await freshModule();

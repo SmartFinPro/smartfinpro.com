@@ -6,27 +6,14 @@
 // UX-verändernde Merge (2.2, 2.4, 3.2, 3.3, 5.2, 5.3a–d) MUSS seine
 // Annotation hier im selben PR ergänzen.
 //
-// Status bei PR 1.4 (dieser PR): ABSICHTLICH LEER.
-// Die beiden erwarteten initialen Einträge existieren zum Zeitpunkt dieses
-// PRs noch nicht:
-//   1. Baseline-Start — kommt aus TOOL_BASELINE_START in
-//      lib/analytics/tool-events.ts, gesetzt beim Merge von PR 1.3. PR 1.3
-//      läuft PARALLEL zu diesem PR (Welle 3) und ist noch nicht gemerged —
-//      TOOL_BASELINE_START existiert im Code noch nicht. Datum wird beim
-//      1.3-Merge gesetzt.
-//   2. Session-Key-Konsolidierung — Merge-Datum von PR 1.2 (ebenfalls
-//      parallel, noch nicht gemerged).
-//
-// Diese Datei bewusst NICHT von tool-events.ts importieren, solange
-// TOOL_BASELINE_START dort nicht existiert (würde einen kaputten Import
-// erzeugen). Struktur ist bereit; Fable trägt die beiden Einträge nach,
-// sobald 1.2 + 1.3 gemerged sind:
-//
-//   { date: '<1.3-merge-date, ISO YYYY-MM-DD>', label: 'Baseline start (tool_v1)' }
-//   { date: '<1.2-merge-date, ISO YYYY-MM-DD>', label: 'Session-key consolidation' }
-//
-// The dashboard tab (components/dashboard/tool-analytics.tsx) must render
-// correctly with this array EMPTY — that is the real, current state.
+// Status ab PR 1.3 (dieser Nachtrag): beide zum Zeitpunkt von PR 1.4 noch
+// fehlenden initialen Einträge sind jetzt nachgetragen, weil sowohl PR 1.2
+// (Session-Key-Konsolidierung) als auch PR 1.3 (Baseline-Start) gemerged
+// sind. Der Import aus tool-events.ts war bei PR 1.4 noch verboten (hätte
+// einen kaputten Import auf ein damals nicht-existentes Symbol erzeugt) —
+// dieser Vorbehalt gilt nicht mehr, TOOL_BASELINE_START existiert jetzt.
+
+import { TOOL_BASELINE_START } from '@/lib/analytics/tool-events';
 
 export interface AnalyticsAnnotation {
   /** ISO calendar date, 'YYYY-MM-DD'. */
@@ -34,7 +21,15 @@ export interface AnalyticsAnnotation {
   label: string;
 }
 
-export const ANALYTICS_ANNOTATIONS: AnalyticsAnnotation[] = [];
+export const ANALYTICS_ANNOTATIONS: AnalyticsAnnotation[] = [
+  // Label MUST stay exactly 'Baseline start (tool_v1)' — getBaselineWindow()
+  // below finds day 0 of the baseline window by this exact string match.
+  { date: TOOL_BASELINE_START, label: 'Baseline start (tool_v1)' },
+  // PR 1.2 merge date (feat/fdl-1-2-tool-tracking-client, PR #88) — same-
+  // session joins across the sfp_session_id/sfp_sid consolidation break at
+  // this date (PR 1.2's acceptance criteria).
+  { date: '2026-07-12', label: 'Session-key consolidation' },
+];
 
 /**
  * Length of the baseline window in days (Spec 0.5.1: "7-14 Tage"). Used to
