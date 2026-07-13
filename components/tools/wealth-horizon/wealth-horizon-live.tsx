@@ -149,23 +149,37 @@ function checkChipStyle(status: 'not-applicable' | 'ok' | 'warning' | 'clamped')
 
 const CONTEXT_CHIP_STYLE: CSSProperties = { background: 'var(--sfp-sky)', borderColor: 'var(--sfp-sky)', color: 'var(--sfp-navy)' };
 
-// ── v3 layout primitives (local to this file — not shared, so they never
-//    drift from the DESIGN-DIREKTIVE's exact numbers: 28px badge, 15px title) ─
+// ── v4.1 layout primitives (local to this file — not shared, so they never
+//    drift from the User-Direktive's exact numbers: 28px badge, 17px title,
+//    28px value) — each NumberedStep IS now its own white `.wh-step-card`
+//    (Money-Leak-Anatomie: badge+title left, big live value right), instead
+//    of the old borderless/indented v3 list item. ─────────────────────────
 
-function NumberedStep({ n, title, children }: { n: number; title: string; children: ReactNode }) {
+function NumberedStep({ n, title, value, children }: { n: number; title: string; value?: ReactNode; children: ReactNode }) {
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex items-center gap-3">
-        <span
-          aria-hidden="true"
-          className="flex h-7 w-7 flex-none items-center justify-center rounded-full text-[13px] font-semibold tabular-nums text-white"
-          style={{ background: 'var(--sfp-navy)' }}
-        >
-          {n}
-        </span>
-        <h3 className="m-0 text-[15px] font-semibold text-[var(--sfp-ink)]">{title}</h3>
+    <div className="wh-step-card flex flex-col gap-3">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-3">
+          <span
+            aria-hidden="true"
+            className="flex h-7 w-7 flex-none items-center justify-center rounded-full text-[13px] font-semibold tabular-nums text-white"
+            style={{ background: 'var(--sfp-navy)' }}
+          >
+            {n}
+          </span>
+          {/* No `truncate` here (unlike the Money Leak Scanner reference) —
+              WH's longer titles ("Your age today & at retirement") combined
+              with the bigger 28px value would clip mid-word on narrow
+              phones; wrapping to a 2nd line instead keeps every title fully
+              readable and only grows the card vertically (never
+              horizontally). */}
+          <h3 className="m-0 text-[17px] font-semibold leading-snug text-[var(--sfp-ink)]">{title}</h3>
+        </div>
+        {value != null ? (
+          <span className="wh-step-value flex-none whitespace-nowrap font-bold tabular-nums text-[var(--sfp-navy)]">{value}</span>
+        ) : null}
       </div>
-      <div className="flex flex-col gap-3 pl-10">{children}</div>
+      <div className="flex flex-col gap-3">{children}</div>
     </div>
   );
 }
@@ -654,10 +668,10 @@ export function WealthHorizonLive({
   const escalatedYear10 = monthlyContributionInYear(monthlyContribution, contributionGrowthPct, 10);
 
   const inputsColumn = (
-    <div className="flex flex-col gap-7">
+    <div className="flex flex-col gap-4">
       {mode === 'simple' ? (
         <>
-          <NumberedStep n={1} title="Starting amount">
+          <NumberedStep n={1} title="Starting amount" value={fmtCurrency(startingAmount)}>
             <SliderField
               label="Starting amount"
               inputKey="startingAmount"
@@ -666,6 +680,8 @@ export function WealthHorizonLive({
               max={1_000_000}
               step={1_000}
               format={fmtCurrency}
+              card={false}
+              hideHeader
               onChange={(v) => {
                 setStartingAmount(v);
                 trackField('startingAmount', v, 'currency');
@@ -673,7 +689,7 @@ export function WealthHorizonLive({
             />
           </NumberedStep>
 
-          <NumberedStep n={2} title="Monthly contribution">
+          <NumberedStep n={2} title="Monthly contribution" value={fmtCurrency(monthlyContribution)}>
             <SliderField
               label="Monthly contribution"
               inputKey="monthlyContribution"
@@ -682,6 +698,8 @@ export function WealthHorizonLive({
               max={5_000}
               step={50}
               format={fmtCurrency}
+              card={false}
+              hideHeader
               onChange={(v) => {
                 setMonthlyContribution(v);
                 trackField('monthlyContribution', v, 'currency');
@@ -700,6 +718,7 @@ export function WealthHorizonLive({
               max={5}
               step={0.5}
               format={fmtPercent1}
+              card={false}
               onChange={(v) => {
                 setContributionGrowthPct(v);
                 trackField('contributionGrowthPct', v, 'percent');
@@ -717,7 +736,7 @@ export function WealthHorizonLive({
         <NumberedStep n={1} title="Your accounts">{accountBreakdownEditor}</NumberedStep>
       )}
 
-      <NumberedStep n={mode === 'simple' ? 3 : 2} title="Your age today & at retirement">
+      <NumberedStep n={mode === 'simple' ? 3 : 2} title="Your age today & at retirement" value={`${base.currentAge} → ${base.retireAge}`}>
         <LifetimeRange
           today={base.currentAge}
           retirement={base.retireAge}
@@ -727,7 +746,7 @@ export function WealthHorizonLive({
         />
       </NumberedStep>
 
-      <NumberedStep n={mode === 'simple' ? 4 : 3} title="Expected annual return">
+      <NumberedStep n={mode === 'simple' ? 4 : 3} title="Expected annual return" value={fmtPercent1(returnNominalPct)}>
         <SliderField
           label="Expected annual return"
           inputKey="returnNominalPct"
@@ -736,6 +755,8 @@ export function WealthHorizonLive({
           max={12}
           step={0.5}
           format={fmtPercent1}
+          card={false}
+          hideHeader
           onChange={(v) => {
             setReturnNominalPct(v);
             trackField('returnNominalPct', v, 'percent');
@@ -749,7 +770,7 @@ export function WealthHorizonLive({
         <p className="m-0 text-xs text-[var(--sfp-slate)]">Nominal, before inflation.</p>
       </NumberedStep>
 
-      <NumberedStep n={mode === 'simple' ? 5 : 4} title="Expected inflation">
+      <NumberedStep n={mode === 'simple' ? 5 : 4} title="Expected inflation" value={fmtPercent1(inflationPct)}>
         <SliderField
           label="Expected inflation"
           inputKey="inflationPct"
@@ -758,6 +779,8 @@ export function WealthHorizonLive({
           max={6}
           step={0.1}
           format={fmtPercent1}
+          card={false}
+          hideHeader
           help="Used to show everything in today's purchasing power"
           onChange={(v) => {
             setInflationPct(v);

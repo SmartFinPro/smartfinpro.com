@@ -990,6 +990,87 @@ html[data-silo="ca"], body.silo-ca { --sfp-silo-tint: #FFE5E5; }
   .sfp-range:hover::-moz-range-thumb { transform: none; }
 }
 
+/* ============================================================
+   Wealth Horizon v4.1 — Gold-Slider-Standard (Money-Leak-Anatomie)
+   User-Direktive 13.07.2026: unify every Wealth Horizon slider on the
+   Money Leak Scanner's slider look — bigger 26px gold thumb with a strong
+   white ring, tool-scoped as its own class so the shared `.sfp-range`
+   (Money Leak Scanner's own 22px thumb, used elsewhere) is untouched.
+   ============================================================ */
+.wh-slider {
+  height: 8px;
+  border-radius: 9999px;
+  outline: none;
+}
+.wh-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 9999px;
+  background: var(--sfp-gold);
+  border: none;
+  box-shadow: 0 0 0 5px #fff, 0 1px 4px rgba(16, 24, 40, 0.25);
+  cursor: pointer;
+  transition: transform var(--tool-motion), box-shadow var(--tool-motion);
+}
+.wh-slider::-moz-range-thumb {
+  width: 26px;
+  height: 26px;
+  border-radius: 9999px;
+  background: var(--sfp-gold);
+  border: none;
+  box-shadow: 0 0 0 5px #fff, 0 1px 4px rgba(16, 24, 40, 0.25);
+  cursor: pointer;
+  transition: transform var(--tool-motion), box-shadow var(--tool-motion);
+}
+.wh-slider:hover::-webkit-slider-thumb,
+.wh-slider:focus-visible::-webkit-slider-thumb {
+  transform: scale(1.06);
+  box-shadow:
+    0 0 0 5px #fff,
+    0 0 0 8px color-mix(in srgb, var(--sfp-gold) 35%, transparent),
+    0 1px 4px rgba(16, 24, 40, 0.25);
+}
+.wh-slider:hover::-moz-range-thumb,
+.wh-slider:focus-visible::-moz-range-thumb {
+  transform: scale(1.06);
+  box-shadow:
+    0 0 0 5px #fff,
+    0 0 0 8px color-mix(in srgb, var(--sfp-gold) 35%, transparent),
+    0 1px 4px rgba(16, 24, 40, 0.25);
+}
+@media (prefers-reduced-motion: reduce) {
+  .wh-slider::-webkit-slider-thumb,
+  .wh-slider::-moz-range-thumb { transition: none; }
+  .wh-slider:hover::-webkit-slider-thumb,
+  .wh-slider:hover::-moz-range-thumb { transform: none; }
+}
+
+/* Step-card anatomy — every numbered step AND every Advanced-settings
+   slider is this same white, rounded-14 card (border/shadow tokens only,
+   no hardcoded hex). */
+.wh-step-card {
+  border-radius: 14px;
+  border: 1px solid var(--tool-border);
+  box-shadow: var(--tool-shadow);
+  background: var(--tool-surface);
+  padding: 20px;
+}
+@media (max-width: 480px) {
+  .wh-step-card { padding: 18px; }
+}
+
+/* Step-card hero value ("$12,000", "30 → 65", …) — clamps down from 28px
+   so a long value like $1,000,000 never overflows/wraps on narrow phones. */
+.wh-step-value {
+  font-size: clamp(22px, 6vw, 28px);
+}
+/* Sub-slider value (Step 2's escalation row, Advanced-settings cards). */
+.wh-slider-value-sm {
+  font-size: clamp(18px, 5vw, 20px);
+}
+
 /* Firewall landing page — scroll-triggered reveal. JS (IntersectionObserver) adds
    `.is-visible` when the element scrolls into view. The hidden start state applies
    ONLY under no-preference, so reduced-motion users always see content immediately. */

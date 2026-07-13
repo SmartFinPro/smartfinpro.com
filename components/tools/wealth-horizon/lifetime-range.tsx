@@ -73,8 +73,11 @@ export interface LifetimeRangeProps {
 // pointer events disabled on the whole element and re-enabled only on the
 // thumb pseudo-element, so two overlapping inputs never fight over clicks
 // anywhere except their own handle.
+// v4.1 — `.wh-slider` (26px gold thumb + white ring, globals.css) replaces
+// `.sfp-range` here so both handles match the Money-Leak-Anatomie standard
+// the rest of Wealth Horizon's sliders now use.
 const OVERLAY_INPUT_CLASSES =
-  'sfp-range pointer-events-none absolute inset-0 w-full appearance-none bg-transparent ' +
+  'wh-slider pointer-events-none absolute inset-0 w-full appearance-none bg-transparent ' +
   '[&::-webkit-slider-thumb]:pointer-events-auto [&::-moz-range-thumb]:pointer-events-auto';
 
 export function LifetimeRange({ today, retirement, onChange, todayInputKey, retirementInputKey }: LifetimeRangeProps) {
@@ -104,14 +107,12 @@ export function LifetimeRange({ today, retirement, onChange, todayInputKey, reti
         >
           Today {today}
         </span>
+        {/* v4.1 — both badges unified navy (was: gold-styled "Retire" badge)
+            per the Money-Leak-Anatomie restyle; the track fill between the
+            handles carries the gold now instead. */}
         <span
-          className="absolute top-7 -translate-x-1/2 whitespace-nowrap rounded-full border px-2 py-0.5 text-[11px] font-semibold"
-          style={{
-            left: `${retirementPct}%`,
-            background: 'var(--sfp-gold)',
-            borderColor: 'var(--sfp-gold-dark)',
-            color: 'var(--sfp-ink)',
-          }}
+          className="absolute top-7 -translate-x-1/2 whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-semibold text-white"
+          style={{ left: `${retirementPct}%`, background: 'var(--sfp-navy)' }}
         >
           Retire {retirement}
         </span>
@@ -120,7 +121,7 @@ export function LifetimeRange({ today, retirement, onChange, todayInputKey, reti
           <div className="pointer-events-none absolute top-1/2 h-1.5 w-full -translate-y-1/2 rounded-full" style={{ background: 'var(--tool-border)' }}>
             <div
               className="absolute h-1.5 rounded-full"
-              style={{ left: `${todayPct}%`, width: `${Math.max(0, retirementPct - todayPct)}%`, background: 'var(--sfp-navy)' }}
+              style={{ left: `${todayPct}%`, width: `${Math.max(0, retirementPct - todayPct)}%`, background: 'var(--sfp-gold)' }}
             />
           </div>
 
