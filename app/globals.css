@@ -64,7 +64,22 @@
     --sfp-ink:        #1A1A2E;
     --sfp-slate:      #64748B;   /* Tailwind slate-500 — matches landing page reference */
     --sfp-footer-text:rgba(255,255,255,0.5);
-    --sfp-warning-bg: #FFF8E1;  /* Warning-Box Hintergrund — amber-50 */
+    --sfp-warning-bg: #FFF8E1;  /* Warning-Box Hintergrund — amber-50 (unverändert; PR 2.1 lässt bestehende --sfp-* live-Werte in Ruhe) */
+
+    /* === Tool-Tokens (FDL PR 2.1) — SPEC 7.1, byte-identical to
+       docs/superpowers/specs/assets/2026-07-12-fdl/hifi/hifi-tokens.css :root.
+       Additive, unreferenced by any mounted page in this PR. === */
+    --tool-radius-control: 6px;
+    --tool-radius-panel: 8px;
+    --tool-surface: #FFFFFF;
+    --tool-surface-muted: #F7F9FC;
+    --tool-border: #D9DEE8;
+    --tool-border-strong: #B6C0D2;
+    --tool-shadow: 0 1px 2px rgb(16 24 40 / 0.05);
+    --tool-motion: 200ms cubic-bezier(0.2, 0, 0, 1);
+    --sfp-warning-border: #E8C978;
+    --sfp-warning-foreground: #8A5A00;
+    --sfp-warning-icon: #B45309;
 
     /* === Typography System (AP-04) === */
     /* Inter ist via next/font/google geladen → --font-inter auf <body> */
@@ -817,9 +832,24 @@ article a:not([href^="/go/"]):not([href^="http"]):not([data-slot="button"]):not(
   --sfp-ink:        #1A1A2E;
   --sfp-slate:      #64748B;   /* Tailwind slate-500 — matches landing page */
   --sfp-footer-text:#AAAAAA;
-  --sfp-warning-bg: #FFF8E1;
+  --sfp-warning-bg: #FFF8E1;  /* Warning-Box Hintergrund — amber-50 (unverändert; PR 2.1 lässt bestehende --sfp-* live-Werte in Ruhe) */
   --sfp-navy-deep:  #0F2E52;   /* Landing page hero deep navy */
   --sfp-gold-light: #FFF8EB;   /* Landing page gold-light badges */
+
+  /* Tool-Tokens (FDL PR 2.1) — byte-identical to hifi-tokens.css :root.
+     This block wins the cascade (Turbopack purge workaround, see header
+     comment above), so the tool tokens MUST also be duplicated here. */
+  --tool-radius-control: 6px;
+  --tool-radius-panel: 8px;
+  --tool-surface: #FFFFFF;
+  --tool-surface-muted: #F7F9FC;
+  --tool-border: #D9DEE8;
+  --tool-border-strong: #B6C0D2;
+  --tool-shadow: 0 1px 2px rgb(16 24 40 / 0.05);
+  --tool-motion: 200ms cubic-bezier(0.2, 0, 0, 1);
+  --sfp-warning-border: #E8C978;
+  --sfp-warning-foreground: #8A5A00;
+  --sfp-warning-icon: #B45309;
 
   /* Typography System (AP-04) */
   --font-primary:      var(--font-inter), system-ui, Arial, sans-serif;
