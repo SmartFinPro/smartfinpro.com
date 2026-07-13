@@ -36,6 +36,7 @@ import {
   Droplet,
   Users,
   FileSearch,
+  Wrench,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import NotificationBell from '@/components/dashboard/notification-bell';
@@ -77,6 +78,7 @@ const SIDEBAR_GROUPS: NavGroup[] = [
       { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart3, exact: true },
       { name: 'CTA Heatmap', href: '/dashboard/analytics/heatmap', icon: Flame },
       { name: 'Cockpit Analytics', href: '/dashboard/analytics/cockpits', icon: Gauge },
+      { name: 'Tool Analytics', href: '/dashboard/analytics/tools', icon: Wrench },
       { name: 'AI-Optimizer', href: '/dashboard/analytics/optimize', icon: Brain, badgeKey: 'optimize' },
       { name: 'Revenue', href: '/dashboard/revenue', icon: DollarSign },
     ],
