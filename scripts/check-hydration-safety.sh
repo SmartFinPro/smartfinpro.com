@@ -2,9 +2,22 @@
 # scripts/check-hydration-safety.sh
 # Guardrail: Detect hydration-unsafe patterns in SSR-rendered client components.
 #
-# Scope: components/marketing/ + lib/mdx/ (public SSR pages)
-# Exempt: components/dashboard/ (client-only behind auth), components/tools/ (calculators),
-#         lib/hooks/ (run inside useEffect), components/ui/ (generic primitives)
+# Scope: components/marketing/ + lib/mdx/ + components/tools/ (public SSR pages)
+# Exempt: components/dashboard/ (client-only behind auth), lib/hooks/ (run
+#         inside useEffect), components/ui/ (generic primitives), and — ONLY
+#         inside components/tools/ — an explicit, SHRINKING allowlist of the
+#         16 legacy calculator widgets that predate the FDL shell guard
+#         (FDL PR 2.1). Every migration PR that ports one of these 16 into
+#         the new components/tools/shell/ architecture DELETES its line from
+#         LEGACY_TOOL_WIDGET_ALLOWLIST below; the allowlist is empty and this
+#         mechanism is removed entirely in PR 5.3d. components/tools/shell/
+#         (and the future components/tools/hub/) are FULLY covered by this
+#         guard — no blanket exemption for new tool code.
+#         Also exempt: ONE pre-existing, unrelated legacy violation in
+#         components/marketing/ (PRE_EXISTING_MARKETING_ALLOWLIST below) —
+#         predates FDL PR 2.1 entirely (see comment at its definition);
+#         documented for a separate Fable/Opus follow-up decision, not fixed
+#         here.
 #
 # Forbidden in client component RENDER scope:
 #   - new Date()          → SSR/client clock mismatch
@@ -31,11 +44,79 @@ fi
 VIOLATIONS=0
 CHECKED=0
 
+# Shrinking allowlist (FDL PR 2.1) — the 16 pre-existing calculator widgets
+# in components/tools/ that predate the shell architecture. NOT exempt:
+# components/tools/shell/ (new), components/tools/money-leak-scanner/
+# (already passes cleanly — first migration pilot, PR 2.2) and
+# components/tools/dynamic-calculators.tsx (already passes cleanly — a
+# lazy-load barrel scheduled for deletion, see risk register 0.7).
+LEGACY_TOOL_WIDGET_ALLOWLIST=(
+  "components/tools/ai-roi-calculator.tsx"
+  "components/tools/au-mortgage-calculator.tsx"
+  "components/tools/broker-comparison.tsx"
+  "components/tools/broker-finder-quiz.tsx"
+  "components/tools/ca-mortgage-affordability-calculator.tsx"
+  "components/tools/credit-card-rewards-calculator.tsx"
+  "components/tools/credit-score-simulator.tsx"
+  "components/tools/debt-payoff-calculator.tsx"
+  "components/tools/gold-roi-calculator.tsx"
+  "components/tools/isa-tax-savings-calculator.tsx"
+  "components/tools/loan-calculator.tsx"
+  "components/tools/remortgage-calculator.tsx"
+  "components/tools/superannuation-calculator.tsx"
+  "components/tools/tfsa-rrsp-calculator.tsx"
+  "components/tools/trading-cost-calculator.tsx"
+  "components/tools/wealthsimple-calculator.tsx"
+)
+
+is_legacy_tool_widget() {
+  local candidate="$1"
+  for allowed in "${LEGACY_TOOL_WIDGET_ALLOWLIST[@]}"; do
+    # Match either an exact relative path (find run from repo root) or any
+    # path ending in "/$allowed" (defensive, in case $file ever carries a
+    # leading directory prefix).
+    case "$candidate" in
+      "$allowed"|*/"$allowed") return 0 ;;
+    esac
+  done
+  return 1
+}
+
+# Pre-existing violation, UNRELATED to FDL PR 2.1's components/tools/ scope
+# widening — discovered because this PR's gate (SPEC 0.2.2) is the first
+# place `check:hydration` is required to exit 0 (it was previously wired as
+# non-blocking in package.json `ci:full`: "npm run check:hydration || echo
+# '... non-blocking'"). components/marketing/ was ALREADY in this script's
+# scope before PR 2.1 — confirmed present on origin/main pre-PR-2.1 by running
+# origin/main's own copy of this script (same single violation, same line).
+# git blame: commit 8d114ea5 (2026-03-17), long before this PR.
+#
+# components/marketing/geo-suggest-banner.tsx:22 — `new Date(Date.now() +
+# days * 86_400_000)` inside `setCookie()`, a plain helper invoked only from
+# a dismiss/preference click handler, never from render scope. Almost
+# certainly a guard false positive (the static grep can't see the call site),
+# but this PR does not touch components/marketing/ code — Fable/Opus decide
+# on a real fix (e.g. rename to make the non-render call obvious to the
+# guard, or teach the guard to look at call sites) as a separate follow-up.
+PRE_EXISTING_MARKETING_ALLOWLIST=(
+  "components/marketing/geo-suggest-banner.tsx"
+)
+
+is_pre_existing_marketing_allowlisted() {
+  local candidate="$1"
+  for allowed in "${PRE_EXISTING_MARKETING_ALLOWLIST[@]}"; do
+    case "$candidate" in
+      "$allowed"|*/"$allowed") return 0 ;;
+    esac
+  done
+  return 1
+}
+
 # Find candidate files
 if [ "$SCOPE" = "all" ]; then
   SEARCH_DIRS="app components lib"
 else
-  SEARCH_DIRS="components/marketing lib/mdx"
+  SEARCH_DIRS="components/marketing lib/mdx components/tools"
 fi
 
 while IFS= read -r file; do
@@ -44,11 +125,19 @@ while IFS= read -r file; do
     */node_modules/*|*/.next/*|*/__tests__/*|*/e2e/*|*/scripts/*) continue ;;
   esac
 
-  # Skip exempt directories in marketing scope
+  # Skip exempt directories in marketing scope (unchanged from before FDL PR
+  # 2.1, except components/tools/ no longer gets a blanket pass — only the
+  # explicit 16-widget legacy allowlist above does).
   if [ "$SCOPE" = "marketing" ]; then
     case "$file" in
-      */components/dashboard/*|*/components/tools/*|*/components/ui/*|*/components/providers/*|*/lib/hooks/*) continue ;;
+      */components/dashboard/*|*/components/ui/*|*/components/providers/*|*/lib/hooks/*) continue ;;
     esac
+    if is_legacy_tool_widget "$file"; then
+      continue
+    fi
+    if is_pre_existing_marketing_allowlisted "$file"; then
+      continue
+    fi
   fi
 
   # Must contain 'use client' directive
