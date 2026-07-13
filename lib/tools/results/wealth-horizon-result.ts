@@ -152,8 +152,8 @@ export function buildWealthHorizonResult(
       ? `Financial independence in the ${focusScenario} scenario is projected around ${focus.fiDate}. `
       : `Financial independence in the ${focusScenario} scenario is not reached by your chosen retirement age. `)
     + (focus.depletionAge !== null
-      ? `In the ${focusScenario} scenario, funds run out ~${focus.depletionAge} in this scenario at the illustrative withdrawal rate.`
-      : `In the ${focusScenario} scenario, funds last beyond age ${LIFETIME_END_AGE} in this scenario at the illustrative withdrawal rate.`);
+      ? `Funds run out around age ${focus.depletionAge} in the ${focusScenario} scenario at the illustrative withdrawal rate.`
+      : `Funds last beyond age ${LIFETIME_END_AGE} in the ${focusScenario} scenario at the illustrative withdrawal rate.`);
 
   return {
     answer: buildAnswer(focus, focusScenario, inputs, currency, locale),

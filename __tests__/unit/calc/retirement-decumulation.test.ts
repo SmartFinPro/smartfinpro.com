@@ -58,6 +58,7 @@ describe('retirement engine — decumulation invariants (FDL WH-v2)', () => {
     expect(base.depletionAge).toBeNull();
     expect(base.decumulationRows.length).toBeGreaterThan(1);
     const lastRow = base.decumulationRows[base.decumulationRows.length - 1];
+    expect(lastRow.age).toBe(90); // explicit upper-cap guard (Opus rec. 2): no off-by-one at LIFETIME_END_AGE
     expect(lastRow.balance).toBeGreaterThanOrEqual(base.balanceAtRetire);
   });
 
