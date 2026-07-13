@@ -10,7 +10,14 @@ export interface Lever {
   key: string;                      // controlRole:'lever' events reference this key
   title: string;
   deltaLabel: string;               // "Save ~$120–180/mo" — always a range/circa, never exact promises
-  apply?: Partial<Record<string, number>>;  // optional input mutation (live application)
+  // Optional input mutation (live application). Semantics are NOT uniform:
+  // most keys are ABSOLUTE new values, but a per-engine documented subset
+  // may be an ADDITIVE delta instead (e.g. the retirement engine's
+  // `employeeContributionMonthly` — see lib/calc/retirement/engine.ts's
+  // applyLever()). Consumers MUST use the engine's own apply function
+  // (e.g. applyLever) rather than reimplementing a generic setField loop,
+  // or they will silently misapply delta-semantic keys as absolutes.
+  apply?: Partial<Record<string, number>>;
 }
 
 export interface AssumptionEntry {

@@ -64,3 +64,34 @@ export function getRuleMeta(
 export function getRule(market: keyof typeof RULE_PACKS, key: string, asOf: string): number {
   return getRuleMeta(market, key, asOf).value;
 }
+
+// ── RuleSnapshot (SPEC 8.4) ───────────────────────────────────────────────
+// A serializable, point-in-time projection of a set of rule keys — the shape
+// a Server Component hands to a Client Island as a prop (no functions, no
+// class instances). Calc engines (e.g. lib/calc/retirement) consume this
+// instead of calling getRule/getRuleMeta directly, so the engine stays pure
+// and decoupled from the RULE_PACKS lookup mechanism.
+export interface RuleSnapshot {
+  asOf: string;
+  values: Record<string, number>;
+  meta: Record<string, { verifiedAt: string; sourceUrl: string; label: string }>;
+}
+
+/** Resolves a fixed list of rule keys for `market` at `asOf` into a single
+ *  serializable snapshot. Missing keys are simply absent from `values`/`meta`
+ *  in production (getRuleMeta already logs a warning per key); in dev/test a
+ *  missing key throws via getRuleMeta, matching the fail-loud contract above. */
+export function resolveRuleSnapshot(
+  market: keyof typeof RULE_PACKS,
+  keys: string[],
+  asOf: string
+): RuleSnapshot {
+  const values: Record<string, number> = {};
+  const meta: Record<string, { verifiedAt: string; sourceUrl: string; label: string }> = {};
+  for (const key of keys) {
+    const entry = getRuleMeta(market, key, asOf);
+    values[key] = entry.value;
+    meta[key] = { verifiedAt: entry.verifiedAt, sourceUrl: entry.sourceUrl, label: entry.label };
+  }
+  return { asOf, values, meta };
+}
