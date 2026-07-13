@@ -1,24 +1,50 @@
 'use client';
 // components/tools/wealth-horizon/wealth-horizon-live.tsx
-// Wealth Horizon v3 — Clean-Redesign (bindende Fable-Direktive nach
-// User-Feedback: v2 war "viel zu unruhig und durcheinander"). Structural
-// reference is a Quirion-style ETF-savings-plan calculator, reinterpreted in
-// SmartFinPro's own visual language — ONE big white panel, five numbered
-// steps on the left, a calm single-hero result on the right. Every displayed
-// number still comes from buildWealthHorizonResult()/the retirement engine —
-// no second calc path lives in this file (harte Regel, unverändert aus v1/v2).
+// Wealth Horizon v4 — consistent slider-only input surface (bindende
+// User-Direktive 13.07.2026, superseding v3's "no sliders anywhere" Clean-
+// Redesign rule for Normal mode specifically). Structural reference is
+// still a Quirion-style ETF-savings-plan calculator — ONE big white panel,
+// numbered steps on the left, a calm single-hero result on the right. Every
+// displayed number still comes from buildWealthHorizonResult()/the
+// retirement engine — no second calc path lives in this file (harte Regel,
+// unverändert seit v1).
 //
-// v3 replaces the v2 3-way scenario switcher with two plain fields the user
-// actually understands — "Expected annual return" (nominal) and "Expected
-// inflation" — converted to the engine's REAL-terms RuleSnapshot by
+// v3 replaced the v2 3-way scenario switcher with two plain fields —
+// "Expected annual return" (nominal) and "Expected inflation" — converted to
+// the engine's REAL-terms RuleSnapshot by
 // lib/tools/results/wealth-horizon-real-return.ts (engine itself stays real
-// and untouched). The v2 Lifetime Path corridor/decumulation chart is
-// replaced entirely by a stacked contribution-vs-growth bar chart
-// (contribution-growth-chart.tsx) covering the accumulation phase only.
+// and untouched); that bridge is UNCHANGED in v4. The v2 Lifetime Path
+// corridor/decumulation chart stays replaced by the v3 stacked
+// contribution-vs-growth bar chart (contribution-growth-chart.tsx).
+//
+// v4 additions (this file):
+//   - Every Normal-mode numeric field (Steps 1/2/4/5 + Advanced settings) is
+//     now a slider-only control (./slider-field.tsx) — CurrencyField/
+//     IntegerField/PercentageField + PresetChips are GONE from Normal mode.
+//     Account-breakdown ("detailed accounts") mode is explicitly OUT of
+//     scope — it keeps its existing text fields (SPEC 7.3 Financial Field
+//     family), since that's a different, opt-in editing surface.
+//   - SPEC-Regel-7-Abweichung (dokumentiert, bindende User-Direktive
+//     13.07.2026): SPEC design rule 7 requires numeric direct entry
+//     alongside any slider. Wealth Horizon v4's Normal mode deliberately
+//     ships slider-only per this explicit instruction — the native
+//     <input type="range"> stays fully keyboard-operable (arrow keys,
+//     Home/End) and aria-valuetext always carries the exact formatted
+//     value, so the control stays screen-reader accessible without a
+//     parallel text box. See slider-field.tsx's own header for the same
+//     note.
+//   - Step 3's two age IntegerFields are replaced by one two-handle
+//     lifetime-range slider (./lifetime-range.tsx).
+//   - Step 2 gained a same-step "Increase contributions each year" slider
+//     (contributionGrowthPct, 0–5%) wired straight to the engine's new
+//     RetirementBaseInputs.contributionGrowthPct (lib/calc/retirement/
+//     engine.ts) — a dynamic hint below it uses the engine's OWN
+//     monthlyContributionInYear() helper, so the UI copy and the engine's
+//     actual math can never diverge.
 //
 // Parametrized to run all 4 markets from ONE island (props identical in
-// spirit to the v1/v2 WealthHorizonLiveProps — FDL 4.3 parametrization
-// untouched), plus one additive prop: `defaultReturnAssumptions`.
+// spirit to the v1/v2/v3 WealthHorizonLiveProps — FDL 4.3 parametrization
+// untouched).
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { ImpactLevers } from '@/components/tools/shell/impact-levers';
@@ -26,8 +52,6 @@ import { AssumptionsDrawer } from '@/components/tools/shell/assumptions-drawer';
 import { NextBestAction } from '@/components/tools/shell/next-best-action';
 import { ResultMiniBar } from '@/components/tools/shell/result-mini-bar';
 import { CurrencyField } from '@/components/tools/shell/fields/currency-field';
-import { IntegerField } from '@/components/tools/shell/fields/integer-field';
-import { PercentageField } from '@/components/tools/shell/fields/percentage-field';
 import { BaseField } from '@/components/tools/shell/fields/base-field';
 import { createLiveAnnouncer } from '@/lib/tools/aria-live';
 import { advancePanelState, type Lever, type PanelState, type ToolCurrency, type ToolResult } from '@/lib/tools/shell-types';
@@ -41,6 +65,7 @@ import {
   applyLever,
   buildContributionChecks,
   LEVER_EXTRA_MONTHLY,
+  monthlyContributionInYear,
 } from '@/lib/calc/retirement/engine';
 import type {
   RetirementAccountInput,
@@ -53,6 +78,8 @@ import { buildContributionGrowthSeries } from '@/lib/tools/results/wealth-horizo
 import { interpolateCountUp } from '@/lib/tools/count-up';
 import { ContributionGrowthChart } from './contribution-growth-chart';
 import type { StackedBarInput } from '@/lib/calc/chart-geometry';
+import { SliderField } from './slider-field';
+import { LifetimeRange, type LifetimeValues } from './lifetime-range';
 
 /** Account types whose contribution room is a PERSONAL figure the user must
  *  supply (`availableRoom`) — never derived from a national maximum. Single
@@ -96,10 +123,11 @@ const ACCOUNT_TYPE_HELP: Partial<Record<RetirementAccountType, string>> = {
     'Your personal unused concessional cap carry-forward, from your ATO online account (myGov) — never derived from the national cap.',
 };
 
-/** Step 4's three return presets (DESIGN-DIREKTIVE v3) — the chip label IS
- *  the trackScenarioCompare() argument (lowercased), NOT the engine's
+/** Step 4's three return presets — now rendered as clickable slider TICKS
+ *  (v4) rather than preset chip buttons (v3). The label IS still the
+ *  trackScenarioCompare() argument (lowercased), NOT the engine's
  *  conservative/base/optimistic scenario keys (that 3-way switcher is gone
- *  in v3 — see lib/tools/results/wealth-horizon-real-return.ts's header). */
+ *  since v3 — see lib/tools/results/wealth-horizon-real-return.ts's header). */
 const RETURN_PRESETS: { key: 'conservative' | 'balanced' | 'optimistic'; label: string; value: number }[] = [
   { key: 'conservative', label: 'Conservative 5.5%', value: 5.5 },
   { key: 'balanced', label: 'Balanced 7.5%', value: 7.5 },
@@ -138,40 +166,6 @@ function NumberedStep({ n, title, children }: { n: number; title: string; childr
         <h3 className="m-0 text-[15px] font-semibold text-[var(--sfp-ink)]">{title}</h3>
       </div>
       <div className="flex flex-col gap-3 pl-10">{children}</div>
-    </div>
-  );
-}
-
-function PresetChips<T extends string | number>({
-  options,
-  activeValue,
-  onSelect,
-}: {
-  options: { label: string; value: T }[];
-  activeValue: T;
-  onSelect: (value: T) => void;
-}) {
-  return (
-    <div className="flex flex-wrap gap-2">
-      {options.map((opt) => {
-        const active = opt.value === activeValue;
-        return (
-          <button
-            key={opt.label}
-            type="button"
-            aria-pressed={active}
-            onClick={() => onSelect(opt.value)}
-            className="rounded-full border px-3 py-1.5 text-xs font-semibold"
-            style={
-              active
-                ? { background: 'var(--sfp-navy)', borderColor: 'var(--sfp-navy)', color: '#fff' }
-                : { background: 'var(--tool-surface)', borderColor: 'var(--tool-border)', color: 'var(--sfp-ink)' }
-            }
-          >
-            {opt.label}
-          </button>
-        );
-      })}
     </div>
   );
 }
@@ -294,6 +288,12 @@ export function WealthHorizonLive({
   const [returnNominalPct, setReturnNominalPct] = useState(defaultReturnAssumptions.returnNominalPct);
   const [inflationPct, setInflationPct] = useState(defaultReturnAssumptions.inflationPct);
 
+  // v4 Step 2 addition — optional REAL annual escalation of employee
+  // contributions (0–5%, default 0 = flat, bit-identical to pre-v4 engine
+  // behavior). Fed straight into RetirementBaseInputs.contributionGrowthPct
+  // below (lib/calc/retirement/engine.ts's own escalation loop).
+  const [contributionGrowthPct, setContributionGrowthPct] = useState(0);
+
   // AU-only helper state (never part of RetirementInputs itself; it only
   // pre-fills an employer-contribution field, which stays freely editable
   // afterward — "editable suggestion, never fixed").
@@ -332,6 +332,7 @@ export function WealthHorizonLive({
         targetMonthlyIncomeToday: base.targetMonthlyIncomeToday,
         annualFeePct: base.annualFeePct,
         withdrawalRatePct: base.withdrawalRatePct,
+        contributionGrowthPct,
         expectedRetirementBenefit,
         contributionMode: 'simple',
         simple: {
@@ -349,11 +350,12 @@ export function WealthHorizonLive({
       targetMonthlyIncomeToday: base.targetMonthlyIncomeToday,
       annualFeePct: base.annualFeePct,
       withdrawalRatePct: base.withdrawalRatePct,
+      contributionGrowthPct,
       expectedRetirementBenefit,
       contributionMode: 'account-breakdown',
       accounts: accounts as [RetirementAccountInput, ...RetirementAccountInput[]],
     };
-  }, [market, mode, base, startingAmount, monthlyContribution, employerContributionMonthly, accounts, benefit]);
+  }, [market, mode, base, startingAmount, monthlyContribution, employerContributionMonthly, accounts, benefit, contributionGrowthPct]);
 
   const contributionChecks = useMemo(() => buildContributionChecks(inputs, rules), [inputs, rules]);
 
@@ -403,6 +405,17 @@ export function WealthHorizonLive({
     markInteracted();
     tracker.trackStart(inputKey);
     tracker.trackCategoricalInputChange(inputKey, bucket);
+  }
+
+  // v4 Step 3 — the two-handle lifetime-range slider reports BOTH ages
+  // together on every change (LifetimeRange's onChange contract); track only
+  // whichever one actually moved, via the SAME trackField mechanism the old
+  // separate IntegerFields used (inputKey/kind unchanged: 'currentAge'/
+  // 'retireAge', kind 'years') so analytics stays identical to v3.
+  function handleLifetimeChange(next: LifetimeValues): void {
+    if (next.today !== base.currentAge) trackField('currentAge', next.today, 'years');
+    if (next.retirement !== base.retireAge) trackField('retireAge', next.retirement, 'years');
+    setBase((b) => ({ ...b, currentAge: next.today, retireAge: next.retirement }));
   }
 
   function updateAccount(index: number, patch: Partial<RetirementAccountInput>): void {
@@ -630,29 +643,30 @@ export function WealthHorizonLive({
     </div>
   );
 
+  // v4 — every Normal-mode slider's live-value formatter, shared so the
+  // hero number and every slider display the same currency/percent style.
+  const fmtCurrency = (v: number) => formatCurrency(v, currency, locale);
+  const fmtPercent1 = (v: number) => formatPercent(v, locale, 1);
+
+  // Step 2's dynamic escalation hint — ALWAYS year 10, using the engine's
+  // OWN monthlyContributionInYear() helper (never a second formula), so the
+  // copy can never drift from what the engine actually projects.
+  const escalatedYear10 = monthlyContributionInYear(monthlyContribution, contributionGrowthPct, 10);
+
   const inputsColumn = (
     <div className="flex flex-col gap-7">
       {mode === 'simple' ? (
         <>
           <NumberedStep n={1} title="Starting amount">
-            <CurrencyField
+            <SliderField
               label="Starting amount"
-              hideLabel
               inputKey="startingAmount"
               value={startingAmount}
-              currency={currency}
-              locale={locale}
               min={0}
+              max={1_000_000}
+              step={1_000}
+              format={fmtCurrency}
               onChange={(v) => {
-                if (v === '') return;
-                setStartingAmount(v);
-                trackField('startingAmount', v, 'currency');
-              }}
-            />
-            <PresetChips
-              options={[5000, 10000, 25000, 50000].map((v) => ({ label: formatCurrency(v, currency, locale), value: v }))}
-              activeValue={startingAmount}
-              onSelect={(v) => {
                 setStartingAmount(v);
                 trackField('startingAmount', v, 'currency');
               }}
@@ -660,24 +674,15 @@ export function WealthHorizonLive({
           </NumberedStep>
 
           <NumberedStep n={2} title="Monthly contribution">
-            <CurrencyField
+            <SliderField
               label="Monthly contribution"
-              hideLabel
               inputKey="monthlyContribution"
               value={monthlyContribution}
-              currency={currency}
-              locale={locale}
               min={0}
+              max={5_000}
+              step={50}
+              format={fmtCurrency}
               onChange={(v) => {
-                if (v === '') return;
-                setMonthlyContribution(v);
-                trackField('monthlyContribution', v, 'currency');
-              }}
-            />
-            <PresetChips
-              options={[200, 400, 800, 1500].map((v) => ({ label: formatCurrency(v, currency, locale), value: v }))}
-              activeValue={monthlyContribution}
-              onSelect={(v) => {
                 setMonthlyContribution(v);
                 trackField('monthlyContribution', v, 'currency');
               }}
@@ -687,6 +692,25 @@ export function WealthHorizonLive({
                 {contributionChecks[0].message}
               </p>
             ) : null}
+            <SliderField
+              label="Increase contributions each year"
+              inputKey="contributionGrowthPct"
+              value={contributionGrowthPct}
+              min={0}
+              max={5}
+              step={0.5}
+              format={fmtPercent1}
+              onChange={(v) => {
+                setContributionGrowthPct(v);
+                trackField('contributionGrowthPct', v, 'percent');
+              }}
+            />
+            {contributionGrowthPct > 0 ? (
+              <p data-testid="contribution-growth-hint" className="m-0 text-xs text-[var(--sfp-slate)]">
+                {fmtCurrency(monthlyContribution)}/month becomes {fmtCurrency(escalatedYear10)}/month in year 10 (in
+                today&rsquo;s money)
+              </p>
+            ) : null}
           </NumberedStep>
         </>
       ) : (
@@ -694,57 +718,31 @@ export function WealthHorizonLive({
       )}
 
       <NumberedStep n={mode === 'simple' ? 3 : 2} title="Your age today & at retirement">
-        <div className="flex gap-3">
-          <div className="flex-1">
-            <IntegerField
-              label="Today"
-              inputKey="currentAge"
-              value={base.currentAge}
-              min={18}
-              max={79}
-              onChange={(v) => {
-                if (v === '') return;
-                setBase((b) => ({ ...b, currentAge: v }));
-                trackField('currentAge', v, 'years');
-              }}
-            />
-          </div>
-          <div className="flex-1">
-            <IntegerField
-              label="Retirement"
-              inputKey="retireAge"
-              value={base.retireAge}
-              min={base.currentAge + 1}
-              max={80}
-              onChange={(v) => {
-                if (v === '') return;
-                setBase((b) => ({ ...b, retireAge: v }));
-                trackField('retireAge', v, 'years');
-              }}
-            />
-          </div>
-        </div>
+        <LifetimeRange
+          today={base.currentAge}
+          retirement={base.retireAge}
+          onChange={handleLifetimeChange}
+          todayInputKey="currentAge"
+          retirementInputKey="retireAge"
+        />
       </NumberedStep>
 
       <NumberedStep n={mode === 'simple' ? 4 : 3} title="Expected annual return">
-        <PercentageField
+        <SliderField
           label="Expected annual return"
-          hideLabel
           inputKey="returnNominalPct"
           value={returnNominalPct}
           min={0}
-          max={15}
+          max={12}
+          step={0.5}
+          format={fmtPercent1}
           onChange={(v) => {
-            if (v === '') return;
             setReturnNominalPct(v);
             trackField('returnNominalPct', v, 'percent');
           }}
-        />
-        <PresetChips
-          options={RETURN_PRESETS.map((p) => ({ label: p.label, value: p.value }))}
-          activeValue={returnNominalPct}
-          onSelect={(value) => {
-            const preset = RETURN_PRESETS.find((p) => p.value === value)!;
+          ticks={RETURN_PRESETS.map((p) => ({ value: p.value, label: p.label }))}
+          onTickClick={(tick) => {
+            const preset = RETURN_PRESETS.find((p) => p.value === tick.value)!;
             handleReturnPresetSelect(preset);
           }}
         />
@@ -752,16 +750,16 @@ export function WealthHorizonLive({
       </NumberedStep>
 
       <NumberedStep n={mode === 'simple' ? 5 : 4} title="Expected inflation">
-        <PercentageField
+        <SliderField
           label="Expected inflation"
-          hideLabel
           inputKey="inflationPct"
           value={inflationPct}
           min={0}
           max={6}
+          step={0.1}
+          format={fmtPercent1}
           help="Used to show everything in today's purchasing power"
           onChange={(v) => {
-            if (v === '') return;
             setInflationPct(v);
             trackField('inflationPct', v, 'percent');
           }}
@@ -774,58 +772,61 @@ export function WealthHorizonLive({
         ) : null}
       </NumberedStep>
 
-      {/* Advanced settings — native <details>, no panel-in-panel (DESIGN-DIREKTIVE). */}
+      {/* Advanced settings — native <details>, no panel-in-panel (DESIGN-DIREKTIVE, unchanged from v3); every field inside is now a slider too (v4). */}
       <details className="wh-advanced">
         <summary className="cursor-pointer text-sm font-semibold text-[var(--sfp-navy)]">Advanced settings</summary>
         <div className="mt-4 flex flex-col gap-4">
-          <PercentageField
+          <SliderField
             label="Annual fee"
             inputKey="annualFeePct"
             value={base.annualFeePct}
             min={0}
-            max={3}
+            max={2}
+            step={0.1}
+            format={fmtPercent1}
             onChange={(v) => {
-              if (v === '') return;
               setBase((b) => ({ ...b, annualFeePct: v }));
               trackField('annualFeePct', v, 'percent');
             }}
           />
-          <PercentageField
+          <SliderField
             label="Withdrawal rate"
             inputKey="withdrawalRatePct"
             value={base.withdrawalRatePct}
             min={2.5}
             max={5.0}
+            step={0.1}
+            format={fmtPercent1}
             onChange={(v) => {
-              if (v === '') return;
               setBase((b) => ({ ...b, withdrawalRatePct: v }));
               trackField('withdrawalRatePct', v, 'percent');
             }}
           />
-          <CurrencyField
+          <SliderField
             label="What monthly income do you want in retirement?"
             inputKey="targetMonthlyIncomeToday"
             value={base.targetMonthlyIncomeToday}
-            currency={currency}
-            locale={locale}
             min={0}
+            max={15_000}
+            step={100}
+            format={fmtCurrency}
             onChange={(v) => {
-              if (v === '') return;
               setBase((b) => ({ ...b, targetMonthlyIncomeToday: v }));
               trackField('targetMonthlyIncomeToday', v, 'currency');
             }}
           />
           {mode === 'simple' ? (
-            <CurrencyField
+            <SliderField
               label="Employer match (monthly, optional)"
               inputKey="employerContributionMonthly"
               value={employerContributionMonthly}
-              currency={currency}
-              locale={locale}
               min={0}
+              max={2_000}
+              step={50}
+              format={fmtCurrency}
               onChange={(v) => {
-                setEmployerContributionMonthly(v === '' ? 0 : v);
-                if (v !== '') trackField('employerContributionMonthly', v, 'currency');
+                setEmployerContributionMonthly(v);
+                trackField('employerContributionMonthly', v, 'currency');
               }}
             />
           ) : null}
@@ -840,27 +841,28 @@ export function WealthHorizonLive({
             </button>
             {benefit.enabled ? (
               <>
-                <CurrencyField
+                <SliderField
                   label="Expected monthly benefit (today's money)"
                   inputKey="benefitMonthlyAmountToday"
                   value={benefit.monthlyAmountToday}
-                  currency={currency}
-                  locale={locale}
                   min={0}
+                  max={5_000}
+                  step={50}
+                  format={fmtCurrency}
                   onChange={(v) => {
-                    if (v === '') return;
                     setBenefit((b) => ({ ...b, monthlyAmountToday: v }));
                     trackField('benefitMonthlyAmountToday', v, 'currency');
                   }}
                 />
-                <IntegerField
+                <SliderField
                   label="Age benefit starts"
                   inputKey="benefitStartsAtAge"
                   value={benefit.startsAtAge}
-                  min={base.currentAge}
-                  max={100}
+                  min={55}
+                  max={75}
+                  step={1}
+                  format={(v) => String(v)}
                   onChange={(v) => {
-                    if (v === '') return;
                     setBenefit((b) => ({ ...b, startsAtAge: v }));
                     trackField('benefitStartsAtAge', v, 'years');
                   }}

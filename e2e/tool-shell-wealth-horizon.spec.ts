@@ -1,38 +1,43 @@
 // e2e/tool-shell-wealth-horizon.spec.ts
-// Wealth Horizon v3 — Clean-Redesign (bindende Fable-Direktive nach
-// User-Feedback: v2 war "viel zu unruhig und durcheinander"). All 4 markets
-// (registry-driven so a future 5th variant is picked up automatically).
+// Wealth Horizon v4 — consistent slider-only Normal-mode input surface
+// (bindende User-Direktive 13.07.2026, superseding v3's "no sliders
+// anywhere" rule for Normal mode). All 4 markets (registry-driven so a
+// future 5th variant is picked up automatically).
 //
 // JS-off (Playwright global default), per market: the Worked Example must be
 // fully present in server HTML — H1, "Example result" chip, all 5 numbered
-// steps (incl. the new "Expected inflation" step), the big hypothetical-
-// balance number + "in today's money", the stacked contribution/growth bar
-// chart with its "Your contributions"/"Growth" legend, the 2 summary tiles,
-// exactly 3 levers, AssumptionsDrawer sources, exactly 1 NextBestAction,
-// robots noindex, the binding wording ("in today's money", "illustrative
-// retirement withdrawal"), the negative wording list (shared FORBIDDEN_WORDS)
-// absent anywhere in the HTML, the route excluded from the sitemap, and
-// market-specific terms present (AU: "12%" + "$32,500"; UK: "ISA"/"SIPP" +
-// "£"; CA: "TFSA"/"RRSP" + "personal room").
+// steps (incl. "Expected inflation" and the Step-2 escalation slider), the
+// big hypothetical-balance number + "in today's money", the stacked
+// contribution/growth bar chart with its "Your contributions"/"Growth"
+// legend, the 2 summary tiles, exactly 3 levers, AssumptionsDrawer sources,
+// exactly 1 NextBestAction, robots noindex, the binding wording ("in today's
+// money", "illustrative retirement withdrawal"), the negative wording list
+// (shared FORBIDDEN_WORDS) absent anywhere in the HTML, the route excluded
+// from the sitemap, and market-specific terms present (AU: "12%" + "$32,500";
+// UK: "ISA"/"SIPP" + "£"; CA: "TFSA"/"RRSP" + "personal room"). Every Normal-
+// mode field is now a native <input type="range"> with correct
+// min/max/step/aria-valuetext, rendered server-side (v4's SPEC-Regel-7
+// deviation — see wealth-horizon-live.tsx's header).
 //
 // Hub-hiddenness (registry-driven, all 4 hubs + footer + llms.txt): unchanged
-// from v2 — none of the 4 Wealth Horizon routes may appear on /tools,
+// from v2/v3 — none of the 4 Wealth Horizon routes may appear on /tools,
 // /uk/tools, /ca/tools, /au/tools, in the footer, or in llms.txt.
 //
-// JS-on (US-only): every numbered step is visible and live from first paint
-// (no sliders anywhere in v3 — "Ruhe" design principle), a plain field edit
-// flips the state chip to "Your result" and fires tool_input_change, a Step-4
-// return-preset chip click ALSO flips to "Your result" (it's a real input
-// change) but fires tool_scenario_compare instead, a lever click still fires
-// tool_input_change with controlRole 'lever', Simple mode still never clamps,
-// Advanced settings holds Annual fee/Withdrawal rate/benefit/detailed-accounts
-// toggle, and the chart's hover overlay mounts without breaking anything
-// JS-off already asserts.
+// JS-on (US-only): every numbered step's slider is visible and live from
+// first paint, dragging a slider flips the state chip to "Your result" and
+// fires tool_input_change, the Step-4 return-preset TICKS still fire
+// tool_scenario_compare instead, a lever click still fires tool_input_change
+// with controlRole 'lever', Simple mode still never clamps, Advanced
+// settings holds Annual fee/Withdrawal rate/benefit/detailed-accounts toggle
+// (all sliders now too), the two-handle lifetime-range enforces
+// retirement ≥ today + 1, the Step-2 escalation slider's dynamic hint uses
+// the engine's own monthlyContributionInYear() formula, and the chart's
+// hover overlay mounts without breaking anything JS-off already asserts.
 //
 // Run:  npx playwright test e2e/tool-shell-wealth-horizon.spec.ts
 //       BASE_URL=http://localhost:3007 npx playwright test e2e/tool-shell-wealth-horizon.spec.ts
 
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type Page, type Locator } from '@playwright/test';
 import { getAllVariants, getHubPathForMarket } from '@/lib/tools/registry';
 import { FORBIDDEN_WORDS } from '@/lib/tools/results/wealth-horizon-result';
 
@@ -113,9 +118,23 @@ function toolEvents(batches: TrackedBatch[]): Array<Record<string, unknown>> {
   return batches.filter((b) => b.type === 'tool_event_batch').flatMap((b) => b.data.events ?? []);
 }
 
+/** Programmatically sets a native range input's value and dispatches
+ *  `input`/`change` — the standard technique for driving a React-controlled
+ *  <input type="range"> from Playwright (`.fill()` isn't reliable for
+ *  range inputs, and dragging by pixel offset is brittle across viewports). */
+async function setRangeValue(locator: Locator, value: number): Promise<void> {
+  await locator.evaluate((el, val) => {
+    const proto = Object.getPrototypeOf(el) as { value: PropertyDescriptor };
+    const setter = Object.getOwnPropertyDescriptor(proto, 'value')?.set;
+    setter?.call(el, String(val));
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+    el.dispatchEvent(new Event('change', { bubbles: true }));
+  }, value);
+}
+
 for (const c of CASES) {
   test.describe(`Wealth Horizon ${c.market.toUpperCase()} (JS off): ${c.path}`, () => {
-    test('Worked Example — v3 Clean-Redesign is fully present in server HTML, noindex, wording contracts hold', async ({ page }) => {
+    test('Worked Example — v4 slider-only surface is fully present in server HTML, noindex, wording contracts hold', async ({ page }) => {
       const response = await page.goto(c.path);
       expect(response?.status()).toBeLessThan(400);
 
@@ -125,14 +144,68 @@ for (const c of CASES) {
       // "Example result" chip (Worked Example, resultState 'example')
       await expect(page.locator('.result-chip').first()).toContainText('Example result');
 
-      // 5 numbered steps, visible from first paint (no step flow, no sliders).
+      // 5 numbered steps, visible from first paint (no step flow).
       const html = await page.content();
       expect(html).toContain('Starting amount');
       expect(html).toContain('Monthly contribution');
+      expect(html).toContain('Increase contributions each year');
       expect(html).toContain('Your age today &amp; at retirement');
       expect(html).toContain('Expected annual return');
       expect(html).toContain('Expected inflation');
-      expect(html.toLowerCase()).not.toContain('type="range"'); // no sliders anywhere in v3
+
+      // v4: every Normal-mode field is a slider, server-rendered with
+      // correct min/max/step (SPEC-Regel-7 deviation, documented).
+      expect(html.toLowerCase()).toContain('type="range"');
+      const startingAmount = page.locator('input[data-input-key="startingAmount"]');
+      await expect(startingAmount).toHaveAttribute('min', '0');
+      await expect(startingAmount).toHaveAttribute('max', '1000000');
+      await expect(startingAmount).toHaveAttribute('step', '1000');
+      await expect(startingAmount).toHaveAttribute('aria-valuetext', /.+/);
+
+      const monthlyContribution = page.locator('input[data-input-key="monthlyContribution"]');
+      await expect(monthlyContribution).toHaveAttribute('min', '0');
+      await expect(monthlyContribution).toHaveAttribute('max', '5000');
+      await expect(monthlyContribution).toHaveAttribute('step', '50');
+
+      const growth = page.locator('input[data-input-key="contributionGrowthPct"]');
+      await expect(growth).toHaveAttribute('min', '0');
+      await expect(growth).toHaveAttribute('max', '5');
+      await expect(growth).toHaveAttribute('step', '0.5');
+
+      const todaySlider = page.getByRole('slider', { name: 'Your age today' });
+      await expect(todaySlider).toHaveAttribute('min', '18');
+      await expect(todaySlider).toHaveAttribute('max', '70');
+      const retireSlider = page.getByRole('slider', { name: 'Retirement age' });
+      await expect(retireSlider).toHaveAttribute('min', '45');
+      await expect(retireSlider).toHaveAttribute('max', '80');
+
+      const returnSlider = page.locator('input[data-input-key="returnNominalPct"]');
+      await expect(returnSlider).toHaveAttribute('min', '0');
+      await expect(returnSlider).toHaveAttribute('max', '12');
+      await expect(returnSlider).toHaveAttribute('step', '0.5');
+
+      const inflationSlider = page.locator('input[data-input-key="inflationPct"]');
+      await expect(inflationSlider).toHaveAttribute('min', '0');
+      await expect(inflationSlider).toHaveAttribute('max', '6');
+      await expect(inflationSlider).toHaveAttribute('step', '0.1');
+
+      // Advanced settings (closed <details>) sliders — present in server
+      // HTML with correct attributes even though not visible.
+      const annualFee = page.locator('input[data-input-key="annualFeePct"]');
+      await expect(annualFee).toHaveAttribute('min', '0');
+      await expect(annualFee).toHaveAttribute('max', '2');
+      await expect(annualFee).toHaveAttribute('step', '0.1');
+      const withdrawalRate = page.locator('input[data-input-key="withdrawalRatePct"]');
+      await expect(withdrawalRate).toHaveAttribute('min', '2.5');
+      await expect(withdrawalRate).toHaveAttribute('max', '5');
+      const targetIncome = page.locator('input[data-input-key="targetMonthlyIncomeToday"]');
+      await expect(targetIncome).toHaveAttribute('min', '0');
+      await expect(targetIncome).toHaveAttribute('max', '15000');
+      await expect(targetIncome).toHaveAttribute('step', '100');
+      const employerMatch = page.locator('input[data-input-key="employerContributionMonthly"]');
+      await expect(employerMatch).toHaveAttribute('min', '0');
+      await expect(employerMatch).toHaveAttribute('max', '2000');
+      await expect(employerMatch).toHaveAttribute('step', '50');
 
       // Hero — big hypothetical-balance number + "in today's money" badge.
       await expect(page.locator('#wealth-horizon-result').getByText('Hypothetical balance at retirement')).toBeVisible();
@@ -231,8 +304,8 @@ test.describe('Wealth Horizon — hub-hiddenness ×4 (FDL 4.3)', () => {
   });
 });
 
-// ── US-only JS-on suite (v3 Clean-Redesign) ─────────────────────────────
-test.describe(`Wealth Horizon US (JS on) — v3 Clean-Redesign: ${PAGE_PATH}`, () => {
+// ── US-only JS-on suite (v4 slider-only surface) ─────────────────────────
+test.describe(`Wealth Horizon US (JS on) — v4 slider-only surface: ${PAGE_PATH}`, () => {
   test.use({ javaScriptEnabled: true });
 
   test.beforeEach(async ({ page }) => {
@@ -243,66 +316,108 @@ test.describe(`Wealth Horizon US (JS on) — v3 Clean-Redesign: ${PAGE_PATH}`, (
     });
   });
 
-  test('no step flow, no sliders — every numbered step is visible immediately', async ({ page }) => {
+  test('no step flow, no text fields in Normal mode — every numbered step is a visible slider from first paint', async ({ page }) => {
     await page.goto(PAGE_PATH, { waitUntil: 'networkidle' });
     await expect(page.getByRole('button', { name: 'Next' })).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'See my result' })).toHaveCount(0);
-    await expect(page.getByRole('slider')).toHaveCount(0);
-    await expect(page.getByRole('textbox', { name: 'Starting amount' })).toBeVisible();
-    await expect(page.getByRole('textbox', { name: 'Monthly contribution' })).toBeVisible();
-    await expect(page.getByRole('textbox', { name: 'Today' })).toBeVisible();
-    await expect(page.getByRole('textbox', { name: 'Retirement' })).toBeVisible();
-    await expect(page.getByRole('textbox', { name: 'Expected annual return' })).toBeVisible();
-    await expect(page.getByRole('textbox', { name: 'Expected inflation' })).toBeVisible();
+    await expect(page.getByRole('slider', { name: 'Starting amount' })).toBeVisible();
+    await expect(page.getByRole('slider', { name: 'Monthly contribution' })).toBeVisible();
+    await expect(page.getByRole('slider', { name: 'Increase contributions each year' })).toBeVisible();
+    await expect(page.getByRole('slider', { name: 'Your age today' })).toBeVisible();
+    await expect(page.getByRole('slider', { name: 'Retirement age' })).toBeVisible();
+    await expect(page.getByRole('slider', { name: 'Expected annual return' })).toBeVisible();
+    await expect(page.getByRole('slider', { name: 'Expected inflation' })).toBeVisible();
     await expect(page.locator('#wealth-horizon-result .result-chip').first()).toContainText('Example result');
   });
 
-  test('a plain field edit flips the chip to "Your result" and fires tool_input_change', async ({ page }) => {
+  test('(a) focusing the return slider and pressing ArrowRight changes the hero balance and fires tool_input_change', async ({ page }) => {
     const batches = await interceptTrack(page);
     await page.goto(PAGE_PATH, { waitUntil: 'networkidle' });
 
-    const currentAgeInput = page.getByRole('textbox', { name: 'Today' });
-    await currentAgeInput.fill('32');
-    await currentAgeInput.blur();
+    const heroBefore = await page.locator('#wealth-horizon-result').getByText(/^\$[\d,]+$/).first().textContent();
 
+    const returnSlider = page.getByRole('slider', { name: 'Expected annual return' });
+    await returnSlider.focus();
+    await returnSlider.press('ArrowRight');
+
+    // The chip flip is asserted first (auto-retrying `expect`) so it also
+    // waits out the ~500ms count-up animation before the hero text is read —
+    // reading it immediately after the keypress can race the very first rAF
+    // frame, which still shows the PREVIOUS value (interpolateCountUp at
+    // progress=0).
     await expect(page.locator('#wealth-horizon-result .result-chip').first()).toContainText('Your result');
+    await page.waitForTimeout(600);
+    const heroAfter = await page.locator('#wealth-horizon-result').getByText(/^\$[\d,]+$/).first().textContent();
+    expect(heroAfter).not.toBe(heroBefore);
 
     await page.waitForTimeout(1800); // 600ms input debounce + 800ms queue flush + buffer
     const events = toolEvents(batches);
     const change = events.find(
-      (e) => e.eventName === 'tool_input_change' && (e.properties as Record<string, unknown> | undefined)?.inputKey === 'currentAge',
+      (e) => e.eventName === 'tool_input_change' && (e.properties as Record<string, unknown> | undefined)?.inputKey === 'returnNominalPct',
     );
-    expect(change, 'tool_input_change for currentAge should have fired').toBeTruthy();
+    expect(change, 'tool_input_change for returnNominalPct should have fired').toBeTruthy();
   });
 
-  test('a Step-4 return-preset chip fires tool_scenario_compare AND flips the chip to "Your result" (it is a real input change)', async ({ page }) => {
+  test('(b) the lifetime-range Today handle stops at retirement − 1 when pressed to its own maximum (End key), never crossing', async ({ page }) => {
+    await page.goto(PAGE_PATH, { waitUntil: 'networkidle' });
+
+    const retirementSlider = page.getByRole('slider', { name: 'Retirement age' });
+    await expect(retirementSlider).toHaveValue('65'); // default, unchanged
+
+    const todaySlider = page.getByRole('slider', { name: 'Your age today' });
+    await todaySlider.focus();
+    await todaySlider.press('End'); // jumps to the input's own max (70) first
+
+    await expect(todaySlider).toHaveValue('64'); // stopped at retirement (65) − 1
+    await expect(retirementSlider).toHaveValue('65'); // untouched
+
+    const todayValue = Number(await todaySlider.inputValue());
+    const retirementValue = Number(await retirementSlider.inputValue());
+    expect(todayValue).toBeLessThan(retirementValue);
+  });
+
+  test('(c) clicking the "Conservative 5.5%" tick snaps the return slider to 5.5 and fires tool_scenario_compare', async ({ page }) => {
     const batches = await interceptTrack(page);
     await page.goto(PAGE_PATH, { waitUntil: 'networkidle' });
 
-    await page.getByRole('button', { name: 'Optimistic 9%' }).click();
+    await page.getByRole('button', { name: 'Conservative 5.5%' }).click();
+
+    const returnSlider = page.getByRole('slider', { name: 'Expected annual return' });
+    await expect(returnSlider).toHaveValue('5.5');
     await expect(page.locator('#wealth-horizon-result .result-chip').first()).toContainText('Your result');
 
     await page.waitForTimeout(1200);
     const events = toolEvents(batches);
     const compare = events.find((e) => e.eventName === 'tool_scenario_compare');
     expect(compare, 'tool_scenario_compare should have fired').toBeTruthy();
-    expect((compare!.properties as Record<string, unknown>).scenario).toBe('optimistic');
+    expect((compare!.properties as Record<string, unknown>).scenario).toBe('conservative');
   });
 
-  test('the "Balanced 7.5%" chip is active by default (untouched defaults match its value)', async ({ page }) => {
+  test('(d) raising the escalation slider to 3% shows a "becomes ... in year 10" hint and raises the hero balance', async ({ page }) => {
     await page.goto(PAGE_PATH, { waitUntil: 'networkidle' });
-    await expect(page.getByRole('button', { name: 'Balanced 7.5%' })).toHaveAttribute('aria-pressed', 'true');
+
+    const heroBefore = await page.locator('#wealth-horizon-result').getByText(/^\$[\d,]+$/).first().textContent();
+
+    const growthSlider = page.getByRole('slider', { name: 'Increase contributions each year' });
+    await setRangeValue(growthSlider, 3);
+
+    const hint = page.getByTestId('contribution-growth-hint');
+    await expect(hint).toBeVisible();
+    await expect(hint).toContainText('becomes');
+    await expect(hint).toContainText('year 10');
+
+    const heroAfter = await page.locator('#wealth-horizon-result').getByText(/^\$[\d,]+$/).first().textContent();
+    expect(heroAfter).not.toBe(heroBefore);
   });
 
-  test('typing a custom return value fires a plain tool_input_change (not tool_scenario_compare)', async ({ page }) => {
+  test('dragging a custom return value fires a plain tool_input_change (not tool_scenario_compare)', async ({ page }) => {
     const batches = await interceptTrack(page);
     await page.goto(PAGE_PATH, { waitUntil: 'networkidle' });
 
-    const returnInput = page.getByRole('textbox', { name: 'Expected annual return' });
-    await returnInput.fill('6.2');
-    await returnInput.blur();
-    await page.waitForTimeout(1800);
+    const returnSlider = page.getByRole('slider', { name: 'Expected annual return' });
+    await setRangeValue(returnSlider, 6.5); // not one of the 3 tick values
 
+    await page.waitForTimeout(1800);
     const events = toolEvents(batches);
     const change = events.find(
       (e) => e.eventName === 'tool_input_change' && (e.properties as Record<string, unknown> | undefined)?.inputKey === 'returnNominalPct',
@@ -311,14 +426,13 @@ test.describe(`Wealth Horizon US (JS on) — v3 Clean-Redesign: ${PAGE_PATH}`, (
     expect(events.some((e) => e.eventName === 'tool_scenario_compare')).toBe(false);
   });
 
-  test('changing the inflation field changes the hero balance number', async ({ page }) => {
+  test('changing the inflation slider changes the hero balance number', async ({ page }) => {
     await page.goto(PAGE_PATH, { waitUntil: 'networkidle' });
     const heroBefore = await page.locator('#wealth-horizon-result').getByText(/^\$[\d,]+$/).first().textContent();
 
-    const inflationInput = page.getByRole('textbox', { name: 'Expected inflation' });
-    await inflationInput.fill('4.5');
-    await inflationInput.blur();
-    await page.waitForTimeout(300);
+    const inflationSlider = page.getByRole('slider', { name: 'Expected inflation' });
+    await setRangeValue(inflationSlider, 4.5);
+    await page.waitForTimeout(600); // let the ~500ms count-up animation finish before reading the hero text
 
     const heroAfter = await page.locator('#wealth-horizon-result').getByText(/^\$[\d,]+$/).first().textContent();
     expect(heroAfter).not.toBe(heroBefore);
@@ -327,12 +441,10 @@ test.describe(`Wealth Horizon US (JS on) — v3 Clean-Redesign: ${PAGE_PATH}`, (
   test('an out-of-range real return (nominal − inflation) shows the clamp warning', async ({ page }) => {
     await page.goto(PAGE_PATH, { waitUntil: 'networkidle' });
 
-    const returnInput = page.getByRole('textbox', { name: 'Expected annual return' });
-    await returnInput.fill('1');
-    await returnInput.blur();
-    const inflationInput = page.getByRole('textbox', { name: 'Expected inflation' });
-    await inflationInput.fill('5');
-    await inflationInput.blur();
+    const returnSlider = page.getByRole('slider', { name: 'Expected annual return' });
+    await setRangeValue(returnSlider, 1);
+    const inflationSlider = page.getByRole('slider', { name: 'Expected inflation' });
+    await setRangeValue(inflationSlider, 5);
 
     await expect(page.getByTestId('real-return-clamp-warning')).toBeVisible();
   });
@@ -351,14 +463,19 @@ test.describe(`Wealth Horizon US (JS on) — v3 Clean-Redesign: ${PAGE_PATH}`, (
     expect(leverChange, 'a tool_input_change with controlRole "lever" should have fired').toBeTruthy();
   });
 
-  test('Simple mode never clamps an over-IRS-limit contribution — value stays, informational hint visible', async ({ page }) => {
+  test('Simple mode never clamps at the slider\'s own maximum contribution — value stays, informational hint visible', async ({ page }) => {
     await page.goto(PAGE_PATH, { waitUntil: 'networkidle' });
 
-    const contributionInput = page.getByRole('textbox', { name: 'Monthly contribution' });
-    await contributionInput.fill('50000'); // annual 600,000 — far beyond any US statutory limit
-    await contributionInput.blur();
+    // v4 deviation note: the slider's own max is $5,000/mo (spec-mandated
+    // range), so the old $50,000-extreme value from v3's text field is no
+    // longer reachable through this control — Simple mode's advisory hint is
+    // unconditional (buildContributionChecks never gates it on the amount),
+    // so asserting at the slider's own max still proves the "never clamps"
+    // contract: the displayed value stays exactly what was set.
+    const contributionSlider = page.getByRole('slider', { name: 'Monthly contribution' });
+    await setRangeValue(contributionSlider, 5000);
 
-    await expect(contributionInput).toHaveValue('50000'); // NOT clamped
+    await expect(contributionSlider).toHaveValue('5000'); // NOT clamped
     const hint = page.getByTestId('contribution-hint');
     await expect(hint).toBeVisible();
     await expect(hint).toContainText('account-level limits may apply');
@@ -368,8 +485,8 @@ test.describe(`Wealth Horizon US (JS on) — v3 Clean-Redesign: ${PAGE_PATH}`, (
     await page.goto(PAGE_PATH, { waitUntil: 'networkidle' });
     await page.getByText('Advanced settings').click();
 
-    await expect(page.getByRole('textbox', { name: 'Annual fee' })).toBeVisible();
-    await expect(page.getByRole('textbox', { name: 'Withdrawal rate' })).toBeVisible();
+    await expect(page.getByRole('slider', { name: 'Annual fee' })).toBeVisible();
+    await expect(page.getByRole('slider', { name: 'Withdrawal rate' })).toBeVisible();
     await expect(page.getByText('Switch to detailed accounts →')).toBeVisible();
   });
 

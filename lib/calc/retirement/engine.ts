@@ -65,6 +65,11 @@ export function validateInputs(inputs: RetirementInputs): void {
   if (inputs.contributionMode === 'account-breakdown' && inputs.accounts.length === 0) {
     throw new TypeError('account-breakdown mode requires at least one account');
   }
+  if (inputs.contributionGrowthPct !== undefined) {
+    if (!Number.isFinite(inputs.contributionGrowthPct) || inputs.contributionGrowthPct < 0 || inputs.contributionGrowthPct > 5) {
+      throw new TypeError('contributionGrowthPct must be within [0, 5]');
+    }
+  }
 }
 
 // ── Contributions ─────────────────────────────────────────────────────────
@@ -105,16 +110,28 @@ function projectScenario(
   contrib: Contributions,
 ): ScenarioResult {
   const rNet = scenarioRate(rules, key) - inputs.annualFeePct / 100;  // fee exactly once
-  const annualContribution = (contrib.employeeMonthly + contrib.employerMonthly) * 12;
   const asOfYear = Number(rules.asOf.slice(0, 4));
+
+  // Wealth Horizon v4 — optional REAL annual escalation of EMPLOYEE
+  // contributions only (employer stays flat, documented v1 simplification;
+  // see RetirementBaseInputs.contributionGrowthPct). g=0 (default/undefined)
+  // makes Math.pow(1+0, k)===1 for every k, so this is bit-identical to the
+  // pre-v4 flat-contribution loop — that equivalence is invariant-tested
+  // (__tests__/unit/calc/retirement-escalation.test.ts, case 1).
+  const g = (inputs.contributionGrowthPct ?? 0) / 100;
+  const employeeAnnualBase = contrib.employeeMonthly * 12;
+  const employerAnnual = contrib.employerMonthly * 12;
 
   const rows: { age: number; balance: number }[] = [{ age: inputs.currentAge, balance: round2(contrib.startingBalance) }];
   let balance = contrib.startingBalance;
+  let yearIndex = 0; // year 1 of saving = index 0 (no escalation yet)
   for (let age = inputs.currentAge + 1; age <= inputs.retireAge; age++) {
     // Contributions flow in every yearly step up to and INCLUDING the step
     // landing on retireAge (= the final working year); v1 projects no rows
     // beyond retireAge. Fixtures use exactly this convention.
+    const annualContribution = employeeAnnualBase * Math.pow(1 + g, yearIndex) + employerAnnual;
     balance = balance * (1 + rNet) + annualContribution;
+    yearIndex += 1;
     rows.push({ age, balance: round2(balance) });
   }
 
@@ -158,6 +175,16 @@ function projectScenario(
 }
 
 function round2(n: number): number { return Math.round(n * 100) / 100; }
+
+/**
+ * Pure helper shared by the engine's own escalation loop (above) and the
+ * Wealth Horizon UI's dynamic "$X/month becomes $Y/month in year N" hint
+ * (SliderField under Step 2) — ONE formula, so the two can never diverge.
+ * `year` is 1-based (year 1 = the base amount, no escalation yet).
+ */
+export function monthlyContributionInYear(baseMonthly: number, growthPct: number, year: number): number {
+  return baseMonthly * Math.pow(1 + growthPct / 100, year - 1);
+}
 
 // ── Contribution checks (contract SPEC 8.3) ──────────────────────────────────
 // Simple mode NEVER clamps — single 'not-applicable' hint entry.
