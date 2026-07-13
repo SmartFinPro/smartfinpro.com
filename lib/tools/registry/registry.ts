@@ -467,6 +467,46 @@ export const TOOL_REGISTRY: Record<ToolId, ToolDefinition> = {
           "Project your retirement in today's dollars across three scenarios: 401(k) and IRA balances, financial independence date, income gap and fee impact.",
         h1: 'Retirement & Financial Freedom Calculator',
       },
+      {
+        market: 'uk',
+        path: '/uk/tools/pension-calculator',
+        status: 'live',
+        // FDL 4.3 — bindende Plan-Abweichung (User-Entscheidung, dokumentiert
+        // im PR-Bericht): der ursprüngliche 4.3-Brief sah hier den atomaren
+        // Index-Flip aller 4 Routen vor. Alle 3 neuen Varianten bleiben
+        // stattdessen noindex+hidden wie die US-Route bis zum separaten
+        // Launch-PR nach Ende des Baseline-Fensters (~20.07.2026).
+        indexable: false,
+        hidden: true,
+        // Slug bindend "pension-calculator" (Head-Term, SPEC 9.1, Zeile 663)
+        // — NICHT "retirement-calculator" wie US/CA/AU.
+        title: 'Pension Calculator UK: ISA, SIPP & Retirement Income',
+        metaDescription:
+          "Project your UK retirement in today's money across three scenarios: ISA and SIPP growth, financial independence date, income gap and fee impact.",
+        h1: 'Pension & Financial Freedom Calculator',
+      },
+      {
+        market: 'ca',
+        path: '/ca/tools/retirement-calculator',
+        status: 'live',
+        indexable: false,
+        hidden: true,
+        title: 'Retirement Calculator Canada: TFSA, RRSP & FI Date',
+        metaDescription:
+          "Project your Canadian retirement in today's dollars across three scenarios: TFSA and RRSP growth, financial independence date and fee impact.",
+        h1: 'Retirement & Financial Freedom Calculator',
+      },
+      {
+        market: 'au',
+        path: '/au/tools/retirement-calculator',
+        status: 'live',
+        indexable: false,
+        hidden: true,
+        title: 'Retirement Calculator Australia: Super & FIRE Date',
+        metaDescription:
+          "Project your Australian retirement in today's dollars across three scenarios: super growth at the 12% guarantee, FIRE date, income gap and fees.",
+        h1: 'Retirement & Financial Freedom Calculator',
+      },
     ],
     shareableFields: ['ageBand', 'retireAge', 'balanceBand', 'contributionBand', 'feeBand', 'withdrawalRatePct', 'scenario'],
   },

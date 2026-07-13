@@ -1,10 +1,15 @@
 'use client';
 // components/tools/wealth-horizon/wealth-horizon-journey.tsx
-// Wealth Horizon US client island (FDL 4.2) — GuidedJourney: Basics →
-// Contributions → Assumptions, then a live result canvas (corridor chart +
-// scenario switcher + 3 levers). Every displayed number comes from
-// buildWealthHorizonResult()/the retirement engine — no second calc path
-// lives in this file (harte Regel, PR 4.2 brief).
+// Wealth Horizon client island — GuidedJourney: Basics → Contributions →
+// Assumptions, then a live result canvas (corridor chart + scenario switcher
+// + 3 levers). Every displayed number comes from buildWealthHorizonResult()/
+// the retirement engine — no second calc path lives in this file (harte
+// Regel, PR 4.2 brief).
+//
+// FDL 4.3: parametrized to run all 4 markets from ONE island instead of a
+// per-market copy (market/locale/currency/account-type subset/benefit link
+// come in as props; US behavior is byte-identical to the pre-4.3 US-only
+// version — see e2e/tool-shell-wealth-horizon.spec.ts's `us` case).
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { GuidedJourneyLayout, type GuidedJourneyStep } from '@/components/tools/shell/guided-journey';
@@ -16,10 +21,12 @@ import { PercentageField } from '@/components/tools/shell/fields/percentage-fiel
 import { SegmentedControl } from '@/components/tools/shell/fields/segmented-control';
 import { BaseField } from '@/components/tools/shell/fields/base-field';
 import { createLiveAnnouncer } from '@/lib/tools/aria-live';
-import { advancePanelState, type Lever, type PanelState, type ToolResult } from '@/lib/tools/shell-types';
+import { advancePanelState, type Lever, type PanelState, type ToolCurrency, type ToolResult } from '@/lib/tools/shell-types';
 import { useToolTracking } from '@/lib/analytics/tool-tracking';
 import type { ToolContext, InputBucketKind } from '@/lib/analytics/tool-events';
+import type { ToolMarket } from '@/lib/tools/registry/types';
 import type { RuleSnapshot } from '@/lib/rules';
+import { formatCurrency, formatPercent } from '@/lib/tools/field-format';
 import {
   applyLever,
   buildContributionChecks,
@@ -35,68 +42,41 @@ import {
   type WealthHorizonScenarioKey,
 } from '@/lib/tools/results/wealth-horizon-result';
 
+/** Account types whose contribution room is a PERSONAL figure the user must
+ *  supply (`availableRoom`) — never derived from a national maximum. Single
+ *  source shared with lib/calc/retirement/engine.ts's own roomTypes list
+ *  (kept here as a literal, not imported, because it's UI-rendering
+ *  classification, not a calculation — the engine remains the sole place
+ *  that actually APPLIES the clamp; SPEC 8.3 contribution contract). */
+const ROOM_ACCOUNT_TYPES: RetirementAccountType[] = ['ca-tfsa', 'ca-rrsp', 'au-super'];
+
 export interface WealthHorizonJourneyProps {
-  market: 'us';
+  market: ToolMarket;
+  variantPath: string;
   rules: RuleSnapshot;
   exampleResult: ToolResult;
-  ssaEstimatorUrl: string;
+  currency: ToolCurrency;
+  locale: string;
+  /** Account types selectable in "Account breakdown" mode, market subset of
+   *  RetirementAccountType (FDL 4.3 parametrization). */
+  accountTypeOptions: { value: RetirementAccountType; label: string }[];
+  /** Short account-type shorthand for the Simple-mode "tax-advantaged
+   *  balance" field label, e.g. "401(k)/IRA" | "ISA/SIPP" | "TFSA/RRSP" | "Super". */
+  taxAdvantagedLabel: string;
+  /** Local name for the market's state/national retirement benefit, e.g.
+   *  "Social Security", "State Pension", "CPP/OAS", "Age Pension" (SPEC 8.3
+   *  benefit contract — v1 never auto-estimates this). */
+  benefitName: string;
+  benefitLinkUrl: string;
+  benefitLinkLabel: string;
 }
 
-const CTX: ToolContext = {
-  toolId: 'wealth-horizon',
-  market: 'us',
-  variantPath: '/tools/retirement-calculator',
-  shellMode: 'guided-journey',
+const ACCOUNT_TYPE_HELP: Partial<Record<RetirementAccountType, string>> = {
+  'ca-tfsa': 'This is your personal room from CRA MyAccount — never derived from the national maximum.',
+  'ca-rrsp': 'This is your personal room from CRA MyAccount — never derived from the national maximum.',
+  'au-super':
+    'Your personal unused concessional cap carry-forward, from your ATO online account (myGov) — never derived from the national cap.',
 };
-
-const ACCOUNT_TYPE_OPTIONS: { value: RetirementAccountType; label: string }[] = [
-  { value: 'us-401k', label: '401(k) / 403(b)' },
-  { value: 'us-traditional-ira', label: 'Traditional IRA' },
-  { value: 'us-roth-ira', label: 'Roth IRA' },
-  { value: 'us-taxable', label: 'Taxable brokerage' },
-];
-
-interface BaseFields {
-  currentAge: number;
-  retireAge: number;
-  targetMonthlyIncomeToday: number;
-  annualFeePct: number;
-  withdrawalRatePct: number;
-}
-
-interface SimpleFields {
-  taxAdvantagedBalance: number;
-  taxableBalance: number;
-  employeeContributionMonthly: number;
-  employerContributionMonthly: number;
-}
-
-interface BenefitFields {
-  enabled: boolean;
-  monthlyAmountToday: number;
-  startsAtAge: number;
-}
-
-const INITIAL_BASE: BaseFields = {
-  currentAge: 30,
-  retireAge: 65,
-  targetMonthlyIncomeToday: 4000,
-  annualFeePct: 0.5,
-  withdrawalRatePct: 4.0,
-};
-
-const INITIAL_SIMPLE: SimpleFields = {
-  taxAdvantagedBalance: 20000,
-  taxableBalance: 5000,
-  employeeContributionMonthly: 400,
-  employerContributionMonthly: 0,
-};
-
-const INITIAL_ACCOUNTS: RetirementAccountInput[] = [
-  { id: 'acc-1', type: 'us-401k', balance: 20000, employeeContributionMonthly: 400 },
-];
-
-const INITIAL_BENEFIT: BenefitFields = { enabled: false, monthlyAmountToday: 0, startsAtAge: 67 };
 
 function leverTrackingValue(lever: Lever): { value: number; kind: InputBucketKind } {
   if (lever.key === 'fees') return { value: lever.apply?.annualFeePct ?? 0, kind: 'percent' };
@@ -111,15 +91,53 @@ function checkChipStyle(status: 'not-applicable' | 'ok' | 'warning' | 'clamped')
   return { background: 'var(--tool-surface-muted)', borderColor: 'var(--tool-border)', color: 'var(--sfp-slate)' };
 }
 
-export function WealthHorizonJourney({ rules, exampleResult, ssaEstimatorUrl }: WealthHorizonJourneyProps) {
-  const tracker = useToolTracking(CTX);
+const CONTEXT_CHIP_STYLE: CSSProperties = { background: 'var(--sfp-sky)', borderColor: 'var(--sfp-sky)', color: 'var(--sfp-navy)' };
+
+export function WealthHorizonJourney({
+  market,
+  variantPath,
+  rules,
+  exampleResult,
+  currency,
+  locale,
+  accountTypeOptions,
+  taxAdvantagedLabel,
+  benefitName,
+  benefitLinkUrl,
+  benefitLinkLabel,
+}: WealthHorizonJourneyProps) {
+  const ctx: ToolContext = useMemo(
+    () => ({ toolId: 'wealth-horizon', market, variantPath, shellMode: 'guided-journey' }),
+    [market, variantPath],
+  );
+  const tracker = useToolTracking(ctx);
+
+  const initialAccountType = accountTypeOptions[0]!.value;
 
   const [mode, setMode] = useState<'simple' | 'account-breakdown'>('simple');
-  const [base, setBase] = useState<BaseFields>(INITIAL_BASE);
-  const [simple, setSimple] = useState<SimpleFields>(INITIAL_SIMPLE);
-  const [accounts, setAccounts] = useState<RetirementAccountInput[]>(INITIAL_ACCOUNTS);
-  const [benefit, setBenefit] = useState<BenefitFields>(INITIAL_BENEFIT);
+  const [base, setBase] = useState({
+    currentAge: 30,
+    retireAge: 65,
+    targetMonthlyIncomeToday: 4000,
+    annualFeePct: 0.5,
+    withdrawalRatePct: 4.0,
+  });
+  const [simple, setSimple] = useState({
+    taxAdvantagedBalance: 20000,
+    taxableBalance: 5000,
+    employeeContributionMonthly: 400,
+    employerContributionMonthly: 0,
+  });
+  const [accounts, setAccounts] = useState<RetirementAccountInput[]>([
+    { id: 'acc-1', type: initialAccountType, balance: 20000, employeeContributionMonthly: 400 },
+  ]);
+  const [benefit, setBenefit] = useState({ enabled: false, monthlyAmountToday: 0, startsAtAge: 67 });
   const [focusScenario, setFocusScenario] = useState<WealthHorizonScenarioKey>('base');
+
+  // AU-only helper state (SPEC "Beitrags-Helfer" — never part of RetirementInputs
+  // itself; it only pre-fills an employer-contribution field, which stays
+  // freely editable afterward — "editable suggestion, never fixed").
+  const [auEligibleEarnings, setAuEligibleEarnings] = useState<number | ''>('');
 
   const [journeyCompleted, setJourneyCompleted] = useState(false);
   const [panelState, setPanelState] = useState<PanelState>('initial');
@@ -142,7 +160,7 @@ export function WealthHorizonJourney({ rules, exampleResult, ssaEstimatorUrl }: 
       : undefined;
     if (mode === 'simple') {
       return {
-        market: 'us',
+        market,
         currentAge: base.currentAge,
         retireAge: base.retireAge,
         targetMonthlyIncomeToday: base.targetMonthlyIncomeToday,
@@ -154,7 +172,7 @@ export function WealthHorizonJourney({ rules, exampleResult, ssaEstimatorUrl }: 
       };
     }
     return {
-      market: 'us',
+      market,
       currentAge: base.currentAge,
       retireAge: base.retireAge,
       targetMonthlyIncomeToday: base.targetMonthlyIncomeToday,
@@ -164,7 +182,7 @@ export function WealthHorizonJourney({ rules, exampleResult, ssaEstimatorUrl }: 
       contributionMode: 'account-breakdown',
       accounts: accounts as [RetirementAccountInput, ...RetirementAccountInput[]],
     };
-  }, [mode, base, simple, accounts, benefit]);
+  }, [market, mode, base, simple, accounts, benefit]);
 
   const contributionChecks = useMemo(() => buildContributionChecks(inputs, rules), [inputs, rules]);
 
@@ -193,7 +211,7 @@ export function WealthHorizonJourney({ rules, exampleResult, ssaEstimatorUrl }: 
 
   function addAccount(): void {
     const id = `acc-${nextAccountId.current++}`;
-    setAccounts((prev) => [...prev, { id, type: 'us-401k', balance: 0, employeeContributionMonthly: 0 }]);
+    setAccounts((prev) => [...prev, { id, type: initialAccountType, balance: 0, employeeContributionMonthly: 0 }]);
   }
 
   function removeAccount(index: number): void {
@@ -236,6 +254,61 @@ export function WealthHorizonJourney({ rules, exampleResult, ssaEstimatorUrl }: 
     document.getElementById('wealth-horizon-result')?.scrollIntoView({ behavior: 'auto', block: 'start' });
   }
 
+  // AU SG helper — "annualEligibleEarnings × SG rate / 12", always an
+  // editable suggestion (SPEC 8.3 contribution contract): applying it just
+  // pre-fills an ordinary, still-freely-editable employer-contribution field.
+  const sgRate = market === 'au' ? rules.values.superGuaranteeRate : undefined;
+  const sgSuggestedMonthly =
+    market === 'au' && typeof sgRate === 'number' && typeof auEligibleEarnings === 'number' && auEligibleEarnings > 0
+      ? Math.round(((auEligibleEarnings * sgRate) / 12) * 100) / 100
+      : null;
+
+  function applySgSuggestion(): void {
+    if (sgSuggestedMonthly === null) return;
+    if (mode === 'simple') {
+      setSimple((s) => ({ ...s, employerContributionMonthly: sgSuggestedMonthly }));
+    } else {
+      const auIndex = accounts.findIndex((a) => a.type === 'au-super');
+      updateAccount(auIndex === -1 ? 0 : auIndex, { employerContributionMonthly: sgSuggestedMonthly });
+    }
+  }
+
+  const marketContextChip =
+    market === 'uk' ? (
+      <p data-testid="uk-isa-allowance-chip" className="m-0 w-fit rounded-tool-control border px-3 py-2 text-xs" style={CONTEXT_CHIP_STYLE}>
+        UK ISA allowance: {formatCurrency(rules.values.isaAllowance, currency, locale)}/yr, all ISA types combined.
+      </p>
+    ) : market === 'au' ? (
+      <div className="flex flex-col gap-3 rounded-tool-control border p-3" style={{ borderColor: 'var(--tool-border)' }}>
+        <p data-testid="au-concessional-cap-chip" className="m-0 w-fit rounded-tool-control border px-3 py-2 text-xs" style={CONTEXT_CHIP_STYLE}>
+          Concessional (before-tax) cap: {formatCurrency(rules.values.concessionalCap, currency, locale)}/yr.
+        </p>
+        <p className="m-0 text-sm font-medium text-[var(--sfp-ink)]">
+          Super Guarantee contribution helper ({formatPercent((sgRate ?? 0) * 100, locale, 0)})
+        </p>
+        <CurrencyField
+          label="Your annual eligible earnings (for the SG estimate)"
+          inputKey="auAnnualEligibleEarnings"
+          value={auEligibleEarnings}
+          currency={currency}
+          locale={locale}
+          min={0}
+          onChange={(v) => setAuEligibleEarnings(v)}
+        />
+        <button
+          type="button"
+          onClick={applySgSuggestion}
+          disabled={sgSuggestedMonthly === null}
+          className="w-fit rounded-tool-control border px-3 py-2 text-xs font-semibold disabled:opacity-50"
+          style={{ borderColor: 'var(--tool-border-strong)', background: 'var(--tool-surface)', color: 'var(--sfp-ink)' }}
+        >
+          {sgSuggestedMonthly !== null
+            ? `Use suggested employer contribution (${formatCurrency(sgSuggestedMonthly, currency, locale)}/mo) — you can still edit it`
+            : 'Enter your eligible earnings to see a suggested employer contribution'}
+        </button>
+      </div>
+    ) : null;
+
   // ── Step 1 — Basics ────────────────────────────────────────────────────
   const basicsContent = (
     <div className="flex flex-col gap-4">
@@ -267,8 +340,8 @@ export function WealthHorizonJourney({ rules, exampleResult, ssaEstimatorUrl }: 
         label="Target monthly income (today's money)"
         inputKey="targetMonthlyIncomeToday"
         value={base.targetMonthlyIncomeToday}
-        currency="USD"
-        locale="en-US"
+        currency={currency}
+        locale={locale}
         min={0}
         onChange={(v) => {
           if (v === '') return;
@@ -296,14 +369,16 @@ export function WealthHorizonJourney({ rules, exampleResult, ssaEstimatorUrl }: 
         }}
       />
 
+      {marketContextChip}
+
       {mode === 'simple' ? (
         <div className="flex flex-col gap-4">
           <CurrencyField
-            label="Tax-advantaged balance (401(k)/IRA)"
+            label={`Tax-advantaged balance (${taxAdvantagedLabel})`}
             inputKey="taxAdvantagedBalance"
             value={simple.taxAdvantagedBalance}
-            currency="USD"
-            locale="en-US"
+            currency={currency}
+            locale={locale}
             min={0}
             onChange={(v) => {
               if (v === '') return;
@@ -315,8 +390,8 @@ export function WealthHorizonJourney({ rules, exampleResult, ssaEstimatorUrl }: 
             label="Taxable account balance"
             inputKey="taxableBalance"
             value={simple.taxableBalance}
-            currency="USD"
-            locale="en-US"
+            currency={currency}
+            locale={locale}
             min={0}
             onChange={(v) => {
               if (v === '') return;
@@ -328,8 +403,8 @@ export function WealthHorizonJourney({ rules, exampleResult, ssaEstimatorUrl }: 
             label="Your monthly contribution"
             inputKey="employeeContributionMonthly"
             value={simple.employeeContributionMonthly}
-            currency="USD"
-            locale="en-US"
+            currency={currency}
+            locale={locale}
             min={0}
             onChange={(v) => {
               if (v === '') return;
@@ -341,8 +416,8 @@ export function WealthHorizonJourney({ rules, exampleResult, ssaEstimatorUrl }: 
             label="Employer match (monthly, optional)"
             inputKey="employerContributionMonthly"
             value={simple.employerContributionMonthly}
-            currency="USD"
-            locale="en-US"
+            currency={currency}
+            locale={locale}
             min={0}
             onChange={(v) => {
               setSimple((s) => ({ ...s, employerContributionMonthly: v === '' ? 0 : v }));
@@ -363,6 +438,7 @@ export function WealthHorizonJourney({ rules, exampleResult, ssaEstimatorUrl }: 
         <div className="flex flex-col gap-4">
           {accounts.map((account, i) => {
             const check = contributionChecks[i];
+            const isRoomType = ROOM_ACCOUNT_TYPES.includes(account.type);
             return (
               <div
                 key={account.id}
@@ -382,7 +458,7 @@ export function WealthHorizonJourney({ rules, exampleResult, ssaEstimatorUrl }: 
                       className="min-h-11 rounded-tool-control border px-3 text-[15px]"
                       style={{ borderColor: 'var(--tool-border)', background: 'var(--tool-surface)', color: 'var(--sfp-ink)' }}
                     >
-                      {ACCOUNT_TYPE_OPTIONS.map((opt) => (
+                      {accountTypeOptions.map((opt) => (
                         <option key={opt.value} value={opt.value}>
                           {opt.label}
                         </option>
@@ -394,8 +470,8 @@ export function WealthHorizonJourney({ rules, exampleResult, ssaEstimatorUrl }: 
                   label="Balance"
                   inputKey={`account-${i}-balance`}
                   value={account.balance}
-                  currency="USD"
-                  locale="en-US"
+                  currency={currency}
+                  locale={locale}
                   min={0}
                   onChange={(v) => {
                     if (v === '') return;
@@ -407,8 +483,8 @@ export function WealthHorizonJourney({ rules, exampleResult, ssaEstimatorUrl }: 
                   label="Your monthly contribution"
                   inputKey={`account-${i}-employee`}
                   value={account.employeeContributionMonthly}
-                  currency="USD"
-                  locale="en-US"
+                  currency={currency}
+                  locale={locale}
                   min={0}
                   onChange={(v) => {
                     if (v === '') return;
@@ -420,8 +496,8 @@ export function WealthHorizonJourney({ rules, exampleResult, ssaEstimatorUrl }: 
                   label="Employer match (monthly, optional)"
                   inputKey={`account-${i}-employer`}
                   value={account.employerContributionMonthly ?? ''}
-                  currency="USD"
-                  locale="en-US"
+                  currency={currency}
+                  locale={locale}
                   min={0}
                   onChange={(v) => {
                     updateAccount(i, { employerContributionMonthly: v === '' ? undefined : v });
@@ -432,14 +508,29 @@ export function WealthHorizonJourney({ rules, exampleResult, ssaEstimatorUrl }: 
                   label="Contributed so far this year (optional)"
                   inputKey={`account-${i}-ytd`}
                   value={account.contributedYtd ?? ''}
-                  currency="USD"
-                  locale="en-US"
+                  currency={currency}
+                  locale={locale}
                   min={0}
                   onChange={(v) => {
                     updateAccount(i, { contributedYtd: v === '' ? undefined : v });
                     if (v !== '') trackField(`account-${i}-ytd`, v, 'currency');
                   }}
                 />
+                {isRoomType ? (
+                  <CurrencyField
+                    label="Available room (optional)"
+                    inputKey={`account-${i}-room`}
+                    value={account.availableRoom ?? ''}
+                    currency={currency}
+                    locale={locale}
+                    min={0}
+                    help={ACCOUNT_TYPE_HELP[account.type]}
+                    onChange={(v) => {
+                      updateAccount(i, { availableRoom: v === '' ? undefined : v });
+                      if (v !== '') trackField(`account-${i}-room`, v, 'currency');
+                    }}
+                  />
+                ) : null}
                 {check ? (
                   <p
                     data-testid={`contribution-hint-${i}`}
@@ -508,7 +599,7 @@ export function WealthHorizonJourney({ rules, exampleResult, ssaEstimatorUrl }: 
           onClick={() => setBenefit((b) => ({ ...b, enabled: !b.enabled }))}
           className="w-fit text-sm font-semibold text-[var(--sfp-navy)] underline"
         >
-          {benefit.enabled ? 'Remove expected benefit' : '+ Add expected Social Security / pension benefit'}
+          {benefit.enabled ? 'Remove expected benefit' : `+ Add expected ${benefitName} benefit`}
         </button>
         {benefit.enabled ? (
           <>
@@ -516,8 +607,8 @@ export function WealthHorizonJourney({ rules, exampleResult, ssaEstimatorUrl }: 
               label="Expected monthly benefit (today's money)"
               inputKey="benefitMonthlyAmountToday"
               value={benefit.monthlyAmountToday}
-              currency="USD"
-              locale="en-US"
+              currency={currency}
+              locale={locale}
               min={0}
               onChange={(v) => {
                 if (v === '') return;
@@ -539,8 +630,8 @@ export function WealthHorizonJourney({ rules, exampleResult, ssaEstimatorUrl }: 
             />
             <p className="m-0 text-xs text-[var(--sfp-slate)]">
               Get your own estimate from the{' '}
-              <a href={ssaEstimatorUrl} className="text-[var(--sfp-navy)] no-underline hover:underline">
-                SSA&rsquo;s benefits estimator
+              <a href={benefitLinkUrl} className="text-[var(--sfp-navy)] no-underline hover:underline">
+                {benefitLinkLabel}
               </a>{' '}
               — this calculator never estimates entitlement or amount for you.
             </p>
@@ -577,7 +668,7 @@ export function WealthHorizonJourney({ rules, exampleResult, ssaEstimatorUrl }: 
         state={panelState}
         result={result}
         exampleResult={exampleResult}
-        ctx={CTX}
+        ctx={ctx}
         onLeverApply={handleLeverApply}
         announce={announce}
       />

@@ -64,10 +64,10 @@ describe('registry data integrity', () => {
       expect(v.path.startsWith(expectedPrefix), `${v.path} vs market ${v.market}`).toBe(true);
     }
   });
-  it('counts: 21 Routen, 18 Konzepte — getrennte Zählfunktionen (FDL 4.2: +wealth-horizon)', () => {
-    expect(getAllVariants().length).toBe(21);
+  it('counts: 24 Routen, 18 Konzepte — getrennte Zählfunktionen (FDL 4.3: +3 Wealth Horizon UK/CA/AU)', () => {
+    expect(getAllVariants().length).toBe(24);
     expect(Object.keys(TOOL_REGISTRY).length).toBe(18);
-    expect(countLiveRoutes()).toBe(21);      // interne Kennzahl (Manifest/Health)
+    expect(countLiveRoutes()).toBe(24);      // interne Kennzahl (Manifest/Health)
     expect(countLiveConcepts()).toBe(18);    // öffentliche Kennzahl (Homepage)
   });
 });
@@ -91,9 +91,9 @@ describe('market availability contract (SPEC 4.2)', () => {
     expect(getToolsForMarket('uk').some((t) => t.id === 'broker-finder')).toBe(true);
     expect(getToolsForMarket('uk').some((t) => t.id === 'loan')).toBe(false);
   });
-  it('tracking manifest expands availableMarkets (30 funktionale Einträge, nicht 21 Routen)', () => {
+  it('tracking manifest expands availableMarkets (33 funktionale Einträge, nicht 24 Routen)', () => {
     const manifest = getExpectedTrackingManifest();
-    expect(manifest.length).toBe(30); // 21 Routen + Broker-Triple × uk/ca/au
+    expect(manifest.length).toBe(33); // 24 Routen + Broker-Triple × uk/ca/au
     expect(manifest).toContainEqual({ toolId: 'broker-finder', path: '/tools/broker-finder', market: 'uk' });
     expect(manifest).toContainEqual({ toolId: 'trading-cost', path: '/tools/trading-cost-calculator', market: 'au' });
   });
@@ -119,6 +119,37 @@ describe('hidden mechanism (FDL 4.2) — Wealth Horizon stays out of every hub/f
   it('getLlmsToolLines() does NOT mention the wealth-horizon route', () => {
     expect(getLlmsToolLines().some((line) => line.includes('/tools/retirement-calculator'))).toBe(false);
   });
+
+  // FDL 4.3 — the 3 new UK/CA/AU variants stay hidden+noindex too (bindende
+  // Plan-Abweichung: the atomic index-flip from the 4.3 brief moved to a
+  // separate launch PR after the baseline window ends).
+  const NEW_VARIANTS: { market: 'uk' | 'ca' | 'au'; path: string }[] = [
+    { market: 'uk', path: '/uk/tools/pension-calculator' },
+    { market: 'ca', path: '/ca/tools/retirement-calculator' },
+    { market: 'au', path: '/au/tools/retirement-calculator' },
+  ];
+
+  for (const { market, path } of NEW_VARIANTS) {
+    it(`${market} wealth-horizon variant (${path}) exists, hidden+noindex`, () => {
+      const v = getAllVariants().find((x) => x.toolId === 'wealth-horizon' && x.market === market);
+      expect(v).toBeDefined();
+      expect(v!.path).toBe(path);
+      expect(v!.hidden).toBe(true);
+      expect(v!.indexable).toBe(false);
+    });
+
+    it(`getToolsForMarket("${market}") does NOT include wealth-horizon`, () => {
+      expect(getToolsForMarket(market).some((t) => t.id === 'wealth-horizon')).toBe(false);
+    });
+
+    it(`getFooterToolLinks("${market}") does NOT include wealth-horizon`, () => {
+      expect(getFooterToolLinks(market).some((l) => l.href === path)).toBe(false);
+    });
+
+    it(`getLlmsToolLines() does NOT mention ${path}`, () => {
+      expect(getLlmsToolLines().some((line) => line.includes(path))).toBe(false);
+    });
+  }
 });
 
 describe('legacy path redirect coverage (FDL 0.3)', () => {
@@ -141,5 +172,9 @@ describe('registry consumers (FDL 0.6)', () => {
     expect(urls).not.toContain('/tools/gold-roi-calculator');   // legacy raus
     expect(urls).not.toContain('/tools/debt-payoff-calculator'); // noindex raus
     expect(urls).not.toContain('/tools/retirement-calculator'); // FDL 4.2: noindex raus
+    // FDL 4.3: the 3 new UK/CA/AU variants stay noindex too (bindende Plan-Abweichung).
+    expect(urls).not.toContain('/uk/tools/pension-calculator');
+    expect(urls).not.toContain('/ca/tools/retirement-calculator');
+    expect(urls).not.toContain('/au/tools/retirement-calculator');
   });
 });

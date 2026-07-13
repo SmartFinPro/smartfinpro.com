@@ -1,25 +1,87 @@
 // e2e/tool-shell-wealth-horizon.spec.ts
-// Wealth Horizon US (FDL 4.2) — /tools/retirement-calculator.
+// Wealth Horizon — all 4 markets (FDL 4.2 US + FDL 4.3 UK/CA/AU), registry-
+// driven so a future 5th variant is picked up automatically.
 //
-// JS-off (Playwright global default): the Worked Example must be fully
-// present in server HTML (H1, "Example result" chip, answer sentence, SVG
-// corridor, exactly 3 levers, AssumptionsDrawer sources, exactly 1
+// JS-off (Playwright global default), per market: the Worked Example must be
+// fully present in server HTML (H1, "Example result" chip, answer sentence,
+// SVG corridor, exactly 3 levers, AssumptionsDrawer sources, exactly 1
 // NextBestAction), robots noindex, the binding wording ("in today's money",
-// "Illustrative retirement withdrawal") present, and the negative wording
-// list (sustainable/guaranteed/you will have) absent anywhere in the HTML.
+// "Illustrative retirement withdrawal") present, the negative wording list
+// (shared FORBIDDEN_WORDS, SPEC 8.3) absent anywhere in the HTML, the route
+// excluded from the sitemap, and market-specific terms present (AU: "12%" +
+// "$32,500"; UK: "ISA"/"SIPP" + "£"; CA: "TFSA"/"RRSP" + "personal room").
 //
-// JS-on (test.use): the 3-step GuidedJourney flow reaches a real result;
-// the scenario switcher fires tool_scenario_compare; a lever click fires
-// tool_input_change{controlRole:'lever'}; and Simple mode never clamps an
-// over-IRS-limit contribution (value stays, informational hint visible).
+// Hub-hiddenness (registry-driven, all 4 hubs + footer + llms.txt): none of
+// the 4 Wealth Horizon routes may appear on /tools, /uk/tools, /ca/tools,
+// /au/tools, in the footer, or in llms.txt.
+//
+// JS-on (test.use): US-only regression suite, UNCHANGED from FDL 4.2 — the
+// 3-step GuidedJourney flow, scenario switcher, lever click, Simple-mode
+// no-clamp behavior and withdrawal-rate slider all stay green, proving the
+// FDL 4.3 island parametrization left US behavior byte-identical.
 //
 // Run:  npx playwright test e2e/tool-shell-wealth-horizon.spec.ts
 //       BASE_URL=http://localhost:3007 npx playwright test e2e/tool-shell-wealth-horizon.spec.ts
 
 import { test, expect, type Page } from '@playwright/test';
+import { getAllVariants, getHubPathForMarket } from '@/lib/tools/registry';
+import { FORBIDDEN_WORDS } from '@/lib/tools/results/wealth-horizon-result';
 
 const PAGE_PATH = '/tools/retirement-calculator';
-const FORBIDDEN_WORDS = ['sustainable', 'guaranteed', 'you will have'];
+
+interface MarketCase {
+  market: 'us' | 'uk' | 'ca' | 'au';
+  path: string;
+  h1: string;
+  /** Source domain that MUST appear in the AssumptionsDrawer sources HTML
+   *  (omit for CA — its Wealth Horizon variant only pulls the shared,
+   *  smartfinpro.com-hosted editorial assumption rules; see
+   *  WEALTH_HORIZON_CA_RULE_KEYS's comment: TFSA/RRSP room is never a
+   *  rule-driven statutory number in this engine). */
+  sourceDomain?: string;
+  /** Market-specific terms that must appear somewhere in the page HTML
+   *  (Kernaufgabe 6 of the FDL 4.3 brief). */
+  marketTerms: string[];
+}
+
+const CASES: MarketCase[] = [
+  {
+    market: 'us',
+    path: '/tools/retirement-calculator',
+    h1: 'Retirement & Financial Freedom Calculator',
+    sourceDomain: 'irs.gov',
+    marketTerms: [],
+  },
+  {
+    market: 'uk',
+    path: '/uk/tools/pension-calculator',
+    h1: 'Pension & Financial Freedom Calculator',
+    sourceDomain: 'gov.uk',
+    marketTerms: ['ISA', 'SIPP', '£'],
+  },
+  {
+    market: 'ca',
+    path: '/ca/tools/retirement-calculator',
+    h1: 'Retirement & Financial Freedom Calculator',
+    marketTerms: ['TFSA', 'RRSP', 'personal room'],
+  },
+  {
+    market: 'au',
+    path: '/au/tools/retirement-calculator',
+    h1: 'Retirement & Financial Freedom Calculator',
+    marketTerms: ['12%', '$32,500'],
+  },
+];
+
+// fs-parity guard: fail loud if the registry ever adds/removes a
+// wealth-horizon variant without this spec's CASES table being updated too.
+test('CASES table covers exactly the registry\'s wealth-horizon variants', () => {
+  const registryPaths = getAllVariants()
+    .filter((v) => v.toolId === 'wealth-horizon')
+    .map((v) => v.path)
+    .sort();
+  expect(CASES.map((c) => c.path).sort()).toEqual(registryPaths);
+});
 
 interface TrackedBatch {
   type: string;
@@ -45,58 +107,102 @@ function toolEvents(batches: TrackedBatch[]): Array<Record<string, unknown>> {
   return batches.filter((b) => b.type === 'tool_event_batch').flatMap((b) => b.data.events ?? []);
 }
 
-test.describe(`Wealth Horizon US (JS off): ${PAGE_PATH}`, () => {
-  test('Worked Example is fully present in server HTML, noindex, binding wording present, negative list absent', async ({ page }) => {
-    const response = await page.goto(PAGE_PATH);
-    expect(response?.status()).toBeLessThan(400);
+for (const c of CASES) {
+  test.describe(`Wealth Horizon ${c.market.toUpperCase()} (JS off): ${c.path}`, () => {
+    test('Worked Example is fully present in server HTML, noindex, binding wording present, negative list absent', async ({ page }) => {
+      const response = await page.goto(c.path);
+      expect(response?.status()).toBeLessThan(400);
 
-    // H1
-    await expect(page.locator('h1')).toHaveText('Retirement & Financial Freedom Calculator');
+      // H1
+      await expect(page.locator('h1')).toHaveText(c.h1);
 
-    // "Example result" chip (Worked Example, resultState 'example')
-    await expect(page.locator('.result-chip').first()).toContainText('Example result');
+      // "Example result" chip (Worked Example, resultState 'example')
+      await expect(page.locator('.result-chip').first()).toContainText('Example result');
 
-    // Answer sentence (slot 1)
-    await expect(page.locator('.answer').first()).not.toBeEmpty();
+      // Answer sentence (slot 1)
+      await expect(page.locator('.answer').first()).not.toBeEmpty();
 
-    // SVG corridor chart (slot 3)
-    await expect(page.locator('svg[role="img"]').first()).toBeVisible();
+      // SVG corridor chart (slot 3)
+      await expect(page.locator('svg[role="img"]').first()).toBeVisible();
 
-    // Exactly 3 levers (slot 4)
-    await expect(page.locator('.levers button.lever')).toHaveCount(3);
+      // Exactly 3 levers (slot 4)
+      await expect(page.locator('.levers button.lever')).toHaveCount(3);
 
-    // AssumptionsDrawer sources present in HTML (native <details>, closed by
-    // default — check content, not visibility)
-    const assumptionsHtml = await page.locator('.assumptions').first().innerHTML();
-    expect(assumptionsHtml).toContain('irs.gov');
+      // AssumptionsDrawer sources present in HTML (native <details>, closed by
+      // default — check content, not visibility)
+      const assumptionsHtml = await page.locator('.assumptions').first().innerHTML();
+      if (c.sourceDomain) expect(assumptionsHtml).toContain(c.sourceDomain);
 
-    // Exactly 1 NextBestAction (slot 6)
-    await expect(page.locator('.next-action a')).toHaveCount(1);
+      // Exactly 1 NextBestAction (slot 6)
+      await expect(page.locator('.next-action a')).toHaveCount(1);
 
-    // robots noindex (SPEC 9.2 deviation, documented: launch-complete flip in PR 4.3)
-    const robots = await page.locator('meta[name="robots"]').getAttribute('content').catch(() => null);
-    expect(robots ?? '').toContain('noindex');
+      // robots noindex (all 4 routes stay hidden until the separate launch PR, FDL 4.3)
+      const robots = await page.locator('meta[name="robots"]').getAttribute('content').catch(() => null);
+      expect(robots ?? '').toContain('noindex');
 
-    // Binding wording (SPEC 8.3) — page.content() re-serializes the parsed
-    // DOM, so HTML entities like &#x27; come back as plain apostrophes.
-    const html = await page.content();
-    expect(html).toContain("in today's money");
-    expect(html.toLowerCase()).toContain("illustrative retirement withdrawal");
+      // Binding wording (SPEC 8.3) — page.content() re-serializes the parsed
+      // DOM, so HTML entities like &#x27; come back as plain apostrophes.
+      const html = await page.content();
+      expect(html).toContain("in today's money");
+      expect(html.toLowerCase()).toContain('illustrative retirement withdrawal');
 
-    // Negative wording list — nowhere on the page
-    const lower = html.toLowerCase();
-    for (const word of FORBIDDEN_WORDS) {
-      expect(lower.includes(word), `found forbidden word "${word}"`).toBe(false);
-    }
+      // Negative wording list — nowhere on the page (shared constant, FDL 4.3
+      // Opus follow-up: this list can never drift between the unit test and
+      // every e2e spec that checks it).
+      const lower = html.toLowerCase();
+      for (const word of FORBIDDEN_WORDS) {
+        expect(lower.includes(word), `found forbidden word "${word}"`).toBe(false);
+      }
+
+      // Market-specific terms (Kernaufgabe 6, FDL 4.3 brief)
+      for (const term of c.marketTerms) {
+        expect(html.includes(term), `missing market term "${term}" on ${c.path}`).toBe(true);
+      }
+    });
+
+    test('sitemap does not include the route (indexable:false)', async ({ request }) => {
+      const res = await request.get('/sitemap.xml');
+      const body = await res.text();
+      expect(body).not.toContain(c.path);
+    });
   });
+}
 
-  test('sitemap does not include the route (indexable:false)', async ({ request }) => {
-    const res = await request.get('/sitemap.xml');
+test.describe('Wealth Horizon — hub-hiddenness ×4 (FDL 4.3)', () => {
+  const HIDDEN_PATHS = CASES.map((c) => c.path);
+
+  for (const market of ['us', 'uk', 'ca', 'au'] as const) {
+    test(`${getHubPathForMarket(market)} does not link to any Wealth Horizon route`, async ({ page }) => {
+      await page.goto(getHubPathForMarket(market));
+      const hrefs = await page.locator('a[href]').evaluateAll((els) => els.map((el) => el.getAttribute('href') ?? ''));
+      for (const hidden of HIDDEN_PATHS) {
+        expect(hrefs.some((h) => h === hidden || h.endsWith(hidden)), `${hidden} linked from ${getHubPathForMarket(market)}`).toBe(false);
+      }
+
+      // Footer (site-wide, rendered on every page including the hub itself) —
+      // config/navigation.ts's getSiloToolLinks() delegates straight to the
+      // registry's getFooterToolLinks(), so this is the same hidden filter.
+      const footerHrefs = await page
+        .locator('footer a[href]')
+        .evaluateAll((els) => els.map((el) => el.getAttribute('href') ?? ''));
+      for (const hidden of HIDDEN_PATHS) {
+        expect(footerHrefs.some((h) => h === hidden || h.endsWith(hidden)), `${hidden} in footer on ${market}`).toBe(false);
+      }
+    });
+  }
+
+  test('llms.txt does not mention any Wealth Horizon route', async ({ request }) => {
+    const res = await request.get('/llms.txt');
     const body = await res.text();
-    expect(body).not.toContain(PAGE_PATH);
+    for (const hidden of HIDDEN_PATHS) {
+      expect(body.includes(hidden), `${hidden} present in /llms.txt`).toBe(false);
+    }
   });
 });
 
+// ── US-only JS-on regression suite (FDL 4.2, UNCHANGED) ─────────────────
+// Proves the FDL 4.3 island parametrization (market/locale/currency/account-
+// type-subset/benefit-link props) left US runtime behavior byte-identical.
 test.describe(`Wealth Horizon US (JS on): ${PAGE_PATH}`, () => {
   test.use({ javaScriptEnabled: true });
 
