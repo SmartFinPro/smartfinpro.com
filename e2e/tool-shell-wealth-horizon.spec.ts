@@ -1,27 +1,33 @@
 // e2e/tool-shell-wealth-horizon.spec.ts
-// Wealth Horizon v2 — Live-Workspace, all 4 markets (FDL WH-v2, registry-
-// driven so a future 5th variant is picked up automatically).
+// Wealth Horizon v3 — Clean-Redesign (bindende Fable-Direktive nach
+// User-Feedback: v2 war "viel zu unruhig und durcheinander"). All 4 markets
+// (registry-driven so a future 5th variant is picked up automatically).
 //
 // JS-off (Playwright global default), per market: the Worked Example must be
-// fully present in server HTML (H1, "Example result" chip, Hero headline,
-// answer sentence, Lifetime Path SVG with the retirement-zone label, at
-// least one milestone chip, exactly 3 levers, AssumptionsDrawer sources,
-// exactly 1 NextBestAction), robots noindex, the binding wording ("in
-// today's money", "Illustrative retirement withdrawal") present, the
-// negative wording list (shared FORBIDDEN_WORDS, SPEC 8.3) absent anywhere
-// in the HTML, the route excluded from the sitemap, and market-specific
-// terms present (AU: "12%" + "$32,500"; UK: "ISA"/"SIPP" + "£"; CA: "TFSA"/
-// "RRSP" + "personal room").
+// fully present in server HTML — H1, "Example result" chip, all 5 numbered
+// steps (incl. the new "Expected inflation" step), the big hypothetical-
+// balance number + "in today's money", the stacked contribution/growth bar
+// chart with its "Your contributions"/"Growth" legend, the 2 summary tiles,
+// exactly 3 levers, AssumptionsDrawer sources, exactly 1 NextBestAction,
+// robots noindex, the binding wording ("in today's money", "illustrative
+// retirement withdrawal"), the negative wording list (shared FORBIDDEN_WORDS)
+// absent anywhere in the HTML, the route excluded from the sitemap, and
+// market-specific terms present (AU: "12%" + "$32,500"; UK: "ISA"/"SIPP" +
+// "£"; CA: "TFSA"/"RRSP" + "personal room").
 //
-// Hub-hiddenness (registry-driven, all 4 hubs + footer + llms.txt): none of
-// the 4 Wealth Horizon routes may appear on /tools, /uk/tools, /ca/tools,
-// /au/tools, in the footer, or in llms.txt.
+// Hub-hiddenness (registry-driven, all 4 hubs + footer + llms.txt): unchanged
+// from v2 — none of the 4 Wealth Horizon routes may appear on /tools,
+// /uk/tools, /ca/tools, /au/tools, in the footer, or in llms.txt.
 //
-// JS-on (test.use, US-only): the Live-Workspace has NO step flow — every
-// field is visible and live from the first paint. A slider change flips the
-// state chip to "Your result" and fires tool_input_change; the scenario
-// switcher fires tool_scenario_compare; the hover overlay mounts without
-// breaking anything JS-off already asserted.
+// JS-on (US-only): every numbered step is visible and live from first paint
+// (no sliders anywhere in v3 — "Ruhe" design principle), a plain field edit
+// flips the state chip to "Your result" and fires tool_input_change, a Step-4
+// return-preset chip click ALSO flips to "Your result" (it's a real input
+// change) but fires tool_scenario_compare instead, a lever click still fires
+// tool_input_change with controlRole 'lever', Simple mode still never clamps,
+// Advanced settings holds Annual fee/Withdrawal rate/benefit/detailed-accounts
+// toggle, and the chart's hover overlay mounts without breaking anything
+// JS-off already asserts.
 //
 // Run:  npx playwright test e2e/tool-shell-wealth-horizon.spec.ts
 //       BASE_URL=http://localhost:3007 npx playwright test e2e/tool-shell-wealth-horizon.spec.ts
@@ -109,7 +115,7 @@ function toolEvents(batches: TrackedBatch[]): Array<Record<string, unknown>> {
 
 for (const c of CASES) {
   test.describe(`Wealth Horizon ${c.market.toUpperCase()} (JS off): ${c.path}`, () => {
-    test('Worked Example — Live-Workspace is fully present in server HTML, noindex, wording contracts hold', async ({ page }) => {
+    test('Worked Example — v3 Clean-Redesign is fully present in server HTML, noindex, wording contracts hold', async ({ page }) => {
       const response = await page.goto(c.path);
       expect(response?.status()).toBeLessThan(400);
 
@@ -119,18 +125,35 @@ for (const c of CASES) {
       // "Example result" chip (Worked Example, resultState 'example')
       await expect(page.locator('.result-chip').first()).toContainText('Example result');
 
-      // Hero headline + answer sentence (no step flow — visible immediately)
-      await expect(page.locator('#wealth-horizon-result h2').first()).not.toBeEmpty();
+      // 5 numbered steps, visible from first paint (no step flow, no sliders).
+      const html = await page.content();
+      expect(html).toContain('Starting amount');
+      expect(html).toContain('Monthly contribution');
+      expect(html).toContain('Your age today &amp; at retirement');
+      expect(html).toContain('Expected annual return');
+      expect(html).toContain('Expected inflation');
+      expect(html.toLowerCase()).not.toContain('type="range"'); // no sliders anywhere in v3
+
+      // Hero — big hypothetical-balance number + "in today's money" badge.
+      await expect(page.locator('#wealth-horizon-result').getByText('Hypothetical balance at retirement')).toBeVisible();
+
+      // The calm text line (item 3) carries the binding "illustrative
+      // retirement withdrawal" wording.
       await expect(page.locator('#wealth-horizon-result .answer').first()).not.toBeEmpty();
 
-      // Lifetime Path SVG (accumulation + decumulation phases in one chart)
+      // Stacked contribution/growth bar chart + its 2-chip legend.
       const svg = page.locator('#wealth-horizon-result svg[role="img"]').first();
       await expect(svg).toBeVisible();
-      await expect(svg).toContainText('Retirement');
+      expect(html).toContain('Your contributions');
+      expect(html).toContain('Growth');
 
-      // At least one milestone chip rendered from the Worked Example's balance path.
-      const milestoneChips = page.locator('[data-testid="milestone-chip"]');
-      expect(await milestoneChips.count()).toBeGreaterThan(0);
+      // Exactly 2 summary tiles.
+      expect(html).toContain('Total contributions');
+      expect(html).toContain('Expected growth');
+
+      // No more milestone chips / scenario switcher (v2 elements, removed).
+      expect(await page.locator('[data-testid="milestone-chip"]').count()).toBe(0);
+      expect(await page.getByRole('group', { name: 'Scenario' }).count()).toBe(0);
 
       // Exactly 3 levers (slot 4)
       await expect(page.locator('.levers button.lever')).toHaveCount(3);
@@ -139,6 +162,13 @@ for (const c of CASES) {
       // default — check content, not visibility)
       const assumptionsHtml = await page.locator('.assumptions').first().innerHTML();
       if (c.sourceDomain) expect(assumptionsHtml).toContain(c.sourceDomain);
+
+      // Advanced settings (native <details>, closed by default) still holds
+      // Annual fee / Withdrawal rate / the detailed-accounts toggle.
+      const advancedHtml = await page.locator('.wh-advanced').first().innerHTML();
+      expect(advancedHtml).toContain('Annual fee');
+      expect(advancedHtml).toContain('Withdrawal rate');
+      expect(advancedHtml).toContain('Switch to detailed accounts');
 
       // Exactly 1 NextBestAction (slot 6)
       await expect(page.locator('.next-action a')).toHaveCount(1);
@@ -149,7 +179,6 @@ for (const c of CASES) {
 
       // Binding wording (SPEC 8.3) — page.content() re-serializes the parsed
       // DOM, so HTML entities like &#x27; come back as plain apostrophes.
-      const html = await page.content();
       expect(html).toContain("in today's money");
       expect(html.toLowerCase()).toContain('illustrative retirement withdrawal');
 
@@ -202,13 +231,8 @@ test.describe('Wealth Horizon — hub-hiddenness ×4 (FDL 4.3)', () => {
   });
 });
 
-// ── US-only JS-on suite (Live-Workspace, FDL WH-v2) ─────────────────────
-// Proves the wizard is gone: every field is visible and live from first
-// paint, a slider change alone (no "Next"/"See my result" click anywhere)
-// flips the result to "Your result" and fires analytics, the scenario
-// switcher still fires tool_scenario_compare, and the hover overlay mounts
-// without breaking anything the JS-off suite already asserted.
-test.describe(`Wealth Horizon US (JS on) — Live-Workspace: ${PAGE_PATH}`, () => {
+// ── US-only JS-on suite (v3 Clean-Redesign) ─────────────────────────────
+test.describe(`Wealth Horizon US (JS on) — v3 Clean-Redesign: ${PAGE_PATH}`, () => {
   test.use({ javaScriptEnabled: true });
 
   test.beforeEach(async ({ page }) => {
@@ -219,26 +243,27 @@ test.describe(`Wealth Horizon US (JS on) — Live-Workspace: ${PAGE_PATH}`, () =
     });
   });
 
-  test('no step flow — every input group is visible immediately, no "Next"/"See my result" button exists', async ({ page }) => {
+  test('no step flow, no sliders — every numbered step is visible immediately', async ({ page }) => {
     await page.goto(PAGE_PATH, { waitUntil: 'networkidle' });
     await expect(page.getByRole('button', { name: 'Next' })).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'See my result' })).toHaveCount(0);
-    await expect(page.getByRole('textbox', { name: 'Your current age' })).toBeVisible();
-    await expect(page.getByRole('textbox', { name: 'Your monthly contribution' })).toBeVisible();
-    await expect(page.getByRole('textbox', { name: 'Withdrawal rate' })).toBeVisible();
+    await expect(page.getByRole('slider')).toHaveCount(0);
+    await expect(page.getByRole('textbox', { name: 'Starting amount' })).toBeVisible();
+    await expect(page.getByRole('textbox', { name: 'Monthly contribution' })).toBeVisible();
+    await expect(page.getByRole('textbox', { name: 'Today' })).toBeVisible();
+    await expect(page.getByRole('textbox', { name: 'Retirement' })).toBeVisible();
+    await expect(page.getByRole('textbox', { name: 'Expected annual return' })).toBeVisible();
+    await expect(page.getByRole('textbox', { name: 'Expected inflation' })).toBeVisible();
     await expect(page.locator('#wealth-horizon-result .result-chip').first()).toContainText('Example result');
   });
 
-  test('a single slider change flips the chip to "Your result" and fires tool_input_change', async ({ page }) => {
+  test('a plain field edit flips the chip to "Your result" and fires tool_input_change', async ({ page }) => {
     const batches = await interceptTrack(page);
     await page.goto(PAGE_PATH, { waitUntil: 'networkidle' });
 
-    // Keyboard-driven interaction fires real native input/change events on a
-    // range input (Playwright's fill() is unreliable for type="range").
-    const currentAgeSlider = page.getByRole('slider', { name: 'Your current age slider' });
-    await currentAgeSlider.focus();
-    await currentAgeSlider.press('ArrowRight');
-    await currentAgeSlider.press('ArrowRight');
+    const currentAgeInput = page.getByRole('textbox', { name: 'Today' });
+    await currentAgeInput.fill('32');
+    await currentAgeInput.blur();
 
     await expect(page.locator('#wealth-horizon-result .result-chip').first()).toContainText('Your result');
 
@@ -250,53 +275,66 @@ test.describe(`Wealth Horizon US (JS on) — Live-Workspace: ${PAGE_PATH}`, () =
     expect(change, 'tool_input_change for currentAge should have fired').toBeTruthy();
   });
 
-  test('scenario switcher fires tool_scenario_compare and stays a "lens" over the live result', async ({ page }) => {
+  test('a Step-4 return-preset chip fires tool_scenario_compare AND flips the chip to "Your result" (it is a real input change)', async ({ page }) => {
     const batches = await interceptTrack(page);
     await page.goto(PAGE_PATH, { waitUntil: 'networkidle' });
 
-    await page.getByRole('group', { name: 'Scenario' }).getByRole('button', { name: 'Optimistic' }).click();
-    await page.waitForTimeout(1200);
+    await page.getByRole('button', { name: 'Optimistic 9%' }).click();
+    await expect(page.locator('#wealth-horizon-result .result-chip').first()).toContainText('Your result');
 
+    await page.waitForTimeout(1200);
     const events = toolEvents(batches);
     const compare = events.find((e) => e.eventName === 'tool_scenario_compare');
     expect(compare, 'tool_scenario_compare should have fired').toBeTruthy();
-    const props = (compare!.properties ?? {}) as Record<string, unknown>;
-    expect(props.scenario).toBe('optimistic');
+    expect((compare!.properties as Record<string, unknown>).scenario).toBe('optimistic');
   });
 
-  // Fable-Design-Review Fix 3 — the default inputs are now IDENTICAL to the
-  // worked example (Fix 2), so the island can always compute live, but a
-  // scenario-lens click alone is still not "your" result: only a real field
-  // edit is. Both halves asserted below.
-  test('(Fix 3a) scenario click before any field change keeps the chip on "Example result" while the numbers switch', async ({ page }) => {
+  test('the "Balanced 7.5%" chip is active by default (untouched defaults match its value)', async ({ page }) => {
     await page.goto(PAGE_PATH, { waitUntil: 'networkidle' });
-    const chip = page.locator('#wealth-horizon-result .result-chip').first();
-    const answer = page.locator('#wealth-horizon-result .answer').first();
-    await expect(chip).toContainText('Example result');
-    const answerBefore = await answer.textContent();
+    await expect(page.getByRole('button', { name: 'Balanced 7.5%' })).toHaveAttribute('aria-pressed', 'true');
+  });
 
-    await page.getByRole('group', { name: 'Scenario' }).getByRole('button', { name: 'Optimistic' }).click();
+  test('typing a custom return value fires a plain tool_input_change (not tool_scenario_compare)', async ({ page }) => {
+    const batches = await interceptTrack(page);
+    await page.goto(PAGE_PATH, { waitUntil: 'networkidle' });
+
+    const returnInput = page.getByRole('textbox', { name: 'Expected annual return' });
+    await returnInput.fill('6.2');
+    await returnInput.blur();
+    await page.waitForTimeout(1800);
+
+    const events = toolEvents(batches);
+    const change = events.find(
+      (e) => e.eventName === 'tool_input_change' && (e.properties as Record<string, unknown> | undefined)?.inputKey === 'returnNominalPct',
+    );
+    expect(change, 'tool_input_change for returnNominalPct should have fired').toBeTruthy();
+    expect(events.some((e) => e.eventName === 'tool_scenario_compare')).toBe(false);
+  });
+
+  test('changing the inflation field changes the hero balance number', async ({ page }) => {
+    await page.goto(PAGE_PATH, { waitUntil: 'networkidle' });
+    const heroBefore = await page.locator('#wealth-horizon-result').getByText(/^\$[\d,]+$/).first().textContent();
+
+    const inflationInput = page.getByRole('textbox', { name: 'Expected inflation' });
+    await inflationInput.fill('4.5');
+    await inflationInput.blur();
     await page.waitForTimeout(300);
 
-    // Chip is unchanged — a scenario-lens switch is not a field edit.
-    await expect(chip).toContainText('Example result');
-    // But the displayed numbers DID move to the optimistic scenario.
-    const answerAfter = await answer.textContent();
-    expect(answerAfter).not.toBe(answerBefore);
+    const heroAfter = await page.locator('#wealth-horizon-result').getByText(/^\$[\d,]+$/).first().textContent();
+    expect(heroAfter).not.toBe(heroBefore);
   });
 
-  test('(Fix 3b) the first real field change — even after a prior scenario switch — flips the chip to "Your result"', async ({ page }) => {
+  test('an out-of-range real return (nominal − inflation) shows the clamp warning', async ({ page }) => {
     await page.goto(PAGE_PATH, { waitUntil: 'networkidle' });
-    const chip = page.locator('#wealth-horizon-result .result-chip').first();
 
-    await page.getByRole('group', { name: 'Scenario' }).getByRole('button', { name: 'Optimistic' }).click();
-    await expect(chip).toContainText('Example result'); // still example after the scenario click alone
+    const returnInput = page.getByRole('textbox', { name: 'Expected annual return' });
+    await returnInput.fill('1');
+    await returnInput.blur();
+    const inflationInput = page.getByRole('textbox', { name: 'Expected inflation' });
+    await inflationInput.fill('5');
+    await inflationInput.blur();
 
-    const currentAgeSlider = page.getByRole('slider', { name: 'Your current age slider' });
-    await currentAgeSlider.focus();
-    await currentAgeSlider.press('ArrowRight');
-
-    await expect(chip).toContainText('Your result'); // first real field edit flips it
+    await expect(page.getByTestId('real-return-clamp-warning')).toBeVisible();
   });
 
   test('lever click fires tool_input_change with controlRole "lever"', async ({ page }) => {
@@ -316,7 +354,7 @@ test.describe(`Wealth Horizon US (JS on) — Live-Workspace: ${PAGE_PATH}`, () =
   test('Simple mode never clamps an over-IRS-limit contribution — value stays, informational hint visible', async ({ page }) => {
     await page.goto(PAGE_PATH, { waitUntil: 'networkidle' });
 
-    const contributionInput = page.getByRole('textbox', { name: 'Your monthly contribution' });
+    const contributionInput = page.getByRole('textbox', { name: 'Monthly contribution' });
     await contributionInput.fill('50000'); // annual 600,000 — far beyond any US statutory limit
     await contributionInput.blur();
 
@@ -326,25 +364,24 @@ test.describe(`Wealth Horizon US (JS on) — Live-Workspace: ${PAGE_PATH}`, () =
     await expect(hint).toContainText('account-level limits may apply');
   });
 
-  test('withdrawal rate is visibly adjustable, 2.5–5.0, from first paint (no step navigation needed)', async ({ page }) => {
+  test('Advanced settings expands to reveal Annual fee, Withdrawal rate and the detailed-accounts toggle', async ({ page }) => {
     await page.goto(PAGE_PATH, { waitUntil: 'networkidle' });
+    await page.getByText('Advanced settings').click();
 
-    const withdrawalInput = page.getByRole('textbox', { name: 'Withdrawal rate' });
-    await expect(withdrawalInput).toBeVisible();
-    const withdrawalSlider = page.locator('input[type="range"][aria-label="Withdrawal rate slider"]');
-    await expect(withdrawalSlider).toHaveAttribute('min', '2.5');
-    await expect(withdrawalSlider).toHaveAttribute('max', '5');
+    await expect(page.getByRole('textbox', { name: 'Annual fee' })).toBeVisible();
+    await expect(page.getByRole('textbox', { name: 'Withdrawal rate' })).toBeVisible();
+    await expect(page.getByText('Switch to detailed accounts →')).toBeVisible();
   });
 
   test('hover overlay mounts on the chart without breaking layout or JS-off content', async ({ page }) => {
     await page.goto(PAGE_PATH, { waitUntil: 'networkidle' });
-    const overlay = page.locator('.lifetime-chart-overlay').first();
+    const overlay = page.locator('.contribution-growth-chart-overlay').first();
     await expect(overlay).toBeAttached();
     // Still shows everything the JS-off suite asserts, even with the overlay mounted.
     await expect(page.locator('#wealth-horizon-result svg[role="img"]').first()).toBeVisible();
     await expect(page.locator('.levers button.lever')).toHaveCount(3);
 
     await overlay.hover();
-    await expect(page.locator('.lifetime-chart-overlay [role="status"]')).toBeVisible();
+    await expect(page.locator('.contribution-growth-chart-overlay [role="status"]')).toBeVisible();
   });
 });

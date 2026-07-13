@@ -49,3 +49,28 @@ export const WEALTH_HORIZON_DEFAULT_INPUTS: Record<Market, SimpleRetirementInput
   ca: buildDefault('ca'),
   au: buildDefault('au'),
 };
+
+// ── Wealth Horizon v3 (Fable-Direktive, Clean-Redesign) ──────────────────────
+// Additive — NOT part of RetirementInputs (the engine only ever sees REAL
+// returns; see lib/tools/results/wealth-horizon-real-return.ts). These are
+// the Live-Workspace's Step-4/5 default field values (nominal return +
+// inflation), shared the same way WEALTH_HORIZON_DEFAULT_INPUTS is: one page
+// (SSR worked example) and the island's `useState` seed both read from here,
+// so they can never drift apart. returnNominalPct 7.5 − inflationPct 2.5 =
+// 5.0% real, matching the pre-v3 realReturnBase default exactly (documented
+// continuity, not a coincidence requirement).
+export interface WealthHorizonReturnAssumptionDefaults {
+  returnNominalPct: number;
+  inflationPct: number;
+}
+
+function buildReturnAssumptionDefaults(): WealthHorizonReturnAssumptionDefaults {
+  return { returnNominalPct: 7.5, inflationPct: 2.5 };
+}
+
+export const WEALTH_HORIZON_DEFAULT_RETURN_ASSUMPTIONS: Record<Market, WealthHorizonReturnAssumptionDefaults> = {
+  us: buildReturnAssumptionDefaults(),
+  uk: buildReturnAssumptionDefaults(),
+  ca: buildReturnAssumptionDefaults(),
+  au: buildReturnAssumptionDefaults(),
+};

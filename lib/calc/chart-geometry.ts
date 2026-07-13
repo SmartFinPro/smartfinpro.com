@@ -278,6 +278,94 @@ function balanceAt(series: LifetimeSeriesInput[], key: string, age: number): num
   return row ? row.balance : null;
 }
 
+// ---------------------------------------------------------------------------
+// Stacked year bars (Wealth Horizon v3 signature visual — replaces the v2
+// Lifetime Path corridor chart entirely, DESIGN-DIREKTIVE item 4). One bar
+// per projection year (currentAge..retireAge), each split into a
+// "Your contributions" segment (bottom) and a "Growth" segment (top, sits
+// directly above, no gap/overlap). Pure geometry only — the growth/
+// contributions split itself is computed by
+// lib/tools/results/wealth-horizon-contribution-series.ts; this function
+// only lays the already-split numbers out in the frame's coordinate space.
+// ---------------------------------------------------------------------------
+
+export interface StackedBarInput {
+  age: number;
+  contributions: number;
+  growth: number;
+}
+
+export interface StackedBarLayoutEntry {
+  age: number;
+  x: number;
+  width: number;
+  /** Top edge (SVG y) of the contributions (bottom) segment. */
+  contribY: number;
+  contribHeight: number;
+  /** Top edge (SVG y) of the growth (top) segment — sits directly above the contributions segment. */
+  growthY: number;
+  growthHeight: number;
+  /** Whether this bar gets an age label on the X axis (every bar when the
+   *  span is ≤30 years, every 2nd bar beyond that — DESIGN-DIREKTIVE). */
+  labeled: boolean;
+}
+
+export interface StackedBarsLayout {
+  frame: ChartFrame;
+  bars: StackedBarLayoutEntry[];
+  yTicks: { y: number; label: string }[];
+  xTicks: { x: number; label: string }[];
+}
+
+export function buildStackedBarsLayout(
+  bars: StackedBarInput[],
+  formatY: (v: number) => string = (v) => String(v),
+  frame: ChartFrame = DEFAULT_FRAME,
+): StackedBarsLayout {
+  if (bars.length === 0) return { frame, bars: [], yTicks: [], xTicks: [] };
+
+  const innerW = frame.width - 2 * frame.padX;
+  const innerH = frame.height - 2 * frame.padY;
+  const n = bars.length;
+  const slot = innerW / n;
+  const gap = slot * 0.25;
+  const barWidth = Math.max(0, slot - gap);
+
+  const totals = bars.map((b) => Math.max(0, b.contributions) + Math.max(0, b.growth));
+  const yMax = Math.max(...totals, 1);
+  const baselineY = frame.height - frame.padY;
+  const sy = (v: number) => baselineY - (v / yMax) * innerH;
+
+  // >30-year span → label every 2nd bar; otherwise label every bar.
+  const spanYears = bars[n - 1].age - bars[0].age;
+  const labelEvery = spanYears > 30 ? 2 : 1;
+
+  const laidOut: StackedBarLayoutEntry[] = bars.map((b, i) => {
+    const contributions = Math.max(0, b.contributions);
+    const growth = Math.max(0, b.growth);
+    const contribY = sy(contributions);
+    const growthY = sy(contributions + growth);
+    return {
+      age: b.age,
+      x: frame.padX + i * slot + gap / 2,
+      width: barWidth,
+      contribY,
+      contribHeight: Math.max(0, baselineY - contribY),
+      growthY,
+      growthHeight: Math.max(0, contribY - growthY),
+      labeled: i % labelEvery === 0,
+    };
+  });
+
+  const yStep = yMax / 4;
+  return {
+    frame,
+    bars: laidOut,
+    yTicks: [0, 1, 2, 3, 4].map((i) => ({ y: sy(i * yStep), label: formatY(i * yStep) })),
+    xTicks: laidOut.filter((b) => b.labeled).map((b) => ({ x: b.x + b.width / 2, label: String(b.age) })),
+  };
+}
+
 export function buildLifetimeLayout(input: LifetimeLayoutInput): LifetimeLayout {
   const frame = input.frame ?? DEFAULT_FRAME;
   const formatY = input.formatY ?? ((v: number) => String(v));

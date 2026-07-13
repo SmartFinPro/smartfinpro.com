@@ -61,17 +61,25 @@ function scenarioByKey(scenarios: readonly ScenarioResult[], key: WealthHorizonS
 
 function buildAnswer(
   focus: ScenarioResult,
-  focusScenario: WealthHorizonScenarioKey,
   inputs: RetirementInputs,
   currency: ToolResult['primary']['currency'],
   locale: string,
 ): string {
+  // Wealth Horizon v3 (Clean-Redesign, Fable-Direktive) — the old 3-way
+  // scenario switcher is gone (replaced by a single user-entered "Expected
+  // annual return" + "Expected inflation" pair, see
+  // lib/tools/results/wealth-horizon-real-return.ts), so this sentence no
+  // longer names a scenario ("In the base scenario, …") — there is nothing
+  // left in the UI for that phrase to refer to. `focus` is always the
+  // engine's 'base' scenario now (buildWealthHorizonResult below always
+  // calls this with focusScenario 'base'); conservative/optimistic still
+  // exist purely to populate primary.range (Result Contract slot 2).
   const withdrawal = formatCurrency(focus.illustrativeMonthlyWithdrawal, currency!, locale);
   if (focus.fiDate) {
-    return `In the ${focusScenario} scenario, you're on track for an illustrative retirement withdrawal of about ${withdrawal} a month in today's money by age ${inputs.retireAge}, reaching financial independence around ${focus.fiDate}.`;
+    return `You're on track for an illustrative retirement withdrawal of about ${withdrawal} a month in today's money by age ${inputs.retireAge}, reaching financial independence around ${focus.fiDate}.`;
   }
   const gap = formatCurrency(focus.incomeGapMonthly, currency!, locale);
-  return `In the ${focusScenario} scenario, your illustrative retirement withdrawal is about ${withdrawal} a month in today's money by age ${inputs.retireAge} — financial independence isn't reached by then, leaving an income gap of about ${gap} a month.`;
+  return `Your illustrative retirement withdrawal is about ${withdrawal} a month in today's money by age ${inputs.retireAge} — financial independence isn't reached by then, leaving an income gap of about ${gap} a month.`;
 }
 
 function minVerifiedAt(rules: RuleSnapshot): string {
@@ -156,7 +164,7 @@ export function buildWealthHorizonResult(
       : `Funds last beyond age ${LIFETIME_END_AGE} in the ${focusScenario} scenario at the illustrative withdrawal rate.`);
 
   return {
-    answer: buildAnswer(focus, focusScenario, inputs, currency, locale),
+    answer: buildAnswer(focus, inputs, currency, locale),
     primary: {
       label: "Illustrative retirement withdrawal (monthly, in today's money)",
       value: focus.illustrativeMonthlyWithdrawal,

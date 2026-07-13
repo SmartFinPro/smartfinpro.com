@@ -10,7 +10,8 @@ import type { Metadata } from 'next';
 import { buildToolMetadata } from '@/lib/tools/registry/metadata';
 import { resolveRuleSnapshot } from '@/lib/rules';
 import { buildWealthHorizonResult, WEALTH_HORIZON_CA_RULE_KEYS } from '@/lib/tools/results/wealth-horizon-result';
-import { WEALTH_HORIZON_DEFAULT_INPUTS } from '@/lib/tools/results/wealth-horizon-defaults';
+import { WEALTH_HORIZON_DEFAULT_INPUTS, WEALTH_HORIZON_DEFAULT_RETURN_ASSUMPTIONS } from '@/lib/tools/results/wealth-horizon-defaults';
+import { buildRealReturnRuleSnapshot } from '@/lib/tools/results/wealth-horizon-real-return';
 import type { RetirementAccountType } from '@/lib/calc/retirement/types';
 import { ToolShell } from '@/components/tools/shell/tool-shell';
 import { WealthHorizonLive } from '@/components/tools/wealth-horizon/wealth-horizon-live';
@@ -32,6 +33,7 @@ export const metadata: Metadata = buildToolMetadata('wealth-horizon', 'ca');
 // (`defaultInputs` prop below), so the SSR "Example result" and the live
 // start state can never drift apart again.
 const EXAMPLE_INPUTS = WEALTH_HORIZON_DEFAULT_INPUTS.ca;
+const EXAMPLE_RETURN_ASSUMPTIONS = WEALTH_HORIZON_DEFAULT_RETURN_ASSUMPTIONS.ca;
 
 const CRA_RETIREMENT_INCOME_CALCULATOR_URL =
   'https://www.canada.ca/en/services/benefits/publicpensions/cpp/retirement-income-calculator.html';
@@ -67,12 +69,22 @@ const FAQ_ITEMS: FAQ[] = [
     answer:
       'Yes — the withdrawal rate is adjustable from 2.5% to 5.0% (default 4.0%) in the Assumptions step, and every result recalculates immediately using the rate you choose.',
   },
+  {
+    question: 'Why do you subtract inflation?',
+    answer:
+      "You enter a nominal return and expected inflation; we subtract inflation to project in today's purchasing power (real return ≈ nominal − inflation). A 9% nominal return during 4% inflation buys the same as a 5% real return during 0% inflation — showing the real number avoids the illusion of growth from inflation alone.",
+  },
 ];
 
 export default function WealthHorizonCAPage() {
   const asOf = new Date().toISOString().slice(0, 10); // revalidate=86400 → this can move day to day, per SPEC 8.5
   const rules = resolveRuleSnapshot('ca', [...WEALTH_HORIZON_CA_RULE_KEYS], asOf);
-  const exampleResult = buildWealthHorizonResult(EXAMPLE_INPUTS, rules, 'example');
+  const { rules: exampleRules } = buildRealReturnRuleSnapshot(
+    rules,
+    EXAMPLE_RETURN_ASSUMPTIONS.returnNominalPct,
+    EXAMPLE_RETURN_ASSUMPTIONS.inflationPct,
+  );
+  const exampleResult = buildWealthHorizonResult(EXAMPLE_INPUTS, exampleRules, 'example');
 
   return (
     <ToolShell
@@ -126,6 +138,11 @@ export default function WealthHorizonCAPage() {
               — then subtracting a documented 2.5% inflation assumption and rounding to three deliberately wide
               scenarios (nominal ≈ real + inflation). We do not claim probabilities for any scenario, and we review
               this methodology at least annually against fresh publications from the same three providers.
+            </p>
+            <p className="m-0 text-[15px] leading-6 text-[var(--sfp-slate)]">
+              You enter a nominal return and expected inflation; we subtract inflation to project in today&rsquo;s
+              purchasing power (real return ≈ nominal − inflation). Conservative and optimistic scenarios are a
+              ±1.5 percentage point editorial range around your own real-return figure, not a second set of inputs.
             </p>
             <p className="m-0 text-[15px] leading-6 text-[var(--sfp-slate)]">
               TFSA and RRSP room is always <strong>your personal room from CRA My Account</strong> — this calculator
@@ -221,7 +238,7 @@ export default function WealthHorizonCAPage() {
         currency="CAD"
         locale="en-CA"
         accountTypeOptions={ACCOUNT_TYPE_OPTIONS}
-        taxAdvantagedLabel="TFSA/RRSP"
+        defaultReturnAssumptions={EXAMPLE_RETURN_ASSUMPTIONS}
         benefitName="CPP/OAS"
         benefitLinkUrl={CRA_RETIREMENT_INCOME_CALCULATOR_URL}
         benefitLinkLabel="Canadian Retirement Income Calculator"

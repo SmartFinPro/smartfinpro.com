@@ -10,7 +10,8 @@ import type { Metadata } from 'next';
 import { buildToolMetadata } from '@/lib/tools/registry/metadata';
 import { resolveRuleSnapshot } from '@/lib/rules';
 import { buildWealthHorizonResult, WEALTH_HORIZON_AU_RULE_KEYS } from '@/lib/tools/results/wealth-horizon-result';
-import { WEALTH_HORIZON_DEFAULT_INPUTS } from '@/lib/tools/results/wealth-horizon-defaults';
+import { WEALTH_HORIZON_DEFAULT_INPUTS, WEALTH_HORIZON_DEFAULT_RETURN_ASSUMPTIONS } from '@/lib/tools/results/wealth-horizon-defaults';
+import { buildRealReturnRuleSnapshot } from '@/lib/tools/results/wealth-horizon-real-return';
 import type { RetirementAccountType } from '@/lib/calc/retirement/types';
 import { ToolShell } from '@/components/tools/shell/tool-shell';
 import { WealthHorizonLive } from '@/components/tools/wealth-horizon/wealth-horizon-live';
@@ -32,13 +33,19 @@ export const metadata: Metadata = buildToolMetadata('wealth-horizon', 'au');
 // (`defaultInputs` prop below), so the SSR "Example result" and the live
 // start state can never drift apart again.
 const EXAMPLE_INPUTS = WEALTH_HORIZON_DEFAULT_INPUTS.au;
+const EXAMPLE_RETURN_ASSUMPTIONS = WEALTH_HORIZON_DEFAULT_RETURN_ASSUMPTIONS.au;
 
 const MONEYSMART_PREPARE_TO_RETIRE_URL = 'https://moneysmart.gov.au/retirement-income/prepare-to-retire';
 
 export default function WealthHorizonAUPage() {
   const asOf = new Date().toISOString().slice(0, 10); // revalidate=86400 → this can move day to day, per SPEC 8.5
   const rules = resolveRuleSnapshot('au', [...WEALTH_HORIZON_AU_RULE_KEYS], asOf);
-  const exampleResult = buildWealthHorizonResult(EXAMPLE_INPUTS, rules, 'example');
+  const { rules: exampleRules } = buildRealReturnRuleSnapshot(
+    rules,
+    EXAMPLE_RETURN_ASSUMPTIONS.returnNominalPct,
+    EXAMPLE_RETURN_ASSUMPTIONS.inflationPct,
+  );
+  const exampleResult = buildWealthHorizonResult(EXAMPLE_INPUTS, exampleRules, 'example');
   const sgRatePct = formatPercent(rules.values.superGuaranteeRate * 100, 'en-AU', 0); // "12%"
   const concessionalCap = formatCurrency(rules.values.concessionalCap, 'AUD', 'en-AU'); // "$32,500"
 
@@ -76,6 +83,11 @@ export default function WealthHorizonAUPage() {
       question: 'Can I change the withdrawal rate?',
       answer:
         'Yes — the withdrawal rate is adjustable from 2.5% to 5.0% (default 4.0%) in the Assumptions step, and every result recalculates immediately using the rate you choose.',
+    },
+    {
+      question: 'Why do you subtract inflation?',
+      answer:
+        "You enter a nominal return and expected inflation; we subtract inflation to project in today's purchasing power (real return ≈ nominal − inflation). A 9% nominal return during 4% inflation buys the same as a 5% real return during 0% inflation — showing the real number avoids the illusion of growth from inflation alone.",
     },
   ];
 
@@ -131,6 +143,11 @@ export default function WealthHorizonAUPage() {
               — then subtracting a documented 2.5% inflation assumption and rounding to three deliberately wide
               scenarios (nominal ≈ real + inflation). We do not claim probabilities for any scenario, and we review
               this methodology at least annually against fresh publications from the same three providers.
+            </p>
+            <p className="m-0 text-[15px] leading-6 text-[var(--sfp-slate)]">
+              You enter a nominal return and expected inflation; we subtract inflation to project in today&rsquo;s
+              purchasing power (real return ≈ nominal − inflation). Conservative and optimistic scenarios are a
+              ±1.5 percentage point editorial range around your own real-return figure, not a second set of inputs.
             </p>
             <p className="m-0 text-[15px] leading-6 text-[var(--sfp-slate)]">
               The current Super Guarantee (SG) rate is <strong>{sgRatePct}</strong> of eligible earnings — the
@@ -227,7 +244,7 @@ export default function WealthHorizonAUPage() {
         currency="AUD"
         locale="en-AU"
         accountTypeOptions={ACCOUNT_TYPE_OPTIONS}
-        taxAdvantagedLabel="Super"
+        defaultReturnAssumptions={EXAMPLE_RETURN_ASSUMPTIONS}
         benefitName="Age Pension"
         benefitLinkUrl={MONEYSMART_PREPARE_TO_RETIRE_URL}
         benefitLinkLabel="Moneysmart’s Prepare to retire guide"

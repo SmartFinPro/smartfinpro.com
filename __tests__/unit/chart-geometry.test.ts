@@ -12,6 +12,7 @@ import {
   buildMini,
   findMilestoneCrossings,
   buildLifetimeLayout,
+  buildStackedBarsLayout,
   DEFAULT_FRAME,
   MINI_FRAME,
   type LifetimeSeriesInput,
@@ -321,5 +322,76 @@ describe('buildLifetimeLayout()', () => {
       series: [{ key: 'base', accumulation: [], decumulation: [] }],
     });
     expect(empty.accumulationPaths[0].d).toBe('');
+  });
+});
+
+describe('buildStackedBarsLayout()', () => {
+  const bars = [
+    { age: 30, contributions: 25_000, growth: 0 },
+    { age: 31, contributions: 29_800, growth: 600 },
+    { age: 32, contributions: 34_600, growth: 1_400 },
+  ];
+
+  it('lays out one bar per input row, sequential and non-overlapping left→right', () => {
+    const layout = buildStackedBarsLayout(bars);
+    expect(layout.bars).toHaveLength(3);
+    for (let i = 1; i < layout.bars.length; i++) {
+      expect(layout.bars[i].x).toBeGreaterThanOrEqual(layout.bars[i - 1].x + layout.bars[i - 1].width);
+    }
+  });
+
+  it('stacks contributions below growth (contribution segment sits lower on screen — larger y)', () => {
+    const layout = buildStackedBarsLayout(bars);
+    const withGrowth = layout.bars.find((b) => b.age === 31)!;
+    expect(withGrowth.contribY).toBeGreaterThan(withGrowth.growthY);
+    // Growth segment's bottom edge should meet the contribution segment's top edge (no gap, no overlap).
+    expect(withGrowth.growthY + withGrowth.growthHeight).toBeCloseTo(withGrowth.contribY, 1);
+  });
+
+  it('a zero-growth bar has zero growth height', () => {
+    const layout = buildStackedBarsLayout(bars);
+    const zeroGrowth = layout.bars.find((b) => b.age === 30)!;
+    expect(zeroGrowth.growthHeight).toBeCloseTo(0, 5);
+  });
+
+  it('negative growth input is floored at 0 (never draws a negative-height segment)', () => {
+    const layout = buildStackedBarsLayout([{ age: 30, contributions: 25_000, growth: -500 }]);
+    expect(layout.bars[0].growthHeight).toBeGreaterThanOrEqual(0);
+  });
+
+  it('labels every bar when the span is 30 years or fewer', () => {
+    const layout = buildStackedBarsLayout(bars); // 3 bars, span well under 30
+    expect(layout.bars.every((b) => b.labeled)).toBe(true);
+  });
+
+  it('labels every 2nd bar when the span exceeds 30 years', () => {
+    const longSpan = Array.from({ length: 36 }, (_, i) => ({ age: 30 + i, contributions: 1000 * (i + 1), growth: 100 * i }));
+    const layout = buildStackedBarsLayout(longSpan);
+    expect(layout.bars[0].labeled).toBe(true);
+    expect(layout.bars[1].labeled).toBe(false);
+    expect(layout.bars[2].labeled).toBe(true);
+    // every bar still renders (drawn), even the unlabeled ones
+    expect(layout.bars).toHaveLength(36);
+  });
+
+  it('yTicks has 4 entries, xTicks only contains labeled bars', () => {
+    const longSpan = Array.from({ length: 36 }, (_, i) => ({ age: 30 + i, contributions: 1000 * (i + 1), growth: 100 * i }));
+    const layout = buildStackedBarsLayout(longSpan);
+    expect(layout.yTicks).toHaveLength(5);
+    expect(layout.xTicks.length).toBeLessThan(layout.bars.length);
+    expect(layout.xTicks.length).toBeGreaterThan(0);
+  });
+
+  it('empty bars array returns an empty layout without throwing', () => {
+    const layout = buildStackedBarsLayout([]);
+    expect(layout.bars).toEqual([]);
+    expect(layout.yTicks).toEqual([]);
+    expect(layout.xTicks).toEqual([]);
+  });
+
+  it('all-zero bars do not NaN (yMax floored at 1)', () => {
+    const layout = buildStackedBarsLayout([{ age: 30, contributions: 0, growth: 0 }]);
+    expect(Number.isNaN(layout.bars[0].contribY)).toBe(false);
+    for (const t of layout.yTicks) expect(Number.isNaN(t.y)).toBe(false);
   });
 });
