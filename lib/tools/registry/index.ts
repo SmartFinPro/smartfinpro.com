@@ -31,9 +31,20 @@ export function getToolEntryHref(id: ToolId, market: ToolMarket): string | null 
   return market === 'us' ? global.path : `${global.path}?market=${market}`;
 }
 
+/** The variant a market actually resolves to for a tool: its own localized
+ *  variant, else the global fallback (US variant, or the tool's first). */
+function resolveVariantForMarket(t: ToolDefinition, market: ToolMarket): ToolRouteVariant {
+  return t.variants.find((v) => v.market === market)
+    ?? t.variants.find((v) => v.market === 'us')
+    ?? t.variants[0];
+}
+
 export function getToolsForMarket(market: ToolMarket): (ToolDefinition & { entryHref: string; localized: boolean })[] {
   return Object.values(TOOL_REGISTRY)
     .filter((t) => getAvailableMarkets(t).includes(market))
+    // FDL 4.2: `hidden` keeps a live-but-unlaunched tool (e.g. Wealth Horizon
+    // during its analytics baseline window) out of the hub entirely.
+    .filter((t) => !resolveVariantForMarket(t, market).hidden)
     .map((t) => ({ ...t, entryHref: getToolEntryHref(t.id, market)!, localized: t.variants.some((v) => v.market === market) }));
 }
 
@@ -59,9 +70,9 @@ export function getSitemapToolEntries(): { url: string }[] {
 }
 
 export function getFooterToolLinks(market: ToolMarket): { label: string; href: string }[] {
-  return getToolsForMarket(market)
+  return getToolsForMarket(market)   // already excludes `hidden` variants
     .filter((t) => {
-      const v = t.variants.find((x) => x.market === market) ?? t.variants.find((x) => x.market === 'us') ?? t.variants[0];
+      const v = resolveVariantForMarket(t, market);
       return v.status === 'live' && v.indexable;
     })
     .map((t) => ({ label: t.name, href: t.entryHref }));
@@ -69,7 +80,7 @@ export function getFooterToolLinks(market: ToolMarket): { label: string; href: s
 
 export function getLlmsToolLines(): string[] {
   return getAllVariants()
-    .filter((v) => v.status === 'live' && v.indexable)
+    .filter((v) => v.status === 'live' && v.indexable && !v.hidden)
     .map((v) => `- ${v.title}: https://smartfinpro.com${v.path}`);
 }
 

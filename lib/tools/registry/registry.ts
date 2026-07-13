@@ -439,4 +439,35 @@ export const TOOL_REGISTRY: Record<ToolId, ToolDefinition> = {
       },
     ],
   },
+
+  'wealth-horizon': {
+    id: 'wealth-horizon',
+    name: 'Retirement & Financial Freedom Calculator',
+    tier: 'major',
+    decisionCategory: 'retire',
+    shellMode: 'guided-journey',
+    icon: 'trending-up',
+    blurb: 'Project your retirement in today’s money across three scenarios and find your FI date.',
+    variants: [
+      {
+        market: 'us',
+        path: '/tools/retirement-calculator',
+        status: 'live',
+        // FDL 4.2 (PR 4.2 brief): deliberate noindex until the 4-market
+        // cluster is complete (SPEC 9.2 targets "ja (Launch komplett)" —
+        // documented deviation, index flip ships in PR 4.3). `hidden: true`
+        // additionally keeps the route out of every hub/footer/llms.txt
+        // consumer during the active tool_v1 analytics baseline window
+        // (0.5) — the route is reachable only via direct link until 4.3
+        // removes the flag.
+        indexable: false,
+        hidden: true,
+        title: 'Retirement Calculator: 401(k), IRA & FIRE Scenarios',
+        metaDescription:
+          "Project your retirement in today's dollars across three scenarios: 401(k) and IRA balances, financial independence date, income gap and fee impact.",
+        h1: 'Retirement & Financial Freedom Calculator',
+      },
+    ],
+    shareableFields: ['ageBand', 'retireAge', 'balanceBand', 'contributionBand', 'feeBand', 'withdrawalRatePct', 'scenario'],
+  },
 };

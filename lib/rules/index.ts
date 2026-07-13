@@ -74,7 +74,11 @@ export function getRule(market: keyof typeof RULE_PACKS, key: string, asOf: stri
 export interface RuleSnapshot {
   asOf: string;
   values: Record<string, number>;
-  meta: Record<string, { verifiedAt: string; sourceUrl: string; label: string }>;
+  // FDL 4.2 (additive): effectiveFrom added alongside verifiedAt/sourceUrl/label
+  // so tool-result adapters can populate ToolResult.sources (RuleSourceRef
+  // requires effectiveFrom) directly from a RuleSnapshot without a second
+  // getRuleMeta() lookup.
+  meta: Record<string, { verifiedAt: string; sourceUrl: string; label: string; effectiveFrom: string }>;
 }
 
 /** Resolves a fixed list of rule keys for `market` at `asOf` into a single
@@ -87,11 +91,11 @@ export function resolveRuleSnapshot(
   asOf: string
 ): RuleSnapshot {
   const values: Record<string, number> = {};
-  const meta: Record<string, { verifiedAt: string; sourceUrl: string; label: string }> = {};
+  const meta: RuleSnapshot['meta'] = {};
   for (const key of keys) {
     const entry = getRuleMeta(market, key, asOf);
     values[key] = entry.value;
-    meta[key] = { verifiedAt: entry.verifiedAt, sourceUrl: entry.sourceUrl, label: entry.label };
+    meta[key] = { verifiedAt: entry.verifiedAt, sourceUrl: entry.sourceUrl, label: entry.label, effectiveFrom: entry.effectiveFrom };
   }
   return { asOf, values, meta };
 }

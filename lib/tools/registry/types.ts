@@ -13,8 +13,8 @@ export type ToolId =
   | 'money-leak-scanner' | 'broker-finder' | 'trading-cost' | 'broker-comparison'
   | 'ai-roi' | 'loan' | 'debt-payoff' | 'credit-utilization' | 'gold-roi'
   | 'credit-card-rewards' | 'isa' | 'remortgage' | 'tfsa-rrsp'
-  | 'wealthsimple-fees' | 'ca-affordability' | 'superannuation' | 'au-mortgage';
-// 'wealth-horizon' kommt erst in Phase 4 dazu (fs-Parity verlangt existierende Pages).
+  | 'wealthsimple-fees' | 'ca-affordability' | 'superannuation' | 'au-mortgage'
+  | 'wealth-horizon'; // FDL 4.2 — Wealth Horizon US (/tools/retirement-calculator)
 
 export interface ToolRouteVariant {
   market: ToolMarket;
@@ -24,6 +24,16 @@ export interface ToolRouteVariant {
   title: string;             // bare, OHNE "| SmartFinPro" — Root-Template hängt Brand an
   metaDescription: string;
   h1: string;
+  /**
+   * FDL 4.2 — additive, optional. `true` means the route EXISTS and is
+   * reachable via a direct link (indexable can be independently true/false),
+   * but must appear in NO hub/footer/nav/llms.txt consumer accessor
+   * (getToolsForMarket/getFooterToolLinks/getLlmsToolLines). Used for
+   * "build now, link after the analytics baseline window ends" — the
+   * launch PR (4.3) removes this flag, nothing else. Sitemap inclusion is
+   * governed solely by `indexable` (unaffected by this flag).
+   */
+  hidden?: boolean;
 }
 
 export interface ToolDefinition {
@@ -38,4 +48,12 @@ export interface ToolDefinition {
   availableMarkets?: ToolMarket[]; // FUNKTIONALE Verfügbarkeit (SPEC 4.2): ein globaler Pfad darf
                                    // mehrere Märkte bedienen; Default = Märkte der variants
   legacyPaths?: string[];    // 308-Quellen; Test prüft gegen next.config.ts-Redirects
+  /**
+   * SPEC 8.7 — per-tool allowlist for share-link fragment payloads
+   * (`#s=base64url(JSON)`); ONLY these keys may ever be serialized into a
+   * shareable link, values bucketed/rounded, never raw amounts. Additive,
+   * optional — the share codec itself ships with PR 2.3; declaring the
+   * allowlist here for a new tool is forward-compatible metadata only.
+   */
+  shareableFields?: string[];
 }

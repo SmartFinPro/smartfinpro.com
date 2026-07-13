@@ -288,7 +288,7 @@ describe('retirement engine — validation + lever shape', () => {
   it('applyLever(contribution) on simple mode adds the delta (not absolute) to the existing contribution', () => {
     const lever = projectRetirement(BASE_SIMPLE_INPUTS, rules).levers.find((l) => l.key === 'contribution')!;
     const before = BASE_SIMPLE_INPUTS.simple.employeeContributionMonthly;
-    const applied = applyLever(BASE_SIMPLE_INPUTS, lever) as typeof BASE_SIMPLE_INPUTS;
+    const applied = applyLever(BASE_SIMPLE_INPUTS, lever, rules) as typeof BASE_SIMPLE_INPUTS;
     expect(applied.simple.employeeContributionMonthly).toBe(before + LEVER_EXTRA_MONTHLY);
     // The realized delta must actually match what deltaLabel promises: applying
     // the lever must raise balanceAtRetire by the same amount buildLevers used
@@ -298,7 +298,7 @@ describe('retirement engine — validation + lever shape', () => {
     expect(appliedBalance).toBeGreaterThan(baseBalance);
   });
 
-  it('applyLever(contribution) on account-breakdown mode adds the delta to the first account only', () => {
+  it('applyLever(contribution) on account-breakdown mode adds the delta to the first account only (none clamped)', () => {
     const breakdownInputs: RetirementInputs = {
       ...BASE_SIMPLE_INPUTS,
       contributionMode: 'account-breakdown',
@@ -309,7 +309,7 @@ describe('retirement engine — validation + lever shape', () => {
       simple: undefined,
     } as RetirementInputs;
     const lever = projectRetirement(breakdownInputs, rules).levers.find((l) => l.key === 'contribution')!;
-    const applied = applyLever(breakdownInputs, lever) as typeof breakdownInputs;
+    const applied = applyLever(breakdownInputs, lever, rules) as typeof breakdownInputs;
     expect(applied.accounts![0].employeeContributionMonthly).toBe(300 + LEVER_EXTRA_MONTHLY);
     expect(applied.accounts![1].employeeContributionMonthly).toBe(100); // untouched
   });
@@ -318,7 +318,70 @@ describe('retirement engine — validation + lever shape', () => {
     const levers = projectRetirement(BASE_SIMPLE_INPUTS, rules).levers;
     const feesLever = levers.find((l) => l.key === 'fees')!;
     const retireLever = levers.find((l) => l.key === 'retire-later')!;
-    expect(applyLever(BASE_SIMPLE_INPUTS, feesLever).annualFeePct).toBe(feesLever.apply!.annualFeePct);
-    expect(applyLever(BASE_SIMPLE_INPUTS, retireLever).retireAge).toBe(BASE_SIMPLE_INPUTS.retireAge + 2);
+    expect(applyLever(BASE_SIMPLE_INPUTS, feesLever, rules).annualFeePct).toBe(feesLever.apply!.annualFeePct);
+    expect(applyLever(BASE_SIMPLE_INPUTS, retireLever, rules).retireAge).toBe(BASE_SIMPLE_INPUTS.retireAge + 2);
+  });
+});
+
+// ── lever-clamp-fix regression (FDL 4.2 Opus follow-up) ─────────────────────
+// Live-Demo confirmed: the "Add $200/mo" lever showed +$0 when accounts[0]
+// was already clamped — the delta landed on the clamped account and was
+// immediately re-clamped back to the same capped value by the engine's own
+// totalContributions()/resolveAccountContribution() pass. Fix: mutateInputs's
+// breakdown branch now targets the FIRST account whose clamp status is NOT
+// 'clamped' (order preserved); if every account is clamped, it falls back to
+// the LAST account (documented v1 fallback).
+describe('retirement engine — lever-clamp-fix regression (FDL 4.2)', () => {
+  const rules = rulesFor('us');
+
+  it('applyLever(contribution) skips a clamped first account and lands the delta on the first non-clamped one', () => {
+    const inputs: RetirementInputs = {
+      ...BASE_SIMPLE_INPUTS,
+      contributionMode: 'account-breakdown',
+      accounts: [
+        // annual 36,000 > remaining (24,500 limit − 20,000 YTD = 4,500) → clamped.
+        { id: 'k401-1', type: 'us-401k', balance: 100000, employeeContributionMonthly: 3000, contributedYtd: 20000 },
+        // us-taxable has no statutory cap key → always 'ok', never clamped.
+        { id: 'taxable-1', type: 'us-taxable', balance: 20000, employeeContributionMonthly: 100 },
+      ],
+      simple: undefined,
+    } as RetirementInputs;
+
+    // Sanity: confirm the fixture actually reproduces the clamp precondition.
+    expect(resolveAccountContribution(inputs.accounts![0], inputs.currentAge, rules).check.status).toBe('clamped');
+    expect(resolveAccountContribution(inputs.accounts![1], inputs.currentAge, rules).check.status).not.toBe('clamped');
+
+    const lever = projectRetirement(inputs, rules).levers.find((l) => l.key === 'contribution')!;
+    expect(lever.apply?.employeeContributionMonthly).toBeGreaterThan(0); // buildLevers ranks it with a real, positive delta
+
+    const applied = applyLever(inputs, lever, rules) as typeof inputs;
+    expect(applied.accounts![0].employeeContributionMonthly).toBe(3000); // clamped account untouched
+    expect(applied.accounts![1].employeeContributionMonthly).toBe(100 + LEVER_EXTRA_MONTHLY); // delta lands here instead
+
+    // The realized delta must actually move the projection — this is exactly
+    // the bug: applying the delta to an already-clamped account gets
+    // re-clamped to the same capped value by the engine, producing +$0.
+    const baseBalance = projectRetirement(inputs, rules).scenarios.find((s) => s.key === 'base')!.balanceAtRetire;
+    const appliedBalance = projectRetirement(applied, rules).scenarios.find((s) => s.key === 'base')!.balanceAtRetire;
+    expect(appliedBalance).toBeGreaterThan(baseBalance);
+  });
+
+  it('applyLever(contribution) falls back to the LAST account when every account is clamped', () => {
+    const inputs: RetirementInputs = {
+      ...BASE_SIMPLE_INPUTS,
+      contributionMode: 'account-breakdown',
+      accounts: [
+        { id: 'k401-1', type: 'us-401k', balance: 100000, employeeContributionMonthly: 3000, contributedYtd: 24000 },
+        { id: 'ira-1', type: 'us-traditional-ira', balance: 30000, employeeContributionMonthly: 1000, contributedYtd: 7400 },
+      ],
+      simple: undefined,
+    } as RetirementInputs;
+    expect(resolveAccountContribution(inputs.accounts![0], inputs.currentAge, rules).check.status).toBe('clamped');
+    expect(resolveAccountContribution(inputs.accounts![1], inputs.currentAge, rules).check.status).toBe('clamped');
+
+    const lever = { key: 'contribution', title: 'Add $200/mo', deltaLabel: '≈ +$0', apply: { employeeContributionMonthly: LEVER_EXTRA_MONTHLY } };
+    const applied = applyLever(inputs, lever, rules) as typeof inputs;
+    expect(applied.accounts![0].employeeContributionMonthly).toBe(3000); // first stays untouched
+    expect(applied.accounts![1].employeeContributionMonthly).toBe(1000 + LEVER_EXTRA_MONTHLY); // fallback = last
   });
 });
