@@ -13,6 +13,18 @@ const ISA_2027_REFORM_SOURCE =
 const CGT_SOURCE = 'https://www.gov.uk/capital-gains-tax/rates';
 const VERIFIED_AT = '2026-07-12';
 
+// PR 5.1 addition (remortgage engine, UK): typical remortgage arrangement
+// (product) fee. This is EXPLICITLY an editable default, not a "live rate" —
+// there is no single regulator-set arrangement fee in the UK mortgage
+// market; lenders set their own, from £0 fee-free deals up to £2,000+ on
+// the lowest-rate deals. Cross-checked two consumer-finance sources:
+// HomeOwners Alliance ("£0 – £2,000+"; "£500 to £1,000 but could be £2,000
+// or more" for the best rates) and Uswitch ("around £1,000-£2,000 on
+// average"). £999 sits inside both ranges and matches a very common actual
+// UK product-fee price point; users can override it per-deal in the UI.
+const UK_ARRANGEMENT_FEE_SOURCE = 'https://hoa.org.uk/advice/guides-for-homeowners/for-owners/remortgaging-costs/';
+const UK_ARRANGEMENT_FEE_VERIFIED_AT = '2026-07-13';
+
 export const UK_RULES: RulePack = {
   isaAllowance: [
     {
@@ -81,6 +93,16 @@ export const UK_RULES: RulePack = {
       verifiedAt: VERIFIED_AT,
       label: 'Dividend allowance',
       category: 'tax',
+    },
+  ],
+  remortgageArrangementFeeDefault: [
+    {
+      value: 999,
+      effectiveFrom: '2026-07-13',
+      sourceUrl: UK_ARRANGEMENT_FEE_SOURCE,
+      verifiedAt: UK_ARRANGEMENT_FEE_VERIFIED_AT,
+      label: 'Typical remortgage arrangement fee (editable default, guideline)',
+      category: 'assumption',
     },
   ],
   ...ASSUMPTION_RULES,
