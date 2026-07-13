@@ -3,7 +3,10 @@ import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, it, expect } from 'vitest';
 import { TOOL_REGISTRY } from '@/lib/tools/registry/registry';
-import { getAllVariants, countLiveConcepts, countLiveRoutes, getToolsForMarket, getToolEntryHref, getExpectedTrackingManifest } from '@/lib/tools/registry';
+import {
+  getAllVariants, countLiveConcepts, countLiveRoutes, getToolsForMarket, getToolEntryHref,
+  getExpectedTrackingManifest, getFooterToolLinks, getLlmsToolLines,
+} from '@/lib/tools/registry';
 
 const MARKETING = join(process.cwd(), 'app', '(marketing)');
 
@@ -61,11 +64,11 @@ describe('registry data integrity', () => {
       expect(v.path.startsWith(expectedPrefix), `${v.path} vs market ${v.market}`).toBe(true);
     }
   });
-  it('counts: 20 Routen, 17 Konzepte — getrennte Zählfunktionen', () => {
-    expect(getAllVariants().length).toBe(20);
-    expect(Object.keys(TOOL_REGISTRY).length).toBe(17);
-    expect(countLiveRoutes()).toBe(20);      // interne Kennzahl (Manifest/Health)
-    expect(countLiveConcepts()).toBe(17);    // öffentliche Kennzahl (Homepage)
+  it('counts: 21 Routen, 18 Konzepte — getrennte Zählfunktionen (FDL 4.2: +wealth-horizon)', () => {
+    expect(getAllVariants().length).toBe(21);
+    expect(Object.keys(TOOL_REGISTRY).length).toBe(18);
+    expect(countLiveRoutes()).toBe(21);      // interne Kennzahl (Manifest/Health)
+    expect(countLiveConcepts()).toBe(18);    // öffentliche Kennzahl (Homepage)
   });
 });
 
@@ -88,11 +91,33 @@ describe('market availability contract (SPEC 4.2)', () => {
     expect(getToolsForMarket('uk').some((t) => t.id === 'broker-finder')).toBe(true);
     expect(getToolsForMarket('uk').some((t) => t.id === 'loan')).toBe(false);
   });
-  it('tracking manifest expands availableMarkets (29 funktionale Einträge, nicht 20 Routen)', () => {
+  it('tracking manifest expands availableMarkets (30 funktionale Einträge, nicht 21 Routen)', () => {
     const manifest = getExpectedTrackingManifest();
-    expect(manifest.length).toBe(29); // 20 Routen + Broker-Triple × uk/ca/au
+    expect(manifest.length).toBe(30); // 21 Routen + Broker-Triple × uk/ca/au
     expect(manifest).toContainEqual({ toolId: 'broker-finder', path: '/tools/broker-finder', market: 'uk' });
     expect(manifest).toContainEqual({ toolId: 'trading-cost', path: '/tools/trading-cost-calculator', market: 'au' });
+  });
+});
+
+describe('hidden mechanism (FDL 4.2) — Wealth Horizon stays out of every hub/footer/llms consumer', () => {
+  it('getAllVariants / fs-parity still SEE the hidden route (it exists and is directly linkable)', () => {
+    const wh = getAllVariants().find((v) => v.toolId === 'wealth-horizon');
+    expect(wh).toBeDefined();
+    expect(wh!.path).toBe('/tools/retirement-calculator');
+    expect(wh!.hidden).toBe(true);
+    expect(wh!.indexable).toBe(false);
+  });
+
+  it('getToolsForMarket("us") does NOT include wealth-horizon', () => {
+    expect(getToolsForMarket('us').some((t) => t.id === 'wealth-horizon')).toBe(false);
+  });
+
+  it('getFooterToolLinks("us") does NOT include wealth-horizon', () => {
+    expect(getFooterToolLinks('us').some((l) => l.href === '/tools/retirement-calculator')).toBe(false);
+  });
+
+  it('getLlmsToolLines() does NOT mention the wealth-horizon route', () => {
+    expect(getLlmsToolLines().some((line) => line.includes('/tools/retirement-calculator'))).toBe(false);
   });
 });
 
@@ -115,5 +140,6 @@ describe('registry consumers (FDL 0.6)', () => {
     expect(urls).toContain('/au/tools/gold-roi-calculator');
     expect(urls).not.toContain('/tools/gold-roi-calculator');   // legacy raus
     expect(urls).not.toContain('/tools/debt-payoff-calculator'); // noindex raus
+    expect(urls).not.toContain('/tools/retirement-calculator'); // FDL 4.2: noindex raus
   });
 });

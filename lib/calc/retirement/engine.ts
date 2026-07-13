@@ -255,12 +255,20 @@ function projectAll(inputs: RetirementInputs, rules: RuleSnapshot): { scenarios:
  * $200/mo" into "set contribution to $200/mo" for a user already
  * contributing more than that. Consumers (e.g. PR 4.2's GuidedJourney)
  * MUST call this function rather than reimplementing patch application.
+ *
+ * `rules` is required (FDL 4.2 clamp-fix) so the account-breakdown branch
+ * can consult resolveAccountContribution() and target a NON-clamped account
+ * — see mutateInputs below for the documented bug this closes.
  */
-export function applyLever(inputs: RetirementInputs, lever: Lever): RetirementInputs {
-  return lever.apply ? mutateInputs(inputs, lever.apply) : inputs;
+export function applyLever(inputs: RetirementInputs, lever: Lever, rules: RuleSnapshot): RetirementInputs {
+  return lever.apply ? mutateInputs(inputs, lever.apply, rules) : inputs;
 }
 
-function mutateInputs(inputs: RetirementInputs, patch: Partial<Record<string, number>>): RetirementInputs {
+function mutateInputs(
+  inputs: RetirementInputs,
+  patch: Partial<Record<string, number>>,
+  rules: RuleSnapshot,
+): RetirementInputs {
   const scalarKeys: (keyof RetirementInputs)[] = ['currentAge', 'retireAge', 'annualFeePct', 'targetMonthlyIncomeToday', 'withdrawalRatePct'];
   let next: RetirementInputs = { ...inputs };
   for (const k of scalarKeys) {
@@ -274,8 +282,23 @@ function mutateInputs(inputs: RetirementInputs, patch: Partial<Record<string, nu
     if (next.contributionMode === 'simple') {
       next = { ...next, simple: { ...next.simple, employeeContributionMonthly: next.simple.employeeContributionMonthly + extra } };
     } else {
-      const [first, ...rest] = next.accounts;
-      next = { ...next, accounts: [{ ...first, employeeContributionMonthly: first.employeeContributionMonthly + extra }, ...rest] };
+      // FDL 4.2 clamp-fix (documented Opus follow-up): a live demo confirmed
+      // "Add $200/mo" showed +$0 when accounts[0] was already clamped — the
+      // delta landed on the clamped account and was immediately re-clamped
+      // back to the same capped value by the engine's own
+      // totalContributions()/resolveAccountContribution() pass. Target the
+      // FIRST account whose clamp status is NOT 'clamped' (order preserved);
+      // if every account is clamped, fall back to the LAST account
+      // (documented v1 fallback — see the FDL 4.2 regression test).
+      const accounts = next.accounts;
+      let targetIndex = accounts.findIndex(
+        (a) => resolveAccountContribution(a, next.currentAge, rules).check.status !== 'clamped',
+      );
+      if (targetIndex === -1) targetIndex = accounts.length - 1;
+      const nextAccounts = accounts.map((a, i) =>
+        i === targetIndex ? { ...a, employeeContributionMonthly: a.employeeContributionMonthly + extra } : a,
+      ) as [RetirementAccountInput, ...RetirementAccountInput[]];
+      next = { ...next, accounts: nextAccounts };
     }
   }
   return next;
@@ -299,7 +322,7 @@ function variant(
   rules: RuleSnapshot,
   base: number,
 ): { lever: Lever; delta: number } {
-  const mutated = mutateInputs(inputs, patch);
+  const mutated = mutateInputs(inputs, patch, rules);
   const newBalance = projectAll(mutated, rules).scenarios[1].balanceAtRetire;
   const delta = newBalance - base;
   return {
