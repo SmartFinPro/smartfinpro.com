@@ -406,6 +406,7 @@ test.describe(`Wealth Horizon US (JS on) — v4 slider-only surface: ${PAGE_PATH
     await expect(hint).toContainText('becomes');
     await expect(hint).toContainText('year 10');
 
+    await page.waitForTimeout(600); // let the ~500ms count-up settle (same race as test (a), see comment there)
     const heroAfter = await page.locator('#wealth-horizon-result').getByText(/^\$[\d,]+$/).first().textContent();
     expect(heroAfter).not.toBe(heroBefore);
   });
