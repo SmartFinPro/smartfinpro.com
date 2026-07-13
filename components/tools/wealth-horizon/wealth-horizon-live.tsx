@@ -1,19 +1,21 @@
 'use client';
-// components/tools/wealth-horizon/wealth-horizon-journey.tsx
-// Wealth Horizon client island — GuidedJourney: Basics → Contributions →
-// Assumptions, then a live result canvas (corridor chart + scenario switcher
-// + 3 levers). Every displayed number comes from buildWealthHorizonResult()/
-// the retirement engine — no second calc path lives in this file (harte
-// Regel, PR 4.2 brief).
+// components/tools/wealth-horizon/wealth-horizon-live.tsx
+// Wealth Horizon v2 — Live-Workspace client island. Replaces the v1
+// GuidedJourney (3-step wizard + "See my result" gate) with an always-live
+// canvas (SPEC LiveCanvasLayout, shellMode 'live-canvas' — bindende
+// Design-Direktive 13.07.2026, dokumentierte Abweichung von Spec-5.2's
+// GuidedJourney default for this tool). Every displayed number still comes
+// from buildWealthHorizonResult()/the retirement engine — no second calc
+// path lives in this file (harte Regel, unverändert aus v1).
 //
-// FDL 4.3: parametrized to run all 4 markets from ONE island instead of a
-// per-market copy (market/locale/currency/account-type subset/benefit link
-// come in as props; US behavior is byte-identical to the pre-4.3 US-only
-// version — see e2e/tool-shell-wealth-horizon.spec.ts's `us` case).
+// Parametrized to run all 4 markets from ONE island (props identical to the
+// v1 WealthHorizonJourneyProps — FDL 4.3 parametrization untouched).
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
-import { GuidedJourneyLayout, type GuidedJourneyStep } from '@/components/tools/shell/guided-journey';
-import { ResultPanel } from '@/components/tools/shell/result-panel';
+import { LiveCanvasLayout } from '@/components/tools/shell/live-canvas';
+import { ImpactLevers } from '@/components/tools/shell/impact-levers';
+import { AssumptionsDrawer } from '@/components/tools/shell/assumptions-drawer';
+import { NextBestAction } from '@/components/tools/shell/next-best-action';
 import { ResultMiniBar } from '@/components/tools/shell/result-mini-bar';
 import { CurrencyField } from '@/components/tools/shell/fields/currency-field';
 import { IntegerField } from '@/components/tools/shell/fields/integer-field';
@@ -25,6 +27,7 @@ import { advancePanelState, type Lever, type PanelState, type ToolCurrency, type
 import { useToolTracking } from '@/lib/analytics/tool-tracking';
 import type { ToolContext, InputBucketKind } from '@/lib/analytics/tool-events';
 import type { ToolMarket } from '@/lib/tools/registry/types';
+import { getTool } from '@/lib/tools/registry';
 import type { RuleSnapshot } from '@/lib/rules';
 import { formatCurrency, formatPercent } from '@/lib/tools/field-format';
 import {
@@ -41,31 +44,31 @@ import {
   buildWealthHorizonResult,
   type WealthHorizonScenarioKey,
 } from '@/lib/tools/results/wealth-horizon-result';
+import { LifetimeChart } from './lifetime-chart';
+import type { LifetimeSeriesInput } from '@/lib/calc/chart-geometry';
 
 /** Account types whose contribution room is a PERSONAL figure the user must
  *  supply (`availableRoom`) — never derived from a national maximum. Single
  *  source shared with lib/calc/retirement/engine.ts's own roomTypes list
  *  (kept here as a literal, not imported, because it's UI-rendering
- *  classification, not a calculation — the engine remains the sole place
- *  that actually APPLIES the clamp; SPEC 8.3 contribution contract). */
+ *  classification, not a calculation). */
 const ROOM_ACCOUNT_TYPES: RetirementAccountType[] = ['ca-tfsa', 'ca-rrsp', 'au-super'];
 
-export interface WealthHorizonJourneyProps {
+export interface WealthHorizonLiveProps {
   market: ToolMarket;
   variantPath: string;
   rules: RuleSnapshot;
   exampleResult: ToolResult;
   currency: ToolCurrency;
   locale: string;
-  /** Account types selectable in "Account breakdown" mode, market subset of
+  /** Account types selectable in "detailed accounts" mode, market subset of
    *  RetirementAccountType (FDL 4.3 parametrization). */
   accountTypeOptions: { value: RetirementAccountType; label: string }[];
   /** Short account-type shorthand for the Simple-mode "tax-advantaged
    *  balance" field label, e.g. "401(k)/IRA" | "ISA/SIPP" | "TFSA/RRSP" | "Super". */
   taxAdvantagedLabel: string;
   /** Local name for the market's state/national retirement benefit, e.g.
-   *  "Social Security", "State Pension", "CPP/OAS", "Age Pension" (SPEC 8.3
-   *  benefit contract — v1 never auto-estimates this). */
+   *  "Social Security", "State Pension", "CPP/OAS", "Age Pension". */
   benefitName: string;
   benefitLinkUrl: string;
   benefitLinkLabel: string;
@@ -93,7 +96,7 @@ function checkChipStyle(status: 'not-applicable' | 'ok' | 'warning' | 'clamped')
 
 const CONTEXT_CHIP_STYLE: CSSProperties = { background: 'var(--sfp-sky)', borderColor: 'var(--sfp-sky)', color: 'var(--sfp-navy)' };
 
-export function WealthHorizonJourney({
+export function WealthHorizonLive({
   market,
   variantPath,
   rules,
@@ -105,9 +108,9 @@ export function WealthHorizonJourney({
   benefitName,
   benefitLinkUrl,
   benefitLinkLabel,
-}: WealthHorizonJourneyProps) {
+}: WealthHorizonLiveProps) {
   const ctx: ToolContext = useMemo(
-    () => ({ toolId: 'wealth-horizon', market, variantPath, shellMode: 'guided-journey' }),
+    () => ({ toolId: 'wealth-horizon', market, variantPath, shellMode: getTool('wealth-horizon').shellMode }),
     [market, variantPath],
   );
   const tracker = useToolTracking(ctx);
@@ -134,16 +137,21 @@ export function WealthHorizonJourney({
   const [benefit, setBenefit] = useState({ enabled: false, monthlyAmountToday: 0, startsAtAge: 67 });
   const [focusScenario, setFocusScenario] = useState<WealthHorizonScenarioKey>('base');
 
-  // AU-only helper state (SPEC "Beitrags-Helfer" — never part of RetirementInputs
-  // itself; it only pre-fills an employer-contribution field, which stays
-  // freely editable afterward — "editable suggestion, never fixed").
+  // AU-only helper state (never part of RetirementInputs itself; it only
+  // pre-fills an employer-contribution field, which stays freely editable
+  // afterward — "editable suggestion, never fixed").
   const [auEligibleEarnings, setAuEligibleEarnings] = useState<number | ''>('');
 
-  const [journeyCompleted, setJourneyCompleted] = useState(false);
+  // Live-Workspace: no step flow, no "See my result" gate. panelState still
+  // flows through advancePanelState (INPUT_CHANGED → CALC_STARTED →
+  // CALC_SUCCEEDED) on the FIRST real field change, driving the
+  // 'example' → 'yours' resultState transition — the calc itself is
+  // synchronous/pure, so both events fire together, never leaving a visible
+  // 'calculating' frame.
   const [panelState, setPanelState] = useState<PanelState>('initial');
-  const [result, setResult] = useState<ToolResult | null>(null);
   const [announcement, setAnnouncement] = useState('');
   const nextAccountId = useRef(2);
+  const firstResultTracked = useRef(false);
 
   const announcerRef = useRef<ReturnType<typeof createLiveAnnouncer> | null>(null);
   if (!announcerRef.current) announcerRef.current = createLiveAnnouncer((s) => setAnnouncement(s));
@@ -186,21 +194,38 @@ export function WealthHorizonJourney({
 
   const contributionChecks = useMemo(() => buildContributionChecks(inputs, rules), [inputs, rules]);
 
-  // Recompute the real result whenever inputs/scenario change AFTER the
-  // journey has completed (levers + scenario switcher both flow through
-  // this single effect — no separate rebuild call needed at each call site).
-  useEffect(() => {
-    if (!journeyCompleted) return;
-    setResult(buildWealthHorizonResult(inputs, rules, 'yours', focusScenario));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [inputs, rules, focusScenario, journeyCompleted]);
+  const showExample = panelState !== 'result' && panelState !== 'stale-data';
+  const resultState = showExample ? 'example' : 'yours';
+
+  // Live recompute — sync/pure, no debounce on the calculation itself (only
+  // the ANALYTICS side is debounced, via tracker.trackInputChange's own
+  // 600ms trailing debounce).
+  const liveResult = useMemo(
+    () => buildWealthHorizonResult(inputs, rules, 'yours', focusScenario),
+    [inputs, rules, focusScenario],
+  );
+  const active: ToolResult = showExample ? exampleResult : liveResult;
+
+  function markInteracted(): void {
+    setPanelState((s) => {
+      if (s === 'result' || s === 'stale-data') return s;
+      const afterInput = advancePanelState(s, { type: 'INPUT_CHANGED', complete: true });
+      return advancePanelState(afterInput, { type: 'CALC_SUCCEEDED', stale: false });
+    });
+    if (!firstResultTracked.current) {
+      firstResultTracked.current = true;
+      tracker.trackFirstResult();
+    }
+  }
 
   function trackField(inputKey: string, rawValue: number, kind: InputBucketKind): void {
+    markInteracted();
     tracker.trackStart(inputKey);
     tracker.trackInputChange(inputKey, rawValue, kind);
   }
 
   function trackCategorical(inputKey: string, bucket: string): void {
+    markInteracted();
     tracker.trackStart(inputKey);
     tracker.trackCategoricalInputChange(inputKey, bucket);
   }
@@ -218,16 +243,8 @@ export function WealthHorizonJourney({
     setAccounts((prev) => (prev.length > 1 ? prev.filter((_, i) => i !== index) : prev));
   }
 
-  function handleComplete(): void {
-    setPanelState((s) => advancePanelState(s, { type: 'CALC_STARTED' }));
-    const built = buildWealthHorizonResult(inputs, rules, 'yours', focusScenario);
-    setResult(built);
-    setJourneyCompleted(true);
-    setPanelState((s) => advancePanelState(s, { type: 'CALC_SUCCEEDED', stale: false }));
-    tracker.trackFirstResult();
-  }
-
   function handleLeverApply(lever: Lever): void {
+    markInteracted();
     const { value, kind } = leverTrackingValue(lever);
     tracker.trackInputChange(`lever:${lever.key}`, value, kind, 'lever');
     const mutated = applyLever(inputs, lever, rules); // NEVER re-clamp here — Simple mode never clamps.
@@ -246,6 +263,14 @@ export function WealthHorizonJourney({
   }
 
   function handleScenarioChange(scenario: WealthHorizonScenarioKey): void {
+    // Switching the scenario lens looks at the CURRENT input state (defaults
+    // until the user has touched anything) — the moment you compare
+    // scenarios you're looking at your own numbers, not the fixed worked
+    // example, so this counts as the first interaction too (documented
+    // product decision — the exampleResult prop is a finished ToolResult
+    // pre-built server-side at 'base' only, so it cannot itself be
+    // re-scenario'd client-side without a second calc path).
+    markInteracted();
     tracker.trackScenarioCompare(scenario);
     setFocusScenario(scenario);
   }
@@ -255,8 +280,8 @@ export function WealthHorizonJourney({
   }
 
   // AU SG helper — "annualEligibleEarnings × SG rate / 12", always an
-  // editable suggestion (SPEC 8.3 contribution contract): applying it just
-  // pre-fills an ordinary, still-freely-editable employer-contribution field.
+  // editable suggestion: applying it just pre-fills an ordinary, still-freely
+  // editable employer-contribution field.
   const sgRate = market === 'au' ? rules.values.superGuaranteeRate : undefined;
   const sgSuggestedMonthly =
     market === 'au' && typeof sgRate === 'number' && typeof auEligibleEarnings === 'number' && auEligibleEarnings > 0
@@ -265,6 +290,7 @@ export function WealthHorizonJourney({
 
   function applySgSuggestion(): void {
     if (sgSuggestedMonthly === null) return;
+    markInteracted();
     if (mode === 'simple') {
       setSimple((s) => ({ ...s, employerContributionMonthly: sgSuggestedMonthly }));
     } else {
@@ -309,15 +335,32 @@ export function WealthHorizonJourney({
       </div>
     ) : null;
 
-  // ── Step 1 — Basics ────────────────────────────────────────────────────
-  const basicsContent = (
+  // ── Group 1 — About you ─────────────────────────────────────────────────
+  const aboutYouContent = (
     <div className="flex flex-col gap-4">
+      <h2 className="m-0 text-base font-semibold text-[var(--sfp-ink)]">About you</h2>
+      <div className="rounded-tool-control border p-3.5" style={{ borderColor: 'var(--tool-border-strong)', background: 'var(--sfp-sky)' }}>
+        <CurrencyField
+          label="What monthly income do you want in retirement?"
+          inputKey="targetMonthlyIncomeToday"
+          value={base.targetMonthlyIncomeToday}
+          currency={currency}
+          locale={locale}
+          min={0}
+          onChange={(v) => {
+            if (v === '') return;
+            setBase((b) => ({ ...b, targetMonthlyIncomeToday: v }));
+            trackField('targetMonthlyIncomeToday', v, 'currency');
+          }}
+        />
+      </div>
       <IntegerField
         label="Your current age"
         inputKey="currentAge"
         value={base.currentAge}
         min={18}
         max={79}
+        slider={{ min: 18, max: 70, step: 1 }}
         onChange={(v) => {
           if (v === '') return;
           setBase((b) => ({ ...b, currentAge: v }));
@@ -330,44 +373,33 @@ export function WealthHorizonJourney({
         value={base.retireAge}
         min={base.currentAge + 1}
         max={80}
+        slider={{ min: 40, max: 80, step: 1 }}
         onChange={(v) => {
           if (v === '') return;
           setBase((b) => ({ ...b, retireAge: v }));
           trackField('retireAge', v, 'years');
         }}
       />
-      <CurrencyField
-        label="Target monthly income (today's money)"
-        inputKey="targetMonthlyIncomeToday"
-        value={base.targetMonthlyIncomeToday}
-        currency={currency}
-        locale={locale}
-        min={0}
-        onChange={(v) => {
-          if (v === '') return;
-          setBase((b) => ({ ...b, targetMonthlyIncomeToday: v }));
-          trackField('targetMonthlyIncomeToday', v, 'currency');
-        }}
-      />
     </div>
   );
 
-  // ── Step 2 — Contributions ─────────────────────────────────────────────
-  const contributionsContent = (
+  // ── Group 2 — Your money ────────────────────────────────────────────────
+  const yourMoneyContent = (
     <div className="flex flex-col gap-4">
-      <SegmentedControl
-        label="Contribution mode"
-        inputKey="contributionMode"
-        value={mode}
-        options={[
-          { value: 'simple', label: 'Simple' },
-          { value: 'account-breakdown', label: 'Account breakdown' },
-        ]}
-        onChange={(v) => {
-          setMode(v);
-          trackCategorical('contributionMode', v);
-        }}
-      />
+      <div className="flex items-center justify-between gap-2">
+        <h2 className="m-0 text-base font-semibold text-[var(--sfp-ink)]">Your money</h2>
+        <button
+          type="button"
+          onClick={() => {
+            const next = mode === 'simple' ? 'account-breakdown' : 'simple';
+            setMode(next);
+            trackCategorical('contributionMode', next);
+          }}
+          className="w-fit text-xs font-semibold text-[var(--sfp-navy)] underline"
+        >
+          {mode === 'simple' ? 'Switch to detailed accounts →' : '← Back to simple mode'}
+        </button>
+      </div>
 
       {marketContextChip}
 
@@ -406,6 +438,7 @@ export function WealthHorizonJourney({
             currency={currency}
             locale={locale}
             min={0}
+            slider={{ min: 0, max: 5000, step: 50 }}
             onChange={(v) => {
               if (v === '') return;
               setSimple((s) => ({ ...s, employeeContributionMonthly: v }));
@@ -565,15 +598,17 @@ export function WealthHorizonJourney({
     </div>
   );
 
-  // ── Step 3 — Assumptions ───────────────────────────────────────────────
+  // ── Group 3 — Assumptions ───────────────────────────────────────────────
   const assumptionsContent = (
     <div className="flex flex-col gap-4">
+      <h2 className="m-0 text-base font-semibold text-[var(--sfp-ink)]">Assumptions</h2>
       <PercentageField
         label="Annual fee"
         inputKey="annualFeePct"
         value={base.annualFeePct}
         min={0}
         max={3}
+        slider={{ min: 0, max: 3, step: 0.1 }}
         onChange={(v) => {
           if (v === '') return;
           setBase((b) => ({ ...b, annualFeePct: v }));
@@ -641,17 +676,86 @@ export function WealthHorizonJourney({
     </div>
   );
 
-  const steps: GuidedJourneyStep[] = [
-    { key: 'basics', title: 'About you', content: basicsContent },
-    { key: 'contributions', title: 'Savings & contributions', content: contributionsContent },
-    { key: 'assumptions', title: 'Target income & assumptions', content: assumptionsContent },
-  ];
+  const inputsColumn = (
+    <div className="flex flex-col gap-8">
+      {aboutYouContent}
+      {yourMoneyContent}
+      {assumptionsContent}
+    </div>
+  );
 
-  const showMiniBar = panelState === 'result' || panelState === 'stale-data';
+  // ── Result canvas (always visible, Result Contract order unchanged from
+  //    slot 4 onward: ImpactLevers → AssumptionsDrawer → NextBestAction) ────
+  const corridor = active.scenario.kind === 'corridor' ? active.scenario : null;
+  const fiAge = corridor?.fiAge ?? null;
+  const gap = corridor?.incomeGapMonthly ?? 0;
+  const withdrawalMonthly = corridor?.withdrawalMonthly ?? active.primary.value;
+  const balanceAtRetire = corridor?.balanceAtRetire ?? 0;
+  const depletionAge = corridor?.depletionAge ?? null;
+  const retireAge = corridor?.retireAge ?? base.retireAge;
+  const endAge = corridor?.endAge ?? 90;
+  const milestones = corridor?.milestones ?? [];
+
+  const financiallyFree = fiAge !== null && fiAge <= retireAge;
+  const headline = financiallyFree
+    ? (
+      <>
+        Financially free at <span style={{ color: 'var(--sfp-gold)' }}>{fiAge}</span>
+      </>
+    )
+    : (
+      <>
+        <span className="tabular-nums">{formatCurrency(gap, currency, locale)}</span>/mo short of freedom at {retireAge}
+      </>
+    );
+
+  const miniBarSummary = financiallyFree
+    ? `FI at ${fiAge} · ≈${formatCurrency(withdrawalMonthly, currency, locale)}/mo`
+    : `${formatCurrency(gap, currency, locale)}/mo short`;
+
+  const lifetimeSeries: LifetimeSeriesInput[] = useMemo(() => {
+    if (active.scenario.kind !== 'corridor') return [];
+    const decumulationByKey = new Map((active.scenario.decumulation ?? []).map((d) => [d.key, d.rows]));
+    return active.scenario.series.map((s) => ({
+      key: s.key,
+      accumulation: s.rows.map((r) => ({ age: r.x, balance: r.y })),
+      decumulation: (decumulationByKey.get(s.key) ?? []).map((r) => ({ age: r.x, balance: r.y })),
+    }));
+  }, [active.scenario]);
 
   const resultCanvas = (
-    <div id="wealth-horizon-result" className="flex flex-col gap-4 md:col-span-12">
-      {journeyCompleted ? (
+    <div id="wealth-horizon-result" className="flex flex-col gap-5">
+      <div className="chip-row flex flex-wrap items-center gap-2.5">
+        <span
+          className="result-chip inline-flex flex-none items-center whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-semibold"
+          style={
+            resultState === 'yours'
+              ? { background: 'var(--sfp-navy)', color: '#fff', border: 'none' }
+              : { background: 'transparent', color: 'var(--sfp-slate)', border: '1px dashed var(--tool-border-strong)' }
+          }
+        >
+          {resultState === 'yours' ? 'Your result' : 'Example result'}
+        </span>
+      </div>
+
+      {/* Hero */}
+      <div className="flex flex-col gap-1.5">
+        <span className="text-xs font-semibold uppercase tracking-wider text-[var(--sfp-slate)]">
+          Your projection — in today&rsquo;s money
+        </span>
+        <h2 className="m-0 text-[34px] font-semibold leading-[42px] text-[var(--sfp-ink)]">{headline}</h2>
+        <p className="answer m-0 text-[16px] leading-6 text-[var(--sfp-slate)]">{active.answer}</p>
+      </div>
+
+      {/* Stat row */}
+      <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
+        <StatChip label={`Balance at ${retireAge}`} value={formatCurrency(balanceAtRetire, currency, locale)} />
+        <StatChip label="Illustrative withdrawal /mo" value={formatCurrency(withdrawalMonthly, currency, locale)} />
+        <StatChip label="Your income goal" value={formatCurrency(base.targetMonthlyIncomeToday, currency, locale)} />
+      </div>
+
+      {/* Scenario switcher */}
+      <div className="flex justify-end">
         <SegmentedControl
           label="Scenario"
           inputKey="scenario"
@@ -663,25 +767,71 @@ export function WealthHorizonJourney({
           ]}
           onChange={handleScenarioChange}
         />
+      </div>
+
+      {/* Lifetime Path chart */}
+      {corridor ? (
+        <LifetimeChart
+          series={lifetimeSeries}
+          currentAge={base.currentAge}
+          retireAge={retireAge}
+          endAge={endAge}
+          fiAge={fiAge}
+          depletionAge={depletionAge}
+          milestones={milestones}
+          withdrawalMonthly={withdrawalMonthly}
+          currency={currency}
+          locale={locale}
+          textAlternative={corridor.textAlternative}
+        />
       ) : null}
-      <ResultPanel
-        state={panelState}
-        result={result}
-        exampleResult={exampleResult}
-        ctx={ctx}
-        onLeverApply={handleLeverApply}
-        announce={announce}
-      />
+
+      {/* Milestones chip row */}
+      {milestones.length > 0 ? (
+        <div className="flex gap-2 overflow-x-auto pb-1">
+          {milestones.map((m, i) => (
+            <span
+              key={i}
+              data-testid="milestone-chip"
+              className="flex-none whitespace-nowrap rounded-full border px-3 py-1 text-xs font-semibold tabular-nums"
+              style={{ borderColor: 'var(--tool-border-strong)', color: 'var(--sfp-ink)', background: 'var(--tool-surface)' }}
+            >
+              {m.label}
+            </span>
+          ))}
+        </div>
+      ) : null}
+
+      {/* (4) exactly 3 levers */}
+      <ImpactLevers levers={active.levers} onApply={handleLeverApply} />
+
+      {/* (5) assumptions + sources */}
+      <AssumptionsDrawer assumptions={active.assumptions} sources={active.sources} />
+
+      {/* (6) exactly one next best action */}
+      <NextBestAction action={active.nextAction} ctx={ctx} />
     </div>
   );
 
   return (
-    <div className={showMiniBar ? 'pb-[72px] sm:pb-0' : ''}>
+    <div className={resultState === 'yours' ? 'pb-[72px] sm:pb-0' : ''}>
       <div role="status" aria-live="polite" className="sr-only">
         {announcement}
       </div>
-      <GuidedJourneyLayout steps={steps} interim={resultCanvas} result={resultCanvas} onComplete={handleComplete} />
-      <ResultMiniBar visible={showMiniBar} summary={result?.answer ?? exampleResult.answer} onJump={jumpToResult} />
+      <LiveCanvasLayout inputs={inputsColumn} result={resultCanvas} />
+      <ResultMiniBar visible={resultState === 'yours'} summary={miniBarSummary} onJump={jumpToResult} />
+    </div>
+  );
+}
+
+function StatChip({ label, value }: { label: string; value: string }) {
+  return (
+    <div
+      className="flex flex-col gap-0.5 rounded-tool-control border p-3"
+      style={{ borderColor: 'var(--tool-border)', background: 'var(--tool-surface)' }}
+    >
+      <span className="text-xs text-[var(--sfp-slate)]">{label}</span>
+      <span className="tabular-nums text-[17px] font-bold text-[var(--sfp-ink)]">{value}</span>
     </div>
   );
 }

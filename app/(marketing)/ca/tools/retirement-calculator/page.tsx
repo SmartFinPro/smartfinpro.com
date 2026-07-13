@@ -1,6 +1,6 @@
 // app/ca/tools/retirement-calculator/page.tsx
 // Wealth Horizon CA (FDL 4.3) — GuidedJourney via the market-parametrized
-// WealthHorizonJourney island (components/tools/wealth-horizon/wealth-horizon-journey.tsx).
+// WealthHorizonLive island (components/tools/wealth-horizon/wealth-horizon-live.tsx — Wealth Horizon v2 Live-Workspace).
 // Deliberately noindex + hidden (see lib/tools/registry/registry.ts
 // 'wealth-horizon' entry) until a separate launch PR after the analytics
 // baseline window ends (~2026-07-20) — bindende Plan-Abweichung, see that
@@ -12,7 +12,7 @@ import { resolveRuleSnapshot } from '@/lib/rules';
 import { buildWealthHorizonResult, WEALTH_HORIZON_CA_RULE_KEYS } from '@/lib/tools/results/wealth-horizon-result';
 import type { RetirementAccountType, RetirementInputs } from '@/lib/calc/retirement/types';
 import { ToolShell } from '@/components/tools/shell/tool-shell';
-import { WealthHorizonJourney } from '@/components/tools/wealth-horizon/wealth-horizon-journey';
+import { WealthHorizonLive } from '@/components/tools/wealth-horizon/wealth-horizon-live';
 import type { FAQ } from '@/types';
 
 const ACCOUNT_TYPE_OPTIONS: { value: RetirementAccountType; label: string }[] = [
@@ -222,7 +222,7 @@ export default function WealthHorizonCAPage() {
         </>
       }
     >
-      <WealthHorizonJourney
+      <WealthHorizonLive
         market="ca"
         variantPath="/ca/tools/retirement-calculator"
         rules={rules}

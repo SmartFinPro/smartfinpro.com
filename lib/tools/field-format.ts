@@ -75,6 +75,22 @@ export function formatCurrency(value: number, currency: ToolCurrency, locale: st
   }
 }
 
+/** Compact currency for chart axes/labels ("$362K", "$1.4M") — full figures
+ *  like "$1,447,643" are wider than a chart's left padding and get clipped
+ *  by the SVG edge (Wealth Horizon v2 milestone/axis labels). */
+export function formatCompactCurrency(value: number, currency: ToolCurrency, locale: string): string {
+  try {
+    return new Intl.NumberFormat(locale, {
+      style: 'currency',
+      currency,
+      notation: 'compact',
+      maximumFractionDigits: 1,
+    }).format(value);
+  } catch {
+    return `${currencyAffix(currency)}${new Intl.NumberFormat(locale, { notation: 'compact', maximumFractionDigits: 1 }).format(value)}`;
+  }
+}
+
 export function formatPercent(value: number, locale: string, fractionDigits = 1): string {
   try {
     return new Intl.NumberFormat(locale, {

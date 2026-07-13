@@ -1,6 +1,6 @@
 // app/(marketing)/tools/retirement-calculator/page.tsx
 // Wealth Horizon US (FDL 4.2). GuidedJourney via the market-parametrized
-// WealthHorizonJourney island (FDL 4.3 — one island, 4 markets; see that
+// WealthHorizonLive island (Wealth Horizon v2 — Live-Workspace; FDL 4.3 — one island, 4 markets; see that
 // file's header). Deliberately noindex + hidden (see
 // lib/tools/registry/registry.ts 'wealth-horizon' entry) — the 4.3 brief's
 // original atomic index-flip was superseded by a user decision: all 4
@@ -14,7 +14,7 @@ import { resolveRuleSnapshot } from '@/lib/rules';
 import { buildWealthHorizonResult, WEALTH_HORIZON_US_RULE_KEYS } from '@/lib/tools/results/wealth-horizon-result';
 import type { RetirementAccountType, RetirementInputs } from '@/lib/calc/retirement/types';
 import { ToolShell } from '@/components/tools/shell/tool-shell';
-import { WealthHorizonJourney } from '@/components/tools/wealth-horizon/wealth-horizon-journey';
+import { WealthHorizonLive } from '@/components/tools/wealth-horizon/wealth-horizon-live';
 import type { FAQ } from '@/types';
 
 const ACCOUNT_TYPE_OPTIONS: { value: RetirementAccountType; label: string }[] = [
@@ -212,7 +212,7 @@ export default function WealthHorizonPage() {
         </>
       }
     >
-      <WealthHorizonJourney
+      <WealthHorizonLive
         market="us"
         variantPath="/tools/retirement-calculator"
         rules={rules}

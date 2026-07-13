@@ -132,12 +132,28 @@ function projectScenario(
       break;
     }
   }
+  const fiAge = fiDate !== null ? inputs.currentAge + (Number(fiDate) - asOfYear) : null;
+
+  // Decumulation (visualization contract, v2): withdraw the illustrative
+  // monthly amount while the remainder keeps compounding at the SAME real
+  // net rate (fee exactly once — reuse rNet, no second subtraction).
+  const decumulationRows: { age: number; balance: number }[] = [{ age: inputs.retireAge, balance: balanceAtRetire }];
+  let dBal = balanceAtRetire;
+  let depletionAge: number | null = null;
+  for (let age = inputs.retireAge + 1; age <= 90; age++) {
+    dBal = dBal * (1 + rNet) - withdrawal * 12;
+    if (dBal <= 0) { depletionAge = age; decumulationRows.push({ age, balance: 0 }); break; }
+    decumulationRows.push({ age, balance: round2(dBal) });
+  }
 
   return {
     key, rows, balanceAtRetire,
     illustrativeMonthlyWithdrawal: withdrawal,
     incomeGapMonthly: gap,
     fiDate,
+    decumulationRows,
+    depletionAge,
+    fiAge,
   };
 }
 

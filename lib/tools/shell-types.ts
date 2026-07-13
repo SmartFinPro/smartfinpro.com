@@ -37,7 +37,31 @@ export interface RuleSourceRef {
 // in RSC (worked example) AND island (live result) from the same geometry.
 export type ScenarioVisualData =
   | { kind: 'corridor'; series: { key: 'conservative' | 'base' | 'optimistic'; rows: { x: number; y: number }[] }[];
-      markers: { x: number; label: string }[]; xLabel: string; yLabel: string; textAlternative: string }
+      markers: { x: number; label: string }[]; xLabel: string; yLabel: string; textAlternative: string;
+      /**
+       * Additive, optional (Wealth Horizon v2 / FDL WH-v2) — the Lifetime
+       * Path chart's decumulation phase (retireAge..depletion/endAge), one
+       * series per scenario key, same {x,y} shape as `series`'s accumulation
+       * rows. Absent for every other 'corridor' consumer (accumulation-only
+       * tools never populate it; ScenarioChart itself ignores it).
+       */
+      decumulation?: { key: 'conservative' | 'base' | 'optimistic'; rows: { x: number; y: number }[] }[];
+      /** Age at which contributions stop / withdrawals begin (Lifetime Path divider). */
+      retireAge?: number;
+      /** Full chart horizon end age (typically 90). */
+      endAge?: number;
+      /** Focused-scenario FI age (age units, not calendar year) — null if not reached. */
+      fiAge?: number | null;
+      /** Focused-scenario depletion age — null if funds last to `endAge`. */
+      depletionAge?: number | null;
+      /** Base-accumulation-line milestone crossings ($100K/$250K/$500K/$1M), max 4. */
+      milestones?: { age: number; balance: number; label: string }[];
+      /** Illustrative monthly withdrawal (focused scenario) — for the retirement zone label. */
+      withdrawalMonthly?: number;
+      /** Focused-scenario income gap (target − withdrawal − benefit), monthly — Hero's negative-case headline. */
+      incomeGapMonthly?: number;
+      /** Focused-scenario balance at retireAge — Live-Workspace stat chip ("Balance at {retireAge}"). */
+      balanceAtRetire?: number }
   | { kind: 'bars'; bars: { key: string; label: string; value: number; emphasis?: boolean }[];
       total?: { label: string; value: number }; textAlternative: string }
   | { kind: 'stack'; segments: { key: string; label: string; value: number }[];

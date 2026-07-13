@@ -1,24 +1,27 @@
 // e2e/tool-shell-wealth-horizon.spec.ts
-// Wealth Horizon — all 4 markets (FDL 4.2 US + FDL 4.3 UK/CA/AU), registry-
-// driven so a future 5th variant is picked up automatically.
+// Wealth Horizon v2 — Live-Workspace, all 4 markets (FDL WH-v2, registry-
+// driven so a future 5th variant is picked up automatically).
 //
 // JS-off (Playwright global default), per market: the Worked Example must be
-// fully present in server HTML (H1, "Example result" chip, answer sentence,
-// SVG corridor, exactly 3 levers, AssumptionsDrawer sources, exactly 1
-// NextBestAction), robots noindex, the binding wording ("in today's money",
-// "Illustrative retirement withdrawal") present, the negative wording list
-// (shared FORBIDDEN_WORDS, SPEC 8.3) absent anywhere in the HTML, the route
-// excluded from the sitemap, and market-specific terms present (AU: "12%" +
-// "$32,500"; UK: "ISA"/"SIPP" + "£"; CA: "TFSA"/"RRSP" + "personal room").
+// fully present in server HTML (H1, "Example result" chip, Hero headline,
+// answer sentence, Lifetime Path SVG with the retirement-zone label, at
+// least one milestone chip, exactly 3 levers, AssumptionsDrawer sources,
+// exactly 1 NextBestAction), robots noindex, the binding wording ("in
+// today's money", "Illustrative retirement withdrawal") present, the
+// negative wording list (shared FORBIDDEN_WORDS, SPEC 8.3) absent anywhere
+// in the HTML, the route excluded from the sitemap, and market-specific
+// terms present (AU: "12%" + "$32,500"; UK: "ISA"/"SIPP" + "£"; CA: "TFSA"/
+// "RRSP" + "personal room").
 //
 // Hub-hiddenness (registry-driven, all 4 hubs + footer + llms.txt): none of
 // the 4 Wealth Horizon routes may appear on /tools, /uk/tools, /ca/tools,
 // /au/tools, in the footer, or in llms.txt.
 //
-// JS-on (test.use): US-only regression suite, UNCHANGED from FDL 4.2 — the
-// 3-step GuidedJourney flow, scenario switcher, lever click, Simple-mode
-// no-clamp behavior and withdrawal-rate slider all stay green, proving the
-// FDL 4.3 island parametrization left US behavior byte-identical.
+// JS-on (test.use, US-only): the Live-Workspace has NO step flow — every
+// field is visible and live from the first paint. A slider change flips the
+// state chip to "Your result" and fires tool_input_change; the scenario
+// switcher fires tool_scenario_compare; the hover overlay mounts without
+// breaking anything JS-off already asserted.
 //
 // Run:  npx playwright test e2e/tool-shell-wealth-horizon.spec.ts
 //       BASE_URL=http://localhost:3007 npx playwright test e2e/tool-shell-wealth-horizon.spec.ts
@@ -35,12 +38,9 @@ interface MarketCase {
   h1: string;
   /** Source domain that MUST appear in the AssumptionsDrawer sources HTML
    *  (omit for CA — its Wealth Horizon variant only pulls the shared,
-   *  smartfinpro.com-hosted editorial assumption rules; see
-   *  WEALTH_HORIZON_CA_RULE_KEYS's comment: TFSA/RRSP room is never a
-   *  rule-driven statutory number in this engine). */
+   *  smartfinpro.com-hosted editorial assumption rules). */
   sourceDomain?: string;
-  /** Market-specific terms that must appear somewhere in the page HTML
-   *  (Kernaufgabe 6 of the FDL 4.3 brief). */
+  /** Market-specific terms that must appear somewhere in the page HTML. */
   marketTerms: string[];
 }
 
@@ -109,7 +109,7 @@ function toolEvents(batches: TrackedBatch[]): Array<Record<string, unknown>> {
 
 for (const c of CASES) {
   test.describe(`Wealth Horizon ${c.market.toUpperCase()} (JS off): ${c.path}`, () => {
-    test('Worked Example is fully present in server HTML, noindex, binding wording present, negative list absent', async ({ page }) => {
+    test('Worked Example — Live-Workspace is fully present in server HTML, noindex, wording contracts hold', async ({ page }) => {
       const response = await page.goto(c.path);
       expect(response?.status()).toBeLessThan(400);
 
@@ -119,11 +119,18 @@ for (const c of CASES) {
       // "Example result" chip (Worked Example, resultState 'example')
       await expect(page.locator('.result-chip').first()).toContainText('Example result');
 
-      // Answer sentence (slot 1)
-      await expect(page.locator('.answer').first()).not.toBeEmpty();
+      // Hero headline + answer sentence (no step flow — visible immediately)
+      await expect(page.locator('#wealth-horizon-result h2').first()).not.toBeEmpty();
+      await expect(page.locator('#wealth-horizon-result .answer').first()).not.toBeEmpty();
 
-      // SVG corridor chart (slot 3)
-      await expect(page.locator('svg[role="img"]').first()).toBeVisible();
+      // Lifetime Path SVG (accumulation + decumulation phases in one chart)
+      const svg = page.locator('#wealth-horizon-result svg[role="img"]').first();
+      await expect(svg).toBeVisible();
+      await expect(svg).toContainText('Retirement');
+
+      // At least one milestone chip rendered from the Worked Example's balance path.
+      const milestoneChips = page.locator('[data-testid="milestone-chip"]');
+      expect(await milestoneChips.count()).toBeGreaterThan(0);
 
       // Exactly 3 levers (slot 4)
       await expect(page.locator('.levers button.lever')).toHaveCount(3);
@@ -136,7 +143,7 @@ for (const c of CASES) {
       // Exactly 1 NextBestAction (slot 6)
       await expect(page.locator('.next-action a')).toHaveCount(1);
 
-      // robots noindex (all 4 routes stay hidden until the separate launch PR, FDL 4.3)
+      // robots noindex (all 4 routes stay hidden until the separate launch PR)
       const robots = await page.locator('meta[name="robots"]').getAttribute('content').catch(() => null);
       expect(robots ?? '').toContain('noindex');
 
@@ -146,15 +153,13 @@ for (const c of CASES) {
       expect(html).toContain("in today's money");
       expect(html.toLowerCase()).toContain('illustrative retirement withdrawal');
 
-      // Negative wording list — nowhere on the page (shared constant, FDL 4.3
-      // Opus follow-up: this list can never drift between the unit test and
-      // every e2e spec that checks it).
+      // Negative wording list — nowhere on the page (shared constant).
       const lower = html.toLowerCase();
       for (const word of FORBIDDEN_WORDS) {
         expect(lower.includes(word), `found forbidden word "${word}"`).toBe(false);
       }
 
-      // Market-specific terms (Kernaufgabe 6, FDL 4.3 brief)
+      // Market-specific terms
       for (const term of c.marketTerms) {
         expect(html.includes(term), `missing market term "${term}" on ${c.path}`).toBe(true);
       }
@@ -179,9 +184,6 @@ test.describe('Wealth Horizon — hub-hiddenness ×4 (FDL 4.3)', () => {
         expect(hrefs.some((h) => h === hidden || h.endsWith(hidden)), `${hidden} linked from ${getHubPathForMarket(market)}`).toBe(false);
       }
 
-      // Footer (site-wide, rendered on every page including the hub itself) —
-      // config/navigation.ts's getSiloToolLinks() delegates straight to the
-      // registry's getFooterToolLinks(), so this is the same hidden filter.
       const footerHrefs = await page
         .locator('footer a[href]')
         .evaluateAll((els) => els.map((el) => el.getAttribute('href') ?? ''));
@@ -200,10 +202,13 @@ test.describe('Wealth Horizon — hub-hiddenness ×4 (FDL 4.3)', () => {
   });
 });
 
-// ── US-only JS-on regression suite (FDL 4.2, UNCHANGED) ─────────────────
-// Proves the FDL 4.3 island parametrization (market/locale/currency/account-
-// type-subset/benefit-link props) left US runtime behavior byte-identical.
-test.describe(`Wealth Horizon US (JS on): ${PAGE_PATH}`, () => {
+// ── US-only JS-on suite (Live-Workspace, FDL WH-v2) ─────────────────────
+// Proves the wizard is gone: every field is visible and live from first
+// paint, a slider change alone (no "Next"/"See my result" click anywhere)
+// flips the result to "Your result" and fires analytics, the scenario
+// switcher still fires tool_scenario_compare, and the hover overlay mounts
+// without breaking anything the JS-off suite already asserted.
+test.describe(`Wealth Horizon US (JS on) — Live-Workspace: ${PAGE_PATH}`, () => {
   test.use({ javaScriptEnabled: true });
 
   test.beforeEach(async ({ page }) => {
@@ -214,23 +219,40 @@ test.describe(`Wealth Horizon US (JS on): ${PAGE_PATH}`, () => {
     });
   });
 
-  async function completeJourney(page: Page): Promise<void> {
+  test('no step flow — every input group is visible immediately, no "Next"/"See my result" button exists', async ({ page }) => {
     await page.goto(PAGE_PATH, { waitUntil: 'networkidle' });
-    await page.getByRole('button', { name: 'Next' }).click(); // Basics → Contributions
-    await page.getByRole('button', { name: 'Next' }).click(); // Contributions → Assumptions
-    await page.getByRole('button', { name: 'See my result' }).click();
-    await expect(page.locator('#wealth-horizon-result')).toBeVisible();
-  }
-
-  test('3-step guided journey flow reaches a real ("Your result") outcome', async ({ page }) => {
-    await completeJourney(page);
-    await expect(page.locator('#wealth-horizon-result .result-chip').first()).toContainText('Your result');
-    await expect(page.locator('#wealth-horizon-result .levers button.lever')).toHaveCount(3);
+    await expect(page.getByRole('button', { name: 'Next' })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'See my result' })).toHaveCount(0);
+    await expect(page.getByRole('textbox', { name: 'Your current age' })).toBeVisible();
+    await expect(page.getByRole('textbox', { name: 'Your monthly contribution' })).toBeVisible();
+    await expect(page.getByRole('textbox', { name: 'Withdrawal rate' })).toBeVisible();
+    await expect(page.locator('#wealth-horizon-result .result-chip').first()).toContainText('Example result');
   });
 
-  test('scenario switcher fires tool_scenario_compare', async ({ page }) => {
+  test('a single slider change flips the chip to "Your result" and fires tool_input_change', async ({ page }) => {
     const batches = await interceptTrack(page);
-    await completeJourney(page);
+    await page.goto(PAGE_PATH, { waitUntil: 'networkidle' });
+
+    // Keyboard-driven interaction fires real native input/change events on a
+    // range input (Playwright's fill() is unreliable for type="range").
+    const currentAgeSlider = page.getByRole('slider', { name: 'Your current age slider' });
+    await currentAgeSlider.focus();
+    await currentAgeSlider.press('ArrowRight');
+    await currentAgeSlider.press('ArrowRight');
+
+    await expect(page.locator('#wealth-horizon-result .result-chip').first()).toContainText('Your result');
+
+    await page.waitForTimeout(1800); // 600ms input debounce + 800ms queue flush + buffer
+    const events = toolEvents(batches);
+    const change = events.find(
+      (e) => e.eventName === 'tool_input_change' && (e.properties as Record<string, unknown> | undefined)?.inputKey === 'currentAge',
+    );
+    expect(change, 'tool_input_change for currentAge should have fired').toBeTruthy();
+  });
+
+  test('scenario switcher fires tool_scenario_compare and stays a "lens" over the live result', async ({ page }) => {
+    const batches = await interceptTrack(page);
+    await page.goto(PAGE_PATH, { waitUntil: 'networkidle' });
 
     await page.getByRole('group', { name: 'Scenario' }).getByRole('button', { name: 'Optimistic' }).click();
     await page.waitForTimeout(1200);
@@ -244,7 +266,7 @@ test.describe(`Wealth Horizon US (JS on): ${PAGE_PATH}`, () => {
 
   test('lever click fires tool_input_change with controlRole "lever"', async ({ page }) => {
     const batches = await interceptTrack(page);
-    await completeJourney(page);
+    await page.goto(PAGE_PATH, { waitUntil: 'networkidle' });
 
     await page.locator('#wealth-horizon-result button.lever').first().click();
     await page.waitForTimeout(1800); // 600ms input debounce + 800ms queue flush + buffer
@@ -258,9 +280,8 @@ test.describe(`Wealth Horizon US (JS on): ${PAGE_PATH}`, () => {
 
   test('Simple mode never clamps an over-IRS-limit contribution — value stays, informational hint visible', async ({ page }) => {
     await page.goto(PAGE_PATH, { waitUntil: 'networkidle' });
-    await page.getByRole('button', { name: 'Next' }).click(); // Basics → Contributions
 
-    const contributionInput = page.getByLabel('Your monthly contribution');
+    const contributionInput = page.getByRole('textbox', { name: 'Your monthly contribution' });
     await contributionInput.fill('50000'); // annual 600,000 — far beyond any US statutory limit
     await contributionInput.blur();
 
@@ -270,19 +291,25 @@ test.describe(`Wealth Horizon US (JS on): ${PAGE_PATH}`, () => {
     await expect(hint).toContainText('account-level limits may apply');
   });
 
-  test('withdrawal rate is visibly adjustable, 2.5–5.0, in the Assumptions step', async ({ page }) => {
-    // GuidedJourneyLayout (SPEC 6.2, pre-built PR 2.1 shell — not modified in
-    // this PR) mounts only the CURRENT step's content, so the withdrawal-rate
-    // field (Step 3) is not part of the JS-off Step-1 HTML; verified here
-    // with JS on, after navigating to the Assumptions step.
+  test('withdrawal rate is visibly adjustable, 2.5–5.0, from first paint (no step navigation needed)', async ({ page }) => {
     await page.goto(PAGE_PATH, { waitUntil: 'networkidle' });
-    await page.getByRole('button', { name: 'Next' }).click(); // Basics → Contributions
-    await page.getByRole('button', { name: 'Next' }).click(); // Contributions → Assumptions
 
     const withdrawalInput = page.getByRole('textbox', { name: 'Withdrawal rate' });
     await expect(withdrawalInput).toBeVisible();
     const withdrawalSlider = page.locator('input[type="range"][aria-label="Withdrawal rate slider"]');
     await expect(withdrawalSlider).toHaveAttribute('min', '2.5');
     await expect(withdrawalSlider).toHaveAttribute('max', '5');
+  });
+
+  test('hover overlay mounts on the chart without breaking layout or JS-off content', async ({ page }) => {
+    await page.goto(PAGE_PATH, { waitUntil: 'networkidle' });
+    const overlay = page.locator('.lifetime-chart-overlay').first();
+    await expect(overlay).toBeAttached();
+    // Still shows everything the JS-off suite asserts, even with the overlay mounted.
+    await expect(page.locator('#wealth-horizon-result svg[role="img"]').first()).toBeVisible();
+    await expect(page.locator('.levers button.lever')).toHaveCount(3);
+
+    await overlay.hover();
+    await expect(page.locator('.lifetime-chart-overlay [role="status"]')).toBeVisible();
   });
 });
