@@ -9,6 +9,15 @@ import type { ShellMode, ToolId, ToolMarket } from '@/lib/tools/registry/types';
 
 export const TOOL_SCHEMA_VERSION = 'tool_v1';
 export const TOOL_EVENT_CATEGORY = 'tool';
+/**
+ * Day 0 of the 7–14-day analytics baseline window (Spec 0.5.1), set to the
+ * real merge date of PR 1.3 (Money Leak / Broker Quiz / Trading Cost
+ * instrumentation — the first real tool_v1 traffic). Consumed by
+ * lib/analytics/analytics-annotations.ts as the 'Baseline start (tool_v1)'
+ * marker and by the dashboard's getBaselineWindow(). Fable corrects this
+ * value at push time if the actual merge date slips.
+ */
+export const TOOL_BASELINE_START = '2026-07-13';
 /** Keep in sync with TrackToolEventBatchSchema (.max(20)). */
 export const TOOL_EVENT_BATCH_HARD_CAP = 20;
 export const TOOL_IMPRESSION_STORAGE_KEY = 'sfp_tool_seen_v1';
