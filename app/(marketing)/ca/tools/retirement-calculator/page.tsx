@@ -1,37 +1,34 @@
-// app/(marketing)/tools/retirement-calculator/page.tsx
-// Wealth Horizon US (FDL 4.2). GuidedJourney via the market-parametrized
-// WealthHorizonJourney island (FDL 4.3 — one island, 4 markets; see that
-// file's header). Deliberately noindex + hidden (see
-// lib/tools/registry/registry.ts 'wealth-horizon' entry) — the 4.3 brief's
-// original atomic index-flip was superseded by a user decision: all 4
-// routes (this one + UK/CA/AU, added in FDL 4.3) stay noindex+hidden until a
-// separate launch PR after the analytics baseline window ends (~2026-07-20).
-// The route is fully built and reachable via direct link starting now.
+// app/ca/tools/retirement-calculator/page.tsx
+// Wealth Horizon CA (FDL 4.3) — GuidedJourney via the market-parametrized
+// WealthHorizonJourney island (components/tools/wealth-horizon/wealth-horizon-journey.tsx).
+// Deliberately noindex + hidden (see lib/tools/registry/registry.ts
+// 'wealth-horizon' entry) until a separate launch PR after the analytics
+// baseline window ends (~2026-07-20) — bindende Plan-Abweichung, see that
+// registry entry's comment and the PR 4.3 report.
 
 import type { Metadata } from 'next';
 import { buildToolMetadata } from '@/lib/tools/registry/metadata';
 import { resolveRuleSnapshot } from '@/lib/rules';
-import { buildWealthHorizonResult, WEALTH_HORIZON_US_RULE_KEYS } from '@/lib/tools/results/wealth-horizon-result';
+import { buildWealthHorizonResult, WEALTH_HORIZON_CA_RULE_KEYS } from '@/lib/tools/results/wealth-horizon-result';
 import type { RetirementAccountType, RetirementInputs } from '@/lib/calc/retirement/types';
 import { ToolShell } from '@/components/tools/shell/tool-shell';
 import { WealthHorizonJourney } from '@/components/tools/wealth-horizon/wealth-horizon-journey';
 import type { FAQ } from '@/types';
 
 const ACCOUNT_TYPE_OPTIONS: { value: RetirementAccountType; label: string }[] = [
-  { value: 'us-401k', label: '401(k) / 403(b)' },
-  { value: 'us-traditional-ira', label: 'Traditional IRA' },
-  { value: 'us-roth-ira', label: 'Roth IRA' },
-  { value: 'us-taxable', label: 'Taxable brokerage' },
+  { value: 'ca-tfsa', label: 'TFSA' },
+  { value: 'ca-rrsp', label: 'RRSP' },
+  { value: 'ca-taxable', label: 'Taxable (non-registered) account' },
 ];
 
-export const revalidate = 86400; // SPEC 8.5 — daily, so rule-window date flips (e.g. Jan 1 caps) apply without a deploy.
+export const revalidate = 86400; // SPEC 8.5 — daily, so rule-window date flips (e.g. Jan 1 limit changes) apply without a deploy.
 
-export const metadata: Metadata = buildToolMetadata('wealth-horizon', 'us');
+export const metadata: Metadata = buildToolMetadata('wealth-horizon', 'ca');
 
-// Worked Example persona — plausible US saver, simple contribution mode
+// Worked Example persona — plausible Canadian saver, simple contribution mode
 // (SPEC 8.3/6.1: rendered fully server-side, visible with JS off).
 const EXAMPLE_INPUTS: RetirementInputs = {
-  market: 'us',
+  market: 'ca',
   currentAge: 38,
   retireAge: 65,
   annualFeePct: 0.4,
@@ -39,18 +36,21 @@ const EXAMPLE_INPUTS: RetirementInputs = {
   withdrawalRatePct: 4.0,
   contributionMode: 'simple',
   simple: {
-    taxAdvantagedBalance: 95000,
-    taxableBalance: 25000,
-    employeeContributionMonthly: 800,
-    employerContributionMonthly: 300,
+    taxAdvantagedBalance: 90000, // TFSA + RRSP combined
+    taxableBalance: 20000,
+    employeeContributionMonthly: 750,
+    employerContributionMonthly: 150, // employer RRSP match
   },
 };
+
+const CRA_RETIREMENT_INCOME_CALCULATOR_URL =
+  'https://www.canada.ca/en/services/benefits/publicpensions/cpp/retirement-income-calculator.html';
 
 const FAQ_ITEMS: FAQ[] = [
   {
     question: 'Is this financial advice?',
     answer:
-      "No. Wealth Horizon is an educational planning tool, not personalized financial, tax or retirement advice. It illustrates three scenarios from the numbers you enter — talk to a licensed advisor before making retirement decisions.",
+      "No. Wealth Horizon is an educational planning tool, not personalized financial or tax advice. It illustrates three scenarios from the numbers you enter — talk to a licensed financial advisor before making retirement decisions.",
   },
   {
     question: "Why is everything shown in today's money instead of nominal dollars?",
@@ -58,14 +58,14 @@ const FAQ_ITEMS: FAQ[] = [
       "All figures use real (inflation-adjusted) returns, so a result of \"$3,000/month\" means $3,000 of today's purchasing power — not a bigger nominal number that buys less in the future. This avoids the illusion of growth from inflation alone.",
   },
   {
-    question: 'What happens if I enter a contribution above the IRS limit?',
+    question: 'How does the calculator know my TFSA and RRSP room?',
     answer:
-      "In simple mode, your total is used exactly as entered and never clamped — you'll see an informational note that account-level limits may apply. In account breakdown mode, a statutory cap is only applied when you've also entered that account's year-to-date contribution, and the clamp is always shown with the amount applied.",
+      "It doesn't guess it — TFSA and RRSP room is always your personal room from CRA My Account, never a number we derive from the national annual or lifetime maximum. If you enter your available room for an account in Account breakdown mode, we clamp your contribution to it and show the clamp; if you leave it blank, we show an informational note only.",
   },
   {
-    question: 'How is my Social Security benefit calculated?',
+    question: 'How is my CPP/OAS benefit calculated?',
     answer:
-      "It isn't — Wealth Horizon never estimates your Social Security or pension entitlement. Get your own estimate from the SSA's official benefits estimator and enter the monthly amount and the age it starts; the calculator counts it only from that age onward.",
+      "It isn't — Wealth Horizon never estimates your CPP or OAS entitlement. Get your own estimate from the Canadian Retirement Income Calculator and enter the monthly amount and the age it starts; the calculator counts it only from that age onward.",
   },
   {
     question: 'What does "financial independence" mean here?',
@@ -79,24 +79,22 @@ const FAQ_ITEMS: FAQ[] = [
   },
 ];
 
-const SSA_ESTIMATOR_URL = 'https://www.ssa.gov/prepare/get-benefits-estimate';
-
-export default function WealthHorizonPage() {
+export default function WealthHorizonCAPage() {
   const asOf = new Date().toISOString().slice(0, 10); // revalidate=86400 → this can move day to day, per SPEC 8.5
-  const rules = resolveRuleSnapshot('us', [...WEALTH_HORIZON_US_RULE_KEYS], asOf);
+  const rules = resolveRuleSnapshot('ca', [...WEALTH_HORIZON_CA_RULE_KEYS], asOf);
   const exampleResult = buildWealthHorizonResult(EXAMPLE_INPUTS, rules, 'example');
 
   return (
     <ToolShell
       toolId="wealth-horizon"
-      market="us"
+      market="ca"
       breadcrumb={[
-        { label: 'Home', href: '/' },
-        { label: 'Tools', href: '/tools' },
-        { label: 'Retirement & Financial Freedom Calculator', href: '/tools/retirement-calculator' },
+        { label: 'Home', href: '/ca' },
+        { label: 'Tools', href: '/ca/tools' },
+        { label: 'Retirement & Financial Freedom Calculator', href: '/ca/tools/retirement-calculator' },
       ]}
       h1="Retirement & Financial Freedom Calculator"
-      benefit="Project your retirement savings across three real-return scenarios and see your financial independence date — free, no sign-up."
+      benefit="Project your TFSA and RRSP savings across three real-return scenarios and see your financial independence date — free, no sign-up."
       estimatedMinutes={3}
       verifiedAt={exampleResult.verifiedAt}
       methodologyHref="#methodology"
@@ -140,9 +138,15 @@ export default function WealthHorizonPage() {
               this methodology at least annually against fresh publications from the same three providers.
             </p>
             <p className="m-0 text-[15px] leading-6 text-[var(--sfp-slate)]">
-              Any expected Social Security, State Pension or other retirement benefit comes entirely from your own
-              official estimate — see &ldquo;How is my Social Security benefit calculated?&rdquo; below — and counts
-              only from the age you say it starts.
+              TFSA and RRSP room is always <strong>your personal room from CRA My Account</strong> — this calculator
+              never derives a contribution limit from the national annual or lifetime maximum. In Account breakdown
+              mode you can enter your own available room for a TFSA or RRSP account, and a contribution is only
+              clamped when you&rsquo;ve supplied that number yourself.
+            </p>
+            <p className="m-0 text-[15px] leading-6 text-[var(--sfp-slate)]">
+              Any expected CPP, OAS or other retirement benefit comes entirely from your own official estimate — see
+              &ldquo;How is my CPP/OAS benefit calculated?&rdquo; below — and counts only from the age you say it
+              starts.
             </p>
             <p className="m-0 text-sm text-[var(--sfp-slate)]">
               <strong>Not financial advice.</strong> This tool is for education and planning only. It does not know
@@ -156,8 +160,8 @@ export default function WealthHorizonPage() {
               Worked example
             </h2>
             <p className="m-0 text-[15px] leading-6 text-[var(--sfp-slate)]">
-              A 38-year-old planning to retire at 65 with $95,000 in tax-advantaged savings and $25,000 in a taxable
-              account, contributing $800/month plus a $300/month employer match at a 0.4% annual fee, targeting
+              A 38-year-old planning to retire at 65 with $90,000 in TFSA and RRSP savings and $20,000 in a taxable
+              account, contributing $750/month plus a $150/month employer RRSP match at a 0.4% annual fee, targeting
               $5,000/month in today&rsquo;s money at a 4.0% withdrawal rate — shown above as the &ldquo;Example
               result&rdquo;.
             </p>
@@ -165,13 +169,13 @@ export default function WealthHorizonPage() {
 
           <section className="flex flex-col gap-2">
             <h2 className="t-h2 m-0 text-[22px] font-semibold leading-[28px] text-[var(--sfp-ink)]">
-              Your official benefits estimate
+              Your official retirement income estimate
             </h2>
             <p className="m-0 text-[15px] leading-6 text-[var(--sfp-slate)]">
               Wealth Horizon never estimates entitlement or benefit amounts automatically. Get your own personalized
               estimate from the{' '}
-              <a href={SSA_ESTIMATOR_URL} className="text-[var(--sfp-navy)] no-underline hover:underline">
-                SSA&rsquo;s &ldquo;Get a benefits estimate&rdquo; tool
+              <a href={CRA_RETIREMENT_INCOME_CALCULATOR_URL} className="text-[var(--sfp-navy)] no-underline hover:underline">
+                Canadian Retirement Income Calculator
               </a>{' '}
               and enter the monthly amount and starting age in the Assumptions step — the projection counts it only
               from that age onward.
@@ -196,16 +200,22 @@ export default function WealthHorizonPage() {
             </h2>
             <ul className="m-0 flex list-disc flex-col gap-1 pl-5 text-sm text-[var(--sfp-navy)]">
               <li>
-                <a href="/tools/money-leak-scanner" className="no-underline hover:underline">
-                  Money Leak Scanner
+                <a href="/ca/tools/money-leak-scanner" className="no-underline hover:underline">
+                  Money Leak Scanner Canada
                 </a>{' '}
                 <span className="text-[var(--sfp-slate)]">— find more money to put toward these contributions.</span>
               </li>
               <li>
-                <a href="/us/personal-finance" className="no-underline hover:underline">
+                <a href="/ca/tools/tfsa-rrsp-calculator" className="no-underline hover:underline">
+                  TFSA vs RRSP Calculator
+                </a>{' '}
+                <span className="text-[var(--sfp-slate)]">— model just your TFSA/RRSP account choice.</span>
+              </li>
+              <li>
+                <a href="/ca/personal-finance" className="no-underline hover:underline">
                   Personal Finance guides
                 </a>{' '}
-                <span className="text-[var(--sfp-slate)]">— broader saving and investing coverage.</span>
+                <span className="text-[var(--sfp-slate)]">— broader Canadian saving and investing coverage.</span>
               </li>
             </ul>
           </section>
@@ -213,17 +223,17 @@ export default function WealthHorizonPage() {
       }
     >
       <WealthHorizonJourney
-        market="us"
-        variantPath="/tools/retirement-calculator"
+        market="ca"
+        variantPath="/ca/tools/retirement-calculator"
         rules={rules}
         exampleResult={exampleResult}
-        currency="USD"
-        locale="en-US"
+        currency="CAD"
+        locale="en-CA"
         accountTypeOptions={ACCOUNT_TYPE_OPTIONS}
-        taxAdvantagedLabel="401(k)/IRA"
-        benefitName="Social Security / pension"
-        benefitLinkUrl={SSA_ESTIMATOR_URL}
-        benefitLinkLabel="SSA’s benefits estimator"
+        taxAdvantagedLabel="TFSA/RRSP"
+        benefitName="CPP/OAS"
+        benefitLinkUrl={CRA_RETIREMENT_INCOME_CALCULATOR_URL}
+        benefitLinkLabel="Canadian Retirement Income Calculator"
       />
     </ToolShell>
   );

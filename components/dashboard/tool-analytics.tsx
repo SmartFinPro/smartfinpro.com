@@ -492,6 +492,11 @@ export function ToolAnalytics({
               </tbody>
             </table>
           </div>
+          <p className="border-t border-slate-100 px-4 py-2.5 text-xs text-slate-400">
+            Routes marked <span className="font-medium text-slate-500">hidden</span> in the tool registry (e.g. Wealth
+            Horizon UK/CA/AU, added FDL 4.3) are reachable only via direct link until their launch PR — &quot;silent&quot;
+            or &quot;no traffic&quot; is expected for them until then, not a tracking problem.
+          </p>
         </SectionCard>
       </WidgetErrorBoundary>
 

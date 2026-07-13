@@ -12,6 +12,7 @@ import type { RetirementInputs } from '@/lib/calc/retirement/types';
 import { projectRetirement } from '@/lib/calc/retirement/engine';
 import {
   buildWealthHorizonResult,
+  FORBIDDEN_WORDS,
   WEALTH_HORIZON_US_RULE_KEYS,
 } from '@/lib/tools/results/wealth-horizon-result';
 
@@ -33,8 +34,6 @@ const SIMPLE_INPUTS: RetirementInputs = {
     employerContributionMonthly: 300,
   },
 };
-
-const FORBIDDEN_WORDS = ['sustainable', 'guaranteed', 'you will have'];
 
 describe('buildWealthHorizonResult', () => {
   it('never uses the forbidden wording (SPEC 8.3 negative list)', () => {

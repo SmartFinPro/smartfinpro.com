@@ -14,6 +14,15 @@ import type { AssumptionEntry, ResultState, RuleSourceRef, ToolResult } from '@/
 export type WealthHorizonScenarioKey = 'conservative' | 'base' | 'optimistic';
 
 /**
+ * SPEC 8.3 negative wording list, binding for every market's copy (page
+ * belowFold, journey island, adapter-built answer/assumptions). Single
+ * exported source — imported by the unit test AND every Wealth Horizon e2e
+ * spec (FDL 4.3 Opus follow-up from #95) so the list can never drift between
+ * suites.
+ */
+export const FORBIDDEN_WORDS = ['sustainable', 'guaranteed', 'you will have'] as const;
+
+/**
  * SPEC 4.5 local placeholder bridge — registry-driven `getBridge()` ships in
  * PR 3.4 (Registry-Brücken). Deliberately `kind: 'tool'`, NOT `'cockpit'`:
  * SPEC 4.5's real Wealth Horizon bridge target is the robo-advisors cockpit
@@ -171,4 +180,38 @@ export const WEALTH_HORIZON_US_RULE_KEYS = [
   'k401CatchUpAge60To63',
   'iraLimit',
   'iraCatchUp',
+] as const;
+
+/** Rule keys Wealth Horizon UK needs (FDL 4.3) — isaAllowance drives the
+ *  engine's uk-isa statutory-cap check (deferralCapKey) and the UI's ISA
+ *  allowance context chip; both read the SAME resolved value. */
+export const WEALTH_HORIZON_UK_RULE_KEYS = [
+  'realReturnConservative',
+  'realReturnBase',
+  'realReturnOptimistic',
+  'inflationAssumption',
+  'isaAllowance',
+] as const;
+
+/** Rule keys Wealth Horizon CA needs (FDL 4.3). No rrspLimit/tfsaAnnual/
+ *  tfsaCumulative here on purpose — ca-tfsa/ca-rrsp are 'personal room'
+ *  account types in the engine (resolveAccountContribution's roomTypes),
+ *  never a national-maximum-derived statutory cap (contract, SPEC 8.3). */
+export const WEALTH_HORIZON_CA_RULE_KEYS = [
+  'realReturnConservative',
+  'realReturnBase',
+  'realReturnOptimistic',
+  'inflationAssumption',
+] as const;
+
+/** Rule keys Wealth Horizon AU needs (FDL 4.3) — concessionalCap drives the
+ *  engine's au-super statutory-cap check AND the UI's cap chip;
+ *  superGuaranteeRate drives the editable SG contribution-suggestion helper. */
+export const WEALTH_HORIZON_AU_RULE_KEYS = [
+  'realReturnConservative',
+  'realReturnBase',
+  'realReturnOptimistic',
+  'inflationAssumption',
+  'concessionalCap',
+  'superGuaranteeRate',
 ] as const;

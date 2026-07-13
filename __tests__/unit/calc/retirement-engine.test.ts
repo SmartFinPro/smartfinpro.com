@@ -384,4 +384,26 @@ describe('retirement engine — lever-clamp-fix regression (FDL 4.2)', () => {
     expect(applied.accounts![0].employeeContributionMonthly).toBe(3000); // first stays untouched
     expect(applied.accounts![1].employeeContributionMonthly).toBe(1000 + LEVER_EXTRA_MONTHLY); // fallback = last
   });
+
+  // FDL 4.3 (Opus follow-up from #95): the fallback above still lands the
+  // raw employeeContributionMonthly increase on the last account, but
+  // resolveAccountContribution() re-clamps it straight back to the same
+  // appliedMonthly — the projection literally does not move. buildLevers
+  // must label that case honestly instead of implying a currency delta.
+  it('buildLevers labels the contribution lever "limits reached" (not a currency delta) when every account is already clamped', () => {
+    const inputs: RetirementInputs = {
+      ...BASE_SIMPLE_INPUTS,
+      contributionMode: 'account-breakdown',
+      accounts: [
+        { id: 'k401-1', type: 'us-401k', balance: 100000, employeeContributionMonthly: 3000, contributedYtd: 24000 },
+        { id: 'ira-1', type: 'us-traditional-ira', balance: 30000, employeeContributionMonthly: 1000, contributedYtd: 7400 },
+      ],
+      simple: undefined,
+    } as RetirementInputs;
+    expect(resolveAccountContribution(inputs.accounts![0], inputs.currentAge, rules).check.status).toBe('clamped');
+    expect(resolveAccountContribution(inputs.accounts![1], inputs.currentAge, rules).check.status).toBe('clamped');
+
+    const lever = projectRetirement(inputs, rules).levers.find((l) => l.key === 'contribution')!;
+    expect(lever.deltaLabel).toBe('≈ $0 (limits reached)');
+  });
 });

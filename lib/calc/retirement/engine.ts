@@ -325,8 +325,21 @@ function variant(
   const mutated = mutateInputs(inputs, patch, rules);
   const newBalance = projectAll(mutated, rules).scenarios[1].balanceAtRetire;
   const delta = newBalance - base;
+  // Opus follow-up (FDL 4.3, raised in the #95 review): the "contribution"
+  // lever can legitimately land a $0 delta when every account is already at
+  // its statutory or personal-room clamp — mutateInputs's all-clamped
+  // fallback still adds LEVER_EXTRA_MONTHLY to an account's raw
+  // employeeContributionMonthly, but resolveAccountContribution() re-clamps
+  // it straight back to the same appliedMonthly, so the projection does not
+  // move. "≈ +$0 at retirement" reads as if the lever failed for an
+  // unrelated reason; label this specific, honest case instead. No second
+  // calculation path — delta is still the exact number computed above.
+  const deltaLabel =
+    key === 'contribution' && delta === 0
+      ? `≈ ${formatApprox(0, inputs.market)} (limits reached)`
+      : `≈ +${formatApprox(delta, inputs.market)} at retirement`;
   return {
-    lever: { key, title, deltaLabel: `≈ +${formatApprox(delta, inputs.market)} at retirement`, apply: patch },
+    lever: { key, title, deltaLabel, apply: patch },
     delta,
   };
 }
