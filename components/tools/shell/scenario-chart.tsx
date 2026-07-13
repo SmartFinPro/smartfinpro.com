@@ -35,7 +35,10 @@ const SERIES_COLOR: Record<string, string> = {
 };
 
 function formatDefault(v: number): string {
-  return Math.round(v).toLocaleString('en-US');
+  // Compact notation ("362K", "1.4M") — full figures like "1,447,643" are
+  // wider than the chart's left padding and get clipped by the SVG edge
+  // (found in the 4.2 design review: the axis read as garbage "47,643").
+  return new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 }).format(v);
 }
 
 export function ScenarioChart({ data, mini = false }: ScenarioChartProps) {
