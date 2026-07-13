@@ -47,7 +47,10 @@ export interface RetirementBaseInputs {
    *  the pre-v4 engine (invariant-tested). Applies to employee contributions
    *  only (simple total or each account's employeeContributionMonthly);
    *  employer match stays flat (documented v1 simplification). Advisory
-   *  contribution checks keep using year-1 amounts (existing convention). */
+   *  contribution checks keep using year-1 amounts (existing convention) —
+   *  consequence: with escalation, later projection years can exceed a
+   *  statutory cap without a per-year re-clamp; the checks are advisory and
+   *  the projection is illustrative (documented v1 behavior). */
   contributionGrowthPct?: number;
 }
 

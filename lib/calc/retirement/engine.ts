@@ -114,10 +114,13 @@ function projectScenario(
 
   // Wealth Horizon v4 — optional REAL annual escalation of EMPLOYEE
   // contributions only (employer stays flat, documented v1 simplification;
-  // see RetirementBaseInputs.contributionGrowthPct). g=0 (default/undefined)
-  // makes Math.pow(1+0, k)===1 for every k, so this is bit-identical to the
-  // pre-v4 flat-contribution loop — that equivalence is invariant-tested
-  // (__tests__/unit/calc/retirement-escalation.test.ts, case 1).
+  // see RetirementBaseInputs.contributionGrowthPct). g=0/undefined/absent
+  // collapse to the identical flat path (Math.pow(1+0, k)===1 exactly in
+  // IEEE-754) — that three-way equivalence is invariant-tested (case 1 in
+  // __tests__/unit/calc/retirement-escalation.test.ts). Regression against
+  // the pre-v4 numbers is carried by the reference fixtures, not by the
+  // Math.pow argument (the refactor also regrouped (a+b)*12 into a*12+b*12,
+  // which the fixtures pin).
   const g = (inputs.contributionGrowthPct ?? 0) / 100;
   const employeeAnnualBase = contrib.employeeMonthly * 12;
   const employerAnnual = contrib.employerMonthly * 12;

@@ -79,6 +79,8 @@ describe('retirement engine — contribution escalation (Wealth Horizon v4)', ()
   it('3. validateInputs throws for contributionGrowthPct outside [0, 5]; accepts the boundaries 0 and 5', () => {
     expect(() => validateInputs({ ...BASE_SIMPLE_INPUTS, contributionGrowthPct: -1 })).toThrow(TypeError);
     expect(() => validateInputs({ ...BASE_SIMPLE_INPUTS, contributionGrowthPct: 6 })).toThrow(TypeError);
+    expect(() => validateInputs({ ...BASE_SIMPLE_INPUTS, contributionGrowthPct: Number.NaN })).toThrow(TypeError);
+    expect(() => validateInputs({ ...BASE_SIMPLE_INPUTS, contributionGrowthPct: Number.POSITIVE_INFINITY })).toThrow(TypeError);
     expect(() => validateInputs({ ...BASE_SIMPLE_INPUTS, contributionGrowthPct: 0 })).not.toThrow();
     expect(() => validateInputs({ ...BASE_SIMPLE_INPUTS, contributionGrowthPct: 5 })).not.toThrow();
   });
