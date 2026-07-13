@@ -307,6 +307,46 @@ jobs:
         with:
           fetch-depth: 0
 
+      # FDL PR 3.1 gate (docs/superpowers/plans/2026-07-12-fdl-product-
+      # experience.md, "PR 3.1 — DecisionState-Store"): lib/decision is a
+      # one-way bridge into the Financial Decision Lab tools — the existing
+      # Comparison Cockpit product (cockpit_v1, frozen per rule 0.1) must
+      # never read it, to keep the cockpit baseline uncontaminated. This runs
+      # unconditionally (not gated behind the tool-changed path filter above)
+      # so it is a real structural gate on every PR, not just tool-touching
+      # ones. Path list verified against the actual repo tree at authoring
+      # time (rg/find for *cockpit* + lib/comparison) — update it if new
+      # cockpit surfaces are added elsewhere.
+      - name: Decision-state / Cockpit isolation gate
+        run: |
+          set +e
+          MATCHES=$(grep -rn "lib/decision" \
+            lib/comparison \
+            components/marketing/comparison-hub.tsx \
+            components/marketing/comparison-cockpit.tsx \
+            components/marketing/cockpit-card.tsx \
+            components/marketing/cockpit-compare.tsx \
+            components/marketing/cockpit-content.tsx \
+            components/marketing/cockpit-decision-bar.tsx \
+            components/marketing/cockpit-impression.tsx \
+            components/marketing/cockpit-table.tsx \
+            components/marketing/cockpit-verdict-cta.tsx \
+            components/dashboard/cockpit-analytics.tsx \
+            lib/actions/cockpit-analytics.ts \
+            lib/analytics/cockpit-events.ts \
+            lib/analytics/cockpit-tracking.ts \
+            "app/api/dashboard/cockpit-analytics" \
+            "app/(dashboard)/dashboard/analytics/cockpits" \
+            scripts/validate-cockpit-rows.ts \
+            2>/dev/null)
+          set -e
+          if [ -n "$MATCHES" ]; then
+            echo "$MATCHES"
+            echo "::error::Cockpit code must never import lib/decision (one-way bridge — see docs/superpowers/plans/2026-07-12-fdl-product-experience.md, PR 3.1)."
+            exit 1
+          fi
+          echo "OK: no lib/decision import found in cockpit code."
+
       - name: Detect tool changes
         id: tool-changed
         run: |
