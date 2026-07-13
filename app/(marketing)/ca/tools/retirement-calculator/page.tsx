@@ -10,7 +10,8 @@ import type { Metadata } from 'next';
 import { buildToolMetadata } from '@/lib/tools/registry/metadata';
 import { resolveRuleSnapshot } from '@/lib/rules';
 import { buildWealthHorizonResult, WEALTH_HORIZON_CA_RULE_KEYS } from '@/lib/tools/results/wealth-horizon-result';
-import type { RetirementAccountType, RetirementInputs } from '@/lib/calc/retirement/types';
+import { WEALTH_HORIZON_DEFAULT_INPUTS } from '@/lib/tools/results/wealth-horizon-defaults';
+import type { RetirementAccountType } from '@/lib/calc/retirement/types';
 import { ToolShell } from '@/components/tools/shell/tool-shell';
 import { WealthHorizonLive } from '@/components/tools/wealth-horizon/wealth-horizon-live';
 import type { FAQ } from '@/types';
@@ -25,23 +26,12 @@ export const revalidate = 86400; // SPEC 8.5 — daily, so rule-window date flip
 
 export const metadata: Metadata = buildToolMetadata('wealth-horizon', 'ca');
 
-// Worked Example persona — plausible Canadian saver, simple contribution mode
-// (SPEC 8.3/6.1: rendered fully server-side, visible with JS off).
-const EXAMPLE_INPUTS: RetirementInputs = {
-  market: 'ca',
-  currentAge: 38,
-  retireAge: 65,
-  annualFeePct: 0.4,
-  targetMonthlyIncomeToday: 5000,
-  withdrawalRatePct: 4.0,
-  contributionMode: 'simple',
-  simple: {
-    taxAdvantagedBalance: 90000, // TFSA + RRSP combined
-    taxableBalance: 20000,
-    employeeContributionMonthly: 750,
-    employerContributionMonthly: 150, // employer RRSP match
-  },
-};
+// Worked Example persona (SPEC 8.3/6.1: rendered fully server-side, visible
+// with JS off) — Fable-Design-Review Fix 2: this is the SAME shared
+// constant the Live-Workspace island seeds its `useState` from
+// (`defaultInputs` prop below), so the SSR "Example result" and the live
+// start state can never drift apart again.
+const EXAMPLE_INPUTS = WEALTH_HORIZON_DEFAULT_INPUTS.ca;
 
 const CRA_RETIREMENT_INCOME_CALCULATOR_URL =
   'https://www.canada.ca/en/services/benefits/publicpensions/cpp/retirement-income-calculator.html';
@@ -160,10 +150,10 @@ export default function WealthHorizonCAPage() {
               Worked example
             </h2>
             <p className="m-0 text-[15px] leading-6 text-[var(--sfp-slate)]">
-              A 38-year-old planning to retire at 65 with $90,000 in TFSA and RRSP savings and $20,000 in a taxable
-              account, contributing $750/month plus a $150/month employer RRSP match at a 0.4% annual fee, targeting
-              $5,000/month in today&rsquo;s money at a 4.0% withdrawal rate — shown above as the &ldquo;Example
-              result&rdquo;.
+              A 30-year-old planning to retire at 65 with $20,000 in TFSA and RRSP savings and $5,000 in a taxable
+              account, contributing $400/month at a 0.5% annual fee, targeting $4,000/month in today&rsquo;s money at
+              a 4.0% withdrawal rate — these are the same numbers already filled in above, shown as the
+              &ldquo;Example result&rdquo; until you change anything.
             </p>
           </section>
 
@@ -227,6 +217,7 @@ export default function WealthHorizonCAPage() {
         variantPath="/ca/tools/retirement-calculator"
         rules={rules}
         exampleResult={exampleResult}
+        defaultInputs={EXAMPLE_INPUTS}
         currency="CAD"
         locale="en-CA"
         accountTypeOptions={ACCOUNT_TYPE_OPTIONS}

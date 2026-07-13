@@ -59,6 +59,11 @@ export interface WealthHorizonLiveProps {
   variantPath: string;
   rules: RuleSnapshot;
   exampleResult: ToolResult;
+  /** Fable-Review Fix 2 — the SAME RetirementInputs the page used to build
+   *  `exampleResult` server-side. The island's initial `useState` is seeded
+   *  from this, never from a second hard-coded literal, so the SSR worked
+   *  example and the live start state can never drift apart again. */
+  defaultInputs: Extract<RetirementInputs, { contributionMode: 'simple' }>;
   currency: ToolCurrency;
   locale: string;
   /** Account types selectable in "detailed accounts" mode, market subset of
@@ -101,6 +106,7 @@ export function WealthHorizonLive({
   variantPath,
   rules,
   exampleResult,
+  defaultInputs,
   currency,
   locale,
   accountTypeOptions,
@@ -118,21 +124,28 @@ export function WealthHorizonLive({
   const initialAccountType = accountTypeOptions[0]!.value;
 
   const [mode, setMode] = useState<'simple' | 'account-breakdown'>('simple');
+  // Fable-Review Fix 2 — seeded from `defaultInputs` (the SAME object the
+  // page used to build `exampleResult`), never a second hard-coded literal.
   const [base, setBase] = useState({
-    currentAge: 30,
-    retireAge: 65,
-    targetMonthlyIncomeToday: 4000,
-    annualFeePct: 0.5,
-    withdrawalRatePct: 4.0,
+    currentAge: defaultInputs.currentAge,
+    retireAge: defaultInputs.retireAge,
+    targetMonthlyIncomeToday: defaultInputs.targetMonthlyIncomeToday,
+    annualFeePct: defaultInputs.annualFeePct,
+    withdrawalRatePct: defaultInputs.withdrawalRatePct,
   });
   const [simple, setSimple] = useState({
-    taxAdvantagedBalance: 20000,
-    taxableBalance: 5000,
-    employeeContributionMonthly: 400,
-    employerContributionMonthly: 0,
+    taxAdvantagedBalance: defaultInputs.simple.taxAdvantagedBalance,
+    taxableBalance: defaultInputs.simple.taxableBalance,
+    employeeContributionMonthly: defaultInputs.simple.employeeContributionMonthly,
+    employerContributionMonthly: defaultInputs.simple.employerContributionMonthly ?? 0,
   });
   const [accounts, setAccounts] = useState<RetirementAccountInput[]>([
-    { id: 'acc-1', type: initialAccountType, balance: 20000, employeeContributionMonthly: 400 },
+    {
+      id: 'acc-1',
+      type: initialAccountType,
+      balance: defaultInputs.simple.taxAdvantagedBalance,
+      employeeContributionMonthly: defaultInputs.simple.employeeContributionMonthly,
+    },
   ]);
   const [benefit, setBenefit] = useState({ enabled: false, monthlyAmountToday: 0, startsAtAge: 67 });
   const [focusScenario, setFocusScenario] = useState<WealthHorizonScenarioKey>('base');
@@ -204,7 +217,17 @@ export function WealthHorizonLive({
     () => buildWealthHorizonResult(inputs, rules, 'yours', focusScenario),
     [inputs, rules, focusScenario],
   );
-  const active: ToolResult = showExample ? exampleResult : liveResult;
+  // Fable-Review Fix 3 — `active` is ALWAYS the live recompute, never gated
+  // by `showExample`/`resultState`. Fix 2 made `defaultInputs` (this
+  // component's own useState seed) identical to the `exampleResult` prop's
+  // source inputs, so `liveResult` at the untouched default state renders
+  // the exact same numbers `exampleResult` was built from server-side — the
+  // `exampleResult` prop only still exists to render that first server HTML
+  // before hydration (JS-off). Because `active` no longer depends on
+  // `resultState`, switching the scenario lens (handleScenarioChange, below)
+  // can update the displayed numbers WITHOUT flipping the "Example
+  // result"/"Your result" chip — that chip only flips on a real field edit.
+  const active: ToolResult = liveResult;
 
   function markInteracted(): void {
     setPanelState((s) => {
@@ -263,14 +286,19 @@ export function WealthHorizonLive({
   }
 
   function handleScenarioChange(scenario: WealthHorizonScenarioKey): void {
-    // Switching the scenario lens looks at the CURRENT input state (defaults
-    // until the user has touched anything) — the moment you compare
-    // scenarios you're looking at your own numbers, not the fixed worked
-    // example, so this counts as the first interaction too (documented
-    // product decision — the exampleResult prop is a finished ToolResult
-    // pre-built server-side at 'base' only, so it cannot itself be
-    // re-scenario'd client-side without a second calc path).
-    markInteracted();
+    // Fable-Review Fix 3 — switching the scenario lens looks at the CURRENT
+    // input state (defaults until the user has touched anything), but it
+    // does NOT count as "your" first interaction: it only ever changes
+    // `focusScenario` (`active` — always `liveResult` since Fix 3 above —
+    // reacts to that immediately) and fires trackScenarioCompare. The
+    // "Example result"/"Your result" chip is untouched here and keeps
+    // showing "Example result" until a real field is edited
+    // (markInteracted(), called from trackField/trackCategorical/
+    // handleLeverApply/applySgSuggestion). Deliberately NOT calling
+    // markInteracted() here (previous behavior, reversed after the
+    // Fable-Design-Review: Fix 2 made the default inputs equal to the worked
+    // example, so comparing scenarios against the still-untouched defaults
+    // is not "your" result yet).
     tracker.trackScenarioCompare(scenario);
     setFocusScenario(scenario);
   }

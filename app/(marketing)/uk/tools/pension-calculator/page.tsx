@@ -12,7 +12,8 @@ import type { Metadata } from 'next';
 import { buildToolMetadata } from '@/lib/tools/registry/metadata';
 import { resolveRuleSnapshot } from '@/lib/rules';
 import { buildWealthHorizonResult, WEALTH_HORIZON_UK_RULE_KEYS } from '@/lib/tools/results/wealth-horizon-result';
-import type { RetirementAccountType, RetirementInputs } from '@/lib/calc/retirement/types';
+import { WEALTH_HORIZON_DEFAULT_INPUTS } from '@/lib/tools/results/wealth-horizon-defaults';
+import type { RetirementAccountType } from '@/lib/calc/retirement/types';
 import { ToolShell } from '@/components/tools/shell/tool-shell';
 import { WealthHorizonLive } from '@/components/tools/wealth-horizon/wealth-horizon-live';
 import type { FAQ } from '@/types';
@@ -27,23 +28,12 @@ export const revalidate = 86400; // SPEC 8.5 — daily, so rule-window date flip
 
 export const metadata: Metadata = buildToolMetadata('wealth-horizon', 'uk');
 
-// Worked Example persona — plausible UK saver, simple contribution mode
-// (SPEC 8.3/6.1: rendered fully server-side, visible with JS off).
-const EXAMPLE_INPUTS: RetirementInputs = {
-  market: 'uk',
-  currentAge: 38,
-  retireAge: 65,
-  annualFeePct: 0.4,
-  targetMonthlyIncomeToday: 3500,
-  withdrawalRatePct: 4.0,
-  contributionMode: 'simple',
-  simple: {
-    taxAdvantagedBalance: 75000, // ISA + SIPP combined
-    taxableBalance: 15000,
-    employeeContributionMonthly: 650,
-    employerContributionMonthly: 200, // employer SIPP contribution
-  },
-};
+// Worked Example persona (SPEC 8.3/6.1: rendered fully server-side, visible
+// with JS off) — Fable-Design-Review Fix 2: this is the SAME shared
+// constant the Live-Workspace island seeds its `useState` from
+// (`defaultInputs` prop below), so the SSR "Example result" and the live
+// start state can never drift apart again.
+const EXAMPLE_INPUTS = WEALTH_HORIZON_DEFAULT_INPUTS.uk;
 
 const GOV_UK_STATE_PENSION_URL = 'https://www.gov.uk/check-state-pension';
 
@@ -164,10 +154,10 @@ export default function WealthHorizonUKPage() {
               Worked example
             </h2>
             <p className="m-0 text-[15px] leading-6 text-[var(--sfp-slate)]">
-              A 38-year-old planning to retire at 65 with £75,000 in ISA and SIPP savings and £15,000 in a taxable
-              account, contributing £650/month plus a £200/month employer SIPP contribution at a 0.4% annual fee,
-              targeting £3,500/month in today&rsquo;s money at a 4.0% withdrawal rate — shown above as the
-              &ldquo;Example result&rdquo;.
+              A 30-year-old planning to retire at 65 with £20,000 in ISA and SIPP savings and £5,000 in a taxable
+              account, contributing £400/month at a 0.5% annual fee, targeting £4,000/month in today&rsquo;s money at
+              a 4.0% withdrawal rate — these are the same numbers already filled in above, shown as the
+              &ldquo;Example result&rdquo; until you change anything.
             </p>
           </section>
 
@@ -231,6 +221,7 @@ export default function WealthHorizonUKPage() {
         variantPath="/uk/tools/pension-calculator"
         rules={rules}
         exampleResult={exampleResult}
+        defaultInputs={EXAMPLE_INPUTS}
         currency="GBP"
         locale="en-GB"
         accountTypeOptions={ACCOUNT_TYPE_OPTIONS}

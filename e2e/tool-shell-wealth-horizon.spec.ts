@@ -264,6 +264,41 @@ test.describe(`Wealth Horizon US (JS on) — Live-Workspace: ${PAGE_PATH}`, () =
     expect(props.scenario).toBe('optimistic');
   });
 
+  // Fable-Design-Review Fix 3 — the default inputs are now IDENTICAL to the
+  // worked example (Fix 2), so the island can always compute live, but a
+  // scenario-lens click alone is still not "your" result: only a real field
+  // edit is. Both halves asserted below.
+  test('(Fix 3a) scenario click before any field change keeps the chip on "Example result" while the numbers switch', async ({ page }) => {
+    await page.goto(PAGE_PATH, { waitUntil: 'networkidle' });
+    const chip = page.locator('#wealth-horizon-result .result-chip').first();
+    const answer = page.locator('#wealth-horizon-result .answer').first();
+    await expect(chip).toContainText('Example result');
+    const answerBefore = await answer.textContent();
+
+    await page.getByRole('group', { name: 'Scenario' }).getByRole('button', { name: 'Optimistic' }).click();
+    await page.waitForTimeout(300);
+
+    // Chip is unchanged — a scenario-lens switch is not a field edit.
+    await expect(chip).toContainText('Example result');
+    // But the displayed numbers DID move to the optimistic scenario.
+    const answerAfter = await answer.textContent();
+    expect(answerAfter).not.toBe(answerBefore);
+  });
+
+  test('(Fix 3b) the first real field change — even after a prior scenario switch — flips the chip to "Your result"', async ({ page }) => {
+    await page.goto(PAGE_PATH, { waitUntil: 'networkidle' });
+    const chip = page.locator('#wealth-horizon-result .result-chip').first();
+
+    await page.getByRole('group', { name: 'Scenario' }).getByRole('button', { name: 'Optimistic' }).click();
+    await expect(chip).toContainText('Example result'); // still example after the scenario click alone
+
+    const currentAgeSlider = page.getByRole('slider', { name: 'Your current age slider' });
+    await currentAgeSlider.focus();
+    await currentAgeSlider.press('ArrowRight');
+
+    await expect(chip).toContainText('Your result'); // first real field edit flips it
+  });
+
   test('lever click fires tool_input_change with controlRole "lever"', async ({ page }) => {
     const batches = await interceptTrack(page);
     await page.goto(PAGE_PATH, { waitUntil: 'networkidle' });
