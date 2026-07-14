@@ -52,7 +52,7 @@ export interface ToolDefinition {
    * Additive, optional. ISO calendar date ('YYYY-MM-DD') a tool went live
    * across its markets (index-flip + `hidden` removed). Purely presentational:
    * hub cards use it to show a small "New" badge for a limited window after
-   * launch (see getIsNewTool() in lib/tools/registry/index.ts). Does NOT
+   * launch (see isRecentlyLaunched() in lib/tools/registry/index.ts). Does NOT
    * affect indexable/hidden/status — those stay the single source of truth
    * for SEO and hub/footer/llms.txt visibility.
    */
