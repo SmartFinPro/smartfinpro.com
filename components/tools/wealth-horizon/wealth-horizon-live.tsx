@@ -57,9 +57,12 @@ import { BaseField } from '@/components/tools/shell/fields/base-field';
 import { createLiveAnnouncer } from '@/lib/tools/aria-live';
 import { advancePanelState, type Lever, type PanelState, type ToolCurrency, type ToolResult } from '@/lib/tools/shell-types';
 import { useToolTracking } from '@/lib/analytics/tool-tracking';
+import { toInputBucket } from '@/lib/analytics/tool-events';
 import type { ToolContext, InputBucketKind } from '@/lib/analytics/tool-events';
-import type { ToolMarket } from '@/lib/tools/registry/types';
-import { getTool } from '@/lib/tools/registry';
+import type { ToolId, ToolMarket } from '@/lib/tools/registry/types';
+import { getTool, getToolEntryHref } from '@/lib/tools/registry';
+import { decodeShare, encodeShare, buildShareUrl } from '@/lib/decision/share-codec';
+import { buildWealthHorizonPrefill, PREFILL_SOURCE_LABEL } from '@/lib/decision/wealth-horizon-prefill';
 import type { RuleSnapshot } from '@/lib/rules';
 import { formatCurrency, formatPercent } from '@/lib/tools/field-format';
 import {
@@ -327,6 +330,14 @@ export function WealthHorizonLive({
   const nextAccountId = useRef(2);
   const firstResultTracked = useRef(false);
 
+  // FDL 4.4 — supporting-widget deep-link prefill (SPEC 8.7 / PR 4.4). Which
+  // source tool's fragment prefilled this session, if any — drives the
+  // visible "Using your {tool} inputs — edit" line. NEVER flips the result
+  // chip to "Shared scenario" (that wording is reserved for a real share,
+  // PR 2.3, per the binding 4.4 brief decision) — the chip stays on the
+  // normal "Your result" path via markInteracted() below.
+  const [prefillSourceToolId, setPrefillSourceToolId] = useState<ToolId | null>(null);
+
   const announcerRef = useRef<ReturnType<typeof createLiveAnnouncer> | null>(null);
   if (!announcerRef.current) announcerRef.current = createLiveAnnouncer((s) => setAnnouncement(s));
   const announce = announcerRef.current.announce;
@@ -334,6 +345,35 @@ export function WealthHorizonLive({
 
   useEffect(() => {
     tracker.trackView();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // FDL 4.4 — deep-link prefill from a supporting widget (super/tfsa-rrsp/
+  // isa), SPEC 8.7. Reads `location.hash` ONLY after mount (never during
+  // SSR) — the server-rendered "Example result" HTML is therefore byte-
+  // identical with/without a fragment (no hydration mismatch); without a
+  // `#s=` fragment this whole effect is a no-op. A successful prefill still
+  // routes through markInteracted() — same "Your result" path a manual edit
+  // takes, never a separate "Shared scenario" state (bindende Entscheidung,
+  // reserved for PR 2.3's real share flow).
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const match = /^#s=(.+)$/.exec(window.location.hash);
+    if (!match) return;
+    const payload = decodeShare(match[1]);
+    if (!payload) return;
+    const prefill = buildWealthHorizonPrefill(payload);
+    if (!prefill) return;
+
+    setBase((b) => ({
+      ...b,
+      currentAge: prefill.currentAge ?? b.currentAge,
+      retireAge: prefill.retireAge ?? b.retireAge,
+    }));
+    if (prefill.startingAmount !== undefined) setStartingAmount(prefill.startingAmount);
+    if (prefill.monthlyContribution !== undefined) setMonthlyContribution(prefill.monthlyContribution);
+    setPrefillSourceToolId(payload.t);
+    markInteracted();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -956,6 +996,29 @@ export function WealthHorizonLive({
   const totalContributions = lastPoint?.contributions ?? startingAmountTotal;
   const expectedGrowth = lastPoint?.growth ?? 0;
 
+  // FDL 4.4 — "Model just your {Super/TFSA/ISA}" rücklink (SPEC 8.7). US has
+  // no supporting single-account tool, so no link there. Path comes from the
+  // registry (getToolEntryHref), never hardcoded; the fragment carries only
+  // bucketed bands from Wealth Horizon's OWN shareableFields allowlist —
+  // never the raw startingAmountTotal/monthlyContributionTotal.
+  const SUPPORTING_TOOL_BY_MARKET: Partial<Record<ToolMarket, { toolId: ToolId; label: string }>> = {
+    au: { toolId: 'superannuation', label: 'Super' },
+    ca: { toolId: 'tfsa-rrsp', label: 'TFSA' },
+    uk: { toolId: 'isa', label: 'ISA' },
+  };
+  const supportingTool = SUPPORTING_TOOL_BY_MARKET[market];
+  const supportingLink = (() => {
+    if (!supportingTool) return null;
+    const path = getToolEntryHref(supportingTool.toolId, market);
+    if (!path) return null;
+    const encoded = encodeShare('wealth-horizon', {
+      ageBand: toInputBucket(base.currentAge, 'years'),
+      balanceBand: toInputBucket(startingAmountTotal, 'currency'),
+      contributionBand: toInputBucket(monthlyContributionTotal, 'currency'),
+    });
+    return { href: encoded ? buildShareUrl('', path, encoded) : path, label: supportingTool.label };
+  })();
+
   const resultCanvas = (
     <div id="wealth-horizon-result" className="flex flex-col gap-5">
       {/* (1) state chip + "in today's money" badge */}
@@ -972,6 +1035,23 @@ export function WealthHorizonLive({
         </span>
         <span className="whitespace-nowrap text-xs font-medium text-[var(--sfp-slate)]">{"in today's money"}</span>
       </div>
+
+      {/* FDL 4.4 — deep-link prefill notice. Chip above stays "Your result"
+          (bindende Entscheidung) — this is an ADDITIONAL line, not a
+          different state. "edit" simply dismisses the line; the prefilled
+          values themselves stay editable exactly like any other input. */}
+      {prefillSourceToolId && PREFILL_SOURCE_LABEL[prefillSourceToolId] ? (
+        <p data-testid="wh-prefill-source-line" className="m-0 text-xs text-[var(--sfp-slate)]">
+          Using your {PREFILL_SOURCE_LABEL[prefillSourceToolId]} inputs —{' '}
+          <button
+            type="button"
+            onClick={() => setPrefillSourceToolId(null)}
+            className="font-semibold text-[var(--sfp-navy)] underline"
+          >
+            edit
+          </button>
+        </p>
+      ) : null}
 
       {/* (2)+(3) Navy highlight panel — same anatomy as the AI ROI
           calculator's "Estimated ROI" block (User-Direktive 14.07.):
@@ -1039,6 +1119,20 @@ export function WealthHorizonLive({
         products={WEALTH_HORIZON_PRODUCTS[market]}
         onCardClick={(kind, href) => tracker.trackNextAction(kind, href)}
       />
+
+      {/* FDL 4.4 — "Model just your {Super/TFSA/ISA}" rücklink. Dezent,
+          keine Verdrängung von BestMatchProducts/NextBestAction darüber. US
+          has no supporting single-account tool, so nothing renders there. */}
+      {supportingLink ? (
+        <a
+          href={supportingLink.href}
+          data-testid="wh-supporting-deep-link"
+          className="inline-flex w-fit items-center gap-1.5 text-sm font-semibold no-underline hover:underline"
+          style={{ color: 'var(--sfp-navy)' }}
+        >
+          Model just your {supportingLink.label}
+        </a>
+      ) : null}
     </div>
   );
 

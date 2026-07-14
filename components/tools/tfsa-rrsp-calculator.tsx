@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   Calculator,
   DollarSign,
@@ -14,6 +14,10 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
+import { getToolEntryHref } from '@/lib/tools/registry';
+import { encodeShare, decodeShare, buildShareUrl } from '@/lib/decision/share-codec';
+import { bandMidpoint, clamp, roundToStep } from '@/lib/decision/wealth-horizon-prefill';
+import { toInputBucket } from '@/lib/analytics/tool-events';
 
 interface CalculationResults {
   tfsaRoom: number;
@@ -60,6 +64,44 @@ export function TfsaRrspCalculator() {
   const [rrspContributed, setRrspContributed] = useState(45000);
   const [investmentReturn, setInvestmentReturn] = useState(6);
   const [showChart, setShowChart] = useState(false);
+
+  // FDL 4.4 — Wealth Horizon rücklink prefill (SPEC 8.7 / PR 4.4). Reads
+  // `#s=` ONLY after mount (never during SSR) — no hydration mismatch;
+  // without a fragment this is a no-op. `balanceBand` lands on
+  // `tfsaContributed` (this widget's closest analogue to a starting
+  // balance) — there is no monthly-contribution field to prefill.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const match = /^#s=(.+)$/.exec(window.location.hash);
+    if (!match) return;
+    const payload = decodeShare(match[1]);
+    if (!payload || payload.t !== 'wealth-horizon') return;
+
+    const ageBand = payload.i.ageBand;
+    if (typeof ageBand === 'string') {
+      const mid = bandMidpoint(ageBand);
+      if (mid !== null) setAge(Math.round(clamp(mid, 18, 71)));
+    }
+    const balanceBand = payload.i.balanceBand;
+    if (typeof balanceBand === 'string') {
+      const mid = bandMidpoint(balanceBand);
+      if (mid !== null) setTfsaContributed(roundToStep(clamp(mid, 0, TFSA_LIFETIME_LIMIT), 5_000));
+    }
+  }, []);
+
+  // FDL 4.4 — "Project this in Wealth Horizon" deep link (SPEC 8.7). Path
+  // comes from the registry (getToolEntryHref), never hardcoded; the
+  // fragment carries only bucketed bands via the tfsa-rrsp shareableFields
+  // allowlist — never the raw tfsaContributed/rrspContributed amounts.
+  const wealthHorizonHref = useMemo(() => {
+    const path = getToolEntryHref('wealth-horizon', 'ca');
+    if (!path) return null;
+    const encoded = encodeShare('tfsa-rrsp', {
+      ageBand: toInputBucket(age, 'years'),
+      balanceBand: toInputBucket(tfsaContributed, 'currency'),
+    });
+    return encoded ? buildShareUrl('', path, encoded) : path;
+  }, [age, tfsaContributed]);
 
   const results: CalculationResults = useMemo(() => {
     // TFSA Room Calculation
@@ -394,6 +436,19 @@ export function TfsaRrspCalculator() {
               </p>
             </div>
           </div>
+
+          {/* FDL 4.4 — dezenter Deep-Link, keine Verdrängung des Affiliate-CTA weiter unten */}
+          {wealthHorizonHref ? (
+            <a
+              href={wealthHorizonHref}
+              data-testid="wh-deep-link"
+              className="inline-flex items-center gap-1.5 text-sm font-semibold no-underline hover:underline"
+              style={{ color: 'var(--sfp-navy)' }}
+            >
+              Project this in Wealth Horizon
+              <ArrowRight className="h-3.5 w-3.5" />
+            </a>
+          ) : null}
 
           {/* Recommendation Box */}
           <div
