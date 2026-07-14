@@ -13,12 +13,19 @@
 // Constraint: retirement ≥ today + 1. `constrainLifetime` is the single pure
 // function that enforces it — see its own doc comment for the exact rule
 // (the MOVED handle stops at the other one; the other handle is never
-// silently clamped). Both the native inputs' own min/max (18–70 for today,
-// 45–80 for retirement) AND this cross-handle stop apply, so Home/End keys
-// naturally respect both: End on "today" jumps to the input's own max (70),
-// then constrainLifetime clamps it down to retirement−1 if that's lower.
+// silently clamped).
+//
+// SCALE FIX (User-Befund 14.07.2026): BOTH native inputs span the SAME
+// visual domain 18–80 (the labeled track). v4 originally gave each input
+// its own min/max (18–70 / 45–80), which positioned the thumbs on two
+// DIFFERENT scales laid over one track — "51" and "68" rendered almost on
+// top of each other despite 17 years of distance. The logical limits
+// (today ≤ 70, retirement ≥ 45) are now enforced exclusively inside
+// constrainLifetime, so Home/End still respect them: End on "today" jumps
+// to the track max (80), then constrainLifetime clamps to
+// min(70, retirement−1).
 
-import { useId } from 'react';
+import { useId, useState, type PointerEvent as ReactPointerEvent } from 'react';
 
 export const LIFETIME_TRACK_MIN = 18;
 export const LIFETIME_TRACK_MAX = 80;
@@ -87,6 +94,17 @@ export function LifetimeRange({ today, retirement, onChange, todayInputKey, reti
   const retirementId = useId();
   const todayPct = pct(today);
   const retirementPct = pct(retirement);
+  // When the two thumbs overlap (1-year gap ≈ a few px), the input stacked
+  // on top would otherwise swallow every click. Track the pointer over the
+  // rail and put whichever thumb is CLOSER on top, so each handle stays
+  // grabbable even at minimum distance (User-Befund 14.07.2026).
+  const [topHandle, setTopHandle] = useState<'today' | 'retirement'>('retirement');
+  function handleRailPointerMove(e: ReactPointerEvent<HTMLDivElement>): void {
+    const rect = e.currentTarget.getBoundingClientRect();
+    if (rect.width === 0) return;
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    setTopHandle(Math.abs(x - todayPct) <= Math.abs(x - retirementPct) ? 'today' : 'retirement');
+  }
 
   function handleTodayChange(next: number): void {
     onChange(constrainLifetime(next, retirement, 'today'));
@@ -119,7 +137,7 @@ export function LifetimeRange({ today, retirement, onChange, todayInputKey, reti
           Retire {retirement}
         </span>
 
-        <div className="absolute top-[52px] min-h-11 w-full">
+        <div className="absolute top-[52px] min-h-11 w-full" onPointerMove={handleRailPointerMove}>
           <div className="pointer-events-none absolute top-1/2 h-1.5 w-full -translate-y-1/2 rounded-full" style={{ background: 'var(--tool-border)' }}>
             <div
               className="absolute h-1.5 rounded-full"
@@ -133,12 +151,12 @@ export function LifetimeRange({ today, retirement, onChange, todayInputKey, reti
             type="range"
             aria-label="Your age today"
             aria-valuetext={`age ${today}`}
-            min={LIFETIME_TODAY_MIN}
-            max={LIFETIME_TODAY_MAX}
+            min={LIFETIME_TRACK_MIN}
+            max={LIFETIME_TRACK_MAX}
             step={1}
             value={today}
             onChange={(e) => handleTodayChange(Number(e.target.value))}
-            className={OVERLAY_INPUT_CLASSES}
+            className={OVERLAY_INPUT_CLASSES + (topHandle === 'today' ? ' z-20' : ' z-10')}
           />
           <input
             id={retirementId}
@@ -146,12 +164,12 @@ export function LifetimeRange({ today, retirement, onChange, todayInputKey, reti
             type="range"
             aria-label="Retirement age"
             aria-valuetext={`retire at ${retirement}`}
-            min={LIFETIME_RETIREMENT_MIN}
-            max={LIFETIME_RETIREMENT_MAX}
+            min={LIFETIME_TRACK_MIN}
+            max={LIFETIME_TRACK_MAX}
             step={1}
             value={retirement}
             onChange={(e) => handleRetirementChange(Number(e.target.value))}
-            className={OVERLAY_INPUT_CLASSES}
+            className={OVERLAY_INPUT_CLASSES + (topHandle === 'retirement' ? ' z-20' : ' z-10')}
           />
         </div>
       </div>

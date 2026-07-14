@@ -174,10 +174,12 @@ for (const c of CASES) {
       await expect(growth).toHaveAttribute('step', '0.5');
 
       const todaySlider = page.getByRole('slider', { name: 'Your age today' });
+      // Shared visual domain 18–80 on BOTH handles (scale-fix 14.07.);
+      // the logical caps (today ≤ 70, retirement ≥ 45) live in constrainLifetime.
       await expect(todaySlider).toHaveAttribute('min', '18');
-      await expect(todaySlider).toHaveAttribute('max', '70');
+      await expect(todaySlider).toHaveAttribute('max', '80');
       const retireSlider = page.getByRole('slider', { name: 'Retirement age' });
-      await expect(retireSlider).toHaveAttribute('min', '45');
+      await expect(retireSlider).toHaveAttribute('min', '18');
       await expect(retireSlider).toHaveAttribute('max', '80');
 
       const returnSlider = page.locator('input[data-input-key="returnNominalPct"]');
