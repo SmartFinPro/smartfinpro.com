@@ -379,7 +379,7 @@ describe('retirement engine — lever-clamp-fix regression (FDL 4.2)', () => {
     expect(resolveAccountContribution(inputs.accounts![0], inputs.currentAge, rules).check.status).toBe('clamped');
     expect(resolveAccountContribution(inputs.accounts![1], inputs.currentAge, rules).check.status).toBe('clamped');
 
-    const lever = { key: 'contribution', title: 'Add $200/mo', deltaLabel: '≈ +$0', apply: { employeeContributionMonthly: LEVER_EXTRA_MONTHLY } };
+    const lever = { key: 'contribution', title: 'Add $200/mo', deltaLabel: '+$0', apply: { employeeContributionMonthly: LEVER_EXTRA_MONTHLY } };
     const applied = applyLever(inputs, lever, rules) as typeof inputs;
     expect(applied.accounts![0].employeeContributionMonthly).toBe(3000); // first stays untouched
     expect(applied.accounts![1].employeeContributionMonthly).toBe(1000 + LEVER_EXTRA_MONTHLY); // fallback = last
@@ -404,6 +404,6 @@ describe('retirement engine — lever-clamp-fix regression (FDL 4.2)', () => {
     expect(resolveAccountContribution(inputs.accounts![1], inputs.currentAge, rules).check.status).toBe('clamped');
 
     const lever = projectRetirement(inputs, rules).levers.find((l) => l.key === 'contribution')!;
-    expect(lever.deltaLabel).toBe('≈ $0 (limits reached)');
+    expect(lever.deltaLabel).toBe('$0 (limits reached)');
   });
 });

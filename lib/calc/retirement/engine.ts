@@ -380,10 +380,14 @@ function variant(
   // move. "≈ +$0 at retirement" reads as if the lever failed for an
   // unrelated reason; label this specific, honest case instead. No second
   // calculation path — delta is still the exact number computed above.
+  // Label format per User-Direktive 14.07.: no "≈" glyph, no "at retirement"
+  // suffix (self-explanatory in context). The amount stays rounded to the
+  // nearest 10 via formatApprox — the approximation is carried by the
+  // rounding and the page-wide "hypothetical/illustrative" framing.
   const deltaLabel =
     key === 'contribution' && delta === 0
-      ? `≈ ${formatApprox(0, inputs.market)} (limits reached)`
-      : `≈ +${formatApprox(delta, inputs.market)} at retirement`;
+      ? `${formatApprox(0, inputs.market)} (limits reached)`
+      : `+${formatApprox(delta, inputs.market)}`;
   return {
     lever: { key, title, deltaLabel, apply: patch },
     delta,
