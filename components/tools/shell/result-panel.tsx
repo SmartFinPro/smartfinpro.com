@@ -16,7 +16,7 @@
 // re-render cycle).
 
 import { useEffect } from 'react';
-import type { Lever, PanelState, ToolResult } from '@/lib/tools/shell-types';
+import type { Lever, PanelState, ToolCurrency, ToolResult } from '@/lib/tools/shell-types';
 import type { ToolContext } from '@/lib/analytics/tool-events';
 import { ScenarioChart } from './scenario-chart';
 import { ImpactLevers } from './impact-levers';
@@ -56,9 +56,27 @@ function StateChip({ resultState }: { resultState: ToolResult['resultState'] }) 
   );
 }
 
+// Locale MUST match the currency, not always 'en-US': Intl's en-US formatter
+// prefixes non-USD currencies with their ISO/ambiguity marker (e.g. CAD →
+// "CA$1,234", AUD → "A$1,234") instead of the bare "$1,234" users expect on
+// their own market's pages (documented finding, PR #96). No market/locale
+// prop exists on ResultPanel, so we derive the locale from the already-
+// present `primary.currency` — smallest possible change (see result-panel.tsx
+// header / PR report for the 4-market ToolCurrency ↔ locale mapping).
+const CURRENCY_LOCALE: Record<ToolCurrency, string> = {
+  USD: 'en-US',
+  GBP: 'en-GB',
+  CAD: 'en-CA',
+  AUD: 'en-AU',
+};
+
+export function localeForCurrency(currency?: ToolCurrency): string {
+  return currency ? CURRENCY_LOCALE[currency] : 'en-US';
+}
+
 function formatPrimary(primary: ToolResult['primary']): string {
   if (primary.format === 'currency') {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat(localeForCurrency(primary.currency), {
       style: 'currency',
       currency: primary.currency ?? 'USD',
       maximumFractionDigits: 0,
@@ -71,7 +89,7 @@ function formatPrimary(primary: ToolResult['primary']): string {
 
 function formatRangeBound(primary: ToolResult['primary'], v: number): string {
   if (primary.format === 'currency') {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat(localeForCurrency(primary.currency), {
       style: 'currency',
       currency: primary.currency ?? 'USD',
       maximumFractionDigits: 0,
