@@ -23,7 +23,7 @@
 //   DROPPED (never rounded-and-kept) — the caller must bucket via
 //   toInputBucket() before calling encodeShare().
 // - Non-Band fields (e.g. `retireAge`, `withdrawalRatePct`, `scenario`,
-//   `strategy`, `taxBand`) are coarse/discrete by nature — never "exact
+//   `strategy`, `taxTier`) are coarse/discrete by nature — never "exact
 //   amounts you typed" — and are allowed as exact values, but still clamped
 //   to a plausible range/shape and rounded to a safe precision as
 //   defense-in-depth against a mis-wired caller.
@@ -197,7 +197,7 @@ const FIELD_LABELS: Record<string, string> = {
   withdrawalRatePct: 'withdrawal rate',
   scenario: 'selected scenario',
   strategy: 'payoff strategy',
-  taxBand: 'tax band',
+  taxTier: 'tax band',
 };
 
 function labelFor(key: string): string {

@@ -74,7 +74,7 @@ export function ISATaxSavingsCalculator() {
     if (!path) return null;
     const encoded = encodeShare('isa', {
       contributionBand: toInputBucket(annualInvestment / 12, 'currency'),
-      taxBand: selectedBand.slug,
+      taxTier: selectedBand.slug,
     });
     return encoded ? buildShareUrl('', path, encoded) : path;
   }, [annualInvestment, selectedBand]);

@@ -310,10 +310,14 @@ export const TOOL_REGISTRY: Record<ToolId, ToolDefinition> = {
     // ISA contribution, a growth rate, a dividend yield and a tax-band
     // selector): contributionBand carries the annual contribution ÷ 12
     // (bucketed as a MONTHLY figure, matching Wealth Horizon's own
-    // contributionBand semantics), taxBand carries the selected UK tax band
+    // contributionBand semantics), taxTier carries the selected UK tax band
     // (genuine categorical "mode" field) as a short slug — never the exact
     // amount invested.
-    shareableFields: ['contributionBand', 'taxBand'],
+    // (named taxTier, NOT taxBand: the codec's isBandKey() heuristic treats
+    // every '*Band' key as a bucket that must match BAND_VALUE_RE — a
+    // categorical slug under 'taxBand' would be silently dropped; Opus-
+    // Review-Auflage A)
+    shareableFields: ['contributionBand', 'taxTier'],
   },
 
   remortgage: {

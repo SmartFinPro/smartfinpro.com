@@ -210,3 +210,64 @@ describe('humanFieldList()', () => {
     expect(humanFieldList('superannuation', payload)).toContain('no identifying details');
   });
 });
+
+// ── Opus-Review-Auflage B (PR 4.4): Test-Härtung ───────────────────────────
+
+describe('encodeShare() — isa roundtrip (taxTier is categorical, NOT a *Band bucket)', () => {
+  it('taxTier survives encode+decode as an exact slug (regression: as "taxBand" the isBandKey() heuristic silently dropped it)', () => {
+    const fields = {
+      contributionBand: toInputBucket(10_000 / 12, 'currency'),
+      taxTier: 'higher',
+    };
+    const encoded = encodeShare('isa', fields);
+    expect(encoded).not.toBeNull();
+    const decoded = decodeShare(encoded!);
+    expect(decoded?.t).toBe('isa');
+    expect(decoded?.i.taxTier).toBe('higher');
+    expect(decoded?.i.contributionBand).toBe(fields.contributionBand);
+  });
+});
+
+describe('encodeShare() / decodeShare() — prototype-pollution keys', () => {
+  it('encodeShare never reads or emits __proto__/constructor keys', () => {
+    const malicious = Object.assign(Object.create(null), {
+      ageBand: toInputBucket(35, 'years'),
+      balanceBand: toInputBucket(150_000, 'currency'),
+      contributionBand: toInputBucket(500, 'currency'),
+    }) as Record<string, number | string>;
+    // eslint-disable-next-line no-proto
+    malicious['__proto__'] = 'polluted';
+    malicious['constructor'] = 'polluted';
+    const encoded = encodeShare('superannuation', malicious);
+    expect(encoded).not.toBeNull();
+    expect(atob(encoded!.replace(/-/g, '+').replace(/_/g, '/'))).not.toContain('polluted');
+    const decoded = decodeShare(encoded!);
+    expect(Object.keys(decoded!.i)).toEqual(['ageBand', 'balanceBand', 'contributionBand']);
+  });
+
+  it('decodeShare of a hand-crafted fragment with __proto__ in `i` does not pollute Object.prototype', () => {
+    const raw = JSON.stringify({ v: 1, t: 'superannuation', i: { __proto__: { hacked: true }, ageBand: '30-39' } });
+    const fragment = Buffer.from(raw, 'utf8').toString('base64url');
+    decodeShare(fragment); // outcome (null or filtered) is secondary —
+    // the binding assertion is that the prototype stays clean:
+    expect(({} as Record<string, unknown>).hacked).toBeUndefined();
+  });
+});
+
+describe('encodeShare() — string length hard cap (MAX_STRING_FIELD_LENGTH = 40)', () => {
+  it('drops a 41-char non-Band string value (40 chars pass, 41 are rejected)', () => {
+    const ok = encodeShare('wealth-horizon', {
+      ageBand: toInputBucket(40, 'years'),
+      scenario: 'a'.repeat(40),
+    });
+    expect(ok).not.toBeNull();
+    expect(decodeShare(ok!)?.i.scenario).toBe('a'.repeat(40));
+
+    const dropped = encodeShare('wealth-horizon', {
+      ageBand: toInputBucket(40, 'years'),
+      scenario: 'a'.repeat(41),
+    });
+    expect(dropped).not.toBeNull();
+    expect(decodeShare(dropped!)?.i.scenario).toBeUndefined();
+  });
+});

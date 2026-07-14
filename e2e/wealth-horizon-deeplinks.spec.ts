@@ -114,7 +114,7 @@ test.describe(`TFSA/RRSP → Wealth Horizon deep link (JS-off): ${TFSA_PATH}`, (
 test.describe(`ISA → Wealth Horizon deep link (JS on, ssr:false widget): ${ISA_PATH}`, () => {
   test.use({ javaScriptEnabled: true });
 
-  test('carries a #s= fragment with only contributionBand/taxBand — never the raw annual investment amount', async ({ page }) => {
+  test('carries a #s= fragment with only contributionBand/taxTier — never the raw annual investment amount', async ({ page }) => {
     await page.goto(ISA_PATH, { waitUntil: 'networkidle' });
     const href = await page.getByTestId('wh-deep-link').getAttribute('href');
     expect(href).toContain('#s=');
@@ -124,6 +124,9 @@ test.describe(`ISA → Wealth Horizon deep link (JS on, ssr:false widget): ${ISA
     const payload = decodeFragment(href!);
     expect(payload!.t).toBe('isa');
     expect(payload!.i.contributionBand).toBeDefined();
+    // Opus-Auflage A/B: taxTier (categorical slug) must SURVIVE encoding —
+    // as 'taxBand' the isBandKey() heuristic silently dropped it.
+    expect(['basic', 'higher', 'additional']).toContain(payload!.i.taxTier);
     expect(payload!.i.ageBand).toBeUndefined(); // no age field on this widget
     expect(payload!.i.balanceBand).toBeUndefined(); // no balance field on this widget
 
