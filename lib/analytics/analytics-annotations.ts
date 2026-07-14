@@ -36,6 +36,12 @@ export const ANALYTICS_ANNOTATIONS: AnalyticsAnnotation[] = [
   // tool_v1-Zeitreihe zeigt ab diesem Tag echten Hub/Footer/llms.txt-
   // Traffic statt nur direkter Links.
   { date: '2026-07-14', label: 'Wealth Horizon launch (4 markets)' },
+  // PR 4.4 (feat/fdl-4-4-deeplinks) — Supporting-Deep-Links super/tfsa/isa
+  // ↔ Wealth Horizon (beidseitiges #s=-Fragment-Prefill): ändert die
+  // Ergebniszonen der drei Supporting-Widgets + WH-Rücklinks während des
+  // laufenden Baseline-Fensters (Pflicht-Annotation gemäß
+  // Baseline-Integritäts-Vertrag).
+  { date: '2026-07-15', label: 'Supporting deep-links (4.4)' },
 ];
 
 /**

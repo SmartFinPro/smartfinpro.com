@@ -306,6 +306,18 @@ export const TOOL_REGISTRY: Record<ToolId, ToolDefinition> = {
         h1: 'ISA Tax Savings Calculator',
       },
     ],
+    // FDL 4.4 — the widget has no age/balance field at all (only an annual
+    // ISA contribution, a growth rate, a dividend yield and a tax-band
+    // selector): contributionBand carries the annual contribution ÷ 12
+    // (bucketed as a MONTHLY figure, matching Wealth Horizon's own
+    // contributionBand semantics), taxTier carries the selected UK tax band
+    // (genuine categorical "mode" field) as a short slug — never the exact
+    // amount invested.
+    // (named taxTier, NOT taxBand: the codec's isBandKey() heuristic treats
+    // every '*Band' key as a bucket that must match BAND_VALUE_RE — a
+    // categorical slug under 'taxBand' would be silently dropped; Opus-
+    // Review-Auflage A)
+    shareableFields: ['contributionBand', 'taxTier'],
   },
 
   remortgage: {
@@ -350,6 +362,14 @@ export const TOOL_REGISTRY: Record<ToolId, ToolDefinition> = {
         h1: 'TFSA vs RRSP Calculator',
       },
     ],
+    // FDL 4.4 — ageBand from `age`; balanceBand from `tfsaContributed`
+    // ("TFSA contributions so far" — the widget's closest analogue to a
+    // starting balance; `rrspContributed` is deliberately left out to keep
+    // one unambiguous figure). The widget has NO monthly-contribution input
+    // (only lifetime-so-far totals), so no contributionBand — documented
+    // deviation from the brief's "mind. Balance + monatlicher Beitrag"
+    // aspiration (see wealth-horizon-prefill.ts header).
+    shareableFields: ['ageBand', 'balanceBand'],
   },
 
   'wealthsimple-fees': {
@@ -416,6 +436,11 @@ export const TOOL_REGISTRY: Record<ToolId, ToolDefinition> = {
         h1: 'Superannuation Calculator',
       },
     ],
+    // FDL 4.4 — ageBand from `currentAge`, balanceBand from
+    // `currentBalance`, contributionBand from `additionalMonthly` (the
+    // widget's own salary-sacrifice extra, already a monthly figure — no
+    // conversion needed). No categorical "mode" field exists on this widget.
+    shareableFields: ['ageBand', 'balanceBand', 'contributionBand'],
   },
 
   'au-mortgage': {

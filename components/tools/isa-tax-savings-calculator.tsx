@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   Calculator,
   DollarSign,
@@ -14,6 +14,10 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
+import { getToolEntryHref } from '@/lib/tools/registry';
+import { encodeShare, decodeShare, buildShareUrl } from '@/lib/decision/share-codec';
+import { bandMidpoint, clamp, roundToStep } from '@/lib/decision/wealth-horizon-prefill';
+import { toInputBucket } from '@/lib/analytics/tool-events';
 
 interface TaxSavingsResult {
   isaValue: number;
@@ -25,9 +29,9 @@ interface TaxSavingsResult {
 }
 
 const TAX_BANDS = [
-  { name: 'Basic Rate (20%)', cgtRate: 0.18, dividendRate: 0.1075 },
-  { name: 'Higher Rate (40%)', cgtRate: 0.24, dividendRate: 0.3575 },
-  { name: 'Additional Rate (45%)', cgtRate: 0.24, dividendRate: 0.3935 },
+  { name: 'Basic Rate (20%)', slug: 'basic', cgtRate: 0.18, dividendRate: 0.1075 },
+  { name: 'Higher Rate (40%)', slug: 'higher', cgtRate: 0.24, dividendRate: 0.3575 },
+  { name: 'Additional Rate (45%)', slug: 'additional', cgtRate: 0.24, dividendRate: 0.3935 },
 ];
 
 const formatGBP = (value: number) =>
@@ -41,6 +45,39 @@ export function ISATaxSavingsCalculator() {
   const [timeHorizon, setTimeHorizon] = useState<5 | 10 | 20>(10);
 
   const selectedBand = TAX_BANDS[selectedBandIndex];
+
+  // FDL 4.4 — Wealth Horizon rücklink prefill (SPEC 8.7 / PR 4.4). Reads
+  // `#s=` ONLY after mount — no hydration mismatch; without a fragment this
+  // is a no-op. This widget has no age/balance field at all, so only
+  // `contributionBand` (a MONTHLY figure) is ever prefilled — converted to
+  // this widget's own ANNUAL contribution field (×12).
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const match = /^#s=(.+)$/.exec(window.location.hash);
+    if (!match) return;
+    const payload = decodeShare(match[1]);
+    if (!payload || payload.t !== 'wealth-horizon') return;
+
+    const contributionBand = payload.i.contributionBand;
+    if (typeof contributionBand === 'string') {
+      const mid = bandMidpoint(contributionBand);
+      if (mid !== null) setAnnualInvestment(roundToStep(clamp(mid * 12, 1_000, 20_000), 500));
+    }
+  }, []);
+
+  // FDL 4.4 — "Project this in Wealth Horizon" deep link (SPEC 8.7). Path
+  // comes from the registry (getToolEntryHref), never hardcoded; the
+  // fragment carries only the bucketed MONTHLY contribution (annual ÷ 12)
+  // and the selected tax band — never the raw annualInvestment amount.
+  const wealthHorizonHref = useMemo(() => {
+    const path = getToolEntryHref('wealth-horizon', 'uk');
+    if (!path) return null;
+    const encoded = encodeShare('isa', {
+      contributionBand: toInputBucket(annualInvestment / 12, 'currency'),
+      taxTier: selectedBand.slug,
+    });
+    return encoded ? buildShareUrl('', path, encoded) : path;
+  }, [annualInvestment, selectedBand]);
 
   const results: Record<5 | 10 | 20, TaxSavingsResult> = useMemo(() => {
     const horizons: (5 | 10 | 20)[] = [5, 10, 20];
@@ -301,6 +338,19 @@ export function ISATaxSavingsCalculator() {
               Total tax saved by investing inside an ISA vs a General Investment Account
             </p>
           </div>
+
+          {/* FDL 4.4 — dezenter Deep-Link, keine Verdrängung des Affiliate-CTA weiter unten */}
+          {wealthHorizonHref ? (
+            <a
+              href={wealthHorizonHref}
+              data-testid="wh-deep-link"
+              className="inline-flex items-center gap-1.5 text-sm font-semibold no-underline hover:underline"
+              style={{ color: 'var(--sfp-navy)' }}
+            >
+              Project this in Wealth Horizon
+              <ArrowRight className="h-3.5 w-3.5" />
+            </a>
+          ) : null}
 
           {/* Stats Grid */}
           <div className="grid grid-cols-2 gap-4">
