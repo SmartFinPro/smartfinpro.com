@@ -26,7 +26,7 @@ export function ImpactLevers({ levers, onApply }: ImpactLeversProps) {
           // hero of the card: big, green, tabular; the title is the caption.
           className="lever group flex min-h-20 flex-col gap-1 rounded-tool-control border border-[var(--tool-border)] bg-[var(--tool-surface)] p-4 text-left transition-colors duration-200 hover:border-[var(--sfp-navy)] hover:bg-[var(--sfp-sky)] focus-visible:border-[var(--sfp-navy)] focus-visible:bg-[var(--sfp-sky)] focus-visible:outline-none"
         >
-          <span className="text-[13px] font-medium text-[var(--sfp-slate)] transition-colors duration-200 group-hover:text-[var(--sfp-ink)]">{lever.title}</span>
+          <span className="text-[15px] font-medium text-[var(--sfp-ink)]">{lever.title}</span>
           <span className="tabular-nums text-2xl font-bold leading-tight text-[var(--sfp-green)]">{lever.deltaLabel}</span>
         </button>
       ))}

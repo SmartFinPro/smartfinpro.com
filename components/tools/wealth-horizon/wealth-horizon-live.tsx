@@ -972,8 +972,8 @@ export function WealthHorizonLive({
 
       {/* (2) label + big number, count-up */}
       <div className="flex flex-col gap-1">
-        <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--sfp-slate)]">
-          Hypothetical balance at retirement (age {retireAge})
+        <span className="text-[16px] font-semibold text-[var(--sfp-ink)]">
+          Your hypothetical balance at {retireAge}
         </span>
         <span className="tabular-nums text-[clamp(32px,6vw,44px)] font-semibold leading-[1.1] text-[var(--sfp-ink)]">
           {formatCurrency(Math.round(displayedBalance), currency, locale)}

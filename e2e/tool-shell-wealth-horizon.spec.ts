@@ -208,7 +208,7 @@ for (const c of CASES) {
       await expect(employerMatch).toHaveAttribute('step', '50');
 
       // Hero — big hypothetical-balance number + "in today's money" badge.
-      await expect(page.locator('#wealth-horizon-result').getByText('Hypothetical balance at retirement')).toBeVisible();
+      await expect(page.locator('#wealth-horizon-result').getByText(/Your hypothetical balance at \d+/)).toBeVisible();
 
       // The calm text line (item 3) carries the binding "illustrative
       // retirement withdrawal" wording.
