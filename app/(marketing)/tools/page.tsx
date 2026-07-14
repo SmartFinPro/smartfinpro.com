@@ -2,7 +2,7 @@ import { Metadata } from 'next';
 import Link from 'next/link';
 import {
   Calculator, CreditCard, Scale, ArrowRight, Sparkles, Target,
-  ScanSearch, Compass, Columns3, Bot, Banknote, TrendingDown, Gauge,
+  ScanSearch, Compass, Columns3, Bot, Banknote, TrendingDown, TrendingUp, Gauge,
   type LucideIcon,
 } from 'lucide-react';
 import { getToolsForMarket, type DecisionCategory } from '@/lib/tools/registry';
@@ -25,6 +25,7 @@ const iconMap: Record<string, LucideIcon> = {
   bot: Bot,
   banknote: Banknote,
   'trending-down': TrendingDown,
+  'trending-up': TrendingUp,
   gauge: Gauge,
   'credit-card': CreditCard,
 };
@@ -49,6 +50,7 @@ const tools = getToolsForMarket('us').map((t) => ({
   icon: iconMap[t.icon] ?? Calculator,
   href: t.entryHref,
   category: categoryLabel[t.decisionCategory],
+  isNew: t.isNew,
 }));
 
 export default function ToolsPage() {
@@ -93,8 +95,18 @@ export default function ToolsPage() {
                   href={tool.href}
                   className="group relative rounded-2xl border border-gray-200 p-6 transition-all duration-300 hover:translate-y-[-4px] hover:shadow-lg bg-white"
                 >
-                  <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-4" style={{ background: 'var(--sfp-sky)', color: 'var(--sfp-navy)' }}>
-                    <tool.icon className="h-6 w-6" />
+                  <div className="flex items-start justify-between gap-2 mb-4">
+                    <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: 'var(--sfp-sky)', color: 'var(--sfp-navy)' }}>
+                      <tool.icon className="h-6 w-6" />
+                    </div>
+                    {tool.isNew && (
+                      <span
+                        className="text-[10px] px-1.5 py-0.5 rounded-full font-medium whitespace-nowrap"
+                        style={{ background: 'rgba(245,166,35,0.15)', color: 'var(--sfp-gold-dark)' }}
+                      >
+                        New
+                      </span>
+                    )}
                   </div>
                   <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--sfp-slate)' }}>
                     {tool.category}

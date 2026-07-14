@@ -447,26 +447,23 @@ export const TOOL_REGISTRY: Record<ToolId, ToolDefinition> = {
     decisionCategory: 'retire',
     // Wealth Horizon v2 (13.07.2026 Fable design directive): Live-Workspace
     // replaces the GuidedJourney wizard — documented deviation from the
-    // Spec-5.2 GuidedJourney default for 'major' tier tools. The route is
-    // still hidden/noindex (see each variant below), so this ships with no
-    // user-facing impact; CTX/analytics shellMode now reads 'live-canvas'.
+    // Spec-5.2 GuidedJourney default for 'major' tier tools. CTX/analytics
+    // shellMode reads 'live-canvas'.
     shellMode: 'live-canvas',
     icon: 'trending-up',
     blurb: 'Project your retirement in today’s money across three scenarios and find your FI date.',
+    launchedAt: '2026-07-14',
     variants: [
       {
         market: 'us',
         path: '/tools/retirement-calculator',
         status: 'live',
-        // FDL 4.2 (PR 4.2 brief): deliberate noindex until the 4-market
-        // cluster is complete (SPEC 9.2 targets "ja (Launch komplett)" —
-        // documented deviation, index flip ships in PR 4.3). `hidden: true`
-        // additionally keeps the route out of every hub/footer/llms.txt
-        // consumer during the active tool_v1 analytics baseline window
-        // (0.5) — the route is reachable only via direct link until 4.3
-        // removes the flag.
-        indexable: false,
-        hidden: true,
+        // Launched 2026-07-14 (User-Entscheidung, vor Ende des tool_v1
+        // Analytics-Baseline-Fensters) — index-flip + hidden-Flag entfernt
+        // für alle 4 Märkte in einem PR. Annotation:
+        // lib/analytics/analytics-annotations.ts ('Wealth Horizon launch
+        // (4 markets)'), damit die Baseline-Zeitreihe den Bruch zeigt.
+        indexable: true,
         title: 'Retirement Calculator: 401(k), IRA & FIRE Scenarios',
         metaDescription:
           "Project your retirement in today's dollars across three scenarios: 401(k) and IRA balances, financial independence date, income gap and fee impact.",
@@ -476,13 +473,9 @@ export const TOOL_REGISTRY: Record<ToolId, ToolDefinition> = {
         market: 'uk',
         path: '/uk/tools/pension-calculator',
         status: 'live',
-        // FDL 4.3 — bindende Plan-Abweichung (User-Entscheidung, dokumentiert
-        // im PR-Bericht): der ursprüngliche 4.3-Brief sah hier den atomaren
-        // Index-Flip aller 4 Routen vor. Alle 3 neuen Varianten bleiben
-        // stattdessen noindex+hidden wie die US-Route bis zum separaten
-        // Launch-PR nach Ende des Baseline-Fensters (~20.07.2026).
-        indexable: false,
-        hidden: true,
+        // Launched 2026-07-14 together with US/CA/AU — see the US variant's
+        // comment above for the launch-timing decision.
+        indexable: true,
         // Slug bindend "pension-calculator" (Head-Term, SPEC 9.1, Zeile 663)
         // — NICHT "retirement-calculator" wie US/CA/AU.
         title: 'Pension Calculator UK: ISA, SIPP & Retirement Income',
@@ -494,8 +487,7 @@ export const TOOL_REGISTRY: Record<ToolId, ToolDefinition> = {
         market: 'ca',
         path: '/ca/tools/retirement-calculator',
         status: 'live',
-        indexable: false,
-        hidden: true,
+        indexable: true,
         title: 'Retirement Calculator Canada: TFSA, RRSP & FI Date',
         metaDescription:
           "Project your Canadian retirement in today's dollars across three scenarios: TFSA and RRSP growth, financial independence date and fee impact.",
@@ -505,8 +497,7 @@ export const TOOL_REGISTRY: Record<ToolId, ToolDefinition> = {
         market: 'au',
         path: '/au/tools/retirement-calculator',
         status: 'live',
-        indexable: false,
-        hidden: true,
+        indexable: true,
         title: 'Retirement Calculator Australia: Super & FIRE Date',
         metaDescription:
           "Project your Australian retirement in today's dollars across three scenarios: super growth at the 12% guarantee, FIRE date, income gap and fees.",

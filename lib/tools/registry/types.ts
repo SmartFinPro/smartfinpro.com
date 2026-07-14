@@ -49,6 +49,15 @@ export interface ToolDefinition {
                                    // mehrere Märkte bedienen; Default = Märkte der variants
   legacyPaths?: string[];    // 308-Quellen; Test prüft gegen next.config.ts-Redirects
   /**
+   * Additive, optional. ISO calendar date ('YYYY-MM-DD') a tool went live
+   * across its markets (index-flip + `hidden` removed). Purely presentational:
+   * hub cards use it to show a small "New" badge for a limited window after
+   * launch (see isRecentlyLaunched() in lib/tools/registry/index.ts). Does NOT
+   * affect indexable/hidden/status — those stay the single source of truth
+   * for SEO and hub/footer/llms.txt visibility.
+   */
+  launchedAt?: string;
+  /**
    * SPEC 8.7 — per-tool allowlist for share-link fragment payloads
    * (`#s=base64url(JSON)`); ONLY these keys may ever be serialized into a
    * shareable link, values bucketed/rounded, never raw amounts. Additive,

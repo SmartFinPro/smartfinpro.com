@@ -3,7 +3,7 @@ import { Metadata } from 'next';
 import Link from 'next/link';
 import {
   Calculator, ArrowRight, Sparkles,
-  ScanSearch, Compass, Columns3, Coins, Sunrise, House,
+  ScanSearch, Compass, Columns3, Coins, Sunrise, House, TrendingUp,
   type LucideIcon,
 } from 'lucide-react';
 import { getToolsForMarket } from '@/lib/tools/registry';
@@ -30,6 +30,7 @@ const iconMap: Record<string, LucideIcon> = {
   coins: Coins,
   sunrise: Sunrise,
   house: House,
+  'trending-up': TrendingUp,
 };
 
 const tools = getToolsForMarket('au').map((t) => ({
@@ -37,6 +38,7 @@ const tools = getToolsForMarket('au').map((t) => ({
   description: t.blurb,
   icon: iconMap[t.icon] ?? Calculator,
   href: t.entryHref,
+  isNew: t.isNew,
 }));
 
 export default function AUToolsPage() {
@@ -89,8 +91,18 @@ export default function AUToolsPage() {
                 href={tool.href}
                 className="group relative rounded-2xl border border-gray-200 p-6 transition-all duration-300 hover:translate-y-[-4px] hover:shadow-lg bg-white"
               >
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-4" style={{ background: 'var(--sfp-sky)', color: 'var(--sfp-navy)' }}>
-                  <tool.icon className="h-6 w-6" />
+                <div className="flex items-start justify-between gap-2 mb-4">
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: 'var(--sfp-sky)', color: 'var(--sfp-navy)' }}>
+                    <tool.icon className="h-6 w-6" />
+                  </div>
+                  {tool.isNew && (
+                    <span
+                      className="text-[10px] px-1.5 py-0.5 rounded-full font-medium whitespace-nowrap"
+                      style={{ background: 'rgba(245,166,35,0.15)', color: 'var(--sfp-gold-dark)' }}
+                    >
+                      New
+                    </span>
+                  )}
                 </div>
                 <h2 className="text-lg font-bold mt-1 mb-2 transition-colors" style={{ color: 'var(--sfp-ink)' }}>
                   {tool.title}

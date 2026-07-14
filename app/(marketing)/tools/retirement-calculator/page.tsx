@@ -1,12 +1,11 @@
 // app/(marketing)/tools/retirement-calculator/page.tsx
 // Wealth Horizon US (FDL 4.2). GuidedJourney via the market-parametrized
 // WealthHorizonLive island (Wealth Horizon v2 — Live-Workspace; FDL 4.3 — one island, 4 markets; see that
-// file's header). Deliberately noindex + hidden (see
-// lib/tools/registry/registry.ts 'wealth-horizon' entry) — the 4.3 brief's
-// original atomic index-flip was superseded by a user decision: all 4
-// routes (this one + UK/CA/AU, added in FDL 4.3) stay noindex+hidden until a
-// separate launch PR after the analytics baseline window ends (~2026-07-20).
-// The route is fully built and reachable via direct link starting now.
+// file's header). Launched 2026-07-14 (User-Entscheidung, vor Ende des
+// tool_v1 Analytics-Baseline-Fensters) — indexable + linked from every hub/
+// footer/llms.txt consumer (see lib/tools/registry/registry.ts
+// 'wealth-horizon' entry and lib/analytics/analytics-annotations.ts for the
+// baseline-chart annotation).
 
 import type { Metadata } from 'next';
 import { buildToolMetadata } from '@/lib/tools/registry/metadata';

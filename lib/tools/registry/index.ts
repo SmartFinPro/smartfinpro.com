@@ -21,6 +21,25 @@ export function getAvailableMarkets(t: ToolDefinition): ToolMarket[] {
   return t.availableMarkets ?? Array.from(new Set(t.variants.map((v) => v.market)));
 }
 
+/** Presentational-only window (days) a tool's hub card shows a "New" badge
+ *  after `launchedAt` — purely cosmetic, never gates SEO/hub-inclusion. */
+export const NEW_TOOL_BADGE_WINDOW_DAYS = 30;
+
+/**
+ * True while `t.launchedAt` is within NEW_TOOL_BADGE_WINDOW_DAYS of
+ * `referenceDate` (default: now). Used ONLY to show a small "New" badge on
+ * hub cards (User-Direktive: "Flaggschiff, extra hervorheben") — has no
+ * effect on indexable/hidden/status, which stay the single source of truth
+ * for SEO and hub/footer/llms.txt visibility.
+ */
+export function isRecentlyLaunched(t: ToolDefinition, referenceDate: Date = new Date()): boolean {
+  if (!t.launchedAt) return false;
+  const launched = new Date(t.launchedAt);
+  if (Number.isNaN(launched.getTime())) return false;
+  const diffDays = (referenceDate.getTime() - launched.getTime()) / (1000 * 60 * 60 * 24);
+  return diffDays >= 0 && diffDays <= NEW_TOOL_BADGE_WINDOW_DAYS;
+}
+
 /** Einstiegs-URL für einen Markt: lokale Variante, sonst globale Route + validierter ?market=-Param (SPEC 4.2). */
 export function getToolEntryHref(id: ToolId, market: ToolMarket): string | null {
   const tool = TOOL_REGISTRY[id];
@@ -39,13 +58,19 @@ function resolveVariantForMarket(t: ToolDefinition, market: ToolMarket): ToolRou
     ?? t.variants[0];
 }
 
-export function getToolsForMarket(market: ToolMarket): (ToolDefinition & { entryHref: string; localized: boolean })[] {
+export function getToolsForMarket(market: ToolMarket): (ToolDefinition & { entryHref: string; localized: boolean; isNew: boolean })[] {
   return Object.values(TOOL_REGISTRY)
     .filter((t) => getAvailableMarkets(t).includes(market))
-    // FDL 4.2: `hidden` keeps a live-but-unlaunched tool (e.g. Wealth Horizon
-    // during its analytics baseline window) out of the hub entirely.
+    // FDL 4.2: `hidden` keeps a live-but-unlaunched tool out of the hub
+    // entirely (unused by any current registry entry — see types.ts).
     .filter((t) => !resolveVariantForMarket(t, market).hidden)
-    .map((t) => ({ ...t, entryHref: getToolEntryHref(t.id, market)!, localized: t.variants.some((v) => v.market === market) }));
+    .map((t) => ({
+      ...t,
+      entryHref: getToolEntryHref(t.id, market)!,
+      localized: t.variants.some((v) => v.market === market),
+      // Presentational-only "New" badge flag — see isRecentlyLaunched() above.
+      isNew: isRecentlyLaunched(t),
+    }));
 }
 
 /** Öffentliche Kennzahl (Homepage): Konzepte mit ≥1 Live-Variante. */

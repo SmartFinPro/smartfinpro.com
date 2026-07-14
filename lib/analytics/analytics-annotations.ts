@@ -29,6 +29,13 @@ export const ANALYTICS_ANNOTATIONS: AnalyticsAnnotation[] = [
   // session joins across the sfp_session_id/sfp_sid consolidation break at
   // this date (PR 1.2's acceptance criteria).
   { date: '2026-07-12', label: 'Session-key consolidation' },
+  // Wealth Horizon launch PR (feat/fdl-wh-launch) — User-Entscheidung
+  // 14.07.2026, den Launch vor Ende des 7-14-Tage-Baseline-Fensters
+  // vorzuziehen (bindende Pflicht-Annotation aus diesem Entscheid): hidden +
+  // noindex entfernt für alle 4 Märkte gleichzeitig (US/UK/CA/AU) — die
+  // tool_v1-Zeitreihe zeigt ab diesem Tag echten Hub/Footer/llms.txt-
+  // Traffic statt nur direkter Links.
+  { date: '2026-07-14', label: 'Wealth Horizon launch (4 markets)' },
 ];
 
 /**
