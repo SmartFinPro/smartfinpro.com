@@ -6,6 +6,10 @@ interface AffiliateDisclosureProps {
   market?: "us" | "uk" | "ca" | "au";
   className?: string;
   position?: "top" | "bottom";
+  /** 'compact' renders a single short sentence + regulatory tag — for dense
+   *  in-tool placements (e.g. Wealth Horizon's product row). Default 'full'
+   *  is unchanged and stays what the Best-X cockpit routes render. */
+  variant?: "full" | "compact";
 }
 
 /**
@@ -27,6 +31,7 @@ export function AffiliateDisclosure({
   market = "us",
   className,
   position = "top",
+  variant = "full",
 }: AffiliateDisclosureProps) {
   const disclaimers = {
     us: {
@@ -54,7 +59,45 @@ export function AffiliateDisclosure({
     },
   };
 
+  const compactTexts: Record<string, { text: string; regulatory: string }> = {
+    us: {
+      text: "SmartFinPro is reader-supported — we may earn a commission when you open an account through links on this page, at no extra cost to you. This never affects our rankings.",
+      regulatory: "FTC 16 CFR \u00a7255",
+    },
+    uk: {
+      text: "We may earn a commission from links on this page at no extra cost to you. Editorially independent. Capital at risk with investment products.",
+      regulatory: "FCA: marketing communication",
+    },
+    au: {
+      text: "We may earn commissions from featured providers. General information only \u2014 not personal financial advice.",
+      regulatory: "ASIC General Advice Warning",
+    },
+    ca: {
+      text: "We may earn a commission from links on this page at no extra cost to you. Reviews remain editorially independent.",
+      regulatory: "OSC/CIRO disclosure",
+    },
+  };
+
   const disclaimer = disclaimers[market];
+
+  if (variant === "compact") {
+    const c = compactTexts[market];
+    return (
+      <div
+        className={cn(
+          "border-l-4 border-sfp-gold bg-amber-50 px-4 py-3 rounded-md",
+          className
+        )}
+        role="note"
+        aria-label="Affiliate disclosure"
+      >
+        <p className="m-0 text-xs text-sfp-slate leading-relaxed">
+          <AlertCircle className="mr-1.5 inline size-3.5 text-sfp-gold align-[-2px]" />
+          {c.text} <span className="italic font-medium whitespace-nowrap">{c.regulatory}</span>
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div

@@ -270,7 +270,9 @@ for (const c of CASES) {
       await expect(cards).toHaveCount(expectedProducts.length);
       expect(expectedProducts.length).toBeGreaterThanOrEqual(2);
       const allowedHrefs = new Set(expectedProducts.map((p) => p.href));
-      const cardHrefs = await cards.evaluateAll((els) => els.map((el) => el.getAttribute('href')));
+      // v4.2 premium redesign: the card is a <div>, its CTA <a> inside
+      // carries the destination — read hrefs from the inner anchors.
+      const cardHrefs = await cards.evaluateAll((els) => els.map((el) => el.querySelector('a')?.getAttribute('href') ?? null));
       for (const href of cardHrefs) {
         expect(href && allowedHrefs.has(href), `card href "${href}" not in the allowed WEALTH_HORIZON_PRODUCTS set for ${c.market}`).toBe(true);
       }
@@ -543,11 +545,11 @@ test.describe(`Wealth Horizon US (JS on) — v4 slider-only surface: ${PAGE_PATH
     const batches = await interceptTrack(page);
     await page.goto(PAGE_PATH, { waitUntil: 'networkidle' });
 
-    const firstCard = page.getByTestId('product-card').first();
-    const href = await firstCard.getAttribute('href');
+    const firstCardCta = page.getByTestId('product-card').first().locator('a');
+    const href = await firstCardCta.getAttribute('href');
     expect(href).toBe('/go/betterment');
 
-    const [popup] = await Promise.all([context.waitForEvent('page'), firstCard.click()]);
+    const [popup] = await Promise.all([context.waitForEvent('page'), firstCardCta.click()]);
     await popup.close();
 
     await page.waitForTimeout(500);

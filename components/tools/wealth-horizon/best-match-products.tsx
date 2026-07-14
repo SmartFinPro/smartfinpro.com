@@ -27,7 +27,7 @@
 // for the initial paint, so the cards + disclosure are present in JS-off
 // HTML; only the onClick tracking call is client-only behavior.
 
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Check } from 'lucide-react';
 import { AffiliateDisclosure } from '@/components/ui/affiliate-disclosure';
 import type { ProductCard } from '@/lib/tools/results/wealth-horizon-products';
 import type { ToolMarket } from '@/lib/tools/registry/types';
@@ -42,37 +42,71 @@ export interface BestMatchProductsProps {
 export function BestMatchProducts({ market, products, onCardClick }: BestMatchProductsProps) {
   return (
     <div className="flex flex-col gap-4" data-testid="best-match-products">
-      <h2 className="t-h2 m-0 text-[22px] font-semibold leading-[28px] text-[var(--sfp-ink)]">
-        Best matches for your retirement plan
-      </h2>
-      <AffiliateDisclosure market={market} position="top" className="m-0" />
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {products.map((product) => (
-          <a
+      {/* Heading row: title left, small "Advertiser disclosure" mention right
+          (FTC "clear & conspicuous BEFORE the links" — the full compact text
+          sits right below the cards, anchored). */}
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h2 className="t-h2 m-0 text-[22px] font-semibold leading-[28px] text-[var(--sfp-ink)]">
+          Best matches for your retirement plan
+        </h2>
+        <a
+          href="#wh-affiliate-disclosure"
+          className="text-xs font-medium text-[var(--sfp-slate)] underline decoration-dotted underline-offset-2"
+        >
+          Advertiser disclosure
+        </a>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {products.map((product, i) => (
+          <div
             key={product.href}
             data-testid="product-card"
-            href={product.href}
-            target={product.kind === 'offer' ? '_blank' : undefined}
-            rel={product.kind === 'offer' ? 'noopener sponsored' : undefined}
-            onClick={() => onCardClick(product.kind === 'offer' ? 'provider' : 'cockpit', product.href)}
-            className="wh-step-card group relative flex flex-col gap-2 no-underline transition-all hover:shadow-md hover:-translate-y-0.5"
+            className="group flex flex-col gap-3 rounded-[14px] border border-[var(--tool-border)] bg-[var(--tool-surface)] p-5 transition-colors duration-200 hover:border-[var(--sfp-navy)]"
+            style={{ boxShadow: 'var(--tool-shadow)' }}
           >
-            <span
-              aria-hidden="true"
-              className="absolute left-0 top-4 bottom-4 w-1 rounded-r-full"
-              style={{ background: 'var(--sfp-gold)' }}
-            />
-            <span className="ml-2 text-[15px] font-bold text-[var(--sfp-ink)]">{product.name}</span>
-            <p className="ml-2 m-0 text-[13px] leading-5 text-[var(--sfp-slate)]">{product.blurb}</p>
-            <span
-              className="ml-2 mt-1 inline-flex w-fit items-center gap-2 rounded-tool-control px-4 py-2.5 text-sm font-bold uppercase tracking-wide text-white transition-transform group-hover:translate-x-0.5"
-              style={{ background: 'var(--sfp-gold)' }}
+            <div className="flex items-start justify-between gap-2">
+              <span className="text-[16px] font-semibold leading-snug text-[var(--sfp-ink)]">{product.name}</span>
+              {i === 0 ? (
+                <span
+                  className="whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-semibold"
+                  style={{
+                    background: 'color-mix(in srgb, var(--sfp-gold) 14%, transparent)',
+                    color: 'var(--sfp-warning-foreground)',
+                  }}
+                >
+                  Top match
+                </span>
+              ) : null}
+            </div>
+            <p className="m-0 text-[13px] leading-5 text-[var(--sfp-slate)]">{product.blurb}</p>
+            <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
+              {product.highlights.map((h) => (
+                <li key={h} className="flex items-center gap-2 text-[13px] text-[var(--sfp-ink)]">
+                  <Check className="h-3.5 w-3.5 flex-none text-[var(--sfp-green)]" aria-hidden="true" />
+                  {h}
+                </li>
+              ))}
+            </ul>
+            <a
+              href={product.href}
+              target={product.kind === 'offer' ? '_blank' : undefined}
+              rel={product.kind === 'offer' ? 'noopener sponsored' : undefined}
+              onClick={() => onCardClick(product.kind === 'offer' ? 'provider' : 'cockpit', product.href)}
+              className="mt-auto inline-flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white no-underline transition-colors duration-200"
+              style={{ background: 'var(--sfp-gold)', textDecoration: 'none' }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--sfp-gold-dark)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--sfp-gold)'; }}
             >
               {product.cta}
-              <ArrowRight className="h-4 w-4" aria-hidden="true" />
-            </span>
-          </a>
+              <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" aria-hidden="true" />
+            </a>
+          </div>
         ))}
+      </div>
+
+      <div id="wh-affiliate-disclosure">
+        <AffiliateDisclosure market={market} variant="compact" className="m-0" />
       </div>
     </div>
   );
