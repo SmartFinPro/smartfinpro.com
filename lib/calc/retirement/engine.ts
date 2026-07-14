@@ -65,6 +65,11 @@ export function validateInputs(inputs: RetirementInputs): void {
   if (inputs.contributionMode === 'account-breakdown' && inputs.accounts.length === 0) {
     throw new TypeError('account-breakdown mode requires at least one account');
   }
+  if (inputs.contributionGrowthPct !== undefined) {
+    if (!Number.isFinite(inputs.contributionGrowthPct) || inputs.contributionGrowthPct < 0 || inputs.contributionGrowthPct > 5) {
+      throw new TypeError('contributionGrowthPct must be within [0, 5]');
+    }
+  }
 }
 
 // ── Contributions ─────────────────────────────────────────────────────────
@@ -105,16 +110,31 @@ function projectScenario(
   contrib: Contributions,
 ): ScenarioResult {
   const rNet = scenarioRate(rules, key) - inputs.annualFeePct / 100;  // fee exactly once
-  const annualContribution = (contrib.employeeMonthly + contrib.employerMonthly) * 12;
   const asOfYear = Number(rules.asOf.slice(0, 4));
+
+  // Wealth Horizon v4 — optional REAL annual escalation of EMPLOYEE
+  // contributions only (employer stays flat, documented v1 simplification;
+  // see RetirementBaseInputs.contributionGrowthPct). g=0/undefined/absent
+  // collapse to the identical flat path (Math.pow(1+0, k)===1 exactly in
+  // IEEE-754) — that three-way equivalence is invariant-tested (case 1 in
+  // __tests__/unit/calc/retirement-escalation.test.ts). Regression against
+  // the pre-v4 numbers is carried by the reference fixtures, not by the
+  // Math.pow argument (the refactor also regrouped (a+b)*12 into a*12+b*12,
+  // which the fixtures pin).
+  const g = (inputs.contributionGrowthPct ?? 0) / 100;
+  const employeeAnnualBase = contrib.employeeMonthly * 12;
+  const employerAnnual = contrib.employerMonthly * 12;
 
   const rows: { age: number; balance: number }[] = [{ age: inputs.currentAge, balance: round2(contrib.startingBalance) }];
   let balance = contrib.startingBalance;
+  let yearIndex = 0; // year 1 of saving = index 0 (no escalation yet)
   for (let age = inputs.currentAge + 1; age <= inputs.retireAge; age++) {
     // Contributions flow in every yearly step up to and INCLUDING the step
     // landing on retireAge (= the final working year); v1 projects no rows
     // beyond retireAge. Fixtures use exactly this convention.
+    const annualContribution = employeeAnnualBase * Math.pow(1 + g, yearIndex) + employerAnnual;
     balance = balance * (1 + rNet) + annualContribution;
+    yearIndex += 1;
     rows.push({ age, balance: round2(balance) });
   }
 
@@ -132,16 +152,42 @@ function projectScenario(
       break;
     }
   }
+  const fiAge = fiDate !== null ? inputs.currentAge + (Number(fiDate) - asOfYear) : null;
+
+  // Decumulation (visualization contract, v2): withdraw the illustrative
+  // monthly amount while the remainder keeps compounding at the SAME real
+  // net rate (fee exactly once — reuse rNet, no second subtraction).
+  const decumulationRows: { age: number; balance: number }[] = [{ age: inputs.retireAge, balance: balanceAtRetire }];
+  let dBal = balanceAtRetire;
+  let depletionAge: number | null = null;
+  for (let age = inputs.retireAge + 1; age <= 90; age++) {
+    dBal = dBal * (1 + rNet) - withdrawal * 12;
+    if (dBal <= 0) { depletionAge = age; decumulationRows.push({ age, balance: 0 }); break; }
+    decumulationRows.push({ age, balance: round2(dBal) });
+  }
 
   return {
     key, rows, balanceAtRetire,
     illustrativeMonthlyWithdrawal: withdrawal,
     incomeGapMonthly: gap,
     fiDate,
+    decumulationRows,
+    depletionAge,
+    fiAge,
   };
 }
 
 function round2(n: number): number { return Math.round(n * 100) / 100; }
+
+/**
+ * Pure helper shared by the engine's own escalation loop (above) and the
+ * Wealth Horizon UI's dynamic "$X/month becomes $Y/month in year N" hint
+ * (SliderField under Step 2) — ONE formula, so the two can never diverge.
+ * `year` is 1-based (year 1 = the base amount, no escalation yet).
+ */
+export function monthlyContributionInYear(baseMonthly: number, growthPct: number, year: number): number {
+  return baseMonthly * Math.pow(1 + growthPct / 100, year - 1);
+}
 
 // ── Contribution checks (contract SPEC 8.3) ──────────────────────────────────
 // Simple mode NEVER clamps — single 'not-applicable' hint entry.
@@ -334,10 +380,14 @@ function variant(
   // move. "≈ +$0 at retirement" reads as if the lever failed for an
   // unrelated reason; label this specific, honest case instead. No second
   // calculation path — delta is still the exact number computed above.
+  // Label format per User-Direktive 14.07.: no "≈" glyph, no "at retirement"
+  // suffix (self-explanatory in context). The amount stays rounded to the
+  // nearest 10 via formatApprox — the approximation is carried by the
+  // rounding and the page-wide "hypothetical/illustrative" framing.
   const deltaLabel =
     key === 'contribution' && delta === 0
-      ? `≈ ${formatApprox(0, inputs.market)} (limits reached)`
-      : `≈ +${formatApprox(delta, inputs.market)} at retirement`;
+      ? `${formatApprox(0, inputs.market)} (limits reached)`
+      : `+${formatApprox(delta, inputs.market)}`;
   return {
     lever: { key, title, deltaLabel, apply: patch },
     delta,

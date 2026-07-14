@@ -63,15 +63,39 @@ export function parseNumericInput(raw: string): number | null {
   return parseCurrencyInput(raw);
 }
 
+/**
+ * Whole-dollar display, always (Wealth Horizon v2 Fable-Design-Review Fix
+ * 1): every figure here is a 30-year PROJECTION, and cents read as false
+ * precision on a multi-decade illustrative number — so every user-visible
+ * amount is rounded to the nearest whole currency unit, in every market
+ * locale. This only affects DISPLAY formatting; engine/primary.value stay
+ * exact — round only at the last mile.
+ */
 export function formatCurrency(value: number, currency: ToolCurrency, locale: string): string {
   try {
     return new Intl.NumberFormat(locale, {
       style: 'currency',
       currency,
-      maximumFractionDigits: Number.isInteger(value) ? 0 : 2,
+      maximumFractionDigits: 0,
     }).format(value);
   } catch {
-    return `${currencyAffix(currency)}${value.toLocaleString(locale)}`;
+    return `${currencyAffix(currency)}${value.toLocaleString(locale, { maximumFractionDigits: 0 })}`;
+  }
+}
+
+/** Compact currency for chart axes/labels ("$362K", "$1.4M") — full figures
+ *  like "$1,447,643" are wider than a chart's left padding and get clipped
+ *  by the SVG edge (Wealth Horizon v2 milestone/axis labels). */
+export function formatCompactCurrency(value: number, currency: ToolCurrency, locale: string): string {
+  try {
+    return new Intl.NumberFormat(locale, {
+      style: 'currency',
+      currency,
+      notation: 'compact',
+      maximumFractionDigits: 1,
+    }).format(value);
+  } catch {
+    return `${currencyAffix(currency)}${new Intl.NumberFormat(locale, { notation: 'compact', maximumFractionDigits: 1 }).format(value)}`;
   }
 }
 

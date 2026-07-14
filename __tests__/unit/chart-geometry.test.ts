@@ -10,8 +10,12 @@ import {
   buildStackLayout,
   buildRangeLayout,
   buildMini,
+  findMilestoneCrossings,
+  buildLifetimeLayout,
+  buildStackedBarsLayout,
   DEFAULT_FRAME,
   MINI_FRAME,
+  type LifetimeSeriesInput,
 } from '@/lib/calc/chart-geometry';
 
 describe('buildCorridorPath()', () => {
@@ -182,5 +186,212 @@ describe('buildMini()', () => {
       textAlternative: 'alt',
     });
     expect(range.viewBox).toBe('0 0 120 64');
+  });
+});
+
+describe('findMilestoneCrossings()', () => {
+  const rows = [
+    { age: 30, balance: 50_000 },
+    { age: 31, balance: 90_000 },
+    { age: 32, balance: 140_000 },
+    { age: 33, balance: 260_000 },
+    { age: 34, balance: 400_000 },
+  ];
+
+  it('returns the first age at which balance crosses each threshold', () => {
+    const crossings = findMilestoneCrossings(rows, [100_000, 250_000]);
+    expect(crossings).toEqual([
+      { threshold: 100_000, age: 32 },
+      { threshold: 250_000, age: 33 },
+    ]);
+  });
+
+  it('start-over-threshold ⇒ the first row\'s age (currentAge)', () => {
+    const crossings = findMilestoneCrossings(rows, [10_000]);
+    expect(crossings).toEqual([{ threshold: 10_000, age: 30 }]);
+  });
+
+  it('never-reached thresholds are omitted (not nulled)', () => {
+    const crossings = findMilestoneCrossings(rows, [1_000_000]);
+    expect(crossings).toEqual([]);
+  });
+
+  it('mixes reached and unreached thresholds, preserving input order', () => {
+    const crossings = findMilestoneCrossings(rows, [100_000, 1_000_000, 250_000]);
+    expect(crossings).toEqual([
+      { threshold: 100_000, age: 32 },
+      { threshold: 250_000, age: 33 },
+    ]);
+  });
+
+  it('empty rows returns empty without throwing', () => {
+    expect(findMilestoneCrossings([], [100_000])).toEqual([]);
+  });
+});
+
+describe('buildLifetimeLayout()', () => {
+  const series: LifetimeSeriesInput[] = [
+    {
+      key: 'conservative',
+      accumulation: [{ age: 40, balance: 100_000 }, { age: 65, balance: 300_000 }],
+      decumulation: [{ age: 65, balance: 300_000 }, { age: 80, balance: 150_000 }, { age: 90, balance: 0 }],
+    },
+    {
+      key: 'base',
+      accumulation: [{ age: 40, balance: 100_000 }, { age: 65, balance: 500_000 }],
+      decumulation: [{ age: 65, balance: 500_000 }, { age: 80, balance: 550_000 }, { age: 90, balance: 600_000 }],
+    },
+    {
+      key: 'optimistic',
+      accumulation: [{ age: 40, balance: 100_000 }, { age: 65, balance: 800_000 }],
+      decumulation: [{ age: 65, balance: 800_000 }, { age: 80, balance: 900_000 }, { age: 90, balance: 1_000_000 }],
+    },
+  ];
+
+  const baseInput = {
+    series,
+    currentAge: 40,
+    retireAge: 65,
+    endAge: 90,
+    fiAge: null,
+    depletionAge: null,
+    milestones: [],
+  };
+
+  it('produces one accumulation and one decumulation path per scenario', () => {
+    const layout = buildLifetimeLayout(baseInput);
+    expect(layout.accumulationPaths).toHaveLength(3);
+    expect(layout.decumulationPaths).toHaveLength(3);
+    for (const p of [...layout.accumulationPaths, ...layout.decumulationPaths]) {
+      expect(p.d.startsWith('M')).toBe(true);
+    }
+  });
+
+  it('the divider sits at retireAge, and the retirement zone spans retireAge..endAge', () => {
+    const layout = buildLifetimeLayout(baseInput);
+    expect(layout.retirementZone.x).toBeCloseTo(layout.dividerX, 5);
+    const frame = DEFAULT_FRAME;
+    const expectedRightEdge = frame.width - frame.padX;
+    expect(layout.retirementZone.x + layout.retirementZone.width).toBeCloseTo(expectedRightEdge, 1);
+  });
+
+  it('accumulation band is built from optimistic forward + conservative reversed, closed with Z', () => {
+    const layout = buildLifetimeLayout(baseInput);
+    expect(layout.bandD.startsWith('M')).toBe(true);
+    expect(layout.bandD.endsWith('Z')).toBe(true);
+  });
+
+  it('fiMarker is null when fiAge is null, present and positioned on the base line otherwise', () => {
+    const noFi = buildLifetimeLayout(baseInput);
+    expect(noFi.fiMarker).toBeNull();
+
+    const withFi = buildLifetimeLayout({ ...baseInput, fiAge: 65 });
+    expect(withFi.fiMarker).not.toBeNull();
+    expect(withFi.fiMarker!.age).toBe(65);
+    expect(withFi.fiMarker!.x).toBeCloseTo(withFi.dividerX, 5);
+  });
+
+  it('depletionMarker is null when depletionAge is null, sits on the zero baseline otherwise', () => {
+    const noDepletion = buildLifetimeLayout(baseInput);
+    expect(noDepletion.depletionMarker).toBeNull();
+
+    const withDepletion = buildLifetimeLayout({ ...baseInput, depletionAge: 90 });
+    expect(withDepletion.depletionMarker).not.toBeNull();
+    expect(withDepletion.depletionMarker!.age).toBe(90);
+    // sy(0) is the frame's bottom baseline (height - padY).
+    expect(withDepletion.depletionMarker!.y).toBeCloseTo(DEFAULT_FRAME.height - DEFAULT_FRAME.padY, 1);
+  });
+
+  it('milestone markers alternate above/below (collision avoidance) and preserve age/label', () => {
+    const layout = buildLifetimeLayout({
+      ...baseInput,
+      milestones: [
+        { age: 50, balance: 100_000, label: '$100K · 50' },
+        { age: 58, balance: 250_000, label: '$250K · 58' },
+      ],
+    });
+    expect(layout.milestoneMarkers).toHaveLength(2);
+    expect(layout.milestoneMarkers[0].labelAbove).toBe(true);
+    expect(layout.milestoneMarkers[1].labelAbove).toBe(false);
+    expect(layout.milestoneMarkers[0].label).toBe('$100K · 50');
+  });
+
+  it('empty accumulation/decumulation rows do not throw (yMax floored at 1)', () => {
+    const empty = buildLifetimeLayout({
+      ...baseInput,
+      series: [{ key: 'base', accumulation: [], decumulation: [] }],
+    });
+    expect(empty.accumulationPaths[0].d).toBe('');
+  });
+});
+
+describe('buildStackedBarsLayout()', () => {
+  const bars = [
+    { age: 30, contributions: 25_000, growth: 0 },
+    { age: 31, contributions: 29_800, growth: 600 },
+    { age: 32, contributions: 34_600, growth: 1_400 },
+  ];
+
+  it('lays out one bar per input row, sequential and non-overlapping left→right', () => {
+    const layout = buildStackedBarsLayout(bars);
+    expect(layout.bars).toHaveLength(3);
+    for (let i = 1; i < layout.bars.length; i++) {
+      expect(layout.bars[i].x).toBeGreaterThanOrEqual(layout.bars[i - 1].x + layout.bars[i - 1].width);
+    }
+  });
+
+  it('stacks contributions below growth (contribution segment sits lower on screen — larger y)', () => {
+    const layout = buildStackedBarsLayout(bars);
+    const withGrowth = layout.bars.find((b) => b.age === 31)!;
+    expect(withGrowth.contribY).toBeGreaterThan(withGrowth.growthY);
+    // Growth segment's bottom edge should meet the contribution segment's top edge (no gap, no overlap).
+    expect(withGrowth.growthY + withGrowth.growthHeight).toBeCloseTo(withGrowth.contribY, 1);
+  });
+
+  it('a zero-growth bar has zero growth height', () => {
+    const layout = buildStackedBarsLayout(bars);
+    const zeroGrowth = layout.bars.find((b) => b.age === 30)!;
+    expect(zeroGrowth.growthHeight).toBeCloseTo(0, 5);
+  });
+
+  it('negative growth input is floored at 0 (never draws a negative-height segment)', () => {
+    const layout = buildStackedBarsLayout([{ age: 30, contributions: 25_000, growth: -500 }]);
+    expect(layout.bars[0].growthHeight).toBeGreaterThanOrEqual(0);
+  });
+
+  it('labels every bar when the span is 30 years or fewer', () => {
+    const layout = buildStackedBarsLayout(bars); // 3 bars, span well under 30
+    expect(layout.bars.every((b) => b.labeled)).toBe(true);
+  });
+
+  it('labels every 2nd bar when the span exceeds 30 years', () => {
+    const longSpan = Array.from({ length: 36 }, (_, i) => ({ age: 30 + i, contributions: 1000 * (i + 1), growth: 100 * i }));
+    const layout = buildStackedBarsLayout(longSpan);
+    expect(layout.bars[0].labeled).toBe(true);
+    expect(layout.bars[1].labeled).toBe(false);
+    expect(layout.bars[2].labeled).toBe(true);
+    // every bar still renders (drawn), even the unlabeled ones
+    expect(layout.bars).toHaveLength(36);
+  });
+
+  it('yTicks has 4 entries, xTicks only contains labeled bars', () => {
+    const longSpan = Array.from({ length: 36 }, (_, i) => ({ age: 30 + i, contributions: 1000 * (i + 1), growth: 100 * i }));
+    const layout = buildStackedBarsLayout(longSpan);
+    expect(layout.yTicks).toHaveLength(5);
+    expect(layout.xTicks.length).toBeLessThan(layout.bars.length);
+    expect(layout.xTicks.length).toBeGreaterThan(0);
+  });
+
+  it('empty bars array returns an empty layout without throwing', () => {
+    const layout = buildStackedBarsLayout([]);
+    expect(layout.bars).toEqual([]);
+    expect(layout.yTicks).toEqual([]);
+    expect(layout.xTicks).toEqual([]);
+  });
+
+  it('all-zero bars do not NaN (yMax floored at 1)', () => {
+    const layout = buildStackedBarsLayout([{ age: 30, contributions: 0, growth: 0 }]);
+    expect(Number.isNaN(layout.bars[0].contribY)).toBe(false);
+    for (const t of layout.yTicks) expect(Number.isNaN(t.y)).toBe(false);
   });
 });

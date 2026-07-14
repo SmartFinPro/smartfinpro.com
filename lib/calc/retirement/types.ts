@@ -40,6 +40,18 @@ export interface RetirementBaseInputs {
     source: 'user-estimate'; // engine never auto-estimates entitlement/amount
   };
   withdrawalRatePct: number; // 2.5–5.0, default 4.0 — adjustable, part of the inputs
+  /** Optional REAL annual escalation of employee contributions, in percent
+   *  (0–5). Increases are in today's purchasing power ON TOP of inflation —
+   *  the whole model is real, so no second inflation application exists
+   *  anywhere. 0/undefined ⇒ flat contributions, results bit-identical to
+   *  the pre-v4 engine (invariant-tested). Applies to employee contributions
+   *  only (simple total or each account's employeeContributionMonthly);
+   *  employer match stays flat (documented v1 simplification). Advisory
+   *  contribution checks keep using year-1 amounts (existing convention) —
+   *  consequence: with escalation, later projection years can exceed a
+   *  statutory cap without a per-year re-clamp; the checks are advisory and
+   *  the projection is illustrative (documented v1 behavior). */
+  contributionGrowthPct?: number;
 }
 
 export type RetirementInputs = RetirementBaseInputs & (
@@ -67,6 +79,16 @@ export interface ScenarioResult {
   illustrativeMonthlyWithdrawal: number; // balance × withdrawalRate / 12 — NEVER "sustainable"/guarantee wording
   incomeGapMonthly: number; // target − withdrawal − benefit, but benefit only from startsAtAge
   fiDate: string | null; // first year in which withdrawal + (already-started) benefit ≥ target
+  /** Post-retirement path in TODAY'S money: same real rNet, fee applied once,
+   *  constant illustrative withdrawal (from balanceAtRetire × rate). The
+   *  user-entered benefit is INCOME, not an asset — it never enters this
+   *  balance path (documented; it already reduces incomeGapMonthly). */
+  decumulationRows: { age: number; balance: number }[]; // retireAge..min(90, depletion age)
+  /** First age (integer) at which the balance would hit ≤ 0 under the
+   *  illustrative withdrawal; null when funds last to age 90 in this scenario. */
+  depletionAge: number | null;
+  /** fiDate as an AGE (currentAge + (fiYear − asOfYear)); null when fiDate is null. */
+  fiAge: number | null;
 }
 
 export interface EngineResult {

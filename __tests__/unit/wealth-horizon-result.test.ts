@@ -12,6 +12,7 @@ import type { RetirementInputs } from '@/lib/calc/retirement/types';
 import { projectRetirement } from '@/lib/calc/retirement/engine';
 import {
   buildWealthHorizonResult,
+  buildRecapSentence,
   FORBIDDEN_WORDS,
   WEALTH_HORIZON_US_RULE_KEYS,
 } from '@/lib/tools/results/wealth-horizon-result';
@@ -114,5 +115,72 @@ describe('buildWealthHorizonResult', () => {
       expect(s.effectiveFrom).toBeTruthy();
       expect(s.verifiedAt).toBeTruthy();
     }
+  });
+});
+
+// Auftrag 2 (User-Direktive 14.07.2026) — the one-sentence recap shown above
+// the Best-match-products section. Exact wording templates are binding.
+describe('buildRecapSentence', () => {
+  it('matches the "achieved" template exactly when the goal is covered (gap 0)', () => {
+    const sentence = buildRecapSentence({
+      balanceAtRetire: 869_691,
+      retireAge: 65,
+      withdrawalMonthly: 2_899,
+      targetMonthlyIncomeToday: 2_500,
+      incomeGapMonthly: 0,
+      currency: 'USD',
+      locale: 'en-US',
+    });
+    expect(sentence).toBe(
+      "Your plan adds up to $869,691 by 65 — about $2,899/month in today's money, covering your $2,500 goal.",
+    );
+  });
+
+  it('matches the "missed" template exactly when the goal is short (gap > 0)', () => {
+    const sentence = buildRecapSentence({
+      balanceAtRetire: 507_867,
+      retireAge: 65,
+      withdrawalMonthly: 1_693,
+      targetMonthlyIncomeToday: 4_000,
+      incomeGapMonthly: 2_307,
+      currency: 'USD',
+      locale: 'en-US',
+    });
+    expect(sentence).toBe(
+      "Your plan adds up to $507,867 by 65 — about $1,693/month in today's money, $2,307 short of your $4,000 goal.",
+    );
+  });
+
+  it('never uses the forbidden wording (SPEC 8.3 negative list) in either branch', () => {
+    const achieved = buildRecapSentence({
+      balanceAtRetire: 869_691, retireAge: 65, withdrawalMonthly: 2_899,
+      targetMonthlyIncomeToday: 2_500, incomeGapMonthly: 0, currency: 'USD', locale: 'en-US',
+    }).toLowerCase();
+    const missed = buildRecapSentence({
+      balanceAtRetire: 507_867, retireAge: 65, withdrawalMonthly: 1_693,
+      targetMonthlyIncomeToday: 4_000, incomeGapMonthly: 2_307, currency: 'USD', locale: 'en-US',
+    }).toLowerCase();
+    for (const word of FORBIDDEN_WORDS) {
+      expect(achieved.includes(word), `found forbidden word "${word}" in achieved template`).toBe(false);
+      expect(missed.includes(word), `found forbidden word "${word}" in missed template`).toBe(false);
+    }
+  });
+
+  it("always carries the binding \"in today's money\" wording", () => {
+    const sentence = buildRecapSentence({
+      balanceAtRetire: 100_000, retireAge: 67, withdrawalMonthly: 500,
+      targetMonthlyIncomeToday: 500, incomeGapMonthly: 0, currency: 'GBP', locale: 'en-GB',
+    });
+    expect(sentence).toContain("in today's money");
+  });
+
+  it('renders non-USD currency/locale correctly (GBP, en-GB)', () => {
+    const sentence = buildRecapSentence({
+      balanceAtRetire: 300_000, retireAge: 68, withdrawalMonthly: 1_200,
+      targetMonthlyIncomeToday: 1_500, incomeGapMonthly: 300, currency: 'GBP', locale: 'en-GB',
+    });
+    expect(sentence).toBe(
+      "Your plan adds up to £300,000 by 68 — about £1,200/month in today's money, £300 short of your £1,500 goal.",
+    );
   });
 });

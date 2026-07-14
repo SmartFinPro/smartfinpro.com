@@ -1,6 +1,6 @@
 // app/au/tools/retirement-calculator/page.tsx
 // Wealth Horizon AU (FDL 4.3) — GuidedJourney via the market-parametrized
-// WealthHorizonJourney island (components/tools/wealth-horizon/wealth-horizon-journey.tsx).
+// WealthHorizonLive island (components/tools/wealth-horizon/wealth-horizon-live.tsx — Wealth Horizon v2 Live-Workspace).
 // Deliberately noindex + hidden (see lib/tools/registry/registry.ts
 // 'wealth-horizon' entry) until a separate launch PR after the analytics
 // baseline window ends (~2026-07-20) — bindende Plan-Abweichung, see that
@@ -10,9 +10,11 @@ import type { Metadata } from 'next';
 import { buildToolMetadata } from '@/lib/tools/registry/metadata';
 import { resolveRuleSnapshot } from '@/lib/rules';
 import { buildWealthHorizonResult, WEALTH_HORIZON_AU_RULE_KEYS } from '@/lib/tools/results/wealth-horizon-result';
-import type { RetirementAccountType, RetirementInputs } from '@/lib/calc/retirement/types';
+import { WEALTH_HORIZON_DEFAULT_INPUTS, WEALTH_HORIZON_DEFAULT_RETURN_ASSUMPTIONS } from '@/lib/tools/results/wealth-horizon-defaults';
+import { buildRealReturnRuleSnapshot } from '@/lib/tools/results/wealth-horizon-real-return';
+import type { RetirementAccountType } from '@/lib/calc/retirement/types';
 import { ToolShell } from '@/components/tools/shell/tool-shell';
-import { WealthHorizonJourney } from '@/components/tools/wealth-horizon/wealth-horizon-journey';
+import { WealthHorizonLive } from '@/components/tools/wealth-horizon/wealth-horizon-live';
 import { formatCurrency, formatPercent } from '@/lib/tools/field-format';
 import type { FAQ } from '@/types';
 
@@ -25,30 +27,25 @@ export const revalidate = 86400; // SPEC 8.5 — daily, so rule-window date flip
 
 export const metadata: Metadata = buildToolMetadata('wealth-horizon', 'au');
 
-// Worked Example persona — plausible Australian saver, simple contribution
-// mode (SPEC 8.3/6.1: rendered fully server-side, visible with JS off).
-const EXAMPLE_INPUTS: RetirementInputs = {
-  market: 'au',
-  currentAge: 38,
-  retireAge: 65,
-  annualFeePct: 0.4,
-  targetMonthlyIncomeToday: 5000,
-  withdrawalRatePct: 4.0,
-  contributionMode: 'simple',
-  simple: {
-    taxAdvantagedBalance: 110000, // super balance
-    taxableBalance: 15000,
-    employeeContributionMonthly: 500, // voluntary salary-sacrifice
-    employerContributionMonthly: 900, // ~12% SG on a plausible salary
-  },
-};
+// Worked Example persona (SPEC 8.3/6.1: rendered fully server-side, visible
+// with JS off) — Fable-Design-Review Fix 2: this is the SAME shared
+// constant the Live-Workspace island seeds its `useState` from
+// (`defaultInputs` prop below), so the SSR "Example result" and the live
+// start state can never drift apart again.
+const EXAMPLE_INPUTS = WEALTH_HORIZON_DEFAULT_INPUTS.au;
+const EXAMPLE_RETURN_ASSUMPTIONS = WEALTH_HORIZON_DEFAULT_RETURN_ASSUMPTIONS.au;
 
 const MONEYSMART_PREPARE_TO_RETIRE_URL = 'https://moneysmart.gov.au/retirement-income/prepare-to-retire';
 
 export default function WealthHorizonAUPage() {
   const asOf = new Date().toISOString().slice(0, 10); // revalidate=86400 → this can move day to day, per SPEC 8.5
   const rules = resolveRuleSnapshot('au', [...WEALTH_HORIZON_AU_RULE_KEYS], asOf);
-  const exampleResult = buildWealthHorizonResult(EXAMPLE_INPUTS, rules, 'example');
+  const { rules: exampleRules } = buildRealReturnRuleSnapshot(
+    rules,
+    EXAMPLE_RETURN_ASSUMPTIONS.returnNominalPct,
+    EXAMPLE_RETURN_ASSUMPTIONS.inflationPct,
+  );
+  const exampleResult = buildWealthHorizonResult(EXAMPLE_INPUTS, exampleRules, 'example');
   const sgRatePct = formatPercent(rules.values.superGuaranteeRate * 100, 'en-AU', 0); // "12%"
   const concessionalCap = formatCurrency(rules.values.concessionalCap, 'AUD', 'en-AU'); // "$32,500"
 
@@ -86,6 +83,11 @@ export default function WealthHorizonAUPage() {
       question: 'Can I change the withdrawal rate?',
       answer:
         'Yes — the withdrawal rate is adjustable from 2.5% to 5.0% (default 4.0%) in the Assumptions step, and every result recalculates immediately using the rate you choose.',
+    },
+    {
+      question: 'Why do you subtract inflation?',
+      answer:
+        "You enter a nominal return and expected inflation; we subtract inflation to project in today's purchasing power (real return ≈ nominal − inflation). A 9% nominal return during 4% inflation buys the same as a 5% real return during 0% inflation — showing the real number avoids the illusion of growth from inflation alone.",
     },
   ];
 
@@ -143,6 +145,11 @@ export default function WealthHorizonAUPage() {
               this methodology at least annually against fresh publications from the same three providers.
             </p>
             <p className="m-0 text-[15px] leading-6 text-[var(--sfp-slate)]">
+              You enter a nominal return and expected inflation; we subtract inflation to project in today&rsquo;s
+              purchasing power (real return ≈ nominal − inflation). Conservative and optimistic scenarios are a
+              ±1.5 percentage point editorial range around your own real-return figure, not a second set of inputs.
+            </p>
+            <p className="m-0 text-[15px] leading-6 text-[var(--sfp-slate)]">
               The current Super Guarantee (SG) rate is <strong>{sgRatePct}</strong> of eligible earnings — the
               Contributions step includes an editable helper that suggests an employer contribution of your annual
               eligible earnings × {sgRatePct} ÷ 12, which you can always overwrite. The concessional (before-tax)
@@ -167,10 +174,10 @@ export default function WealthHorizonAUPage() {
               Worked example
             </h2>
             <p className="m-0 text-[15px] leading-6 text-[var(--sfp-slate)]">
-              A 38-year-old planning to retire at 65 with $110,000 in super and $15,000 in a taxable account,
-              contributing $500/month in voluntary salary-sacrifice plus a $900/month employer super contribution
-              (around the {sgRatePct} SG rate on a plausible salary) at a 0.4% annual fee, targeting $5,000/month in
-              today&rsquo;s money at a 4.0% withdrawal rate — shown above as the &ldquo;Example result&rdquo;.
+              A 30-year-old planning to retire at 65 with $20,000 in super and $5,000 in a taxable account,
+              contributing $400/month in voluntary salary-sacrifice at a 0.5% annual fee, targeting $4,000/month in
+              today&rsquo;s money at a 4.0% withdrawal rate — these are the same numbers already filled in above,
+              shown as the &ldquo;Example result&rdquo; until you change anything.
             </p>
           </section>
 
@@ -228,15 +235,16 @@ export default function WealthHorizonAUPage() {
         </>
       }
     >
-      <WealthHorizonJourney
+      <WealthHorizonLive
         market="au"
         variantPath="/au/tools/retirement-calculator"
         rules={rules}
         exampleResult={exampleResult}
+        defaultInputs={EXAMPLE_INPUTS}
         currency="AUD"
         locale="en-AU"
         accountTypeOptions={ACCOUNT_TYPE_OPTIONS}
-        taxAdvantagedLabel="Super"
+        defaultReturnAssumptions={EXAMPLE_RETURN_ASSUMPTIONS}
         benefitName="Age Pension"
         benefitLinkUrl={MONEYSMART_PREPARE_TO_RETIRE_URL}
         benefitLinkLabel="Moneysmart’s Prepare to retire guide"

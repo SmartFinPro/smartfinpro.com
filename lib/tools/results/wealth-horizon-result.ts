@@ -8,8 +8,23 @@
 import { projectRetirement } from '@/lib/calc/retirement/engine';
 import type { RetirementInputs, ScenarioResult } from '@/lib/calc/retirement/types';
 import type { RuleSnapshot } from '@/lib/rules';
-import { formatCurrency, formatPercent, MARKET_CURRENCY, MARKET_LOCALE } from '@/lib/tools/field-format';
+import { findMilestoneCrossings } from '@/lib/calc/chart-geometry';
+import { formatCompactCurrency, formatCurrency, formatPercent, MARKET_CURRENCY, MARKET_LOCALE } from '@/lib/tools/field-format';
 import type { AssumptionEntry, ResultState, RuleSourceRef, ToolResult } from '@/lib/tools/shell-types';
+
+/** Lifetime Path chart horizon end age (Wealth Horizon v2 — SPEC "full life
+ *  horizon" contract): currentAge..LIFETIME_END_AGE, covering both the
+ *  accumulation and decumulation phases in one continuous axis. */
+export const LIFETIME_END_AGE = 90;
+
+/** Milestone thresholds (Wealth Horizon v2), applied to the BASE scenario's
+ *  accumulation line only — max 4 by construction (one entry per threshold
+ *  that's actually crossed before retireAge). */
+const MILESTONE_THRESHOLDS = [100_000, 250_000, 500_000, 1_000_000];
+
+function formatMilestoneLabel(value: number, age: number, currency: ToolResult['primary']['currency'], locale: string): string {
+  return `${formatCompactCurrency(value, currency ?? 'USD', locale)} · ${age}`;
+}
 
 export type WealthHorizonScenarioKey = 'conservative' | 'base' | 'optimistic';
 
@@ -44,32 +59,27 @@ function scenarioByKey(scenarios: readonly ScenarioResult[], key: WealthHorizonS
   return found;
 }
 
-/** Pure inverse of the engine's `fiDate = asOfYear + (age - currentAge)` —
- *  turns a projected FI year back into the row age it corresponds to, for
- *  the chart marker's x-position. Not a second money calculation: it reuses
- *  the exact asOf/currentAge the engine already used, no new arithmetic on
- *  balances. */
-function fiAge(fiDate: string | null, inputs: RetirementInputs, rules: RuleSnapshot): number | null {
-  if (!fiDate) return null;
-  const asOfYear = Number(rules.asOf.slice(0, 4));
-  const parsedFiYear = Number(fiDate);
-  if (!Number.isFinite(parsedFiYear)) return null;
-  return inputs.currentAge + (parsedFiYear - asOfYear);
-}
-
 function buildAnswer(
   focus: ScenarioResult,
-  focusScenario: WealthHorizonScenarioKey,
   inputs: RetirementInputs,
   currency: ToolResult['primary']['currency'],
   locale: string,
 ): string {
+  // Wealth Horizon v3 (Clean-Redesign, Fable-Direktive) — the old 3-way
+  // scenario switcher is gone (replaced by a single user-entered "Expected
+  // annual return" + "Expected inflation" pair, see
+  // lib/tools/results/wealth-horizon-real-return.ts), so this sentence no
+  // longer names a scenario ("In the base scenario, …") — there is nothing
+  // left in the UI for that phrase to refer to. `focus` is always the
+  // engine's 'base' scenario now (buildWealthHorizonResult below always
+  // calls this with focusScenario 'base'); conservative/optimistic still
+  // exist purely to populate primary.range (Result Contract slot 2).
   const withdrawal = formatCurrency(focus.illustrativeMonthlyWithdrawal, currency!, locale);
   if (focus.fiDate) {
-    return `In the ${focusScenario} scenario, you're on track for an illustrative retirement withdrawal of about ${withdrawal} a month in today's money by age ${inputs.retireAge}, reaching financial independence around ${focus.fiDate}.`;
+    return `You're on track for an illustrative retirement withdrawal of about ${withdrawal} a month in today's money by age ${inputs.retireAge}, reaching financial independence around ${focus.fiDate}.`;
   }
   const gap = formatCurrency(focus.incomeGapMonthly, currency!, locale);
-  return `In the ${focusScenario} scenario, your illustrative retirement withdrawal is about ${withdrawal} a month in today's money by age ${inputs.retireAge} — financial independence isn't reached by then, leaving an income gap of about ${gap} a month.`;
+  return `Your illustrative retirement withdrawal is about ${withdrawal} a month in today's money by age ${inputs.retireAge} — financial independence isn't reached by then, leaving an income gap of about ${gap} a month.`;
 }
 
 function minVerifiedAt(rules: RuleSnapshot): string {
@@ -126,19 +136,35 @@ export function buildWealthHorizonResult(
   const currency = MARKET_CURRENCY[inputs.market];
   const locale = MARKET_LOCALE[inputs.market];
 
-  const markerAge = fiAge(focus.fiDate, inputs, rules);
+  const markerAge = focus.fiAge; // engine-computed (ScenarioResult.fiAge) — single source, no second calc path
   const markers = markerAge !== null ? [{ x: markerAge, label: `FI ${focus.fiDate}` }] : [];
+
+  // Milestones: base-scenario ACCUMULATION line only (v2 Lifetime Path
+  // contract) — max 4 by construction (one per threshold actually crossed
+  // before retireAge).
+  const milestoneCrossings = findMilestoneCrossings(
+    base.rows.map((r) => ({ age: r.age, balance: r.balance })),
+    MILESTONE_THRESHOLDS,
+  );
+  const milestones = milestoneCrossings.map((m) => ({
+    age: m.age,
+    balance: m.threshold,
+    label: formatMilestoneLabel(m.threshold, m.age, currency, locale),
+  }));
 
   const textAlternative = `Projected balance at age ${inputs.retireAge} (today's money): `
     + `${formatCurrency(conservative.balanceAtRetire, currency, locale)} conservative, `
     + `${formatCurrency(base.balanceAtRetire, currency, locale)} base, `
     + `${formatCurrency(optimistic.balanceAtRetire, currency, locale)} optimistic. `
     + (focus.fiDate
-      ? `Financial independence in the ${focusScenario} scenario is projected around ${focus.fiDate}.`
-      : `Financial independence in the ${focusScenario} scenario is not reached by your chosen retirement age.`);
+      ? `Financial independence in the ${focusScenario} scenario is projected around ${focus.fiDate}. `
+      : `Financial independence in the ${focusScenario} scenario is not reached by your chosen retirement age. `)
+    + (focus.depletionAge !== null
+      ? `Funds run out around age ${focus.depletionAge} in the ${focusScenario} scenario at the illustrative withdrawal rate.`
+      : `Funds last beyond age ${LIFETIME_END_AGE} in the ${focusScenario} scenario at the illustrative withdrawal rate.`);
 
   return {
-    answer: buildAnswer(focus, focusScenario, inputs, currency, locale),
+    answer: buildAnswer(focus, inputs, currency, locale),
     primary: {
       label: "Illustrative retirement withdrawal (monthly, in today's money)",
       value: focus.illustrativeMonthlyWithdrawal,
@@ -153,6 +179,19 @@ export function buildWealthHorizonResult(
         { key: 'base', rows: base.rows.map((r) => ({ x: r.age, y: r.balance })) },
         { key: 'optimistic', rows: optimistic.rows.map((r) => ({ x: r.age, y: r.balance })) },
       ],
+      decumulation: [
+        { key: 'conservative', rows: conservative.decumulationRows.map((r) => ({ x: r.age, y: r.balance })) },
+        { key: 'base', rows: base.decumulationRows.map((r) => ({ x: r.age, y: r.balance })) },
+        { key: 'optimistic', rows: optimistic.decumulationRows.map((r) => ({ x: r.age, y: r.balance })) },
+      ],
+      retireAge: inputs.retireAge,
+      endAge: LIFETIME_END_AGE,
+      fiAge: focus.fiAge,
+      depletionAge: focus.depletionAge,
+      milestones,
+      withdrawalMonthly: focus.illustrativeMonthlyWithdrawal,
+      incomeGapMonthly: focus.incomeGapMonthly,
+      balanceAtRetire: focus.balanceAtRetire,
       markers,
       xLabel: 'Age',
       yLabel: "Balance (today's money)",
@@ -165,6 +204,54 @@ export function buildWealthHorizonResult(
     nextAction: WEALTH_HORIZON_NEXT_ACTION,
     resultState,
   };
+}
+
+/**
+ * Auftrag 2 (User-Direktive 14.07.2026) — ONE-sentence recap shown above the
+ * Best-match-products section, generated from the SAME numbers the resultCanvas
+ * already renders (corridor.balanceAtRetire/incomeGapMonthly, the focused
+ * scenario's illustrativeMonthlyWithdrawal, inputs.targetMonthlyIncomeToday) —
+ * no second calc path, this only formats. Reuses the exact "in today's money"
+ * wording (SPEC 8.3) and never emits FORBIDDEN_WORDS; makes no return/
+ * performance promise — it only reports the plan's own numbers back to the
+ * user. Exact templates (binding, User-Direktive):
+ *   achieved: "Your plan adds up to $869,691 by 65 — about $2,899/month in
+ *     today's money, covering your $2,500 goal."
+ *   missed:   "Your plan adds up to $507,867 by 65 — about $1,693/month in
+ *     today's money, $2,307 short of your $4,000 goal."
+ * `incomeGapMonthly` is passed straight from the engine's own
+ * `max(0, target − withdrawal − benefit)` (ScenarioResult.incomeGapMonthly) —
+ * never recomputed here, so this can never drift from buildAnswer()'s own
+ * "income gap" figure above.
+ */
+export interface RecapSentenceInput {
+  balanceAtRetire: number;
+  retireAge: number;
+  withdrawalMonthly: number;
+  targetMonthlyIncomeToday: number;
+  incomeGapMonthly: number;
+  currency: ToolResult['primary']['currency'];
+  locale: string;
+}
+
+export function buildRecapSentence({
+  balanceAtRetire,
+  retireAge,
+  withdrawalMonthly,
+  targetMonthlyIncomeToday,
+  incomeGapMonthly,
+  currency,
+  locale,
+}: RecapSentenceInput): string {
+  const balance = formatCurrency(balanceAtRetire, currency!, locale);
+  const monthly = formatCurrency(withdrawalMonthly, currency!, locale);
+  const goal = formatCurrency(targetMonthlyIncomeToday, currency!, locale);
+  const goalPart =
+    incomeGapMonthly > 0
+      ? `${formatCurrency(incomeGapMonthly, currency!, locale)} short of your ${goal} goal`
+      : `covering your ${goal} goal`;
+
+  return `Your plan adds up to ${balance} by ${retireAge} — about ${monthly}/month in today's money, ${goalPart}.`;
 }
 
 /** Rule keys Wealth Horizon US needs from resolveRuleSnapshot — single source

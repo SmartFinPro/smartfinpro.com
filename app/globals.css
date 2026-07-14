@@ -990,6 +990,92 @@ html[data-silo="ca"], body.silo-ca { --sfp-silo-tint: #FFE5E5; }
   .sfp-range:hover::-moz-range-thumb { transform: none; }
 }
 
+/* ============================================================
+   Shared Slider Anatomy — `.sfp-slider` (User-Direktive 14.07.2026)
+   Auftrag 1: Wealth Horizon's sliders must be visually IDENTICAL to the
+   Money Leak Scanner's own `.sfp-range` (above) — same 8px track, same
+   22px gold thumb with a 3px white border, same rgba hover/focus rings.
+   This class is a 1:1 extracted copy of `.sfp-range`'s property values
+   (Money Leak Scanner's component files are baseline-frozen and keep using
+   `.sfp-range` directly, untouched); Wealth Horizon is the first other
+   consumer of this shared anatomy. This REPLACES v4.1's bespoke
+   `.wh-slider` (26px thumb, 5px white box-shadow ring) — that variant was
+   introduced as "Money-Leak-Anatomie" but had actually drifted from it
+   (bigger thumb, different ring technique/colors); this class corrects
+   that drift by copying the real values instead of re-approximating them.
+   ============================================================ */
+.sfp-slider {
+  height: 8px;
+  border-radius: 9999px;
+  outline: none;
+}
+.sfp-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 9999px;
+  background: var(--sfp-gold);
+  border: 3px solid #ffffff;
+  box-shadow: 0 1px 3px rgba(16, 24, 40, 0.15), 0 0 0 1px rgba(27, 79, 140, 0.15);
+  cursor: pointer;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+.sfp-slider::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 9999px;
+  background: var(--sfp-gold);
+  border: 3px solid #ffffff;
+  box-shadow: 0 1px 3px rgba(16, 24, 40, 0.15), 0 0 0 1px rgba(27, 79, 140, 0.15);
+  cursor: pointer;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+.sfp-slider:hover::-webkit-slider-thumb {
+  transform: scale(1.1);
+  box-shadow: 0 2px 6px rgba(16, 24, 40, 0.2), 0 0 0 1px var(--sfp-navy);
+}
+.sfp-slider:hover::-moz-range-thumb {
+  transform: scale(1.1);
+  box-shadow: 0 2px 6px rgba(16, 24, 40, 0.2), 0 0 0 1px var(--sfp-navy);
+}
+.sfp-slider:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 3px rgba(245, 166, 35, 0.45);
+}
+.sfp-slider:focus-visible::-moz-range-thumb {
+  box-shadow: 0 0 0 3px rgba(245, 166, 35, 0.45);
+}
+@media (prefers-reduced-motion: reduce) {
+  .sfp-slider::-webkit-slider-thumb,
+  .sfp-slider::-moz-range-thumb { transition: none; }
+  .sfp-slider:hover::-webkit-slider-thumb,
+  .sfp-slider:hover::-moz-range-thumb { transform: none; }
+}
+
+/* Step-card anatomy — every numbered step AND every Advanced-settings
+   slider is this same white, rounded-14 card (border/shadow tokens only,
+   no hardcoded hex). */
+.wh-step-card {
+  border-radius: 14px;
+  border: 1px solid var(--tool-border);
+  box-shadow: var(--tool-shadow);
+  background: var(--tool-surface);
+  padding: 20px;
+}
+@media (max-width: 480px) {
+  .wh-step-card { padding: 18px; }
+}
+
+/* Step-card hero value ("$12,000", "30 → 65", …) — clamps down from 28px
+   so a long value like $1,000,000 never overflows/wraps on narrow phones. */
+.wh-step-value {
+  font-size: clamp(22px, 6vw, 28px);
+}
+/* Sub-slider value (Step 2's escalation row, Advanced-settings cards). */
+.wh-slider-value-sm {
+  font-size: clamp(18px, 5vw, 20px);
+}
+
 /* Firewall landing page — scroll-triggered reveal. JS (IntersectionObserver) adds
    `.is-visible` when the element scrolls into view. The hidden start state applies
    ONLY under no-preference, so reduced-motion users always see content immediately. */

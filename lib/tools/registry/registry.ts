@@ -445,7 +445,12 @@ export const TOOL_REGISTRY: Record<ToolId, ToolDefinition> = {
     name: 'Retirement & Financial Freedom Calculator',
     tier: 'major',
     decisionCategory: 'retire',
-    shellMode: 'guided-journey',
+    // Wealth Horizon v2 (13.07.2026 Fable design directive): Live-Workspace
+    // replaces the GuidedJourney wizard — documented deviation from the
+    // Spec-5.2 GuidedJourney default for 'major' tier tools. The route is
+    // still hidden/noindex (see each variant below), so this ships with no
+    // user-facing impact; CTX/analytics shellMode now reads 'live-canvas'.
+    shellMode: 'live-canvas',
     icon: 'trending-up',
     blurb: 'Project your retirement in today’s money across three scenarios and find your FI date.',
     variants: [

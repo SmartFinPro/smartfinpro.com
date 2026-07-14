@@ -1,6 +1,6 @@
 // app/(marketing)/tools/retirement-calculator/page.tsx
 // Wealth Horizon US (FDL 4.2). GuidedJourney via the market-parametrized
-// WealthHorizonJourney island (FDL 4.3 — one island, 4 markets; see that
+// WealthHorizonLive island (Wealth Horizon v2 — Live-Workspace; FDL 4.3 — one island, 4 markets; see that
 // file's header). Deliberately noindex + hidden (see
 // lib/tools/registry/registry.ts 'wealth-horizon' entry) — the 4.3 brief's
 // original atomic index-flip was superseded by a user decision: all 4
@@ -12,9 +12,11 @@ import type { Metadata } from 'next';
 import { buildToolMetadata } from '@/lib/tools/registry/metadata';
 import { resolveRuleSnapshot } from '@/lib/rules';
 import { buildWealthHorizonResult, WEALTH_HORIZON_US_RULE_KEYS } from '@/lib/tools/results/wealth-horizon-result';
-import type { RetirementAccountType, RetirementInputs } from '@/lib/calc/retirement/types';
+import { WEALTH_HORIZON_DEFAULT_INPUTS, WEALTH_HORIZON_DEFAULT_RETURN_ASSUMPTIONS } from '@/lib/tools/results/wealth-horizon-defaults';
+import { buildRealReturnRuleSnapshot } from '@/lib/tools/results/wealth-horizon-real-return';
+import type { RetirementAccountType } from '@/lib/calc/retirement/types';
 import { ToolShell } from '@/components/tools/shell/tool-shell';
-import { WealthHorizonJourney } from '@/components/tools/wealth-horizon/wealth-horizon-journey';
+import { WealthHorizonLive } from '@/components/tools/wealth-horizon/wealth-horizon-live';
 import type { FAQ } from '@/types';
 
 const ACCOUNT_TYPE_OPTIONS: { value: RetirementAccountType; label: string }[] = [
@@ -28,23 +30,15 @@ export const revalidate = 86400; // SPEC 8.5 — daily, so rule-window date flip
 
 export const metadata: Metadata = buildToolMetadata('wealth-horizon', 'us');
 
-// Worked Example persona — plausible US saver, simple contribution mode
-// (SPEC 8.3/6.1: rendered fully server-side, visible with JS off).
-const EXAMPLE_INPUTS: RetirementInputs = {
-  market: 'us',
-  currentAge: 38,
-  retireAge: 65,
-  annualFeePct: 0.4,
-  targetMonthlyIncomeToday: 5000,
-  withdrawalRatePct: 4.0,
-  contributionMode: 'simple',
-  simple: {
-    taxAdvantagedBalance: 95000,
-    taxableBalance: 25000,
-    employeeContributionMonthly: 800,
-    employerContributionMonthly: 300,
-  },
-};
+// Worked Example persona (SPEC 8.3/6.1: rendered fully server-side, visible
+// with JS off) — Fable-Design-Review Fix 2: this is the SAME shared
+// constant the Live-Workspace island seeds its `useState` from
+// (`defaultInputs` prop below), so the SSR "Example result" and the live
+// start state can never drift apart again.
+const EXAMPLE_INPUTS = WEALTH_HORIZON_DEFAULT_INPUTS.us;
+// v3 addition — same Fix-2 sharing pattern, extended to the Step-4/5 return/
+// inflation defaults (lib/tools/results/wealth-horizon-defaults.ts).
+const EXAMPLE_RETURN_ASSUMPTIONS = WEALTH_HORIZON_DEFAULT_RETURN_ASSUMPTIONS.us;
 
 const FAQ_ITEMS: FAQ[] = [
   {
@@ -77,6 +71,11 @@ const FAQ_ITEMS: FAQ[] = [
     answer:
       'Yes — the withdrawal rate is adjustable from 2.5% to 5.0% (default 4.0%) in the Assumptions step, and every result recalculates immediately using the rate you choose.',
   },
+  {
+    question: 'Why do you subtract inflation?',
+    answer:
+      "You enter a nominal return and expected inflation; we subtract inflation to project in today's purchasing power (real return ≈ nominal − inflation). A 9% nominal return during 4% inflation buys the same as a 5% real return during 0% inflation — showing the real number avoids the illusion of growth from inflation alone.",
+  },
 ];
 
 const SSA_ESTIMATOR_URL = 'https://www.ssa.gov/prepare/get-benefits-estimate';
@@ -84,7 +83,15 @@ const SSA_ESTIMATOR_URL = 'https://www.ssa.gov/prepare/get-benefits-estimate';
 export default function WealthHorizonPage() {
   const asOf = new Date().toISOString().slice(0, 10); // revalidate=86400 → this can move day to day, per SPEC 8.5
   const rules = resolveRuleSnapshot('us', [...WEALTH_HORIZON_US_RULE_KEYS], asOf);
-  const exampleResult = buildWealthHorizonResult(EXAMPLE_INPUTS, rules, 'example');
+  // v3 — the SSR worked example must use the SAME real-return override the
+  // island's untouched defaults compute (Fix 2/3 parity), never the raw
+  // rule-pack realReturn* values directly.
+  const { rules: exampleRules } = buildRealReturnRuleSnapshot(
+    rules,
+    EXAMPLE_RETURN_ASSUMPTIONS.returnNominalPct,
+    EXAMPLE_RETURN_ASSUMPTIONS.inflationPct,
+  );
+  const exampleResult = buildWealthHorizonResult(EXAMPLE_INPUTS, exampleRules, 'example');
 
   return (
     <ToolShell
@@ -140,6 +147,11 @@ export default function WealthHorizonPage() {
               this methodology at least annually against fresh publications from the same three providers.
             </p>
             <p className="m-0 text-[15px] leading-6 text-[var(--sfp-slate)]">
+              You enter a nominal return and expected inflation; we subtract inflation to project in today&rsquo;s
+              purchasing power (real return ≈ nominal − inflation). Conservative and optimistic scenarios are a
+              ±1.5 percentage point editorial range around your own real-return figure, not a second set of inputs.
+            </p>
+            <p className="m-0 text-[15px] leading-6 text-[var(--sfp-slate)]">
               Any expected Social Security, State Pension or other retirement benefit comes entirely from your own
               official estimate — see &ldquo;How is my Social Security benefit calculated?&rdquo; below — and counts
               only from the age you say it starts.
@@ -156,10 +168,10 @@ export default function WealthHorizonPage() {
               Worked example
             </h2>
             <p className="m-0 text-[15px] leading-6 text-[var(--sfp-slate)]">
-              A 38-year-old planning to retire at 65 with $95,000 in tax-advantaged savings and $25,000 in a taxable
-              account, contributing $800/month plus a $300/month employer match at a 0.4% annual fee, targeting
-              $5,000/month in today&rsquo;s money at a 4.0% withdrawal rate — shown above as the &ldquo;Example
-              result&rdquo;.
+              A 30-year-old planning to retire at 65 with $20,000 in tax-advantaged savings and $5,000 in a taxable
+              account, contributing $400/month at a 0.5% annual fee, targeting $4,000/month in today&rsquo;s money at
+              a 4.0% withdrawal rate — these are the same numbers already filled in above, shown as the
+              &ldquo;Example result&rdquo; until you change anything.
             </p>
           </section>
 
@@ -212,15 +224,16 @@ export default function WealthHorizonPage() {
         </>
       }
     >
-      <WealthHorizonJourney
+      <WealthHorizonLive
         market="us"
         variantPath="/tools/retirement-calculator"
         rules={rules}
         exampleResult={exampleResult}
+        defaultInputs={EXAMPLE_INPUTS}
         currency="USD"
         locale="en-US"
         accountTypeOptions={ACCOUNT_TYPE_OPTIONS}
-        taxAdvantagedLabel="401(k)/IRA"
+        defaultReturnAssumptions={EXAMPLE_RETURN_ASSUMPTIONS}
         benefitName="Social Security / pension"
         benefitLinkUrl={SSA_ESTIMATOR_URL}
         benefitLinkLabel="SSA’s benefits estimator"

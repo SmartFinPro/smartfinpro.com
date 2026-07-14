@@ -1,6 +1,6 @@
 // app/ca/tools/retirement-calculator/page.tsx
 // Wealth Horizon CA (FDL 4.3) — GuidedJourney via the market-parametrized
-// WealthHorizonJourney island (components/tools/wealth-horizon/wealth-horizon-journey.tsx).
+// WealthHorizonLive island (components/tools/wealth-horizon/wealth-horizon-live.tsx — Wealth Horizon v2 Live-Workspace).
 // Deliberately noindex + hidden (see lib/tools/registry/registry.ts
 // 'wealth-horizon' entry) until a separate launch PR after the analytics
 // baseline window ends (~2026-07-20) — bindende Plan-Abweichung, see that
@@ -10,9 +10,11 @@ import type { Metadata } from 'next';
 import { buildToolMetadata } from '@/lib/tools/registry/metadata';
 import { resolveRuleSnapshot } from '@/lib/rules';
 import { buildWealthHorizonResult, WEALTH_HORIZON_CA_RULE_KEYS } from '@/lib/tools/results/wealth-horizon-result';
-import type { RetirementAccountType, RetirementInputs } from '@/lib/calc/retirement/types';
+import { WEALTH_HORIZON_DEFAULT_INPUTS, WEALTH_HORIZON_DEFAULT_RETURN_ASSUMPTIONS } from '@/lib/tools/results/wealth-horizon-defaults';
+import { buildRealReturnRuleSnapshot } from '@/lib/tools/results/wealth-horizon-real-return';
+import type { RetirementAccountType } from '@/lib/calc/retirement/types';
 import { ToolShell } from '@/components/tools/shell/tool-shell';
-import { WealthHorizonJourney } from '@/components/tools/wealth-horizon/wealth-horizon-journey';
+import { WealthHorizonLive } from '@/components/tools/wealth-horizon/wealth-horizon-live';
 import type { FAQ } from '@/types';
 
 const ACCOUNT_TYPE_OPTIONS: { value: RetirementAccountType; label: string }[] = [
@@ -25,23 +27,13 @@ export const revalidate = 86400; // SPEC 8.5 — daily, so rule-window date flip
 
 export const metadata: Metadata = buildToolMetadata('wealth-horizon', 'ca');
 
-// Worked Example persona — plausible Canadian saver, simple contribution mode
-// (SPEC 8.3/6.1: rendered fully server-side, visible with JS off).
-const EXAMPLE_INPUTS: RetirementInputs = {
-  market: 'ca',
-  currentAge: 38,
-  retireAge: 65,
-  annualFeePct: 0.4,
-  targetMonthlyIncomeToday: 5000,
-  withdrawalRatePct: 4.0,
-  contributionMode: 'simple',
-  simple: {
-    taxAdvantagedBalance: 90000, // TFSA + RRSP combined
-    taxableBalance: 20000,
-    employeeContributionMonthly: 750,
-    employerContributionMonthly: 150, // employer RRSP match
-  },
-};
+// Worked Example persona (SPEC 8.3/6.1: rendered fully server-side, visible
+// with JS off) — Fable-Design-Review Fix 2: this is the SAME shared
+// constant the Live-Workspace island seeds its `useState` from
+// (`defaultInputs` prop below), so the SSR "Example result" and the live
+// start state can never drift apart again.
+const EXAMPLE_INPUTS = WEALTH_HORIZON_DEFAULT_INPUTS.ca;
+const EXAMPLE_RETURN_ASSUMPTIONS = WEALTH_HORIZON_DEFAULT_RETURN_ASSUMPTIONS.ca;
 
 const CRA_RETIREMENT_INCOME_CALCULATOR_URL =
   'https://www.canada.ca/en/services/benefits/publicpensions/cpp/retirement-income-calculator.html';
@@ -77,12 +69,22 @@ const FAQ_ITEMS: FAQ[] = [
     answer:
       'Yes — the withdrawal rate is adjustable from 2.5% to 5.0% (default 4.0%) in the Assumptions step, and every result recalculates immediately using the rate you choose.',
   },
+  {
+    question: 'Why do you subtract inflation?',
+    answer:
+      "You enter a nominal return and expected inflation; we subtract inflation to project in today's purchasing power (real return ≈ nominal − inflation). A 9% nominal return during 4% inflation buys the same as a 5% real return during 0% inflation — showing the real number avoids the illusion of growth from inflation alone.",
+  },
 ];
 
 export default function WealthHorizonCAPage() {
   const asOf = new Date().toISOString().slice(0, 10); // revalidate=86400 → this can move day to day, per SPEC 8.5
   const rules = resolveRuleSnapshot('ca', [...WEALTH_HORIZON_CA_RULE_KEYS], asOf);
-  const exampleResult = buildWealthHorizonResult(EXAMPLE_INPUTS, rules, 'example');
+  const { rules: exampleRules } = buildRealReturnRuleSnapshot(
+    rules,
+    EXAMPLE_RETURN_ASSUMPTIONS.returnNominalPct,
+    EXAMPLE_RETURN_ASSUMPTIONS.inflationPct,
+  );
+  const exampleResult = buildWealthHorizonResult(EXAMPLE_INPUTS, exampleRules, 'example');
 
   return (
     <ToolShell
@@ -138,6 +140,11 @@ export default function WealthHorizonCAPage() {
               this methodology at least annually against fresh publications from the same three providers.
             </p>
             <p className="m-0 text-[15px] leading-6 text-[var(--sfp-slate)]">
+              You enter a nominal return and expected inflation; we subtract inflation to project in today&rsquo;s
+              purchasing power (real return ≈ nominal − inflation). Conservative and optimistic scenarios are a
+              ±1.5 percentage point editorial range around your own real-return figure, not a second set of inputs.
+            </p>
+            <p className="m-0 text-[15px] leading-6 text-[var(--sfp-slate)]">
               TFSA and RRSP room is always <strong>your personal room from CRA My Account</strong> — this calculator
               never derives a contribution limit from the national annual or lifetime maximum. In Account breakdown
               mode you can enter your own available room for a TFSA or RRSP account, and a contribution is only
@@ -160,10 +167,10 @@ export default function WealthHorizonCAPage() {
               Worked example
             </h2>
             <p className="m-0 text-[15px] leading-6 text-[var(--sfp-slate)]">
-              A 38-year-old planning to retire at 65 with $90,000 in TFSA and RRSP savings and $20,000 in a taxable
-              account, contributing $750/month plus a $150/month employer RRSP match at a 0.4% annual fee, targeting
-              $5,000/month in today&rsquo;s money at a 4.0% withdrawal rate — shown above as the &ldquo;Example
-              result&rdquo;.
+              A 30-year-old planning to retire at 65 with $20,000 in TFSA and RRSP savings and $5,000 in a taxable
+              account, contributing $400/month at a 0.5% annual fee, targeting $4,000/month in today&rsquo;s money at
+              a 4.0% withdrawal rate — these are the same numbers already filled in above, shown as the
+              &ldquo;Example result&rdquo; until you change anything.
             </p>
           </section>
 
@@ -222,15 +229,16 @@ export default function WealthHorizonCAPage() {
         </>
       }
     >
-      <WealthHorizonJourney
+      <WealthHorizonLive
         market="ca"
         variantPath="/ca/tools/retirement-calculator"
         rules={rules}
         exampleResult={exampleResult}
+        defaultInputs={EXAMPLE_INPUTS}
         currency="CAD"
         locale="en-CA"
         accountTypeOptions={ACCOUNT_TYPE_OPTIONS}
-        taxAdvantagedLabel="TFSA/RRSP"
+        defaultReturnAssumptions={EXAMPLE_RETURN_ASSUMPTIONS}
         benefitName="CPP/OAS"
         benefitLinkUrl={CRA_RETIREMENT_INCOME_CALCULATOR_URL}
         benefitLinkLabel="Canadian Retirement Income Calculator"

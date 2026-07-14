@@ -83,6 +83,23 @@ describe('formatCurrency() / formatPercent() / formatInteger()', () => {
     expect(currencyAffix('USD')).toBe('$');
     expect(currencyAffix('GBP')).toBe('£');
   });
+
+  // Wealth Horizon v2 Fable-Design-Review Fix 1 — a 30-year PROJECTION
+  // showing cents ("$1,387.93/mo") reads as false precision. Every
+  // user-visible amount is now whole-currency-unit only, in every market
+  // locale, regardless of whether the underlying value is fractional.
+  it('rounds fractional values to whole currency units (no cents), per market locale', () => {
+    expect(formatCurrency(1387.93, 'USD', MARKET_LOCALE.us)).not.toContain('.');
+    expect(formatCurrency(3612.07, 'USD', MARKET_LOCALE.us)).not.toContain('.');
+    expect(formatCurrency(1083620.65, 'USD', MARKET_LOCALE.us)).not.toContain('.');
+    expect(formatCurrency(1387.93, 'GBP', MARKET_LOCALE.uk)).not.toContain('.');
+    expect(formatCurrency(1387.93, 'CAD', MARKET_LOCALE.ca)).not.toContain('.');
+    expect(formatCurrency(1387.93, 'AUD', MARKET_LOCALE.au)).not.toContain('.');
+  });
+
+  it('still formats already-whole values with no decimals (unchanged behavior)', () => {
+    expect(formatCurrency(1250, 'USD', MARKET_LOCALE.us)).not.toContain('.');
+  });
 });
 
 describe('clamp()', () => {
