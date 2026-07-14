@@ -1,10 +1,10 @@
 // app/ca/tools/retirement-calculator/page.tsx
 // Wealth Horizon CA (FDL 4.3) — GuidedJourney via the market-parametrized
 // WealthHorizonLive island (components/tools/wealth-horizon/wealth-horizon-live.tsx — Wealth Horizon v2 Live-Workspace).
-// Deliberately noindex + hidden (see lib/tools/registry/registry.ts
-// 'wealth-horizon' entry) until a separate launch PR after the analytics
-// baseline window ends (~2026-07-20) — bindende Plan-Abweichung, see that
-// registry entry's comment and the PR 4.3 report.
+// Launched 2026-07-14 together with US/UK/AU (User-Entscheidung, vor Ende
+// des tool_v1 Analytics-Baseline-Fensters) — indexable + linked from every
+// hub/footer/llms.txt consumer, see lib/tools/registry/registry.ts
+// 'wealth-horizon' entry and lib/analytics/analytics-annotations.ts.
 
 import type { Metadata } from 'next';
 import { buildToolMetadata } from '@/lib/tools/registry/metadata';

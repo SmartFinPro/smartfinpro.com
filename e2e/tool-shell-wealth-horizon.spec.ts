@@ -10,18 +10,19 @@
 // big hypothetical-balance number + "in today's money", the stacked
 // contribution/growth bar chart with its "Your contributions"/"Growth"
 // legend, the 2 summary tiles, exactly 3 levers, AssumptionsDrawer sources,
-// exactly 1 NextBestAction, robots noindex, the binding wording ("in today's
-// money", "illustrative retirement withdrawal"), the negative wording list
-// (shared FORBIDDEN_WORDS) absent anywhere in the HTML, the route excluded
-// from the sitemap, and market-specific terms present (AU: "12%" + "$32,500";
+// exactly 1 NextBestAction, robots index (not noindex), the binding wording
+// ("in today's money", "illustrative retirement withdrawal"), the negative
+// wording list (shared FORBIDDEN_WORDS) absent anywhere in the HTML, the
+// route included in the sitemap, and market-specific terms present (AU: "12%" + "$32,500";
 // UK: "ISA"/"SIPP" + "£"; CA: "TFSA"/"RRSP" + "personal room"). Every Normal-
 // mode field is now a native <input type="range"> with correct
 // min/max/step/aria-valuetext, rendered server-side (v4's SPEC-Regel-7
 // deviation — see wealth-horizon-live.tsx's header).
 //
-// Hub-hiddenness (registry-driven, all 4 hubs + footer + llms.txt): unchanged
-// from v2/v3 — none of the 4 Wealth Horizon routes may appear on /tools,
-// /uk/tools, /ca/tools, /au/tools, in the footer, or in llms.txt.
+// Hub-visibility (registry-driven, all 4 hubs + footer + llms.txt): launched
+// 2026-07-14 (User-Entscheidung vor Ende des Analytics-Baseline-Fensters) —
+// all 4 Wealth Horizon routes now MUST appear on /tools, /uk/tools,
+// /ca/tools, /au/tools, in the footer, and in llms.txt.
 //
 // JS-on (US-only): every numbered step's slider is visible and live from
 // first paint, dragging a slider flips the state chip to "Your result" and
@@ -135,7 +136,7 @@ async function setRangeValue(locator: Locator, value: number): Promise<void> {
 
 for (const c of CASES) {
   test.describe(`Wealth Horizon ${c.market.toUpperCase()} (JS off): ${c.path}`, () => {
-    test('Worked Example — v4 slider-only surface is fully present in server HTML, noindex, wording contracts hold', async ({ page }) => {
+    test('Worked Example — v4 slider-only surface is fully present in server HTML, index, wording contracts hold', async ({ page }) => {
       const response = await page.goto(c.path);
       expect(response?.status()).toBeLessThan(400);
 
@@ -279,9 +280,9 @@ for (const c of CASES) {
         expect(href && allowedHrefs.has(href), `card href "${href}" not in the allowed WEALTH_HORIZON_PRODUCTS set for ${c.market}`).toBe(true);
       }
 
-      // robots noindex (all 4 routes stay hidden until the separate launch PR)
+      // robots index (launched 2026-07-14 — all 4 routes are indexable now)
       const robots = await page.locator('meta[name="robots"]').getAttribute('content').catch(() => null);
-      expect(robots ?? '').toContain('noindex');
+      expect(robots ?? '').not.toContain('noindex');
 
       // Binding wording (SPEC 8.3) — page.content() re-serializes the parsed
       // DOM, so HTML entities like &#x27; come back as plain apostrophes.
@@ -300,10 +301,10 @@ for (const c of CASES) {
       }
     });
 
-    test('sitemap does not include the route (indexable:false)', async ({ request }) => {
+    test('sitemap includes the route (indexable:true, launched 2026-07-14)', async ({ request }) => {
       const res = await request.get('/sitemap.xml');
       const body = await res.text();
-      expect(body).not.toContain(c.path);
+      expect(body).toContain(c.path);
     });
   });
 }
@@ -328,31 +329,28 @@ test.describe(`Wealth Horizon US financial-freedom visual: ${PAGE_PATH}`, () => 
   });
 });
 
-test.describe('Wealth Horizon — hub-hiddenness ×4 (FDL 4.3)', () => {
-  const HIDDEN_PATHS = CASES.map((c) => c.path);
+test.describe('Wealth Horizon — hub-visibility ×4 (launch PR, 2026-07-14)', () => {
+  const LAUNCHED_PATHS = CASES.map((c) => c.path);
 
   for (const market of ['us', 'uk', 'ca', 'au'] as const) {
-    test(`${getHubPathForMarket(market)} does not link to any Wealth Horizon route`, async ({ page }) => {
+    test(`${getHubPathForMarket(market)} links to its market's Wealth Horizon route`, async ({ page }) => {
       await page.goto(getHubPathForMarket(market));
       const hrefs = await page.locator('a[href]').evaluateAll((els) => els.map((el) => el.getAttribute('href') ?? ''));
-      for (const hidden of HIDDEN_PATHS) {
-        expect(hrefs.some((h) => h === hidden || h.endsWith(hidden)), `${hidden} linked from ${getHubPathForMarket(market)}`).toBe(false);
-      }
+      const ownPath = CASES.find((c) => c.market === market)!.path;
+      expect(hrefs.some((h) => h === ownPath || h.endsWith(ownPath)), `${ownPath} not linked from ${getHubPathForMarket(market)}`).toBe(true);
 
       const footerHrefs = await page
         .locator('footer a[href]')
         .evaluateAll((els) => els.map((el) => el.getAttribute('href') ?? ''));
-      for (const hidden of HIDDEN_PATHS) {
-        expect(footerHrefs.some((h) => h === hidden || h.endsWith(hidden)), `${hidden} in footer on ${market}`).toBe(false);
-      }
+      expect(footerHrefs.some((h) => h === ownPath || h.endsWith(ownPath)), `${ownPath} missing from footer on ${market}`).toBe(true);
     });
   }
 
-  test('llms.txt does not mention any Wealth Horizon route', async ({ request }) => {
+  test('llms.txt mentions every Wealth Horizon route', async ({ request }) => {
     const res = await request.get('/llms.txt');
     const body = await res.text();
-    for (const hidden of HIDDEN_PATHS) {
-      expect(body.includes(hidden), `${hidden} present in /llms.txt`).toBe(false);
+    for (const launched of LAUNCHED_PATHS) {
+      expect(body.includes(launched), `${launched} missing from /llms.txt`).toBe(true);
     }
   });
 });

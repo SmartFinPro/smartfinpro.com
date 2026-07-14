@@ -3,10 +3,10 @@
 // WealthHorizonLive island (components/tools/wealth-horizon/wealth-horizon-live.tsx — Wealth Horizon v2 Live-Workspace).
 // Slug is deliberately "pension-calculator" (Head-Term, SPEC 9.1 line 663),
 // NOT "retirement-calculator" like the other 3 markets.
-// Deliberately noindex + hidden (see lib/tools/registry/registry.ts
-// 'wealth-horizon' entry) until a separate launch PR after the analytics
-// baseline window ends (~2026-07-20) — bindende Plan-Abweichung, see that
-// registry entry's comment and the PR 4.3 report.
+// Launched 2026-07-14 together with US/CA/AU (User-Entscheidung, vor Ende
+// des tool_v1 Analytics-Baseline-Fensters) — indexable + linked from every
+// hub/footer/llms.txt consumer, see lib/tools/registry/registry.ts
+// 'wealth-horizon' entry and lib/analytics/analytics-annotations.ts.
 
 import type { Metadata } from 'next';
 import { buildToolMetadata } from '@/lib/tools/registry/metadata';

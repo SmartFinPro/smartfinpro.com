@@ -5,7 +5,8 @@ import { describe, it, expect } from 'vitest';
 import { TOOL_REGISTRY } from '@/lib/tools/registry/registry';
 import {
   getAllVariants, countLiveConcepts, countLiveRoutes, getToolsForMarket, getToolEntryHref,
-  getExpectedTrackingManifest, getFooterToolLinks, getLlmsToolLines,
+  getExpectedTrackingManifest, getFooterToolLinks, getLlmsToolLines, isRecentlyLaunched,
+  NEW_TOOL_BADGE_WINDOW_DAYS,
 } from '@/lib/tools/registry';
 
 const MARKETING = join(process.cwd(), 'app', '(marketing)');
@@ -99,57 +100,91 @@ describe('market availability contract (SPEC 4.2)', () => {
   });
 });
 
-describe('hidden mechanism (FDL 4.2) — Wealth Horizon stays out of every hub/footer/llms consumer', () => {
-  it('getAllVariants / fs-parity still SEE the hidden route (it exists and is directly linkable)', () => {
-    const wh = getAllVariants().find((v) => v.toolId === 'wealth-horizon');
+describe('launch visibility (FDL launch PR, 2026-07-14) — Wealth Horizon now visible in every hub/footer/llms consumer', () => {
+  // The `hidden` mechanism itself (FDL 4.2/4.3) stays generic infra — it's
+  // just unused by any registry entry right now because Wealth Horizon's
+  // hidden+noindex flags were removed on 2026-07-14 (User-Entscheidung vor
+  // Ende des Analytics-Baseline-Fensters, Annotation in
+  // lib/analytics/analytics-annotations.ts).
+  it('getAllVariants / fs-parity see the launched US route (indexable, not hidden)', () => {
+    const wh = getAllVariants().find((v) => v.toolId === 'wealth-horizon' && v.market === 'us');
     expect(wh).toBeDefined();
     expect(wh!.path).toBe('/tools/retirement-calculator');
-    expect(wh!.hidden).toBe(true);
-    expect(wh!.indexable).toBe(false);
+    expect(wh!.hidden).toBeUndefined();
+    expect(wh!.indexable).toBe(true);
   });
 
-  it('getToolsForMarket("us") does NOT include wealth-horizon', () => {
-    expect(getToolsForMarket('us').some((t) => t.id === 'wealth-horizon')).toBe(false);
+  it('getToolsForMarket("us") includes wealth-horizon', () => {
+    expect(getToolsForMarket('us').some((t) => t.id === 'wealth-horizon')).toBe(true);
   });
 
-  it('getFooterToolLinks("us") does NOT include wealth-horizon', () => {
-    expect(getFooterToolLinks('us').some((l) => l.href === '/tools/retirement-calculator')).toBe(false);
+  it('getFooterToolLinks("us") includes wealth-horizon', () => {
+    expect(getFooterToolLinks('us').some((l) => l.href === '/tools/retirement-calculator')).toBe(true);
   });
 
-  it('getLlmsToolLines() does NOT mention the wealth-horizon route', () => {
-    expect(getLlmsToolLines().some((line) => line.includes('/tools/retirement-calculator'))).toBe(false);
+  it('getLlmsToolLines() mentions the wealth-horizon route', () => {
+    expect(getLlmsToolLines().some((line) => line.includes('/tools/retirement-calculator'))).toBe(true);
   });
 
-  // FDL 4.3 — the 3 new UK/CA/AU variants stay hidden+noindex too (bindende
-  // Plan-Abweichung: the atomic index-flip from the 4.3 brief moved to a
-  // separate launch PR after the baseline window ends).
-  const NEW_VARIANTS: { market: 'uk' | 'ca' | 'au'; path: string }[] = [
+  // The 3 UK/CA/AU variants launched in the same PR as the US route — see
+  // the registry entry's comment (lib/tools/registry/registry.ts).
+  const LAUNCHED_VARIANTS: { market: 'uk' | 'ca' | 'au'; path: string }[] = [
     { market: 'uk', path: '/uk/tools/pension-calculator' },
     { market: 'ca', path: '/ca/tools/retirement-calculator' },
     { market: 'au', path: '/au/tools/retirement-calculator' },
   ];
 
-  for (const { market, path } of NEW_VARIANTS) {
-    it(`${market} wealth-horizon variant (${path}) exists, hidden+noindex`, () => {
+  for (const { market, path } of LAUNCHED_VARIANTS) {
+    it(`${market} wealth-horizon variant (${path}) exists, indexable, not hidden`, () => {
       const v = getAllVariants().find((x) => x.toolId === 'wealth-horizon' && x.market === market);
       expect(v).toBeDefined();
       expect(v!.path).toBe(path);
-      expect(v!.hidden).toBe(true);
-      expect(v!.indexable).toBe(false);
+      expect(v!.hidden).toBeUndefined();
+      expect(v!.indexable).toBe(true);
     });
 
-    it(`getToolsForMarket("${market}") does NOT include wealth-horizon`, () => {
-      expect(getToolsForMarket(market).some((t) => t.id === 'wealth-horizon')).toBe(false);
+    it(`getToolsForMarket("${market}") includes wealth-horizon`, () => {
+      expect(getToolsForMarket(market).some((t) => t.id === 'wealth-horizon')).toBe(true);
     });
 
-    it(`getFooterToolLinks("${market}") does NOT include wealth-horizon`, () => {
-      expect(getFooterToolLinks(market).some((l) => l.href === path)).toBe(false);
+    it(`getFooterToolLinks("${market}") includes wealth-horizon`, () => {
+      expect(getFooterToolLinks(market).some((l) => l.href === path)).toBe(true);
     });
 
-    it(`getLlmsToolLines() does NOT mention ${path}`, () => {
-      expect(getLlmsToolLines().some((line) => line.includes(path))).toBe(false);
+    it(`getLlmsToolLines() mentions ${path}`, () => {
+      expect(getLlmsToolLines().some((line) => line.includes(path))).toBe(true);
     });
   }
+});
+
+describe('"New" hub badge (launch PR, presentational-only)', () => {
+  it('wealth-horizon is flagged isNew right after launch (2026-07-14), across all 4 markets', () => {
+    const dayOfLaunch = new Date('2026-07-14T12:00:00Z');
+    expect(isRecentlyLaunched(TOOL_REGISTRY['wealth-horizon'], dayOfLaunch)).toBe(true);
+    for (const market of ['us', 'uk', 'ca', 'au'] as const) {
+      const tool = getToolsForMarket(market).find((t) => t.id === 'wealth-horizon');
+      expect(tool).toBeDefined();
+      expect(isRecentlyLaunched(tool!, dayOfLaunch)).toBe(true);
+    }
+  });
+
+  it('flips back to false once the badge window has elapsed', () => {
+    const wellAfter = new Date('2026-07-14T00:00:00Z');
+    wellAfter.setDate(wellAfter.getDate() + NEW_TOOL_BADGE_WINDOW_DAYS + 1);
+    expect(isRecentlyLaunched(TOOL_REGISTRY['wealth-horizon'], wellAfter)).toBe(false);
+  });
+
+  it('a tool with no launchedAt is never flagged isNew', () => {
+    expect(isRecentlyLaunched(TOOL_REGISTRY['money-leak-scanner'])).toBe(false);
+  });
+
+  it('never affects indexable/hidden/status — presentational only', () => {
+    for (const v of TOOL_REGISTRY['wealth-horizon'].variants) {
+      expect(v.indexable).toBe(true);
+      expect(v.hidden).toBeUndefined();
+      expect(v.status).toBe('live');
+    }
+  });
 });
 
 describe('legacy path redirect coverage (FDL 0.3)', () => {
@@ -171,10 +206,11 @@ describe('registry consumers (FDL 0.6)', () => {
     expect(urls).toContain('/au/tools/gold-roi-calculator');
     expect(urls).not.toContain('/tools/gold-roi-calculator');   // legacy raus
     expect(urls).not.toContain('/tools/debt-payoff-calculator'); // noindex raus
-    expect(urls).not.toContain('/tools/retirement-calculator'); // FDL 4.2: noindex raus
-    // FDL 4.3: the 3 new UK/CA/AU variants stay noindex too (bindende Plan-Abweichung).
-    expect(urls).not.toContain('/uk/tools/pension-calculator');
-    expect(urls).not.toContain('/ca/tools/retirement-calculator');
-    expect(urls).not.toContain('/au/tools/retirement-calculator');
+    // Launched 2026-07-14 (User-Entscheidung, see registry entry comment) —
+    // all 4 Wealth Horizon markets are indexable and MUST be in the sitemap.
+    expect(urls).toContain('/tools/retirement-calculator');
+    expect(urls).toContain('/uk/tools/pension-calculator');
+    expect(urls).toContain('/ca/tools/retirement-calculator');
+    expect(urls).toContain('/au/tools/retirement-calculator');
   });
 });
