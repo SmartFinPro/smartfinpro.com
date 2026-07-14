@@ -306,6 +306,26 @@ for (const c of CASES) {
   });
 }
 
+test.describe(`Wealth Horizon US financial-freedom visual: ${PAGE_PATH}`, () => {
+  test.use({ javaScriptEnabled: false });
+
+  test('renders the editorial below-fold full-width with no decorative image (User-Direktive 14.07.)', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto(PAGE_PATH);
+
+    // The financial-freedom portrait was removed — no image inside the tool page body.
+    await expect(page.getByTestId('financial-freedom-visual')).toHaveCount(0);
+
+    // Methodology section spans (nearly) the full 1240px shell container
+    // instead of the old 760px aside column.
+    const methodology = page.locator('#methodology');
+    await expect(methodology).toBeVisible();
+    const box = await methodology.boundingBox();
+    expect(box).not.toBeNull();
+    expect(box!.width).toBeGreaterThan(1000);
+  });
+});
+
 test.describe('Wealth Horizon — hub-hiddenness ×4 (FDL 4.3)', () => {
   const HIDDEN_PATHS = CASES.map((c) => c.path);
 

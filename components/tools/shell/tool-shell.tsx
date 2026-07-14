@@ -22,6 +22,8 @@ export interface ToolShellProps {
   privacyHref: string;
   children: ReactNode;                   // Modus-Layout
   belowFold: ReactNode;                  // RSC: Methodik, Worked Example, FAQ, Quellen
+  /** Optional contextual visual shown beside editorial content on wide screens. */
+  belowFoldAside?: ReactNode;
   /** Additive: mirrors the visible FAQ in `belowFold` for FAQPage JSON-LD — never fabricated. */
   faq?: FAQ[];
 }
@@ -38,6 +40,7 @@ export function ToolShell({
   privacyHref,
   children,
   belowFold,
+  belowFoldAside,
   faq,
 }: ToolShellProps) {
   return (
@@ -80,7 +83,19 @@ export function ToolShell({
 
       <div className="workspace">{children}</div>
 
-      <div className="below-fold mt-10 flex max-w-[760px] flex-col gap-7">{belowFold}</div>
+      {belowFoldAside ? (
+        <div className="below-fold mt-10 grid gap-8 lg:grid-cols-[minmax(0,760px)_minmax(0,280px)] lg:items-start lg:gap-12">
+          <div className="flex max-w-[760px] flex-col gap-7">{belowFold}</div>
+          <aside aria-label="Page visual" className="hidden lg:flex lg:justify-end">
+            {belowFoldAside}
+          </aside>
+        </div>
+      ) : (
+        // Full container width + generous vertical rhythm (User-Direktive
+        // 14.07.: editorial sections should breathe across the whole page,
+        // not sit in a narrow 760px column).
+        <div className="below-fold mt-12 flex w-full flex-col gap-10 [&_p]:leading-7">{belowFold}</div>
+      )}
     </div>
   );
 }
