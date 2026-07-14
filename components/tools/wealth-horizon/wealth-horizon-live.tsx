@@ -46,6 +46,7 @@
 // spirit to the v1/v2/v3 WealthHorizonLiveProps — FDL 4.3 parametrization
 // untouched).
 
+import { TrendingUp } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { ImpactLevers } from '@/components/tools/shell/impact-levers';
 import { AssumptionsDrawer } from '@/components/tools/shell/assumptions-drawer';
@@ -972,20 +973,23 @@ export function WealthHorizonLive({
         <span className="whitespace-nowrap text-xs font-medium text-[var(--sfp-slate)]">{"in today's money"}</span>
       </div>
 
-      {/* (2) label + big number, count-up */}
-      <div className="flex flex-col gap-1">
-        <span className="text-[16px] font-semibold text-[var(--sfp-ink)]">
-          Your hypothetical balance at {retireAge}
-        </span>
-        <span className="tabular-nums text-[clamp(32px,6vw,44px)] font-semibold leading-[1.1] text-[var(--sfp-ink)]">
+      {/* (2)+(3) Navy highlight panel — same anatomy as the AI ROI
+          calculator's "Estimated ROI" block (User-Direktive 14.07.):
+          icon + label row in white/80, huge white number, context line. */}
+      <div className="rounded-2xl p-6 text-white" style={{ background: 'var(--sfp-navy)' }}>
+        <div className="mb-2 flex items-center gap-2">
+          <TrendingUp className="h-5 w-5" aria-hidden="true" />
+          <span className="text-sm font-medium text-white/80">
+            Your hypothetical balance at {retireAge}
+          </span>
+        </div>
+        <div className="tabular-nums text-[clamp(36px,5.5vw,44px)] font-bold leading-[1.1]">
           {formatCurrency(Math.round(displayedBalance), currency, locale)}
-        </span>
-      </div>
-
-      {/* (3) one calm text line + optional gold pill */}
-      <div className="flex flex-wrap items-center gap-2">
-        <p className="answer m-0 text-[15px] leading-6 text-[var(--sfp-slate)]">{item3Text}</p>
-        {financiallyFree ? <GoldPill>Financially free at {fiAge}</GoldPill> : null}
+        </div>
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <p className="answer m-0 text-sm leading-6 text-white/80">{item3Text}</p>
+          {financiallyFree ? <GoldPill>Financially free at {fiAge}</GoldPill> : null}
+        </div>
       </div>
 
       {/* (4) the chart — stacked contribution/growth bars */}
