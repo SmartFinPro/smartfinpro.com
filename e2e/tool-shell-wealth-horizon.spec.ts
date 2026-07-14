@@ -40,6 +40,7 @@
 import { test, expect, type Page, type Locator } from '@playwright/test';
 import { getAllVariants, getHubPathForMarket } from '@/lib/tools/registry';
 import { FORBIDDEN_WORDS } from '@/lib/tools/results/wealth-horizon-result';
+import { WEALTH_HORIZON_PRODUCTS } from '@/lib/tools/results/wealth-horizon-products';
 
 const PAGE_PATH = '/tools/retirement-calculator';
 
@@ -245,6 +246,34 @@ for (const c of CASES) {
 
       // Exactly 1 NextBestAction (slot 6)
       await expect(page.locator('.next-action a')).toHaveCount(1);
+
+      // Auftrag 2 (User-Direktive 14.07.2026) — one-sentence recap, present
+      // in JS-off HTML, naming the Worked Example's retireAge (65, shared
+      // default across all 4 markets — wealth-horizon-defaults.ts) and the
+      // "/month" wording.
+      const recap = page.getByTestId('wh-recap-sentence');
+      await expect(recap).toBeVisible();
+      await expect(recap).toHaveText(/by 65/);
+      await expect(recap).toContainText('/month');
+
+      // Auftrag 3 (User-Direktive 14.07.2026) — "Best matches for your
+      // retirement plan": ≥2 cards, the disclosure, every card href from the
+      // allowed WEALTH_HORIZON_PRODUCTS set for this market — all present in
+      // JS-off HTML (static per-market data, no fetch).
+      const productsSection = page.getByTestId('best-match-products');
+      await expect(productsSection).toBeVisible();
+      await expect(productsSection.getByText('Best matches for your retirement plan')).toBeVisible();
+      await expect(page.getByRole('note', { name: 'Affiliate disclosure' })).toBeVisible();
+
+      const expectedProducts = WEALTH_HORIZON_PRODUCTS[c.market];
+      const cards = productsSection.getByTestId('product-card');
+      await expect(cards).toHaveCount(expectedProducts.length);
+      expect(expectedProducts.length).toBeGreaterThanOrEqual(2);
+      const allowedHrefs = new Set(expectedProducts.map((p) => p.href));
+      const cardHrefs = await cards.evaluateAll((els) => els.map((el) => el.getAttribute('href')));
+      for (const href of cardHrefs) {
+        expect(href && allowedHrefs.has(href), `card href "${href}" not in the allowed WEALTH_HORIZON_PRODUCTS set for ${c.market}`).toBe(true);
+      }
 
       // robots noindex (all 4 routes stay hidden until the separate launch PR)
       const robots = await page.locator('meta[name="robots"]').getAttribute('content').catch(() => null);
@@ -501,5 +530,34 @@ test.describe(`Wealth Horizon US (JS on) — v4 slider-only surface: ${PAGE_PATH
 
     await overlay.hover();
     await expect(page.locator('.contribution-growth-chart-overlay [role="status"]')).toBeVisible();
+  });
+
+  // Auftrag 3 (User-Direktive 14.07.2026) — clicking a Best-match-products
+  // card CTA fires the existing trackNextAction contract (no new event):
+  // kind 'offer' → NextActionKind 'provider'. US ships only 'offer' cards
+  // (see WEALTH_HORIZON_PRODUCTS.us), each opened in a new tab
+  // (target="_blank", rel="noopener sponsored" — outbound affiliate link
+  // convention) — the popup is closed immediately, only the tracked event on
+  // the ORIGINAL page is asserted.
+  test('clicking a Best-match-products offer card fires tool_next_action_click with nextActionKind "provider"', async ({ page, context }) => {
+    const batches = await interceptTrack(page);
+    await page.goto(PAGE_PATH, { waitUntil: 'networkidle' });
+
+    const firstCard = page.getByTestId('product-card').first();
+    const href = await firstCard.getAttribute('href');
+    expect(href).toBe('/go/betterment');
+
+    const [popup] = await Promise.all([context.waitForEvent('page'), firstCard.click()]);
+    await popup.close();
+
+    await page.waitForTimeout(500);
+    const events = toolEvents(batches);
+    const nextAction = events.find(
+      (e) =>
+        e.eventName === 'tool_next_action_click' &&
+        (e.properties as Record<string, unknown> | undefined)?.nextActionKind === 'provider' &&
+        (e.properties as Record<string, unknown> | undefined)?.bridgeHref === '/go/betterment',
+    );
+    expect(nextAction, 'tool_next_action_click with nextActionKind "provider" should have fired').toBeTruthy();
   });
 });

@@ -73,11 +73,13 @@ export interface LifetimeRangeProps {
 // pointer events disabled on the whole element and re-enabled only on the
 // thumb pseudo-element, so two overlapping inputs never fight over clicks
 // anywhere except their own handle.
-// v4.1 — `.wh-slider` (26px gold thumb + white ring, globals.css) replaces
-// `.sfp-range` here so both handles match the Money-Leak-Anatomie standard
-// the rest of Wealth Horizon's sliders now use.
+// v4.2 (User-Direktive 14.07.2026) — `.sfp-slider` (globals.css) is an exact
+// 1:1 copy of the Money Leak Scanner's own `.sfp-range` thumb/ring anatomy
+// (22px gold thumb, 3px white border, same rgba hover/focus rings),
+// replacing v4.1's `.wh-slider` (26px thumb, 5px white box-shadow ring),
+// which had drifted from the anatomy it claimed to match.
 const OVERLAY_INPUT_CLASSES =
-  'wh-slider pointer-events-none absolute inset-0 w-full appearance-none bg-transparent ' +
+  'sfp-slider pointer-events-none absolute inset-0 w-full appearance-none bg-transparent ' +
   '[&::-webkit-slider-thumb]:pointer-events-auto [&::-moz-range-thumb]:pointer-events-auto';
 
 export function LifetimeRange({ today, retirement, onChange, todayInputKey, retirementInputKey }: LifetimeRangeProps) {

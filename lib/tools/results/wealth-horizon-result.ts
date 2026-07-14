@@ -206,6 +206,54 @@ export function buildWealthHorizonResult(
   };
 }
 
+/**
+ * Auftrag 2 (User-Direktive 14.07.2026) — ONE-sentence recap shown above the
+ * Best-match-products section, generated from the SAME numbers the resultCanvas
+ * already renders (corridor.balanceAtRetire/incomeGapMonthly, the focused
+ * scenario's illustrativeMonthlyWithdrawal, inputs.targetMonthlyIncomeToday) —
+ * no second calc path, this only formats. Reuses the exact "in today's money"
+ * wording (SPEC 8.3) and never emits FORBIDDEN_WORDS; makes no return/
+ * performance promise — it only reports the plan's own numbers back to the
+ * user. Exact templates (binding, User-Direktive):
+ *   achieved: "Your plan adds up to $869,691 by 65 — about $2,899/month in
+ *     today's money, covering your $2,500 goal."
+ *   missed:   "Your plan adds up to $507,867 by 65 — about $1,693/month in
+ *     today's money, $2,307 short of your $4,000 goal."
+ * `incomeGapMonthly` is passed straight from the engine's own
+ * `max(0, target − withdrawal − benefit)` (ScenarioResult.incomeGapMonthly) —
+ * never recomputed here, so this can never drift from buildAnswer()'s own
+ * "income gap" figure above.
+ */
+export interface RecapSentenceInput {
+  balanceAtRetire: number;
+  retireAge: number;
+  withdrawalMonthly: number;
+  targetMonthlyIncomeToday: number;
+  incomeGapMonthly: number;
+  currency: ToolResult['primary']['currency'];
+  locale: string;
+}
+
+export function buildRecapSentence({
+  balanceAtRetire,
+  retireAge,
+  withdrawalMonthly,
+  targetMonthlyIncomeToday,
+  incomeGapMonthly,
+  currency,
+  locale,
+}: RecapSentenceInput): string {
+  const balance = formatCurrency(balanceAtRetire, currency!, locale);
+  const monthly = formatCurrency(withdrawalMonthly, currency!, locale);
+  const goal = formatCurrency(targetMonthlyIncomeToday, currency!, locale);
+  const goalPart =
+    incomeGapMonthly > 0
+      ? `${formatCurrency(incomeGapMonthly, currency!, locale)} short of your ${goal} goal`
+      : `covering your ${goal} goal`;
+
+  return `Your plan adds up to ${balance} by ${retireAge} — about ${monthly}/month in today's money, ${goalPart}.`;
+}
+
 /** Rule keys Wealth Horizon US needs from resolveRuleSnapshot — single source
  *  for the page (worked example) and the island (live recompute) so the two
  *  never resolve a different rule set. */

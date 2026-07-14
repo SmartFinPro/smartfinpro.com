@@ -21,9 +21,12 @@
 // v4.1 restyle (User-Direktive 13.07.2026, image reference — the Money Leak
 // Scanner's slider anatomy, see components/tools/money-leak-scanner/
 // SliderField.tsx, is now Wealth Horizon's own standard, styling only):
-//   - Gold hard-stop track fill (`.wh-slider`, globals.css) + 26px gold
-//     thumb with a strong white ring, instead of the plain unfilled
-//     `.sfp-range` track this component used before.
+//   - Gold hard-stop track fill (`.sfp-slider`, globals.css) — v4.2
+//     (User-Direktive 14.07.2026) replaced v4.1's bespoke 26px-thumb
+//     `.wh-slider` with `.sfp-slider`, an exact 1:1 copy of the Money Leak
+//     Scanner's own `.sfp-range` thumb/ring anatomy (22px gold thumb, 3px
+//     white border, same rgba hover/focus rings) — v4.1's version had
+//     drifted from the anatomy it claimed to match.
 //   - A min/max/hint row now sits under the track (min left, optional hint
 //     centre — the old full-width `help` paragraph moved here, max right).
 //   - `card` (default true) wraps the field in the same white rounded-14
@@ -114,9 +117,10 @@ export function SliderField({
           </span>
         ) : null}
       </div>
-      {/* h-11 touch zone wraps the visually-thin `.wh-slider` track/thumb
-          (8px track, 26px gold thumb w/ white ring) so the tap target still
-          meets the ≥44px mobile minimum. */}
+      {/* h-11 touch zone wraps the visually-thin `.sfp-slider` track/thumb
+          (8px track, 22px gold thumb w/ 3px white border — Money Leak
+          Scanner's exact anatomy) so the tap target still meets the ≥44px
+          mobile minimum. */}
       <div className="flex min-h-11 items-center">
         <input
           id={inputId}
@@ -133,7 +137,7 @@ export function SliderField({
             onChange(next);
             onCommit?.(next);
           }}
-          className="wh-slider w-full appearance-none cursor-pointer"
+          className="sfp-slider w-full appearance-none cursor-pointer"
           style={{
             background: `linear-gradient(to right, var(--sfp-gold) 0%, var(--sfp-gold) ${percent}%, var(--tool-border) ${percent}%, var(--tool-border) 100%)`,
           }}
