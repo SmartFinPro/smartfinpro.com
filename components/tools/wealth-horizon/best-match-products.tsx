@@ -93,8 +93,11 @@ export function BestMatchProducts({ market, products, onCardClick }: BestMatchPr
               target={product.kind === 'offer' ? '_blank' : undefined}
               rel={product.kind === 'offer' ? 'noopener sponsored' : undefined}
               onClick={() => onCardClick(product.kind === 'offer' ? 'provider' : 'cockpit', product.href)}
-              className="mt-auto inline-flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white no-underline transition-colors duration-200"
-              style={{ background: 'var(--sfp-gold)', textDecoration: 'none' }}
+              className="mt-auto inline-flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold no-underline transition-colors duration-200"
+              // color inline: die globale `article a`-Farbregel überstimmt
+              // sonst .text-white → goldene Schrift auf Gold = unsichtbar
+              // (User-Screenshot-Befund 14.07.).
+              style={{ background: 'var(--sfp-gold)', color: '#fff', textDecoration: 'none' }}
               onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--sfp-gold-dark)'; }}
               onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--sfp-gold)'; }}
             >

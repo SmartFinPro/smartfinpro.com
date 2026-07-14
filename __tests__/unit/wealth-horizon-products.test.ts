@@ -27,7 +27,7 @@ describe('WEALTH_HORIZON_PRODUCTS', () => {
     for (const { market, card } of ALL_CARDS) {
       if (card.kind === 'offer') {
         expect(card.href.startsWith('/go/'), `${market}/${card.name} offer href should start with /go/`).toBe(true);
-        expect(card.cta).toBe('View offer');
+        expect(card.cta).toBe('Start now');
       }
     }
   });
@@ -39,7 +39,7 @@ describe('WEALTH_HORIZON_PRODUCTS', () => {
         expect(manifestPaths.has(card.href), `${market}/${card.name} cockpit href "${card.href}" not in BEST_X_MANIFEST`).toBe(
           true,
         );
-        expect(card.cta).toBe('See the ranking');
+        expect(card.cta).toBe('Start now');
       }
     }
   });

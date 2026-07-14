@@ -47,7 +47,7 @@ export interface ProductCard {
    *  never performance/returns (same wording contract as blurb). */
   highlights: string[];
   href: string;
-  cta: 'View offer' | 'See the ranking';
+  cta: 'Start now';
   kind: ProductCardKind;
 }
 
@@ -58,7 +58,7 @@ export const WEALTH_HORIZON_PRODUCTS: Record<Market, ProductCard[]> = {
       blurb: 'Automated portfolio management with tax-loss harvesting and no account minimum.',
       highlights: ['Automatic rebalancing', 'Tax-loss harvesting', 'No account minimum'],
       href: '/go/betterment',
-      cta: 'View offer',
+      cta: 'Start now',
       kind: 'offer',
     },
     {
@@ -66,7 +66,7 @@ export const WEALTH_HORIZON_PRODUCTS: Record<Market, ProductCard[]> = {
       blurb: 'Low-cost automated investing with a range of retirement account types.',
       highlights: ['Automated portfolios', 'IRA & rollover support', 'Goal-based planning'],
       href: '/go/wealthfront',
-      cta: 'View offer',
+      cta: 'Start now',
       kind: 'offer',
     },
     {
@@ -74,7 +74,7 @@ export const WEALTH_HORIZON_PRODUCTS: Record<Market, ProductCard[]> = {
       blurb: "Fidelity's robo-advisor, built around retirement-account investing.",
       highlights: ['Backed by Fidelity', 'Retirement-focused portfolios', 'Simple account setup'],
       href: '/go/fidelity-go',
-      cta: 'View offer',
+      cta: 'Start now',
       kind: 'offer',
     },
   ],
@@ -84,7 +84,7 @@ export const WEALTH_HORIZON_PRODUCTS: Record<Market, ProductCard[]> = {
       blurb: "One of the UK's largest investing platforms, with Stocks & Shares ISA and SIPP accounts.",
       highlights: ['ISA & SIPP accounts', 'Established UK platform', 'Wide fund selection'],
       href: '/go/hargreaves-lansdown',
-      cta: 'View offer',
+      cta: 'Start now',
       kind: 'offer',
     },
     {
@@ -92,7 +92,7 @@ export const WEALTH_HORIZON_PRODUCTS: Record<Market, ProductCard[]> = {
       blurb: 'Compare UK investing apps and Stocks & Shares ISA platforms, ranked by fees.',
       highlights: ['Editorial ranking', 'Compared side by side', 'Updated regularly'],
       href: '/uk/personal-finance/best/investing-apps',
-      cta: 'See the ranking',
+      cta: 'Start now',
       kind: 'cockpit',
     },
   ],
@@ -102,7 +102,7 @@ export const WEALTH_HORIZON_PRODUCTS: Record<Market, ProductCard[]> = {
       blurb: 'A Canadian robo-advisor offering registered accounts, including TFSA and RRSP.',
       highlights: ['TFSA & RRSP support', 'Automated portfolios', 'Built for Canada'],
       href: '/go/wealthsimple',
-      cta: 'View offer',
+      cta: 'Start now',
       kind: 'offer',
     },
     {
@@ -110,7 +110,7 @@ export const WEALTH_HORIZON_PRODUCTS: Record<Market, ProductCard[]> = {
       blurb: 'Compare self-directed TFSA and RRSP brokerage platforms by commissions and fees.',
       highlights: ['TFSA/RRSP platforms ranked', 'Side-by-side comparison', 'Updated regularly'],
       href: '/ca/tax-efficient-investing/best/tfsa-rrsp-platforms',
-      cta: 'See the ranking',
+      cta: 'Start now',
       kind: 'cockpit',
     },
   ],
@@ -120,7 +120,7 @@ export const WEALTH_HORIZON_PRODUCTS: Record<Market, ProductCard[]> = {
       blurb: 'Compare Australian robo-advice and micro-investing apps, ranked by fees.',
       highlights: ['Robo & micro-investing ranked', 'Side-by-side comparison', 'Updated regularly'],
       href: '/au/personal-finance/best/robo-advisors',
-      cta: 'See the ranking',
+      cta: 'Start now',
       kind: 'cockpit',
     },
     {
@@ -128,7 +128,7 @@ export const WEALTH_HORIZON_PRODUCTS: Record<Market, ProductCard[]> = {
       blurb: 'Compare APRA-regulated super funds by fees, ranked independently.',
       highlights: ['Super funds compared', 'Fees & features ranked', 'Updated regularly'],
       href: '/au/superannuation/best/super-funds',
-      cta: 'See the ranking',
+      cta: 'Start now',
       kind: 'cockpit',
     },
   ],
