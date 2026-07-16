@@ -127,12 +127,17 @@ interface FraudResult {
   reason: string | null;
 }
 
+// Countries the affiliate programs actually pay for (Tier-1 target markets).
+// UK arrives as 'GB' from Cloudflare's CF-IPCountry header.
+const MONETIZABLE_COUNTRIES = new Set(['US', 'GB', 'CA', 'AU']);
+
 /**
  * Run fraud heuristics on a click before recording it.
  *
  * Checks (in order):
  *  1. Bot User-Agent signature match
- *  2. Duplicate click: same IP + same link within 60 s
+ *  2. Off-target geography (non-monetizable / bot-prone)
+ *  3. Duplicate click: same IP + same link within 60 s (IP velocity)
  *
  * Non-blocking — if the Supabase check fails, defaults to "not suspicious"
  * to avoid false positives on legitimate clicks.
@@ -141,8 +146,9 @@ async function detectFraud(params: {
   ip: string;
   userAgent: string;
   linkId: string;
+  countryCode: string;
 }): Promise<FraudResult> {
-  const { ip, userAgent, linkId } = params;
+  const { ip, userAgent, linkId, countryCode } = params;
   const reasons: string[] = [];
 
   // 1. Bot UA check
@@ -150,22 +156,31 @@ async function detectFraud(params: {
     reasons.push('bot_ua');
   }
 
-  // 2. Duplicate-IP click within 60 seconds for the same link
+  // 2. Off-target geography. The affiliate programs only pay for US/UK/CA/AU.
+  // An English-language US/UK/CA/AU finance site receiving clicks from other
+  // countries is overwhelmingly bot/proxy traffic (the live data was dominated
+  // by VN/IL/CN + a long single-click tail) and is not monetizable. Flag it so
+  // it is excluded from conversion-rate / EPC denominators. 'XX' (unknown geo)
+  // is left UNflagged to avoid false positives on geo-unavailable real users.
+  if (countryCode && countryCode !== 'XX' && !MONETIZABLE_COUNTRIES.has(countryCode)) {
+    reasons.push('off_target_geo');
+  }
+
+  // 3. Duplicate-IP click within 60 seconds for the same link (IP velocity).
   // Uses index: idx_link_clicks_ip_link_time
   if (ip && ip !== 'unknown') {
     try {
       const supabase = createServiceClient();
       const cutoff = new Date(Date.now() - 60_000).toISOString(); // 60 s ago
-      const { data } = await supabase
+      const { count } = await supabase
         .from('link_clicks')
         .select('click_id', { count: 'exact', head: true })
         .eq('ip_address', ip)
         .eq('link_id', linkId)
-        .gte('clicked_at', cutoff)
-        .limit(1);
+        .gte('clicked_at', cutoff);
 
-      // If data has results (or count > 0), it's a duplicate
-      if (data !== null) {
+      // count > 0 → a prior click from this IP+link within the window
+      if ((count ?? 0) > 0) {
         reasons.push('duplicate_ip');
       }
     } catch {
@@ -220,7 +235,7 @@ export async function trackClick(slug: string): Promise<string | null> {
   const userAgent = headersList.get('user-agent') || '';
 
   // ── Fraud Detection ────────────────────────────────────────
-  const fraud = await detectFraud({ ip, userAgent, linkId: link.id });
+  const fraud = await detectFraud({ ip, userAgent, linkId: link.id, countryCode });
 
   if (fraud.isSuspicious) {
     console.warn(
