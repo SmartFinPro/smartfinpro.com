@@ -14,7 +14,7 @@ export default defineConfig({
     environment: 'node',
     globals: true,
     setupFiles: ['./vitest.setup.ts'],
-    include: ['__tests__/**/*.test.ts'],
+    include: ['__tests__/**/*.test.ts', 'lib/**/*.test.ts'],
     exclude: ['node_modules', '.next', 'e2e', '__tests__/integration/**'],
     reporters: [
       'default',
