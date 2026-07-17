@@ -87,19 +87,10 @@ export function generateReviewSchema(review: ReviewData) {
       worstRating: 1,
     },
     author: {
-      '@type': 'Person',
-      name: review.author || 'SmartFinPro Editorial Team',
-      url: `${BASE_URL}/about`,
+      '@type': 'Organization',
+      name: 'SmartFinPro',
+      url: BASE_URL,
     },
-    // Phase 1 GEO — Fact-Checker Integration (separate from author)
-    // reviewedBy = the expert who fact-checked and reviewed the article
-    ...(review.reviewedBy && {
-      reviewedBy: {
-        '@type': 'Person',
-        name: review.reviewedBy.split(',')[0].trim(),
-        url: `${BASE_URL}/about`,
-      },
-    }),
     publisher: {
       '@type': 'Organization',
       name: 'SmartFinPro',
@@ -243,18 +234,10 @@ export function generateArticleSchema(article: {
     description: article.description,
     image: article.image || `${BASE_URL}/og-image.png`,
     author: {
-      '@type': 'Person',
-      name: article.author || 'SmartFinPro Editorial Team',
-      url: `${BASE_URL}/about`,
+      '@type': 'Organization',
+      name: 'SmartFinPro',
+      url: BASE_URL,
     },
-    // Fact-Checker / Reviewer node — boosts EEAT trust signal for AI crawlers
-    ...(article.reviewedBy && {
-      reviewedBy: {
-        '@type': 'Person',
-        name: article.reviewedBy,
-        url: article.reviewedByUrl || `${BASE_URL}/about`,
-      },
-    }),
     publisher: {
       '@type': 'Organization',
       name: 'SmartFinPro',
@@ -276,7 +259,11 @@ export function generateArticleSchema(article: {
  * Person Schema - For author/expert profiles
  * Used to identify individual contributors and experts on the site
  *
- * Phase 2 GEO: Added sameAs (LinkedIn) + hasCredential (CFA, CFP, etc.)
+ * 2026-07-17 editorial-integrity fix: `hasCredential` /
+ * EducationalOccupationalCredential emission was removed — SmartFinPro has
+ * no verified individual credential holders, so no credential nodes may be
+ * emitted here. The `credentials` param is accepted but intentionally unused
+ * to avoid a TS excess-property break at call sites.
  */
 export function generatePersonSchema(person: {
   name: string;
@@ -287,7 +274,7 @@ export function generatePersonSchema(person: {
   affiliateLinks?: string[];
   /** External profile URLs (LinkedIn, etc.) — emitted as sameAs array */
   sameAs?: string[];
-  /** Professional credentials / certifications (CFA, CFP, CIM, CISI, …) */
+  /** @deprecated no longer emitted — see EducationalOccupationalCredential removal (2026-07-17) */
   credentials?: string[];
   /** Topics the expert is known for — boosts relevance for AI models */
   knowsAbout?: string[];
@@ -303,14 +290,6 @@ export function generatePersonSchema(person: {
     // External social profiles — primary GEO signal for AI crawlers
     ...(person.sameAs && person.sameAs.length > 0 && {
       sameAs: person.sameAs,
-    }),
-    // Professional credentials as EducationalOccupationalCredential nodes
-    ...(person.credentials && person.credentials.length > 0 && {
-      hasCredential: person.credentials.map((cred) => ({
-        '@type': 'EducationalOccupationalCredential',
-        credentialCategory: cred,
-        name: cred,
-      })),
     }),
     // Expert topic coverage — helps AI models understand authority scope
     ...(person.knowsAbout && person.knowsAbout.length > 0 && {

@@ -35,7 +35,7 @@ import { StickyFooterCTA } from '@/components/marketing/sticky-footer-cta';
 import { SafeMDX } from '@/components/content/SafeMDX';
 import { TrustBlockTracker } from '@/components/marketing/trust-block-tracker';
 import { MiniQuiz } from '@/components/marketing/mini-quiz';
-import { generateReviewSchema, generatePersonSchema, generateArticleSchema, generateBreadcrumbSchema, generateFAQSchema } from '@/lib/seo/schema';
+import { generateReviewSchema, generateArticleSchema, generateBreadcrumbSchema, generateFAQSchema } from '@/lib/seo/schema';
 import { RiskWarningBox } from '@/components/marketing/risk-warning';
 import { AffiliateDisclosure } from '@/components/ui/affiliate-disclosure';
 import { categoryConfig } from '@/lib/i18n/config';
@@ -251,37 +251,6 @@ export function ReportLayout({
                 reviewedBy: reviewerName,
                 reviewedByUrl: reviewerLinkedIn || 'https://smartfinpro.com/about',
               }),
-            })),
-          }}
-        />
-      )}
-
-      {/* Schema.org JSON-LD — Person schema for expert reviewer (EEAT) */}
-      {showExpertCards && reviewerName && (
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify(generatePersonSchema({
-              name: reviewerName,
-              // url = canonical SFP profile; LinkedIn goes into sameAs
-              url: 'https://smartfinpro.com/about',
-              jobTitle: reviewerTitle !== 'Expert Reviewer' ? reviewerTitle : undefined,
-              image: expertImage ? `https://smartfinpro.com${expertImage}` : undefined,
-              description: reviewerBio,
-              // Phase 2 GEO — LinkedIn sameAs (external social proof signal)
-              ...(reviewerLinkedIn && {
-                sameAs: [reviewerLinkedIn],
-              }),
-              // Phase 2 GEO — Credentials as EducationalOccupationalCredential nodes
-              ...(reviewerCredentials.length > 0 && {
-                credentials: reviewerCredentials,
-              }),
-              // Phase 2 GEO — Expert knowledge scope for AI crawlers
-              knowsAbout: [
-                categoryConfig[category]?.name || categoryName,
-                'Financial Product Reviews',
-                'Investment Analysis',
-              ],
             })),
           }}
         />
