@@ -27,7 +27,10 @@
 
 **Warum die Titel der scharfe Punkt sind:** CFA ist eine eingetragene Marke des CFA Institute, CFP eine Zertifizierungsmarke des CFP Board, CPA in US-Bundesstaaten gesetzlich geschützt. In Australien — Markt #2 — ist das Führen von Finanzberater-Titeln ohne Eintrag im ASIC-Register nach Corporations Act s923C **strafbewehrt**. Das ist eine andere Kategorie als eine irreführende Werbeaussage.
 
-**Bewusst offen (nicht angenommen):** Die `review_count`-Werte (48567, 312, 542, …) sind **nicht verifiziert**. Sie könnten legitime Anbieterdaten sein (z. B. echte App-Store-Bewertungen). Task 7 klärt das, statt es zu unterstellen.
+**Task 7 ist am 2026-07-17 geklärt — nicht mehr offen.** Die `review_count`-Werte zerfallen in zwei Fälle mit unterschiedlichem Fix:
+- **273 Cockpit-Werte: NICHT erfunden, aber falsch zugeordnet.** Es sind echte **App-Store-Bewertungen der Banking-App** des Anbieters (`scripts/seed-credit-card-companies.mjs:23ff` dokumentiert `review_source: 'App Store iOS'`). Live steht aber „Chase — 4.8 ★, 3,500,000 reviews" neben einer **Kreditkarte**. → **exakt beschriften** statt löschen (Weg (b) im Inventar).
+- **8 MDX-Werte: erfunden.** `schema.review_count` sitzt auf Kategorie-Indizes (`au/superannuation/index.mdx`: 328) und Vergleichsartikeln (`etoro-vs-robinhood.mdx`: live sichtbar „48,567 Ratings"). Keine mögliche Quelle. → **ersatzlos entfernen.**
+- **Entwarnung:** `AggregateRating`-JSON-LD wird **nirgends ausgeliefert** (0 Vorkommen live). Die Werte erscheinen nur als sichtbarer Text.
 
 ---
 
@@ -339,28 +342,63 @@ git commit -am "chore: remove fabricated expert portraits, routing and database 
 
 ---
 
-## Task 7: `review_count` verifizieren — NICHT annehmen
+## Task 7: `review_count` — zwei Fälle, zwei Fixes  ·  **Modell: Haiku (Mechanik)**
 
-**Files:** `content/**/*.mdx` (8 Dateien), `lib/seo/schema.ts`
+**Geklärt am 2026-07-17. Nichts mehr zu untersuchen — nur auszuführen.**
 
-- [ ] **Step 1: Werte und Herkunft prüfen**
+**Files:**
+- Modify: die 8 MDX aus Step 1
+- Modify: `scripts/seed-credit-card-companies.mjs`, `product_attributes` (Beschriftung)
 
-```bash
-grep -rn "review_count:" content/
+- [ ] **Step 1: Die 8 erfundenen Werte ersatzlos entfernen**
+
+Betroffen (verifiziert):
+```
+content/us/trading/etoro-vs-robinhood.mdx
+content/ca/tax-efficient-investing/wealthsimple-vs-questrade.mdx
+content/ca/housing/best-mortgage-rates-canada.mdx
+content/au/superannuation/index.mdx
+content/cross-market/green-finance-esg-guide.mdx
+content/cross-market/best-ai-financial-advisors.mdx
+content/cross-market/ai-financial-coaching.mdx
+content/cross-market/best-esg-funds.mdx
 ```
 
-Werte: 48567, 312, 542, 328, 267, 298, 201, 184.
+Aus dem Frontmatter den kompletten `schema:`-Block mit `rating` + `review_count` entfernen. **Kein Ersatzwert, keine Schaetzung.** Grund: Diese Werte sitzen auf Kategorie-Indizes und Vergleichsartikeln — es gibt niemanden, der sie bewertet haben koennte.
 
-- [ ] **Step 2: Für jeden Wert entscheiden**
-
-- Stammt der Wert aus einer **belegbaren Anbieterquelle** (z. B. App-Store-Bewertungen)? → behalten, **Quelle im Frontmatter dokumentieren**, im Text als fremde Bewertung ausweisen.
-- Ist er **erfunden**? → `AggregateRating` ersatzlos entfernen. Erfundene Bewertungszahlen sind exakt der Kern von FTC 16 CFR Part 465.
-- **Im Zweifel: entfernen.**
-
-- [ ] **Step 3: Commit**
+- [ ] **Step 2: Verifizieren**
 
 ```bash
-git commit -am "fix(seo): remove unverifiable AggregateRating claims"
+grep -rn "review_count" content/ | wc -l   # erwartet: 0
+curl -sL "https://smartfinpro.com/us/trading/etoro-vs-robinhood" | grep -c "48,567"   # erwartet nach Deploy: 0
+```
+
+- [ ] **Step 3: Die 273 Cockpit-Werte exakt beschriften (NICHT loeschen)**
+
+Die Zahl ist echt — es ist die App-Store-Bewertung der Banking-App. Falsch ist nur die Etikettierung. Im Cockpit-UI muss aus
+
+`Chase — 4.8 ★, 3,500,000 reviews`
+
+werden:
+
+`Chase Mobile app: 4.8★ · ~3.5M App Store ratings (iOS)`
+
+Regeln: Das Wort **"app"** ist Pflicht. Nie als Bewertung des Finanzprodukts. Nie als `AggregateRating`. `source_url` fuer diesen Wert auf das App-Store-Listing setzen — die aktuelle Marketing-URL belegt ihn nicht.
+
+- [ ] **Step 4: Guard-Muster ergaenzen**
+
+In `lib/editorial/forbidden-claims.ts` aufnehmen, damit die Fehl-Etikettierung nicht zurueckkehrt:
+
+```typescript
+{ pattern: /\d[\d,\.]*\s*(reviews|ratings)(?!.{0,40}\bapp\b)/i,
+  reason: 'Fremdbewertung ohne "app"-Kennzeichnung — App-Store-Werte sind keine Produktbewertungen.' },
+```
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add content scripts lib/editorial
+git commit -m "fix: remove 8 fabricated review counts, relabel app-store ratings as app ratings"
 ```
 
 ---
