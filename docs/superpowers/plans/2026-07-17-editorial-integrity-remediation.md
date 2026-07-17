@@ -49,9 +49,12 @@
 | `app/(marketing)/integrity/page.tsx:54` | **hartkodiertes `EXPERTS`-Array** — sichtbar (Z. 220) + JSON-LD `jobTitle: credentials` (Z. 727) | **8** |
 | `app/(marketing)/about/page.tsx:34` | **hartkodiertes `allAuthors`-Array** — sichtbar (Z. 253) + JSON-LD `founders` (Z. 727) | **8** |
 | `components/marketing/expert-verifier.tsx` | löschen | 4 |
-| `components/marketing/expert-box.tsx` | löschen | 4 |
+| `components/marketing/expert-box.tsx` | ⚠️ **NICHT löschen** — enthält auch `TrustAuthority` (212 MDX!) + `MethodologyBox` (76), beide gesperrt. Aufteilen. | **5a** |
+| `components/marketing/trust-blocks.tsx` | NEU — `TrustAuthority` + `MethodologyBox` byte-gleich, personenfrei | **5a** |
+| `lib/comparison/bridge.ts` · `components/marketing/decision-bridge.tsx` | Market Check (V15-Vertrag) | **5a** |
 | `components/marketing/expert-verdict-box.tsx` | → `editorial-verdict-box.tsx` (Inhalt bleibt, Person raus) | 4 |
-| `content/**/*.mdx` (216) | `reviewedBy` raus, `author` → Marke | 5 |
+| 4 Pilot-MDX | `<ExpertBox>` raus, `<DecisionBridge />` rein, `reviewedBy` raus | **5b** |
+| `content/**/*.mdx` (~199 Rest) | Codemod — erst nach 5b-Freigabe **und** Task 10 | **5c** |
 | `lib/actions/experts.ts` · `lib/experts/image-routing.ts` | entfernen | 6 |
 | `public/images/experts/*.jpg` (18) | löschen | 6 |
 | `app/(marketing)/{integrity,review-policy,editorial-policy,methodology,corrections-policy,about}/page.tsx` | Neutext | 8 |
@@ -283,42 +286,97 @@ git commit -am "refactor(marketing): remove fabricated expert components, keep e
 
 ---
 
-## Task 5: Die 216 MDX-Dateien
+## Task 5a: expert-box.tsx aufteilen + Market Check bauen  ·  **Modell: Sonnet**
 
-**Files:** `content/**/*.mdx`
+> **Vertrag:** `docs/superpowers/specs/2026-07-17-cockpit-bridge-design.md` — **der V15-Abschnitt am Ende hat Vorrang.** Pixel-Referenz: `docs/superpowers/specs/assets/2026-07-17-market-check/market-check-v15.html`.
 
-- [ ] **Step 1: Ist-Zustand festhalten**
+**⚠️ Task 4 hat bewiesen, warum `expert-box.tsx` NICHT gelöscht werden darf:** Die Datei exportiert vier Komponenten. `ExpertBox` (203 MDX) und `ExpertEndorsement` (20) sind Personas — aber **`TrustAuthority` steckt in 212 MDX-Dateien** und `MethodologyBox` in 76. Beide sind personenfrei und stehen laut `memory/design-system-locked.md` unter Änderungssperre.
 
-```bash
-grep -rl "reviewedBy" content/ | wc -l   # erwartet: 216
-```
+**Files:**
+- Create: `components/marketing/trust-blocks.tsx` — `TrustAuthority` + `MethodologyBox` **byte-gleich** verschoben, keine Änderung
+- Modify: `components/marketing/expert-box.tsx` — nur noch `ExpertBox`/`ExpertEndorsement`, bleibt bis Task 5b bestehen (225 MDX-Tags zeigen noch darauf)
+- Create: `lib/comparison/bridge.ts` (server-only) — Datenschicht
+- Create: `components/marketing/decision-bridge.tsx` — die Komponente
+- Modify: `lib/mdx/components.tsx` — `DecisionBridge` registrieren, `TrustAuthority`/`MethodologyBox` aus der neuen Datei
 
-- [ ] **Step 2: `reviewedBy` ersatzlos entfernen**
-
-```bash
-find content -name '*.mdx' -exec sed -i '' '/^reviewedBy:/d' {} +
-grep -rl "reviewedBy" content/ | wc -l   # erwartet: 0
-```
-
-- [ ] **Step 3: `author` auf die Marke vereinheitlichen**
-
-Bestehende Werte wie `SmartFinPro AU Finance Team` behaupten ein Team. Vereinheitlichen auf `SmartFinPro Research`:
+- [ ] **Step 1: Split zuerst, mit Beweis der Unveränderlichkeit**
 
 ```bash
-find content -name '*.mdx' -exec sed -i '' -E "s/^author: .*/author: SmartFinPro Research/" {} +
+git mv --force /dev/null 2>/dev/null || true
+# TrustAuthority + MethodologyBox nach trust-blocks.tsx, dann:
+npx next build --webpack   # muss gruen sein
+```
+Beweis erbringen, dass `TrustAuthority` byte-gleich ist:
+```bash
+git show HEAD:components/marketing/expert-box.tsx | sed -n '/export function TrustAuthority/,/^}/p' > /tmp/ta-before.txt
+sed -n '/export function TrustAuthority/,/^}/p' components/marketing/trust-blocks.tsx > /tmp/ta-after.txt
+diff /tmp/ta-before.txt /tmp/ta-after.txt && echo "IDENTISCH"
 ```
 
-- [ ] **Step 4: Frontmatter-Schema nachziehen**
+- [ ] **Step 2: `<DecisionBridge />` ist PROPLOS**
 
-`reviewedBy` aus Typdefinition und Validierung entfernen (`lib/mdx/`), damit ein Rückfall am Typ scheitert.
+```tsx
+/** MDX-Tag. Bewusst PROPLOS — es gibt kein Feld, in das jemand etwas erfinden koennte.
+ *  Genau ueber Props kam die Fabrikation herein:
+ *  <ExpertBox name="…" credentials="CFA, AFA" quote="My top recommendation…" />
+ *  Alle Daten kommen serverseitig aus getCockpitData per Context. */
+export function DecisionBridge(): JSX.Element | null
+```
 
-- [ ] **Step 5: Build + Commit**
+- [ ] **Step 3: Array-Guards — bekannte Falle in genau diesem Codebase**
+
+`memory/ssr-mdx-unguarded-array-props`: ein ungeguardetes `.map()` in einer SSR-MDX-Komponente hat schon einmal **Review-Bodies geleert — mit HTTP 200**, also unbemerkt. Bei 203 Seiten waere das teuer.
+
+**Pflicht:** jedes Array vor `.map`/`.length` mit `Array.isArray()` pruefen; `products?.length ? … : null`. Kein optionales Feld ohne Guard.
+
+- [ ] **Step 4: Berechnete Zeilen, nicht geschriebene**
+
+`Strongest`/`Weakest` aus `sub_scores` (max/min). Verdict-Spread aus `max(score) − min(score)` und `count`. **Keine Superlative aus `best_for`/`pros`/`deep_dive` uebernehmen** — sie sind ungeprueft (siehe Audit-Blocker in der Spec).
+
+- [ ] **Step 5: Guard-Muster ergaenzen**
+
+In `lib/editorial/forbidden-claims.ts`: die neue Komponente darf nie Personen/Titel tragen.
+
+- [ ] **Step 6: Verifikation**
 
 ```bash
-npx next build --webpack
-git add content lib/mdx
-git commit -m "content: remove 27 fabricated reviewers and their credentials from 216 pages"
+npx vitest run && npx next build --webpack
+grep -rl "<TrustAuthority" content/ | wc -l   # erwartet: 212 (unveraendert)
 ```
+
+- [ ] **Step 7: Commit** (deutsch, `Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>`)
+
+---
+
+## Task 5b: PILOT mit 4 Artikeln — KEIN Codemod  ·  **Modell: Sonnet**
+
+> **Betreiber-Entscheidung 2026-07-17:** „nicht sofort per Codemod über 203 Dateien ausrollen. Erst eToro plus 2–3 unterschiedliche Reviewseiten testen, insbesondere mobil und bei fehlenden Daten. Danach automatisiert skalieren."
+
+**Die vier Piloten:**
+| Artikel | prueft |
+|---|---|
+| `content/us/trading/etoro-review.mdx` | **Zustand A** — Produkt im Feld, `review_slug`-Match |
+| ein Artikel **mit** Cockpit, **ohne** `review_slug`-Match | **Zustand B** — Field at a glance |
+| ein `content/cross-market/*.mdx` | **Zustand C** — rendert `null` |
+| einer mit **langem Produktnamen** (z. B. `interactive-brokers-review`) | Mobil-Umbruch bei 390px |
+
+- [ ] **Step 1:** In diesen 4 Dateien `<ExpertBox …>` (samt Zitat, Name, Titeln, `credentials`) **ersatzlos** entfernen, `<DecisionBridge />` an dieselbe Stelle, `reviewedBy` aus dem Frontmatter.
+- [ ] **Step 2:** Fuer die Pilot-Produkte `pros`/`cons`/`best_for` **von Hand pruefen** — der Superlativ-Audit im Kleinen.
+- [ ] **Step 3: Live-Beweis gegen den geleerten Body.** Prod-Build + `curl`, **h2-Zaehlung** pro Pilotseite (gesunde Review ≈ 17 h2). Ein leerer Body liefert **200**, nicht 500 — nur die h2-Zahl verraet ihn.
+- [ ] **Step 4:** Mobil 390px: kein Umbruch in Strip-Zeilen, Marker verdeckt keine Ziffer.
+- [ ] **Step 5:** Zustand C: HTML enthaelt **keinen** leeren Kasten, kein Platzhalter.
+- [ ] **Step 6: STOP.** Ergebnis vorlegen. Der Codemod ueber die restlichen ~199 laeuft **erst nach Freigabe** — und erst nach dem Claim-Audit (Task 10).
+
+---
+
+## Task 5c: Codemod ueber die restlichen ~199  ·  **Modell: Haiku (Mechanik)**
+
+**Startet NICHT vor Task 5b-Freigabe UND Task 10 (Claim-Audit).**
+
+- [ ] `<ExpertBox>`/`<ExpertEndorsement>`/`<ExpertVerifier>` samt der **205 erfundenen Zitate** aus allen MDX entfernen, `<DecisionBridge />` einsetzen, `reviewedBy` streichen.
+- [ ] Danach: `ExpertBox`/`ExpertEndorsement` aus `expert-box.tsx` loeschen, Datei entfaellt; `expert-verifier.tsx` loeschen.
+- [ ] `grep -rl "<ExpertBox" content/` → 0 · `grep -rn "reviewedBy" content/` → 0
+- [ ] 6 Artikel ohne Cockpit (`cross-market` ×4, `us/credit-score` ×2) rendern `null` — der Tag bleibt trotzdem drin und aktiviert sich automatisch, sobald ein Cockpit live geht.
 
 ---
 
@@ -516,3 +574,29 @@ git commit -am "test: enable editorial integrity guard — regressions now fail 
 - Task 3 zuerst: kleinste Änderung, höchstes Risiko.
 - Task 8 erst nach 3–6: sonst wird Prosa geschrieben, die gleich wieder bricht.
 - Task 9 ist das Schlussgate — vorher darf nichts als „fertig" gelten.
+
+---
+
+## Task 10: Claim-Audit über 273 Zeilen  ⛔ **BLOCKER vor Task 5c**  ·  **Modell: Sonnet + Opus-Review**
+
+**Files:** `product_attributes` (273 Zeilen), `scripts/*.mjs`
+
+**Der Beweis, dass das nötig ist:** Ein einziger widerlegter Superlativ steht bei **einem** Produkt an **vier** Stellen. `options_fee` ist bei eToro **0.0** — bei **Webull ebenfalls 0.0**. Trotzdem:
+
+| Feld | Inhalt |
+|---|---|
+| `best_for` | „**Cheapest** options trading" |
+| `deep_dive` | „the **only** broker in this comparison charging genuinely $0" |
+| `pros[0]` | „$0/contract options — the **only true** zero-fee options broker" |
+| `attributes.options_fee_note` | „The **only true** $0-options broker among these 9" |
+
+Wenn das bei einem Produkt viermal passiert, sagt das genug über die restlichen 272.
+
+- [ ] **Step 1:** Superlative maschinell finden — `only`, `cheapest`, `best`, `lowest`, `fastest`, `no other`, `unmatched`, `#1` — über `best_for`, `deep_dive`, `pros`, `cons`, `chips`, `attributes.*_note`.
+- [ ] **Step 2:** Jeden Treffer gegen die **Feld-Daten** prüfen: Ist der Superlativ innerhalb des Vergleichsfelds wahr? Bei Gleichstand → entschärfen („matched only by X" / „low-cost").
+- [ ] **Step 3:** `confidence_reason` als Feld ergänzen und aus den `cons` befüllen. Beleg, dass es geht: eToros dritter Con lautet „Extended-hours trading availability for US accounts is **not established**" — das **ist** der Grund für `confidence: low`, nur im falschen Feld.
+- [ ] **Step 4:** `verified`-Boolean klären — verifiziert von wem, wogegen? Sonst raus.
+- [ ] **Step 5:** Guard-Muster ergänzen, damit Superlative nicht zurückkehren.
+- [ ] **Step 6: Opus-Review** — dieselbe Kategorie wie Marktregeln: Falschheit hat reale Folgen (FTC §5, FCA, ASIC s12DA).
+
+**Warum das VOR Task 5c muss:** Der Market Check zeigt `best_for` im Strip. Ein unbelegter Superlativ auf 199 Seiten ist schlimmer als auf einer. Und falls später grüne Haken dazukommen: **ein Haken ist ein Verifikationssignal** und beglaubigt, was daneben steht.
