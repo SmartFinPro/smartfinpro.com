@@ -30,7 +30,7 @@ import { ProtocolBridge } from '@/components/marketing/ProtocolBridge';
 import { FrictionlessCTA } from '@/components/marketing/frictionless-cta';
 import { StickyFooterCTA } from '@/components/marketing/sticky-footer-cta';
 import { SafeMDX } from '@/components/content/SafeMDX';
-import { DecisionBridgeProvider } from '@/components/marketing/decision-bridge';
+import { DecisionBridgeProvider, DecisionBridge } from '@/components/marketing/decision-bridge';
 import type { DecisionBridgeData } from '@/lib/comparison/types';
 import { TrustBlockTracker } from '@/components/marketing/trust-block-tracker';
 import { MiniQuiz } from '@/components/marketing/mini-quiz';
@@ -119,9 +119,6 @@ export function ReportLayout({
     month: 'short',
     year: 'numeric',
   });
-  const reportId = Math.abs(
-    review.title.split('').reduce((a, c) => a + c.charCodeAt(0), 0) * 17 + 100000
-  );
   // Guide mode: no rating, no CTA, no pros/cons — clean research paper style
   const isGuide = review.isGuide || false;
   const hasRating = !isGuide && review.rating > 0;
@@ -258,35 +255,9 @@ export function ReportLayout({
               </div>
               <div className="w-px h-4 bg-gray-300 hidden md:block" />
               <div className="flex items-center gap-2" style={{ color: 'var(--sfp-slate)' }}>
-                <span>Report ID: <strong style={{ color: 'var(--sfp-ink)' }}>{reportId}</strong></span>
-              </div>
-              <div className="w-px h-4 bg-gray-300 hidden md:block" />
-              <div className="flex items-center gap-2" style={{ color: 'var(--sfp-slate)' }}>
                 <FileText className="h-3.5 w-3.5" />
                 <span>Sections: <strong style={{ color: 'var(--sfp-ink)' }}>{review.sections?.length || 0}</strong></span>
               </div>
-              {hasRating && (
-                <>
-                  <div className="w-px h-4 bg-gray-300 hidden md:block" />
-                  <div className="flex items-center gap-1.5">
-                    {[...Array(5)].map((_, i) => (
-                      <Star
-                        key={i}
-                        className={`h-4 w-4 ${
-                          i < Math.floor(review.rating)
-                            ? 'text-amber-400 fill-amber-400'
-                            : 'text-gray-300'
-                        }`}
-                      />
-                    ))}
-                    {review.reviewCount > 0 && (
-                      <span className="text-sm font-semibold ml-1" style={{ color: 'var(--sfp-ink)' }}>
-                        ({review.reviewCount})
-                      </span>
-                    )}
-                  </div>
-                </>
-              )}
               <div className="w-px h-4 bg-gray-300 hidden md:block" />
               <div className="flex items-center gap-2" style={{ color: 'var(--sfp-slate)' }}>
                 <span>Format: <strong style={{ color: 'var(--sfp-ink)' }}>{isGuide ? 'Expert Guide' : 'Expert Review'}</strong></span>
@@ -897,11 +868,15 @@ export function ReportLayout({
               {/* Protocol bridge (e.g. Financial Firewall) — sidebar */}
               {protocolBridge && <ProtocolBridge {...protocolBridge} className="" />}
 
-              {/* Report Info Card */}
+              {/* Report Info Card — trimmed (editorial integrity remediation,
+                  2026-07-17): the "Report ID" was a hash decoration
+                  (Math.abs(title-charcodes * 17 + 100000)), never a real
+                  register, and the sidebar CTA duplicated the always-visible
+                  sticky top CTA (StickyReviewNav). Both removed; only the two
+                  real facts — product + publish date — remain. */}
               <div className="rounded-2xl border border-[#E2E8F0] bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)] overflow-hidden">
-                {/* Report Details */}
                 <div className="p-5">
-                  <div className="rounded-xl p-4 mb-4" style={{ background: 'var(--sfp-sky)' }}>
+                  <div className="rounded-xl p-4" style={{ background: 'var(--sfp-sky)' }}>
                     <div className="flex items-center gap-3 mb-3">
                       <div
                         className="w-12 h-12 rounded-lg flex items-center justify-center shrink-0"
@@ -918,83 +893,27 @@ export function ReportLayout({
                         </div>
                       </div>
                     </div>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span style={{ color: 'var(--sfp-slate)' }}>Report ID</span>
-                        <span className="font-semibold" style={{ color: 'var(--sfp-ink)' }}>{reportId}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span style={{ color: 'var(--sfp-slate)' }}>Published</span>
-                        <span className="font-semibold" style={{ color: 'var(--sfp-ink)' }}>{formattedDate}</span>
-                      </div>
-                      {hasRating && (
-                        <div className="flex justify-between items-center">
-                          <span style={{ color: 'var(--sfp-slate)' }}>Rating</span>
-                          <div className="flex items-center gap-1">
-                            {[...Array(5)].map((_, i) => (
-                              <Star
-                                key={i}
-                                className={`h-3.5 w-3.5 ${
-                                  i < Math.floor(review.rating)
-                                    ? 'text-amber-400 fill-amber-400'
-                                    : 'text-gray-300'
-                                }`}
-                              />
-                            ))}
-                            <span className="text-xs font-semibold ml-1" style={{ color: 'var(--sfp-ink)' }}>
-                              ({review.reviewCount})
-                            </span>
-                          </div>
-                        </div>
-                      )}
+                    <div className="flex justify-between text-sm">
+                      <span style={{ color: 'var(--sfp-slate)' }}>Published</span>
+                      <span className="font-semibold" style={{ color: 'var(--sfp-ink)' }}>{formattedDate}</span>
                     </div>
                   </div>
-
-                  {/* Primary CTA (reviews with affiliate only) */}
-                  {hasAffiliate && (
-                    <div className="pt-3 border-t border-gray-100">
-                      <TrackedAffiliateLink
-                        href={review.affiliateUrl}
-                        className="w-full h-12 text-base font-normal border-0 shadow-md hover:shadow-lg transition-all rounded-2xl inline-flex items-center justify-center no-underline hover:no-underline hover:brightness-110"
-                        style={{ background: 'var(--sfp-gold)', color: 'var(--sfp-ink)', textDecoration: 'none' }}
-                        eventLabel={primaryCtaLabel}
-                        market={market}
-                        category={category}
-                        pageType="review"
-                        layoutVariant="decision_first"
-                        placement="sidebar_primary"
-                      >
-                        {primaryCtaLabel} <ArrowRight className="ml-2 h-4 w-4" />
-                      </TrackedAffiliateLink>
-                      <p className="mt-2 text-[11px] leading-snug" style={{ color: 'var(--sfp-slate)' }}>
-                        No obligation. Approval, fees, and outcomes depend on your debt profile and state regulations.
-                      </p>
-                    </div>
-                  )}
                 </div>
               </div>
 
-              {/* Trust Badge Card */}
-              <div className="rounded-2xl border border-[#E2E8F0] bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.04)] text-center">
-                <div className="text-sm font-semibold mb-2" style={{ color: 'var(--sfp-ink)' }}>
-                  Trusted by <strong style={{ color: 'var(--sfp-navy)' }}>50,000+</strong> professionals
+              {/* Market Check (DecisionBridge) — replaces the fabricated
+                  "Trusted by 50,000+ professionals" / "Expert-reviewed &
+                  independently verified" / "✓ Verified" / "By {reviewedBy}"
+                  card with real, cockpit-derived rank/score data. Renders
+                  nothing when no cockpit resolves for this article (Zustand
+                  C) — see docs/superpowers/specs/2026-07-17-cockpit-bridge-design.md. */}
+              {decisionBridge && (
+                <div className="rounded-2xl border border-[#E2E8F0] bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)] overflow-hidden p-5">
+                  <DecisionBridgeProvider data={decisionBridge}>
+                    <DecisionBridge />
+                  </DecisionBridgeProvider>
                 </div>
-                <p className="text-xs mb-3" style={{ color: 'var(--sfp-slate)' }}>
-                  Expert-reviewed &amp; independently verified
-                </p>
-                <div className="flex items-center justify-center gap-4">
-                  <div className="flex items-center gap-1">
-                    <Shield className="h-4 w-4" style={{ color: 'var(--sfp-green)' }} />
-                    <span className="text-xs font-medium" style={{ color: 'var(--sfp-green)' }}>Verified</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <User className="h-4 w-4" style={{ color: 'var(--sfp-navy)' }} />
-                    <span className="text-xs font-medium" style={{ color: 'var(--sfp-navy)' }}>
-                      {review.reviewedBy ? `By ${review.reviewedBy.split(',')[0]}` : 'Expert Review'}
-                    </span>
-                  </div>
-                </div>
-              </div>
+              )}
 
               {/* Author Info */}
               <div className="rounded-2xl border border-[#E2E8F0] bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
@@ -1021,6 +940,14 @@ export function ReportLayout({
                   </div>
                 </div>
               </div>
+
+              {/* Affiliate disclosure — unobtrusive, category-neutral (editorial
+                  integrity remediation, 2026-07-17). Replaces a debt-relief-specific
+                  disclaimer ("depend on your debt profile and state regulations")
+                  that was rendering on every category, including this one. */}
+              <p className="px-1 text-[10px] leading-snug" style={{ color: 'var(--sfp-slate)' }}>
+                SmartFinPro may earn an affiliate commission when you use links on this page. Commissions do not influence our rankings or ratings.
+              </p>
 
             </div>
           </aside>

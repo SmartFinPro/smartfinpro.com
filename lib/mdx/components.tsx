@@ -63,7 +63,6 @@ import { CTABox } from '@/components/marketing/cta-box';
 import { FAQSection } from '@/components/marketing/faq-section';
 import { ComparisonTable, SimpleComparison } from '@/components/marketing/comparison-table';
 import { StarRating, TrustBadges } from '@/components/marketing/trust-badges';
-import { ExpertBox, ExpertEndorsement } from '@/components/marketing/expert-box';
 import { TrustAuthority, MethodologyBox } from '@/components/marketing/trust-blocks';
 import { DecisionBridge } from '@/components/marketing/decision-bridge';
 import {
@@ -140,7 +139,6 @@ import { AnalysisTable, ScopeTable, RankingTable } from '@/components/marketing/
 import { FrictionlessCTA } from '@/components/marketing/frictionless-cta';
 import { EvidenceCarousel } from '@/components/marketing/evidence-carousel';
 import { StickyComparisonBar } from '@/components/marketing/sticky-comparison-bar';
-import { ExpertVerifier } from '@/components/marketing/expert-verifier';
 import { ProtocolBridge } from '@/components/marketing/ProtocolBridge';
 import { ContentTypeTag } from '@/components/marketing/ContentTypeTag';
 import { WinnerAtGlance } from '@/components/marketing/winner-at-glance';
@@ -151,6 +149,16 @@ import { TrustBar } from '@/components/marketing/trust-bar';
 // MiniQuiz uses Dialog which causes Turbopack bundling issues in mdxComponents.
 // Render MiniQuiz via ReportLayout instead (outside MDX pipeline).
 function MiniQuiz() { return null; }
+
+// Editorial integrity remediation (2026-07-17): <ExpertBox>, <ExpertEndorsement>,
+// and <ExpertVerifier> rendered fabricated names/credentials/quotes across 203
+// review MDX files (see docs/superpowers/specs/2026-07-17-cockpit-bridge-design.md).
+// Repointing the three tags here — instead of editing every MDX file — retires
+// the fabrication everywhere at once. Props are intentionally untyped/ignored:
+// whatever an MDX author writes into these tags never reaches the DOM. The real
+// components stay on disk (components/marketing/expert-box.tsx,
+// expert-verifier.tsx) but are no longer reachable from the MDX pipeline.
+function NullPersonaBlock(_props: Record<string, unknown>) { return null; }
 
 // Tip Component — Sky background + Navy left border (per Konzept 7.3 Info-Box)
 function Tip({ children }: { children: React.ReactNode }) {
@@ -1828,8 +1836,8 @@ export const mdxComponents = {
   SimpleComparison,
   StarRating,
   TrustBadges,
-  ExpertBox,
-  ExpertEndorsement,
+  ExpertBox: NullPersonaBlock,
+  ExpertEndorsement: NullPersonaBlock,
   TrustAuthority,
   MethodologyBox,
   DecisionBridge,
@@ -1875,7 +1883,7 @@ export const mdxComponents = {
   ComparisonHub,
   FrictionlessCTA,
   StickyComparisonBar,
-  ExpertVerifier,
+  ExpertVerifier: NullPersonaBlock,
   ProtocolBridge,
   ContentTypeTag,
   WinnerAtGlance,
