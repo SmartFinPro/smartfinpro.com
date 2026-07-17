@@ -63,12 +63,9 @@ import { CTABox } from '@/components/marketing/cta-box';
 import { FAQSection } from '@/components/marketing/faq-section';
 import { ComparisonTable, SimpleComparison } from '@/components/marketing/comparison-table';
 import { StarRating, TrustBadges } from '@/components/marketing/trust-badges';
-import {
-  ExpertBox,
-  ExpertEndorsement,
-  TrustAuthority,
-  MethodologyBox,
-} from '@/components/marketing/expert-box';
+import { ExpertBox, ExpertEndorsement } from '@/components/marketing/expert-box';
+import { TrustAuthority, MethodologyBox } from '@/components/marketing/trust-blocks';
+import { DecisionBridge } from '@/components/marketing/decision-bridge';
 import {
   TrackedCTA,
   HighlightCTA,
@@ -1835,6 +1832,7 @@ export const mdxComponents = {
   ExpertEndorsement,
   TrustAuthority,
   MethodologyBox,
+  DecisionBridge,
   TrackedCTA,
   HighlightCTA,
   InlineCTA,

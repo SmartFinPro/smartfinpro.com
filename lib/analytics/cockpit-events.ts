@@ -24,8 +24,11 @@ export type CockpitEventName =
   | 'cockpit_amount_change'
   | 'cockpit_years_change';
 
-/** Where an event originated. sticky / decision-bar / matcher / body are
- *  reserved — no provider CTA exists on those surfaces today. */
+/** Where an event originated. sticky / decision-bar / matcher are reserved —
+ *  no provider CTA exists on those surfaces today. 'body' is DecisionBridge
+ *  (the Market Check panel inside review/guide article bodies) — its one CTA
+ *  is `ctaMode: 'cockpit'` / `destinationType: 'internal_cockpit'`, never a
+ *  provider offer. */
 export type CockpitSurface =
   | 'cockpit'
   | 'card'
@@ -38,14 +41,17 @@ export type CockpitSurface =
   | 'body';
 
 /** The CTA mode of the ACTUALLY RENDERED link (never product.ctaMode — the
- *  render ladder puts externalUrl before reviewSlug, so they can differ). */
-export type CockpitCtaMode = 'offer' | 'visit' | 'review' | 'unavailable';
+ *  render ladder puts externalUrl before reviewSlug, so they can differ).
+ *  'cockpit' is DecisionBridge's single CTA — it never resolves through
+ *  resolveCockpitCta (no provider offer exists on the 'body' surface). */
+export type CockpitCtaMode = 'offer' | 'visit' | 'review' | 'unavailable' | 'cockpit';
 
 export type CockpitDestinationType =
   | 'affiliate'
   | 'outbound'
   | 'internal_review'
-  | 'unavailable';
+  | 'unavailable'
+  | 'internal_cockpit';
 
 export type CockpitImpressionKind = 'viewport' | 'rendered';
 
