@@ -39,6 +39,15 @@ export interface ContentMeta {
   lossPercentage?: string;
   /** Optional sidebar bridge to a dark "Protocol" landing page (e.g. the Financial Firewall). */
   protocolBridge?: { href: string; title: string; subtitle?: string; chips?: string[] };
+  /**
+   * Optional DecisionBridge ("Market Check") topic override — names a
+   * BEST_X_MANIFEST topic for this article's market/category explicitly.
+   * Only needed where a market/category maps to more than one cockpit topic
+   * (today: only us/personal-finance). See lib/comparison/bridge.ts
+   * (Stufe 1 of the topic-resolution ladder) and
+   * docs/superpowers/specs/2026-07-17-cockpit-bridge-design.md §3.
+   */
+  cockpitTopic?: string;
 }
 
 // ── Currency Map ────────────────────────────────────────────
@@ -89,6 +98,7 @@ function normalizeFrontmatter(raw: Record<string, unknown>): ContentMeta {
     lossPercentage:
       (raw.lossPercentage as string) ?? (raw.loss_percentage as string) ?? undefined,
     protocolBridge: (raw.protocol_bridge as ContentMeta['protocolBridge']) ?? undefined,
+    cockpitTopic: (raw.cockpitTopic as string) ?? undefined,
   };
 }
 

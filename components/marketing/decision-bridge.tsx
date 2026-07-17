@@ -23,6 +23,7 @@
 import { createContext, useContext, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import type { DecisionBridgeData, DecisionBridgeFieldRow } from '@/lib/comparison/types';
+import { buildWeaknessClause } from '@/lib/comparison/verdict';
 import { CockpitImpression } from '@/components/marketing/cockpit-impression';
 import { useCockpitTracking } from '@/lib/analytics/cockpit-tracking';
 
@@ -246,7 +247,14 @@ function StateA({
 
   const stripPlan = buildStripPlan(data.field, position.rank);
   const spread = data.scoreMax - data.scoreMin;
-  const verdictText = `${spread.toFixed(1)} point${spread === 1 ? '' : 's'} separate the highest and lowest score among the ${data.fieldCount} provider${data.fieldCount === 1 ? '' : 's'} analysed.`;
+  const spreadSentence = `${spread.toFixed(1)} point${spread === 1 ? '' : 's'} separate the highest and lowest score among the ${data.fieldCount} provider${data.fieldCount === 1 ? '' : 's'} analysed.`;
+  // Middle sentence of the operator-approved verdict ("Good for … . Consider
+  // alternatives if … . The field is tight … ."). The first sentence stays
+  // out until Task 10 audits `best_for`; this middle one is entirely
+  // computed from `sub_scores` and only renders when the weakest dimension
+  // is a real, nameable trade-off — see lib/comparison/verdict.ts.
+  const weaknessClause = weakest ? buildWeaknessClause(weakest[0], weakest[1], data.fieldBestSubScores) : null;
+  const verdictText = weaknessClause ? `${weaknessClause} ${spreadSentence}` : spreadSentence;
 
   const footItems: ReactNode[] = [];
   if (verifiedLabel) {

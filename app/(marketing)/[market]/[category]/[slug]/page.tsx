@@ -14,6 +14,7 @@ const getCachedContentSlugs = cache(async () => {
 import { ReportLayout } from '@/components/marketing/report-layout';
 import { getEnrichedCtaPartners } from '@/lib/actions/page-cta-partners';
 import { rankOffersByEV } from '@/lib/actions/offer-ev';
+import { getDecisionBridgeData } from '@/lib/comparison/bridge';
 
 interface ContentPageProps {
   params: Promise<{
@@ -155,13 +156,16 @@ export default async function ContentPage({ params }: ContentPageProps) {
       notFound();
     }
 
-    const [relatedArticles, allCategoryContent, ctaPartners, crossCategoryContent] = await Promise.all([
+    const [relatedArticles, allCategoryContent, ctaPartners, crossCategoryContent, decisionBridge] = await Promise.all([
       getRelatedContent(market as Market, category as Category, slug, 3),
       getContentByMarketAndCategory(market as Market, category as Category),
       // URL format must match dashboard: US = no prefix, others = /market prefix
       getEnrichedCtaPartners(`${market === 'us' ? '' : `/${market}`}/${category}/${slug}`),
       // Cross-category content for "Related Topics" section (Topical Authority signal)
       getCrossCategoryContent(market as Market, category as Category, 3),
+      // Market Check / DecisionBridge — replaces <ExpertBox> (editorial integrity
+      // remediation, Task 5b). Never throws; degrades to null internally.
+      getDecisionBridgeData(market as Market, category as Category, slug, content.meta.cockpitTopic),
     ]);
 
     // Sibling reviews: exclude current + index, sorted by quality score DESC.
@@ -211,6 +215,7 @@ export default async function ContentPage({ params }: ContentPageProps) {
           slug={slug}
           protocolBridge={content.meta.protocolBridge}
           miniQuiz={content.meta.miniQuiz}
+          decisionBridge={decisionBridge}
           review={{
             title: content.meta.seoTitle || content.meta.title,
             description: content.meta.description,
@@ -256,13 +261,16 @@ export default async function ContentPage({ params }: ContentPageProps) {
     notFound();
   }
 
-  const [relatedArticles, allCategoryContent, ctaPartners, crossCategoryContent] = await Promise.all([
+  const [relatedArticles, allCategoryContent, ctaPartners, crossCategoryContent, decisionBridge] = await Promise.all([
     getRelatedContent(market as Market, category as Category, slug, 3),
     getContentByMarketAndCategory(market as Market, category as Category),
     // URL format must match dashboard: US = no prefix, others = /market prefix
     getEnrichedCtaPartners(`${market === 'us' ? '' : `/${market}`}/${category}/${slug}`),
     // Cross-category content for "Related Topics" section (Topical Authority signal)
     getCrossCategoryContent(market as Market, category as Category, 3),
+    // Market Check / DecisionBridge — replaces <ExpertBox> (editorial integrity
+    // remediation, Task 5b). Never throws; degrades to null internally.
+    getDecisionBridgeData(market as Market, category as Category, slug, content.meta.cockpitTopic),
   ]);
 
   // Filter sibling reviews (exclude current + index pages)
@@ -295,6 +303,7 @@ export default async function ContentPage({ params }: ContentPageProps) {
         category={category as Category}
         slug={slug}
         miniQuiz={content.meta.miniQuiz}
+        decisionBridge={decisionBridge}
         review={{
           title: content.meta.seoTitle || content.meta.title,
           description: content.meta.description,

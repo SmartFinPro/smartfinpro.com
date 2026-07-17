@@ -30,6 +30,8 @@ import { ProtocolBridge } from '@/components/marketing/ProtocolBridge';
 import { FrictionlessCTA } from '@/components/marketing/frictionless-cta';
 import { StickyFooterCTA } from '@/components/marketing/sticky-footer-cta';
 import { SafeMDX } from '@/components/content/SafeMDX';
+import { DecisionBridgeProvider } from '@/components/marketing/decision-bridge';
+import type { DecisionBridgeData } from '@/lib/comparison/types';
 import { TrustBlockTracker } from '@/components/marketing/trust-block-tracker';
 import { MiniQuiz } from '@/components/marketing/mini-quiz';
 import { generateReviewSchema, generateArticleSchema, generateBreadcrumbSchema, generateFAQSchema } from '@/lib/seo/schema';
@@ -91,6 +93,9 @@ interface ReportLayoutProps {
   crossCategoryContent?: ContentItem[];
   /** Optional sidebar bridge into a dark "Protocol" landing page (e.g. the Financial Firewall). */
   protocolBridge?: { href: string; title: string; subtitle?: string; chips?: string[] };
+  /** Market Check ("DecisionBridge") payload for this article, or null when no
+   *  cockpit resolves (Zustand C). Never throws upstream — see lib/comparison/bridge.ts. */
+  decisionBridge?: DecisionBridgeData | null;
 }
 
 export function ReportLayout({
@@ -105,6 +110,7 @@ export function ReportLayout({
   ctaPartners,
   slug,
   protocolBridge,
+  decisionBridge,
 }: ReportLayoutProps) {
   const marketPrefix = `/${market}`;
   const categoryName = categoryConfig[category]?.name || category.replace('-', ' ');
@@ -521,7 +527,9 @@ export function ReportLayout({
             <div className="rounded-2xl border border-[#E2E8F0] bg-white p-6 md:p-8 shadow-[0_1px_3px_rgba(0,0,0,0.04)] mb-8">
               <div className="prose prose-lg max-w-none">
                 {mdxSource ? (
-                  <SafeMDX source={mdxSource} />
+                  <DecisionBridgeProvider data={decisionBridge ?? null}>
+                    <SafeMDX source={mdxSource} />
+                  </DecisionBridgeProvider>
                 ) : (
                   <p style={{ color: 'var(--sfp-slate)' }}>Review content is being prepared.</p>
                 )}
