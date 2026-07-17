@@ -41,8 +41,13 @@
 | `docs/superpowers/specs/2026-07-17-claims-inventory.md` | Jede Aussage → Realität → Verdikt | 1 |
 | `lib/editorial/forbidden-claims.ts` | Einzige Quelle der verbotenen Claim-Muster | 2 |
 | `lib/editorial/forbidden-claims.test.ts` | Guard-Test über `content/` + `components/` + `app/` | 2 |
-| `lib/seo/schema.ts` (~Z. 281) | Person/Credential-Emission entfernen | 3 |
-| `components/marketing/report-layout.tsx` (~Z. 275) | dito | 3 |
+| `lib/seo/schema.ts` (~Z. 281) | Person/Credential-Emission entfernen | 3 ✅ |
+| `components/marketing/report-layout.tsx` (~Z. 275) | dito | 3 ✅ |
+| `lib/seo/schema.ts:284` (`generatePersonSchema`) | Funktion emittiert weiter `Person` — mit Aufrufern entfernen | **4** |
+| `components/seo/person-schema.tsx` | Aufrufer von `generatePersonSchema` | **4** |
+| `app/(marketing)/[market]/[category]/best/[topic]/page.tsx` | ruft `getMarketExpert` → `Person` auf 38 Cockpit-Routen | **4** |
+| `app/(marketing)/integrity/page.tsx:54` | **hartkodiertes `EXPERTS`-Array** — sichtbar (Z. 220) + JSON-LD `jobTitle: credentials` (Z. 727) | **8** |
+| `app/(marketing)/about/page.tsx:34` | **hartkodiertes `allAuthors`-Array** — sichtbar (Z. 253) + JSON-LD `founders` (Z. 727) | **8** |
 | `components/marketing/expert-verifier.tsx` | löschen | 4 |
 | `components/marketing/expert-box.tsx` | löschen | 4 |
 | `components/marketing/expert-verdict-box.tsx` | → `editorial-verdict-box.tsx` (Inhalt bleibt, Person raus) | 4 |
@@ -232,10 +237,23 @@ git commit -m "fix(seo): stop emitting fabricated Person and credential structur
 
 ---
 
-## Task 4: Expert-Komponenten entfernen
+## Task 4: Expert-Komponenten + restliche Person-Emission entfernen
+
+> ⚠️ **Erweitert 2026-07-17 (Fund aus Task 3):** Task 3 hat `Person` aus `generateReviewSchema`/`generateArticleSchema` und `report-layout.tsx` entfernt. **Vier Emissionsstellen leben weiter** — drei davon gehören hierher:
+> - `lib/seo/schema.ts:284` — `generatePersonSchema` selbst emittiert weiter `'@type': 'Person'`
+> - `components/seo/person-schema.tsx` — Aufrufer
+> - `app/(marketing)/[market]/[category]/best/[topic]/page.tsx` — ruft `getMarketExpert` aus `lib/actions/experts`, emittiert `Person` auf **38 Cockpit-Routen** (live verifiziert auf `/au/superannuation/best-super-funds-australia` und `/us/personal-finance/best/credit-card-companies`)
+> - `components/marketing/expert-verifier.tsx:111,225` — ohnehin in diesem Task
+>
+> Die vierte (`/integrity` + `/about`, hartkodierte Arrays) ist **Task 8**.
+>
+> `lib/actions/experts.ts` wird erst in **Task 6** gelöscht — dieser Task muss den Aufrufer in `best/[topic]/page.tsx` also schon entkoppeln, sonst bricht Task 6 den Build.
 
 **Files:**
 - Delete: `components/marketing/expert-verifier.tsx`, `components/marketing/expert-box.tsx`
+- Delete: `components/seo/person-schema.tsx`
+- Modify: `lib/seo/schema.ts` — `generatePersonSchema` ersatzlos entfernen (keine Aufrufer mehr)
+- Modify: `app/(marketing)/[market]/[category]/best/[topic]/page.tsx` — `getMarketExpert`-Aufruf + Person-JSON-LD entfernen
 - Rename+Modify: `components/marketing/expert-verdict-box.tsx` → `components/marketing/editorial-verdict-box.tsx`
 
 - [ ] **Step 1: Alle Verwendungsstellen finden**
@@ -406,6 +424,18 @@ git commit -m "fix: remove 8 fabricated review counts, relabel app-store ratings
 ## Task 8: Vertrauensseiten neu texten  ⚠️ **OPUS-REVIEW PFLICHT**
 
 **Files:** `app/(marketing)/{integrity,review-policy,editorial-policy,methodology,corrections-policy,about}/page.tsx`
+
+> ⚠️ **Nachgetragen 2026-07-17 (Fund aus Task 3 — der Plan hatte diese Lücke):** `/integrity` und `/about` enthalten **hartkodierte Persona-Arrays direkt im Seiten-Code**:
+> - `app/(marketing)/integrity/page.tsx:54` → `const EXPERTS = [{ name: 'Jessica Miller', credentials: 'CFA, CFP', image: '/images/experts/james-miller.jpg', … }]` — sichtbar gerendert (Z. 220) **und** als JSON-LD emittiert (Z. 727, `jobTitle: expert.credentials` → gibt „CFA, CFP" maschinenlesbar an Google).
+> - `app/(marketing)/about/page.tsx:34` → `const allAuthors = […]` — sichtbar (Z. 253) **und** als `founders`-`Person`-Nodes (Z. 727).
+>
+> Das Array ist die gemeinsame Quelle für Prosa UND JSON-LD. **Beides fällt mit dem Array** — deshalb gehört es hierher und nicht in Task 3. Nach diesem Task darf `grep -rn "'@type': 'Person'" app/` **0 Treffer** liefern.
+>
+> Randnotiz als Fabrikationsbeleg: „Jessica Miller" nutzt `james-miller.jpg`, „Michelle Torres" nutzt `michael-torres.jpg` — dieselben Stock-Porträts über Geschlechter hinweg recycelt.
+
+- [ ] **Step 0: Persona-Arrays entfernen (vor der Prosa)**
+
+`EXPERTS` in `integrity/page.tsx` und `allAuthors` in `about/page.tsx` ersatzlos löschen — samt der sichtbaren Sektionen, die darauf rendern, und der JSON-LD-Blöcke, die daraus `Person`-Nodes bauen. **Keine Ersatz-Personas, kein „Editorial Team"-Platzhalter mit Fantasienamen.**
 
 - [ ] **Step 1: Jede neue Aussage gegen das Inventar aus Task 1 prüfen**
 
