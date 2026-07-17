@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { ExpertVerdictBox } from '@/components/marketing/expert-verdict-box';
+import { EditorialVerdictBox } from '@/components/marketing/editorial-verdict-box';
 import { ComparisonTable } from '@/components/marketing/comparison-table';
 import {
   ArrowRight,
@@ -318,7 +318,7 @@ export default async function BrokerReviewPage({ params }: PageProps) {
           ═══════════════════════════════════════════════════════ */}
       <section className="py-16" style={{ background: 'var(--sfp-gray)' }}>
         <div className="container mx-auto px-4 max-w-4xl">
-          <ExpertVerdictBox
+          <EditorialVerdictBox
             name={review.name}
             verdict={review.verdict}
             pros={pros}

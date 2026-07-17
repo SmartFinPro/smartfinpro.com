@@ -23,9 +23,7 @@ import { PortalSidebar } from '@/components/marketing/portal-sidebar';
 import { ReportCard } from '@/components/marketing/report-card';
 import { CategorySummary } from '@/components/marketing/category-summary';
 import { ReportPagination } from '@/components/marketing/report-pagination';
-import { ExpertVerifier } from '@/components/marketing/expert-verifier';
 import { NewsletterBox } from '@/components/marketing/newsletter-box';
-import { getMarketExpert } from '@/lib/actions/experts';
 import { getFirstMondayOfMonth } from '@/lib/utils/date-helpers';
 import { RegionalHeroImage } from '@/components/marketing/regional-hero-image';
 
@@ -129,17 +127,13 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
   const marketPrefix = `/${market}`;
 
   // Graceful degradation: any single failure won't crash the page
-  const [pillarResult, allContentResult, expertResult] = await Promise.allSettled([
+  const [pillarResult, allContentResult] = await Promise.allSettled([
     getPillarContent(market as Market, category as Category),
     getContentByMarketAndCategory(market as Market, category as Category),
-    getMarketExpert(market, category),
   ]);
 
   const pillarContent = pillarResult.status === 'fulfilled' ? pillarResult.value : null;
   const allContent = allContentResult.status === 'fulfilled' ? (allContentResult.value || []) : [];
-  const expert = expertResult.status === 'fulfilled' && expertResult.value
-    ? expertResult.value
-    : { name: 'SmartFinPro Team', role: 'Editorial Team', bio: null, image_url: null, linkedin_url: null, credentials: ['Expert Reviewer'] as string[], market_slug: market as Market, category: (category as Category) || null, id: '', verified: true, created_at: '', updated_at: '' };
 
   // Quality sort helper (reused below to avoid multiple inline calls)
   const qualitySort = (a: (typeof allContent)[0], b: (typeof allContent)[0]) => {
@@ -498,7 +492,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
                   </div>
                   <div className="flex flex-col justify-center px-5 py-3 min-w-[140px]">
                     <span className="text-xs font-bold" style={{ color: 'var(--sfp-ink)' }}>Reviewed By</span>
-                    <span className="text-xs" style={{ color: 'var(--sfp-slate)' }}>{expert.name}</span>
+                    <span className="text-xs" style={{ color: 'var(--sfp-slate)' }}>SmartFinPro Research</span>
                   </div>
                   <div className="flex flex-col justify-center px-5 py-3 min-w-[130px]">
                     <span className="text-xs font-bold" style={{ color: 'var(--sfp-ink)' }}>Fact-Checked</span>
@@ -506,19 +500,6 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
                   </div>
                 </div>
               </div>
-            </div>
-
-            {/* Expert Verifier */}
-            <div className="mt-6">
-              <ExpertVerifier
-                name={expert.name}
-                title={expert.role}
-                credentials={expert.credentials.length > 0 ? expert.credentials : ['Expert Reviewer']}
-                lastFactChecked={getFirstMondayOfMonth()}
-                bio={expert.bio || undefined}
-                image={expert.image_url || undefined}
-                linkedInUrl={expert.linkedin_url || undefined}
-              />
             </div>
 
             {/* Useful Tools */}

@@ -256,55 +256,6 @@ export function generateArticleSchema(article: {
 }
 
 /**
- * Person Schema - For author/expert profiles
- * Used to identify individual contributors and experts on the site
- *
- * 2026-07-17 editorial-integrity fix: `hasCredential` /
- * EducationalOccupationalCredential emission was removed — SmartFinPro has
- * no verified individual credential holders, so no credential nodes may be
- * emitted here. The `credentials` param is accepted but intentionally unused
- * to avoid a TS excess-property break at call sites.
- */
-export function generatePersonSchema(person: {
-  name: string;
-  url?: string;
-  image?: string;
-  jobTitle?: string;
-  description?: string;
-  affiliateLinks?: string[];
-  /** External profile URLs (LinkedIn, etc.) — emitted as sameAs array */
-  sameAs?: string[];
-  /** @deprecated no longer emitted — see EducationalOccupationalCredential removal (2026-07-17) */
-  credentials?: string[];
-  /** Topics the expert is known for — boosts relevance for AI models */
-  knowsAbout?: string[];
-}) {
-  return {
-    '@context': 'https://schema.org',
-    '@type': 'Person',
-    name: person.name,
-    url: person.url || `${BASE_URL}/about`,
-    image: person.image,
-    jobTitle: person.jobTitle || 'Financial Expert',
-    description: person.description,
-    // External social profiles — primary GEO signal for AI crawlers
-    ...(person.sameAs && person.sameAs.length > 0 && {
-      sameAs: person.sameAs,
-    }),
-    // Expert topic coverage — helps AI models understand authority scope
-    ...(person.knowsAbout && person.knowsAbout.length > 0 && {
-      knowsAbout: person.knowsAbout,
-    }),
-    ...(person.affiliateLinks && {
-      affiliation: person.affiliateLinks.map(link => ({
-        '@type': 'Organization',
-        url: link,
-      })),
-    }),
-  };
-}
-
-/**
  * HowTo Schema - For problem-solution and step-by-step guides
  * Helps Google display step-by-step guides in SERPs
  */

@@ -121,7 +121,7 @@ import { RiskWarningBox } from '@/components/marketing/risk-warning';
 import { QuickVerdictCard } from '@/components/marketing/quick-verdict-card';
 import { SmartFinCard } from '@/components/marketing/smartfin-card';
 import { ProviderCard } from '@/components/marketing/provider-card';
-import { ExpertVerdictBox } from '@/components/marketing/expert-verdict-box';
+import { EditorialVerdictBox } from '@/components/marketing/editorial-verdict-box';
 import { QuickSummary } from '@/components/marketing/quick-summary';
 import {
   SpreadComparison,
@@ -1854,7 +1854,7 @@ export const mdxComponents = {
   QuickVerdictCard,
   SmartFinCard,
   ProviderCard,
-  ExpertVerdictBox,
+  EditorialVerdictBox,
   QuickSummary,
   SpreadComparison,
   CostBreakdownGrid,

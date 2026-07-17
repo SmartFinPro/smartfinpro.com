@@ -13,7 +13,6 @@ import { describe, it, expect } from 'vitest';
 import {
   generateReviewSchema,
   generateArticleSchema,
-  generatePersonSchema,
 } from './schema';
 import type { ReviewData } from '@/types';
 
@@ -95,18 +94,5 @@ describe('generateArticleSchema', () => {
   it('does not emit a reviewedBy node even when reviewedBy is supplied', () => {
     const schema = generateArticleSchema(baseArticle) as Record<string, unknown>;
     expect(schema.reviewedBy).toBeUndefined();
-  });
-});
-
-describe('generatePersonSchema', () => {
-  it('never emits EducationalOccupationalCredential nodes, even when credentials are supplied', () => {
-    const json = JSON.stringify(
-      generatePersonSchema({
-        name: 'Jordan Blake',
-        credentials: ['CFA', 'CFP'],
-      })
-    );
-    expect(json).not.toContain('EducationalOccupationalCredential');
-    expect(json).not.toContain('hasCredential');
   });
 });

@@ -12,7 +12,6 @@ const getCachedContentSlugs = cache(async () => {
   return new Set(all.map(s => `${s.market}/${s.category}/${s.slug}`));
 });
 import { ReportLayout } from '@/components/marketing/report-layout';
-import { getMarketExpert } from '@/lib/actions/experts';
 import { getEnrichedCtaPartners } from '@/lib/actions/page-cta-partners';
 import { rankOffersByEV } from '@/lib/actions/offer-ev';
 
@@ -156,9 +155,8 @@ export default async function ContentPage({ params }: ContentPageProps) {
       notFound();
     }
 
-    const [relatedArticles, expert, allCategoryContent, ctaPartners, crossCategoryContent] = await Promise.all([
+    const [relatedArticles, allCategoryContent, ctaPartners, crossCategoryContent] = await Promise.all([
       getRelatedContent(market as Market, category as Category, slug, 3),
-      getMarketExpert(market, category),
       getContentByMarketAndCategory(market as Market, category as Category),
       // URL format must match dashboard: US = no prefix, others = /market prefix
       getEnrichedCtaPartners(`${market === 'us' ? '' : `/${market}`}/${category}/${slug}`),
@@ -204,7 +202,6 @@ export default async function ContentPage({ params }: ContentPageProps) {
       <main id="main-content">
         <ReportLayout
           ctaPartners={rankedPartners}
-          expert={expert}
           mdxSource={mdxSource}
           relatedArticles={relatedArticles}
           siblingReviews={siblingReviews}
@@ -259,9 +256,8 @@ export default async function ContentPage({ params }: ContentPageProps) {
     notFound();
   }
 
-  const [relatedArticles, expert, allCategoryContent, ctaPartners, crossCategoryContent] = await Promise.all([
+  const [relatedArticles, allCategoryContent, ctaPartners, crossCategoryContent] = await Promise.all([
     getRelatedContent(market as Market, category as Category, slug, 3),
-    getMarketExpert(market, category),
     getContentByMarketAndCategory(market as Market, category as Category),
     // URL format must match dashboard: US = no prefix, others = /market prefix
     getEnrichedCtaPartners(`${market === 'us' ? '' : `/${market}`}/${category}/${slug}`),
@@ -291,7 +287,6 @@ export default async function ContentPage({ params }: ContentPageProps) {
     <>
       <ReportLayout
         ctaPartners={rankedPartners}
-        expert={expert}
         mdxSource={mdxSource}
         relatedArticles={relatedArticles}
         siblingReviews={siblingReviews}
