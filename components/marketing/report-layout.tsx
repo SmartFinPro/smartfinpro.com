@@ -34,7 +34,7 @@ import { DecisionBridgeProvider, DecisionBridge } from '@/components/marketing/d
 import type { DecisionBridgeData } from '@/lib/comparison/types';
 import { TrustBlockTracker } from '@/components/marketing/trust-block-tracker';
 import { MiniQuiz } from '@/components/marketing/mini-quiz';
-import { generateReviewSchema, generateArticleSchema, generateBreadcrumbSchema, generateFAQSchema } from '@/lib/seo/schema';
+import { generateReviewSchema, generateArticleSchema, generateFAQSchema } from '@/lib/seo/schema';
 import { RiskWarningBox } from '@/components/marketing/risk-warning';
 import { AffiliateDisclosure } from '@/components/ui/affiliate-disclosure';
 import { categoryConfig } from '@/lib/i18n/config';
@@ -195,18 +195,8 @@ export function ReportLayout({
         />
       )}
 
-      {/* Schema.org JSON-LD — BreadcrumbList for navigation rich snippets */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(generateBreadcrumbSchema(
-            buildBreadcrumbs(market, category, review.title, slug).map(item => ({
-              name: item.label,
-              url: `https://smartfinpro.com${item.href || ''}`,
-            }))
-          )),
-        }}
-      />
+      {/* Schema.org JSON-LD — BreadcrumbList is emitted once by <Breadcrumb>
+          in the hero section below; intentionally NOT duplicated here. */}
 
       {/* F-07: Schema.org JSON-LD — FAQPage (Rich Results + AI-Overview citability).
           Frontmatter `faqs:` already exists on 180+ MDX files; only the wiring was missing. */}

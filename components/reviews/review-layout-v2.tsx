@@ -64,7 +64,7 @@ import { SafeMDX } from '@/components/content/SafeMDX';
 import { FAQSection } from '@/components/marketing/faq-section';
 import { buildBreadcrumbs } from '@/lib/breadcrumbs';
 import { getCanonicalUrl } from '@/lib/seo/hreflang';
-import { generateBestXReviewSchema, generateBreadcrumbSchema, generateFAQSchema } from '@/lib/seo/schema';
+import { generateBestXReviewSchema, generateFAQSchema } from '@/lib/seo/schema';
 import { normalizeVerdictFrontmatter } from '@/lib/reviews/verdict-frontmatter';
 import { categoryConfig } from '@/lib/i18n/config';
 import type { Market, Category } from '@/lib/i18n/config';
@@ -72,11 +72,6 @@ import type { ContentMeta, ContentItem } from '@/lib/mdx';
 import type { DecisionBridgeData } from '@/lib/comparison/types';
 import type { MDXRemoteSerializeResult } from '@/lib/mdx/types';
 import { logger } from '@/lib/logging';
-
-// Matches the hardcoded-domain convention already used by
-// components/marketing/breadcrumb.tsx and report-layout.tsx's own
-// BreadcrumbList JSON-LD — not reinvented here.
-const SITE_URL = 'https://smartfinpro.com';
 
 const CTA_GOLD_STYLE: CSSProperties = {
   display: 'inline-block',
@@ -194,17 +189,8 @@ export function ReviewLayoutV2({
         }}
       />
 
-      {/* Schema.org JSON-LD — BreadcrumbList (same hardcoded-domain pattern as V1) */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(
-            generateBreadcrumbSchema(
-              breadcrumbs.map((item) => ({ name: item.label, url: `${SITE_URL}${item.href || ''}` })),
-            ),
-          ),
-        }}
-      />
+      {/* Schema.org JSON-LD — BreadcrumbList is emitted once by <Breadcrumb>
+          (rendered inside ReviewHeader below); intentionally NOT duplicated here. */}
 
       {/* Schema.org JSON-LD — FAQPage (exactly one emission; FAQSection below gets includeSchema=false) */}
       {meta.faq && meta.faq.length > 0 && (
