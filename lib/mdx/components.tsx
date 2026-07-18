@@ -65,6 +65,7 @@ import { ComparisonTable, SimpleComparison } from '@/components/marketing/compar
 import { StarRating, TrustBadges } from '@/components/marketing/trust-badges';
 import { TrustAuthority, MethodologyBox } from '@/components/marketing/trust-blocks';
 import { DecisionBridge } from '@/components/marketing/decision-bridge';
+import { SectionVerdict, KeyEvidence, SmartFinProTake } from '@/components/reviews/section-blocks';
 import {
   TrackedCTA,
   HighlightCTA,
@@ -1841,6 +1842,9 @@ export const mdxComponents = {
   TrustAuthority,
   MethodologyBox,
   DecisionBridge,
+  SectionVerdict,
+  KeyEvidence,
+  SmartFinProTake,
   TrackedCTA,
   HighlightCTA,
   InlineCTA,
