@@ -1,7 +1,7 @@
 -- T0b — Cockpit-Datenaudit `us/trading/trading-platforms`: corrects the eToro row's
 -- unbacked "only true $0-fee options broker" exclusivity claim (repeated in tagline,
 -- pros[0], attributes.options_fee_note and deep_dive), the quote-less $100
--- account_minimum (correct value is a $50 standard minimum / $10 via ACH), and adds
+-- account_minimum (correct value is a $50 standard minimum across all methods), and adds
 -- transparency notes to the two rows (Robinhood, Webull) whose options_fee_note text
 -- was compared against eToro's on an inconsistent semantic basis.
 --
@@ -49,11 +49,11 @@ SET
     'Industry-leading social/copy-trading community with 50M+ global users'
   ]::text[],
   cons = ARRAY[
-    '$50 minimum first deposit ($10 via ACH) — most peers require $0',
+    '$50 minimum first deposit — most peers require $0',
     'No futures trading available on the US platform',
     'Extended-hours trading availability for US accounts is not established — we show it as unverified rather than claim it'
   ]::text[],
-  deep_dive = 'eToro charges no commission or broker-imposed per-contract fee on US options — only regulatory and exchange pass-through costs, which run comparable in size to what other brokers charge outright. It pairs this with a large, well-known social/copy-trading community and a permanent $100,000 demo account. It requires a $50 minimum first deposit ($10 via ACH), and its extended-hours trading availability for US accounts could not be verified at the time of research, so we show it as unestablished rather than claim a feature that may not exist for US customers.',
+  deep_dive = 'eToro charges no commission or broker-imposed per-contract fee on US options — only regulatory and exchange pass-through costs, which run comparable in size to what other brokers charge outright. It pairs this with a large, well-known social/copy-trading community and a permanent $100,000 demo account. It requires a $50 minimum first deposit, and its extended-hours trading availability for US accounts could not be verified at the time of research, so we show it as unestablished rather than claim a feature that may not exist for US customers.',
   attributes = jsonb_set(
     jsonb_set(
       jsonb_set(
@@ -63,7 +63,7 @@ SET
         true
       ),
       '{deposit_note}',
-      '"$50 standard minimum first deposit; ACH transfers from $10 (eToro Funds Availability, checked 18 Jul 2026)."'::jsonb,
+      '"$50 standard minimum first deposit across all methods; wire transfers from $500 (eToro deposit FAQ, checked 18 Jul 2026)."'::jsonb,
       true
     ),
     '{confidence_reason}',

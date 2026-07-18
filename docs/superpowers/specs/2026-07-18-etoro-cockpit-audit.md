@@ -1,6 +1,7 @@
 # T0b — Cockpit-Datenaudit `us/trading/trading-platforms` (Optionsgebühren-Semantik + eToro-Zeile)
 
-**Datum:** 2026-07-18 · **Auditor:** Fable (Primärquellen via WebFetch) · **Opus-Verifikation:** ausstehend (Gate vor T8/T15/T17)
+**Datum:** 2026-07-18 · **Auditor:** Fable · **Opus-Gate:** REJECT in Runde 1 → korrigiert → siehe §6
+> **Opus-Befund (Runde 1):** Die ursprüngliche Fassung ersetzte den unbelegten $100 durch ein ebenso unbelegtes „$10 via ACH" — die zitierte Funds-Availability-PDF ist **404**, und die lebende Deposit-FAQ nennt für Bank-Transfer (ACH) selbst **$50** (Debit $50 · Bank $50 · PayPal $50 · Wire $500). Der $10-Wert stammte aus einem Such-Snippet und ist gestrichen. Fees-Teil (eToro/Robinhood/Webull), Semantik, WHERE, Rollback: alle PASS.
 **Scope:** Semantik-Definition für alle 9 Zeilen; migriert werden nur als inkonsistent befundene Zeilen (eToro, Robinhood-Note, Webull-Note).
 
 ---
@@ -20,7 +21,7 @@
 | **eToro US** | „No commission or contract fees" (US); Durchreichungen: ORF **$0.02**/Kontrakt, FINRA TAF **$0.00279**/Kontrakt (Verkauf), LQT **$0.02**/Kontrakt. Optionen-Start ab $50 erwähnt. | https://www.etoro.com/en-us/trading/fees/ |
 | **Robinhood** | Keine Commission, aber **„Robinhood Contract Fee" $0.04/Kontrakt** (seit 10.01.2025, kombiniert reg./exchange-Kosten); „may differ from or exceed the actual fee we paid". Index-Optionen $0.35 (Gold)/$0.50. | https://robinhood.com/us/en/support/articles/trading-fees-on-robinhood/ |
 | **Webull** | „does not charge commissions for … options listed on U.S. exchanges" (Equity); **Index-Optionen $0.50**/Kontrakt; **oversized orders $0.10**/Kontrakt; „Webull does not profit from these [pass-through] fees". | https://www.webull.com/pricing |
-| **eToro Deposit** | Standard-Mindesteinzahlung **$50**; **ACH ab $10** (Funds-Availability-Dokument). **$100 ist durch keine Quelle gedeckt.** | https://www.etoro.com/en-us/customer-service/deposit-faq/ · https://www.etoro.com/wp-content/uploads/2021/10/Funds_Availability.pdf |
+| **eToro Deposit** | Mindesteinzahlung **$50** über alle Methoden (Debit $50 · Bank/ACH $50 · PayPal $50 · **Wire $500**). **$100 ist durch keine Quelle gedeckt.** Frühere „$10 ACH"-Angabe: Quelle 404, von der FAQ widersprochen — gestrichen. | https://www.etoro.com/en-us/customer-service/deposit-faq/ |
 
 ## 3. Feld-für-Feld: alt → neu
 
@@ -30,11 +31,11 @@
 |---|---|---|---|
 | `tagline` | „Only true $0-fee options broker" | **„Copy trading at scale, with $0 broker contract fees on options"** | Exklusivclaim widerlegt (Webull $0, Robinhood ohne Commission). Neue tagline nennt belegte Fakten, kein Superlativ. |
 | `account_minimum` | 100 | **50** | $100 quellenlos. $50 = Standard lt. Deposit-FAQ. |
-| `attributes.deposit_note` | — | „$50 standard minimum first deposit; ACH transfers from $10 (eToro Funds Availability, checked 18 Jul 2026)." | Zahlungsweg-Differenzierung lt. Rev.-2.1-Review. |
+| `attributes.deposit_note` | — | „$50 standard minimum first deposit across all methods; wire transfers from $500 (eToro deposit FAQ, checked 18 Jul 2026)." | FAQ-gedeckt; kein $10-Claim. |
 | `attributes.options_fee_note` | „…The only true $0-options broker among these 9." | **„eToro charges no commission or broker-imposed per-contract fee on US options. Regulatory and exchange pass-through fees still apply (ORF $0.02, LQT $0.02, FINRA TAF $0.00279/contract on sales — ~$0.04–0.05 per contract per side, comparable to peers' combined fees)."** | Rev.-2.1-Pflichtformulierung + Bezifferung + Vergleichbarkeits-Hinweis. |
 | `pros[0]` | „$0/contract options — the only true zero-fee options broker in this comparison" | „No commission or broker-imposed per-contract fee on US options (regulatory pass-throughs apply)" | dito |
-| `cons[0]` | „$100 minimum first deposit for US customers, higher than most peers' $0" | „$50 minimum first deposit ($10 via ACH) — most peers require $0" | Faktenkorrektur, Con bleibt dem Sinn nach bestehen |
-| `deep_dive` | „…the only broker in this comparison charging genuinely $0 per options contract … requires a $100 minimum first deposit…" | Neuformulierung ohne Exklusivclaim, mit $50/$10-Deposit und Pass-through-Hinweis | dito |
+| `cons[0]` | „$100 minimum first deposit for US customers, higher than most peers' $0" | „$50 minimum first deposit — most peers require $0" | Faktenkorrektur, Con bleibt |
+| `deep_dive` | „…the only broker in this comparison charging genuinely $0 per options contract … requires a $100 minimum first deposit…" | Neuformulierung ohne Exklusivclaim, mit $50-Deposit und Pass-through-Hinweis | dito |
 | `confidence` | low | **medium** | Nach Audit sind Kern-Pricing + Deposit quellenbelegt; einziger offener Punkt bleibt extended_hours (transparent `null`). |
 | `attributes.confidence_reason` | — | „Core pricing and deposit terms verified against official eToro pages (18 Jul 2026). Extended-hours availability for US accounts remains unestablished — no citable source; shown as unverified." | Rev.-2.1 Punkt 3 (JSONB, keine neue Spalte). |
 
@@ -66,4 +67,9 @@
 
 ## 5. Migration
 
-`supabase/migrations/20260718T0B00_audit_trading_platforms_options.sql` — UPDATEs für genau 3 Zeilen (eToro vollständig, Robinhood + Webull nur `attributes.options_fee_note`), Rollback-SQL als Kommentarblock am Dateiende. Anwendung auf Prod **manuell** (deploy.yml fährt keine Migrationen).
+`supabase/migrations/20260718100000_audit_trading_platforms_options.sql` — UPDATEs für genau 3 Zeilen (eToro vollständig, Robinhood + Webull nur `attributes.options_fee_note`), Rollback-SQL als Kommentarblock am Dateiende. Anwendung auf Prod **manuell** (deploy.yml fährt keine Migrationen).
+
+## 6. Opus-Gate-Protokoll
+
+- **Runde 1 (18.07.): REJECT.** A FAIL ($10-ACH unbelegt, Quelle 404, FAQ widerspricht) · B PASS (Semantik, auch für die übrigen 6 geprüft: $0.65/Leg bzw. tastytrade $1 = echte Kommissionen, keine getarnten Durchreichungen) · C PASS (Migration mechanisch fehlerfrei, Rollback exakt seed-treu, Arrays unversehrt) · D FAIL (nur der $10-Wert) · E PASS mit CONCERN: tagline „$0 broker contract fees" ist nur zusammen mit der options_fee_note nicht irreführend — **Render-Vertrag: beide immer im selben Sichtkontext ausspielen** (gilt für V2-Komponenten, in Verifikation aufgenommen).
+- **Korrektur:** $10-ACH aus deposit_note/cons[0]/deep_dive entfernt, Quelle auf lebende FAQ umgestellt.
