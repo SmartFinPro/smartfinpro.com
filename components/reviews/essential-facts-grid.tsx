@@ -76,13 +76,13 @@ export function EssentialFactsGrid({ facts }: EssentialFactsGridProps) {
           return (
             <div
               key={i}
-              className="flex flex-col transition-colors duration-200 hover:[border-color:var(--sfp-navy)]"
-              style={{
-                border: '1px solid var(--sfp-hairline-strong)',
-                borderRadius: '14px',
-                background: '#fff',
-                padding: '18px 20px',
-              }}
+              // border + background as CLASSES (not inline style): an inline
+              // `background`/`border` (specificity 1,0,0) would out-specify the
+              // Tailwind hover utilities (0,2,0) and silently kill the hover —
+              // same trap as the sidebar Visit button. Base white/hairline →
+              // hover light-blue fill + navy border.
+              className="flex flex-col rounded-[14px] border border-[var(--sfp-hairline-strong)] bg-white transition-colors duration-200 hover:border-[var(--sfp-navy)] hover:bg-[var(--sfp-sky)]"
+              style={{ padding: '18px 20px' }}
             >
               <div
                 style={{
