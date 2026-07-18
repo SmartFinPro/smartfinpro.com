@@ -45,49 +45,92 @@ export function EssentialFactsGrid({ facts }: EssentialFactsGridProps) {
   if (!facts || facts.length === 0) return null;
 
   return (
-    <div
-      className="grid grid-cols-2 border-t border-l md:grid-cols-3"
-      style={{ borderColor: 'var(--sfp-hairline)', fontFamily: 'var(--font-primary)' }}
-    >
-      {facts.map((fact, i) => {
-        const asOfLabel = formatIsoDate(fact.asOf);
-        return (
-          <div key={i} className="border-b border-r" style={{ borderColor: 'var(--sfp-hairline)', padding: '14px 16px' }}>
+    <div style={{ fontFamily: 'var(--font-primary)' }}>
+      {/* Titel-Eyebrow — same idiom as the ScoreBreakdown / Best-for zone
+          headings, gives the block a named identity instead of reading as a
+          bare data table (Betreiber-Wunsch 2026-07-19: "prominenter, mehr
+          enterprise premium"). */}
+      <div
+        style={{
+          fontSize: '10.5px',
+          letterSpacing: '0.14em',
+          textTransform: 'uppercase',
+          color: 'var(--sfp-slate)',
+          fontWeight: 600,
+          marginBottom: '12px',
+        }}
+      >
+        Essential Facts
+      </div>
+
+      {/* Individual elevated stat cards with a gap (not a dense hairline
+          table): rounded, hairline-strong frame, white bg, generous padding
+          — the same card family as VerdictCard / the sidebar cards, so the
+          block reads as a deliberate premium module. `items-stretch` +
+          marginTop:auto on the source line keeps every card's source row
+          bottom-aligned across a row. Empty trailing grid cells simply don't
+          render (gap only sits between real items → no stray hairlines). */}
+      <div className="grid grid-cols-2 items-stretch gap-3 md:grid-cols-3">
+        {facts.map((fact, i) => {
+          const asOfLabel = formatIsoDate(fact.asOf);
+          return (
             <div
+              key={i}
+              className="flex flex-col transition-colors duration-200 hover:[border-color:var(--sfp-navy)]"
               style={{
-                fontSize: '9.5px',
-                letterSpacing: '0.11em',
-                textTransform: 'uppercase',
-                color: 'var(--sfp-slate)',
-                fontWeight: 600,
-                marginBottom: '4px',
+                border: '1px solid var(--sfp-hairline-strong)',
+                borderRadius: '14px',
+                background: '#fff',
+                padding: '18px 20px',
               }}
             >
-              {fact.label}
+              <div
+                style={{
+                  fontSize: '9.5px',
+                  letterSpacing: '0.12em',
+                  textTransform: 'uppercase',
+                  color: 'var(--sfp-navy)',
+                  fontWeight: 700,
+                  marginBottom: '8px',
+                }}
+              >
+                {fact.label}
+              </div>
+              <div
+                style={{
+                  fontVariantNumeric: 'tabular-nums',
+                  fontSize: '20px',
+                  fontWeight: 600,
+                  letterSpacing: '-0.02em',
+                  lineHeight: 1.2,
+                  color: 'var(--sfp-ink)',
+                  marginBottom: fact.context ? '6px' : '10px',
+                }}
+              >
+                {fact.value}
+              </div>
+              {fact.context && (
+                <div style={{ fontSize: '12px', lineHeight: 1.45, color: 'var(--sfp-slate)', marginBottom: '10px' }}>
+                  {fact.context}
+                </div>
+              )}
+              <div
+                style={{
+                  fontSize: '10.5px',
+                  color: 'var(--sfp-slate)',
+                  marginTop: 'auto',
+                  paddingTop: '4px',
+                }}
+              >
+                {asOfLabel ? <>as of {asOfLabel} · </> : null}
+                <a href={fact.sourceHref} style={{ color: 'var(--sfp-navy)', fontWeight: 600 }}>
+                  Source
+                </a>
+              </div>
             </div>
-            <div
-              style={{
-                fontVariantNumeric: 'tabular-nums',
-                fontSize: '17px',
-                letterSpacing: '-0.02em',
-                color: 'var(--sfp-ink)',
-                marginBottom: fact.context ? '3px' : '6px',
-              }}
-            >
-              {fact.value}
-            </div>
-            {fact.context && (
-              <div style={{ fontSize: '11.5px', color: 'var(--sfp-slate)', marginBottom: '6px' }}>{fact.context}</div>
-            )}
-            <div style={{ fontSize: '10.5px', color: 'var(--sfp-slate)' }}>
-              {asOfLabel ? <>as of {asOfLabel} · </> : null}
-              <a href={fact.sourceHref} style={{ color: 'var(--sfp-navy)' }}>
-                Source
-              </a>
-            </div>
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
   );
 }
