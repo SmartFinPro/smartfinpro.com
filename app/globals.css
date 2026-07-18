@@ -54,6 +54,7 @@
 
     /* === SmartFinPro Brand Colors (YMYL Trust System) === */
     --sfp-navy:       #1B4F8C;
+    --sfp-blue-bright: #2563EB;   /* helleres Royal-Blau, = Header-Gradient-Endfarbe (components/marketing/header.tsx) */
     --sfp-navy-dark:  #163D6E;
     --sfp-gold:       #F5A623;
     --sfp-gold-dark:  #D48B1A;
