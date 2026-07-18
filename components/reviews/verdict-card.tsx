@@ -70,26 +70,18 @@ export function VerdictCard({
       }}
     >
       <div>
-        {/* Betreiber-Wunsch 2026-07-19: box treatment stays the exact
-            SectionVerdict idiom (navy left border + --sfp-gray background
-            running continuously behind label AND paragraph — one unified
-            box). The label itself now carries the SAME typography as the
-            MDX H2 subheadings (lib/mdx/components.tsx StyledH2: 32/36px,
-            font-semibold, tracking-tight, --sfp-navy) instead of a small
-            tracked-uppercase eyebrow — "Our Verdict" reads with the same
-            visual weight as "Fees"/"Markets"/etc. — same classes as
-            StyledH2's `h2` verbatim (32/36px), not a scaled-down variant.
-            Padding scaled up to give the larger label room to breathe
-            inside the box. */}
+        {/* Betreiber-Wunsch 2026-07-19: back to a small label — no navy
+            left border, no H2-scale type. --sfp-gray background still
+            unifies label + paragraph into one box (no borderLeft accent). */}
         <div style={{ margin: '0 0 18px' }}>
           <div
-            className="text-[32px] md:text-[36px] font-semibold tracking-tight"
             style={{
               fontFamily: 'var(--font-primary)',
+              fontSize: '13px',
+              fontWeight: 600,
               color: 'var(--sfp-navy)',
               background: 'var(--sfp-gray)',
-              borderLeft: '2px solid var(--sfp-navy)',
-              padding: '14px 16px 6px',
+              padding: '10px 14px 4px',
             }}
           >
             Our Verdict
@@ -100,8 +92,7 @@ export function VerdictCard({
               fontSize: '16.5px',
               lineHeight: 1.7,
               background: 'var(--sfp-gray)',
-              borderLeft: '2px solid var(--sfp-navy)',
-              padding: '4px 16px 14px',
+              padding: '2px 14px 12px',
               margin: 0,
               color: 'var(--sfp-ink)',
             }}
