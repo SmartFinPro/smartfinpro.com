@@ -122,6 +122,96 @@ export function generateReviewSchema(review: ReviewData) {
   };
 }
 
+/**
+ * T6 (2026-07-18 review-redesign V2 foundation): Review JSON-LD for the
+ * BEST-X 0-10 score model — a SEPARATE, additive function from
+ * {@link generateReviewSchema} (V1, 5-point `rating`/`reviewCount`
+ * scale). generateReviewSchema is not modified by this addition (see
+ * schema.test.ts's byte-for-byte V1 regression guard).
+ *
+ * Deliberately does NOT emit `itemReviewed` — unlike V1, this input has no
+ * product/pricing fields (title/verdictSummary/score come from hand-
+ * verified V2 frontmatter per lib/reviews/verdict-frontmatter.ts, not an
+ * unaudited DB product row), so there is nothing defensible to build a
+ * SoftwareApplication `itemReviewed` node from yet.
+ */
+export interface BestXReviewSchemaInput {
+  title: string;
+  /** Absolute canonical URL of the review page. */
+  url: string;
+  /** The V2 verdict block's `summary` — becomes `reviewBody`. */
+  verdictSummary: string;
+  /** BEST-X score on a 0-10 scale, or `null` when no audited score exists yet (T0b). */
+  score: number | null;
+  topStrengths: string[];
+  mainLimitation: string;
+  market: string;
+  datePublished: string;
+  dateModified: string;
+}
+
+export function generateBestXReviewSchema(input: BestXReviewSchemaInput) {
+  const { title, url, verdictSummary, score, topStrengths, mainLimitation, datePublished, dateModified } = input;
+
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Review',
+    name: title,
+    url,
+    // `score === null` ⇒ no visible score AND no reviewRating (T0d) — the
+    // key is omitted entirely (not set to `undefined`), matching the "kein
+    // reviewRating-Feld" requirement.
+    ...(score !== null
+      ? {
+          reviewRating: {
+            '@type': 'Rating',
+            ratingValue: score,
+            bestRating: 10,
+            worstRating: 0,
+          },
+        }
+      : {}),
+    author: {
+      '@type': 'Organization',
+      name: 'SmartFinPro',
+      url: BASE_URL,
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: 'SmartFinPro',
+      logo: {
+        '@type': 'ImageObject',
+        url: `${BASE_URL}/icon.png`,
+      },
+    },
+    datePublished,
+    dateModified,
+    reviewBody: verdictSummary,
+    positiveNotes: topStrengths.length
+      ? {
+          '@type': 'ItemList',
+          itemListElement: topStrengths.map((strength, index) => ({
+            '@type': 'ListItem',
+            position: index + 1,
+            name: strength,
+          })),
+        }
+      : undefined,
+    negativeNotes: mainLimitation
+      ? {
+          '@type': 'ItemList',
+          itemListElement: [
+            {
+              '@type': 'ListItem',
+              position: 1,
+              name: mainLimitation,
+            },
+          ],
+        }
+      : undefined,
+  };
+}
+
 // Helper to extract numeric price from pricing string
 function extractPrice(pricing?: string): string {
   if (!pricing) return '0';
