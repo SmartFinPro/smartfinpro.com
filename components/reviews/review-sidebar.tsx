@@ -198,7 +198,13 @@ export function ReviewSidebar({
           {affiliateUrl && (
             <TrackedAffiliateLink
               href={affiliateUrl}
-              className="block w-full text-center no-underline rounded-[10px] px-4 py-[11px] text-[13.5px] font-semibold bg-[var(--sfp-blue-bright)] text-white shadow-sm transition-all duration-200 hover:brightness-110 hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:brightness-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--sfp-blue-bright)]"
+              // color + textDecoration as inline style (specificity 1,0,0) — the
+              // global `a[href^="/go/"]` affiliate rule (globals.css:774, gold +
+              // underline, specificity 0,1,1) otherwise out-specifies Tailwind's
+              // text-white / no-underline utility classes. bg stays a class so the
+              // brightness/lift hover still works (inline bg would kill :hover).
+              className="block w-full text-center no-underline rounded-[10px] px-4 py-[11px] text-[13.5px] font-semibold bg-[var(--sfp-blue-bright)] shadow-sm transition-all duration-200 hover:brightness-110 hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:brightness-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--sfp-blue-bright)]"
+              style={{ color: 'white', textDecoration: 'none' }}
               eventLabel={`Visit ${productName}`}
               market={market}
               category={category}
