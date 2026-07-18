@@ -38,7 +38,7 @@
 import fs from 'fs';
 import path from 'path';
 import Link from 'next/link';
-import { BarChart3, ArrowRight } from 'lucide-react';
+import { BarChart3 } from 'lucide-react';
 import { DecisionBridge, DecisionBridgeProvider } from '@/components/marketing/decision-bridge';
 import { TrackedAffiliateLink } from '@/components/marketing/tracked-affiliate-link';
 import { AffiliateDisclosure } from '@/components/ui/affiliate-disclosure';
@@ -198,7 +198,7 @@ export function ReviewSidebar({
           {affiliateUrl && (
             <TrackedAffiliateLink
               href={affiliateUrl}
-              className="flex w-full items-center justify-center gap-2 no-underline rounded-[10px] px-4 py-[11px] text-[13.5px] font-semibold bg-[var(--sfp-green)] text-white transition duration-150 hover:brightness-95 focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-[var(--sfp-navy)]"
+              className="block w-full text-center no-underline rounded-[10px] px-4 py-[11px] text-[13.5px] font-semibold bg-[var(--sfp-navy)] text-white shadow-sm transition-all duration-200 hover:bg-[var(--sfp-navy-dark)] hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-[var(--sfp-gold)]"
               eventLabel={`Visit ${productName}`}
               market={market}
               category={category}
@@ -207,7 +207,6 @@ export function ReviewSidebar({
               placement="sidebar"
             >
               Visit {productName}
-              <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </TrackedAffiliateLink>
           )}
         </div>
