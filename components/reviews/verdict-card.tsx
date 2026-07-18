@@ -27,7 +27,6 @@ import Link from 'next/link';
 import type { VerdictBlock } from '@/lib/reviews/verdict-frontmatter';
 import type { DecisionBridgeData } from '@/lib/comparison/types';
 import { scoreLabel, rankPhrase } from '@/lib/reviews/score-label';
-import { CheckCircleIcon } from '@/components/marketing/check-icon';
 
 /** The audited cockpit position for the reviewed product — same shape as
  *  DecisionBridgeData['position'], reused rather than redefined. */
@@ -112,7 +111,6 @@ export function VerdictCard({
                 key={`${i}-${strength}`}
                 style={{
                   display: 'flex',
-                  alignItems: 'flex-start',
                   gap: '8px',
                   fontFamily: 'var(--font-primary)',
                   fontSize: '14px',
@@ -120,7 +118,9 @@ export function VerdictCard({
                   color: 'var(--sfp-ink)',
                 }}
               >
-                <CheckCircleIcon size={16} style={{ flexShrink: 0, marginTop: '2px' }} />
+                <span aria-hidden="true" style={{ color: 'var(--sfp-green)', fontWeight: 700 }}>
+                  ✓
+                </span>
                 {strength}
               </li>
             ))}
