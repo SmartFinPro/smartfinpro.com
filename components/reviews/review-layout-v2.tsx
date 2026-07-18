@@ -6,26 +6,40 @@
 // header for the full T0a rationale). This file does not re-type the
 // anchor list; it only orders the zones to match it:
 //
-//   ReviewHeader (+ CTA-Zone 1: Compare primary / Visit secondary)
+//   ReviewHeader
 //     → #verdict   VerdictCard (+ScoreBreakdown from decisionBridge.position)
+//     → [mobile-only] ReviewSidebar in-flow, directly under #verdict
 //     → BestForNotFor
 //     → EssentialFactsGrid
 //     → ReviewSectionNav (renders all 7 REVIEW_V2_ANCHORS)
 //     → MDX body, wrapped in SectionVerdictsProvider (5 mdx-owned H2 sections)
-//     → #alternatives  AlternativesSection (CTA-Zone 2)
-//     → FinalDecision (CTA-Zone 3) + CategoryRiskDisclosure
+//     → #alternatives  AlternativesSection (CTA-Zone 1)
+//     → FinalDecision (CTA-Zone 2) + CategoryRiskDisclosure
 //     → MethodologySection
 //     → FAQSection (includeSchema=false — this file emits the one FAQPage script)
 //     → Related Topics / pillar backlink / sibling reviews
+//   [desktop-only, right rail] ReviewSidebar, sticky
 //
-// Deliberately NOT rendered here (plan T0a/T0c, "Explizit NICHT drin"):
+// Sidebar (Betreiber-Wunsch, 2026-07-18 — revises T0c below): rendered by
+// components/reviews/review-sidebar.tsx, gated on `decisionBridge` being
+// present. It is now the PRIMARY CTA surface (Report-Info-Card w/ provider
+// logo, Market Check with its internal CTA suppressed via
+// `<DecisionBridge showCta={false} />`, its own Compare+Visit button pair,
+// compact affiliate/risk disclosure). The former "CTA-Zone 1" — a Compare/
+// Visit pair rendered between ReviewHeader and #verdict — was REMOVED
+// entirely (not renumbered into the sidebar) to avoid doubling it: with the
+// sidebar now primary, only 2 CTA zones remain in the main column
+// (Alternatives, Final Decision), for 3 total incl. the sidebar — within
+// the Konzept's "max 3 CTA-Zonen" cap. On mobile (no room for a rail),
+// ReviewSidebar is rendered a second time in-flow, directly under the
+// #verdict zone, and hidden on desktop — the same dual-render-per-breakpoint
+// pattern components/marketing/report-layout.tsx already uses for its
+// ProtocolBridge "mobile fallback".
+//
+// Deliberately still NOT rendered here (plan T0a, "Explizit NICHT drin"):
 // StickyReviewNav (V1), ReviewExitIntent, XRayScore, MiniQuiz, the V1 "Quick
-// Verdict" card, star ratings, DecisionBridge/DecisionBridgeProvider (T0c —
-// the sidebar Market-Check bridge stays V1-only; this file only reads the
-// same DecisionBridgeData as plain data), ComparisonTablePremium ("Ready to
-// try"), the V1 Report-Info-Card, and the V1 Author-Box. No sidebar at all —
-// V2 is a single centered column on both mobile and desktop (Konzept §26/§32
-// Weißraum, hairlines instead of shadowed cards).
+// Verdict" card, star ratings, ComparisonTablePremium ("Ready to try"), and
+// the V1 Author-Box.
 //
 // Source-of-truth (T0d): every zone's copy comes from hand-verified
 // frontmatter (ContentMeta.verdict/essentialFacts/alternatives/
@@ -47,7 +61,6 @@
 // top-level frontmatter key itself is missing.
 // ============================================================
 
-import type { CSSProperties } from 'react';
 import Link from 'next/link';
 import { ReviewHeader } from './review-header';
 import { VerdictCard } from './verdict-card';
@@ -55,6 +68,7 @@ import { ScoreBreakdown } from './score-breakdown';
 import { BestForNotFor } from './best-for-not-for';
 import { EssentialFactsGrid } from './essential-facts-grid';
 import { ReviewSectionNav } from './review-section-nav';
+import { ReviewSidebar } from './review-sidebar';
 import { SectionVerdictsProvider } from './section-blocks';
 import { AlternativesSection } from './alternatives-section';
 import { FinalDecision } from './final-decision';
@@ -72,29 +86,6 @@ import type { ContentMeta, ContentItem } from '@/lib/mdx';
 import type { DecisionBridgeData } from '@/lib/comparison/types';
 import type { MDXRemoteSerializeResult } from '@/lib/mdx/types';
 import { logger } from '@/lib/logging';
-
-const CTA_GOLD_STYLE: CSSProperties = {
-  display: 'inline-block',
-  background: 'var(--sfp-gold)',
-  color: 'var(--sfp-ink)',
-  fontWeight: 600,
-  fontSize: '13.5px',
-  padding: '9px 16px',
-  textDecoration: 'none',
-  borderRadius: '2px',
-};
-
-const CTA_OUTLINE_STYLE: CSSProperties = {
-  display: 'inline-block',
-  background: 'transparent',
-  color: 'var(--sfp-navy)',
-  border: '1px solid var(--sfp-navy)',
-  fontWeight: 600,
-  fontSize: '13.5px',
-  padding: '8px 15px',
-  textDecoration: 'none',
-  borderRadius: '2px',
-};
 
 export interface ReviewLayoutV2Props {
   meta: ContentMeta;
@@ -167,6 +158,11 @@ export function ReviewLayoutV2({
     ? `Compare all ${decisionBridge.fieldCount} ${decisionBridge.topicLabel}`
     : undefined;
 
+  // Sidebar (Betreiber-Wunsch, 2026-07-18) — gated on decisionBridge like
+  // every other cockpit-derived zone; a review with no resolved cockpit
+  // field gets no sidebar, same as it gets no Market Check on V1.
+  const hasSidebar = Boolean(decisionBridge);
+
   return (
     <article style={{ background: '#fff' }}>
       {/* Schema.org JSON-LD — BEST-X Review (score-less when position is null, T0d) */}
@@ -201,7 +197,8 @@ export function ReviewLayoutV2({
       )}
 
       <div className="container mx-auto px-4 py-10 lg:py-14">
-        <div className="max-w-[760px] mx-auto">
+        <div className={hasSidebar ? 'lg:grid lg:grid-cols-[760px_300px] lg:gap-14 lg:justify-center' : ''}>
+        <div className={hasSidebar ? 'max-w-[760px] mx-auto lg:mx-0 lg:max-w-none' : 'max-w-[760px] mx-auto'}>
           <ReviewHeader
             title={title}
             positioning={verdict?.positioning}
@@ -210,27 +207,6 @@ export function ReviewLayoutV2({
             dataVerifiedDate={meta.dataVerifiedDate}
             modifiedDate={meta.modifiedDate}
           />
-
-          {/* CTA-Zone 1 — Compare primary (Gold) / Visit secondary (outline Navy) */}
-          {(decisionBridge?.cockpitHref || affiliateUrl) && (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', margin: '20px 0 32px' }}>
-              {decisionBridge?.cockpitHref && (
-                <Link href={decisionBridge.cockpitHref} style={CTA_GOLD_STYLE}>
-                  {compareLabel}
-                </Link>
-              )}
-              {affiliateUrl && (
-                <a
-                  href={affiliateUrl}
-                  target="_blank"
-                  rel="noopener noreferrer nofollow"
-                  style={CTA_OUTLINE_STYLE}
-                >
-                  Visit {productName}
-                </a>
-              )}
-            </div>
-          )}
 
           {/* #verdict — layout-owned nav anchor (REVIEW_V2_ANCHORS) */}
           {verdict && (
@@ -246,6 +222,23 @@ export function ReviewLayoutV2({
                   <ScoreBreakdown subScores={position.subScores} />
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Mobile-only sidebar, in-flow directly under the Verdict zone —
+              hidden on desktop where the sticky right rail below takes over. */}
+          {hasSidebar && decisionBridge && (
+            <div className="lg:hidden" style={{ marginBottom: '40px' }}>
+              <ReviewSidebar
+                productName={productName}
+                publishDate={meta.publishDate}
+                decisionBridge={decisionBridge}
+                compareLabel={compareLabel as string}
+                affiliateUrl={affiliateUrl}
+                market={market}
+                category={category}
+                hasLeverageRisk={meta.hasLeverageRisk}
+              />
             </div>
           )}
 
@@ -418,6 +411,24 @@ export function ReviewLayoutV2({
               </div>
             </div>
           )}
+        </div>
+
+        {/* Desktop-only sticky right rail — hidden on mobile where ReviewSidebar
+            already rendered in-flow under #verdict above. */}
+        {hasSidebar && decisionBridge && (
+          <div className="hidden lg:block">
+            <ReviewSidebar
+              productName={productName}
+              publishDate={meta.publishDate}
+              decisionBridge={decisionBridge}
+              compareLabel={compareLabel as string}
+              affiliateUrl={affiliateUrl}
+              market={market}
+              category={category}
+              hasLeverageRisk={meta.hasLeverageRisk}
+            />
+          </div>
+        )}
         </div>
       </div>
     </article>

@@ -97,9 +97,22 @@ function buildStripPlan(field: DecisionBridgeFieldRow[], positionRank: number): 
   return plan;
 }
 
-/** MDX-Tag. Bewusst PROPLOS — es gibt kein Feld, in das jemand etwas
- *  erfinden könnte. Alle Daten kommen serverseitig aus DecisionBridgeContext. */
-export function DecisionBridge(): ReactNode {
+export interface DecisionBridgeProps {
+  /**
+   * Default `true` (V1/MDX-Aufrufe ohne dieses Prop verhalten sich exakt wie
+   * vorher). `false` unterdrückt nur den internen `CtaLink` — die einzige
+   * Ausnahme vom "proplos"-Prinzip unten, weil es keine neue Kopie erfindet,
+   * nur ein bereits berechnetes Element ein-/ausblendet (Sidebar-Rework
+   * 2026-07-18: components/reviews/review-sidebar.tsx rendert seinen
+   * eigenen Compare-Button daneben und will die Dopplung vermeiden).
+   */
+  showCta?: boolean;
+}
+
+/** MDX-Tag. Bewusst (bis auf `showCta`, siehe oben) PROPLOS — es gibt kein
+ *  Feld, in das jemand etwas erfinden könnte. Alle Daten kommen serverseitig
+ *  aus DecisionBridgeContext. */
+export function DecisionBridge({ showCta = true }: DecisionBridgeProps = {}): ReactNode {
   const data = useContext(DecisionBridgeContext);
   const tracking = useCockpitTracking({
     market: data?.market ?? '',
@@ -180,9 +193,9 @@ export function DecisionBridge(): ReactNode {
         </div>
 
         {data.position ? (
-          <StateA data={data} position={data.position} topicNoun={topicNoun} verifiedLabel={verifiedLabel} onCtaClick={handleCtaClick} />
+          <StateA data={data} position={data.position} topicNoun={topicNoun} verifiedLabel={verifiedLabel} onCtaClick={handleCtaClick} showCta={showCta} />
         ) : (
-          <StateB data={data} topicNoun={topicNoun} verifiedLabel={verifiedLabel} onCtaClick={handleCtaClick} />
+          <StateB data={data} topicNoun={topicNoun} verifiedLabel={verifiedLabel} onCtaClick={handleCtaClick} showCta={showCta} />
         )}
       </div>
     </CockpitImpression>
@@ -227,12 +240,14 @@ function StateA({
   topicNoun,
   verifiedLabel,
   onCtaClick,
+  showCta,
 }: {
   data: DecisionBridgeData;
   position: NonNullable<DecisionBridgeData['position']>;
   topicNoun: string;
   verifiedLabel: string | null;
   onCtaClick: () => void;
+  showCta: boolean;
 }) {
   const rawSubScores = position.subScores && typeof position.subScores === 'object' ? position.subScores : {};
   const subEntries = Object.entries(rawSubScores).filter(
@@ -420,7 +435,7 @@ function StateA({
         {verdictText}
       </div>
 
-      <CtaLink href={data.cockpitHref} fieldCount={data.fieldCount} topicNoun={topicNoun} onClick={onCtaClick} />
+      {showCta && <CtaLink href={data.cockpitHref} fieldCount={data.fieldCount} topicNoun={topicNoun} onClick={onCtaClick} />}
 
       {subEntries.length > 0 && (
         <ScoreDetails subEntries={subEntries} positionName={position.name} fieldBestSubScores={data.fieldBestSubScores} />
@@ -561,11 +576,13 @@ function StateB({
   topicNoun,
   verifiedLabel,
   onCtaClick,
+  showCta,
 }: {
   data: DecisionBridgeData;
   topicNoun: string;
   verifiedLabel: string | null;
   onCtaClick: () => void;
+  showCta: boolean;
 }) {
   const cellStyle: React.CSSProperties = { padding: '12px 14px 12px 0', borderRight: '1px solid var(--sfp-hairline)' };
   const emStyle: React.CSSProperties = {
@@ -629,7 +646,7 @@ function StateB({
         {cells}
       </div>
 
-      <CtaLink href={data.cockpitHref} fieldCount={data.fieldCount} topicNoun={topicNoun} onClick={onCtaClick} />
+      {showCta && <CtaLink href={data.cockpitHref} fieldCount={data.fieldCount} topicNoun={topicNoun} onClick={onCtaClick} />}
     </>
   );
 }

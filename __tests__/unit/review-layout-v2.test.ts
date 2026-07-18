@@ -159,7 +159,18 @@ describe('ReviewLayoutV2', () => {
 
     // Header
     expect(html).toContain('eToro Review');
-    // CTA-Zone 1
+    // Sidebar (2026-07-18 sidebar rework) — dual-rendered once for the
+    // mobile in-flow fallback (under #verdict) and once for the desktop
+    // sticky rail; both carry the Report-Info-Card + Market Check + button
+    // pair, so "decision-bridge" testid appears exactly twice.
+    expect(html).toContain('Expert Review');
+    expect(html).toContain('Published');
+    expect(html).toContain('/images/brokers/etoro.svg'); // real logo, fs-checked
+    const decisionBridgeTestIdCount = (html.match(/data-testid="decision-bridge"/g) ?? []).length;
+    expect(decisionBridgeTestIdCount).toBe(2);
+    // Sidebar's own Compare/Visit button pair (the former "CTA-Zone 1" — a
+    // duplicate pair rendered between ReviewHeader and #verdict — was
+    // removed; the sidebar is now the primary CTA surface).
     expect(html).toContain('Compare all 9 trading platforms');
     expect(html).toContain('Visit eToro');
     // Verdict zone (+ score breakdown)
@@ -217,6 +228,9 @@ describe('ReviewLayoutV2', () => {
     expect(html).not.toContain('reviewRating');
     expect(html).toContain('Our Verdict');
     expect(html).not.toContain('Score Breakdown');
+    // No decisionBridge → no sidebar at all (gated on decisionBridge, same as V1's Market Check).
+    expect(html).not.toContain('Expert Review');
+    expect(html).not.toContain('data-testid="decision-bridge"');
   });
 
   it('missing verdict block: never throws; verdict-derived zones are omitted, independent zones still render', () => {
