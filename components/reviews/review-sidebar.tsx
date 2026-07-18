@@ -166,11 +166,15 @@ export function ReviewSidebar({
                   >
                     Expert Review
                   </div>
+                  {/* Full-width wordmark — as large as the card's inner sky box
+                      allows (Betreiber-Wunsch 2026-07-19). w-full + h-auto lets
+                      the 3:1 wordmark scale to the box width; object-contain keeps
+                      the aspect ratio. */}
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={logo.src}
                     alt={`${productName} logo`}
-                    className="mt-2 h-10 w-auto max-w-full object-contain object-left"
+                    className="mt-2 w-full h-auto max-h-24 object-contain"
                   />
                 </div>
               ) : (
