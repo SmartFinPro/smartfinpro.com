@@ -165,7 +165,7 @@ describe('ReviewLayoutV2', () => {
     // pair, so "decision-bridge" testid appears exactly twice.
     expect(html).toContain('Expert Review');
     expect(html).toContain('Published');
-    expect(html).toContain('/images/brokers/etoro.svg'); // real logo, fs-checked
+    expect(html).toContain('/images/brokers/etoro-seeklogo.svg'); // real wordmark, fs-checked
     const decisionBridgeTestIdCount = (html.match(/data-testid="decision-bridge"/g) ?? []).length;
     expect(decisionBridgeTestIdCount).toBe(2);
     // Sidebar's own Compare/Visit button pair (the former "CTA-Zone 1" — a

@@ -91,14 +91,28 @@ function formatPublishMonth(iso: string): string | null {
 const KNOWN_BROKER_LOGO_SLUGS = ['etoro', 'ibkr', 'ig', 'plus500', 'capital-com', 'revolut', 'investing'] as const;
 void KNOWN_BROKER_LOGO_SLUGS; // documentation constant — see resolveLogoSrc()
 
-function resolveLogoSrc(slug: string | null | undefined): string | null {
+/** Resolves the provider logo, preferring a real full wordmark (`{slug}-seeklogo.*`)
+ *  over the generic square icon (`{slug}.svg`). `isWordmark` tells the card to show
+ *  it big and drop the redundant text name (the wordmark already reads "eToro"),
+ *  vs. the icon+text fallback layout. Filesystem-checked — a new logo dropped into
+ *  public/images/brokers/ works without a code change. */
+function resolveLogoSrc(slug: string | null | undefined): { src: string; isWordmark: boolean } | null {
   if (!slug) return null;
-  const absolutePath = path.join(process.cwd(), 'public', 'images', 'brokers', `${slug}.svg`);
-  try {
-    return fs.existsSync(absolutePath) ? `/images/brokers/${slug}.svg` : null;
-  } catch {
-    return null;
+  const candidates: Array<{ name: string; isWordmark: boolean }> = [
+    { name: `${slug}-seeklogo.svg`, isWordmark: true },
+    { name: `${slug}-seeklogo.png`, isWordmark: true },
+    { name: `${slug}.svg`, isWordmark: false },
+  ];
+  for (const c of candidates) {
+    try {
+      if (fs.existsSync(path.join(process.cwd(), 'public', 'images', 'brokers', c.name))) {
+        return { src: `/images/brokers/${c.name}`, isWordmark: c.isWordmark };
+      }
+    } catch {
+      /* ignore and try next */
+    }
   }
+  return null;
 }
 
 export function ReviewSidebar({
@@ -112,7 +126,7 @@ export function ReviewSidebar({
   hasLeverageRisk,
 }: ReviewSidebarProps) {
   const publishedLabel = formatPublishMonth(publishDate);
-  const logoSrc = resolveLogoSrc(decisionBridge.position?.slug);
+  const logo = resolveLogoSrc(decisionBridge.position?.slug);
   // Prominent CFD/leverage warning ONLY for products that actually carry that
   // risk (frontmatter `hasLeverageRisk`), NOT every trading/forex page. The
   // old category-wide trigger printed a CFD warning on eToro US, which offers
@@ -134,38 +148,13 @@ export function ReviewSidebar({
         >
           <div style={{ padding: '16px' }}>
             <div className="rounded-xl p-4" style={{ background: 'var(--sfp-sky)' }}>
-              <div className="flex items-center gap-3 mb-3">
-                <div
-                  className="w-14 h-14 rounded-xl flex items-center justify-center shrink-0 overflow-hidden"
-                  style={{
-                    background: logoSrc ? '#fff' : 'var(--sfp-navy)',
-                    border: logoSrc ? '1px solid var(--sfp-hairline)' : 'none',
-                  }}
-                >
-                  {logoSrc ? (
-                    // Plain <img>, not next/image: next.config.ts has no
-                    // `dangerouslyAllowSVG`, so the built-in optimizer 400s
-                    // on local SVGs (a pre-existing gap that also affects
-                    // components/tools/broker-finder-quiz.tsx and
-                    // trading-cost-calculator.tsx). A static <img> bypasses
-                    // the optimizer entirely — correct for a small vector
-                    // icon that needs no resize pipeline anyway.
-                    //
-                    // object-cover + object-left: the shared brokers/*.svg are
-                    // WIDE lockups (viewBox 200x48 = mark on the left + white
-                    // wordmark on the right). In a square tile object-contain
-                    // shrinks the whole lockup to tile-WIDTH → a tiny mark and
-                    // an invisible white wordmark. Cover+left fills the tile
-                    // with the left mark (the wordmark is redundant here — the
-                    // product name sits next to this tile as text) and crops
-                    // the wordmark off.
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={logoSrc} alt={`${productName} logo`} className="w-full h-full object-cover object-left" />
-                  ) : (
-                    <BarChart3 className="h-7 w-7 text-white" />
-                  )}
-                </div>
-                <div>
+              {logo?.isWordmark ? (
+                // Real wordmark (e.g. brokers/etoro-seeklogo.svg): show it big
+                // and drop the redundant "Expert Review / {name}" text block —
+                // the wordmark already reads the brand name. Only a small
+                // uppercase context label stays above it.
+                // eslint-disable-next-line @next/next/no-img-element
+                <div className="mb-3">
                   <div
                     style={{
                       fontSize: '10px',
@@ -177,11 +166,50 @@ export function ReviewSidebar({
                   >
                     Expert Review
                   </div>
-                  <div className="text-sm font-bold" style={{ color: 'var(--sfp-ink)' }}>
-                    {productName}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={logo.src}
+                    alt={`${productName} logo`}
+                    className="mt-2 h-10 w-auto max-w-full object-contain object-left"
+                  />
+                </div>
+              ) : (
+                <div className="flex items-center gap-3 mb-3">
+                  <div
+                    className="w-14 h-14 rounded-xl flex items-center justify-center shrink-0 overflow-hidden"
+                    style={{
+                      background: logo ? '#fff' : 'var(--sfp-navy)',
+                      border: logo ? '1px solid var(--sfp-hairline)' : 'none',
+                    }}
+                  >
+                    {logo ? (
+                      // Plain <img>, not next/image (next.config.ts has no
+                      // dangerouslyAllowSVG → optimizer 400s on local SVGs).
+                      // object-cover+left crops a wide icon lockup to its left mark.
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={logo.src} alt={`${productName} logo`} className="w-full h-full object-cover object-left" />
+                    ) : (
+                      <BarChart3 className="h-7 w-7 text-white" />
+                    )}
+                  </div>
+                  <div>
+                    <div
+                      style={{
+                        fontSize: '10px',
+                        fontWeight: 700,
+                        letterSpacing: '0.12em',
+                        textTransform: 'uppercase',
+                        color: 'var(--sfp-slate)',
+                      }}
+                    >
+                      Expert Review
+                    </div>
+                    <div className="text-sm font-bold" style={{ color: 'var(--sfp-ink)' }}>
+                      {productName}
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
               {publishedLabel && (
                 <div className="flex justify-between text-sm">
                   <span style={{ color: 'var(--sfp-slate)' }}>Published</span>

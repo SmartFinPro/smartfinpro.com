@@ -68,9 +68,11 @@ describe('ReviewSidebar', () => {
     expect(html).toContain('Expert Review');
     expect(html).toContain('Published');
     expect(html).toContain('February 2026');
-    // Real logo (etoro.svg genuinely exists in public/images/brokers/) —
-    // fs.existsSync-checked, not a hardcoded assumption.
-    expect(html).toContain('/images/brokers/etoro.svg');
+    // Real wordmark: etoro-seeklogo.svg exists in public/images/brokers/ and
+    // wins over the generic etoro.svg icon (fs.existsSync-checked). The card
+    // shows the wordmark big and drops the redundant "{name}" text (the
+    // wordmark already reads the brand), so assert the logo src.
+    expect(html).toContain('/images/brokers/etoro-seeklogo.svg');
 
     // b. Market Check — the widget itself renders...
     expect(html).toContain('How eToro compares');
