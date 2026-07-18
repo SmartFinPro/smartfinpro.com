@@ -37,7 +37,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import Link from 'next/link';
-import { ArrowRight, ShieldCheck, ExternalLink, Users, Zap, Globe } from 'lucide-react';
+import { ArrowRight, ShieldCheck, ExternalLink, Zap, Globe } from 'lucide-react';
 import { RegulatorBadge } from '@/components/marketing/regulator-badge';
 import { PreQualQuiz } from '@/components/marketing/pre-qual-quiz';
 import type { EnrichedCtaPartner } from '@/lib/types/page-cta';
@@ -85,21 +85,21 @@ const BUTTON_COLORS: readonly ButtonColorScheme[] = [
     shadow: '0 2px 8px rgba(26, 107, 58, 0.35)',
     hoverBg: 'var(--sfp-green)', hoverText: '#fff',
     hoverShadow: '0 4px 12px rgba(26, 107, 58, 0.45)',
-    badge: '★★★ Best Value',
+    badge: '',
   },
   {
     bg: 'var(--sfp-green)', text: '#fff',
     shadow: '0 2px 8px rgba(26, 107, 58, 0.35)',
     hoverBg: 'var(--sfp-green)', hoverText: '#fff',
     hoverShadow: '0 4px 12px rgba(26, 107, 58, 0.45)',
-    badge: '★★ Best Overall',
+    badge: '',
   },
   {
     bg: 'var(--sfp-green)', text: '#fff',
     shadow: '0 2px 8px rgba(26, 107, 58, 0.35)',
     hoverBg: 'var(--sfp-green)', hoverText: '#fff',
     hoverShadow: '0 4px 12px rgba(26, 107, 58, 0.45)',
-    badge: '★ Best Features',
+    badge: '',
   },
 ] as const;
 
@@ -251,12 +251,6 @@ export function StickyReviewNav({
 
   // ── Stable values ─────────────────────────────────────────────
   const year = reviewYear ?? new Date().getUTCFullYear();
-
-  const socialProofCount = useMemo(() => {
-    // Deterministic across SSR + client hydration (no clock/timezone input).
-    const base = productName.length * 7 + (rating || 4) * 31;
-    return Math.floor(80 + (base % 120));
-  }, [productName, rating]);
 
   // ── Derive category + market from URL or props ─────────────────
   const { resolvedCategory, resolvedMarket } = useMemo(() => {
@@ -476,7 +470,6 @@ export function StickyReviewNav({
 
   const subtitleParts: string[] = ['Expert Analysis'];
   if (rating && rating > 0) subtitleParts.push(`★ ${rating.toFixed(1)}/5`);
-  if (reviewCount && reviewCount > 0) subtitleParts.push(`${reviewCount.toLocaleString('en-US')} Ratings`);
   subtitleParts.push(categoryLabel);
   const subtitle = subtitleParts.join(' · ');
 
@@ -488,17 +481,6 @@ export function StickyReviewNav({
   /** Variant A: Multi-CTA — up to 3 buttons with labels + social proof */
   const renderVariantA = () => (
     <>
-      {/* CENTER: Social proof */}
-      <div className="hidden lg:block shrink-0" aria-hidden="true">
-        <div
-          className="flex items-center gap-1.5 text-xs sm:text-sm whitespace-nowrap"
-          style={{ color: 'rgba(255, 255, 255, 0.5)' }}
-        >
-          <Users className="w-3.5 h-3.5" />
-          <span>{socialProofCount.toLocaleString('en-US')} comparing now</span>
-        </div>
-      </div>
-
       {/* CENTER: Up to 3 CTA Buttons (absolutely centered on lg+, normal flow on mobile) */}
       <div className="lg:absolute lg:left-1/2 lg:-translate-x-1/2 flex items-center gap-2.5 shrink-0" role="group" aria-label="Partner offers">
         {resolvedPartners.map((cta, i) => {
@@ -571,14 +553,14 @@ export function StickyReviewNav({
 
     return (
       <>
-        {/* CENTER: Urgency text instead of social proof */}
+        {/* CENTER: Neutral compare-now hint (no urgency/scarcity claim) */}
         <div className="hidden lg:block shrink-0" aria-hidden="true">
           <div
             className="flex items-center gap-1.5 text-xs sm:text-sm whitespace-nowrap"
             style={{ color: 'rgba(255, 215, 100, 0.7)' }}
           >
             <Zap className="w-3.5 h-3.5" />
-            <span>Limited offer — compare now</span>
+            <span>Compare alternatives</span>
           </div>
         </div>
 
