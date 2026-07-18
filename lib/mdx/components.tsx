@@ -755,19 +755,9 @@ function StyledH2({ children, ...props }: React.HTMLAttributes<HTMLHeadingElemen
         className="mb-8 h-px w-full"
         style={{ background: 'linear-gradient(90deg, transparent, rgba(27,79,140,0.12), transparent)' }}
       />
-      <div className="flex items-center gap-4">
-        <div
-          className="w-1 h-8 rounded-full shrink-0"
-          style={{ background: 'linear-gradient(180deg, var(--sfp-navy), var(--sfp-gold))' }}
-        />
-        <h2 className="text-[32px] md:text-[36px] font-semibold tracking-tight" style={{ color: 'var(--sfp-navy)' }} {...props}>
-          {children}
-        </h2>
-      </div>
-      <div
-        className="mt-3 ml-5 h-px w-32"
-        style={{ background: 'linear-gradient(90deg, var(--sfp-gold), transparent)' }}
-      />
+      <h2 className="text-[32px] md:text-[36px] font-semibold tracking-tight" style={{ color: 'var(--sfp-navy)' }} {...props}>
+        {children}
+      </h2>
     </div>
   );
 }
