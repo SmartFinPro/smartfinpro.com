@@ -4,6 +4,7 @@ import matter from 'gray-matter';
 import readingTime from 'reading-time';
 import { Market, Category } from '@/lib/i18n/config';
 import { applyFreshnessOverride } from '@/lib/mdx/content-overrides-loader';
+import type { VerdictBlock, EssentialFact, AlternativeEntry, SectionVerdicts } from '@/lib/reviews/verdict-frontmatter';
 
 const contentDirectory = path.join(process.cwd(), 'content');
 
@@ -48,6 +49,26 @@ export interface ContentMeta {
    * docs/superpowers/specs/2026-07-17-cockpit-bridge-design.md §3.
    */
   cockpitTopic?: string;
+  /**
+   * V2 review-layout opt-in (T5/T13, 2026-07-18 review-redesign). When
+   * exactly `'v2'`, the page renders via ReviewLayoutV2 instead of the V1
+   * ReportLayout — checked BEFORE the V1 `rating` gate (page.tsx), so a V2
+   * page never depends on a fabricated 4.7/5-style rating. Absent/any other
+   * value = V1 (unchanged).
+   */
+  reviewLayout?: 'v2';
+  /** V2 verdict block — hand-verified copy, validated by lib/reviews/verdict-frontmatter.ts. Never sourced from unaudited DB fields. */
+  verdict?: VerdictBlock;
+  /** V2 Essential Facts grid — each entry requires sourceHref + asOf (Konzept §9.3/§29.2). */
+  essentialFacts?: EssentialFact[];
+  /** V2 Alternatives section (2-3 entries) — the Layout-owned "Alternatives" nav anchor. */
+  alternatives?: AlternativeEntry[];
+  /** V2 transparency changelog ("what changed, when") — not validated by verdict-frontmatter.ts (no length rule defined for it). */
+  updateLog?: { date: string; change: string }[];
+  /** V2 per-MDX-section verdict blurbs. Keys are validated against the 5 mdx-owned ids in lib/reviews/section-anchors.ts. */
+  sectionVerdicts?: SectionVerdicts;
+  /** V2 explicit "data verified on" date (T0d) — distinct from `modifiedDate` (article edit date) and `position.dataVerifiedAt` (score data-as-of date). */
+  dataVerifiedDate?: string;
 }
 
 // ── Currency Map ────────────────────────────────────────────
@@ -99,6 +120,13 @@ function normalizeFrontmatter(raw: Record<string, unknown>): ContentMeta {
       (raw.lossPercentage as string) ?? (raw.loss_percentage as string) ?? undefined,
     protocolBridge: (raw.protocol_bridge as ContentMeta['protocolBridge']) ?? undefined,
     cockpitTopic: (raw.cockpitTopic as string) ?? undefined,
+    reviewLayout: (raw.reviewLayout as ContentMeta['reviewLayout']) ?? undefined,
+    verdict: (raw.verdict as ContentMeta['verdict']) ?? undefined,
+    essentialFacts: (raw.essentialFacts as ContentMeta['essentialFacts']) ?? undefined,
+    alternatives: (raw.alternatives as ContentMeta['alternatives']) ?? undefined,
+    updateLog: (raw.updateLog as ContentMeta['updateLog']) ?? undefined,
+    sectionVerdicts: (raw.sectionVerdicts as ContentMeta['sectionVerdicts']) ?? undefined,
+    dataVerifiedDate: (raw.dataVerifiedDate as string) ?? undefined,
   };
 }
 

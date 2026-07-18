@@ -42,7 +42,19 @@ function stripMdxSyntax(mdx) {
     .replace(/[*_`]/g, ' ');
 }
 
-function countWords(text) {
+/**
+ * Whitespace-token word count for a single string. Exported (T5, 2026-07-18)
+ * so lib/reviews/verdict-frontmatter.ts can apply the exact same counting
+ * rule to individual §30.1 length checks (verdict.positioning,
+ * verdict.summary, sectionVerdicts values, finalDecision, faq[].answer) —
+ * one counting implementation shared by both the per-field content-rule
+ * validator (verdict-frontmatter.ts) and the whole-page rendered-word-count
+ * gate below, instead of two independently-drifting word counters.
+ *
+ * @param {string | null | undefined} text
+ * @returns {number}
+ */
+export function countWords(text) {
   if (!text) return 0;
   return String(text).trim().split(/\s+/).filter(Boolean).length;
 }
