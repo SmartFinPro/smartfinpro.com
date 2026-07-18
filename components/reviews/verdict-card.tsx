@@ -88,7 +88,7 @@ export function VerdictCard({
             fontFamily: 'var(--font-secondary)',
             fontSize: '16.5px',
             lineHeight: 1.7,
-            color: '#2B2B38',
+            color: 'var(--sfp-ink)',
             margin: '0 0 18px',
           }}
         >
