@@ -160,7 +160,6 @@ export function BrokerComparisonTablePremium({
                   <StarRatingInline value={broker.rating} />
                   <span className="text-xs tabular-nums" style={{ color: 'var(--sfp-slate)' }}>
                     {broker.rating}/5
-                    {broker.reviewCount && ` (${broker.reviewCount.toLocaleString('en-US')})`}
                   </span>
                 </div>
               </div>

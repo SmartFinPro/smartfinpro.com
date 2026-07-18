@@ -49,6 +49,7 @@ import type { EnrichedCtaPartner } from '@/lib/types/page-cta';
 import { StickyReviewNav } from '@/components/marketing/sticky-review-nav';
 import { ReviewExitIntent } from '@/components/marketing/review-exit-intent';
 import { XRayScore } from '@/components/marketing/xray-score';
+import { CategoryRiskDisclosure } from '@/components/reviews/category-risk-disclosure';
 
 // ── Auto-Quiz: derive topic from page category ──────────────────
 type QuizTopic = 'trading' | 'personal-finance' | 'forex' | 'business-banking' | 'ai-tools' | 'broker' | 'banking';
@@ -642,7 +643,7 @@ export function ReportLayout({
                     <strong>Last fact-check:</strong> {factCheckedLabel}
                   </p>
                   <p>
-                    <strong>Data points reviewed:</strong> {(review.reviewCount ?? 0).toLocaleString('en-US')} consumer records, lender pricing pages, and public regulator guidance.
+                    Reviewed against provider disclosures and public regulator guidance.
                   </p>
                   <p>
                     <strong>Primary sources:</strong> {
@@ -743,9 +744,7 @@ export function ReportLayout({
                     ]}
                     expandableVerdict={true}
                   />
-                  <div className="mt-3 text-xs" style={{ color: 'var(--sfp-slate)' }}>
-                    Not legal, tax, or bankruptcy advice. Terms vary by state and credit profile.
-                  </div>
+                  <CategoryRiskDisclosure category={category} />
                 </div>
               );
             })()}
@@ -833,9 +832,6 @@ export function ReportLayout({
                                 }`}
                               />
                             ))}
-                            <span className="ml-1 font-medium" style={{ color: 'var(--sfp-ink)' }}>
-                              ({item.meta.reviewCount || 0})
-                            </span>
                           </div>
                         )}
                         <div className="w-px h-3 bg-gray-300" />
@@ -974,7 +970,6 @@ export function ReportLayout({
                         }`}
                       />
                     ))}
-                    <span className="text-xs ml-1" style={{ color: 'var(--sfp-slate)' }}>({review.reviewCount})</span>
                   </div>
                 )}
               </div>
