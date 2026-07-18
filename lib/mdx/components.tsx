@@ -748,11 +748,14 @@ function StyledH1({ children, ...props }: React.HTMLAttributes<HTMLHeadingElemen
 }
 
 function StyledH2({ children, ...props }: React.HTMLAttributes<HTMLHeadingElement>) {
+  // Betreiber-Wunsch 2026-07-19: Abstand ueber Zwischenueberschriften
+  // verkleinert (mt-14→mt-8, Separator mb-8→mb-5) — vorher ~88px Luft
+  // ueber jedem H2, jetzt ~52px.
   return (
-    <div className="relative mt-14 mb-6 not-prose">
+    <div className="relative mt-8 mb-6 not-prose">
       {/* Subtle section separator */}
       <div
-        className="mb-8 h-px w-full"
+        className="mb-5 h-px w-full"
         style={{ background: 'linear-gradient(90deg, transparent, rgba(27,79,140,0.12), transparent)' }}
       />
       <h2 className="text-[32px] md:text-[36px] font-semibold tracking-tight" style={{ color: 'var(--sfp-navy)' }} {...props}>
