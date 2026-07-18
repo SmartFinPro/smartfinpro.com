@@ -70,15 +70,20 @@ export function VerdictCard({
       }}
     >
       <div>
+        {/* Betreiber-Wunsch 2026-07-19: same type treatment as the
+            ScoreBreakdown row labels ("Fees" etc. — 12px, ink, no uppercase/
+            tracking) instead of a tracked slate eyebrow, on a light-blue
+            (--sfp-sky) underlay spanning the full text area — same idiom as
+            the highlighted "isYou" row in decision-bridge.tsx's ranking strip. */}
         <div
           style={{
             fontFamily: 'var(--font-primary)',
-            fontSize: '10.5px',
-            letterSpacing: '0.14em',
-            textTransform: 'uppercase',
-            color: 'var(--sfp-slate)',
-            fontWeight: 600,
-            marginBottom: '10px',
+            fontSize: '12px',
+            color: 'var(--sfp-ink)',
+            background: 'var(--sfp-sky)',
+            borderRadius: '8px',
+            padding: '8px 12px',
+            marginBottom: '14px',
           }}
         >
           Our Verdict
