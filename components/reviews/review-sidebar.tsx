@@ -113,7 +113,12 @@ export function ReviewSidebar({
 }: ReviewSidebarProps) {
   const publishedLabel = formatPublishMonth(publishDate);
   const logoSrc = resolveLogoSrc(decisionBridge.position?.slug);
-  const showRiskWarning = category === 'trading' || category === 'forex' || Boolean(hasLeverageRisk);
+  // Prominent CFD/leverage warning ONLY for products that actually carry that
+  // risk (frontmatter `hasLeverageRisk`), NOT every trading/forex page. The
+  // old category-wide trigger printed a CFD warning on eToro US, which offers
+  // no CFDs — factually wrong, same class as the debt-profile disclaimer bug.
+  // Non-leverage products get the quiet general-risk line instead (see d.).
+  const showRiskWarning = Boolean(hasLeverageRisk);
 
   return (
     <aside className="lg:sticky lg:top-24" style={{ fontFamily: 'var(--font-primary)' }}>
@@ -204,15 +209,6 @@ export function ReviewSidebar({
               Visit {productName}
             </TrackedAffiliateLink>
           )}
-          {/* d. Compact affiliate/risk disclosure — kept adjacent to the CTA it
-              belongs to (F-05: disclosure near the affiliate link, not stranded
-              at the bottom of the rail). */}
-          {affiliateUrl && (
-            <div className="flex flex-col gap-2 pt-0.5">
-              <AffiliateDisclosure market={market} variant="compact" />
-              {showRiskWarning && <RiskWarningBox variant="compact" market={market} />}
-            </div>
-          )}
         </div>
 
         {/* b. Market Check — internal CTA suppressed; (c) above is the sidebar's one Compare button. */}
@@ -228,6 +224,29 @@ export function ReviewSidebar({
             <DecisionBridge showCta={false} />
           </DecisionBridgeProvider>
         </div>
+
+        {/* d. Disclosure/risk — Betreiber-Wunsch 2026-07-18: below the Market
+            Check, deliberately quiet. Affiliate disclosure in the whisper
+            `minimal` variant (FTC "clear and conspicuous" = legible, not
+            hidden). The prominent CFD RiskWarningBox now renders ONLY when the
+            product is actually a leveraged/CFD product (`hasLeverageRisk`) —
+            NOT for every `trading` page: eToro US offers no CFDs (the article
+            states this three times), so the category-generic CFD warning was
+            factually wrong here, the same class of bug as the debt-profile
+            disclaimer. A quiet, correct general-risk line replaces it. */}
+        {affiliateUrl && (
+          <div className="flex flex-col gap-1.5 pt-1">
+            <AffiliateDisclosure market={market} variant="minimal" />
+            {showRiskWarning ? (
+              <RiskWarningBox variant="compact" market={market} />
+            ) : (
+              <p className="m-0 text-[11px] leading-snug text-sfp-slate">
+                Investing involves risk, including possible loss of principal.
+                Options and crypto carry additional risk.
+              </p>
+            )}
+          </div>
+        )}
       </div>
     </aside>
   );

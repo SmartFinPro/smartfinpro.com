@@ -65,6 +65,10 @@ export interface ReviewHeaderProps {
   dataVerifiedDate?: string;
   /** ISO YYYY-MM-DD — ContentMeta.modifiedDate. Segment omitted (not placeholder'd) when absent or malformed. */
   modifiedDate?: string;
+  /** Product-level leverage/CFD flag. The leverage-risk addendum shows ONLY
+   *  when the product actually carries that risk — not for every trading/forex
+   *  page (eToro US offers no CFDs). */
+  hasLeverageRisk?: boolean;
 }
 
 export function ReviewHeader({
@@ -74,6 +78,7 @@ export function ReviewHeader({
   category,
   dataVerifiedDate,
   modifiedDate,
+  hasLeverageRisk,
 }: ReviewHeaderProps) {
   const verifiedLabel = dataVerifiedDate ? formatIsoDate(dataVerifiedDate) : null;
   const updatedLabel = modifiedDate ? formatIsoDate(modifiedDate) : null;
@@ -82,7 +87,7 @@ export function ReviewHeader({
   if (verifiedLabel) metaSegments.push(`Data verified ${verifiedLabel}`);
   if (updatedLabel) metaSegments.push(`Updated ${updatedLabel}`);
 
-  const showRiskAddendum = LEVERAGE_RISK_CATEGORIES.has(category);
+  const showRiskAddendum = LEVERAGE_RISK_CATEGORIES.has(category) && Boolean(hasLeverageRisk);
 
   return (
     <header style={{ fontFamily: 'var(--font-primary)' }}>

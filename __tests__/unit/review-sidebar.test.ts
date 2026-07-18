@@ -82,12 +82,32 @@ describe('ReviewSidebar', () => {
     expect(html).toContain('Compare all 9 trading platforms');
     expect(html).toContain('Visit eToro');
 
-    // d. Compact disclosure + risk warning (trading category + affiliateUrl present)
+    // d. Compact disclosure — trading category, but the eToro fixture has NO
+    // hasLeverageRisk flag (eToro US offers no CFDs), so the quiet general-risk
+    // line renders, NOT the prominent CFD RiskWarningBox.
     expect(html).toContain('reader-supported');
-    expect(html).toContain('Risk Warning');
+    expect(html).toContain('Investing involves risk, including possible loss of principal');
+    expect(html).not.toContain('Risk Warning');
 
     // Sticky only at lg:
     expect(html).toContain('lg:sticky');
+  });
+
+  it('with hasLeverageRisk=true (a real CFD broker): shows the prominent CFD RiskWarningBox, not the general-risk line', () => {
+    const html = renderToStaticMarkup(
+      h(ReviewSidebar, {
+        productName: 'eToro',
+        publishDate: '2026-01-10',
+        decisionBridge: makeDecisionBridge({}),
+        compareLabel: 'Compare all 9 trading platforms',
+        affiliateUrl: '/go/etoro',
+        market: 'us',
+        category: 'trading',
+        hasLeverageRisk: true,
+      }),
+    );
+    expect(html).toContain('Risk Warning');
+    expect(html).not.toContain('Investing involves risk, including possible loss of principal');
   });
 
   it('unknown broker slug (no logo file): falls back to the BarChart3 icon, never a guessed <img src>', () => {

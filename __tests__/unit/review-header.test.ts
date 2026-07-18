@@ -117,8 +117,34 @@ describe('ReviewHeader', () => {
     expect(html).toContain('How we make money');
   });
 
-  it('appends a terse risk addendum for trading/forex categories only', () => {
-    const trading = renderToStaticMarkup(
+  it('appends the leverage-risk addendum only for a leverage category AND hasLeverageRisk=true', () => {
+    // trading + flag → addendum
+    const tradingLeveraged = renderToStaticMarkup(
+      h(ReviewHeader, {
+        title: 'Plus500 Review',
+        breadcrumbs: BREADCRUMBS,
+        category: 'trading',
+        modifiedDate: '2026-07-17',
+        hasLeverageRisk: true,
+      }),
+    );
+    expect(tradingLeveraged).toContain('high risk of losing money');
+
+    // forex + flag → addendum
+    const forexLeveraged = renderToStaticMarkup(
+      h(ReviewHeader, {
+        title: 'IG Review',
+        breadcrumbs: BREADCRUMBS,
+        category: 'forex',
+        modifiedDate: '2026-07-17',
+        hasLeverageRisk: true,
+      }),
+    );
+    expect(forexLeveraged).toContain('high risk of losing money');
+
+    // trading WITHOUT the flag (e.g. eToro US — no CFDs) → NO addendum.
+    // This is the fix: the category alone must not print a CFD warning.
+    const tradingNoLeverage = renderToStaticMarkup(
       h(ReviewHeader, {
         title: 'eToro Review',
         breadcrumbs: BREADCRUMBS,
@@ -126,24 +152,16 @@ describe('ReviewHeader', () => {
         modifiedDate: '2026-07-17',
       }),
     );
-    expect(trading).toContain('high risk of losing money');
+    expect(tradingNoLeverage).not.toContain('high risk of losing money');
 
-    const forex = renderToStaticMarkup(
-      h(ReviewHeader, {
-        title: 'OANDA Review',
-        breadcrumbs: BREADCRUMBS,
-        category: 'forex',
-        modifiedDate: '2026-07-17',
-      }),
-    );
-    expect(forex).toContain('high risk of losing money');
-
+    // non-leverage category never shows it, flag or not.
     const banking = renderToStaticMarkup(
       h(ReviewHeader, {
         title: 'Mercury Review',
         breadcrumbs: BREADCRUMBS,
         category: 'business-banking',
         modifiedDate: '2026-07-17',
+        hasLeverageRisk: true,
       }),
     );
     expect(banking).not.toContain('high risk of losing money');

@@ -206,6 +206,7 @@ export function ReviewLayoutV2({
             category={category}
             dataVerifiedDate={meta.dataVerifiedDate}
             modifiedDate={meta.modifiedDate}
+            hasLeverageRisk={meta.hasLeverageRisk}
           />
 
           {/* #verdict — layout-owned nav anchor (REVIEW_V2_ANCHORS) */}
@@ -295,7 +296,7 @@ export function ReviewLayoutV2({
                 compareLabel={compareLabel}
                 affiliateUrl={affiliateUrl}
               />
-              <CategoryRiskDisclosure category={category} className="mt-3 text-xs" />
+              <CategoryRiskDisclosure category={category} hasLeverageRisk={meta.hasLeverageRisk} className="mt-3 text-xs" />
             </div>
           )}
 

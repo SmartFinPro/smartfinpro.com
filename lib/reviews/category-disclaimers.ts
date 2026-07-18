@@ -35,6 +35,16 @@ const CATEGORY_DISCLAIMERS: Record<string, string> = {
 };
 
 /**
+ * Categories whose disclaimer is a CFD/leverage warning. These must be gated
+ * on the product-level `hasLeverageRisk` flag, NOT shown category-wide: not
+ * every trading/forex broker offers CFDs (US brokers generally do not — e.g.
+ * eToro US), so a category-wide CFD warning is factually wrong there. The
+ * NON-leverage disclaimers (debt-relief, credit-repair) stay purely category-
+ * driven — they have no per-product leverage concept.
+ */
+export const LEVERAGE_DISCLAIMER_CATEGORIES: ReadonlySet<string> = new Set(['trading', 'forex']);
+
+/**
  * Returns the category-appropriate risk disclaimer, or `null` when the
  * category has no mapped disclaimer (renders nothing — never falls back to
  * a generic/blanket claim for an unmapped category).
