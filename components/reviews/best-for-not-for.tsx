@@ -11,6 +11,7 @@
 // ============================================================
 
 import type { VerdictBlock } from '@/lib/reviews/verdict-frontmatter';
+import { CheckCircleIcon, MinusCircleIcon } from '@/components/marketing/check-icon';
 
 export interface BestForNotForProps {
   bestFor: VerdictBlock['bestFor'];
@@ -37,11 +38,14 @@ const LIST_STYLE = {
 
 const ITEM_STYLE = {
   display: 'flex',
+  alignItems: 'flex-start' as const,
   gap: '8px',
   fontSize: '14px',
   lineHeight: 1.5,
   color: 'var(--sfp-ink)',
 };
+
+const ICON_STYLE = { flexShrink: 0, marginTop: '2px' } as const;
 
 export function BestForNotFor({ bestFor, notFor }: BestForNotForProps) {
   const best = bestFor.slice(0, 3);
@@ -56,9 +60,7 @@ export function BestForNotFor({ bestFor, notFor }: BestForNotForProps) {
           <ul style={LIST_STYLE}>
             {best.map((item, i) => (
               <li key={`${i}-${item}`} style={ITEM_STYLE}>
-                <span aria-hidden="true" style={{ color: 'var(--sfp-green)', fontWeight: 700 }}>
-                  ✓
-                </span>
+                <CheckCircleIcon size={16} style={ICON_STYLE} />
                 {item}
               </li>
             ))}
@@ -71,9 +73,7 @@ export function BestForNotFor({ bestFor, notFor }: BestForNotForProps) {
           <ul style={LIST_STYLE}>
             {not.map((item, i) => (
               <li key={`${i}-${item}`} style={ITEM_STYLE}>
-                <span aria-hidden="true" style={{ color: 'var(--sfp-red)', fontWeight: 700 }}>
-                  ✕
-                </span>
+                <MinusCircleIcon size={16} style={ICON_STYLE} />
                 {item}
               </li>
             ))}
