@@ -419,7 +419,11 @@ function AffiliateButton({
 
 // Collapsible Section — Split-Panel Proof Design Accordion
 // Uses native <details>/<summary> for zero-JS open/close
-function CollapsibleSection({
+// Exported (T12, 2026-07-18 review-redesign V2) so V2 layout components
+// (components/reviews/methodology-section.tsx) can reuse it directly instead
+// of re-implementing the same accordion — it was previously a module-private
+// helper referenced only by the mdxComponents registry below.
+export function CollapsibleSection({
   title,
   count,
   defaultOpen = false,
