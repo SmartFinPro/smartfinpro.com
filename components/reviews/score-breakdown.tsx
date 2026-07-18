@@ -1,8 +1,17 @@
 // components/reviews/score-breakdown.tsx — V2 BEST-X sub-score breakdown (T8)
 // ============================================================
-// Server Component. Renders `position.subScores` as dezente horizontale
-// Bars (V15 minibar-style: hairline rows, tabular-nums, no <table>, no
-// donut/radial chart — both explicitly ruled out by the plan).
+// Server Component. Renders `position.subScores` as compact minibar rows —
+// designed to live INSIDE VerdictCard's BestXScore panel (260px rail), not
+// as a full-width standalone zone (Betreiber-Wunsch 2026-07-19: "score card
+// kompakter, premium enterprise"). V15 idiom: hairline-row track,
+// tabular-nums, navy fill, no <table>, no donut/radial chart — both
+// explicitly ruled out by the plan.
+//
+// Per-row scoreLabel() words were deliberately dropped in the compact
+// redesign — the headline score above already carries its band word; rows
+// read label + number + bar. Row order is the subScores insertion order
+// (DB-canonical), NEVER sorted by value: sorting descending would combine
+// with the 5-row cap to systematically hide the weakest dimension.
 //
 // Dynamically iterates whatever keys are present in `subScores` — T0d:
 // eToro has exactly 4 (fees/features/ux/support); a mortgage-broker cockpit
@@ -16,9 +25,8 @@
 // ============================================================
 
 import type { SubScores } from '@/lib/comparison/types';
-import { scoreLabel } from '@/lib/reviews/score-label';
 
-/** Field size beyond which only the top N sub-scores are shown (plan: "max 5 sichtbar"). */
+/** Field size beyond which only the first N sub-scores are shown (plan: "max 5 sichtbar"). */
 const MAX_VISIBLE_SUBSCORES = 5;
 
 function humanizeSubScoreKey(key: string): string {
@@ -45,7 +53,7 @@ export function ScoreBreakdown({ subScores }: ScoreBreakdownProps) {
     <div style={{ fontFamily: 'var(--font-primary)' }}>
       <div
         style={{
-          fontSize: '10.5px',
+          fontSize: '10px',
           letterSpacing: '0.14em',
           textTransform: 'uppercase',
           color: 'var(--sfp-slate)',
@@ -56,34 +64,34 @@ export function ScoreBreakdown({ subScores }: ScoreBreakdownProps) {
         Score Breakdown
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-        {visible.map(([key, value], index) => {
+        {visible.map(([key, value]) => {
           const pct = Math.max(0, Math.min(100, (value / 10) * 100));
-          const isLast = index === visible.length - 1;
           return (
-            <div
-              key={key}
-              style={{
-                borderBottom: isLast ? 'none' : '1px solid var(--sfp-hairline-row)',
-                paddingBottom: '8px',
-              }}
-            >
+            <div key={key}>
               <div
                 style={{
                   display: 'flex',
                   justifyContent: 'space-between',
-                  fontSize: '13px',
+                  alignItems: 'baseline',
+                  fontSize: '12px',
                   color: 'var(--sfp-ink)',
-                  marginBottom: '5px',
+                  marginBottom: '4px',
                 }}
               >
                 <span>{humanizeSubScoreKey(key)}</span>
-                <span style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 600 }}>
-                  {value.toFixed(1)} · {scoreLabel(value)}
+                <span
+                  style={{
+                    fontVariantNumeric: 'tabular-nums',
+                    fontWeight: 600,
+                    fontSize: '12.5px',
+                  }}
+                >
+                  {value.toFixed(1)}
                 </span>
               </div>
               <div
                 style={{
-                  height: '4px',
+                  height: '3px',
                   background: 'var(--sfp-hairline-row)',
                   borderRadius: '2px',
                   overflow: 'hidden',

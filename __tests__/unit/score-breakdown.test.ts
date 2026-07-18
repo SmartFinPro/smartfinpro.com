@@ -56,10 +56,14 @@ describe('ScoreBreakdown', () => {
     expect(html).not.toContain('6.5');
   });
 
-  it('renders a scoreLabel() word alongside each value, and no <table> / donut markup', () => {
+  it('renders values as bare tabular numbers (no per-row band words — compact 2026-07-19 redesign), and no <table> / donut markup', () => {
     const html = renderToStaticMarkup(h(ScoreBreakdown, { subScores: { fees: 9.2, support: 7.5 } }));
-    expect(html).toContain('Excellent'); // scoreLabel(9.2)
-    expect(html).toContain('Fair'); // scoreLabel(7.5)
+    expect(html).toContain('9.2');
+    expect(html).toContain('7.5');
+    // Per-row scoreLabel() words were dropped: the headline score above the
+    // breakdown (BestXScore panel) already carries its band word.
+    expect(html).not.toContain('Excellent'); // scoreLabel(9.2)
+    expect(html).not.toContain('Fair'); // scoreLabel(7.5)
     expect(html).not.toContain('<table');
     expect(html).not.toContain('<circle');
   });

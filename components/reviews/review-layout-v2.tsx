@@ -7,7 +7,7 @@
 // anchor list; it only orders the zones to match it:
 //
 //   ReviewHeader
-//     → #verdict   VerdictCard (+ScoreBreakdown from decisionBridge.position)
+//     → #verdict   VerdictCard (BestXScore panel embeds ScoreBreakdown)
 //     → [mobile-only] ReviewSidebar in-flow, directly under #verdict
 //     → BestForNotFor
 //     → EssentialFactsGrid
@@ -64,7 +64,6 @@
 import Link from 'next/link';
 import { ReviewHeader } from './review-header';
 import { VerdictCard } from './verdict-card';
-import { ScoreBreakdown } from './score-breakdown';
 import { BestForNotFor } from './best-for-not-for';
 import { EssentialFactsGrid } from './essential-facts-grid';
 import { ReviewSectionNav } from './review-section-nav';
@@ -209,7 +208,9 @@ export function ReviewLayoutV2({
             hasLeverageRisk={meta.hasLeverageRisk}
           />
 
-          {/* #verdict — layout-owned nav anchor (REVIEW_V2_ANCHORS) */}
+          {/* #verdict — layout-owned nav anchor (REVIEW_V2_ANCHORS). The
+              sub-score breakdown lives INSIDE VerdictCard's BestXScore panel
+              (2026-07-19 compact redesign) — no separate full-width zone. */}
           {verdict && (
             <div id="verdict" style={{ marginBottom: '40px' }}>
               <VerdictCard
@@ -218,11 +219,6 @@ export function ReviewLayoutV2({
                 position={position}
                 fieldCount={fieldCount}
               />
-              {position && (
-                <div style={{ marginTop: '20px', borderTop: '1px solid var(--sfp-hairline)', paddingTop: '20px' }}>
-                  <ScoreBreakdown subScores={position.subScores} />
-                </div>
-              )}
             </div>
           )}
 

@@ -27,6 +27,7 @@ import Link from 'next/link';
 import type { VerdictBlock } from '@/lib/reviews/verdict-frontmatter';
 import type { DecisionBridgeData } from '@/lib/comparison/types';
 import { scoreLabel, rankPhrase } from '@/lib/reviews/score-label';
+import { ScoreBreakdown } from './score-breakdown';
 
 /** The audited cockpit position for the reviewed product — same shape as
  *  DecisionBridgeData['position'], reused rather than redefined. */
@@ -178,6 +179,11 @@ export function VerdictCard({
   );
 }
 
+// The unified compact score card (Betreiber-Wunsch 2026-07-19: "kompakter,
+// premium enterprise"): headline number, band + rank on ONE line, the
+// sub-score minibars (formerly a separate full-width zone under the card)
+// hairline-separated inside the same rail, methodology sentence last. One
+// coherent score surface instead of two disconnected ones.
 function BestXScore({
   position,
   fieldCount,
@@ -195,7 +201,7 @@ function BestXScore({
       <div
         style={{
           fontVariantNumeric: 'tabular-nums',
-          fontSize: 'clamp(36px, 4vw, 44px)',
+          fontSize: 'clamp(34px, 4vw, 40px)',
           fontWeight: 700,
           color: 'var(--sfp-ink)',
           letterSpacing: '-0.02em',
@@ -203,15 +209,30 @@ function BestXScore({
         }}
       >
         {position.score.toFixed(1)}
-        <span style={{ fontSize: '18px', fontWeight: 400, color: 'var(--sfp-slate)' }}>/10</span>
+        <span style={{ fontSize: '17px', fontWeight: 400, color: 'var(--sfp-slate)' }}>/10</span>
       </div>
-      <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--sfp-navy)', margin: '4px 0 2px' }}>
-        {scoreLabel(position.score)}
+      <div style={{ fontSize: '12.5px', margin: '7px 0 0', lineHeight: 1.4 }}>
+        <span style={{ fontWeight: 600, color: 'var(--sfp-navy)' }}>{scoreLabel(position.score)}</span>
+        <span style={{ color: 'var(--sfp-slate)' }}> · {rankPhrase(position.rank, fieldCount)}</span>
       </div>
-      <div style={{ fontSize: '12.5px', color: 'var(--sfp-slate)', marginBottom: '14px' }}>
-        {rankPhrase(position.rank, fieldCount)}
-      </div>
-      <p style={{ fontSize: '11.5px', lineHeight: 1.5, color: 'var(--sfp-slate)', margin: 0 }}>
+      {/* Divider-wrapper only when the breakdown actually renders — an empty
+          subScores object must not leave an orphan hairline (ScoreBreakdown's
+          own null-degradation contract, mirrored here for the wrapper). */}
+      {position.subScores &&
+        Object.values(position.subScores).some((v) => typeof v === 'number' && Number.isFinite(v)) && (
+          <div
+            style={{
+              margin: '14px 0',
+              borderTop: '1px solid var(--sfp-hairline-row)',
+              paddingTop: '14px',
+            }}
+          >
+            <ScoreBreakdown subScores={position.subScores} />
+          </div>
+        )}
+      {/* margin-top collapses with the divider-wrapper's margin-bottom (block
+          context), so the gap stays 14px with OR without the breakdown. */}
+      <p style={{ fontSize: '11px', lineHeight: 1.5, color: 'var(--sfp-slate)', margin: '14px 0 0' }}>
         Calculated from verified data points from official sources. Commercial relationships do not
         affect the score. <Link href={scoreHref} style={{ color: 'var(--sfp-navy)' }}>How we score</Link>
       </p>
