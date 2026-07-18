@@ -136,7 +136,7 @@ export function ReviewSidebar({
             <div className="rounded-xl p-4" style={{ background: 'var(--sfp-sky)' }}>
               <div className="flex items-center gap-3 mb-3">
                 <div
-                  className="w-12 h-12 rounded-lg flex items-center justify-center shrink-0 overflow-hidden"
+                  className="w-14 h-14 rounded-xl flex items-center justify-center shrink-0 overflow-hidden"
                   style={{
                     background: logoSrc ? '#fff' : 'var(--sfp-navy)',
                     border: logoSrc ? '1px solid var(--sfp-hairline)' : 'none',
@@ -150,10 +150,19 @@ export function ReviewSidebar({
                     // trading-cost-calculator.tsx). A static <img> bypasses
                     // the optimizer entirely — correct for a small vector
                     // icon that needs no resize pipeline anyway.
+                    //
+                    // object-cover + object-left: the shared brokers/*.svg are
+                    // WIDE lockups (viewBox 200x48 = mark on the left + white
+                    // wordmark on the right). In a square tile object-contain
+                    // shrinks the whole lockup to tile-WIDTH → a tiny mark and
+                    // an invisible white wordmark. Cover+left fills the tile
+                    // with the left mark (the wordmark is redundant here — the
+                    // product name sits next to this tile as text) and crops
+                    // the wordmark off.
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={logoSrc} alt={`${productName} logo`} className="w-8 h-8 object-contain" />
+                    <img src={logoSrc} alt={`${productName} logo`} className="w-full h-full object-cover object-left" />
                   ) : (
-                    <BarChart3 className="h-6 w-6 text-white" />
+                    <BarChart3 className="h-7 w-7 text-white" />
                   )}
                 </div>
                 <div>
