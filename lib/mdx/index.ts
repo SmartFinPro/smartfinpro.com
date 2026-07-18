@@ -69,6 +69,26 @@ export interface ContentMeta {
   sectionVerdicts?: SectionVerdicts;
   /** V2 explicit "data verified on" date (T0d) — distinct from `modifiedDate` (article edit date) and `position.dataVerifiedAt` (score data-as-of date). */
   dataVerifiedDate?: string;
+  /**
+   * V2 "Final Decision" zone prose (components/reviews/final-decision.tsx,
+   * T12) — 80-140 words per lib/reviews/verdict-frontmatter.ts's
+   * VerdictFrontmatterSchema.finalDecision. Raw frontmatter key
+   * `finalDecision` (scalar string) — the same key
+   * scripts/lib/rendered-word-count.mjs already reads for the T0e whole-page
+   * word-count gate. T5/T12 defined the Zod rule and the consuming
+   * component but neither wired this field into ContentMeta; added here
+   * (T13) so ReviewLayoutV2 can actually read it from loaded content.
+   */
+  finalDecision?: string;
+  /**
+   * V2 FAQ zone — deliberately a SEPARATE frontmatter key from the V1
+   * `faqs` field above (raw key `faq`, singular), matching
+   * lib/reviews/verdict-frontmatter.ts's VerdictFrontmatterSchema.faq and
+   * scripts/lib/rendered-word-count.mjs's `fm.faq` read. V1 pages keep
+   * using `faqs` untouched; V2 pages get a fresh, dedicated FAQ list rather
+   * than inheriting whatever `faqs` happened to hold pre-migration.
+   */
+  faq?: { question: string; answer: string }[];
 }
 
 // ── Currency Map ────────────────────────────────────────────
@@ -127,6 +147,8 @@ function normalizeFrontmatter(raw: Record<string, unknown>): ContentMeta {
     updateLog: (raw.updateLog as ContentMeta['updateLog']) ?? undefined,
     sectionVerdicts: (raw.sectionVerdicts as ContentMeta['sectionVerdicts']) ?? undefined,
     dataVerifiedDate: (raw.dataVerifiedDate as string) ?? undefined,
+    finalDecision: (raw.finalDecision as string) ?? undefined,
+    faq: (raw.faq as ContentMeta['faq']) ?? undefined,
   };
 }
 
