@@ -70,36 +70,43 @@ export function VerdictCard({
       }}
     >
       <div>
-        {/* Betreiber-Wunsch 2026-07-19: same type treatment as the
-            ScoreBreakdown row labels ("Fees" etc. — 12px, ink, no uppercase/
-            tracking) instead of a tracked slate eyebrow, on a light-blue
-            (--sfp-sky) underlay spanning the full text area — same idiom as
-            the highlighted "isYou" row in decision-bridge.tsx's ranking strip. */}
-        <div
-          style={{
-            fontFamily: 'var(--font-primary)',
-            fontSize: '12px',
-            color: 'var(--sfp-ink)',
-            background: 'var(--sfp-sky)',
-            borderRadius: '8px',
-            padding: '8px 12px',
-            marginBottom: '14px',
-          }}
-        >
-          Our Verdict
+        {/* Betreiber-Wunsch 2026-07-19: exact box treatment of
+            SectionVerdict (components/reviews/section-blocks.tsx) — navy
+            left border + --sfp-gray background running continuously behind
+            the tracked-uppercase eyebrow AND the summary paragraph (one
+            unified box, not two), so the card-level "Our Verdict" reads as
+            the same idiom as the inline MDX-body verdict callouts. */}
+        <div style={{ margin: '0 0 18px' }}>
+          <div
+            style={{
+              fontFamily: 'var(--font-primary)',
+              fontSize: '9.5px',
+              letterSpacing: '0.16em',
+              textTransform: 'uppercase',
+              color: 'var(--sfp-navy)',
+              fontWeight: 700,
+              background: 'var(--sfp-gray)',
+              borderLeft: '2px solid var(--sfp-navy)',
+              padding: '9px 13px 0',
+            }}
+          >
+            Our Verdict
+          </div>
+          <p
+            style={{
+              fontFamily: 'var(--font-secondary)',
+              fontSize: '16.5px',
+              lineHeight: 1.7,
+              background: 'var(--sfp-gray)',
+              borderLeft: '2px solid var(--sfp-navy)',
+              padding: '2px 13px 12px',
+              margin: 0,
+              color: 'var(--sfp-ink)',
+            }}
+          >
+            {verdict.summary}
+          </p>
         </div>
-
-        <p
-          style={{
-            fontFamily: 'var(--font-secondary)',
-            fontSize: '16.5px',
-            lineHeight: 1.7,
-            color: 'var(--sfp-ink)',
-            margin: '0 0 18px',
-          }}
-        >
-          {verdict.summary}
-        </p>
 
         {topStrengths.length > 0 && (
           <ul
