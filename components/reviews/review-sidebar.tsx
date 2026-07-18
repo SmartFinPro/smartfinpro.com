@@ -178,7 +178,44 @@ export function ReviewSidebar({
           </div>
         </div>
 
-        {/* b. Market Check — internal CTA suppressed; (c) below is the sidebar's one Compare button. */}
+        {/* c. Button pair — placed BETWEEN the two cards (Betreiber-Wunsch 2026-07-18):
+            the primary action sits right under the provider identity, above the
+            Market Check. Colours are Tailwind classes (NOT inline style) so the
+            :hover rules actually win — inline `background`/`color` would out-
+            specify a hover class and silently kill the effect. */}
+        <div className="flex flex-col gap-2.5">
+          <Link
+            href={decisionBridge.cockpitHref}
+            className="block text-center font-semibold no-underline rounded-[10px] px-4 py-[11px] text-[13.5px] bg-[var(--sfp-gold)] text-[var(--sfp-ink)] transition-colors duration-150 hover:bg-[var(--sfp-gold-dark)] focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-[var(--sfp-navy)]"
+          >
+            {compareLabel}
+          </Link>
+          {affiliateUrl && (
+            <TrackedAffiliateLink
+              href={affiliateUrl}
+              className="block text-center font-semibold no-underline rounded-[10px] px-4 py-[10px] text-[13.5px] bg-transparent text-[var(--sfp-navy)] border border-[var(--sfp-navy)] transition-colors duration-150 hover:bg-[var(--sfp-sky)] hover:border-[var(--sfp-navy-dark)] hover:text-[var(--sfp-navy-dark)] focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-[var(--sfp-navy)]"
+              eventLabel={`Visit ${productName}`}
+              market={market}
+              category={category}
+              pageType="review"
+              layoutVariant="v2_sidebar"
+              placement="sidebar"
+            >
+              Visit {productName}
+            </TrackedAffiliateLink>
+          )}
+          {/* d. Compact affiliate/risk disclosure — kept adjacent to the CTA it
+              belongs to (F-05: disclosure near the affiliate link, not stranded
+              at the bottom of the rail). */}
+          {affiliateUrl && (
+            <div className="flex flex-col gap-2 pt-0.5">
+              <AffiliateDisclosure market={market} variant="compact" />
+              {showRiskWarning && <RiskWarningBox variant="compact" market={market} />}
+            </div>
+          )}
+        </div>
+
+        {/* b. Market Check — internal CTA suppressed; (c) above is the sidebar's one Compare button. */}
         <div
           style={{
             border: '1px solid var(--sfp-hairline-strong)',
@@ -191,59 +228,6 @@ export function ReviewSidebar({
             <DecisionBridge showCta={false} />
           </DecisionBridgeProvider>
         </div>
-
-        {/* c. Button pair */}
-        <div className="flex flex-col gap-2.5">
-          <Link
-            href={decisionBridge.cockpitHref}
-            className="text-center transition-colors hover:[background-color:var(--sfp-gold-dark)]"
-            style={{
-              display: 'block',
-              background: 'var(--sfp-gold)',
-              color: 'var(--sfp-ink)',
-              fontWeight: 600,
-              fontSize: '13.5px',
-              padding: '11px 16px',
-              textDecoration: 'none',
-              borderRadius: '10px',
-            }}
-          >
-            {compareLabel}
-          </Link>
-          {affiliateUrl && (
-            <TrackedAffiliateLink
-              href={affiliateUrl}
-              className="text-center"
-              style={{
-                display: 'block',
-                background: 'transparent',
-                color: 'var(--sfp-navy)',
-                border: '1px solid var(--sfp-navy)',
-                fontWeight: 600,
-                fontSize: '13.5px',
-                padding: '10px 16px',
-                textDecoration: 'none',
-                borderRadius: '10px',
-              }}
-              eventLabel={`Visit ${productName}`}
-              market={market}
-              category={category}
-              pageType="review"
-              layoutVariant="v2_sidebar"
-              placement="sidebar"
-            >
-              Visit {productName}
-            </TrackedAffiliateLink>
-          )}
-        </div>
-
-        {/* d. Compact affiliate/risk disclosure — required because "Visit" above is an affiliate link (F-05). */}
-        {affiliateUrl && (
-          <div className="flex flex-col gap-2.5">
-            <AffiliateDisclosure market={market} variant="compact" />
-            {showRiskWarning && <RiskWarningBox variant="compact" market={market} />}
-          </div>
-        )}
       </div>
     </aside>
   );
