@@ -17,11 +17,13 @@
 // "Why this score?" link has somewhere real to land) -> H3 per-card names.
 // Every hero metric below is COMPUTED from the live `view`, never hardcoded.
 
+import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { getResearchView } from '@/lib/research/data';
 import { Breadcrumb } from '@/components/marketing/breadcrumb';
 import { ResearchCard } from '@/components/research/ResearchCard';
+import { ResearchLibrary, type ResearchLibraryItem } from '@/components/research/ResearchLibrary';
 import { generateComparisonItemListSchema } from '@/lib/seo/schema';
 import type { ResearchProduct } from '@/lib/research/adapter';
 
@@ -86,7 +88,7 @@ function latestDataVerifiedAt(view: ResearchProduct[]): string | null {
 
 function HeroMetricTile({ value, label }: { value: string; label: string }) {
   return (
-    <div className="rounded-xl border px-4 py-3" style={{ borderColor: 'var(--sfp-hairline)', background: 'var(--sfp-gray)' }}>
+    <div className="rounded-xl border px-3 py-2.5 sm:px-4 sm:py-3" style={{ borderColor: 'var(--sfp-hairline)', background: 'var(--sfp-gray)' }}>
       <div className="text-xl sm:text-2xl font-black tabular-nums" style={{ color: 'var(--sfp-ink)' }}>
         {value}
       </div>
@@ -132,6 +134,55 @@ export default async function ResearchPage() {
       })),
   });
 
+  // The Cockpit this library funnels into (all products share one topic here).
+  const cockpitBase = view.length
+    ? `/${view[0].product.market}/${view[0].product.category}/best/${view[0].product.topic}`
+    : '/us/trading/best/trading-platforms';
+  // Session-scoped shortlist key, namespaced by market/topic.
+  const shortlistStorageKey = view.length
+    ? `research-shortlist:${view[0].product.market}:${view[0].product.topic}`
+    : 'research-shortlist:us:trading-platforms';
+
+  // Build the card nodes ONCE on the server (ResearchCard is a Server Component
+  // — it reads the filesystem for logos), then hand them to the client shell as
+  // opaque ReactNodes alongside a filterable `meta`. The shell never re-renders
+  // a card; it only shows/hides/ring-selects these nodes (§12 RSC boundary).
+  const items: ResearchLibraryItem[] = view.map((rp) => ({
+    meta: {
+      slug: rp.product.slug,
+      name: rp.product.displayName,
+      status: rp.research.status,
+      confidence: rp.research.status === 'audited' ? rp.research.confidence : null,
+      verifiedAt: rp.research.dataVerifiedAt,
+      score: rp.displayScore,
+      rank: rp.rank,
+      bestFor: rp.product.bestFor ?? null,
+      tagline: rp.product.tagline ?? null,
+    },
+    node: <ResearchCard item={rp} />,
+    ...(featured && rp.product.slug === featured.product.slug
+      ? { featuredNode: <ResearchCard item={rp} variant="featured" /> }
+      : {}),
+  }));
+
+  // Static browse view rendered into the prerendered HTML while the client
+  // shell (useSearchParams) hydrates under Suspense — keeps /research
+  // statically prerenderable and meaningful without JS / to crawlers.
+  const browseFallback = (
+    <>
+      {featured && (
+        <div className="mb-6">
+          <ResearchCard item={featured} variant="featured" />
+        </div>
+      )}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        {rest.map((item) => (
+          <ResearchCard key={item.product.slug} item={item} />
+        ))}
+      </div>
+    </>
+  );
+
   return (
     <main id="main-content">
       <script
@@ -143,7 +194,7 @@ export default async function ResearchPage() {
       <article className="min-h-screen" style={{ background: 'var(--sfp-gray)' }}>
         {/* Hero — "Research Briefing" */}
         <section className="bg-white border-b border-gray-200">
-          <div className="mx-auto px-6 pt-8 pb-10" style={{ maxWidth: '1280px' }}>
+          <div className="mx-auto px-6 pt-6 pb-6 sm:pt-8 sm:pb-10" style={{ maxWidth: '1280px' }}>
             <Breadcrumb
               items={[
                 { label: 'Home', href: '/' },
@@ -164,14 +215,15 @@ export default async function ResearchPage() {
             >
               US Trading Platform Research
             </h1>
-            <p className="text-base mt-3 max-w-3xl leading-relaxed" style={{ color: 'var(--sfp-slate)' }}>
-              The evidence-first way to shortlist a US trading platform — not a marketing &ldquo;best&rdquo;
-              list. Every audited score below is backed by per-fact sources and a re-verification date, and
-              where our data isn&apos;t yet complete enough to publish a confident score, we show the
-              verification status instead of guessing.
+            {/* Kept short so the search field sits within the first mobile
+                viewport; the full honesty detail lives in the H2 sub-line below
+                and the "How we score" methodology section. */}
+            <p className="text-base mt-3 max-w-2xl leading-relaxed" style={{ color: 'var(--sfp-slate)' }}>
+              The evidence-first way to shortlist a US trading platform — not a marketing &ldquo;best&rdquo; list.
+              Every audited score is backed by per-fact sources and a dated re-verification.
             </p>
 
-            <div className="mt-7 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <div className="mt-5 grid grid-cols-2 gap-3 sm:mt-7 sm:grid-cols-4">
               <HeroMetricTile value={String(totalCount)} label="Platforms" />
               <HeroMetricTile value={String(auditedCount)} label="Audited" />
               <HeroMetricTile value={String(verifiedDataPoints)} label="Verified data points" />
@@ -181,7 +233,7 @@ export default async function ResearchPage() {
         </section>
 
         {/* Research Cards */}
-        <section className="mx-auto px-6 py-12" style={{ maxWidth: '1280px' }}>
+        <section className="mx-auto px-6 py-8 sm:py-12" style={{ maxWidth: '1280px' }}>
           <h2 className="text-2xl font-bold mb-1" style={{ color: 'var(--sfp-ink)' }}>
             Verified platform research
           </h2>
@@ -190,17 +242,14 @@ export default async function ResearchPage() {
             separately with their status — never ranked on incomplete data.
           </p>
 
-          {featured && (
-            <div className="mb-6">
-              <ResearchCard item={featured} variant="featured" />
-            </div>
-          )}
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-            {rest.map((item) => (
-              <ResearchCard key={item.product.slug} item={item} />
-            ))}
-          </div>
+          <Suspense fallback={browseFallback}>
+            <ResearchLibrary
+              items={items}
+              featuredSlug={featured?.product.slug ?? null}
+              compareBaseHref={cockpitBase}
+              storageKey={shortlistStorageKey}
+            />
+          </Suspense>
         </section>
 
         {/* Methodology note + affiliate disclosure */}

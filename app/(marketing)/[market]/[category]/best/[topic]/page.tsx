@@ -247,7 +247,12 @@ export default async function CockpitPage({ params }: CockpitPageProps) {
         </div>
       )}
 
-      <div className="mx-auto max-w-6xl px-4 pb-10 pt-6">
+      {/* id="comparison" (+ scroll-mt for the sticky header) is the stable
+          anchor the Research Library's shortlist handoff targets
+          (…&view=compare#comparison) so the user lands directly on the compare
+          surface instead of the hero. The wrapper is outside the Suspense, so
+          it's in the prerendered HTML at a fixed position. */}
+      <div id="comparison" className="mx-auto max-w-6xl px-4 pb-10 pt-6 scroll-mt-24">
         <Suspense fallback={null}>
           <ComparisonCockpit
             products={products}
