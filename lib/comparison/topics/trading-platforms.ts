@@ -255,7 +255,7 @@ export const tradingPlatformsConfig: TopicConfig = {
     },
     {
       h3: 'Minimum deposit',
-      body: 'Most US brokers have no minimum to open an account. eToro is the one exception in this list, requiring a $100 minimum first deposit for US customers even though its account minimum is technically $0.',
+      body: 'Most US brokers have no minimum to open an account. eToro is the one exception in this list, requiring a $50 minimum first deposit for US customers even though its account minimum is technically $0.',
     },
     {
       h3: 'Idle cash yield (cash sweep)',
