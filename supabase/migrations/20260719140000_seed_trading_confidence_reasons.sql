@@ -20,36 +20,36 @@
 BEGIN;
 
 UPDATE public.product_attributes
-SET attributes = jsonb_set(attributes, '{confidence_reason}', '"All four compared facts — options contract fee, minimum deposit, extended-hours availability and TradingView integration — were verified against the official broker pricing pages on 2026-07-03."'::jsonb, true)
-WHERE slug = 'fidelity' AND market = 'us' AND topic = 'trading-platforms';
+SET attributes = jsonb_set(attributes, '{confidence_reason}', '"All four compared facts — options contract fee, minimum deposit, extended-hours availability and TradingView integration — were verified on 2026-07-03 against official published sources."'::jsonb, true)
+WHERE slug = 'fidelity' AND market = 'us' AND category = 'trading' AND topic = 'trading-platforms';
 
 UPDATE public.product_attributes
-SET attributes = jsonb_set(attributes, '{confidence_reason}', '"All four compared facts — options contract fee, minimum deposit, extended-hours availability and TradingView integration — were verified against official broker pricing pages and independent broker references on 2026-07-03."'::jsonb, true)
-WHERE slug = 'charles-schwab' AND market = 'us' AND topic = 'trading-platforms';
+SET attributes = jsonb_set(attributes, '{confidence_reason}', '"All four compared facts — options contract fee, minimum deposit, extended-hours availability and TradingView integration — were verified on 2026-07-03 against a combination of official and independent published sources."'::jsonb, true)
+WHERE slug = 'charles-schwab' AND market = 'us' AND category = 'trading' AND topic = 'trading-platforms';
 
 UPDATE public.product_attributes
-SET attributes = jsonb_set(attributes, '{confidence_reason}', '"All four compared facts — options contract fee, minimum deposit, extended-hours availability and TradingView integration — were verified against official broker pricing pages and independent broker references on 2026-07-03."'::jsonb, true)
-WHERE slug = 'interactive-brokers' AND market = 'us' AND topic = 'trading-platforms';
+SET attributes = jsonb_set(attributes, '{confidence_reason}', '"All four compared facts — options contract fee, minimum deposit, extended-hours availability and TradingView integration — were verified on 2026-07-03 against a combination of official and independent published sources."'::jsonb, true)
+WHERE slug = 'interactive-brokers' AND market = 'us' AND category = 'trading' AND topic = 'trading-platforms';
 
 UPDATE public.product_attributes
-SET attributes = jsonb_set(attributes, '{confidence_reason}', '"All four compared facts — options contract fee, minimum deposit, extended-hours availability and TradingView integration — were verified against official broker pricing pages and independent broker references on 2026-07-03."'::jsonb, true)
-WHERE slug = 'robinhood' AND market = 'us' AND topic = 'trading-platforms';
+SET attributes = jsonb_set(attributes, '{confidence_reason}', '"All four compared facts — options contract fee, minimum deposit, extended-hours availability and TradingView integration — were verified on 2026-07-03 against a combination of official and independent published sources."'::jsonb, true)
+WHERE slug = 'robinhood' AND market = 'us' AND category = 'trading' AND topic = 'trading-platforms';
 
 UPDATE public.product_attributes
-SET attributes = jsonb_set(attributes, '{confidence_reason}', '"All four compared facts — options contract fee, minimum deposit, extended-hours availability and TradingView integration — were verified against official broker pricing pages and independent broker references on 2026-07-03."'::jsonb, true)
-WHERE slug = 'webull' AND market = 'us' AND topic = 'trading-platforms';
+SET attributes = jsonb_set(attributes, '{confidence_reason}', '"All four compared facts — options contract fee, minimum deposit, extended-hours availability and TradingView integration — were verified on 2026-07-03 against a combination of official and independent published sources."'::jsonb, true)
+WHERE slug = 'webull' AND market = 'us' AND category = 'trading' AND topic = 'trading-platforms';
 
 UPDATE public.product_attributes
-SET attributes = jsonb_set(attributes, '{confidence_reason}', '"All four compared facts — options contract fee, minimum deposit, extended-hours availability and TradingView integration — were verified against the official broker pricing pages on 2026-07-03."'::jsonb, true)
-WHERE slug = 'etrade' AND market = 'us' AND topic = 'trading-platforms';
+SET attributes = jsonb_set(attributes, '{confidence_reason}', '"All four compared facts — options contract fee, minimum deposit, extended-hours availability and TradingView integration — were verified on 2026-07-03 against official published sources."'::jsonb, true)
+WHERE slug = 'etrade' AND market = 'us' AND category = 'trading' AND topic = 'trading-platforms';
 
 UPDATE public.product_attributes
-SET attributes = jsonb_set(attributes, '{confidence_reason}', '"All four compared facts — options contract fee, minimum deposit, extended-hours availability and TradingView integration — were verified against official broker pricing pages and independent broker references on 2026-07-03."'::jsonb, true)
-WHERE slug = 'tastytrade' AND market = 'us' AND topic = 'trading-platforms';
+SET attributes = jsonb_set(attributes, '{confidence_reason}', '"All four compared facts — options contract fee, minimum deposit, extended-hours availability and TradingView integration — were verified on 2026-07-03 against a combination of official and independent published sources."'::jsonb, true)
+WHERE slug = 'tastytrade' AND market = 'us' AND category = 'trading' AND topic = 'trading-platforms';
 
 UPDATE public.product_attributes
-SET attributes = jsonb_set(attributes, '{confidence_reason}', '"All four compared facts — options contract fee, minimum deposit, extended-hours availability and TradingView integration — were verified against official broker pricing pages and independent broker references on 2026-07-03."'::jsonb, true)
-WHERE slug = 'merrill-edge' AND market = 'us' AND topic = 'trading-platforms';
+SET attributes = jsonb_set(attributes, '{confidence_reason}', '"All four compared facts — options contract fee, minimum deposit, extended-hours availability and TradingView integration — were verified on 2026-07-03 against a combination of official and independent published sources."'::jsonb, true)
+WHERE slug = 'merrill-edge' AND market = 'us' AND category = 'trading' AND topic = 'trading-platforms';
 
 COMMIT;
 
@@ -57,6 +57,6 @@ COMMIT;
 -- BEGIN;
 -- UPDATE public.product_attributes
 -- SET attributes = attributes - 'confidence_reason'
--- WHERE market = 'us' AND topic = 'trading-platforms'
+-- WHERE market = 'us' AND category = 'trading' AND topic = 'trading-platforms'
 --   AND slug IN ('fidelity', 'charles-schwab', 'interactive-brokers', 'robinhood', 'webull', 'etrade', 'tastytrade', 'merrill-edge');
 -- COMMIT;

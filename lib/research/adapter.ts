@@ -23,7 +23,10 @@ export interface ResearchProduct {
   /** 1-based rank among AUDITED products only; null for provisional/unavailable. */
   rank: number | null;
   /** Score to display — the audited BEST-X score, or null for ANY non-audited
-   *  status (never surface a provisional/unavailable number as if precise). */
+   *  status (never surface a provisional/unavailable number as if precise).
+   *  This is the editorial 0–10 score stored on the product (methodology_version
+   *  records which editorial rubric was applied) — NOT a separately-recomputed
+   *  metric. */
   displayScore: number | null;
   /** Internal review link, or null when the product has no review (e.g. Merrill
    *  Edge) — never a dead link (E5). Drives the card's primary-CTA fallback. */

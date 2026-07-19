@@ -148,7 +148,7 @@ UPDATE public.product_attributes
 SET research_sources    = '${json}'::jsonb,
     methodology_version = '${METHODOLOGY_VERSION}',
     research_status     = '${r.status}'
-WHERE slug = '${r.slug}' AND market = 'us' AND topic = 'trading-platforms';`;
+WHERE slug = '${r.slug}' AND market = 'us' AND category = 'trading' AND topic = 'trading-platforms';`;
     })
     .join('\n\n');
 
@@ -180,7 +180,7 @@ COMMIT;
 -- BEGIN;
 -- UPDATE public.product_attributes
 -- SET research_sources = NULL, methodology_version = NULL, research_status = NULL
--- WHERE market = 'us' AND topic = 'trading-platforms'
+-- WHERE market = 'us' AND category = 'trading' AND topic = 'trading-platforms'
 --   AND slug IN (${rows.map((r) => `'${r.slug}'`).join(', ')});
 -- COMMIT;
 `;

@@ -97,10 +97,13 @@ function build() {
 
     const allOfficial = REQUIRED_KEYS.every((k) => cells[k].sourceType === 'official');
     const date = REQUIRED_KEYS.map((k) => cells[k].verifiedAt).sort().at(-1); // max verifiedAt
-    const basis = allOfficial
-      ? 'the official broker pricing pages'
-      : 'official broker pricing pages and independent broker references';
-    const reason = `All four compared facts — ${FACT_LABEL} — were verified against ${basis} on ${date}.`;
+    // Wording stays truthful to the actual source classes: `official` here spans
+    // provider pricing/FAQ/disclosure pages AND official third-party listings
+    // (e.g. tradingview.com/brokers) — so we say "official published sources",
+    // never "pricing pages" (which would overclaim for extended-hours/TradingView).
+    const reason = allOfficial
+      ? `All four compared facts — ${FACT_LABEL} — were verified on ${date} against official published sources.`
+      : `All four compared facts — ${FACT_LABEL} — were verified on ${date} against a combination of official and independent published sources.`;
 
     const hit = FORBIDDEN.find((p) => p.test(reason));
     if (hit) errors.push(`${slug}: confidence_reason matches forbidden pattern ${hit}`);
@@ -119,7 +122,7 @@ function build() {
       const jsonValue = JSON.stringify(r.reason).replace(/'/g, "''");
       return `UPDATE public.product_attributes
 SET attributes = jsonb_set(attributes, '{confidence_reason}', '${jsonValue}'::jsonb, true)
-WHERE slug = '${r.slug}' AND market = 'us' AND topic = 'trading-platforms';`;
+WHERE slug = '${r.slug}' AND market = 'us' AND category = 'trading' AND topic = 'trading-platforms';`;
     })
     .join('\n\n');
 
@@ -153,7 +156,7 @@ COMMIT;
 -- BEGIN;
 -- UPDATE public.product_attributes
 -- SET attributes = attributes - 'confidence_reason'
--- WHERE market = 'us' AND topic = 'trading-platforms'
+-- WHERE market = 'us' AND category = 'trading' AND topic = 'trading-platforms'
 --   AND slug IN (${rows.map((r) => `'${r.slug}'`).join(', ')});
 -- COMMIT;
 `;
