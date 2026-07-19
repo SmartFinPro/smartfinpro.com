@@ -42,3 +42,13 @@ Triggered on-demand SSG revalidation: `POST /api/revalidate {slug:/us/trading/be
   live cockpit — the DB-driven eToro fields are already live via revalidation.
 
 Live cockpit: https://smartfinpro.com/us/trading/best/trading-platforms
+
+## T0b checkpoint CLOSED — prose hotfix deployed (2026-07-19 14:47 CEST)
+- Standalone hotfix (cherry-pick of the $100→$50 prose only, no research files): **PR #101**,
+  squash-merged to `main` as **e22b6b6**. CI green (build, Cockpit/Hydration/Tool E2E,
+  Imports+MDX+Prose, Dashboard smoke). Deploy "Build & Deploy to VPS" (run 29687421271):
+  **success**.
+- Post-deploy live re-verification (revalidate + `?cachebust`, HTTP 200, cf MISS):
+  ✓ `$100 minimum first deposit` = **0** · ✓ `requiring a $50 minimum first deposit` = 2
+  · ✓ no "only true" claim · ✓ 9 providers render · ✓ compare + CTAs intact · ✓ no console/server errors.
+- **Checkpoint green. Step 3 (Research Library UI) released.**
