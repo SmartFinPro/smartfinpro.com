@@ -28,3 +28,17 @@ content verified in-editor before Run; comment lines stripped, executable SQL id
 - **Cockpit SSG revalidation / redeploy** — T0b changed eToro's cockpit-visible fields (tagline/pros/cons/min);
   the live cockpit is SSG (1-day revalidate) and will reflect T0b on next regeneration/redeploy.
 - **Research Library UI** = Step 3 (P7–P10) — not yet built; the research_* data has no rendering surface yet.
+
+## Post-apply cockpit smoke test (2026-07-19 13:45 CEST)
+Triggered on-demand SSG revalidation: `POST /api/revalidate {slug:/us/trading/best/trading-platforms}`
+→ `{revalidated:true}`. Fetched live page with `?cachebust` (cf-cache-status: MISS, HTTP 200):
+- ✓ fabricated "only true $0-fee" claim GONE (0 occurrences)
+- ✓ eToro new tagline present; eToro data-driven minimum shows $50
+- ✓ all 9 providers render; ✓ compare + CTAs present; ✓ no server/browser errors
+- ✗ **1 deviation found & fixed in source:** the trading-platforms topic config
+  buyerGuide "Minimum deposit" prose still read "$100 minimum first deposit"
+  (hardcoded editorial copy, not product_attributes). Corrected to $50
+  (commit on `feat/research-library-pilot`). **Requires a deploy** to reach the
+  live cockpit — the DB-driven eToro fields are already live via revalidation.
+
+Live cockpit: https://smartfinpro.com/us/trading/best/trading-platforms
