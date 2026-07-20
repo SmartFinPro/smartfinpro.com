@@ -158,6 +158,11 @@ export default async function ResearchPage() {
       rank: rp.rank,
       bestFor: rp.product.bestFor ?? null,
       tagline: rp.product.tagline ?? null,
+      // Analytics-only card facts (research_v1): the evidence disclosure's
+      // data-point count and the card's own review link, which the shell uses
+      // to tell a review click apart from the card's other links.
+      dataPoints: Object.keys(rp.research.fieldSources).length,
+      reviewHref: rp.reviewHref ?? null,
     },
     node: <ResearchCard item={rp} />,
     ...(featured && rp.product.slug === featured.product.slug
@@ -248,6 +253,8 @@ export default async function ResearchPage() {
               featuredSlug={featured?.product.slug ?? null}
               compareBaseHref={cockpitBase}
               storageKey={shortlistStorageKey}
+              market={view[0]?.product.market ?? 'us'}
+              topic={view[0]?.product.topic ?? 'trading-platforms'}
             />
           </Suspense>
         </section>

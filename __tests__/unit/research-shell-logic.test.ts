@@ -29,6 +29,8 @@ const meta = (over: Partial<ResearchLibraryItemMeta> = {}): ResearchLibraryItemM
   rank: 1,
   bestFor: 'Best overall',
   tagline: 'Zero fees, automatic cash yield',
+  dataPoints: 4,
+  reviewHref: '/us/trading/fidelity-review',
   ...over,
 });
 

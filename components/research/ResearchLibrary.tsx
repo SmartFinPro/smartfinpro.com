@@ -24,7 +24,7 @@
 //     /research stays statically prerenderable; search writes are debounced via
 //     router.replace, filter toggles via router.push.
 
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Search, X, GitCompare, SlidersHorizontal } from 'lucide-react';
 import {
@@ -37,6 +37,8 @@ import {
   toggleShortlist as toggleShortlistSet,
   type ResearchLibraryItemMeta,
 } from '@/lib/research/shell-logic';
+import { useResearchTracking } from '@/lib/analytics/research-tracking';
+import { toQueryLength, type ResearchFacet } from '@/lib/analytics/research-events';
 
 // Re-exported so page.tsx (which builds `items` with this shape) keeps its path.
 export type { ResearchLibraryItemMeta };
@@ -58,6 +60,9 @@ export interface ResearchLibraryProps {
    *  Session-scoped (not the URL, not localStorage) — survives the Cockpit
    *  round-trip + Back, clears when the browser session ends. */
   storageKey: string;
+  /** Analytics dimensions shared by every research_v1 event on this surface. */
+  market: string;
+  topic: string;
 }
 
 const STATUS_LABEL: Record<ResearchLibraryItemMeta['status'], string> = {
@@ -120,7 +125,19 @@ function FilterChips({
 
 /** Wraps a server-rendered card node and adds the shortlist toggle (a corner
  *  pill in the grid gutter, so it never overlaps the card's own design) plus a
- *  navy selection ring. */
+ *  navy selection ring.
+ *
+ *  It is also the ONLY place the card's own interactions become measurable:
+ *  ResearchCard is a Server Component (it reads the filesystem for logos), so
+ *  it has no onClick and its "View evidence" disclosure is a native <details>.
+ *  Two DELEGATED listeners on this wrapper close that gap without turning the
+ *  card into a client component:
+ *    - click  → nearest <a>; a review click is one whose href equals the card's
+ *               own reviewHref (so compare / provider / evidence-source links
+ *               and the "Why this score?" methodology link never count).
+ *    - toggle → fires on <details data-research-evidence>, OPEN only. `toggle`
+ *               does NOT bubble, so it must be bound in the CAPTURE phase; a
+ *               normal bubbling listener here would silently never fire. */
 function SelectableCard({
   slug,
   name,
@@ -128,6 +145,9 @@ function SelectableCard({
   selected,
   atCapacity,
   onToggle,
+  reviewHref,
+  onReviewClick,
+  onEvidenceOpen,
 }: {
   slug: string;
   name: string;
@@ -135,10 +155,57 @@ function SelectableCard({
   selected: boolean;
   atCapacity: boolean;
   onToggle: (slug: string) => void;
+  reviewHref: string | null;
+  onReviewClick: () => void;
+  onEvidenceOpen: () => void;
 }) {
   const disabled = atCapacity && !selected;
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  // Latest-value ref so the listeners are bound exactly ONCE per card while
+  // still calling the current handlers (position/count change on every render).
+  const latest = useRef({ reviewHref, onReviewClick, onEvidenceOpen });
+  useEffect(() => {
+    latest.current = { reviewHref, onReviewClick, onEvidenceOpen };
+  });
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    const handleClick = (event: Event) => {
+      try {
+        const href = latest.current.reviewHref;
+        if (!href) return;
+        const anchor = (event.target as Element | null)?.closest?.('a');
+        if (!anchor || anchor.getAttribute('href') !== href) return;
+        latest.current.onReviewClick();
+      } catch {
+        /* fail-soft — tracking must never break a navigation */
+      }
+    };
+
+    const handleToggle = (event: Event) => {
+      try {
+        const details = event.target as HTMLDetailsElement | null;
+        if (!details?.hasAttribute?.('data-research-evidence')) return;
+        if (details.open) latest.current.onEvidenceOpen(); // open only, never close
+      } catch {
+        /* fail-soft */
+      }
+    };
+
+    el.addEventListener('click', handleClick);
+    el.addEventListener('toggle', handleToggle, true); // capture: toggle doesn't bubble
+    return () => {
+      el.removeEventListener('click', handleClick);
+      el.removeEventListener('toggle', handleToggle, true);
+    };
+  }, []);
+
   return (
     <div
+      ref={containerRef}
       className="relative"
       style={selected ? { boxShadow: '0 0 0 2px var(--sfp-navy)', borderRadius: 18 } : undefined}
     >
@@ -169,10 +236,20 @@ function SelectableCard({
   );
 }
 
-export function ResearchLibrary({ items, featuredSlug, compareBaseHref, storageKey }: ResearchLibraryProps) {
+export function ResearchLibrary({
+  items,
+  featuredSlug,
+  compareBaseHref,
+  storageKey,
+  market,
+  topic,
+}: ResearchLibraryProps) {
   const router = useRouter();
   const pathname = usePathname();
   const sp = useSearchParams();
+  // research_v1 (docs/research-library/analytics-research-v1.md) — fail-soft
+  // by construction; the raw query never leaves the browser (only its length).
+  const tracker = useResearchTracking({ market, topic, pagePath: pathname });
 
   const urlQ = sp.get('q') ?? '';
   const status = sp.get('status');
@@ -191,29 +268,30 @@ export function ResearchLibrary({ items, featuredSlug, compareBaseHref, storageK
     setQuery(urlQ);
   }
 
-  useEffect(() => {
-    const current = sp.get('q') ?? '';
-    const nextQ = query.trim();
-    if (nextQ === current) return;
-    const id = setTimeout(() => {
-      const params = new URLSearchParams(sp.toString());
-      if (nextQ) params.set('q', nextQ);
-      else params.delete('q');
-      const qs = params.toString();
-      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
-    }, 300);
-    return () => clearTimeout(id);
-  }, [query, sp, pathname, router]);
-
+  /** Toggling a filter chip. `nextCount` is the match count the change
+   *  PRODUCES — computed here rather than read after the re-render, so the
+   *  event describes the state the user actually caused. */
   const setParam = useCallback(
-    (key: string, value: string | null) => {
+    (key: ResearchFacet, value: string | null) => {
       const params = new URLSearchParams(sp.toString());
       if (value) params.set(key, value);
       else params.delete(key);
+      const nextFilters = {
+        query,
+        status: key === 'status' ? value : status,
+        confidence: key === 'confidence' ? value : confidence,
+        fresh: key === 'fresh' ? value : fresh,
+      };
+      tracker.trackFilterChange(
+        key,
+        value,
+        value !== null,
+        items.filter((i) => matchesFilters(i.meta, nextFilters)).length,
+      );
       const qs = params.toString();
       router.push(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
     },
-    [sp, pathname, router],
+    [sp, pathname, router, tracker, items, query, status, confidence, fresh],
   );
 
   const resetAll = useCallback(() => {
@@ -234,12 +312,44 @@ export function ResearchLibrary({ items, featuredSlug, compareBaseHref, storageK
     [items, query, status, confidence, fresh],
   );
 
+  // Debounced URL write for the search box — and the ONLY place a search event
+  // is emitted, so research_search can never fire per keystroke: both happen
+  // when the same 300ms debounce settles. Declared after `filtered` so the
+  // settled result count is read from the render that produced it.
+  // The query string itself is never sent — only toQueryLength(nextQ).
+  useEffect(() => {
+    const current = sp.get('q') ?? '';
+    const nextQ = query.trim();
+    if (nextQ === current) return;
+    const resultCount = filtered.length;
+    const id = setTimeout(() => {
+      tracker.trackSearch(toQueryLength(nextQ), resultCount);
+      const params = new URLSearchParams(sp.toString());
+      if (nextQ) params.set('q', nextQ);
+      else params.delete('q');
+      const qs = params.toString();
+      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+    }, 300);
+    return () => clearTimeout(id);
+  }, [query, sp, pathname, router, tracker, filtered]);
+
   // ── Shortlist (session state, not URL) ────────────────────────────────────
   const [shortlist, setShortlist] = useState<Set<string>>(new Set());
   const [sheetOpen, setSheetOpen] = useState(false); // mobile "Edit" names sheet
-  const toggleShortlist = useCallback((slug: string) => {
-    setShortlist((prev) => toggleShortlistSet(prev, slug));
-  }, []);
+  // The next set is computed OUTSIDE the state updater on purpose: a setState
+  // updater is re-invoked in React StrictMode, which would double-fire the
+  // analytics event in development.
+  const toggleShortlist = useCallback(
+    (slug: string) => {
+      const next = toggleShortlistSet(shortlist, slug);
+      // A blocked add (shortlist already full) leaves the set unchanged — no event.
+      if (next.size !== shortlist.size) {
+        tracker.trackShortlistChange(next.has(slug) ? 'add' : 'remove', slug, next.size);
+      }
+      setShortlist(next);
+    },
+    [shortlist, tracker],
+  );
 
   // Restore the shortlist from sessionStorage on mount so it survives the
   // Cockpit round-trip + Back (empty on the server → set after mount, so no
@@ -291,7 +401,11 @@ export function ResearchLibrary({ items, featuredSlug, compareBaseHref, storageK
   // the Cockpit opens on the compare surface, not the hero.
   const compareUrl = buildCompareUrl(compareBaseHref, slugs);
 
-  const wrap = (item: ResearchLibraryItem, node: ReactNode) => (
+  /** `position` is the 1-based index of the card in the CURRENTLY rendered
+   *  list (featured first in the browse view) — the research_v1 contract's
+   *  position property, which is what a rank can't express once a filter is
+   *  active. */
+  const wrap = (item: ResearchLibraryItem, node: ReactNode, position: number) => (
     <SelectableCard
       key={item.meta.slug}
       slug={item.meta.slug}
@@ -300,6 +414,13 @@ export function ResearchLibrary({ items, featuredSlug, compareBaseHref, storageK
       selected={shortlist.has(item.meta.slug)}
       atCapacity={shortlist.size >= MAX_SHORTLIST}
       onToggle={toggleShortlist}
+      reviewHref={item.meta.reviewHref}
+      onReviewClick={() =>
+        tracker.trackReviewClick(item.meta.slug, item.meta.status, item.meta.rank, position)
+      }
+      onEvidenceOpen={() =>
+        tracker.trackEvidenceOpen(item.meta.slug, item.meta.status, item.meta.dataPoints)
+      }
     />
   );
 
@@ -387,13 +508,17 @@ export function ResearchLibrary({ items, featuredSlug, compareBaseHref, storageK
       {/* Results. Default (browse) = Winner Dossier + grid. Active = uniform grid. */}
       {!isActive ? (
         <>
-          {featuredItem?.featuredNode && <div className="mb-6">{wrap(featuredItem, featuredItem.featuredNode)}</div>}
+          {featuredItem?.featuredNode && (
+            <div className="mb-6">{wrap(featuredItem, featuredItem.featuredNode, 1)}</div>
+          )}
           <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-            {restItems.map((item) => wrap(item, item.node))}
+            {restItems.map((item, i) => wrap(item, item.node, featuredItem?.featuredNode ? i + 2 : i + 1))}
           </div>
         </>
       ) : filtered.length > 0 ? (
-        <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">{filtered.map((item) => wrap(item, item.node))}</div>
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+          {filtered.map((item, i) => wrap(item, item.node, i + 1))}
+        </div>
       ) : (
         <div
           className="rounded-xl border border-dashed px-6 py-16 text-center"
@@ -425,12 +550,15 @@ export function ResearchLibrary({ items, featuredSlug, compareBaseHref, storageK
             </span>
           );
           const clearAll = () => {
+            tracker.trackShortlistChange('clear', null, 0);
             setShortlist(new Set());
             setSheetOpen(false);
           };
           const compareCta = compareUrl ? (
             <a
               href={compareUrl}
+              // Sent immediately (not queued) — this navigates to the Cockpit.
+              onClick={() => tracker.trackCockpitHandoff(slugs)}
               className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-bold"
               style={{ background: 'var(--sfp-navy)', color: '#ffffff', textDecoration: 'none' }}
             >

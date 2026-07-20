@@ -18,6 +18,15 @@ export interface ResearchLibraryItemMeta {
   rank: number | null;
   bestFor: string | null;
   tagline: string | null;
+  /** Count of per-fact sources behind the card's evidence disclosure.
+   *  Not used for filtering — the shell reports it with research_evidence_open
+   *  (analytics research_v1), so it lives beside the other card facts rather
+   *  than being re-derived from the DOM. */
+  dataPoints: number;
+  /** The card's own review link, or null when the product has no review.
+   *  The shell compares a clicked anchor's href against this to tell a review
+   *  click apart from the card's other links (compare / provider / evidence). */
+  reviewHref: string | null;
 }
 
 export interface ResearchFilters {

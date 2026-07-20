@@ -34,7 +34,12 @@ export function EvidenceDisclosure({ fieldSources, labelFor }: EvidenceDisclosur
   if (entries.length === 0) return null;
 
   return (
-    <details className="text-xs">
+    // data-research-evidence marks THIS disclosure for the client shell's
+    // delegated `toggle` listener (analytics research_v1: research_evidence_open).
+    // The card is a Server Component with no onClick of its own, and the
+    // featured layout also renders a "Score breakdown" <details> — the shell
+    // must fire on the evidence one only, so the marker is the contract.
+    <details className="text-xs" data-research-evidence="">
       <summary className="cursor-pointer select-none font-semibold" style={{ color: 'var(--sfp-navy)' }}>
         View evidence — {entries.length} verified data point{entries.length === 1 ? '' : 's'}
       </summary>
