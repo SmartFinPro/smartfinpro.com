@@ -283,7 +283,18 @@ export default async function ResearchPage() {
             <p className="mt-4 text-xs" style={{ color: 'var(--sfp-slate)' }}>
               Advertising disclosure: some links on this page may earn us a commission at no cost to
               you — it never affects our rankings.{' '}
-              <Link href="/affiliate-disclosure" className="underline" style={{ color: 'var(--sfp-navy)' }}>
+              {/* textDecoration inline, not just the `underline` class: this page
+                  is wrapped in <article>, and globals.css strips the underline
+                  from internal links inside article/.prose (restoring it only on
+                  :hover). Navy against the surrounding slate is 1.09:1, far below
+                  the 3:1 that would let colour alone carry the link — so without
+                  a permanent underline it is not identifiable as a link at all
+                  (WCAG 1.4.1). An inline style outranks that stylesheet rule. */}
+              <Link
+                href="/affiliate-disclosure"
+                className="underline"
+                style={{ color: 'var(--sfp-navy)', textDecoration: 'underline' }}
+              >
                 Details
               </Link>
             </p>

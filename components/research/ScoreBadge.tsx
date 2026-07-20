@@ -28,11 +28,18 @@ export interface ScoreBadgeProps {
 }
 
 /** Subtle color cue aligned to the SCORE_BANDS thresholds (9.0 / 8.0 / 7.0) —
- *  green≥9, gold-dark≥8, navy≥7, slate below. Decorative support for the text
- *  label, which is what actually carries the meaning. */
+ *  green≥9, ink≥8, navy≥7, slate below. Decorative support for the text
+ *  label, which is what actually carries the meaning.
+ *
+ *  The 8–9 band is ink rather than gold: --sfp-gold-dark on white is 2.79:1,
+ *  below even the 3:1 large-text floor, and this numeral is the single most
+ *  important thing on the card. Gold stays the accent it is everywhere else —
+ *  award signet, #1 pill, highlights — where it sits on its own surface and is
+ *  not load-bearing text. The other three bands already pass (green 6.5:1,
+ *  navy 8.3:1, slate 7.1:1). */
 function bandColor(score: number): string {
   if (score >= 9.0) return 'var(--sfp-green)';
-  if (score >= 8.0) return 'var(--sfp-gold-dark)';
+  if (score >= 8.0) return 'var(--sfp-ink)';
   if (score >= 7.0) return 'var(--sfp-navy)';
   return 'var(--sfp-slate)';
 }
