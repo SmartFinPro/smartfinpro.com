@@ -63,7 +63,13 @@
     --sfp-sky:        #E8F0FB;
     --sfp-gray:       #F7F8FA;   /* Landing page --gray */
     --sfp-ink:        #1A1A2E;
-    --sfp-slate:      #64748B;   /* Tailwind slate-500 — matches landing page reference */
+    /* slate-600, was slate-500 (#64748B). The old value is 4.47:1 against
+       --sfp-gray — under the 4.5:1 WCAG AA floor for normal-size text, so every
+       piece of secondary text on a grey surface failed (axe counted 223 such
+       elements on /research alone). Same grey, one step darker: 7.1:1. Changed
+       at the token rather than per-component so the fix reaches the whole site
+       instead of one route. */
+    --sfp-slate:      #475569;
     --sfp-footer-text:rgba(255,255,255,0.5);
     --sfp-warning-bg: #FFF8E1;  /* Warning-Box Hintergrund — amber-50 (unverändert; PR 2.1 lässt bestehende --sfp-* live-Werte in Ruhe) */
 
@@ -845,7 +851,7 @@ article a:not([href^="/go/"]):not([href^="http"]):not([data-slot="button"]):not(
   --sfp-sky:        #E8F0FB;
   --sfp-gray:       #F7F8FA;   /* Landing page --gray */
   --sfp-ink:        #1A1A2E;
-  --sfp-slate:      #64748B;   /* Tailwind slate-500 — matches landing page */
+  --sfp-slate:      #475569;   /* slate-600 — see the :root note above (WCAG AA on --sfp-gray) */
   --sfp-footer-text:#AAAAAA;
   --sfp-warning-bg: #FFF8E1;  /* Warning-Box Hintergrund — amber-50 (unverändert; PR 2.1 lässt bestehende --sfp-* live-Werte in Ruhe) */
   --sfp-navy-deep:  #0F2E52;   /* Landing page hero deep navy */
