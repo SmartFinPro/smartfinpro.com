@@ -16,9 +16,11 @@
 -- memory/deploy-no-migration-step.md). Suggested flow:
 --   Dry-Run/Staging → Audit-Freigabe → apply (supabase db push / Dashboard SQL
 --   / psql) → run the verification block below → revalidate the cockpit/hub.
--- This file is NOT auto-applied. As of this commit it is intentionally UNAPPLIED
--- (created + type-checked only) — Schritt 1 of the pilot builds the contract;
--- the data audit + apply is a later, separately-gated step.
+-- This file is NOT auto-applied. STATUS: APPLIED to production on 2026-07-19
+-- via the Supabase SQL editor, verified read-only afterwards (8 audited /
+-- 1 provisional, no mass overwrite). See
+-- docs/superpowers/plans/data/2026-07-19-trading-research-apply-log.md.
+-- Re-running is safe: the statements are idempotent.
 --
 -- research_sources key convention (per-Tier-1-fact provenance) — the JSONB keys
 -- are the topic's TopicConfig specColumn keys. For us/trading/trading-platforms

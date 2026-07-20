@@ -414,6 +414,27 @@ export default function Header({ market: marketProp }: HeaderProps) {
                       )}
                     </div>
 
+                    {/* Research Library entry point. US only — the pilot covers
+                        exactly one topic (US trading platforms), so offering it
+                        under UK/CA/AU would promise a hub that does not exist.
+                        Sits in the Trading panel rather than the top-level nav
+                        for the same reason: it is trading research today, not a
+                        sitewide research hub. */}
+                    {group === 'Trading' && market === 'us' && (
+                      <div className="mt-4 pt-3 border-t border-white/10">
+                        <Link
+                          href="/research"
+                          className="inline-flex items-center gap-2 text-xs font-medium text-white hover:underline"
+                          onClick={() => setActiveMenu(null)}
+                        >
+                          <span className="text-[10px] font-semibold uppercase tracking-wider text-white/50">
+                            Platform Research
+                          </span>
+                          <span className="text-white/85">Verified data &amp; sources for 9 US platforms</span>
+                        </Link>
+                      </div>
+                    )}
+
                     {/* Broker reviews in Trading mega-panel — compact text pills */}
                     {group === 'Trading' && (
                       <div className="mt-4 pt-3 border-t border-white/10">

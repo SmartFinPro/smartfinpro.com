@@ -261,15 +261,25 @@ export function ResearchCard({ item, variant = 'standard' }: ResearchCardProps) 
   // Cockpit itself owns the `view=compare` contract.
   const compareHref = `/${product.market}/${product.category}/best/${product.topic}?compare=${encodeURIComponent(product.slug)}`;
 
-  // The provider/affiliate CTA — always the weakest rung. Respects
-  // resolveCockpitCta's external/tracked flags exactly like the Cockpit does.
+  // The provider CTA — always the weakest rung, and deliberately NOT the
+  // Cockpit's behaviour.
   const providerCta = resolveCockpitCta(product);
-  // Only render the weakest "Visit provider" rung when the resolved CTA is a
-  // genuine EXTERNAL provider link. resolveCockpitCta returns an internal
-  // "Read review" branch (external:false) for a product with a reviewSlug but
-  // no externalUrl — rendering that as "Visit provider ↗" would point an
-  // external-looking link at an internal page and duplicate the primary CTA.
-  const hasProviderCta = providerCta.external && providerCta.href !== '#';
+  // Two separate reasons this rung can be absent, kept separate on purpose:
+  //
+  //  1. NO AFFILIATE OFFER HERE, BY DESIGN. For ctaMode 'offer' the Cockpit
+  //     renders a tracked /go/<slug> as its primary green button. Research is
+  //     the evidence-first discovery layer — it pre-qualifies, the Cockpit
+  //     converts (Research -> Review -> Cockpit). Putting the money link on a
+  //     research card would make this a second conversion surface and give the
+  //     page a stake in which platform a reader picks. Note this used to fall
+  //     out of the `external` check by accident, since resolveCockpitCta marks
+  //     the internal /go redirect as external:false; it is now stated.
+  //  2. An internal "Read review" fallback (external:false, for a product with
+  //     a reviewSlug but no externalUrl) must not be dressed as "Visit provider
+  //     ↗" — that would point an external-looking link at an internal page and
+  //     duplicate the primary CTA.
+  const isAffiliateOffer = providerCta.ctaMode === 'offer';
+  const hasProviderCta = !isAffiliateOffer && providerCta.external && providerCta.href !== '#';
 
   const primary = reviewHref
     ? { label: 'Read research', href: reviewHref }

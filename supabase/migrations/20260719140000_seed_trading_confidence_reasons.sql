@@ -14,7 +14,9 @@
 -- rank at runtime; eToro stays provisional.
 --
 -- APPLICATION: manual, ONLY via this versioned file (no service-key DML path).
--- NOT auto-applied. As of this commit: UNAPPLIED.
+-- NOT auto-applied. STATUS: APPLIED to production on 2026-07-19 and verified
+-- — see the apply log under docs/superpowers/plans/data/. Re-running is safe
+-- (idempotent).
 -- Regenerate with: node scripts/research/build-trading-confidence-reasons.mjs
 
 BEGIN;

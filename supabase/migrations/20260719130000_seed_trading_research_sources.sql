@@ -12,7 +12,9 @@
 -- eToro.extendedHours (confidence low, "offen — nicht verifiziert").
 --
 -- APPLICATION: manual, ONLY via this versioned file (no service-key DML path).
--- NOT auto-applied (deploy.yml runs no migrations). As of this commit: UNAPPLIED.
+-- NOT auto-applied (deploy.yml runs no migrations). STATUS: APPLIED to
+-- production on 2026-07-19 and verified — see the apply log under
+-- docs/superpowers/plans/data/. Re-running is safe (idempotent).
 -- Regenerate with: node scripts/research/build-trading-research-sources.mjs
 
 BEGIN;
