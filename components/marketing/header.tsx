@@ -269,7 +269,18 @@ export default function Header({ market: marketProp }: HeaderProps) {
           {/* Mobile Menu */}
           <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
             <SheetTrigger asChild className="lg:hidden">
-              <Button variant="ghost" size="icon" className="hover:bg-white/10" style={{ color: '#fff' }}>
+              {/* The trigger is icon-only, so it has no text for a screen reader
+                  to announce — axe reports it as a critical button-name failure
+                  on every page below the lg breakpoint. aria-label carries the
+                  name; aria-expanded carries the state the icon conveys visually. */}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="hover:bg-white/10"
+                style={{ color: '#fff' }}
+                aria-label={mobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
+                aria-expanded={mobileMenuOpen}
+              >
                 {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
               </Button>
             </SheetTrigger>
