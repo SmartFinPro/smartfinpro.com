@@ -16,6 +16,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { affiliatePrefetch } from '@/lib/affiliate/prefetch';
 import { useCTATracking } from '@/lib/hooks/use-component-tracking';
 import {
   ArrowRight,
@@ -168,6 +169,7 @@ export function FrictionlessCTA({
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6">
             <Link
               href={affiliateUrl}
+              prefetch={affiliatePrefetch(affiliateUrl)}
               target="_blank"
               rel="noopener sponsored"
               onClick={() => trackClick(affiliateUrl)}

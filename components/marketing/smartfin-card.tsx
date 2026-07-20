@@ -24,6 +24,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { affiliatePrefetch } from '@/lib/affiliate/prefetch';
 import {
   Star,
   CheckCircle,
@@ -167,6 +168,7 @@ export function SmartFinCard({
             <div className="shrink-0 lg:self-center">
               <Link
                 href={affiliateUrl}
+                prefetch={affiliatePrefetch(affiliateUrl)}
                 target="_blank"
                 rel="noopener sponsored"
                 className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold text-white shadow-md hover:shadow-lg transition-all hover:brightness-110 no-underline hover:no-underline whitespace-nowrap"

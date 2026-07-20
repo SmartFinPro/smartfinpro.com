@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { affiliatePrefetch } from '@/lib/affiliate/prefetch';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, ExternalLink, Sparkles, Zap, Shield, Clock, TrendingUp, Building, DollarSign, Target } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -46,6 +47,9 @@ export function TrackedCTA({
     <Button asChild variant={variant} size={size} className={cn('gap-2', premiumClassName, className)} style={premiumStyle}>
       <Link
         href={href}
+        // A /go/ href is money: the router must not fetch it on hover or in the
+        // viewport, because the redirect route reads that as a click.
+        prefetch={affiliatePrefetch(href)}
         {...(isTrackedLink ? { target: '_blank', rel: 'noopener sponsored' } : {})}
         title={productName ? `Visit ${productName}` : undefined}
       >
@@ -89,6 +93,7 @@ export function HighlightCTA({
   return (
     <Link
       href={href}
+      prefetch={affiliatePrefetch(href)}
       target="_blank"
       rel="noopener sponsored"
       className="group block rounded-2xl border border-gray-200 bg-white shadow-sm p-5 md:p-6 hover:shadow-md hover:border-gray-300 transition-all my-8"
@@ -132,6 +137,7 @@ export function InlineCTA({ href, text }: InlineCTAProps) {
   return (
     <Link
       href={href}
+      prefetch={affiliatePrefetch(href)}
       target="_blank"
       rel="noopener sponsored"
       className="inline-flex items-center gap-1.5 font-medium transition-colors"
@@ -164,7 +170,7 @@ export function StickyBottomCTA({ href, productName, price }: StickyBottomCTAPro
           className="gap-2 border-0 shadow-lg text-white"
           style={{ background: 'var(--sfp-gold)', color: 'var(--sfp-ink)', borderRadius: '1rem' }}
         >
-          <Link href={href} target="_blank" rel="noopener sponsored">
+          <Link href={href} prefetch={affiliatePrefetch(href)} target="_blank" rel="noopener sponsored">
             Get Started
             <ArrowRight className="h-4 w-4" />
           </Link>
@@ -227,6 +233,7 @@ export function DecisionCTA({
           <Link
             key={option.label}
             href={option.href}
+            prefetch={affiliatePrefetch(option.href)}
             target="_blank"
             rel="noopener sponsored"
             className={cn(

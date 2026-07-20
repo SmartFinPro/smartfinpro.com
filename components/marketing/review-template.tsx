@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { affiliatePrefetch } from '@/lib/affiliate/prefetch';
 import { Button } from '@/components/ui/button';
 import {
   ArrowRight,
@@ -141,7 +142,7 @@ export function ReviewTemplate({ review, mdxSource, relatedArticles, expert }: R
                 className="h-14 px-10 text-lg rounded-2xl text-white border-0 shadow-md hover:shadow-lg transition-all"
                 style={{ background: 'var(--sfp-gold)', color: 'var(--sfp-ink)' }}
               >
-                <Link href={review.affiliateUrl} target="_blank" rel="noopener sponsored">
+                <Link href={review.affiliateUrl} prefetch={affiliatePrefetch(review.affiliateUrl)} target="_blank" rel="noopener sponsored">
                   {review.category === 'personal-finance' && review.market === 'us' && review.rating
                     ? `Check Rates & Apply`
                     : `Try ${review.productName} Free`}
@@ -458,7 +459,7 @@ export function ReviewTemplate({ review, mdxSource, relatedArticles, expert }: R
                   className="h-14 px-10 text-lg rounded-2xl text-white border-0 shadow-md hover:shadow-lg transition-all"
                   style={{ background: 'var(--sfp-gold)', color: 'var(--sfp-ink)' }}
                 >
-                  <Link href={review.affiliateUrl} target="_blank" rel="noopener sponsored">
+                  <Link href={review.affiliateUrl} prefetch={affiliatePrefetch(review.affiliateUrl)} target="_blank" rel="noopener sponsored">
                     {review.category === 'personal-finance' && review.market === 'us' && review.rating
                       ? 'Check Rates & Apply'
                       : 'Start Free Trial'}

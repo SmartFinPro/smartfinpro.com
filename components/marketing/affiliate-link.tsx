@@ -21,6 +21,11 @@ import type { Market, Category } from '@/types';
 /** Shared rel attribute — every outgoing affiliate link must carry this */
 const AFFILIATE_REL = 'nofollow noopener sponsored' as const;
 
+// Every <Link> below carries `prefetch={false}`. Next's router would otherwise
+// fetch the /go/ href on hover and in the viewport, and the redirect route
+// counts that as a click — a page view would write a `link_clicks` row and ping
+// the affiliate network. See lib/affiliate/prefetch.ts for the full invariant.
+
 interface AffiliateLinkProps {
   /** The /go/ slug for this affiliate link */
   slug: string;
@@ -78,6 +83,7 @@ export function AffiliateLink({
       <div className="my-4 not-prose">
         <Link
           href={href}
+          prefetch={false}
           target="_blank"
           rel={AFFILIATE_REL}
           className={`inline-flex items-center justify-center gap-2 rounded-2xl font-medium transition-all text-sm px-6 py-3 text-white shadow-md hover:shadow-lg ${className}`}
@@ -102,6 +108,7 @@ export function AffiliateLink({
       >
         <Link
           href={href}
+          prefetch={false}
           target="_blank"
           rel={AFFILIATE_REL}
           className="flex items-center justify-between gap-3"
@@ -121,6 +128,7 @@ export function AffiliateLink({
     <span className={`inline ${className}`}>
       <Link
         href={href}
+        prefetch={false}
         target="_blank"
         rel={AFFILIATE_REL}
         className="underline underline-offset-2 transition-colors"
