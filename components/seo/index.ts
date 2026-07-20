@@ -21,7 +21,6 @@ export { ReviewSchema } from './review-schema';
 export { FAQSchema } from './faq-schema';
 export { BreadcrumbSchema } from './breadcrumb-schema';
 export { ArticleSchema } from './article-schema';
-export { PersonSchema } from './person-schema';
 export { HowToSchema } from './howto-schema';
 export { FinancialProductSchema } from './financial-product-schema';
 export { ComparisonSchema } from './comparison-schema';

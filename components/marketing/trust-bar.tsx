@@ -74,19 +74,12 @@ export function TrustBar({ badges, market = 'us', className = '', checkmarks, re
   return (
     <div className={`py-4 ${className}`}>
       {/* Rating line (when provided via MDX) */}
-      {(reviewCount || rating) && (
+      {rating && (
         <div className="flex items-center justify-center gap-3 mb-3 text-sm">
-          {rating && (
-            <span className="inline-flex items-center gap-1 text-amber-500 font-semibold">
-              <Star className="h-4 w-4 fill-amber-500" />
-              {rating}/5
-            </span>
-          )}
-          {reviewCount && (
-            <span style={{ color: 'var(--sfp-slate)' }}>
-              Based on {reviewCount.toLocaleString('en-US')} reviews
-            </span>
-          )}
+          <span className="inline-flex items-center gap-1 text-amber-500 font-semibold">
+            <Star className="h-4 w-4 fill-amber-500" />
+            {rating}/5
+          </span>
         </div>
       )}
       {/* Badge row */}

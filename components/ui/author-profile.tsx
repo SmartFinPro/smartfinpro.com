@@ -2,7 +2,7 @@
 'use client';
 
 import Image from 'next/image';
-import { Linkedin, Award, FileText, CheckCircle } from 'lucide-react';
+import { Linkedin, Award, CheckCircle } from 'lucide-react';
 import type { Author } from '@/lib/authors';
 
 interface AuthorProfileProps {
@@ -91,11 +91,6 @@ export function AuthorProfile({ author, compact = false, showBio = true }: Autho
 
           {/* Stats & Links */}
           <div className="flex flex-wrap items-center gap-4 text-sm">
-            <div className="flex items-center gap-2" style={{ color: 'var(--sfp-slate)' }}>
-              <FileText className="h-4 w-4" style={{ color: 'var(--sfp-gold)' }} />
-              <span>{author.reviewCount}+ reviews</span>
-            </div>
-
             <div className="flex items-center gap-2" style={{ color: 'var(--sfp-slate)' }}>
               <CheckCircle className="h-4 w-4" style={{ color: 'var(--sfp-green)' }} />
               <span>{author.yearsExperience} years experience</span>

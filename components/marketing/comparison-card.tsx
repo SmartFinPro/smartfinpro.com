@@ -235,9 +235,6 @@ export function ComparisonCard({
               </span>
             ))}
           </div>
-          <span style={{ fontSize: 14, color: C.slate }}>
-            <b style={{ color: C.ink, fontWeight: 600 }}>{p.reviewCount.toLocaleString('en-US')}</b> reviews
-          </span>
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
           {showReadReviewInRating && reviewHref && (

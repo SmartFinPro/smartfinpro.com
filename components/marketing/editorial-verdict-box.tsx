@@ -4,7 +4,8 @@ import { CheckCircle, AlertTriangle, Star, ExternalLink, Shield, Sparkles } from
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 
-interface ExpertVerdictBoxProps {
+interface EditorialVerdictBoxProps {
+  /** Product/provider name being verdicted — never a person's name. */
   name: string;
   verdict: string;
   pros: string[];
@@ -15,7 +16,12 @@ interface ExpertVerdictBoxProps {
   accentColor?: 'emerald' | 'blue' | 'navy' | 'amber' | 'rose';
 }
 
-export function ExpertVerdictBox({
+// 2026-07-17 editorial-integrity fix: this box never displayed a fabricated
+// person (the `name` prop is always the reviewed product/provider name), but
+// it did caption itself "Expert Verdict" — implying an individual expert's
+// judgment. Renamed from ExpertVerdictBox and the caption changed to a plain
+// SmartFinPro attribution — no persona, no invented reviewer.
+export function EditorialVerdictBox({
   name,
   verdict,
   pros,
@@ -24,7 +30,7 @@ export function ExpertVerdictBox({
   affiliateUrl,
   ctaLabel,
   accentColor = 'navy',
-}: ExpertVerdictBoxProps) {
+}: EditorialVerdictBoxProps) {
   return (
     <div className="not-prose my-8 rounded-2xl border border-gray-200 bg-white overflow-hidden shadow-sm">
       {/* Header: Name + Rating */}
@@ -40,7 +46,7 @@ export function ExpertVerdictBox({
                 <h4 className="text-lg font-bold" style={{ color: 'var(--sfp-ink)' }}>{name}</h4>
                 <Shield className="h-4 w-4" style={{ color: 'var(--sfp-slate)' }} />
               </div>
-              <p className="text-xs mt-0.5 uppercase tracking-wider font-medium" style={{ color: 'var(--sfp-slate)' }}>Expert Verdict</p>
+              <p className="text-xs mt-0.5 uppercase tracking-wider font-medium" style={{ color: 'var(--sfp-slate)' }}>SmartFinPro Verdict</p>
             </div>
           </div>
 

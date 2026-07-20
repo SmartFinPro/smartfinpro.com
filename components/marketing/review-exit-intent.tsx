@@ -6,7 +6,7 @@
 // ── Strategy ────────────────────────────────────────────────────
 //   Targets users who have READ the review (sticky nav visible = scrolled
 //   past hero) and are about to leave → highest-intent moment for conversion.
-//   Shows the #1 resolved CTA partner with personalized social proof.
+//   Shows the #1 resolved CTA partner and its key trust signals.
 //
 // ── Suppression ─────────────────────────────────────────────────
 //   Sets window.__sfpReviewExitActive flag so the generic ExitIntentPopup
@@ -30,7 +30,6 @@ import {
   TrendingUp,
   ExternalLink,
   ArrowRight,
-  Users,
   Clock,
   Zap,
   Globe,
@@ -155,12 +154,6 @@ export function ReviewExitIntent({
     return null;
   }, [ctaPartners, affiliateUrl, primaryCtaLabel, productName]);
 
-  // ── Social proof (deterministic per product) ────────────────────
-  const socialCount = useMemo(() => {
-    const base = productName.length * 11 + (rating || 4) * 23;
-    return Math.floor(40 + (base % 80)); // 40–120 range
-  }, [productName, rating]);
-
   // ── Geo-mismatch redirect (read from middleware cookie) ─────────
   const [geoRedirect, setGeoRedirect] = useState<{ label: string; url: string } | null>(null);
 
@@ -274,7 +267,7 @@ export function ReviewExitIntent({
               Still Comparing {productName}?
             </DialogTitle>
             <DialogDescription className="text-sm mt-1" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
-              {socialCount} readers signed up this week — here&apos;s why.
+              Here&apos;s what our review found — before you decide.
             </DialogDescription>
           </DialogHeader>
         </div>
@@ -286,7 +279,7 @@ export function ReviewExitIntent({
           <div className="space-y-3 mb-5">
             {[
               { icon: ShieldCheck, color: 'var(--sfp-green)', text: 'Verified & regulated platform' },
-              { icon: Star, color: 'var(--sfp-gold)', text: rating ? `Rated ${rating.toFixed(1)}/5 by ${reviewCount && reviewCount > 0 ? reviewCount.toLocaleString('en-US') : 'industry'} experts` : 'Top-rated by industry experts' },
+              { icon: Star, color: 'var(--sfp-gold)', text: rating ? `Rated ${rating.toFixed(1)}/5 by industry experts` : 'Top-rated by industry experts' },
               { icon: TrendingUp, color: 'var(--sfp-navy)', text: 'Exclusive sign-up bonus for SmartFinPro readers' },
               { icon: Zap, color: '#8B5CF6', text: 'Account setup in under 5 minutes' },
             ].map((item, i) => (
@@ -361,10 +354,6 @@ export function ReviewExitIntent({
             style={{ color: 'var(--sfp-slate)' }}
             aria-hidden="true"
           >
-            <span className="flex items-center gap-1.5">
-              <Users className="w-3.5 h-3.5" style={{ color: 'var(--sfp-green)' }} />
-              {socialCount.toLocaleString('en-US')} signed up this week
-            </span>
             <span className="flex items-center gap-1.5">
               <ShieldCheck className="w-3.5 h-3.5" style={{ color: 'var(--sfp-navy)' }} />
               Verified platform

@@ -122,3 +122,66 @@ export interface ProductForComparison {
 export interface MatcherAnswers {
   [questionId: string]: string;
 }
+
+/**
+ * DecisionBridge ("Market Check") — the data contract for the review-article
+ * → cockpit bridge (see docs/superpowers/specs/2026-07-17-cockpit-bridge-design.md,
+ * V15 section). Defined here (not in lib/comparison/bridge.ts, which is
+ * `server-only`) so components/marketing/decision-bridge.tsx can `import type`
+ * without any risk of pulling a server-only module into the client bundle
+ * (memory: client-server-action-import-dashboard — a value import from a
+ * server module hangs Suspense with no crash).
+ *
+ * Every field is either a straight passthrough of one already-validated
+ * `ProductForComparison` value, or a plain aggregate (max/min/count/filter)
+ * over the field. Deliberately excludes `bestFor` / `pros` / `cons` /
+ * `deepDive` — those DB fields are unaudited (Task 10 blocker) and must
+ * never surface through this bridge.
+ */
+export interface DecisionBridgeFieldRow {
+  /** 1-indexed — same order getCockpitData already returns (Smart Rank, top pick pinned). */
+  rank: number;
+  name: string;
+  score: number;
+  /** Internal review link, or null when that competitor has no review yet
+   *  (rendered as plain text, never a dead link). Never `/go`. */
+  reviewHref: string | null;
+  /** True for the row matching the article being read. */
+  isYou: boolean;
+}
+
+export interface DecisionBridgeData {
+  market: string;
+  category: string;
+  topic: string;
+  topicLabel: string;
+  cockpitHref: string;
+  fieldCount: number;
+  leader: { name: string; score: number };
+  scoreMin: number;
+  scoreMax: number;
+  /** Max `dataVerifiedAt` across the field, ISO YYYY-MM-DD, or null if none set. */
+  lastVerified: string | null;
+  officialSourceCount: number;
+  /** Count per confidence level across the field. Null confidences count nowhere. */
+  confidenceMix: { high: number; medium: number; low: number };
+  /** Full field in Smart-Rank order — powers the ranking strip. */
+  field: DecisionBridgeFieldRow[];
+  /** Per sub-score key, the max value seen across the whole field — powers
+   *  the "View score details" comparison column. Empty object if no product
+   *  in the field has any sub-scores. */
+  fieldBestSubScores: Record<string, number>;
+  /** null when the reviewed article's product is not in this cockpit's field
+   *  (renders "Zustand B" — field-at-a-glance instead of a rank line). */
+  position: {
+    rank: number;
+    /** product_attributes.slug — for analytics only, never rendered as a link. */
+    slug: string;
+    name: string;
+    score: number;
+    subScores: SubScores;
+    confidence: 'high' | 'medium' | 'low' | null;
+    dataVerifiedAt: string | null;
+    isTopPick: boolean;
+  } | null;
+}

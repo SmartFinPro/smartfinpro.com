@@ -54,6 +54,7 @@
 
     /* === SmartFinPro Brand Colors (YMYL Trust System) === */
     --sfp-navy:       #1B4F8C;
+    --sfp-blue-bright: #2563EB;   /* helleres Royal-Blau, = Header-Gradient-Endfarbe (components/marketing/header.tsx) */
     --sfp-navy-dark:  #163D6E;
     --sfp-gold:       #F5A623;
     --sfp-gold-dark:  #D48B1A;
@@ -80,6 +81,14 @@
     --sfp-warning-border: #E8C978;
     --sfp-warning-foreground: #8A5A00;
     --sfp-warning-icon: #B45309;
+
+    /* === DecisionBridge / "Market Check" hairline tokens — V15 pixel
+       contract, byte-identical to docs/superpowers/specs/assets/
+       2026-07-17-market-check/market-check-v15.html (--hair / --hair-strong).
+       Scoped to components/marketing/decision-bridge.tsx; not used elsewhere. === */
+    --sfp-hairline: #D8E0EC;
+    --sfp-hairline-strong: #B4C2D6;
+    --sfp-hairline-row: #EEF2F7;
 
     /* === Typography System (AP-04) === */
     /* Inter ist via next/font/google geladen → --font-inter auf <body> */
@@ -850,6 +859,12 @@ article a:not([href^="/go/"]):not([href^="http"]):not([data-slot="button"]):not(
   --sfp-warning-border: #E8C978;
   --sfp-warning-foreground: #8A5A00;
   --sfp-warning-icon: #B45309;
+
+  /* DecisionBridge / "Market Check" hairline tokens — must be duplicated here
+     too (see Turbopack purge workaround note above this block). */
+  --sfp-hairline: #D8E0EC;
+  --sfp-hairline-strong: #B4C2D6;
+  --sfp-hairline-row: #EEF2F7;
 
   /* Typography System (AP-04) */
   --font-primary:      var(--font-inter), system-ui, Arial, sans-serif;

@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { ExpertVerdictBox } from '@/components/marketing/expert-verdict-box';
+import { EditorialVerdictBox } from '@/components/marketing/editorial-verdict-box';
 import { ComparisonTable } from '@/components/marketing/comparison-table';
 import {
   ArrowRight,
@@ -268,7 +268,7 @@ export default async function BrokerReviewPage({ params }: PageProps) {
                   />
                 ))}
                 <span className="ml-2 text-sm tabular-nums" style={{ color: 'var(--sfp-slate)' }}>
-                  {review.rating}/5 ({(review.reviewCount ?? 0).toLocaleString('en-US')} reviews)
+                  {review.rating}/5
                 </span>
               </div>
               <span className="text-gray-300">|</span>
@@ -318,7 +318,7 @@ export default async function BrokerReviewPage({ params }: PageProps) {
           ═══════════════════════════════════════════════════════ */}
       <section className="py-16" style={{ background: 'var(--sfp-gray)' }}>
         <div className="container mx-auto px-4 max-w-4xl">
-          <ExpertVerdictBox
+          <EditorialVerdictBox
             name={review.name}
             verdict={review.verdict}
             pros={pros}
@@ -565,8 +565,7 @@ export default async function BrokerReviewPage({ params }: PageProps) {
               Ready to Get Started with {review.name}?
             </h2>
             <p className="text-lg mb-8 max-w-xl mx-auto leading-relaxed" style={{ color: 'var(--sfp-slate)' }}>
-              Open your free account today and experience why{' '}
-              {(review.reviewCount ?? 0).toLocaleString('en-US')}+ traders trust {review.name}.
+              Open your free account today and see why traders choose {review.name}.
               No commitment, cancel anytime.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">

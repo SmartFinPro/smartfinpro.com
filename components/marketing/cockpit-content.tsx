@@ -4,16 +4,20 @@
 // (methodology, buyer's guide, FAQ, reviewer) renders BELOW it.
 //
 // Server component — receives ONLY plain props (never the TopicConfig, which holds
-// functions). The client islands (FAQSection, ExpertVerifier) get plain arrays/strings
-// + includeSchema={false}: the route owns the single FAQPage + Person JSON-LD. Custom
-// compact verdict markup (not WinnerAtGlance) so the heading is a proper <h2> and pick
-// links respect the attribution gate (no blanket rel="sponsored").
+// functions). The client islands (FAQSection) get plain arrays/strings + includeSchema={false}:
+// the route owns the single FAQPage JSON-LD. Custom compact verdict markup (not
+// WinnerAtGlance) so the heading is a proper <h2> and pick links respect the
+// attribution gate (no blanket rel="sponsored").
+//
+// 2026-07-17 editorial-integrity fix: this file used to render an ExpertVerifier
+// "About our reviewer" block sourced from the (fabricated) experts DB. That block
+// and the reviewer/reviewerName/reviewerCredential props that fed it were removed —
+// attribution is now the static "SmartFinPro Research" string, no persona.
 
 import Image from 'next/image';
 import { Star, ArrowUpRight, Clock } from 'lucide-react';
 import { CheckCircleIcon } from './check-icon';
 import { FAQSection } from './faq-section';
-import { ExpertVerifier } from './expert-verifier';
 import { CockpitVerdictCta } from './cockpit-verdict-cta';
 import type { CockpitCtaMode, CockpitDestinationType } from '@/lib/analytics/cockpit-events';
 
@@ -134,8 +138,6 @@ interface CockpitVerdictProps {
   intro: string;
   picks: VerdictPick[];
   verifiedDate: string; // ISO YYYY-MM-DD
-  reviewerName: string;
-  reviewerCredential?: string;
   market: string;
   category: string;
   topic: string;
@@ -150,8 +152,6 @@ export function CockpitVerdict({
   intro,
   picks,
   verifiedDate,
-  reviewerName,
-  reviewerCredential,
   market,
   category,
   topic,
@@ -163,8 +163,7 @@ export function CockpitVerdict({
           Expert Reviews &amp; Ratings
         </h2>
         <p className="m-0 text-xs" style={{ color: 'var(--sfp-slate)' }}>
-          Data verified {fmtDate(verifiedDate)} · Reviewed by {reviewerName}
-          {reviewerCredential ? `, ${reviewerCredential}` : ''} ·{' '}
+          Data verified {fmtDate(verifiedDate)} · Reviewed by SmartFinPro Research ·{' '}
           <a href="#how-we-test" className="underline" style={{ color: 'var(--sfp-navy)' }}>
             How we test
           </a>
@@ -191,14 +190,6 @@ interface CockpitBodyProps {
   methodology: string;
   buyerGuide: { h3: string; body: string }[];
   faq: { q: string; a: string }[];
-  reviewer: {
-    name: string;
-    role: string;
-    bio: string | null;
-    image_url: string | null;
-    credentials: string[];
-    linkedin_url: string | null;
-  };
   verifiedDate: string; // ISO
   /** Config-authored external authority references (regulator registers,
    *  official protection-limit/fee pages) — SEO addendum §8. */
@@ -216,7 +207,6 @@ export function CockpitBody({
   methodology,
   buyerGuide,
   faq,
-  reviewer,
   verifiedDate,
   sources,
   relatedLinks,
@@ -307,23 +297,6 @@ export function CockpitBody({
       )}
 
       <FAQSection faqs={faq.map((f) => ({ question: f.q, answer: f.a }))} title="Frequently asked questions" includeSchema={false} />
-
-      <section>
-        <h2 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--sfp-ink)' }}>
-          About our reviewer
-        </h2>
-        <ExpertVerifier
-          variant="default"
-          includeSchema={false}
-          name={reviewer.name}
-          title={reviewer.role}
-          credentials={reviewer.credentials}
-          image={reviewer.image_url ?? undefined}
-          bio={reviewer.bio ?? undefined}
-          lastFactChecked={verifiedDate}
-          linkedInUrl={reviewer.linkedin_url ?? undefined}
-        />
-      </section>
     </div>
   );
 }

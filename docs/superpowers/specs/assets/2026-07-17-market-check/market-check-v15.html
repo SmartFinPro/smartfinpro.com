@@ -1,0 +1,314 @@
+<title>Market Check — DecisionBridge</title>
+
+<style>
+  :root{
+    --sfp-navy:#1B4F8C; --sfp-gold:#F5A623; --sfp-gold-dark:#D48B1A;
+    --sfp-green:#1A6B3A; --sfp-red:#D64045; --sfp-sky:#E8F0FB;
+    --sfp-gray:#F2F4F8; --sfp-ink:#1A1A2E; --sfp-slate:#555555;
+    --f-body:Georgia,Lora,"Times New Roman",serif;
+    --f-ui:"Inter",system-ui,-apple-system,"Segoe UI",Arial,sans-serif;
+    --f-num:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+    --hair:#D8E0EC; --hair-strong:#B4C2D6;
+    --page:#EDF0F5; --doc-ink:#1F2534; --doc-mut:#5C6678;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; background:var(--page); color:var(--doc-ink); font-family:var(--f-ui); line-height:1.55; -webkit-font-smoothing:antialiased;}
+  .wrap{max-width:940px; margin:0 auto; padding:44px 20px 80px; display:flex; flex-direction:column; gap:36px;}
+  h1{font-family:var(--f-body); font-size:clamp(25px,3.4vw,34px); line-height:1.15; margin:0; letter-spacing:-.015em; text-wrap:balance;}
+  h2{font-family:var(--f-body); font-size:20px; margin:0; letter-spacing:-.01em;}
+  p{margin:0; max-width:66ch; font-size:15px;}
+  .lede{color:var(--doc-mut);}
+  .eyebrow{font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--doc-mut); font-weight:600;}
+  .sec{display:flex; flex-direction:column; gap:13px;}
+  hr.rule{height:1px; background:var(--hair); border:0; margin:0;}
+  code{font-family:var(--f-num); font-size:12.5px;}
+  .canvas{background:#fff; border:1px solid var(--hair); padding:26px 24px; overflow-x:auto;}
+  .canvas--art{font-family:var(--f-body); font-size:16.5px; line-height:1.7; color:#2B2B38;}
+  .canvas--art p{max-width:none; font-size:16.5px;}
+  .canvas.narrow{max-width:400px; padding:16px 14px;}
+  .clabel{font-size:10.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--doc-mut); font-weight:600; margin-bottom:8px;}
+
+  /* ══════════ MARKET CHECK ══════════ */
+  .mc{
+    border-bottom:1px solid var(--hair-strong);
+    background:#fff; font-family:var(--f-ui); color:var(--sfp-ink); margin:26px 0; padding-bottom:2px;
+  }
+  .mc__bar{
+    display:flex; justify-content:space-between; align-items:baseline;
+    padding:0 0 8px; border-bottom:2px solid var(--sfp-navy);
+  }
+  .mc__tag{font-family:var(--f-body); font-size:17px; letter-spacing:-.01em; color:var(--sfp-ink); font-weight:400;}
+  .mc__rank{font-family:var(--f-num); font-size:12.5px; color:var(--sfp-slate); font-variant-numeric:tabular-nums; letter-spacing:.02em;}
+  .mc__rank b{color:var(--sfp-ink); font-weight:600;}
+
+  .mc__id{display:flex; justify-content:space-between; align-items:baseline; gap:16px; padding:13px 0 2px;}
+  .mc__name{font-family:var(--f-body); font-size:21px; letter-spacing:-.015em;}
+  .mc__score{font-family:var(--f-num); font-size:21px; font-variant-numeric:tabular-nums; letter-spacing:-.03em; white-space:nowrap;}
+  .mc__score s{text-decoration:none; color:var(--sfp-slate); font-size:14px;}
+  .mc__for{font-size:12.5px; color:var(--sfp-slate); padding-bottom:12px;}
+
+  .mc__sw{
+    display:flex; gap:28px; flex-wrap:wrap; font-size:12.5px;
+    padding:12px 0 10px; border-bottom:1px solid var(--hair);
+  }
+  .mc__sw span{color:var(--sfp-slate);}
+  .mc__sw b{color:var(--sfp-ink); font-weight:600; font-family:var(--f-num); font-variant-numeric:tabular-nums;}
+
+  /* Kompakte Drei-Punkt-Achse */
+  .line{position:relative; height:26px; margin:14px 0 4px;}
+  .line__rail{position:absolute; left:0; right:0; top:12px; height:1px; background:var(--hair-strong);}
+  .line__pt{position:absolute; top:8px; width:9px; height:9px; border-radius:99px; transform:translateX(-50%); background:#fff;}
+  .line__pt--me{border:2.5px solid var(--sfp-navy); z-index:2;}
+  .line__pt--med{border:2px solid var(--hair-strong);}
+  .line__pt--lead{border:2.5px solid var(--sfp-gold-dark);}
+  .line__lb{position:absolute; top:-4px; font-size:11px; transform:translateX(-50%); white-space:nowrap; font-family:var(--f-ui);}
+  .line__lb b{font-family:var(--f-num); font-variant-numeric:tabular-nums;}
+  .line__lb--me{color:var(--sfp-navy); font-weight:600;}
+  .line__lb--med{color:var(--sfp-slate);}
+  .line__lb--lead{color:var(--sfp-gold-dark); font-weight:600;}
+
+  /* Ranglisten-Strip: die Kombination aus investing.com-Form und unseren Daten */
+  table.strip{width:100%; border-collapse:collapse; margin:11px 0 2px; font-family:var(--f-ui);}
+  table.strip td{padding:5px 0; border-bottom:1px solid #EEF2F7; font-size:13.5px; vertical-align:baseline;}
+  table.strip tr:last-child td{border-bottom:0;}
+  table.strip td.r{width:24px; font-family:var(--f-num); font-size:11.5px; color:var(--sfp-slate); font-variant-numeric:tabular-nums;}
+  table.strip td.nm a{color:var(--sfp-ink); text-decoration:none; border-bottom:1px solid var(--hair);}
+  table.strip td.nm a:hover{border-bottom-color:var(--sfp-navy); color:var(--sfp-navy);}
+  table.strip td.bf{color:var(--sfp-slate); font-size:12px; text-align:right; padding-right:14px;}
+  table.strip td.sc{width:52px; text-align:right; padding-right:9px; font-family:var(--f-num); font-variant-numeric:tabular-nums; font-weight:600;}
+  tr.you td{background:var(--sfp-sky); font-weight:600;}
+  tr.you td.r{color:var(--sfp-navy);}
+  tr.you td:last-child{box-shadow:inset -2px 0 0 var(--sfp-navy);}
+  tr.gap td{color:var(--sfp-slate); font-size:11.5px; padding:3px 0; border-bottom:1px solid #EEF2F7;}
+  /* Verdict: dezent abgesetzt — getönte Bahn mit Navy-Kante, keine weitere Linie */
+  .mc__vtag{
+    font-size:9.5px; letter-spacing:.16em; text-transform:uppercase; color:var(--sfp-navy);
+    font-weight:700; background:var(--sfp-gray); border-left:2px solid var(--sfp-navy);
+    padding:9px 13px 0; margin-top:12px;
+  }
+  .mc__verdict{
+    font-family:var(--f-body); font-size:14px; line-height:1.5;
+    background:var(--sfp-gray); border-left:2px solid var(--sfp-navy);
+    padding:2px 13px 9px; color:var(--sfp-ink);
+  }
+
+  details.mc__more{border-top:1px solid var(--hair); padding:8px 0;}
+  details.mc__more summary{cursor:pointer; font-size:12px; color:var(--sfp-navy); list-style:none; padding:2px 0;}
+  details.mc__more summary::-webkit-details-marker{display:none;}
+  details.mc__more summary::before{content:"▸ "; font-size:9px; vertical-align:1px;}
+  details.mc__more[open] summary::before{content:"▾ ";}
+  details.mc__more summary:focus-visible{outline:2px solid var(--sfp-navy); outline-offset:2px;}
+  table.subs{width:100%; border-collapse:collapse; margin:8px 0 4px;}
+  table.subs th{text-align:left; font-size:9.5px; letter-spacing:.11em; text-transform:uppercase; color:var(--sfp-slate); font-weight:600; padding:5px 0; border-bottom:1px solid var(--hair);}
+  table.subs td{padding:5px 0; border-bottom:1px solid #EEF2F7; font-size:13px;}
+  table.subs td.n{text-align:right; font-family:var(--f-num); font-variant-numeric:tabular-nums; width:60px;}
+
+  .mc__foot{
+    font-size:11.5px; color:var(--sfp-slate); padding:8px 0 0; border-top:1px solid var(--hair);
+  }
+  .mc__foot b{color:var(--sfp-ink); font-weight:600; font-family:var(--f-num); font-variant-numeric:tabular-nums;}
+  .mc__foot a{color:var(--sfp-navy);}
+  .lim{color:var(--sfp-slate); font-weight:600;}
+
+  .mc__cta{
+    display:inline-block; margin:14px 0 4px; background:var(--sfp-gold); color:#3B2A05;
+    font-weight:600; font-size:13.5px; padding:9px 16px; text-decoration:none; font-family:var(--f-ui);
+    transition:background .15s;
+  }
+  .mc__cta:hover{background:var(--sfp-gold-dark);}
+  .mc__cta:focus-visible{outline:3px solid var(--sfp-navy); outline-offset:2px;}
+
+  /* Zustand B / C */
+  .fld{display:grid; grid-template-columns:repeat(3,1fr); border-bottom:1px solid var(--hair);}
+  .fld div{padding:12px 14px 12px 0; border-right:1px solid var(--hair);}
+  .fld div:last-child{border-right:0;}
+  .fld em{display:block; font-style:normal; font-size:9.5px; letter-spacing:.11em; text-transform:uppercase; color:var(--sfp-slate); font-weight:600; margin-bottom:4px;}
+  .fld b{font-family:var(--f-num); font-size:17px; font-variant-numeric:tabular-nums; display:block; letter-spacing:-.02em;}
+  .fld span{font-size:11.5px; color:var(--sfp-slate);}
+  .void{border:1px dashed var(--hair-strong); padding:22px; text-align:center; color:var(--doc-mut); font-size:13px;}
+
+  .note{border-left:2px solid var(--sfp-navy); background:var(--sfp-sky); padding:12px 15px; font-size:13.5px; color:#233046;}
+  .note b{color:var(--sfp-navy);}
+  .warn{border-left:2px solid var(--sfp-red); background:#FDF3F3; padding:12px 15px; font-size:13.5px; color:#4A2326;}
+  .warn b{color:var(--sfp-red);}
+  .vs{display:grid; grid-template-columns:1fr 1fr; border:1px solid var(--hair);}
+  .vs > div{padding:15px 17px;}
+  .vs > div:first-child{border-right:1px solid var(--hair); background:#FDF7F7;}
+  .vs > div:last-child{background:#F5FAF7;}
+  .vs h3{margin:0 0 7px; font-size:10px; letter-spacing:.12em; text-transform:uppercase;}
+  .vs q{font-family:var(--f-body); font-size:14px; line-height:1.5; color:#3F3F4B; display:block;}
+  .kv{display:flex; justify-content:space-between; gap:10px; font-size:13px; padding:3px 0; border-bottom:1px solid #E8EEE9;}
+  .kv b{font-family:var(--f-num); font-variant-numeric:tabular-nums;}
+  @media(max-width:780px){ .vs{grid-template-columns:1fr;} .vs>div:first-child{border-right:0; border-bottom:1px solid var(--hair);} .fld{grid-template-columns:1fr;} .fld div{border-right:0; border-bottom:1px solid var(--hair); padding-right:0;} }
+  @media(prefers-reduced-motion:reduce){ *{transition:none!important;} }
+</style>
+
+<div class="wrap">
+
+  <header class="sec">
+    <div class="eyebrow">SmartFinPro · Komponenten-Entwurf v4 · 17.07.2026</div>
+    <h1>Market Check</h1>
+    <p class="lede">
+      Ersetzt <code>&lt;ExpertBox&gt;</code> in 203 Reviews. Jede Zahl echt aus
+      <code>product_attributes</code> · <code>us/trading/trading-platforms</code> · Stand 03.07.2026.
+      Kein Fülltext, kein Bild, keine Person.
+    </p>
+  </header>
+
+  <hr class="rule">
+
+  <section class="sec">
+    <h2>Desktop</h2>
+    <div class="canvas canvas--art">
+      <div class="mc">
+        <div class="mc__bar">
+          <span class="mc__tag">How eToro compares</span>
+          <span class="mc__rank"><b>#8</b> of 9</span>
+        </div>
+
+        <div class="mc__sw" style="border-top:0;">
+          <span>Strongest: <b>Fees 8.8</b></span>
+          <span>Weakest: <b>Support 7.8</b></span>
+        </div>
+
+
+        <table class="strip">
+          <tbody>
+            <tr><td class="r">1</td><td class="nm"><a href="#">Fidelity</a></td><td class="bf">Best overall</td><td class="sc">9.6</td></tr>
+            <tr><td class="r">2</td><td class="nm"><a href="#">Charles Schwab</a></td><td class="bf">Best all-in-one</td><td class="sc">9.3</td></tr>
+            <tr><td class="r">3</td><td class="nm"><a href="#">Interactive Brokers</a></td><td class="bf">Best for active traders</td><td class="sc">9.2</td></tr>
+            <tr class="gap"><td class="r">⋯</td><td colspan="3">4 more between</td></tr>
+            <tr class="you"><td class="r">8</td><td class="nm">eToro</td><td class="bf">Low-cost options trading</td><td class="sc">8.3</td></tr>
+            <tr><td class="r">9</td><td class="nm"><a href="#">Merrill Edge</a></td><td class="bf">Bank of America clients</td><td class="sc">8.0</td></tr>
+          </tbody>
+        </table>
+
+        <div class="mc__vtag">Verdict</div>
+        <div class="mc__verdict">
+          Good for low-cost options trading. Consider alternatives if reliable support is a
+          priority. The field is tight: only 1.6 points separate all nine platforms.
+        </div>
+        <a class="mc__cta" href="#">Compare all 9 platforms →</a>
+
+        <details class="mc__more">
+          <summary>View score details</summary>
+          <table class="subs">
+            <thead><tr><th>Sub-score</th><th class="n">eToro</th><th class="n">Field best</th></tr></thead>
+            <tbody>
+              <tr><td>Fees</td><td class="n">8.8</td><td class="n" style="color:var(--sfp-slate)">9.4</td></tr>
+              <tr><td>UX</td><td class="n">8.4</td><td class="n" style="color:var(--sfp-slate)">9.4</td></tr>
+              <tr><td>Support</td><td class="n">7.8</td><td class="n" style="color:var(--sfp-slate)">9.6</td></tr>
+              <tr><td>Features</td><td class="n">8.0</td><td class="n" style="color:var(--sfp-slate)">9.6</td></tr>
+            </tbody>
+          </table>
+        </details>
+
+        <div class="mc__foot">Verified <b>3 Jul 2026</b> · <b>9</b> official sources · Data confidence: <span class="lim">limited</span> · <a href="#">How we score</a></div>
+
+      </div>
+    </div>
+  </section>
+
+  <section class="sec">
+    <div class="clabel">Mobil · 390 px</div>
+    <div class="canvas narrow">
+      <div class="mc" style="margin:0">
+        <div class="mc__bar"><span class="mc__tag">How eToro compares</span><span class="mc__rank"><b>#8</b> of 9</span></div>
+        <div class="mc__sw" style="gap:14px; border-top:0;">
+          <span>Strongest: <b>Fees 8.8</b></span>
+          <span>Weakest: <b>Support 7.8</b></span>
+        </div>
+
+        <table class="strip">
+          <tbody>
+            <tr><td class="r">1</td><td class="nm"><a href="#">Fidelity</a></td><td class="sc">9.6</td></tr>
+            <tr><td class="r">2</td><td class="nm"><a href="#">Charles Schwab</a></td><td class="sc">9.3</td></tr>
+            <tr><td class="r">3</td><td class="nm"><a href="#">Interactive Brokers</a></td><td class="sc">9.2</td></tr>
+            <tr class="gap"><td class="r">⋯</td><td colspan="2">4 more between</td></tr>
+            <tr class="you"><td class="r">8</td><td class="nm">eToro</td><td class="sc">8.3</td></tr>
+            <tr><td class="r">9</td><td class="nm"><a href="#">Merrill Edge</a></td><td class="sc">8.0</td></tr>
+          </tbody>
+        </table>
+
+        <div class="mc__vtag">Verdict</div>
+        <div class="mc__verdict" style="font-size:13.5px;">Good for low-cost options trading. Consider alternatives if support matters. Only 1.6 points separate all nine.</div>
+        <a class="mc__cta" href="#">Compare all 9 →</a>
+        <details class="mc__more"><summary>View score details</summary>
+          <table class="subs">
+            <thead><tr><th>Sub-score</th><th class="n">eToro</th><th class="n">Best</th></tr></thead>
+            <tbody>
+              <tr><td>Fees</td><td class="n">8.8</td><td class="n" style="color:var(--sfp-slate)">9.4</td></tr>
+              <tr><td>UX</td><td class="n">8.4</td><td class="n" style="color:var(--sfp-slate)">9.4</td></tr>
+              <tr><td>Support</td><td class="n">7.8</td><td class="n" style="color:var(--sfp-slate)">9.6</td></tr>
+              <tr><td>Features</td><td class="n">8.0</td><td class="n" style="color:var(--sfp-slate)">9.6</td></tr>
+            </tbody>
+          </table>
+        </details>
+        <div class="mc__foot" style="font-size:11px;">Verified <b>3 Jul 2026</b> · <b>9</b> official · confidence: <span class="lim">limited</span> · <a href="#">How we score</a></div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="rule">
+
+  <section class="sec">
+    <h2>Zustand B — kein Produkt-Match</h2>
+    <div class="canvas">
+      <div class="mc" style="margin:0">
+        <div class="mc__bar"><span class="mc__tag">How the field compares</span><span class="mc__rank"><b>9</b> tracked</span></div>
+        <div class="mc__id"><span class="mc__name">Best Trading Platforms · US</span></div>
+        <div class="mc__for">Field at a glance</div>
+        <div class="fld">
+          <div><em>Leader</em><b style="font-family:var(--f-body); font-size:16px;">Fidelity</b><span>9.6 · Best overall</span></div>
+          <div><em>Spread</em><b>8.0 – 9.6</b><span>9 platforms</span></div>
+          <div><em>Verified</em><b>3 Jul 2026</b><span>9 official</span></div>
+        </div>
+        <a class="mc__cta" href="#">Compare all 9 platforms →</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec">
+    <h2>Zustand C — keine Daten</h2>
+    <p class="lede">6 Artikel: <code>cross-market</code> (4), <code>us/credit-score</code> (2).</p>
+    <div class="canvas"><div class="void">Rendert <code>null</code>.</div></div>
+    <div class="note">
+      <b>Der Tag ist proplos:</b> <code>&lt;DecisionBridge /&gt;</code> statt
+      <code>&lt;ExpertBox name="…" credentials="CFA, AFA" quote="…" /&gt;</code>.
+      Die Fabrikation kam über Props. Es gibt kein Feld mehr, in das jemand etwas erfinden könnte.
+    </div>
+  </section>
+
+  <hr class="rule">
+
+  <section class="sec">
+    <h2>Zwei offene Punkte</h2>
+    <div class="warn">
+      <b>„Data confidence: limited"</b> ist bisher unbegründet — <code>confidence</code> wird in den
+      Seed-Skripten von Hand gesetzt, ohne Regel und ohne Begründungsfeld. Der Link
+      <b>„How we score"</b> löst das, aber nur wenn <code>/methodology</code> die Stufe wirklich
+      definiert und die 273 Werte dieser Definition entsprechen. Beides ist Task-8-Arbeit.
+    </div>
+    <div class="warn">
+      <b>Der widerlegte Superlativ steht an DREI Stellen.</b> <code>options_fee</code> ist bei eToro
+      <b>0.0</b> — bei <b>Webull ebenfalls 0.0</b>. Trotzdem sagt die DB:
+      <code>best_for: "Cheapest options trading"</code> ·
+      <code>deep_dive: "the <b>only</b> broker… charging genuinely $0"</code> ·
+      <code>pros[0]: "$0/contract options — the <b>only true</b> zero-fee options broker"</code>.
+      Der Kasten sagt deshalb „low-cost options trading" statt des Superlativs. Präzision aus <code>options_fee_note</code>: „no commission or contract fees <b>beyond regulatory pass-throughs</b>" — es sind <b>Kontrakt</b>gebühren, die null sind, nicht alle Optionsgebühren.
+    </div>
+    <div class="warn">
+      <b><code>pros</code>/<code>cons</code> sind ebenfalls ungeprüft</b> — bei 273/273 befüllt, aber
+      wie <code>best_for</code> nie auditiert (<code>pros[0]</code> trägt denselben widerlegten
+      Superlativ). Falls sie später mit grünen Haken gezeigt werden: <b>ein Haken ist ein
+      Verifikationssignal</b> und beglaubigt, was daneben steht. Dann muss der Audit vorher laufen.
+    </div>
+    <div class="note">
+      <b>Nebenbei gelöst:</b> eToros dritter Con lautet „Extended-hours trading availability for US
+      accounts is <b>not established</b>". Das ist die Begründung für <code>confidence: low</code> —
+      sie existiert also, nur nicht im dafür vorgesehenen Feld. <code>confidence_reason</code> lässt
+      sich aus den <code>cons</code> ableiten, aber von Hand, nicht automatisch.
+    </div>
+  </section>
+
+</div>

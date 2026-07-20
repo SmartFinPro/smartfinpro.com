@@ -12,9 +12,10 @@ const getCachedContentSlugs = cache(async () => {
   return new Set(all.map(s => `${s.market}/${s.category}/${s.slug}`));
 });
 import { ReportLayout } from '@/components/marketing/report-layout';
-import { getMarketExpert } from '@/lib/actions/experts';
+import { ReviewLayoutV2 } from '@/components/reviews/review-layout-v2';
 import { getEnrichedCtaPartners } from '@/lib/actions/page-cta-partners';
 import { rankOffersByEV } from '@/lib/actions/offer-ev';
+import { getDecisionBridgeData } from '@/lib/comparison/bridge';
 
 interface ContentPageProps {
   params: Promise<{
@@ -145,6 +146,74 @@ export default async function ContentPage({ params }: ContentPageProps) {
     notFound();
   }
 
+  // V2 review layout (T5/T13/T14, 2026-07-18 review-redesign): checked
+  // BEFORE the V1 `rating` gate below — a V2 page must never depend on a
+  // fabricated 4.7/5-style rating (plan "Architektur: Gating"). Data loading
+  // (decisionBridge/siblings/crossCategory) mirrors the V1 review branch
+  // below exactly (same functions, same arguments) but is intentionally
+  // NOT shared/hoisted — the V1 branch stays byte-identical (plan Pflicht,
+  // verified via the V1-Regressionsbeweis in the T13/T14 commits).
+  if (content.meta.reviewLayout === 'v2') {
+    // serializeMDX separate from Promise.all — compilation errors must not crash non-MDX fetches
+    let mdxSource;
+    try {
+      mdxSource = await serializeMDX(content.content);
+    } catch (e) {
+      console.error('[serialize] MDX compilation failed:', market, category, slug, e);
+      notFound();
+    }
+
+    const [allCategoryContent, crossCategoryContent, decisionBridge] = await Promise.all([
+      getContentByMarketAndCategory(market as Market, category as Category),
+      // Cross-category content for "Related Topics" section (Topical Authority signal)
+      getCrossCategoryContent(market as Market, category as Category, 3),
+      // Market Check / DecisionBridge data — consumed as plain data only
+      // (T0c: the sidebar bridge component itself is never rendered on V2).
+      getDecisionBridgeData(market as Market, category as Category, slug, content.meta.cockpitTopic),
+    ]);
+
+    // Sibling reviews: same quality-sorted + starvation-fallback logic as
+    // the V1 review branch below (computeQualityScore/QUALITY_SCORE_THRESHOLD/
+    // QUALITY_FALLBACK_MIN), duplicated rather than shared so that branch
+    // stays untouched.
+    const allSiblings = allCategoryContent
+      .filter(item => item.slug !== slug && item.slug !== 'index')
+      .sort((a, b) => {
+        const scoreDiff = computeQualityScore(b) - computeQualityScore(a);
+        if (scoreDiff !== 0) return scoreDiff;
+        return new Date(b.meta.modifiedDate || b.meta.publishDate || 0).getTime()
+             - new Date(a.meta.modifiedDate || a.meta.publishDate || 0).getTime();
+      });
+    const siblingsFiltered = allSiblings
+      .filter(item => item.meta.rating && computeQualityScore(item) >= QUALITY_SCORE_THRESHOLD);
+    const siblingReviews = siblingsFiltered.length >= QUALITY_FALLBACK_MIN
+      ? siblingsFiltered
+      : allSiblings;
+
+    // Best-alternative link (T0d: never a dead link) — existence-checked
+    // against the already-loaded category content list.
+    const bestAlternativeSlug = content.meta.verdict?.bestAlternative?.slug;
+    const bestAlternativeHref = bestAlternativeSlug && allCategoryContent.some(item => item.slug === bestAlternativeSlug)
+      ? `/${market}/${category}/${bestAlternativeSlug}`
+      : null;
+
+    return (
+      <main id="main-content">
+        <ReviewLayoutV2
+          meta={content.meta}
+          mdxSource={mdxSource}
+          market={market as Market}
+          category={category as Category}
+          slug={slug}
+          decisionBridge={decisionBridge}
+          siblingReviews={siblingReviews}
+          crossCategoryContent={crossCategoryContent}
+          bestAlternativeHref={bestAlternativeHref}
+        />
+      </main>
+    );
+  }
+
   // For review pages, use the ReportLayout (Premium Research Report style)
   if (content.meta.rating) {
     // serializeMDX separate from Promise.all — compilation errors must not crash non-MDX fetches
@@ -156,14 +225,16 @@ export default async function ContentPage({ params }: ContentPageProps) {
       notFound();
     }
 
-    const [relatedArticles, expert, allCategoryContent, ctaPartners, crossCategoryContent] = await Promise.all([
+    const [relatedArticles, allCategoryContent, ctaPartners, crossCategoryContent, decisionBridge] = await Promise.all([
       getRelatedContent(market as Market, category as Category, slug, 3),
-      getMarketExpert(market, category),
       getContentByMarketAndCategory(market as Market, category as Category),
       // URL format must match dashboard: US = no prefix, others = /market prefix
       getEnrichedCtaPartners(`${market === 'us' ? '' : `/${market}`}/${category}/${slug}`),
       // Cross-category content for "Related Topics" section (Topical Authority signal)
       getCrossCategoryContent(market as Market, category as Category, 3),
+      // Market Check / DecisionBridge — replaces <ExpertBox> (editorial integrity
+      // remediation, Task 5b). Never throws; degrades to null internally.
+      getDecisionBridgeData(market as Market, category as Category, slug, content.meta.cockpitTopic),
     ]);
 
     // Sibling reviews: exclude current + index, sorted by quality score DESC.
@@ -204,7 +275,6 @@ export default async function ContentPage({ params }: ContentPageProps) {
       <main id="main-content">
         <ReportLayout
           ctaPartners={rankedPartners}
-          expert={expert}
           mdxSource={mdxSource}
           relatedArticles={relatedArticles}
           siblingReviews={siblingReviews}
@@ -214,6 +284,7 @@ export default async function ContentPage({ params }: ContentPageProps) {
           slug={slug}
           protocolBridge={content.meta.protocolBridge}
           miniQuiz={content.meta.miniQuiz}
+          decisionBridge={decisionBridge}
           review={{
             title: content.meta.seoTitle || content.meta.title,
             description: content.meta.description,
@@ -259,14 +330,16 @@ export default async function ContentPage({ params }: ContentPageProps) {
     notFound();
   }
 
-  const [relatedArticles, expert, allCategoryContent, ctaPartners, crossCategoryContent] = await Promise.all([
+  const [relatedArticles, allCategoryContent, ctaPartners, crossCategoryContent, decisionBridge] = await Promise.all([
     getRelatedContent(market as Market, category as Category, slug, 3),
-    getMarketExpert(market, category),
     getContentByMarketAndCategory(market as Market, category as Category),
     // URL format must match dashboard: US = no prefix, others = /market prefix
     getEnrichedCtaPartners(`${market === 'us' ? '' : `/${market}`}/${category}/${slug}`),
     // Cross-category content for "Related Topics" section (Topical Authority signal)
     getCrossCategoryContent(market as Market, category as Category, 3),
+    // Market Check / DecisionBridge — replaces <ExpertBox> (editorial integrity
+    // remediation, Task 5b). Never throws; degrades to null internally.
+    getDecisionBridgeData(market as Market, category as Category, slug, content.meta.cockpitTopic),
   ]);
 
   // Filter sibling reviews (exclude current + index pages)
@@ -291,7 +364,6 @@ export default async function ContentPage({ params }: ContentPageProps) {
     <>
       <ReportLayout
         ctaPartners={rankedPartners}
-        expert={expert}
         mdxSource={mdxSource}
         relatedArticles={relatedArticles}
         siblingReviews={siblingReviews}
@@ -300,6 +372,7 @@ export default async function ContentPage({ params }: ContentPageProps) {
         category={category as Category}
         slug={slug}
         miniQuiz={content.meta.miniQuiz}
+        decisionBridge={decisionBridge}
         review={{
           title: content.meta.seoTitle || content.meta.title,
           description: content.meta.description,
