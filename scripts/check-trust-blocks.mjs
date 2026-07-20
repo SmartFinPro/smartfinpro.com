@@ -121,9 +121,15 @@ for (const file of files) {
     reviewCount++;
 
     // ERRORS (critical for EEAT — cause exit code 1)
-    if (!data.reviewedBy) {
-      fileErrors.push('missing reviewedBy (critical for EEAT)');
-    }
+    //
+    // `reviewedBy` is deliberately NOT checked here. It used to name a
+    // fact-checker who did not exist, and the editorial-integrity remediation
+    // retires the field (lib/editorial/forbidden-claims.ts lists it verbatim,
+    // check-frontmatter no longer requires it, the V2 review layout has no
+    // reviewer slot). Real expertise signals are earned by the sourced facts
+    // and the methodology section — never by asserting a person who is not
+    // behind the page. Demanding the field here would order the fabrication
+    // back under the banner of EEAT.
     if (!data.modifiedDate) {
       fileErrors.push('missing modifiedDate (critical for freshness signal)');
     }

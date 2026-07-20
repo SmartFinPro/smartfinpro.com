@@ -27,7 +27,6 @@ const REVIEW_REQUIRED = [
   'title',
   'description',
   'author',
-  'reviewedBy',
   'publishDate',
   'category',
   'market',
@@ -35,6 +34,16 @@ const REVIEW_REQUIRED = [
   'affiliateUrl',
   'affiliateDisclosure',
 ];
+
+// `reviewedBy` is deliberately NOT required. It named a fact-checker who did
+// not exist ("Sarah Chen, CFA", "Robert Hayes, CFP", "James Miller, CFA"),
+// which layout-builder rendered as an ExpertBox and page.tsx emitted as a
+// reviewedBy Person in the JSON-LD. The editorial-integrity remediation
+// retires the field — lib/editorial/forbidden-claims.ts lists it verbatim
+// ("Erfundene Reviewer — ersatzlos entfernt"), check-seo-quality dropped its
+// reviewedBy criterion for the same reason, and the V2 review layout has no
+// reviewer slot at all. A gate that demands the field would order the
+// fabrication back, so removing it from a review is correct, not a defect.
 
 // ── Required fields for ALL content files ─────────────────
 const BASE_REQUIRED = [
