@@ -237,17 +237,19 @@ export async function GET(
   const ua = request.headers.get('user-agent');
 
   // ── Click-Fraud: Bot UA Detection ────────────────────────────
-  // Return 403 silently — bots should not get a helpful redirect
+  // Return 403 silently — bots should not get a helpful redirect. No click is
+  // recorded and NO persistent block is written.
+  //
+  // A single User-Agent match is deliberately NOT enough to ban an IP: the UA is
+  // trivially spoofed, and behind carrier NAT / corporate proxies / VPN exits one
+  // crawler request would lock every real user sharing that IP out of all
+  // affiliate redirects. The 403 below already stops the bot for this request;
+  // persisting it only added collateral damage. Persistent blocks are reserved
+  // for the rate-limit path (1h, below) and manual dashboard blocks.
   if (isBotUserAgent(ua)) {
     logger.warn('[affiliate] Bot UA blocked', {
       ip,
       ua: ua?.slice(0, 200) ?? '(empty)',
-    });
-    // Persist 24h block for confirmed bots (cluster-safe via Supabase)
-    void blockIp(ip, 'bot_ua_detected', {
-      durationMs: 24 * 60 * 60 * 1000,
-      path: request.url,
-      ua: ua ?? undefined,
     });
     return new NextResponse(null, { status: 403 });
   }
@@ -265,7 +267,11 @@ export async function GET(
   // In-memory per-worker; complements the persistent blocklist.
   if (!affiliateRedirectLimiter.check(ip)) {
     logger.warn('[affiliate] Rate limit exceeded — auto-blocking IP', { ip, ua: ua?.slice(0, 100) });
-    // Auto-block for 1 hour and persist to Supabase
+    // Behavioural signal (>10 req/min), so a temporary persistent block is
+    // warranted — unlike a bot UA, this cannot be faked by a single request.
+    // Capped at 1 hour with an explicit reason and expiry; longer or permanent
+    // blocks are reserved for repeatedly confirmed abuse and manual dashboard
+    // blocks. Nothing in the automated path may exceed this ceiling.
     void blockIp(ip, 'rate_limit_exceeded', {
       durationMs: 60 * 60 * 1000,
       path: request.url,
