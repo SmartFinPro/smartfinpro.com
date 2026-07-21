@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
+import { affiliatePrefetch } from '@/lib/affiliate/prefetch';
 import {
   ArrowRight,
   Shield,
@@ -296,6 +297,7 @@ export default function UKBrokerHeroSlider() {
                     <div className="flex items-center gap-2 mb-3">
                       <Link
                         href={slide.href}
+                        prefetch={affiliatePrefetch(slide.href)}
                         onClick={(e) => { e.stopPropagation(); fireTrackingEvent(slide, 'cta_click'); }}
                         className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-semibold text-white transition-all hover:scale-[1.02] hover:shadow-md"
                         style={{ background: slide.accentColor }}

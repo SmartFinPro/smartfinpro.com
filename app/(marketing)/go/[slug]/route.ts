@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { trackClick } from '@/lib/affiliate/tracker';
 import { resolveLink } from '@/lib/affiliate/link-registry';
+import { speculativeRequestReason } from '@/lib/affiliate/prefetch';
 import { affiliateRedirectLimiter } from '@/lib/security/rate-limit';
 import { isIpBlocked, blockIp } from '@/lib/security/ip-blocklist';
 import { logger } from '@/lib/logging';
@@ -217,6 +218,21 @@ export async function GET(
   };
 
   try {
+  // ── Money Invariant: no click without a human ────────────────
+  // FIRST, ahead of every other gate. A prefetch/prerender/RSC request is not a
+  // click: it must not reach trackClick (phantom rows in `link_clicks` plus an
+  // outbound ping to the affiliate network on every page view), must not spend
+  // a real visitor's rate-limit budget, and must never get their IP blocked by
+  // the bot gate — behind carrier NAT that would lock real users out of every
+  // affiliate redirect. 204 is deliberate: nothing to follow, nothing to cache.
+  const speculative = speculativeRequestReason(request);
+  if (speculative) {
+    return new NextResponse(null, {
+      status: 204,
+      headers: { ...noCacheHeaders, 'x-sfp-speculative': speculative },
+    });
+  }
+
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
   const ua = request.headers.get('user-agent');
 

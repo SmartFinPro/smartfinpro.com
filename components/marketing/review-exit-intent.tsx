@@ -17,6 +17,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
+import { affiliatePrefetch } from '@/lib/affiliate/prefetch';
 import {
   Dialog,
   DialogContent,
@@ -306,6 +307,7 @@ export function ReviewExitIntent({
           {/* ── Primary CTA Button ──────────────────────────────────── */}
           <Link
             href={topPartner.url}
+            prefetch={affiliatePrefetch(topPartner.url)}
             target="_blank"
             rel="noopener noreferrer nofollow"
             onClick={handleCtaClick}
