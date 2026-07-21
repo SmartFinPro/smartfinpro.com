@@ -44,6 +44,7 @@ interface ExecutiveOverviewProps {
   stats: {
     revenueInRange: number;
     totalClicksInRange: number;
+    suspiciousClicksExcluded: number;
     leadsInRange: number;
     totalRevenue: number;
     totalClicks: number;
@@ -391,6 +392,25 @@ export function ExecutiveOverview({
           </div>
         </div>
 
+        {/* Denominator transparency — CR and EPC above are computed on valid
+            clicks only. Stating the exclusion explicitly keeps the one-off drop
+            in the historical denominator explainable instead of looking like
+            lost traffic. */}
+        {stats.suspiciousClicksExcluded > 0 && (
+          <p className="text-[11px] text-slate-400 -mt-4 mb-8">
+            <span className="font-semibold text-slate-500 tabular-nums">
+              {formatNumber(stats.totalClicks)} valid clicks
+            </span>
+            {' · '}
+            <span className="tabular-nums">
+              {formatNumber(stats.suspiciousClicksExcluded)} excluded
+            </span>
+            {' — clicks flagged by fraud controls, including duplicate activity, '}
+            {'or originating outside monetizable markets are excluded from '}
+            {'conversion rate and EPC.'}
+          </p>
+        )}
+
         {/* ── Market Share + Platform Pulse ────────────────────── */}
         <div className="grid lg:grid-cols-2 gap-6 mb-8">
           {/* Market Share */}
@@ -639,6 +659,6 @@ function getWebVitalsDetail(webVitalsHealth: ExecutiveOverviewProps['webVitalsHe
 function getRevenueDetail(stats: ExecutiveOverviewProps['stats'], status: SystemStatus): string {
   if (status === 'never-run') return 'No revenue data';
   if (stats.totalRevenue > 0) return formatCurrency(stats.totalRevenue);
-  if (stats.totalClicks > 0) return `${formatNumber(stats.totalClicks)} clicks, no revenue`;
+  if (stats.totalClicks > 0) return `${formatNumber(stats.totalClicks)} valid clicks, no revenue`;
   return 'No revenue';
 }
