@@ -59,16 +59,32 @@ export function EvidenceCarousel({
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
+  const [failedSrcs, setFailedSrcs] = useState<string[]>([]);
   const hasTrackedView = useRef(false);
   const carouselRef = useRef<HTMLDivElement>(null);
+
+  /*
+   * Drop slides whose asset fails to load. The captions and methodology note
+   * assert these screenshots come from our own testing — rendering that claim
+   * next to a broken image would be worse than rendering nothing, so a
+   * carousel with no surviving slide removes itself entirely.
+   *
+   * The build-time guard (scripts/check-evidence-images.mjs) is the primary
+   * defence; this only covers assets that vanish after the build.
+   */
+  const markFailed = useCallback((src: string) => {
+    setFailedSrcs((prev) => (prev.includes(src) ? prev : [...prev, src]));
+  }, []);
+
+  const validSlides = (slides ?? []).filter((s) => !failedSrcs.includes(s.src));
 
   /* Sync index */
   const onSelect = useCallback(() => {
     if (!emblaApi) return;
     const idx = emblaApi.selectedScrollSnap();
     setSelectedIndex(idx);
-    trackEvent('screenshot_next', { slide: idx, caption: slides[idx]?.caption ?? '' });
-  }, [emblaApi, slides]);
+    trackEvent('screenshot_next', { slide: idx, caption: validSlides[idx]?.caption ?? '' });
+  }, [emblaApi, validSlides]);
 
   useEffect(() => {
     if (!emblaApi) return;
@@ -78,6 +94,11 @@ export function EvidenceCarousel({
     };
   }, [emblaApi, onSelect]);
 
+  /* Re-measure after a slide drops out, otherwise embla keeps stale snaps */
+  useEffect(() => {
+    emblaApi?.reInit();
+  }, [emblaApi, validSlides.length]);
+
   /* Intersection Observer for view tracking */
   useEffect(() => {
     if (!carouselRef.current || hasTrackedView.current) return;
@@ -85,22 +106,23 @@ export function EvidenceCarousel({
       ([entry]) => {
         if (entry.isIntersecting && !hasTrackedView.current) {
           hasTrackedView.current = true;
-          trackEvent('screenshot_view', { totalSlides: slides.length });
+          trackEvent('screenshot_view', { totalSlides: validSlides.length });
         }
       },
       { threshold: 0.5 },
     );
     obs.observe(carouselRef.current);
     return () => obs.disconnect();
-  }, [slides.length]);
+  }, [validSlides.length]);
 
   /* Keyboard nav for lightbox */
   useEffect(() => {
-    if (!lightboxOpen) return;
+    if (!lightboxOpen || validSlides.length === 0) return;
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setLightboxOpen(false);
-      if (e.key === 'ArrowRight') setLightboxIndex((p) => (p + 1) % slides.length);
-      if (e.key === 'ArrowLeft') setLightboxIndex((p) => (p - 1 + slides.length) % slides.length);
+      if (e.key === 'ArrowRight') setLightboxIndex((p) => (p + 1) % validSlides.length);
+      if (e.key === 'ArrowLeft')
+        setLightboxIndex((p) => (p - 1 + validSlides.length) % validSlides.length);
     };
     document.addEventListener('keydown', handler);
     document.body.style.overflow = 'hidden';
@@ -108,15 +130,19 @@ export function EvidenceCarousel({
       document.removeEventListener('keydown', handler);
       document.body.style.overflow = '';
     };
-  }, [lightboxOpen, slides.length]);
+  }, [lightboxOpen, validSlides.length]);
 
   const openLightbox = (idx: number) => {
     setLightboxIndex(idx);
     setLightboxOpen(true);
-    trackEvent('screenshot_zoom', { slide: idx, caption: slides[idx]?.caption ?? '' });
+    trackEvent('screenshot_zoom', { slide: idx, caption: validSlides[idx]?.caption ?? '' });
   };
 
-  if (!slides || slides.length === 0) return null;
+  if (validSlides.length === 0) return null;
+
+  /* Slides can drop out while an index is held — keep both in range */
+  const activeIndex = Math.min(selectedIndex, validSlides.length - 1);
+  const activeLightboxIndex = Math.min(lightboxIndex, validSlides.length - 1);
 
   return (
     <>
@@ -171,7 +197,7 @@ export function EvidenceCarousel({
                     fontVariantNumeric: 'tabular-nums',
                   }}
                 >
-                  {slides.length}
+                  {validSlides.length}
                 </div>
                 <div
                   className="whitespace-nowrap text-center"
@@ -226,7 +252,7 @@ export function EvidenceCarousel({
         <div className="relative mt-4">
           <div className="overflow-hidden rounded-xl" ref={emblaRef}>
             <div className="flex">
-              {slides.map((slide, idx) => (
+              {validSlides.map((slide, idx) => (
                 <div
                   key={idx}
                   className="flex-[0_0_100%] min-w-0 relative"
@@ -244,6 +270,7 @@ export function EvidenceCarousel({
                         fill
                         className="object-contain"
                         sizes="(max-width: 768px) 100vw, 800px"
+                        onError={() => markFailed(slide.src)}
                       />
                       {/* Zoom overlay on hover */}
                       <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
@@ -277,7 +304,7 @@ export function EvidenceCarousel({
           </div>
 
           {/* Arrows */}
-          {slides.length > 1 && (
+          {validSlides.length > 1 && (
             <>
               <button
                 type="button"
@@ -300,19 +327,19 @@ export function EvidenceCarousel({
         </div>
 
         {/* Dots */}
-        {slides.length > 1 && (
+        {validSlides.length > 1 && (
           <div className="flex justify-center gap-2 mt-4">
-            {slides.map((_, idx) => (
+            {validSlides.map((_, idx) => (
               <button
                 key={idx}
                 type="button"
                 onClick={() => emblaApi?.scrollTo(idx)}
                 className={`w-2.5 h-2.5 rounded-full transition-all ${
-                  idx === selectedIndex ? 'w-6' : ''
+                  idx === activeIndex ? 'w-6' : ''
                 }`}
                 style={{
                   background:
-                    idx === selectedIndex ? 'var(--sfp-navy)' : '#D1D5DB',
+                    idx === activeIndex ? 'var(--sfp-navy)' : '#D1D5DB',
                 }}
                 aria-label={`Go to screenshot ${idx + 1}`}
               />
@@ -358,13 +385,13 @@ export function EvidenceCarousel({
           </button>
 
           {/* Navigation */}
-          {slides.length > 1 && (
+          {validSlides.length > 1 && (
             <>
               <button
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
-                  setLightboxIndex((p) => (p - 1 + slides.length) % slides.length);
+                  setLightboxIndex((p) => (p - 1 + validSlides.length) % validSlides.length);
                 }}
                 className="absolute left-4 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors z-10"
                 aria-label="Previous"
@@ -375,7 +402,7 @@ export function EvidenceCarousel({
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
-                  setLightboxIndex((p) => (p + 1) % slides.length);
+                  setLightboxIndex((p) => (p + 1) % validSlides.length);
                 }}
                 className="absolute right-4 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors z-10"
                 aria-label="Next"
@@ -391,21 +418,22 @@ export function EvidenceCarousel({
             onClick={(e) => e.stopPropagation()}
           >
             <Image
-              src={slides[lightboxIndex].src}
-              alt={slides[lightboxIndex].alt}
+              src={validSlides[activeLightboxIndex].src}
+              alt={validSlides[activeLightboxIndex].alt}
               fill
               className="object-contain"
               sizes="90vw"
               quality={95}
               priority
+              onError={() => markFailed(validSlides[activeLightboxIndex].src)}
             />
           </div>
 
           {/* Caption overlay */}
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-center z-10">
-            <p className="text-white text-sm font-semibold">{slides[lightboxIndex].caption}</p>
+            <p className="text-white text-sm font-semibold">{validSlides[activeLightboxIndex].caption}</p>
             <p className="text-white/60 text-xs mt-1">
-              {slides[lightboxIndex].testedOn} · {lightboxIndex + 1} / {slides.length}
+              {validSlides[activeLightboxIndex].testedOn} · {activeLightboxIndex + 1} / {validSlides.length}
             </p>
           </div>
         </div>
