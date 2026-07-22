@@ -6,8 +6,37 @@ on:
       - main
 
 jobs:
+  # ── Gate: production must not deploy over undetected migration drift ──
+  # Runs before the deploy job (deploy `needs` it). A missing Supabase
+  # credential OR a genuinely new drift fails this job and blocks the deploy;
+  # the 6 baselined known-drifts are tolerated. This is trusted code (push to
+  # main), so the credential exposure is safe here — unlike pull_request.
+  migration-drift-gate:
+    name: Migration drift gate (blocks deploy on new drift / missing creds)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout trusted main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: false
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      # No `npm ci` — the checker is zero-dependency (Node built-ins + fetch).
+      - name: Check migration drift against live schema (--strict)
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: npm run check:migrations -- --strict
+
   deploy:
     name: Build on GitHub → Deploy to Cloudways VPS
+    needs: migration-drift-gate
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
