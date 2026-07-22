@@ -272,11 +272,21 @@ export async function GET(
     // Capped at 1 hour with an explicit reason and expiry; longer or permanent
     // blocks are reserved for repeatedly confirmed abuse and manual dashboard
     // blocks. Nothing in the automated path may exceed this ceiling.
-    void blockIp(ip, 'rate_limit_exceeded', {
-      durationMs: 60 * 60 * 1000,
-      path: request.url,
-      ua: ua ?? undefined,
-    });
+    //
+    // EXCEPT the literal 'unknown' (missing x-forwarded-for): the limiter is
+    // in-memory and keyed by that string, so every request lacking a forwarded
+    // IP — behind a misconfigured proxy, a health checker, unrelated traffic —
+    // shares one bucket and can trip it together. Persisting a block on
+    // 'unknown' would then 403 every future request in that shape, for real
+    // visitors, for up to an hour. The request in front of us still gets
+    // rate-limited below; only the persistent write is skipped.
+    if (ip !== 'unknown') {
+      void blockIp(ip, 'rate_limit_exceeded', {
+        durationMs: 60 * 60 * 1000,
+        path: request.url,
+        ua: ua ?? undefined,
+      });
+    }
     return new NextResponse('Too many requests', { status: 429 });
   }
 

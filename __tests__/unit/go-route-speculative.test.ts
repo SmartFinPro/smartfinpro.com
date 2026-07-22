@@ -156,3 +156,39 @@ describe('GET /go/[slug] — a speculative request is not a click', () => {
     expect(trackClick).not.toHaveBeenCalled();
   });
 });
+
+describe('GET /go/[slug] — the rate-limit block never persists "unknown"', () => {
+  // No `x-forwarded-for` (e.g. behind a misconfigured proxy, or a health
+  // checker) resolves `ip` to the literal string 'unknown'. The rate limiter
+  // is in-memory and keyed by that string, so EVERY such request shares one
+  // bucket — a burst from unrelated sources can trip it. If the block that
+  // follows ever persisted 'unknown' to Supabase, `isIpBlocked('unknown')`
+  // would then 403 every future request lacking a forwarded IP, for real
+  // visitors, for up to an hour. The current request must still be rate
+  // limited (429) — only the persistent block on the literal 'unknown' is
+  // the hazard.
+  const NO_XFF_HEADERS = { ...CLICK_HEADERS };
+  delete (NO_XFF_HEADERS as Record<string, string>)['x-forwarded-for'];
+
+  beforeEach(() => {
+    rateLimitCheck.mockReturnValue(false);
+  });
+
+  it('still rate-limits the current request with 429', async () => {
+    const res = await call(NO_XFF_HEADERS);
+
+    expect(res.status).toBe(429);
+  });
+
+  it('never persists a block for the literal ip "unknown"', async () => {
+    await call(NO_XFF_HEADERS);
+
+    expect(blockIp).not.toHaveBeenCalled();
+  });
+
+  it('still persists a block when a real IP trips the rate limit (control — the fix must not disable blocking generally)', async () => {
+    await call(CLICK_HEADERS);
+
+    expect(blockIp).toHaveBeenCalledWith('203.0.113.7', 'rate_limit_exceeded', expect.any(Object));
+  });
+});
