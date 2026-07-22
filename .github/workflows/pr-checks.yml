@@ -48,15 +48,18 @@ jobs:
       - name: Unit tests
         run: npm run test
 
-      - name: Check migration drift (local migrations vs. live schema)
-        # --strict: if the repo secrets are missing the step FAILS loudly instead
-        # of passing as a silent skip, so drift verification can never quietly
-        # turn into a green no-op. The secret VALUES are only ever read into the
-        # env below and used as request headers — they are never printed.
-        env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-        run: npm run check:migrations -- --strict
+      - name: Migration drift — parser/CLI smoke only (NO DB, NO secrets)
+        # SECURITY BOUNDARY — do NOT add secrets to this job.
+        # `pull_request` checks out and runs untrusted PR code. Any production
+        # secret exposed here could be exfiltrated by a malicious PR (e.g. POSTed
+        # to an attacker host) regardless of whether the value is ever printed —
+        # not logging it is not a defence. So this step runs the checker WITHOUT
+        # credentials: it prints a visible "NOTHING WAS VERIFIED" banner and
+        # exits 0. The parser/baseline logic is exercised by the unit tests above
+        # (npm run test → __tests__/unit/migration-drift.test.ts). The real
+        # live-schema verification runs only on trusted main, in the separate
+        # migration-drift.yml workflow and as a gate in deploy.yml.
+        run: npm run check:migrations
 
       - name: Check expert images
         run: npm run check:experts
