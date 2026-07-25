@@ -18,6 +18,15 @@
 // `deep_dive`. `position` (score/rank) is the T0b-audited cockpit row —
 // never frontmatter `rating`.
 //
+// `verdict.topStrengths` is deliberately NOT rendered (operator, 2026-07-21:
+// "too much information here"). Two of its three items restate `bestFor`
+// exactly — "No broker-imposed per-contract fee on US options" against "US
+// options traders avoiding broker contract fees", and the $100,000 practice
+// account against two separate bestFor lines — and both facts appear a THIRD
+// time in the Essential Facts rail. The one item that was unique
+// (TradingView charting) is carried by the body. The field stays in the
+// frontmatter and its schema; only this rendering drops.
+//
 // Above-the-fold word budget (Konzept §7.4, 300-380 words total) is
 // enforced upstream by the verdict-frontmatter Zod schema's per-field word
 // counts, not by truncating here.
@@ -31,7 +40,7 @@ import { ScoreBreakdown } from './score-breakdown';
 import { EssentialFactsGrid } from './essential-facts-grid';
 import { CALLOUT_ARTICLE } from '@/lib/reviews/callout-style';
 import { BestForNotFor } from './best-for-not-for';
-import { CheckCircleIcon, MinusCircleIcon } from '@/components/marketing/check-icon';
+import { MinusCircleIcon } from '@/components/marketing/check-icon';
 import type { EssentialFact } from '@/lib/reviews/verdict-frontmatter';
 
 /** The audited cockpit position for the reviewed product — same shape as
@@ -58,7 +67,6 @@ export function VerdictCard({
   essentialFacts,
   scoreHref = '/methodology',
 }: VerdictCardProps) {
-  const topStrengths = verdict.topStrengths.slice(0, 3);
 
   return (
     <div
@@ -95,36 +103,6 @@ export function VerdictCard({
         <p style={{ ...CALLOUT_ARTICLE, margin: '0 0 18px' }}>
           {verdict.summary}
         </p>
-
-        {topStrengths.length > 0 && (
-          <ul
-            style={{
-              listStyle: 'none',
-              margin: '0 0 16px',
-              padding: 0,
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '6px',
-            }}
-          >
-            {topStrengths.map((strength, i) => (
-              <li
-                key={`${i}-${strength}`}
-                style={{
-                  display: 'flex',
-                  gap: '8px',
-                  fontFamily: 'var(--font-secondary)',
-                  fontSize: '18px',
-                  lineHeight: 1.5,
-                  color: 'var(--sfp-ink)',
-                }}
-              >
-                <CheckCircleIcon size={17} color="var(--sfp-navy)" style={{ flexShrink: 0, marginTop: '4px' }} />
-                {strength}
-              </li>
-            ))}
-          </ul>
-        )}
 
         <div
           style={{
