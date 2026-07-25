@@ -288,13 +288,23 @@ export function ReviewLayoutV2({
               leading instead of 16px at the browser's default, which takes a
               line from ~95 characters to ~82 and materially opens the line
               spacing. No max-width, deliberately.
-              Written as a scoped <style> rather than utility classes on
-              purpose: the paragraphs are produced by StyledP inside MDX, whose
-              `leading-[1.7] mb-5` demonstrably do not reach the rendered
-              element (computed line-height is `normal`, margin is the browser's
-              own 1em). An explicit rule here is not subject to that, and it
-              cannot be purged. Scoped to .review-v2-prose so V1 pages, which
-              share StyledP, are untouched. */}
+              A scoped rule rather than utility classes because the paragraphs
+              are created by StyledP deep inside MDX: nothing here can reach
+              them without stacking `[&_p]:` variants, and this file cannot edit
+              StyledP without changing all 216 V1 pages too. The rule wins on
+              specificity (0,1,1 against a utility's 0,1,0), which is how it
+              overrides StyledP's own 16px/1.7.
+              Correcting an earlier claim in this comment: StyledP's utilities
+              are NOT broken. Measuring them against a page whose Suspense
+              boundary had not resolved reports `line-height: normal` and the
+              browser's default margin, because the MDX body is still parked in
+              a hidden container outside this element — the known trap recorded
+              in memory as qa-hidden-tab-suspense-gotchas. With the boundary
+              resolved, text-base / leading-[1.7] / mb-5 all arrive.
+              Note the two `prose` classes below are inert: @tailwindcss/
+              typography is not registered in tailwind.config.ts, so only the
+              handful of hand-written `.prose …` rules in app/globals.css apply.
+              Scoped to .review-v2-prose, so V1 pages are untouched. */}
           <style
             dangerouslySetInnerHTML={{
               __html: `
