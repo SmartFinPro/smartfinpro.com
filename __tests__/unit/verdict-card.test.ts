@@ -112,7 +112,11 @@ describe('VerdictCard', () => {
     expect(html).not.toContain('How we score');
     expect(html).not.toContain('Calculated from verified data points');
     expect(html).not.toContain('href="/methodology"');
-    // Two-column grid class is not applied when there is no right panel.
-    expect(html).not.toContain('grid-cols');
+    // The CARD's own two-column grid is not applied when there is no right
+    // panel. Asserted on the card's specific class rather than the substring
+    // "grid-cols": Best for / Not for now renders inside the card and brings
+    // its own `sm:grid-cols-2`, which is a different grid and legitimately
+    // present here.
+    expect(html).not.toContain('md:grid-cols-[minmax(0,1fr)_260px]');
   });
 });

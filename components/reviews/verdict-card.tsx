@@ -30,6 +30,8 @@ import { scoreLabel, rankPhrase } from '@/lib/reviews/score-label';
 import { ScoreBreakdown } from './score-breakdown';
 import { EssentialFactsGrid } from './essential-facts-grid';
 import { CALLOUT_ARTICLE } from '@/lib/reviews/callout-style';
+import { BestForNotFor } from './best-for-not-for';
+import { CheckCircleIcon, MinusCircleIcon } from '@/components/marketing/check-icon';
 import type { EssentialFact } from '@/lib/reviews/verdict-frontmatter';
 
 /** The audited cockpit position for the reviewed product — same shape as
@@ -125,9 +127,7 @@ export function VerdictCard({
                   color: 'var(--sfp-ink)',
                 }}
               >
-                <span aria-hidden="true" style={{ color: 'var(--sfp-green)', fontWeight: 700 }}>
-                  ✓
-                </span>
+                <CheckCircleIcon size={17} color="var(--sfp-navy)" style={{ flexShrink: 0, marginTop: '4px' }} />
                 {strength}
               </li>
             ))}
@@ -145,9 +145,7 @@ export function VerdictCard({
             marginBottom: '14px',
           }}
         >
-          <span aria-hidden="true" style={{ color: 'var(--sfp-red)', fontWeight: 700 }}>
-            −
-          </span>
+          <MinusCircleIcon size={17} color="var(--sfp-navy)" style={{ flexShrink: 0, marginTop: '4px' }} />
           <span>
             <strong style={{ fontWeight: 600 }}>Main limitation:</strong> {verdict.mainLimitation}
           </span>
@@ -178,6 +176,18 @@ export function VerdictCard({
             {verdict.bestAlternative.reason}
           </p>
         )}
+
+        {/* Best for / Not for, inside the card rather than as its own band
+            below it (operator, 2026-07-21). The left column ran out of content
+            well before the score rail beside it ran out of height, so the card
+            ended on a large empty rectangle while a closely related pair of
+            lists sat in a separate block underneath. Same four lists, one
+            container, and every mark in this card is now the same icon in the
+            same navy — the strengths, the limitation and both of these — so it
+            reads as one argument instead of four widgets. */}
+        <div style={{ marginTop: '22px', paddingTop: '20px', borderTop: '1px solid var(--sfp-hairline-row)' }}>
+          <BestForNotFor bestFor={verdict.bestFor} notFor={verdict.notFor} />
+        </div>
       </div>
 
       {/* Essential Facts, in the score rail rather than as a separate band of
