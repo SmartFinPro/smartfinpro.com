@@ -276,7 +276,16 @@ export function ReviewLayoutV2({
               measure rendered: running text keeps the FULL column width, so it
               aligns with the verdict box and the section-verdict callouts
               directly above it — a narrower text column underneath a
-              full-width box read as a misalignment. The readability gain
+              full-width box read as a misalignment.
+              One face and one size for the whole article (2026-07-21, second
+              pass): paragraphs, list items and table cells were 18/13.5/14/12px
+              in the sans while the callouts were 18px serif. The article now
+              sets entirely in the serif at 18px, matching the callouts, so the
+              page reads as one document rather than as a text with widgets in
+              it. Table headers keep only their weight to stay scannable.
+              The paragraph selector is `p`, not `> * > p`: the callouts wrap
+              their text in an MDX paragraph one level deeper, which carried its
+              own 16px and left five boxes a size below everything around them. The readability gain
               therefore comes from type rather than from measure. Calibrated
               against a reference the operator named as easy to read
               (dollarscout.net), measured in the browser rather than guessed:
@@ -306,8 +315,18 @@ export function ReviewLayoutV2({
           <style
             dangerouslySetInnerHTML={{
               __html: `
-.review-v2-prose > * > p { font-size: 18px; line-height: 1.65; margin: 0 0 1.15em; }
-@media (max-width: 640px) { .review-v2-prose > * > p { font-size: 17px; line-height: 1.65; } }
+.review-v2-prose p,
+.review-v2-prose li,
+.review-v2-prose table td,
+.review-v2-prose table th { font-family: var(--font-secondary); font-size: 18px; line-height: 1.65; }
+.review-v2-prose > * > p { margin: 0 0 1.15em; }
+.review-v2-prose table th { font-weight: 600; }
+@media (max-width: 640px) {
+  .review-v2-prose p,
+  .review-v2-prose li,
+  .review-v2-prose table td,
+  .review-v2-prose table th { font-size: 17px; }
+}
 `,
             }}
           />
