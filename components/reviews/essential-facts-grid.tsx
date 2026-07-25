@@ -10,8 +10,9 @@
 // language).
 //
 // 4-6 facts (lib/reviews/verdict-frontmatter.ts EssentialFactsSchema),
-// desktop 3 columns (up to 2 rows), mobile 2 columns (up to 3 rows) — never
-// a horizontally-scrolling table, both explicitly ruled out by the plan.
+// desktop 3-up rows, mobile 2-up rows — never a horizontally-scrolling
+// table, both explicitly ruled out by the plan. A partial last row fills
+// the remaining width (flex grow) instead of leaving an empty cell.
 //
 // Each fact requires `sourceHref` + `asOf` at the Zod schema layer (Konzept
 // §9.3/§29.2: `asOf` alone is not enough without a citable source). This
@@ -68,9 +69,18 @@ export function EssentialFactsGrid({ facts }: EssentialFactsGridProps) {
           — the same card family as VerdictCard / the sidebar cards, so the
           block reads as a deliberate premium module. `items-stretch` +
           marginTop:auto on the source line keeps every card's source row
-          bottom-aligned across a row. Empty trailing grid cells simply don't
-          render (gap only sits between real items → no stray hairlines). */}
-      <div className="grid grid-cols-2 items-stretch gap-3 md:grid-cols-3">
+          bottom-aligned across a row.
+
+          Flex-wrap instead of fixed grid columns: the fact count varies per
+          review (schema allows 4-6, some reviews carry 5), and a fixed
+          3-column grid leaves a visible hole whenever count % 3 !== 0
+          (5 facts → 3+2 with an empty cell). With wrap + grow the cards in
+          the last row share the leftover width, so ANY count lands balanced
+          — no per-count special-casing. The basis values subtract each
+          card's share of the gap (gap-3 = 12px → 6px at 2-up, 8px at 3-up)
+          so full rows still resolve to exactly 2 (mobile) / 3 (md) columns
+          — same rhythm as the old grid. */}
+      <div className="flex flex-wrap items-stretch gap-3">
         {facts.map((fact, i) => {
           const asOfLabel = formatIsoDate(fact.asOf);
           return (
@@ -81,7 +91,7 @@ export function EssentialFactsGrid({ facts }: EssentialFactsGridProps) {
               // Tailwind hover utilities (0,2,0) and silently kill the hover —
               // same trap as the sidebar Visit button. Base white/hairline →
               // hover light-blue fill + navy border.
-              className="flex flex-col rounded-[14px] border border-[var(--sfp-hairline-strong)] bg-white transition-colors duration-200 hover:border-[var(--sfp-navy)] hover:bg-[var(--sfp-sky)]"
+              className="flex min-w-0 grow basis-[calc(50%-6px)] flex-col rounded-[14px] border border-[var(--sfp-hairline-strong)] bg-white transition-colors duration-200 hover:border-[var(--sfp-navy)] hover:bg-[var(--sfp-sky)] md:basis-[calc(33.333%-8px)]"
               style={{ padding: '18px 20px' }}
             >
               <div

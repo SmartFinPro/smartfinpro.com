@@ -69,7 +69,19 @@ export function VerdictCard({
         background: '#fff',
       }}
     >
-      <div>
+      {/* Score panel FIRST in the DOM, positioned into the right rail on
+          desktop (md:col-start-2 md:row-start-1) — see BestXScore's own note.
+          Measured before this change: on a 390px viewport the score sat
+          2,509px down the page, roughly three screens below the fold, because
+          it stacked after the full verdict prose. The single number the whole
+          page is about was effectively invisible on mobile.
+          Reordering in the DOM rather than with CSS `order` on purpose: the
+          panel contains a "How we score" link, so a visual-only reorder would
+          leave screen-reader and keyboard order contradicting what is on
+          screen (WCAG 1.3.2 / 2.4.3). Desktop layout is unchanged. */}
+      {position && <BestXScore position={position} fieldCount={fieldCount} scoreHref={scoreHref} />}
+
+      <div className={position ? 'md:col-start-1 md:row-start-1' : ''}>
         {/* Betreiber-Wunsch 2026-07-19: back to a small label — no navy
             left border, no H2-scale type. --sfp-gray background still
             unifies label + paragraph into one box (no borderLeft accent). */}
@@ -178,8 +190,6 @@ export function VerdictCard({
           </p>
         )}
       </div>
-
-      {position && <BestXScore position={position} fieldCount={fieldCount} scoreHref={scoreHref} />}
     </div>
   );
 }
@@ -200,7 +210,11 @@ function BestXScore({
 }) {
   return (
     <div
-      className="mt-6 border-t pt-6 md:mt-0 md:border-t-0 md:border-l md:pl-8 md:pt-0"
+      // Mobile: the panel now sits ABOVE the verdict prose, so its separator
+      // is a bottom rule, not a top one. Desktop: unchanged — second column,
+      // left rule, no horizontal rule. col/row-start pin it to the right rail
+      // even though it comes first in the DOM.
+      className="mb-6 border-b pb-6 md:col-start-2 md:row-start-1 md:mb-0 md:border-b-0 md:border-l md:pb-0 md:pl-8"
       style={{ borderColor: 'var(--sfp-hairline)', fontFamily: 'var(--font-primary)' }}
     >
       <div

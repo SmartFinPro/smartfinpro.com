@@ -91,7 +91,23 @@ export function ReviewHeader({
 
   return (
     <header style={{ fontFamily: 'var(--font-primary)' }}>
-      <Breadcrumb items={breadcrumbs} />
+      {/* The leaf crumb is the full page title — at 390px it wrapped to
+          multiple lines and pushed the H1 far below the fold. The shared
+          Breadcrumb also serves V1 pages, so the one-line constraint is
+          scoped HERE via descendant selectors instead of editing the shared
+          component. The full label stays in the DOM and in the
+          BreadcrumbList JSON-LD (SEO/schema intact) — it is only visually
+          ellipsized. min-w-0 down the flex chain is load-bearing: flex items
+          default to min-width:auto and refuse to shrink below their
+          intrinsic text width, so truncate alone would never engage.
+          shrink-0 on the NON-leaf crumbs is equally load-bearing: without
+          it, flex distributes the shrink across all items and the ancestor
+          links collapse to their min-content width — "United States" wraps
+          to two lines while the leaf truncates. Only the leaf may give way.
+          shrink-0 on the chevron keeps the separator from being crushed. */}
+      <div className="[&_nav]:min-w-0 [&_nav>span:not(:last-child)]:shrink-0 [&_nav>span:last-child]:min-w-0 [&_nav>span:last-child>svg]:shrink-0 [&_nav>span:last-child>span:last-child]:truncate">
+        <Breadcrumb items={breadcrumbs} />
+      </div>
 
       <h1
         style={{
@@ -134,18 +150,39 @@ export function ReviewHeader({
         {metaSegments.join(' · ')}
       </div>
 
+      {/* DisclosureLine — compliance-mandatory, so it stays at full reading
+          size and contrast. The hairline + own padding give it a deliberate,
+          calm stand of its own instead of crowding between MetaLine and the
+          VerdictCard. "BEST-X Score." is wrapped nowrap because the compound
+          term otherwise breaks mid-name ("BEST-X / Score.") at common
+          desktop widths. The inline textDecoration on the link is
+          load-bearing: globals.css strips underlines from internal links
+          inside article/.prose (hover-only restore), and navy against the
+          surrounding slate text is only ~1.09:1 — without a permanent
+          underline the link is not identifiable as one (WCAG 1.4.1). The
+          inline style out-specifies that stylesheet rule. */}
       <p
-        className="text-xs"
         style={{
           fontFamily: 'var(--font-primary)',
+          fontSize: '12.5px',
           color: 'var(--sfp-slate)',
-          lineHeight: 1.5,
+          lineHeight: 1.6,
           margin: 0,
           maxWidth: '66ch',
+          borderTop: '1px solid var(--sfp-hairline)',
+          paddingTop: '12px',
         }}
       >
-        SmartFinPro may earn a commission from partner links. This never affects our BEST-X Score.{' '}
-        <Link href="/affiliate-disclosure" style={{ color: 'var(--sfp-navy)' }}>
+        SmartFinPro may earn a commission from partner links. This never affects our{' '}
+        <span style={{ whiteSpace: 'nowrap' }}>BEST-X Score.</span>{' '}
+        <Link
+          href="/affiliate-disclosure"
+          style={{
+            color: 'var(--sfp-navy)',
+            textDecoration: 'underline',
+            textUnderlineOffset: '2px',
+          }}
+        >
           How we make money
         </Link>
         {showRiskAddendum
