@@ -95,13 +95,6 @@ export interface ReviewLayoutV2Props {
   /** Same category, quality-sorted sibling list the V1 branch computes — rendered here without star ratings or reviewCount. */
   siblingReviews?: ContentItem[];
   crossCategoryContent?: ContentItem[];
-  /**
-   * Resolved internal review link for verdict.bestAlternative, existence-
-   * checked by the caller (page.tsx) against the loaded content list — null
-   * when that competitor has no review yet (T0d: never a dead link, same
-   * convention as DecisionBridgeFieldRow.reviewHref).
-   */
-  bestAlternativeHref?: string | null;
 }
 
 export function ReviewLayoutV2({
@@ -113,7 +106,6 @@ export function ReviewLayoutV2({
   decisionBridge,
   siblingReviews,
   crossCategoryContent,
-  bestAlternativeHref,
 }: ReviewLayoutV2Props) {
   const title = meta.seoTitle || meta.title;
   const productName = meta.title.split(' ')[0];
@@ -212,7 +204,6 @@ export function ReviewLayoutV2({
             <div id="verdict" style={{ marginBottom: '40px' }}>
               <VerdictCard
                 verdict={verdict}
-                bestAlternativeHref={bestAlternativeHref}
                 position={position}
                 fieldCount={fieldCount}
                 essentialFacts={essentialFacts}

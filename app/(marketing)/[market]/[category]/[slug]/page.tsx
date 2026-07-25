@@ -192,10 +192,6 @@ export default async function ContentPage({ params }: ContentPageProps) {
 
     // Best-alternative link (T0d: never a dead link) — existence-checked
     // against the already-loaded category content list.
-    const bestAlternativeSlug = content.meta.verdict?.bestAlternative?.slug;
-    const bestAlternativeHref = bestAlternativeSlug && allCategoryContent.some(item => item.slug === bestAlternativeSlug)
-      ? `/${market}/${category}/${bestAlternativeSlug}`
-      : null;
 
     return (
       <main id="main-content">
@@ -208,7 +204,6 @@ export default async function ContentPage({ params }: ContentPageProps) {
           decisionBridge={decisionBridge}
           siblingReviews={siblingReviews}
           crossCategoryContent={crossCategoryContent}
-          bestAlternativeHref={bestAlternativeHref}
         />
       </main>
     );

@@ -153,7 +153,6 @@ describe('ReviewLayoutV2', () => {
         decisionBridge: DECISION_BRIDGE,
         siblingReviews: [SIBLING],
         crossCategoryContent: [CROSS_CATEGORY],
-        bestAlternativeHref: '/us/trading/fidelity-review',
       }),
     );
 

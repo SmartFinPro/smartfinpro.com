@@ -4,7 +4,7 @@
 // components/reviews/verdict-card.tsx (T8, review-redesign V2).
 //
 // Covers the plan's explicit T8 contract: verdict prose + top-3-strengths
-// cap + single mainLimitation + optional bestAlternative link/plain-text
+// cap + single mainLimitation
 // fallback, and — the Pflicht requirement — Null-Degradation: `position ===
 // null` omits the BestXScore panel entirely (never falls back to a
 // frontmatter rating) while the verdict prose still renders single-column.
@@ -60,30 +60,18 @@ describe('VerdictCard', () => {
     expect(html).toContain('Support response times trail the field leaders.');
   });
 
-  it('links the best alternative when a resolved href is provided', () => {
-    const html = renderToStaticMarkup(
-      h(VerdictCard, { verdict: VERDICT, position: POSITION, fieldCount: 9, bestAlternativeHref: '/trading/fidelity-review' }),
-    );
-    expect(html).toContain('href="/trading/fidelity-review"');
-    expect(html).toContain('Fidelity');
-    expect(html).toContain('higher overall score and faster support');
-  });
-
-  it('renders the best alternative as plain text (never a dead link) when no href is resolved', () => {
+  it('never renders a best-alternative line, even when the frontmatter carries one', () => {
+    // Removed from the card (operator, 2026-07-21). The fixture still has
+    // `bestAlternative` — the frontmatter field and its Zod schema are
+    // untouched — so this asserts the RENDER drops it rather than the data
+    // being absent, which is what would silently regress if someone re-added
+    // the block.
     const html = renderToStaticMarkup(
       h(VerdictCard, { verdict: VERDICT, position: POSITION, fieldCount: 9 }),
     );
-    expect(html).not.toContain('<a href=""');
-    expect(html).toContain('Fidelity');
-  });
-
-  it('omits the best-alternative line entirely when verdict.bestAlternative is absent', () => {
-    const { bestAlternative, ...withoutAlt } = VERDICT;
-    void bestAlternative;
-    const html = renderToStaticMarkup(
-      h(VerdictCard, { verdict: withoutAlt as VerdictBlock, position: POSITION, fieldCount: 9 }),
-    );
+    expect(VERDICT.bestAlternative).toBeTruthy();
     expect(html).not.toContain('Best alternative');
+    expect(html).not.toContain('higher overall score and faster support');
   });
 
   it('BestXScore renders score, band label, rank phrase, and the mandatory methodology sentence + link', () => {
