@@ -4,7 +4,7 @@
 // components/reviews/verdict-card.tsx (T8, review-redesign V2).
 //
 // Covers the plan's explicit T8 contract: verdict prose + top-3-strengths
-// cap + single mainLimitation
+// single mainLimitation
 // fallback, and — the Pflicht requirement — Null-Degradation: `position ===
 // null` omits the BestXScore panel entirely (never falls back to a
 // frontmatter rating) while the verdict prose still renders single-column.
@@ -43,7 +43,7 @@ const POSITION: ReviewPosition = {
 };
 
 describe('VerdictCard', () => {
-  it('renders the verdict summary, caps topStrengths at 3, and renders exactly one mainLimitation', () => {
+  it('renders the summary and exactly one mainLimitation, and no longer renders topStrengths', () => {
     const html = renderToStaticMarkup(
       h(VerdictCard, { verdict: VERDICT, position: POSITION, fieldCount: 9 }),
     );
@@ -51,13 +51,16 @@ describe('VerdictCard', () => {
     // above the opening paragraph of a review.
     expect(html).not.toContain('Our Verdict');
     expect(html).toContain('eToro is a strong pick for copy trading');
-    expect(html).toContain('No broker-imposed options contract fees');
-    expect(html).toContain('Copy trading at scale');
-    expect(html).toContain('Wide asset coverage');
-    // 4th topStrength must be dropped (schema caps at 3, component slices defensively)
-    expect(html).not.toContain('Simple mobile app');
     expect(html).toContain('Main limitation:');
     expect(html).toContain('Support response times trail the field leaders.');
+
+    // topStrengths is no longer rendered (operator: too much information in
+    // this block). Asserted against a fixture that still HAS the list, so
+    // re-adding the render fails here — a check on absent data would not.
+    expect(VERDICT.topStrengths.length).toBeGreaterThan(0);
+    for (const strength of VERDICT.topStrengths) {
+      expect(html).not.toContain(strength);
+    }
   });
 
   it('never renders a best-alternative line, even when the frontmatter carries one', () => {

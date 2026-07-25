@@ -18,13 +18,20 @@ export interface BestForNotForProps {
   notFor: VerdictBlock['notFor'];
 }
 
-const EYEBROW_STYLE = {
-  fontSize: '10.5px',
-  letterSpacing: '0.14em',
-  textTransform: 'uppercase' as const,
+/**
+ * Sentence case in the article's serif, not an uppercase letter-spaced
+ * eyebrow. Same reasoning as the table headers: capitals plus tracking read
+ * as a different typeface and as dashboard chrome, which is exactly the look
+ * this design has been moving away from. The label sits in the body's voice,
+ * one step down in size and in slate, so it separates the lists without
+ * announcing itself.
+ */
+const LABEL_STYLE = {
+  fontFamily: 'var(--font-secondary)',
+  fontSize: '15px',
   color: 'var(--sfp-slate)',
   fontWeight: 600,
-  marginBottom: '10px',
+  marginBottom: '8px',
 };
 
 const LIST_STYLE = {
@@ -77,7 +84,7 @@ export function BestForNotFor({ bestFor, notFor }: BestForNotForProps) {
     <div className="grid gap-y-5" style={{ fontFamily: 'var(--font-primary)' }}>
       {best.length > 0 && (
         <div>
-          <div style={EYEBROW_STYLE}>Best for</div>
+          <div style={LABEL_STYLE}>Best for</div>
           <ul style={LIST_STYLE}>
             {best.map((item, i) => (
               <li key={`${i}-${item}`} style={ITEM_STYLE}>
@@ -90,7 +97,7 @@ export function BestForNotFor({ bestFor, notFor }: BestForNotForProps) {
       )}
       {not.length > 0 && (
         <div>
-          <div style={EYEBROW_STYLE}>Not for</div>
+          <div style={LABEL_STYLE}>Not for</div>
           <ul style={LIST_STYLE}>
             {not.map((item, i) => (
               <li key={`${i}-${item}`} style={ITEM_STYLE}>
