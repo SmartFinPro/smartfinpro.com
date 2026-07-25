@@ -66,6 +66,7 @@ import { ReviewHeader } from './review-header';
 import { VerdictCard } from './verdict-card';
 import { BestForNotFor } from './best-for-not-for';
 import { EssentialFactsGrid } from './essential-facts-grid';
+import { ScoreInField } from './score-in-field';
 import { ReviewSectionNav } from './review-section-nav';
 import { ReviewSidebar } from './review-sidebar';
 import { SectionVerdictsProvider } from './section-blocks';
@@ -251,10 +252,56 @@ export function ReviewLayoutV2({
             </div>
           )}
 
+          {/* Where this product sits in the field — closes the opening block
+              (score → who it is for → hard facts → standing) before the nav
+              hands over to the deep dive. It plots the same audited
+              position/field numbers the sidebar lists as a table; the table
+              answers "who is above me", this answers "by how much", which is
+              the point the verdict prose makes in words ("1.6 points separate
+              first from last") and which no table can show.
+              Self-degrading: renders null without position/field, so a review
+              with no cockpit match simply has no such block. */}
+          {/* Gated on the same preconditions the component itself requires, so
+              a review without a cockpit match gets no empty 40px gap where the
+              block would have been (the wrapper's margin would survive a null
+              child). The component keeps its own, stricter validation. */}
+          {position && decisionBridge?.field && decisionBridge.field.length > 0 && (
+            <div style={{ marginBottom: '40px' }}>
+              <ScoreInField field={decisionBridge.field} position={position} fieldCount={fieldCount} />
+            </div>
+          )}
+
           <ReviewSectionNav />
 
-          {/* MDX body — the 5 mdx-owned H2 sections (Fees/Markets/Platform/Safety/Support) */}
-          <div className="prose prose-lg max-w-none" style={{ margin: '32px 0 40px' }}>
+          {/* MDX body — the 5 mdx-owned H2 sections (Fees/Markets/Platform/Safety/Support)
+              READING MEASURE. The body column is 760px wide and the MDX
+              paragraph component asks for 16px text, which puts a line at
+              roughly 95 characters — well past the 60–75 that typography
+              research treats as comfortable, and the main reason a 4,100-word
+              review reads as a wall. The rule below caps the MEASURE of running
+              text and gives it editorial leading, while tables, cards, callouts
+              and figures keep the full 760px they need.
+              The cap is in rem, not ch: `ch` is the width of the "0" glyph,
+              which in Inter is about 0.63em while running prose averages closer
+              to 0.48em — 68ch measured out at 729px, i.e. ~86 characters, still
+              far past the target. 37rem lands near 72.
+              Written as a scoped <style> rather than utility classes on
+              purpose: the paragraphs are produced by StyledP inside MDX, whose
+              `leading-[1.7] mb-5` demonstrably do not reach the rendered
+              element (computed line-height is `normal`, margin is the browser's
+              own 1em). An explicit rule here is not subject to that, and it
+              cannot be purged. Scoped to .review-v2-prose so V1 pages, which
+              share StyledP, are untouched. */}
+          <style
+            dangerouslySetInnerHTML={{
+              __html: `
+.review-v2-prose > * > p { max-width: 37rem; font-size: 17px; line-height: 1.75; margin: 0 0 1.15em; }
+.review-v2-prose > * > ul, .review-v2-prose > * > ol { max-width: 37rem; }
+@media (max-width: 640px) { .review-v2-prose > * > p { font-size: 16.5px; line-height: 1.7; } }
+`,
+            }}
+          />
+          <div className="review-v2-prose prose prose-lg max-w-none" style={{ margin: '32px 0 40px' }}>
             <SectionVerdictsProvider data={meta.sectionVerdicts ?? null}>
               {mdxSource ? (
                 <SafeMDX source={mdxSource} />

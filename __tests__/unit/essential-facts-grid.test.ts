@@ -80,7 +80,13 @@ describe('EssentialFactsGrid', () => {
       expect(html).toContain(`Fact ${i}`);
     }
     expect(html).not.toContain('<table');
-    expect(html).toContain('grid-cols-2');
-    expect(html).toContain('md:grid-cols-3');
+    // Two per row on small screens, three from md up. Previously a CSS grid
+    // (grid-cols-2 / md:grid-cols-3), now flex-wrap with an explicit basis —
+    // the change exists because a fixed 3-column grid left a hole in the last
+    // row at 5 facts, while `grow` lets a short final row fill the width. The
+    // assertion tracks the two breakpoint widths rather than the mechanism, so
+    // it still fails if either row size is lost.
+    expect(html).toContain('basis-[calc(50%-6px)]');
+    expect(html).toContain('md:basis-[calc(33.333%-8px)]');
   });
 });

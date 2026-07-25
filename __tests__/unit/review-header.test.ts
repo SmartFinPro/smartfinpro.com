@@ -110,7 +110,13 @@ describe('ReviewHeader', () => {
         modifiedDate: '2026-07-17',
       }),
     );
-    expect(html).toContain(
+    // Asserted against the TEXT, not the markup. "BEST-X Score." now sits in a
+    // nowrap span so the term cannot break mid-phrase, which split the raw HTML
+    // string without changing a single rendered character. This is the wording
+    // the operator approved and it is a compliance line, so the check has to
+    // survive presentational markup rather than pin it.
+    const text = html.replace(/<[^>]+>/g, '');
+    expect(text).toContain(
       'SmartFinPro may earn a commission from partner links. This never affects our BEST-X Score.',
     );
     expect(html).toContain('href="/affiliate-disclosure"');
