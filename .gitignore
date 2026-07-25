@@ -77,3 +77,10 @@ test-results/
 # Audit verify run logs
 audits/reports/verify-*.log
 audits/reports/verify-status.json
+
+# Test-Report-Artefakt (wird bei jedem Testlauf neu erzeugt)
+audits/reports/unit-latest.json
+
+# Lokale Tool-/Scratch-Verzeichnisse
+.codex/
+.scratch-migration/

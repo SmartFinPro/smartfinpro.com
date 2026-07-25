@@ -9,10 +9,94 @@
       "url": "http://localhost:3002"
     },
     {
+      "name": "dev-3006",
+      "runtimeExecutable": "/opt/homebrew/bin/node",
+      "runtimeArgs": ["node_modules/.bin/next", "dev", "--webpack", "-p", "3006"],
+      "port": 3006,
+      "url": "http://localhost:3006"
+    },
+    {
       "name": "landing",
       "runtimeExecutable": "npx",
       "runtimeArgs": ["serve", "landing", "-l", "3003"],
       "port": 3003
+    },
+    {
+      "name": "cockpit-hysa-preview",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-c", "cd /Users/christianb./Websites/smartfinpro.com/.claude/worktrees/cockpit-hysa && /Users/christianb./Websites/smartfinpro.com/node_modules/.bin/next dev --webpack -p 3004"],
+      "port": 3004,
+      "url": "http://localhost:3004"
+    },
+    {
+      "name": "standalone-3111",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-c", "PORT=3111 HOSTNAME=127.0.0.1 /opt/homebrew/bin/node --env-file=.env.local .next/standalone/server.js"],
+      "port": 3111,
+      "url": "http://localhost:3111"
+    },
+    {
+      "name": "cockpit-tracking-standalone",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-c", "cd /Users/christianb./Websites/smartfinpro.com/.claude/worktrees/cockpit-tracking/.next/standalone/.claude/worktrees/cockpit-tracking && PORT=3112 HOSTNAME=127.0.0.1 /opt/homebrew/bin/node --env-file=.env.local server.js"],
+      "port": 3112,
+      "url": "http://localhost:3112"
+    },
+    {
+      "name": "cockpit-tracking-preview",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-c", "cd /Users/christianb./Websites/smartfinpro.com/.claude/worktrees/cockpit-tracking && /Users/christianb./Websites/smartfinpro.com/node_modules/.bin/next dev --webpack -p 3007"],
+      "port": 3007,
+      "url": "http://localhost:3007"
+    },
+    {
+      "name": "cockpit-tracking-ci-repro",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-c", "cd /Users/christianb./Websites/smartfinpro.com/.claude/worktrees/cockpit-tracking && PORT=3008 /Users/christianb./Websites/smartfinpro.com/node_modules/.bin/next dev --turbopack"],
+      "port": 3008,
+      "url": "http://localhost:3008"
+    },
+    {
+      "name": "cockpit-credit-cards-preview",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-c", "cd /Users/christianb./Websites/smartfinpro.com/.claude/worktrees/cockpit-credit-cards && /Users/christianb./Websites/smartfinpro.com/node_modules/.bin/next dev --webpack -p 3005"],
+      "port": 3005,
+      "url": "http://localhost:3005"
+    },
+    {
+      "name": "fdl-1-4-preview",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-c", "cd /private/tmp/sfp-fdl-1-4 && /Users/christianb./Websites/smartfinpro.com/node_modules/.bin/next dev --webpack -p 3009"],
+      "port": 3009,
+      "url": "http://localhost:3009"
+    },
+    {
+      "name": "fdl-wh-v2",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-c", "cd /private/tmp/sfp-fdl-wh-v2 && pkill -f next-server; PORT=3013 HOSTNAME=127.0.0.1 /opt/homebrew/bin/node --env-file=.env.local .next/standalone/server.js"],
+      "port": 3013,
+      "url": "http://localhost:3013/tools/retirement-calculator"
+    },
+    {
+      "name": "dashboard-logo-preview",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-c", "cd /private/tmp/sfp-dashboard-logo && /Users/christianb./Websites/smartfinpro.com/node_modules/.bin/next dev --webpack -p 3020"],
+      "port": 3020,
+      "url": "http://localhost:3020/dashboard"
+    },
+    {
+      "name": "wealth-horizon-banner-mockup",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["serve", "/private/tmp/claude-501/-Users-christianb--Websites-smartfinpro-com/3d54d719-19f8-42bd-83ab-43a384ee6a41/scratchpad", "-l", "3022"],
+      "port": 3022,
+      "url": "http://localhost:3022/wealth-horizon-featured-banner-directions.html"
+    },
+    {
+      "name": "wh-worktree-dev",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-c", "cd /Users/christianb./Websites/smartfinpro.com/.worktrees/wealth-horizon-magnet && node_modules/.bin/next dev --webpack -p 3023"],
+      "port": 3023,
+      "url": "http://localhost:3023/"
     }
   ]
 }
