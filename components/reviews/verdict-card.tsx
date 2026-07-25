@@ -119,8 +119,8 @@ export function VerdictCard({
                 style={{
                   display: 'flex',
                   gap: '8px',
-                  fontFamily: 'var(--font-primary)',
-                  fontSize: '14px',
+                  fontFamily: 'var(--font-secondary)',
+                  fontSize: '18px',
                   lineHeight: 1.5,
                   color: 'var(--sfp-ink)',
                 }}
@@ -138,9 +138,9 @@ export function VerdictCard({
           style={{
             display: 'flex',
             gap: '8px',
-            fontFamily: 'var(--font-primary)',
-            fontSize: '14px',
-            lineHeight: 1.5,
+            fontFamily: 'var(--font-secondary)',
+            fontSize: '18px',
+            lineHeight: 1.55,
             color: 'var(--sfp-ink)',
             marginBottom: '14px',
           }}
@@ -156,9 +156,9 @@ export function VerdictCard({
         {verdict.bestAlternative && (
           <p
             style={{
-              fontFamily: 'var(--font-primary)',
-              fontSize: '13.5px',
-              lineHeight: 1.5,
+              fontFamily: 'var(--font-secondary)',
+              fontSize: '18px',
+              lineHeight: 1.55,
               color: 'var(--sfp-slate)',
               margin: 0,
             }}
@@ -174,7 +174,7 @@ export function VerdictCard({
             ) : (
               <strong style={{ color: 'var(--sfp-ink)', fontWeight: 600 }}>{verdict.bestAlternative.name}</strong>
             )}
-            {' — '}
+            {': '}
             {verdict.bestAlternative.reason}
           </p>
         )}

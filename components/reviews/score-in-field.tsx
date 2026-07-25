@@ -599,7 +599,7 @@ export function ScoreInField({ field, position, fieldCount }: ScoreInFieldProps)
               {rows.map((row, i) => (
                 <li key={`sr-${row.rank}-${row.name}-${i}`}>
                   {row.name}: {row.score.toFixed(1)} out of 10
-                  {row.isYou ? ' — the product reviewed on this page' : ''}
+                  {row.isYou ? ' (the product reviewed on this page)' : ''}
                 </li>
               ))}
             </ul>
@@ -662,7 +662,7 @@ export function ScoreInField({ field, position, fieldCount }: ScoreInFieldProps)
             <>
               All {plotted} providers score between{' '}
               <b style={{ color: 'var(--sfp-ink)', fontWeight: 600, ...NUM }}>{domainMin.toFixed(1)}</b> and{' '}
-              <b style={{ color: 'var(--sfp-ink)', fontWeight: 600, ...NUM }}>{domainMax.toFixed(1)}</b> — a{' '}
+              <b style={{ color: 'var(--sfp-ink)', fontWeight: 600, ...NUM }}>{domainMax.toFixed(1)}</b>, a{' '}
               {spread.toFixed(1)}-point spread on a 10-point scale.
             </>
           )}
@@ -679,17 +679,17 @@ export function ScoreInField({ field, position, fieldCount }: ScoreInFieldProps)
                 same test that decides whether an end gets a NAME at all. */}
             {you === domainMin ? (
               <>
-                {name} scores {you.toFixed(1)} — the lowest in this field, {belowHighest.toFixed(1)} points below
+                {name} scores {you.toFixed(1)}: the lowest in this field, {belowHighest.toFixed(1)} points below
                 the highest score.
               </>
             ) : you === domainMax ? (
               <>
-                {name} scores {you.toFixed(1)} — the highest in this field, {aboveLowest.toFixed(1)} points above
+                {name} scores {you.toFixed(1)}: the highest in this field, {aboveLowest.toFixed(1)} points above
                 the lowest score.
               </>
             ) : (
               <>
-                {name} scores {you.toFixed(1)} — {aboveLowest.toFixed(1)} points above the lowest and{' '}
+                {name} scores {you.toFixed(1)}: {aboveLowest.toFixed(1)} points above the lowest and{' '}
                 {belowHighest.toFixed(1)} below the highest score in the field.
               </>
             )}

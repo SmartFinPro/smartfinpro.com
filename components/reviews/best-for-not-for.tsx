@@ -36,12 +36,17 @@ const LIST_STYLE = {
   gap: '6px',
 };
 
+// Serif at the article's running size. These are read as sentences, not
+// scanned as data, so they belong to the same voice as the paragraphs and the
+// callouts — they were 14px sans against 18px serif body, which is what made
+// the page look like text with widgets dropped into it.
 const ITEM_STYLE = {
   display: 'flex',
   alignItems: 'flex-start' as const,
   gap: '8px',
-  fontSize: '14px',
-  lineHeight: 1.5,
+  fontFamily: 'var(--font-secondary)',
+  fontSize: '18px',
+  lineHeight: 1.55,
   color: 'var(--sfp-ink)',
 };
 

@@ -61,7 +61,7 @@ export function AffiliateDisclosure({
 
   const compactTexts: Record<string, { text: string; regulatory: string }> = {
     us: {
-      text: "SmartFinPro is reader-supported — we may earn a commission when you open an account through links on this page, at no extra cost to you. This never affects our rankings.",
+      text: "SmartFinPro is reader-supported. We may earn a commission when you open an account through links on this page, at no extra cost to you. This never affects our rankings.",
       regulatory: "FTC 16 CFR \u00a7255",
     },
     uk: {

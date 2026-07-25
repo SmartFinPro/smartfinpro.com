@@ -121,7 +121,7 @@ export function MethodologySection({ essentialFacts, updateLog, methodologyHref 
                     <span style={{ fontFamily: FONT_NUM, fontVariantNumeric: 'tabular-nums', color: 'var(--sfp-slate)' }}>
                       {entry.date}
                     </span>
-                    {' — '}
+                    {': '}
                     {entry.change}
                   </li>
                 ))}
