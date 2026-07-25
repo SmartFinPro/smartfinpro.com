@@ -43,6 +43,7 @@
 // ============================================================
 
 import Link from 'next/link';
+import { BUTTON_COMPARE } from './button-style';
 import type { Market, Category } from '@/lib/i18n/config';
 import type { AlternativeEntry } from '@/lib/reviews/verdict-frontmatter';
 import type { DecisionBridgeFieldRow } from '@/lib/comparison/types';
@@ -173,18 +174,7 @@ export function AlternativesSection({
       </div>
 
       {showCta && (
-        <Link
-          href={cockpitHref as string}
-          style={{
-            display: 'inline-block',
-            background: 'var(--sfp-gold)',
-            color: 'var(--sfp-ink)',
-            fontWeight: 600,
-            fontSize: '13.5px',
-            padding: '9px 16px',
-            textDecoration: 'none',
-          }}
-        >
+        <Link href={cockpitHref as string} className={BUTTON_COMPARE}>
           Compare all {fieldCount} {topicLabel} →
         </Link>
       )}

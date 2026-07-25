@@ -30,6 +30,7 @@
 // ============================================================
 
 import Link from 'next/link';
+import { BUTTON_COMPARE, BUTTON_VISIT, AFFILIATE_LINK_TEXT } from './button-style';
 import type { VerdictBlock, AlternativeEntry } from '@/lib/reviews/verdict-frontmatter';
 
 export interface FinalDecisionProps {
@@ -136,18 +137,7 @@ export function FinalDecision({
       {hasCta && (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
           {compareHref && (
-            <Link
-              href={compareHref}
-              style={{
-                display: 'inline-block',
-                background: 'var(--sfp-gold)',
-                color: 'var(--sfp-ink)',
-                fontWeight: 600,
-                fontSize: '13.5px',
-                padding: '9px 16px',
-                textDecoration: 'none',
-              }}
-            >
+            <Link href={compareHref} className={BUTTON_COMPARE}>
               {compareLabel}
             </Link>
           )}
@@ -156,16 +146,8 @@ export function FinalDecision({
               href={affiliateUrl}
               target="_blank"
               rel="noopener noreferrer nofollow"
-              style={{
-                display: 'inline-block',
-                background: 'transparent',
-                color: 'var(--sfp-navy)',
-                border: '1px solid var(--sfp-navy)',
-                fontWeight: 600,
-                fontSize: '13.5px',
-                padding: '8px 15px',
-                textDecoration: 'none',
-              }}
+              className={BUTTON_VISIT}
+              style={AFFILIATE_LINK_TEXT}
             >
               Visit {productName}
             </a>

@@ -38,6 +38,7 @@
 import fs from 'fs';
 import path from 'path';
 import Link from 'next/link';
+import { BUTTON_COMPARE, BUTTON_VISIT, AFFILIATE_LINK_TEXT } from './button-style';
 import { BarChart3 } from 'lucide-react';
 import { DecisionBridge, DecisionBridgeProvider } from '@/components/marketing/decision-bridge';
 import { TrackedAffiliateLink } from '@/components/marketing/tracked-affiliate-link';
@@ -232,7 +233,7 @@ export function ReviewSidebar({
         <div className="flex flex-col gap-2.5">
           <Link
             href={decisionBridge.cockpitHref}
-            className="block text-center font-semibold no-underline rounded-[10px] px-4 py-[11px] text-[13.5px] bg-[var(--sfp-gold)] text-[var(--sfp-ink)] transition-colors duration-150 hover:bg-[var(--sfp-gold-dark)] focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-[var(--sfp-navy)]"
+            className={`${BUTTON_COMPARE} block w-full`}
           >
             {compareLabel}
           </Link>
@@ -244,8 +245,8 @@ export function ReviewSidebar({
               // underline, specificity 0,1,1) otherwise out-specifies Tailwind's
               // text-white / no-underline utility classes. bg stays a class so the
               // brightness/lift hover still works (inline bg would kill :hover).
-              className="block w-full text-center no-underline rounded-[10px] px-4 py-[11px] text-[13.5px] font-semibold bg-[var(--sfp-blue-bright)] shadow-sm transition-all duration-200 hover:brightness-110 hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:brightness-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--sfp-blue-bright)]"
-              style={{ color: 'white', textDecoration: 'none' }}
+              className={`${BUTTON_VISIT} block w-full`}
+              style={AFFILIATE_LINK_TEXT}
               eventLabel={`Visit ${productName}`}
               market={market}
               category={category}
