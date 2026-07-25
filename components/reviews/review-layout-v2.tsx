@@ -9,7 +9,6 @@
 //   ReviewHeader
 //     → #verdict   VerdictCard (BestXScore panel embeds ScoreBreakdown)
 //     → [mobile-only] ReviewSidebar in-flow, directly under #verdict
-//     → BestForNotFor
 //     → ReviewSectionNav (renders all 7 REVIEW_V2_ANCHORS)
 //     → MDX body, wrapped in SectionVerdictsProvider (5 mdx-owned H2 sections)
 //     → #alternatives  AlternativesSection (CTA-Zone 1)
@@ -63,7 +62,6 @@
 import Link from 'next/link';
 import { ReviewHeader } from './review-header';
 import { VerdictCard } from './verdict-card';
-import { BestForNotFor } from './best-for-not-for';
 import { ScoreInField } from './score-in-field';
 import { ReviewSectionNav } from './review-section-nav';
 import { ReviewSidebar } from './review-sidebar';
@@ -236,12 +234,6 @@ export function ReviewLayoutV2({
                 category={category}
                 hasLeverageRisk={meta.hasLeverageRisk}
               />
-            </div>
-          )}
-
-          {verdict && (
-            <div style={{ marginBottom: '40px' }}>
-              <BestForNotFor bestFor={verdict.bestFor} notFor={verdict.notFor} />
             </div>
           )}
 
