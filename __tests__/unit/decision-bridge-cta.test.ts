@@ -81,7 +81,9 @@ describe('DecisionBridge showCta prop', () => {
     // Everything else untouched:
     expect(html).toContain('How eToro compares');
     expect(html).toContain('Fidelity'); // ranking strip
-    expect(html).toContain('Verdict');
+    // The verdict PANEL, asserted by its text — the "Verdict" label above it
+    // was removed (it named what the tinted panel already shows).
+    expect(html).toContain('Consider alternatives if reliable support is a priority');
     expect(html).toContain('official sources');
   });
 

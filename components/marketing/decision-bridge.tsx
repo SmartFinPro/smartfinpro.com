@@ -406,29 +406,22 @@ function StateA({
         </table>
       )}
 
+      {/* No "Verdict" label (operator, 2026-07-21) — the tinted panel and the
+          navy rule already say "this is the conclusion", and the 9.5px
+          uppercase eyebrow was the loudest thing in a quiet sidebar. One
+          element now, so the padding is whole.
+          Size stays at the sidebar's own scale rather than the article's 18px:
+          this column is roughly a third of the width, where body-size type
+          would break to very short lines. */}
       <div
         style={{
-          fontSize: '9.5px',
-          letterSpacing: '0.16em',
-          textTransform: 'uppercase',
-          color: 'var(--sfp-navy)',
-          fontWeight: 700,
-          background: 'var(--sfp-gray)',
-          borderLeft: '2px solid var(--sfp-navy)',
-          padding: '9px 13px 0',
-          marginTop: '12px',
-        }}
-      >
-        Verdict
-      </div>
-      <div
-        style={{
-          fontFamily: 'var(--font-secondary)',
+          fontFamily: 'var(--font-primary)',
           fontSize: '14px',
           lineHeight: 1.5,
           background: 'var(--sfp-gray)',
           borderLeft: '2px solid var(--sfp-navy)',
-          padding: '2px 13px 9px',
+          padding: '11px 13px',
+          marginTop: '12px',
           color: 'var(--sfp-ink)',
         }}
       >

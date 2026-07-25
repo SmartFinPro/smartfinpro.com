@@ -107,40 +107,33 @@ export function SectionVerdict({ id }: SectionVerdictProps) {
   const text = sectionVerdicts?.[id];
   if (!text) return null;
 
+  // No "Verdict" label. The word named what the reader can already see: a
+  // short, set-apart summary at the head of a section. The tinted panel and
+  // the navy rule mark it as an aside on their own, and dropping the label
+  // also drops a 9.5px uppercase micro-line — the kind of shouted eyebrow
+  // that made this design read as a dashboard rather than as research.
+  // With the label gone the two stacked divs have no reason to exist, so this
+  // is one element and the padding is whole again.
   return (
-    <div style={{ margin: '20px 0' }}>
-      <div
-        style={{
-          fontFamily: 'var(--font-primary)',
-          fontSize: '9.5px',
-          letterSpacing: '0.16em',
-          textTransform: 'uppercase',
-          color: 'var(--sfp-navy)',
-          fontWeight: 700,
-          background: 'var(--sfp-gray)',
-          borderLeft: '2px solid var(--sfp-navy)',
-          padding: '9px 13px 0',
-        }}
-      >
-        Verdict
-      </div>
-      <div
-        style={{
-          fontFamily: 'var(--font-secondary)',
-          // Raised with the body copy (review-layout-v2 sets running text to
-          // 17px): at 14px this highlighted one-line summary rendered SMALLER
-          // than the paragraphs it summarises, which inverts the emphasis. 16px
-          // serif sits alongside 17px sans without competing with it.
-          fontSize: '16px',
-          lineHeight: 1.6,
-          background: 'var(--sfp-gray)',
-          borderLeft: '2px solid var(--sfp-navy)',
-          padding: '2px 13px 9px',
-          color: 'var(--sfp-ink)',
-        }}
-      >
-        {text}
-      </div>
+    <div
+      style={{
+        // Sans at the body size — same face and size as the paragraphs around
+        // it, per the dollarscout reference. The tint and the navy rule carry
+        // the emphasis.
+        fontFamily: 'var(--font-primary)',
+        // Matched to the running text (review-layout-v2 sets body to 18px).
+        // A highlighted summary set smaller than the paragraphs it summarises
+        // inverts the emphasis.
+        fontSize: '18px',
+        lineHeight: 1.6,
+        background: 'var(--sfp-gray)',
+        borderLeft: '2px solid var(--sfp-navy)',
+        padding: '12px 15px',
+        color: 'var(--sfp-ink)',
+        margin: '20px 0',
+      }}
+    >
+      {text}
     </div>
   );
 }

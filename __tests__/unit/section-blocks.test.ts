@@ -37,8 +37,10 @@ describe('SectionVerdict', () => {
     const html = renderToStaticMarkup(
       h(SectionVerdictsProvider, { data: VERDICTS, children: h(SectionVerdict, { id: 'fees' }) }),
     );
+    // Asserted by the callout's own text. The "Verdict" eyebrow above it was
+    // removed; the tinted panel and navy rule mark the aside without a label.
     expect(html).toContain('No broker-imposed per-contract options fee');
-    expect(html).toContain('Verdict');
+    expect(html).not.toContain('>Verdict<');
   });
 
   it('renders null for an unknown id even with a Provider mounted', () => {

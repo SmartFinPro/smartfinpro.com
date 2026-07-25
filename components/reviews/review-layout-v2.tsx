@@ -10,7 +10,6 @@
 //     → #verdict   VerdictCard (BestXScore panel embeds ScoreBreakdown)
 //     → [mobile-only] ReviewSidebar in-flow, directly under #verdict
 //     → BestForNotFor
-//     → EssentialFactsGrid
 //     → ReviewSectionNav (renders all 7 REVIEW_V2_ANCHORS)
 //     → MDX body, wrapped in SectionVerdictsProvider (5 mdx-owned H2 sections)
 //     → #alternatives  AlternativesSection (CTA-Zone 1)
@@ -65,7 +64,6 @@ import Link from 'next/link';
 import { ReviewHeader } from './review-header';
 import { VerdictCard } from './verdict-card';
 import { BestForNotFor } from './best-for-not-for';
-import { EssentialFactsGrid } from './essential-facts-grid';
 import { ScoreInField } from './score-in-field';
 import { ReviewSectionNav } from './review-section-nav';
 import { ReviewSidebar } from './review-sidebar';
@@ -219,6 +217,7 @@ export function ReviewLayoutV2({
                 bestAlternativeHref={bestAlternativeHref}
                 position={position}
                 fieldCount={fieldCount}
+                essentialFacts={essentialFacts}
               />
             </div>
           )}
@@ -243,12 +242,6 @@ export function ReviewLayoutV2({
           {verdict && (
             <div style={{ marginBottom: '40px' }}>
               <BestForNotFor bestFor={verdict.bestFor} notFor={verdict.notFor} />
-            </div>
-          )}
-
-          {essentialFacts.length > 0 && (
-            <div style={{ marginBottom: '40px' }}>
-              <EssentialFactsGrid facts={essentialFacts} />
             </div>
           )}
 
@@ -284,10 +277,15 @@ export function ReviewLayoutV2({
               aligns with the verdict box and the section-verdict callouts
               directly above it — a narrower text column underneath a
               full-width box read as a misalignment. The readability gain
-              therefore comes from type rather than from measure: 17px at 1.75
-              leading instead of 16px at the browser's default, which takes a
-              line from ~95 characters to ~82 and materially opens the line
-              spacing. No max-width, deliberately.
+              therefore comes from type rather than from measure. Calibrated
+              against a reference the operator named as easy to read
+              (dollarscout.net), measured in the browser rather than guessed:
+              18px, line-height 1.63, 72 characters per line. Note the absolute
+              leading there is 29.25px and ours was already 29.75px — the gap
+              was never the line spacing, it was the SIZE, and through it the
+              characters per line. At 18px in this 760px column a line holds
+              about 76 characters, against 95 before. No max-width, deliberately
+              (operator decision: text aligns with the boxes above it).
               A scoped rule rather than utility classes because the paragraphs
               are created by StyledP deep inside MDX: nothing here can reach
               them without stacking `[&_p]:` variants, and this file cannot edit
@@ -308,8 +306,8 @@ export function ReviewLayoutV2({
           <style
             dangerouslySetInnerHTML={{
               __html: `
-.review-v2-prose > * > p { font-size: 17px; line-height: 1.75; margin: 0 0 1.15em; }
-@media (max-width: 640px) { .review-v2-prose > * > p { font-size: 16.5px; line-height: 1.7; } }
+.review-v2-prose > * > p { font-size: 18px; line-height: 1.65; margin: 0 0 1.15em; }
+@media (max-width: 640px) { .review-v2-prose > * > p { font-size: 17px; line-height: 1.65; } }
 `,
             }}
           />

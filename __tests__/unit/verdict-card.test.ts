@@ -47,7 +47,9 @@ describe('VerdictCard', () => {
     const html = renderToStaticMarkup(
       h(VerdictCard, { verdict: VERDICT, position: POSITION, fieldCount: 9 }),
     );
-    expect(html).toContain('Our Verdict');
+    // The summary itself, not a label: "Our Verdict" was removed as redundant
+    // above the opening paragraph of a review.
+    expect(html).not.toContain('Our Verdict');
     expect(html).toContain('eToro is a strong pick for copy trading');
     expect(html).toContain('No broker-imposed options contract fees');
     expect(html).toContain('Copy trading at scale');
@@ -103,8 +105,7 @@ describe('VerdictCard', () => {
     const html = renderToStaticMarkup(
       h(VerdictCard, { verdict: VERDICT, position: null, fieldCount: 9 }),
     );
-    // Verdict prose still renders.
-    expect(html).toContain('Our Verdict');
+    // Verdict prose still renders (without the removed label).
     expect(html).toContain('eToro is a strong pick for copy trading');
     // BestXScore panel is gone — no score digits, no band label markup, no methodology sentence/link.
     expect(html).not.toContain('/10');
