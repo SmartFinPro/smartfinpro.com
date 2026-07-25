@@ -114,6 +114,29 @@ describe('ScoreInField — degradation (renders null, never a placeholder)', () 
     ] as DecisionBridgeFieldRow[];
     expect(render({ field: broken, position: POSITION, fieldCount: 2 })).toBe('');
   });
+
+  // Regression: the cockpit loader's num() turns a missing/unparseable score
+  // into 0, which is a perfectly finite number. Plotting such a row renders
+  // "not captured yet" as "scored 0.0", names that provider as the field's
+  // worst, and stretches a 1.6-point spread into a 9.6-point one — the exact
+  // inversion of what this component exists to say.
+  it('excludes a row whose score is 0 from the loader coercing a missing value', () => {
+    const withUnscored = [...FIELD, row(10, 'NoDataBroker', 0)];
+    const html = render({ field: withUnscored, position: POSITION, fieldCount: 10 });
+
+    expect(html).not.toContain('NoDataBroker');
+    // The claim the component exists to make survives intact, rather than
+    // inverting into "a 9.6-point spread" with an unscored provider at the
+    // bottom. (Asserting the absence of the bare string "0.0" would be wrong
+    // here — it also occurs in CSS values such as letter-spacing:-0.01em.)
+    expect(html).toContain('1.6-point spread');
+    expect(html).not.toContain('9.6-point spread');
+    expect(html).toContain('Merrill Edge · lowest');
+  });
+
+  it('renders nothing when a zero score is the only row left', () => {
+    expect(render({ field: [row(1, 'NoDataBroker', 0)], position: POSITION, fieldCount: 1 })).toBe('');
+  });
 });
 
 describe('ScoreInField — zero-spread degradation (no division by zero)', () => {

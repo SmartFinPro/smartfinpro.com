@@ -116,9 +116,21 @@ export function ScoreInField({ field, position, fieldCount }: ScoreInFieldProps)
   if (!isFiniteNumber(position.score)) return null;
 
   // Drop malformed rows instead of plotting a dot at a made-up coordinate.
+  // `score > 0`, not merely finite: the cockpit loader's num() coerces a
+  // missing or unparseable score to 0 (lib/comparison/loader.ts), so a product
+  // whose score has not been captured yet arrives here as a perfectly finite
+  // zero. Plotting it turns "not measured" into "scored 0.0", names that
+  // provider as the worst in the field, and inverts this component's entire
+  // claim — a 1.6-point spread renders as 9.6. lib/comparison/bridge.ts:45
+  // already applies exactly this guard to the leader; the field rows need it
+  // too. A field emptied by this degrades to null below, which is correct.
   const rows = field.filter(
     (row): row is DecisionBridgeFieldRow =>
-      Boolean(row) && isFiniteNumber(row.score) && typeof row.name === 'string' && row.name.length > 0,
+      Boolean(row) &&
+      isFiniteNumber(row.score) &&
+      row.score > 0 &&
+      typeof row.name === 'string' &&
+      row.name.length > 0,
   );
   if (rows.length === 0) return null;
 
@@ -143,9 +155,13 @@ export function ScoreInField({ field, position, fieldCount }: ScoreInFieldProps)
   const plotted = rows.length;
 
   // Rank chip only when the rank is real AND plausible against the field size.
+  // Also suppressed when rows were dropped: the prose then says "All 2
+  // providers…" while the chip would still say "Rank 2 of 3" and the sidebar a
+  // third number. One card must not carry two counts of the same field — drop
+  // the chip and let the plotted reality speak.
   const total = isFiniteNumber(fieldCount) && fieldCount > 0 ? fieldCount : plotted;
   const rank = position.rank;
-  const showRank = isFiniteNumber(rank) && rank >= 1 && rank <= total;
+  const showRank = isFiniteNumber(rank) && rank >= 1 && rank <= total && plotted === total;
 
   // An end is named only when a real provider owns that extreme.
   const lowRow = rows.find((row) => row.score === rowMin) ?? null;
@@ -159,12 +175,32 @@ export function ScoreInField({ field, position, fieldCount }: ScoreInFieldProps)
   const youContextPct = toPercent(you, 0, SCORE_SCALE_MAX);
 
   const youPct = isLevel ? 50 : toPercent(you, domainMin, domainMax);
-  // Keeping the pin label inside the card without any JS: near the rail ends
-  // the label anchors to its own edge instead of centring on the pin.
-  const labelTransform = youPct <= 18 ? 'none' : youPct >= 82 ? 'translateX(-100%)' : 'translateX(-50%)';
+  // The pin label is laid out in three zones rather than positioned exactly
+  // over the pin. Exact positioning cannot be made safe here: the label's width
+  // depends on the product name, the rail's width depends on the viewport, and
+  // neither is knowable while rendering on the server — a threshold calibrated
+  // on "eToro" (5 characters) puts "Charles Schwab Intelligent Portfolios" at
+  // left: -45px on a 320px viewport, i.e. cut off. Real names in the field hit
+  // this: Interactive Brokers, Merrill Edge Self-Directed, Vanguard Digital
+  // Advisor. Three zones cost a little precision — the stem and dot still mark
+  // the exact score — and cannot clip at any name length or viewport.
+  const labelAlign: 'flex-start' | 'center' | 'flex-end' =
+    youPct <= 33 ? 'flex-start' : youPct >= 67 ? 'flex-end' : 'center';
 
   const aboveLowest = you - domainMin;
   const belowHighest = domainMax - you;
+
+  // Rank and score are not the same ordering. lib/comparison/ranking.ts scores
+  // a "smart rank" (score minus cost, plus bonus and click weight) and then
+  // pins the editorial top pick to #1 regardless of its score. For US trading
+  // the two happen to coincide, so the chip and the axis tell one story. On a
+  // topic with a bonus or a cost term — business banking, credit cards — they
+  // will not, and a reader who counts five dots to the right of a pin labelled
+  // "Rank 3" sees a chart that looks wrong rather than one measuring something
+  // else. Detected rather than assumed: the note appears only when the two
+  // orderings actually disagree, so it never adds noise to a page where they
+  // agree.
+  const rankOrderMatchesScore = rows.every((r, i, all) => i === 0 || all[i - 1].score >= r.score);
 
   return (
     <section
@@ -179,7 +215,7 @@ export function ScoreInField({ field, position, fieldCount }: ScoreInFieldProps)
       }}
     >
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-        <h3
+        <h2
           id="score-in-field-heading"
           style={{
             fontFamily: 'var(--font-secondary)',
@@ -190,7 +226,7 @@ export function ScoreInField({ field, position, fieldCount }: ScoreInFieldProps)
           }}
         >
           Where {name} sits in the field
-        </h3>
+        </h2>
         {showRank && (
           <span
             style={{
@@ -323,23 +359,19 @@ export function ScoreInField({ field, position, fieldCount }: ScoreInFieldProps)
           {/* Pin label sits in its own row above the rail so it can never
               collide with the dots, and comes first in DOM order so a screen
               reader hears "eToro 8.3" before the (hidden) rail. */}
-          <div style={{ position: 'relative', height: '22px' }}>
-            <div style={{ position: 'absolute', left: `${DOT_INSET_PX}px`, right: `${DOT_INSET_PX}px`, top: 0 }}>
-              <span
-                style={{
-                  position: 'absolute',
-                  left: `${youPct}%`,
-                  transform: labelTransform,
-                  whiteSpace: 'nowrap',
-                  fontSize: '13px',
-                  fontWeight: 600,
-                  color: 'var(--sfp-navy)',
-                }}
-              >
-                {name}{' '}
-                <span style={{ fontFamily: FONT_NUM, fontVariantNumeric: 'tabular-nums' }}>{you.toFixed(1)}</span>
-              </span>
-            </div>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: labelAlign,
+              paddingLeft: `${DOT_INSET_PX}px`,
+              paddingRight: `${DOT_INSET_PX}px`,
+              minHeight: '22px',
+            }}
+          >
+            <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--sfp-navy)', textAlign: 'center' }}>
+              {name}{' '}
+              <span style={{ fontFamily: FONT_NUM, fontVariantNumeric: 'tabular-nums' }}>{you.toFixed(1)}</span>
+            </span>
           </div>
 
           <div aria-hidden="true" style={{ position: 'relative', height: '20px' }}>
@@ -412,24 +444,45 @@ export function ScoreInField({ field, position, fieldCount }: ScoreInFieldProps)
                         pointer-events-none so it can never swallow the hover
                         that produced it. */}
                     <span
-                      className="pointer-events-none absolute opacity-0 transition-opacity duration-150 group-hover:opacity-100"
+                      // HOVERABLE (WCAG 1.4.13). The flyout is a CHILD of the
+                      // hovered wrapper and keeps its pointer events, so moving
+                      // the pointer onto it keeps the ancestor in :hover and the
+                      // label stays up — someone at 200% zoom can actually read
+                      // it. paddingBottom bridges the gap down to the dot so the
+                      // pointer never crosses dead space on the way. An earlier
+                      // pointer-events-none version failed this: the label
+                      // vanished the moment you moved toward it.
+                      // Dismissible is NOT met — that needs an Esc handler, and
+                      // this is a Server Component with no client JS. The
+                      // trade-off is deliberate and cheap here: every name and
+                      // score the flyout can show is also visible in the
+                      // sidebar's ranking table and present in the sr-only list
+                      // below, so a user who cannot dismiss it loses nothing.
+                      className="absolute opacity-0 transition-opacity duration-150 group-hover:opacity-100"
                       style={{
                         left: '50%',
-                        bottom: '22px',
+                        bottom: '10px',
                         transform: anchor,
-                        whiteSpace: 'nowrap',
-                        fontSize: '12px',
-                        fontWeight: 600,
-                        color: '#fff',
-                        background: 'var(--sfp-ink)',
-                        padding: '4px 8px',
-                        borderRadius: '6px',
+                        paddingBottom: '8px',
                         zIndex: 2,
                       }}
                     >
-                      {row.name}{' '}
-                      <span style={{ fontFamily: FONT_NUM, fontVariantNumeric: 'tabular-nums' }}>
-                        {row.score.toFixed(1)}
+                      <span
+                        style={{
+                          display: 'block',
+                          whiteSpace: 'nowrap',
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          color: '#fff',
+                          background: 'var(--sfp-ink)',
+                          padding: '4px 8px',
+                          borderRadius: '6px',
+                        }}
+                      >
+                        {row.name}{' '}
+                        <span style={{ fontFamily: FONT_NUM, fontVariantNumeric: 'tabular-nums' }}>
+                          {row.score.toFixed(1)}
+                        </span>
                       </span>
                     </span>
                   </span>
@@ -517,12 +570,19 @@ export function ScoreInField({ field, position, fieldCount }: ScoreInFieldProps)
           {/* The distance the rail draws, spelled out — this is the textual
               equivalent of the pin's placement, visible to everyone. */}
           <p style={{ fontSize: '13px', lineHeight: 1.5, color: 'var(--sfp-slate)', margin: '14px 0 0' }}>
-            {aboveLowest < LEVEL_SPREAD_EPSILON ? (
+            {/* Exact equality against the axis end, not an epsilon. With an
+                epsilon a product 0.02 behind the last-placed provider is called
+                "the lowest in this field" while the axis label right above it
+                still names that other provider as lowest — two contradicting
+                statements inside one card. `product_attributes.score` is an
+                unconstrained float, so this is reachable. Exact equality is the
+                same test that decides whether an end gets a NAME at all. */}
+            {you === domainMin ? (
               <>
                 {name} scores {you.toFixed(1)} — the lowest in this field, {belowHighest.toFixed(1)} points below the
                 highest score.
               </>
-            ) : belowHighest < LEVEL_SPREAD_EPSILON ? (
+            ) : you === domainMax ? (
               <>
                 {name} scores {you.toFixed(1)} — the highest in this field, {aboveLowest.toFixed(1)} points above the
                 lowest score.
@@ -534,6 +594,13 @@ export function ScoreInField({ field, position, fieldCount }: ScoreInFieldProps)
               </>
             )}
           </p>
+
+          {showRank && !rankOrderMatchesScore && (
+            <p style={{ fontSize: '12px', lineHeight: 1.5, color: 'var(--sfp-slate)', margin: '8px 0 0' }}>
+              Positions on this rail are plotted by score. The rank also weighs cost and our editorial
+              pick, so it can differ from the score order.
+            </p>
+          )}
         </div>
       )}
     </section>

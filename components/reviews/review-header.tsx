@@ -91,21 +91,27 @@ export function ReviewHeader({
 
   return (
     <header style={{ fontFamily: 'var(--font-primary)' }}>
-      {/* The leaf crumb is the full page title — at 390px it wrapped to
-          multiple lines and pushed the H1 far below the fold. The shared
-          Breadcrumb also serves V1 pages, so the one-line constraint is
-          scoped HERE via descendant selectors instead of editing the shared
-          component. The full label stays in the DOM and in the
-          BreadcrumbList JSON-LD (SEO/schema intact) — it is only visually
-          ellipsized. min-w-0 down the flex chain is load-bearing: flex items
-          default to min-width:auto and refuse to shrink below their
-          intrinsic text width, so truncate alone would never engage.
-          shrink-0 on the NON-leaf crumbs is equally load-bearing: without
-          it, flex distributes the shrink across all items and the ancestor
-          links collapse to their min-content width — "United States" wraps
-          to two lines while the leaf truncates. Only the leaf may give way.
-          shrink-0 on the chevron keeps the separator from being crushed. */}
-      <div className="[&_nav]:min-w-0 [&_nav>span:not(:last-child)]:shrink-0 [&_nav>span:last-child]:min-w-0 [&_nav>span:last-child>svg]:shrink-0 [&_nav>span:last-child>span:last-child]:truncate">
+      {/* The leaf crumb is the full page title — left alone it wrapped to
+          several lines and pushed the H1 far below the fold. The shared
+          Breadcrumb also serves V1 pages, so the constraint is scoped HERE
+          via descendant selectors instead of editing the shared component.
+          Below sm the leaf is hidden outright rather than truncated. Two
+          reasons, both measured:
+            - Truncating it forced shrink-0 onto the ancestor crumbs (they
+              otherwise collapse to min-content and wrap instead), and those
+              three fixed-width crumbs plus chevrons overflow a 320px
+              viewport: document.scrollWidth 349 against clientWidth 320,
+              i.e. the whole page scrolled sideways — a WCAG 1.4.10 failure
+              at exactly the width 1.4.10 is tested at.
+            - What survived truncation at 390px was "e…". A single letter
+              followed by an ellipsis reads as a rendering fault, not as an
+              abbreviation, and the leaf is not a link (it is the current
+              page) whose full text stands directly below as the H1.
+          The label stays in the DOM and in the BreadcrumbList JSON-LD, which
+          components/marketing/breadcrumb.tsx builds from the data rather
+          than the DOM — so the schema keeps all four positions either way.
+          From sm up there is room and the full leaf is shown. */}
+      <div className="[&_nav]:min-w-0 [&_nav>span:last-child]:hidden sm:[&_nav>span:last-child]:flex sm:[&_nav>span:not(:last-child)]:shrink-0 sm:[&_nav>span:last-child]:min-w-0 sm:[&_nav>span:last-child>svg]:shrink-0 sm:[&_nav>span:last-child>span:last-child]:truncate">
         <Breadcrumb items={breadcrumbs} />
       </div>
 

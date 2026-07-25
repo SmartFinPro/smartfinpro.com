@@ -91,7 +91,14 @@ export function EssentialFactsGrid({ facts }: EssentialFactsGridProps) {
               // Tailwind hover utilities (0,2,0) and silently kill the hover —
               // same trap as the sidebar Visit button. Base white/hairline →
               // hover light-blue fill + navy border.
-              className="flex min-w-0 grow basis-[calc(50%-6px)] flex-col rounded-[14px] border border-[var(--sfp-hairline-strong)] bg-white transition-colors duration-200 hover:border-[var(--sfp-navy)] hover:bg-[var(--sfp-sky)] md:basis-[calc(33.333%-8px)]"
+              // max-w caps how far `grow` may stretch a short final row. Without
+              // it, 4 facts render as three 245px cards above one 760px card
+              // spanning the whole column — which looks more broken than the
+              // gap this layout replaced. 4 is the minimum EssentialFactsSchema
+              // allows, so it is the common case, not an edge one. Capped at
+              // half the row, a 4th card sits at ~half width and the 5-fact case
+              // (two cards sharing the last row) is unaffected.
+              className="flex min-w-0 grow basis-[calc(50%-6px)] flex-col rounded-[14px] border border-[var(--sfp-hairline-strong)] bg-white transition-colors duration-200 hover:border-[var(--sfp-navy)] hover:bg-[var(--sfp-sky)] md:max-w-[calc(50%-6px)] md:basis-[calc(33.333%-8px)]"
               style={{ padding: '18px 20px' }}
             >
               <div

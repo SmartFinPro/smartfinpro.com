@@ -127,8 +127,12 @@ export function SectionVerdict({ id }: SectionVerdictProps) {
       <div
         style={{
           fontFamily: 'var(--font-secondary)',
-          fontSize: '14px',
-          lineHeight: 1.5,
+          // Raised with the body copy (review-layout-v2 sets running text to
+          // 17px): at 14px this highlighted one-line summary rendered SMALLER
+          // than the paragraphs it summarises, which inverts the emphasis. 16px
+          // serif sits alongside 17px sans without competing with it.
+          fontSize: '16px',
+          lineHeight: 1.6,
           background: 'var(--sfp-gray)',
           borderLeft: '2px solid var(--sfp-navy)',
           padding: '2px 13px 9px',
