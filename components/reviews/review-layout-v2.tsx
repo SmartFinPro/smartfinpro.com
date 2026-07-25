@@ -278,13 +278,16 @@ export function ReviewLayoutV2({
               paragraph component asks for 16px text, which puts a line at
               roughly 95 characters — well past the 60–75 that typography
               research treats as comfortable, and the main reason a 4,100-word
-              review reads as a wall. The rule below caps the MEASURE of running
-              text and gives it editorial leading, while tables, cards, callouts
-              and figures keep the full 760px they need.
-              The cap is in rem, not ch: `ch` is the width of the "0" glyph,
-              which in Inter is about 0.63em while running prose averages closer
-              to 0.48em — 68ch measured out at 729px, i.e. ~86 characters, still
-              far past the target. 37rem lands near 72.
+              review reads as a wall.
+              Operator decision (2026-07-21), taken after seeing a capped
+              measure rendered: running text keeps the FULL column width, so it
+              aligns with the verdict box and the section-verdict callouts
+              directly above it — a narrower text column underneath a
+              full-width box read as a misalignment. The readability gain
+              therefore comes from type rather than from measure: 17px at 1.75
+              leading instead of 16px at the browser's default, which takes a
+              line from ~95 characters to ~82 and materially opens the line
+              spacing. No max-width, deliberately.
               Written as a scoped <style> rather than utility classes on
               purpose: the paragraphs are produced by StyledP inside MDX, whose
               `leading-[1.7] mb-5` demonstrably do not reach the rendered
@@ -295,8 +298,7 @@ export function ReviewLayoutV2({
           <style
             dangerouslySetInnerHTML={{
               __html: `
-.review-v2-prose > * > p { max-width: 37rem; font-size: 17px; line-height: 1.75; margin: 0 0 1.15em; }
-.review-v2-prose > * > ul, .review-v2-prose > * > ol { max-width: 37rem; }
+.review-v2-prose > * > p { font-size: 17px; line-height: 1.75; margin: 0 0 1.15em; }
 @media (max-width: 640px) { .review-v2-prose > * > p { font-size: 16.5px; line-height: 1.7; } }
 `,
             }}

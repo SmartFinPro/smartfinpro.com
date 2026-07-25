@@ -362,21 +362,77 @@ export function ScoreInField({ field, position, fieldCount }: ScoreInFieldProps)
                   dots instead of one blob. */}
               {rows.map((row, i) => {
                 if (row.isYou) return null;
+                const pct = toPercent(row.score, domainMin, domainMax);
+                // Keep the flyout inside the rail at the extremes: anchor it by
+                // its left edge near the start, its right edge near the end,
+                // centred everywhere between. Without this the first and last
+                // competitor's label is half cut off by the card.
+                const anchor =
+                  pct < 12 ? 'translateX(0)' : pct > 88 ? 'translateX(-100%)' : 'translateX(-50%)';
                 return (
                   <span
                     key={`${row.rank}-${row.name}-${i}`}
+                    // The wrapper is the hit area: 22px, more than double the
+                    // 10px dot, because a 10px hover target is unusable in
+                    // practice — the dot itself stays 10px.
+                    // NOT focusable on purpose. This whole rail is aria-hidden,
+                    // and a focusable element inside an aria-hidden subtree is
+                    // a defect in itself; making it focusable properly would
+                    // also add one tab stop per competitor. The hover label is
+                    // a mouse-only enhancement, and every value it can reveal
+                    // is available to assistive tech in the visually-hidden
+                    // list below the rail.
+                    className="group absolute"
                     style={{
-                      position: 'absolute',
-                      left: `${toPercent(row.score, domainMin, domainMax)}%`,
-                      top: '5px',
-                      width: '10px',
-                      height: '10px',
-                      marginLeft: '-5px',
-                      borderRadius: '50%',
-                      background: 'var(--sfp-slate)',
-                      boxShadow: '0 0 0 2px #fff',
+                      left: `${pct}%`,
+                      top: 0,
+                      width: '22px',
+                      height: '20px',
+                      marginLeft: '-11px',
+                      cursor: 'default',
                     }}
-                  />
+                  >
+                    <span
+                      aria-hidden="true"
+                      style={{
+                        position: 'absolute',
+                        left: '50%',
+                        top: '5px',
+                        width: '10px',
+                        height: '10px',
+                        marginLeft: '-5px',
+                        borderRadius: '50%',
+                        background: 'var(--sfp-slate)',
+                        boxShadow: '0 0 0 2px #fff',
+                      }}
+                    />
+                    {/* Name + score of the competitor behind this dot. Hidden
+                        by opacity rather than display so it is laid out (and
+                        therefore correctly positioned) before it is shown, and
+                        pointer-events-none so it can never swallow the hover
+                        that produced it. */}
+                    <span
+                      className="pointer-events-none absolute opacity-0 transition-opacity duration-150 group-hover:opacity-100"
+                      style={{
+                        left: '50%',
+                        bottom: '22px',
+                        transform: anchor,
+                        whiteSpace: 'nowrap',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        color: '#fff',
+                        background: 'var(--sfp-ink)',
+                        padding: '4px 8px',
+                        borderRadius: '6px',
+                        zIndex: 2,
+                      }}
+                    >
+                      {row.name}{' '}
+                      <span style={{ fontFamily: FONT_NUM, fontVariantNumeric: 'tabular-nums' }}>
+                        {row.score.toFixed(1)}
+                      </span>
+                    </span>
+                  </span>
                 );
               })}
               {/* This product — larger, plus a stem up to its label. Shape and
@@ -407,6 +463,22 @@ export function ScoreInField({ field, position, fieldCount }: ScoreInFieldProps)
               />
             </div>
           </div>
+
+          {/* The full field in text. The dots reveal each competitor's name and
+              score on hover, which is a mouse-only affordance — this list makes
+              exactly the same values available to screen readers, keyboard-only
+              users and anyone on a touch device, so no one gets less than the
+              mouse user does. `sr-only` rather than aria-label on each dot: the
+              dots sit inside an aria-hidden rail, and one continuous list reads
+              far better than nine isolated announcements. */}
+          <ul className="sr-only">
+            {rows.map((row, i) => (
+              <li key={`sr-${row.rank}-${row.name}-${i}`}>
+                {row.name}: {row.score.toFixed(1)} out of 10
+                {row.isYou ? ' — the product reviewed on this page' : ''}
+              </li>
+            ))}
+          </ul>
 
           {/* Rail ends as real text — the axis labels stay in the a11y tree. */}
           <div className="flex items-start justify-between gap-4" style={{ marginTop: '8px' }}>
