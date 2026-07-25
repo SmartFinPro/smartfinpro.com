@@ -29,6 +29,7 @@ import type { DecisionBridgeData } from '@/lib/comparison/types';
 import { scoreLabel, rankPhrase } from '@/lib/reviews/score-label';
 import { ScoreBreakdown } from './score-breakdown';
 import { EssentialFactsGrid } from './essential-facts-grid';
+import { CALLOUT_ARTICLE } from '@/lib/reviews/callout-style';
 import type { EssentialFact } from '@/lib/reviews/verdict-frontmatter';
 
 /** The audited cockpit position for the reviewed product — same shape as
@@ -94,26 +95,10 @@ export function VerdictCard({
             under an H1 naming the product and above the summary itself — the
             reader knows what an opening paragraph in a tinted panel is. The
             panel does the marking; the word only took a line.
-            Set at the body size (18px), not below it: this is the most
-            important paragraph on the page and used to render smaller than
-            the running text underneath it. */}
-        <p
-          style={{
-            // Sans, not the serif it used to be, and at the running-text size:
-            // "same as the rest of the text" (operator). The reference named as
-            // easy to read (dollarscout.net) sets its whole article in one sans
-            // at 18px/1.63 and uses no serif for reading text at all. The panel
-            // tint is what sets this paragraph apart; it does not need a second
-            // typeface to do it.
-            fontFamily: 'var(--font-primary)',
-            fontSize: '18px',
-            lineHeight: 1.65,
-            background: 'var(--sfp-gray)',
-            padding: '14px 16px',
-            margin: '0 0 18px',
-            color: 'var(--sfp-ink)',
-          }}
-        >
+            Styling comes from CALLOUT_ARTICLE so this panel, the per-section
+            verdicts and the editorial aside are one look — they had drifted
+            into three backgrounds and two typefaces. */}
+        <p style={{ ...CALLOUT_ARTICLE, margin: '0 0 18px' }}>
           {verdict.summary}
         </p>
 
