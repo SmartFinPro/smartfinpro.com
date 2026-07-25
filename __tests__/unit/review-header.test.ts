@@ -5,8 +5,8 @@
 //
 // Covers the plan's explicit contract: no V1 title suffix, MetaLine segment
 // omission ("Daten fehlen ⇒ Segment entfällt ersatzlos"), positioning-line
-// presence gating, the exact operator-approved DisclosureLine wording, and
-// the trading/forex-only risk addendum.
+// presence gating. The DisclosureLine moved to its own component and is
+// covered by __tests__/unit/review-disclosure.test.ts.
 
 import { describe, it, expect } from 'vitest';
 import { createElement as h } from 'react';
@@ -99,77 +99,5 @@ describe('ReviewHeader', () => {
       }),
     );
     expect(withoutPositioning).not.toContain('Best for copy traders');
-  });
-
-  it('renders the DisclosureLine with the exact operator-approved wording and a How-we-make-money link', () => {
-    const html = renderToStaticMarkup(
-      h(ReviewHeader, {
-        title: 'Mercury Review',
-        breadcrumbs: BREADCRUMBS,
-        category: 'business-banking',
-        modifiedDate: '2026-07-17',
-      }),
-    );
-    // Asserted against the TEXT, not the markup. "BEST-X Score." now sits in a
-    // nowrap span so the term cannot break mid-phrase, which split the raw HTML
-    // string without changing a single rendered character. This is the wording
-    // the operator approved and it is a compliance line, so the check has to
-    // survive presentational markup rather than pin it.
-    const text = html.replace(/<[^>]+>/g, '');
-    expect(text).toContain(
-      'SmartFinPro may earn a commission from partner links. This never affects our BEST-X Score.',
-    );
-    expect(html).toContain('href="/affiliate-disclosure"');
-    expect(html).toContain('How we make money');
-  });
-
-  it('appends the leverage-risk addendum only for a leverage category AND hasLeverageRisk=true', () => {
-    // trading + flag → addendum
-    const tradingLeveraged = renderToStaticMarkup(
-      h(ReviewHeader, {
-        title: 'Plus500 Review',
-        breadcrumbs: BREADCRUMBS,
-        category: 'trading',
-        modifiedDate: '2026-07-17',
-        hasLeverageRisk: true,
-      }),
-    );
-    expect(tradingLeveraged).toContain('high risk of losing money');
-
-    // forex + flag → addendum
-    const forexLeveraged = renderToStaticMarkup(
-      h(ReviewHeader, {
-        title: 'IG Review',
-        breadcrumbs: BREADCRUMBS,
-        category: 'forex',
-        modifiedDate: '2026-07-17',
-        hasLeverageRisk: true,
-      }),
-    );
-    expect(forexLeveraged).toContain('high risk of losing money');
-
-    // trading WITHOUT the flag (e.g. eToro US — no CFDs) → NO addendum.
-    // This is the fix: the category alone must not print a CFD warning.
-    const tradingNoLeverage = renderToStaticMarkup(
-      h(ReviewHeader, {
-        title: 'eToro Review',
-        breadcrumbs: BREADCRUMBS,
-        category: 'trading',
-        modifiedDate: '2026-07-17',
-      }),
-    );
-    expect(tradingNoLeverage).not.toContain('high risk of losing money');
-
-    // non-leverage category never shows it, flag or not.
-    const banking = renderToStaticMarkup(
-      h(ReviewHeader, {
-        title: 'Mercury Review',
-        breadcrumbs: BREADCRUMBS,
-        category: 'business-banking',
-        modifiedDate: '2026-07-17',
-        hasLeverageRisk: true,
-      }),
-    );
-    expect(banking).not.toContain('high risk of losing money');
   });
 });

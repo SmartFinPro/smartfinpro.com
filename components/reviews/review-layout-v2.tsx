@@ -13,7 +13,7 @@
 //     → MDX body, wrapped in SectionVerdictsProvider (5 mdx-owned H2 sections)
 //     → #alternatives  AlternativesSection (CTA-Zone 1)
 //     → FinalDecision (CTA-Zone 2) + CategoryRiskDisclosure
-//     → MethodologySection
+//     → ReviewDisclosure + MethodologySection
 //     → FAQSection (includeSchema=false — this file emits the one FAQPage script)
 //     → Related Topics / pillar backlink / sibling reviews
 //   [desktop-only, right rail] ReviewSidebar, sticky
@@ -69,6 +69,7 @@ import { SectionVerdictsProvider } from './section-blocks';
 import { AlternativesSection } from './alternatives-section';
 import { FinalDecision } from './final-decision';
 import { MethodologySection } from './methodology-section';
+import { ReviewDisclosure } from './review-disclosure';
 import { CategoryRiskDisclosure } from './category-risk-disclosure';
 import { SafeMDX } from '@/components/content/SafeMDX';
 import { FAQSection } from '@/components/marketing/faq-section';
@@ -202,7 +203,6 @@ export function ReviewLayoutV2({
             category={category}
             dataVerifiedDate={meta.dataVerifiedDate}
             modifiedDate={meta.modifiedDate}
-            hasLeverageRisk={meta.hasLeverageRisk}
           />
 
           {/* #verdict — layout-owned nav anchor (REVIEW_V2_ANCHORS). The
@@ -376,6 +376,15 @@ export function ReviewLayoutV2({
               <CategoryRiskDisclosure category={category} hasLeverageRisk={meta.hasLeverageRisk} className="mt-3 text-xs" />
             </div>
           )}
+
+          {/* Affiliate disclosure — moved out of ReviewHeader (operator,
+              2026-07-21) to sit here, immediately before the methodology it
+              refers to, instead of directly under the H1. The CTA-adjacent
+              disclosure is unaffected: ReviewSidebar renders its own beneath
+              the Visit button, at every breakpoint. */}
+          <div style={{ marginBottom: '28px' }}>
+            <ReviewDisclosure category={category} hasLeverageRisk={meta.hasLeverageRisk} />
+          </div>
 
           {/* Methodology — no nav entry (T0a) */}
           <div style={{ marginBottom: '40px' }}>
