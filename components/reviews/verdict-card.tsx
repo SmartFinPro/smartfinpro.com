@@ -43,13 +43,6 @@ export interface VerdictCardProps {
   /** Rendered in the right rail under the score, filling space the score
    *  panel leaves empty — see the note at the render site. */
   essentialFacts?: EssentialFact[];
-  /**
-   * Resolved internal review link for verdict.bestAlternative, or
-   * null/undefined when that competitor has no review yet — rendered as
-   * plain text, never a dead link (same convention as
-   * DecisionBridgeFieldRow.reviewHref in lib/comparison/types.ts).
-   */
-  bestAlternativeHref?: string | null;
   /** Audited cockpit position (T0b) — null when the product isn't in this field yet. */
   position: ReviewPosition | null;
   /** Total field size — required to phrase `position`'s rank; ignored when `position` is null. */
@@ -60,7 +53,6 @@ export interface VerdictCardProps {
 
 export function VerdictCard({
   verdict,
-  bestAlternativeHref,
   position,
   fieldCount,
   essentialFacts,
@@ -151,31 +143,6 @@ export function VerdictCard({
           </span>
         </div>
 
-        {verdict.bestAlternative && (
-          <p
-            style={{
-              fontFamily: 'var(--font-secondary)',
-              fontSize: '18px',
-              lineHeight: 1.55,
-              color: 'var(--sfp-slate)',
-              margin: 0,
-            }}
-          >
-            Best alternative:{' '}
-            {bestAlternativeHref ? (
-              <Link
-                href={bestAlternativeHref}
-                style={{ color: 'var(--sfp-navy)', textDecoration: 'none', borderBottom: '1px solid var(--sfp-hairline)' }}
-              >
-                {verdict.bestAlternative.name}
-              </Link>
-            ) : (
-              <strong style={{ color: 'var(--sfp-ink)', fontWeight: 600 }}>{verdict.bestAlternative.name}</strong>
-            )}
-            {': '}
-            {verdict.bestAlternative.reason}
-          </p>
-        )}
 
         {/* Best for / Not for, inside the card rather than as its own band
             below it (operator, 2026-07-21). The left column ran out of content
