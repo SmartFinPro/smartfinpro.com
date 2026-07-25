@@ -28,8 +28,8 @@
 //            statement, legible in a second.
 //   Rail 2 — that same highlighted slice, magnified, with every provider as a
 //            tick mark and this product as a labelled pin.
-// The two rails are joined into ONE figure by an SVG "zoom lens" connector —
-// two hairlines running from the ends of the highlighted band down to the full
+// The two rails are joined into ONE figure by an SVG "zoom lens" connector — a
+// tinted cone opening from the ends of the highlighted band out to the full
 // width of the detail axis (the standard print-graphics inset convention), and
 // the detail axis carries a serif figure caption naming the span ("Inside that
 // 1.6-point band, magnified"). Context → detail, one composition, not two
@@ -40,8 +40,11 @@
 // The card is set like printed institutional research, not like a dashboard:
 //   - No decorative accent bars, no uppercase letter-spaced eyebrow labels,
 //     no monospace. Numerals are tabular figures in the house sans
-//     (font-variant-numeric: tabular-nums); the headline and the single large
-//     display score are set in the serif (--font-secondary).
+//     (font-variant-numeric: tabular-nums). The headline is serif; the single
+//     large display score is NOT — it is set exactly like BestXScore's in
+//     verdict-card.tsx (sans, 700, clamp 34-40px), because it is the same
+//     number as the one in the verdict panel and two different treatments of
+//     one figure read as two different claims.
 //   - Hairlines structure (masthead rule, figure/notes rule, axis lines);
 //     nothing is ornamental. Gold is not used at all — as a graphical object
 //     it is ~2.0:1 and as text 2.79:1, both below the WCAG bar, and an accent
@@ -88,7 +91,7 @@
 import type { CSSProperties } from 'react';
 
 import type { DecisionBridgeData, DecisionBridgeFieldRow } from '@/lib/comparison/types';
-import { rankPhrase } from '@/lib/reviews/score-label';
+import { rankPhrase, scoreLabel } from '@/lib/reviews/score-label';
 
 /** The BEST-X editorial score scale (lib/comparison/types.ts: `score` is 0-10). */
 const SCORE_SCALE_MAX = 10;
@@ -118,7 +121,11 @@ const NUM: CSSProperties = { fontVariantNumeric: 'tabular-nums' };
  * composed. Each step here is a ROLE, so adding a size means adding a role and
  * having to justify it.
  *
- *   display — the score. Appears exactly once; it is the focal figure.
+ *   display — the score. Appears exactly once; it is the focal figure. Its
+ *             size, weight and "/10" treatment are taken verbatim from
+ *             BestXScore in verdict-card.tsx, because the two are the SAME
+ *             number on the same page and were reading as two different
+ *             claims: serif 30px here against sans 34-40px bold there.
  *   title   — the card headline.
  *   body    — everything that is read as language or as a primary datum:
  *             notes, figure caption, the pin label, the rail-end values, the
@@ -129,7 +136,7 @@ const NUM: CSSProperties = { fontVariantNumeric: 'tabular-nums' };
  * Line heights belong to the step, not to the call site, for the same reason.
  */
 const TYPE = {
-  display: { fontSize: '30px', lineHeight: 1 },
+  display: { fontSize: 'clamp(34px, 4vw, 40px)', lineHeight: 1 },
   title: { fontSize: '19px', lineHeight: 1.25 },
   body: { fontSize: '13px', lineHeight: 1.55 },
   micro: { fontSize: '11px', lineHeight: 1.4 },
@@ -281,26 +288,21 @@ export function ScoreInField({ field, position, fieldCount }: ScoreInFieldProps)
         <div style={{ textAlign: 'right' }}>
           <div
             style={{
-              fontFamily: 'var(--font-secondary)',
               ...TYPE.display,
-              letterSpacing: '-0.01em',
+              fontFamily: 'var(--font-primary)',
+              fontWeight: 700,
+              color: 'var(--sfp-ink)',
+              letterSpacing: '-0.02em',
               ...NUM,
             }}
           >
             {you.toFixed(1)}
-            <span style={{ ...TYPE.body, color: 'var(--sfp-slate)' }}>&thinsp;/&thinsp;10</span>
+            <span style={{ fontSize: '17px', fontWeight: 400, color: 'var(--sfp-slate)' }}>/10</span>
           </div>
           {showRank && (
-            <div
-              style={{
-                ...TYPE.body,
-                color: 'var(--sfp-slate)',
-                marginTop: '3px',
-                whiteSpace: 'nowrap',
-                ...NUM,
-              }}
-            >
-              {rankPhrase(rank, total)}
+            <div style={{ fontSize: '12.5px', margin: '7px 0 0', lineHeight: 1.4, whiteSpace: 'nowrap' }}>
+              <span style={{ fontWeight: 600, color: 'var(--sfp-navy)' }}>{scoreLabel(you)}</span>
+              <span style={{ color: 'var(--sfp-slate)' }}> &middot; {rankPhrase(rank, total)}</span>
             </div>
           )}
         </div>
@@ -393,25 +395,20 @@ export function ScoreInField({ field, position, fieldCount }: ScoreInFieldProps)
               aria-hidden="true"
               viewBox="0 0 100 12"
               preserveAspectRatio="none"
-              style={{ display: 'block', width: '100%', height: '14px' }}
+              style={{ display: 'block', width: '100%', height: '26px' }}
             >
-              <line
-                x1={contextStartPct}
-                y1={0}
-                x2={0}
-                y2={12}
-                stroke="var(--sfp-hairline-strong)"
-                strokeWidth={1}
-                vectorEffect="non-scaling-stroke"
-              />
-              <line
-                x1={contextEndPct}
-                y1={0}
-                x2={100}
-                y2={12}
-                stroke="var(--sfp-hairline-strong)"
-                strokeWidth={1}
-                vectorEffect="non-scaling-stroke"
+              {/* A filled cone, not two hairlines. The band can sit anywhere on
+                  the 0-10 axis, and when it sits near one end — eToro's does,
+                  at 78-96% — the far connector has to cross most of the width
+                  over a few pixels of height. As a stroke that renders almost
+                  horizontal and reads as a stray rule someone forgot to
+                  delete, not as a link between two rails. Filled, the same
+                  geometry reads instantly as "this narrow slice, opened up",
+                  which is the print convention for an inset, and it works at
+                  any band position. */}
+              <polygon
+                points={`${contextStartPct},0 ${contextEndPct},0 100,12 0,12`}
+                fill="var(--sfp-sky)"
               />
             </svg>
 
