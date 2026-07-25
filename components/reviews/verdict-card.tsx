@@ -33,6 +33,7 @@
 // ============================================================
 
 import Link from 'next/link';
+import type { ReactNode } from 'react';
 import type { VerdictBlock } from '@/lib/reviews/verdict-frontmatter';
 import type { DecisionBridgeData } from '@/lib/comparison/types';
 import { scoreLabel, rankPhrase } from '@/lib/reviews/score-label';
@@ -58,6 +59,8 @@ export interface VerdictCardProps {
   fieldCount: number;
   /** Defaults to '/methodology' — the same target decision-bridge.tsx's "How we score" link uses. */
   scoreHref?: string;
+  /** Compact CTA/disclosure surface, inserted after audience fit on mobile/tablet. */
+  mobileActions?: ReactNode;
 }
 
 export function VerdictCard({
@@ -66,6 +69,7 @@ export function VerdictCard({
   fieldCount,
   essentialFacts,
   scoreHref = '/methodology',
+  mobileActions,
 }: VerdictCardProps) {
 
   return (
@@ -93,16 +97,30 @@ export function VerdictCard({
       )}
 
       <div className={position ? 'md:col-start-1 md:row-start-1 md:row-span-2' : ''}>
-        {/* No "Our Verdict" label (operator, 2026-07-21). It sat directly
-            under an H1 naming the product and above the summary itself — the
-            reader knows what an opening paragraph in a tinted panel is. The
-            panel does the marking; the word only took a line.
-            Styling comes from CALLOUT_ARTICLE so this panel, the per-section
-            verdicts and the editorial aside are one look — they had drifted
-            into three backgrounds and two typefaces. */}
-        <p style={{ ...CALLOUT_ARTICLE, margin: '0 0 18px' }}>
-          {verdict.summary}
-        </p>
+        {/* Best for / Not for FIRST (operator, 2026-07-25, after an external
+            design audit). It used to close the card, behind the summary prose
+            and the limitation. Measured on a 390px viewport that put "Best for"
+            1.90 viewport heights down the page: a reader had to scroll past
+            roughly 400px of numbers and a 546px block of prose before finding
+            out whether the product was meant for them at all — the one question
+            an opening block exists to answer.
+            The card now reads score → who it is for → what holds it back →
+            the argument in full.
+            This reorders the DOM, not just the visual order (no CSS `order`):
+            these are lists a screen reader walks in sequence, and the same
+            WCAG 1.3.2 / 2.4.3 reasoning that governs the score panel above
+            applies here.
+            Inside the card rather than as its own band below it (operator,
+            2026-07-21). The left column ran out of content well before the
+            score rail beside it ran out of height, so the card ended on a large
+            empty rectangle while a closely related pair of lists sat in a
+            separate block underneath. Same four lists, one container, and every
+            mark in this card is the same icon in the same navy — the
+            limitation and both of these — so it reads as one argument instead
+            of four widgets. */}
+        <BestForNotFor bestFor={verdict.bestFor} notFor={verdict.notFor} />
+
+        {mobileActions}
 
         <div
           style={{
@@ -112,7 +130,7 @@ export function VerdictCard({
             fontSize: '18px',
             lineHeight: 1.55,
             color: 'var(--sfp-ink)',
-            marginBottom: '14px',
+            marginTop: '18px',
           }}
         >
           <MinusCircleIcon size={17} color="var(--sfp-navy)" style={{ flexShrink: 0, marginTop: '4px' }} />
@@ -121,17 +139,20 @@ export function VerdictCard({
           </span>
         </div>
 
-
-        {/* Best for / Not for, inside the card rather than as its own band
-            below it (operator, 2026-07-21). The left column ran out of content
-            well before the score rail beside it ran out of height, so the card
-            ended on a large empty rectangle while a closely related pair of
-            lists sat in a separate block underneath. Same four lists, one
-            container, and every mark in this card is now the same icon in the
-            same navy — the strengths, the limitation and both of these — so it
-            reads as one argument instead of four widgets. */}
+        {/* No "Our Verdict" label (operator, 2026-07-21). It sat directly
+            under an H1 naming the product and above the summary itself — the
+            reader knows what an opening paragraph in a tinted panel is. The
+            panel does the marking; the word only took a line.
+            Styling comes from CALLOUT_ARTICLE so this panel, the per-section
+            verdicts and the editorial aside are one look — they had drifted
+            into three backgrounds and two typefaces.
+            The hairline moved up here with the prose (2026-07-25): it separates
+            the full argument from the quick answers above it, which is the
+            break the card now has. */}
         <div style={{ marginTop: '22px', paddingTop: '20px', borderTop: '1px solid var(--sfp-hairline-row)' }}>
-          <BestForNotFor bestFor={verdict.bestFor} notFor={verdict.notFor} />
+          <p style={{ ...CALLOUT_ARTICLE, margin: 0 }}>
+            {verdict.summary}
+          </p>
         </div>
       </div>
 
@@ -141,20 +162,45 @@ export function VerdictCard({
           empty for most of its height while a five-tile grid took a full
           screen-width block further down. Same information, one section fewer.
 
-          Its own grid item — col 2 / row 2, with the verdict column spanning
-          both rows — rather than a child of the score panel. Inside the panel
-          it inherited the panel's DOM position, which on mobile is FIRST: the
-          facts then sat between the score and the verdict prose and pushed the
-          summary from y=500 to y=1520, i.e. out of the opening screen. As a
-          separate item it is last in the DOM, so mobile reads score → verdict →
-          facts while desktop still stacks it under the score. */}
+          Desktop keeps that col 2 / row 2 rail. Mobile receives the same facts
+          behind a collapsed native details control: every value and source
+          remains available, but the five-row block no longer consumes the
+          opening before a reader asks for it. */}
       {position && essentialFacts && essentialFacts.length > 0 && (
-        <div
-          className="md:col-start-2 md:row-start-2"
-          style={{ borderTop: '1px solid var(--sfp-hairline-row)', paddingTop: '16px' }}
-        >
-          <EssentialFactsGrid facts={essentialFacts} />
-        </div>
+        <>
+          <div
+            className="hidden md:block md:col-start-2 md:row-start-2"
+            style={{ borderTop: '1px solid var(--sfp-hairline-row)', paddingTop: '16px' }}
+          >
+            <EssentialFactsGrid facts={essentialFacts} />
+          </div>
+          <details
+            className="md:hidden"
+            style={{
+              borderTop: '1px solid var(--sfp-hairline-row)',
+              paddingTop: '16px',
+              fontFamily: 'var(--font-primary)',
+            }}
+          >
+            <summary
+              className="cursor-pointer list-none [&::-webkit-details-marker]:hidden"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                color: 'var(--sfp-navy)',
+                fontSize: '13.5px',
+                fontWeight: 600,
+              }}
+            >
+              Essential facts
+              <span aria-hidden="true" style={{ color: 'var(--sfp-slate)', fontSize: '18px' }}>+</span>
+            </summary>
+            <div style={{ paddingTop: '16px' }}>
+              <EssentialFactsGrid facts={essentialFacts} />
+            </div>
+          </details>
+        </>
       )}
     </div>
   );

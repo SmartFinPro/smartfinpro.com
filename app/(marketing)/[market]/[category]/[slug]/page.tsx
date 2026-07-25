@@ -194,18 +194,19 @@ export default async function ContentPage({ params }: ContentPageProps) {
     // against the already-loaded category content list.
 
     return (
-      <main id="main-content">
-        <ReviewLayoutV2
-          meta={content.meta}
-          mdxSource={mdxSource}
-          market={market as Market}
-          category={category as Category}
-          slug={slug}
-          decisionBridge={decisionBridge}
-          siblingReviews={siblingReviews}
-          crossCategoryContent={crossCategoryContent}
-        />
-      </main>
+      // The `<main id="main-content">` landmark is already provided by the shared
+      // MarketingLayout (app/(marketing)/layout.tsx) — a second one here would
+      // duplicate both the element and the id (invalid HTML, confuses a11y tree).
+      <ReviewLayoutV2
+        meta={content.meta}
+        mdxSource={mdxSource}
+        market={market as Market}
+        category={category as Category}
+        slug={slug}
+        decisionBridge={decisionBridge}
+        siblingReviews={siblingReviews}
+        crossCategoryContent={crossCategoryContent}
+      />
     );
   }
 
@@ -267,49 +268,50 @@ export default async function ContentPage({ params }: ContentPageProps) {
     } catch { /* EV ranking non-critical — fall through to CPA sort */ }
 
     return (
-      <main id="main-content">
-        <ReportLayout
-          ctaPartners={rankedPartners}
-          mdxSource={mdxSource}
-          relatedArticles={relatedArticles}
-          siblingReviews={siblingReviews}
-          crossCategoryContent={crossCategoryContent}
-          market={market as Market}
-          category={category as Category}
-          slug={slug}
-          protocolBridge={content.meta.protocolBridge}
-          miniQuiz={content.meta.miniQuiz}
-          decisionBridge={decisionBridge}
-          review={{
-            title: content.meta.seoTitle || content.meta.title,
-            description: content.meta.description,
-            productName: content.meta.title.split(' ')[0], // Extract product name
-            category: content.meta.category,
-            market: content.meta.market,
-            rating: content.meta.rating,
-            reviewCount: content.meta.reviewCount || 0,
-            affiliateUrl: content.meta.affiliateUrl || '#',
-            pros: content.meta.pros || [],
-            cons: content.meta.cons || [],
-            bestFor: content.meta.bestFor || '',
-            pricing: content.meta.pricing || '',
-            currency: content.meta.currency,
-            guarantee: content.meta.guarantee,
-            publishDate: content.meta.publishDate,
-            modifiedDate: content.meta.modifiedDate,
-            author: content.meta.author,
-            reviewedBy: content.meta.reviewedBy,
-            readingTime: content.readingTime?.text,
-            faqs: content.meta.faqs || [],
-            sections: content.meta.sections || [],
-            testimonials: [],
-            competitors: [],
-            content: '',
-            hasLeverageRisk: content.meta.hasLeverageRisk,
-            lossPercentage: content.meta.lossPercentage,
-          }}
-        />
-      </main>
+      // The `<main id="main-content">` landmark is already provided by the shared
+      // MarketingLayout (app/(marketing)/layout.tsx) — a second one here would
+      // duplicate both the element and the id (invalid HTML, confuses a11y tree).
+      <ReportLayout
+        ctaPartners={rankedPartners}
+        mdxSource={mdxSource}
+        relatedArticles={relatedArticles}
+        siblingReviews={siblingReviews}
+        crossCategoryContent={crossCategoryContent}
+        market={market as Market}
+        category={category as Category}
+        slug={slug}
+        protocolBridge={content.meta.protocolBridge}
+        miniQuiz={content.meta.miniQuiz}
+        decisionBridge={decisionBridge}
+        review={{
+          title: content.meta.seoTitle || content.meta.title,
+          description: content.meta.description,
+          productName: content.meta.title.split(' ')[0], // Extract product name
+          category: content.meta.category,
+          market: content.meta.market,
+          rating: content.meta.rating,
+          reviewCount: content.meta.reviewCount || 0,
+          affiliateUrl: content.meta.affiliateUrl || '#',
+          pros: content.meta.pros || [],
+          cons: content.meta.cons || [],
+          bestFor: content.meta.bestFor || '',
+          pricing: content.meta.pricing || '',
+          currency: content.meta.currency,
+          guarantee: content.meta.guarantee,
+          publishDate: content.meta.publishDate,
+          modifiedDate: content.meta.modifiedDate,
+          author: content.meta.author,
+          reviewedBy: content.meta.reviewedBy,
+          readingTime: content.readingTime?.text,
+          faqs: content.meta.faqs || [],
+          sections: content.meta.sections || [],
+          testimonials: [],
+          competitors: [],
+          content: '',
+          hasLeverageRisk: content.meta.hasLeverageRisk,
+          lossPercentage: content.meta.lossPercentage,
+        }}
+      />
     );
   }
 

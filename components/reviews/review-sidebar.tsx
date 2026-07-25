@@ -7,7 +7,7 @@
 //
 //   a. Report-Info-Card — the same card components/marketing/report-layout.tsx
 //      renders in its sidebar ("EXPERT REVIEW" eyebrow, product name,
-//      "Published {Month Year}"), with the generic Navy/BarChart3 icon
+//      "Data verified {day month year}"), with the generic Navy/BarChart3 icon
 //      swapped for the reviewed provider's real logo when one exists in
 //      public/images/brokers/ — fs.existsSync-checked against the real file,
 //      never a guessed or hardcoded-present logo. Falls back to the
@@ -25,32 +25,25 @@
 //      hasLeverageRisk frontmatter flag — the same F-04b rule
 //      report-layout.tsx already applies for its risk warning.
 //
-// Sticky only at lg: (`lg:sticky lg:top-24`) — plain static/in-flow below
-// that breakpoint. This lets ONE component serve both roles ReviewLayoutV2
-// needs: the desktop rail (rendered once inside a `hidden lg:block`
-// wrapper) and the mobile in-flow fallback rendered directly under the
-// Verdict zone (`lg:hidden` wrapper) — the same dual-render-per-breakpoint
-// pattern report-layout.tsx already uses for its ProtocolBridge "mobile
-// fallback" (see that file's comment above the `lg:hidden` ProtocolBridge
-// render).
+// Sticky at lg (`lg:sticky lg:top-24`) and mounted only in ReviewLayoutV2's
+// desktop rail. Smaller viewports use ReviewMobileActions inside VerdictCard,
+// which avoids repeating this component's provider card and Market Check.
 // ============================================================
 
 import fs from 'fs';
 import path from 'path';
-import Link from 'next/link';
-import { BUTTON_COMPARE, BUTTON_VISIT, AFFILIATE_LINK_TEXT } from './button-style';
 import { BarChart3 } from 'lucide-react';
 import { DecisionBridge, DecisionBridgeProvider } from '@/components/marketing/decision-bridge';
-import { TrackedAffiliateLink } from '@/components/marketing/tracked-affiliate-link';
 import { AffiliateDisclosure } from '@/components/ui/affiliate-disclosure';
 import { RiskWarningBox } from '@/components/marketing/risk-warning';
 import type { Market, Category } from '@/lib/i18n/config';
 import type { DecisionBridgeData } from '@/lib/comparison/types';
+import { ReviewActionButtons } from './review-action-buttons';
 
 export interface ReviewSidebarProps {
   productName: string;
-  /** ISO YYYY-MM-DD (ContentMeta.publishDate) — rendered as "Published {Month Year}". */
-  publishDate: string;
+  /** Latest available ISO YYYY-MM-DD review verification date. */
+  verifiedDate: string;
   decisionBridge: DecisionBridgeData;
   /** Same string ReviewLayoutV2 already computes for FinalDecision's CTA
    *  ("Compare all {fieldCount} {topicLabel}") — reused, not recomputed, so
@@ -63,22 +56,19 @@ export interface ReviewSidebarProps {
   hasLeverageRisk?: boolean;
 }
 
-const MONTHS = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
-];
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-/** ISO YYYY-MM-DD → "February 2026". Manual parse (no `Date`) — same
+/** ISO YYYY-MM-DD → "18 Jul 2026". Manual parse (no `Date`) — same
  *  discipline as decision-bridge.tsx's formatVerifiedDate. This component
  *  only ever renders on the server, so a `Date`-based format wouldn't risk
  *  a hydration mismatch here, but a manual parse keeps one date-formatting
  *  idiom across the V2 zones instead of introducing a second one. */
-function formatPublishMonth(iso: string): string | null {
+function formatVerifiedDate(iso: string): string | null {
   const parts = iso.split('-');
   if (parts.length !== 3) return null;
-  const [y, m] = parts.map(Number);
-  if (!y || !m || m < 1 || m > 12) return null;
-  return `${MONTHS[m - 1]} ${y}`;
+  const [y, m, d] = parts.map(Number);
+  if (!y || !m || !d || m < 1 || m > 12 || d < 1 || d > 31) return null;
+  return `${d} ${MONTHS[m - 1]} ${y}`;
 }
 
 /**
@@ -118,7 +108,7 @@ function resolveLogoSrc(slug: string | null | undefined): { src: string; isWordm
 
 export function ReviewSidebar({
   productName,
-  publishDate,
+  verifiedDate,
   decisionBridge,
   compareLabel,
   affiliateUrl,
@@ -126,7 +116,7 @@ export function ReviewSidebar({
   category,
   hasLeverageRisk,
 }: ReviewSidebarProps) {
-  const publishedLabel = formatPublishMonth(publishDate);
+  const verifiedLabel = formatVerifiedDate(verifiedDate);
   const logo = resolveLogoSrc(decisionBridge.position?.slug);
   // Prominent CFD/leverage warning ONLY for products that actually carry that
   // risk (frontmatter `hasLeverageRisk`), NOT every trading/forex page. The
@@ -154,7 +144,6 @@ export function ReviewSidebar({
                 // and drop the redundant "Expert Review / {name}" text block —
                 // the wordmark already reads the brand name. Only a small
                 // uppercase context label stays above it.
-                // eslint-disable-next-line @next/next/no-img-element
                 <div className="mb-3">
                   <div
                     style={{
@@ -215,10 +204,10 @@ export function ReviewSidebar({
                   </div>
                 </div>
               )}
-              {publishedLabel && (
+              {verifiedLabel && (
                 <div className="flex justify-between text-sm">
-                  <span style={{ color: 'var(--sfp-slate)' }}>Published</span>
-                  <span className="font-semibold" style={{ color: 'var(--sfp-ink)' }}>{publishedLabel}</span>
+                  <span style={{ color: 'var(--sfp-slate)' }}>Data verified</span>
+                  <span className="font-semibold" style={{ color: 'var(--sfp-ink)' }}>{verifiedLabel}</span>
                 </div>
               )}
             </div>
@@ -230,34 +219,16 @@ export function ReviewSidebar({
             Market Check. Colours are Tailwind classes (NOT inline style) so the
             :hover rules actually win — inline `background`/`color` would out-
             specify a hover class and silently kill the effect. */}
-        <div className="flex flex-col gap-2.5">
-          <Link
-            href={decisionBridge.cockpitHref}
-            className={`${BUTTON_COMPARE} block w-full`}
-          >
-            {compareLabel}
-          </Link>
-          {affiliateUrl && (
-            <TrackedAffiliateLink
-              href={affiliateUrl}
-              // color + textDecoration as inline style (specificity 1,0,0) — the
-              // global `a[href^="/go/"]` affiliate rule (globals.css:774, gold +
-              // underline, specificity 0,1,1) otherwise out-specifies Tailwind's
-              // text-white / no-underline utility classes. bg stays a class so the
-              // brightness/lift hover still works (inline bg would kill :hover).
-              className={`${BUTTON_VISIT} block w-full`}
-              style={AFFILIATE_LINK_TEXT}
-              eventLabel={`Visit ${productName}`}
-              market={market}
-              category={category}
-              pageType="review"
-              layoutVariant="v2_sidebar"
-              placement="sidebar"
-            >
-              Visit {productName}
-            </TrackedAffiliateLink>
-          )}
-        </div>
+        <ReviewActionButtons
+          productName={productName}
+          compareHref={decisionBridge.cockpitHref}
+          compareLabel={compareLabel}
+          affiliateUrl={affiliateUrl}
+          market={market}
+          category={category}
+          layoutVariant="v2_sidebar"
+          placement="sidebar"
+        />
 
         {/* b. Market Check — internal CTA suppressed; (c) above is the sidebar's one Compare button. */}
         <div
