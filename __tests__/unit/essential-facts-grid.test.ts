@@ -68,7 +68,7 @@ describe('EssentialFactsGrid', () => {
     expect(renderToStaticMarkup(h(EssentialFactsGrid, { facts: [] }))).toBe('');
   });
 
-  it('renders up to 6 facts in a responsive 2/3-column grid (no <table>)', () => {
+  it('renders up to 6 facts as a single-column definition list (no <table>, no tiles)', () => {
     const sixFacts: EssentialFact[] = Array.from({ length: 6 }, (_, i) => ({
       label: `Fact ${i + 1}`,
       value: `${i + 1}`,
@@ -80,13 +80,32 @@ describe('EssentialFactsGrid', () => {
       expect(html).toContain(`Fact ${i}`);
     }
     expect(html).not.toContain('<table');
-    // Two per row on small screens, three from md up. Previously a CSS grid
-    // (grid-cols-2 / md:grid-cols-3), now flex-wrap with an explicit basis —
-    // the change exists because a fixed 3-column grid left a hole in the last
-    // row at 5 facts, while `grow` lets a short final row fill the width. The
-    // assertion tracks the two breakpoint widths rather than the mechanism, so
-    // it still fails if either row size is lost.
-    expect(html).toContain('basis-[calc(50%-6px)]');
-    expect(html).toContain('md:basis-[calc(33.333%-8px)]');
+    // The facts moved out of a full-width tile grid into the score rail, so
+    // they are now a <dl> stack rather than wrapped flex cards. Asserted on the
+    // semantics (label/value pairs), not on layout classes.
+    expect(html).toContain('<dl');
+    expect(html).toContain('<dt');
+    expect(html).toContain('<dd');
+  });
+
+  it('states one shared date when every fact carries it, instead of repeating it per fact', () => {
+    const facts: EssentialFact[] = [
+      { label: 'A', value: '1', asOf: '2026-07-18', sourceHref: 'https://example.com/a' },
+      { label: 'B', value: '2', asOf: '2026-07-18', sourceHref: 'https://example.com/b' },
+    ];
+    const html = renderToStaticMarkup(h(EssentialFactsGrid, { facts }));
+    expect(html).toContain('All figures as of 18 Jul 2026.');
+    expect(html).not.toContain('as of 18 Jul 2026 ·');
+  });
+
+  it('keeps a per-fact date when the facts do NOT share one (never asserts a freshness a figure lacks)', () => {
+    const facts: EssentialFact[] = [
+      { label: 'A', value: '1', asOf: '2026-07-18', sourceHref: 'https://example.com/a' },
+      { label: 'B', value: '2', asOf: '2026-03-02', sourceHref: 'https://example.com/b' },
+    ];
+    const html = renderToStaticMarkup(h(EssentialFactsGrid, { facts }));
+    expect(html).not.toContain('All figures as of');
+    expect(html).toContain('as of 18 Jul 2026');
+    expect(html).toContain('as of 2 Mar 2026');
   });
 });

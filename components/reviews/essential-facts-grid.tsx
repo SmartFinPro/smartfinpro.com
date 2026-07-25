@@ -45,101 +45,61 @@ export interface EssentialFactsGridProps {
 export function EssentialFactsGrid({ facts }: EssentialFactsGridProps) {
   if (!facts || facts.length === 0) return null;
 
+  // One shared date line instead of five. Only when EVERY fact really carries
+  // the same parsed date — otherwise each fact keeps its own, because "as of"
+  // is a per-fact claim and collapsing differing dates into one would assert
+  // a freshness that some of the figures do not have.
+  const dates = facts.map((f) => formatIsoDate(f.asOf));
+  const sharedDate = dates.every((d) => d !== null && d === dates[0]) ? dates[0] : null;
+
   return (
     <div style={{ fontFamily: 'var(--font-primary)' }}>
-      {/* Titel-Eyebrow — same idiom as the ScoreBreakdown / Best-for zone
-          headings, gives the block a named identity instead of reading as a
-          bare data table (Betreiber-Wunsch 2026-07-19: "prominenter, mehr
-          enterprise premium"). */}
       <div
         style={{
-          fontSize: '10.5px',
+          fontSize: '10px',
           letterSpacing: '0.14em',
           textTransform: 'uppercase',
           color: 'var(--sfp-slate)',
           fontWeight: 600,
-          marginBottom: '12px',
+          marginBottom: '10px',
         }}
       >
         Essential Facts
       </div>
 
-      {/* Individual elevated stat cards with a gap (not a dense hairline
-          table): rounded, hairline-strong frame, white bg, generous padding
-          — the same card family as VerdictCard / the sidebar cards, so the
-          block reads as a deliberate premium module. `items-stretch` +
-          marginTop:auto on the source line keeps every card's source row
-          bottom-aligned across a row.
-
-          Flex-wrap instead of fixed grid columns: the fact count varies per
-          review (schema allows 4-6, some reviews carry 5), and a fixed
-          3-column grid leaves a visible hole whenever count % 3 !== 0
-          (5 facts → 3+2 with an empty cell). With wrap + grow the cards in
-          the last row share the leftover width, so ANY count lands balanced
-          — no per-count special-casing. The basis values subtract each
-          card's share of the gap (gap-3 = 12px → 6px at 2-up, 8px at 3-up)
-          so full rows still resolve to exactly 2 (mobile) / 3 (md) columns
-          — same rhythm as the old grid. */}
-      <div className="flex flex-wrap items-stretch gap-3">
+      <dl style={{ margin: 0 }}>
         {facts.map((fact, i) => {
-          const asOfLabel = formatIsoDate(fact.asOf);
+          const asOfLabel = dates[i];
           return (
             <div
               key={i}
-              // border + background as CLASSES (not inline style): an inline
-              // `background`/`border` (specificity 1,0,0) would out-specify the
-              // Tailwind hover utilities (0,2,0) and silently kill the hover —
-              // same trap as the sidebar Visit button. Base white/hairline →
-              // hover light-blue fill + navy border.
-              // max-w caps how far `grow` may stretch a short final row. Without
-              // it, 4 facts render as three 245px cards above one 760px card
-              // spanning the whole column — which looks more broken than the
-              // gap this layout replaced. 4 is the minimum EssentialFactsSchema
-              // allows, so it is the common case, not an edge one. Capped at
-              // half the row, a 4th card sits at ~half width and the 5-fact case
-              // (two cards sharing the last row) is unaffected.
-              className="flex min-w-0 grow basis-[calc(50%-6px)] flex-col rounded-[14px] border border-[var(--sfp-hairline-strong)] bg-white transition-colors duration-200 hover:border-[var(--sfp-navy)] hover:bg-[var(--sfp-sky)] md:max-w-[calc(50%-6px)] md:basis-[calc(33.333%-8px)]"
-              style={{ padding: '18px 20px' }}
+              style={{
+                paddingTop: i === 0 ? 0 : '11px',
+                marginTop: i === 0 ? 0 : '11px',
+                borderTop: i === 0 ? 'none' : '1px solid var(--sfp-hairline-row)',
+              }}
             >
-              <div
+              <dt style={{ fontSize: '12px', lineHeight: 1.35, color: 'var(--sfp-slate)' }}>{fact.label}</dt>
+              <dd
                 style={{
-                  fontSize: '9.5px',
-                  letterSpacing: '0.12em',
-                  textTransform: 'uppercase',
-                  color: 'var(--sfp-navy)',
-                  fontWeight: 700,
-                  marginBottom: '8px',
-                }}
-              >
-                {fact.label}
-              </div>
-              <div
-                style={{
+                  margin: '2px 0 0',
                   fontVariantNumeric: 'tabular-nums',
-                  fontSize: '20px',
+                  fontSize: '15px',
                   fontWeight: 600,
-                  letterSpacing: '-0.02em',
-                  lineHeight: 1.2,
+                  lineHeight: 1.3,
                   color: 'var(--sfp-ink)',
-                  marginBottom: fact.context ? '6px' : '10px',
                 }}
               >
                 {fact.value}
-              </div>
+              </dd>
               {fact.context && (
-                <div style={{ fontSize: '12px', lineHeight: 1.45, color: 'var(--sfp-slate)', marginBottom: '10px' }}>
+                <div style={{ fontSize: '11.5px', lineHeight: 1.45, color: 'var(--sfp-slate)', marginTop: '3px' }}>
                   {fact.context}
                 </div>
               )}
-              <div
-                style={{
-                  fontSize: '10.5px',
-                  color: 'var(--sfp-slate)',
-                  marginTop: 'auto',
-                  paddingTop: '4px',
-                }}
-              >
-                {asOfLabel ? <>as of {asOfLabel} · </> : null}
+              <div style={{ fontSize: '11px', lineHeight: 1.4, color: 'var(--sfp-slate)', marginTop: '3px' }}>
+                {/* Per-fact date only when the facts do NOT share one. */}
+                {!sharedDate && asOfLabel ? <>as of {asOfLabel} · </> : null}
                 <a href={fact.sourceHref} style={{ color: 'var(--sfp-navy)', fontWeight: 600 }}>
                   Source
                 </a>
@@ -147,7 +107,22 @@ export function EssentialFactsGrid({ facts }: EssentialFactsGridProps) {
             </div>
           );
         })}
-      </div>
+      </dl>
+
+      {sharedDate && (
+        <p
+          style={{
+            fontSize: '11px',
+            lineHeight: 1.4,
+            color: 'var(--sfp-slate)',
+            margin: '11px 0 0',
+            paddingTop: '11px',
+            borderTop: '1px solid var(--sfp-hairline-row)',
+          }}
+        >
+          All figures as of {sharedDate}.
+        </p>
+      )}
     </div>
   );
 }

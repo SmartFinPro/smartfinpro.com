@@ -173,8 +173,9 @@ describe('ReviewLayoutV2', () => {
     // removed; the sidebar is now the primary CTA surface).
     expect(html).toContain('Compare all 9 trading platforms');
     expect(html).toContain('Visit eToro');
-    // Verdict zone (+ score breakdown)
-    expect(html).toContain('Our Verdict');
+    // Verdict zone (+ score breakdown). Asserted by the summary text — the
+    // "Our Verdict" label was removed.
+    expect(html).toContain(FULL_META.verdict!.summary.slice(0, 40));
     expect(html).toContain('Score Breakdown');
     // BestForNotFor
     expect(html).toContain('Best for');
@@ -226,7 +227,7 @@ describe('ReviewLayoutV2', () => {
       }),
     );
     expect(html).not.toContain('reviewRating');
-    expect(html).toContain('Our Verdict');
+    expect(html).toContain(FULL_META.verdict!.summary.slice(0, 40));
     expect(html).not.toContain('Score Breakdown');
     // No decisionBridge → no sidebar at all (gated on decisionBridge, same as V1's Market Check).
     expect(html).not.toContain('Expert Review');
@@ -251,8 +252,9 @@ describe('ReviewLayoutV2', () => {
           decisionBridge: null,
         }),
       );
-      // Verdict-derived zones omitted.
-      expect(html).not.toContain('Our Verdict');
+      // Verdict-derived zones omitted. Asserted on the summary text: with the
+      // label gone, checking for "Our Verdict" would pass no matter what.
+      expect(html).not.toContain(FULL_META.verdict!.summary.slice(0, 40));
       expect(html).not.toContain('Best for');
       expect(html).not.toContain('Alternatives to eToro');
       expect(html).not.toContain('Final Decision');

@@ -28,6 +28,8 @@ import type { VerdictBlock } from '@/lib/reviews/verdict-frontmatter';
 import type { DecisionBridgeData } from '@/lib/comparison/types';
 import { scoreLabel, rankPhrase } from '@/lib/reviews/score-label';
 import { ScoreBreakdown } from './score-breakdown';
+import { EssentialFactsGrid } from './essential-facts-grid';
+import type { EssentialFact } from '@/lib/reviews/verdict-frontmatter';
 
 /** The audited cockpit position for the reviewed product — same shape as
  *  DecisionBridgeData['position'], reused rather than redefined. */
@@ -35,6 +37,9 @@ export type ReviewPosition = NonNullable<DecisionBridgeData['position']>;
 
 export interface VerdictCardProps {
   verdict: VerdictBlock;
+  /** Rendered in the right rail under the score, filling space the score
+   *  panel leaves empty — see the note at the render site. */
+  essentialFacts?: EssentialFact[];
   /**
    * Resolved internal review link for verdict.bestAlternative, or
    * null/undefined when that competitor has no review yet — rendered as
@@ -55,13 +60,14 @@ export function VerdictCard({
   bestAlternativeHref,
   position,
   fieldCount,
+  essentialFacts,
   scoreHref = '/methodology',
 }: VerdictCardProps) {
   const topStrengths = verdict.topStrengths.slice(0, 3);
 
   return (
     <div
-      className={position ? 'grid gap-8 md:grid-cols-[minmax(0,1fr)_260px]' : ''}
+      className={position ? 'grid gap-x-8 gap-y-6 md:grid-cols-[minmax(0,1fr)_260px]' : ''}
       style={{
         border: '1px solid var(--sfp-hairline-strong)',
         borderRadius: '18px',
@@ -79,39 +85,37 @@ export function VerdictCard({
           panel contains a "How we score" link, so a visual-only reorder would
           leave screen-reader and keyboard order contradicting what is on
           screen (WCAG 1.3.2 / 2.4.3). Desktop layout is unchanged. */}
-      {position && <BestXScore position={position} fieldCount={fieldCount} scoreHref={scoreHref} />}
+      {position && (
+<BestXScore position={position} fieldCount={fieldCount} scoreHref={scoreHref} />
+      )}
 
-      <div className={position ? 'md:col-start-1 md:row-start-1' : ''}>
-        {/* Betreiber-Wunsch 2026-07-19: back to a small label — no navy
-            left border, no H2-scale type. --sfp-gray background still
-            unifies label + paragraph into one box (no borderLeft accent). */}
-        <div style={{ margin: '0 0 18px' }}>
-          <div
-            style={{
-              fontFamily: 'var(--font-primary)',
-              fontSize: '13px',
-              fontWeight: 600,
-              color: 'var(--sfp-navy)',
-              background: 'var(--sfp-gray)',
-              padding: '10px 14px 4px',
-            }}
-          >
-            Our Verdict
-          </div>
-          <p
-            style={{
-              fontFamily: 'var(--font-secondary)',
-              fontSize: '16.5px',
-              lineHeight: 1.7,
-              background: 'var(--sfp-gray)',
-              padding: '2px 14px 12px',
-              margin: 0,
-              color: 'var(--sfp-ink)',
-            }}
-          >
-            {verdict.summary}
-          </p>
-        </div>
+      <div className={position ? 'md:col-start-1 md:row-start-1 md:row-span-2' : ''}>
+        {/* No "Our Verdict" label (operator, 2026-07-21). It sat directly
+            under an H1 naming the product and above the summary itself — the
+            reader knows what an opening paragraph in a tinted panel is. The
+            panel does the marking; the word only took a line.
+            Set at the body size (18px), not below it: this is the most
+            important paragraph on the page and used to render smaller than
+            the running text underneath it. */}
+        <p
+          style={{
+            // Sans, not the serif it used to be, and at the running-text size:
+            // "same as the rest of the text" (operator). The reference named as
+            // easy to read (dollarscout.net) sets its whole article in one sans
+            // at 18px/1.63 and uses no serif for reading text at all. The panel
+            // tint is what sets this paragraph apart; it does not need a second
+            // typeface to do it.
+            fontFamily: 'var(--font-primary)',
+            fontSize: '18px',
+            lineHeight: 1.65,
+            background: 'var(--sfp-gray)',
+            padding: '14px 16px',
+            margin: '0 0 18px',
+            color: 'var(--sfp-ink)',
+          }}
+        >
+          {verdict.summary}
+        </p>
 
         {topStrengths.length > 0 && (
           <ul
@@ -190,6 +194,28 @@ export function VerdictCard({
           </p>
         )}
       </div>
+
+      {/* Essential Facts, in the score rail rather than as a separate band of
+          tiles below the card (operator, 2026-07-21). The score panel is short
+          and the verdict column beside it is long, so this rail used to run
+          empty for most of its height while a five-tile grid took a full
+          screen-width block further down. Same information, one section fewer.
+
+          Its own grid item — col 2 / row 2, with the verdict column spanning
+          both rows — rather than a child of the score panel. Inside the panel
+          it inherited the panel's DOM position, which on mobile is FIRST: the
+          facts then sat between the score and the verdict prose and pushed the
+          summary from y=500 to y=1520, i.e. out of the opening screen. As a
+          separate item it is last in the DOM, so mobile reads score → verdict →
+          facts while desktop still stacks it under the score. */}
+      {position && essentialFacts && essentialFacts.length > 0 && (
+        <div
+          className="md:col-start-2 md:row-start-2"
+          style={{ borderTop: '1px solid var(--sfp-hairline-row)', paddingTop: '16px' }}
+        >
+          <EssentialFactsGrid facts={essentialFacts} />
+        </div>
+      )}
     </div>
   );
 }
