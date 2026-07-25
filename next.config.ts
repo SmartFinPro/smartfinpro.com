@@ -513,7 +513,12 @@ const nextConfig: SmartFinNextConfig = {
       // 1h CDN-Cache, Browser revalidiert immer.
       // ============================================================
       {
-        source: '/:path((?!api|_next|static|favicon|dashboard).*)',
+        // `go` is excluded: this catch-all comes last and would otherwise
+        // override the no-store rule above with `s-maxage=3600`. An edge-cached
+        // /go/[slug] response is a dead CTA for an hour — and since the route
+        // now answers speculative requests with 204, caching one would serve
+        // that 204 to every real clicker.
+        source: '/:path((?!api|_next|static|favicon|dashboard|go).*)',
         missing: [{ type: 'header', key: 'rsc' }],
         headers: [
           {

@@ -676,6 +676,7 @@ export default function FirewallClient({
           </div>
           <Link
             href={MERCURY_AFFILIATE_URL}
+            prefetch={false}
             target="_blank"
             rel="noopener sponsored"
             className={cn('shrink-0 cta-glow', protocolButtonClass('compact'))}
@@ -736,6 +737,7 @@ export default function FirewallClient({
                 <div className="mt-10 flex flex-col gap-4 sm:flex-row">
                   <Link
                     href={MERCURY_AFFILIATE_URL}
+                    prefetch={false}
                     target="_blank"
                     rel="noopener sponsored"
                     className={protocolButtonClass()}
@@ -952,6 +954,7 @@ export default function FirewallClient({
                       <div className="mt-10 flex flex-col gap-4 sm:flex-row">
                         <Link
                           href={MERCURY_AFFILIATE_URL}
+                          prefetch={false}
                           target="_blank"
                           rel="noopener sponsored"
                           className={protocolButtonClass('wide')}
@@ -1516,6 +1519,7 @@ export default function FirewallClient({
           </div>
           <Link
             href={MERCURY_AFFILIATE_URL}
+            prefetch={false}
             target="_blank"
             rel="noopener sponsored"
             className={cn('shrink-0', protocolButtonClass('compact'))}

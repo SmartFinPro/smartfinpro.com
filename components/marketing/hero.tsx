@@ -17,6 +17,8 @@ interface HeroProps {
     text: string;
     href: string;
   };
+  /** Hide the two hero CTA buttons (the featured card below supplies the CTA). */
+  hideCtas?: boolean;
 }
 
 const trustBadges = [
@@ -31,6 +33,7 @@ export default function Hero({
   backgroundImageSrc = defaultMarketHomeHeroImage,
   primaryCta = { text: 'Explore Reports', href: '/us/ai-tools' },
   secondaryCta = { text: 'How We Review', href: '/tools' },
+  hideCtas = false,
 }: HeroProps) {
   // Split title: everything before "\n" is the first line,
   // the first word after "\n" gets the gold accent, rest follows normally
@@ -145,18 +148,26 @@ export default function Hero({
           {subtitle}
         </p>
 
-        {/* CTAs */}
+        {/* CTAs — hidden when the featured Wealth Horizon card supplies the CTA */}
+        {!hideCtas && (
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-start gap-3">
           <Link
             href={primaryCta.href}
-            className="no-underline inline-flex items-center justify-center transition-all duration-200 hover:brightness-110 hover:no-underline"
+            className="hero-cta-champ no-underline inline-flex items-center justify-center hover:no-underline"
             style={{
+              position: 'relative',
+              overflow: 'hidden',
               padding: '14px 32px',
-              background: 'var(--sfp-gold)',
-              color: 'var(--sfp-ink)',
+              // Exact champagne treatment of the Wealth Horizon card CTA (.wh-cta):
+              // gradient + inset highlights + drop shadow, navy-dark label.
+              background: 'linear-gradient(180deg, #E3C283 0%, #D8B36B 45%, #C9A35B 100%)',
+              boxShadow:
+                'inset 0 1px 0 rgba(255,255,255,.45), inset 0 -1px 0 rgba(94,70,26,.30), 0 2px 10px -2px rgba(0,0,0,.45)',
+              color: '#163D6E',
               fontSize: '14px',
               fontWeight: 700,
-              borderRadius: '8px',
+              letterSpacing: '.01em',
+              borderRadius: '999px',
               textDecoration: 'none',
               border: 'none',
             }}
@@ -173,13 +184,14 @@ export default function Hero({
               color: 'rgba(255,255,255,0.85)',
               fontSize: '14px',
               fontWeight: 600,
-              borderRadius: '8px',
+              borderRadius: '999px',
               textDecoration: 'none',
             }}
           >
             {secondaryCta.text}
           </Link>
         </div>
+        )}
 
         {/* Trust Badges */}
         <div className="mt-8 flex flex-wrap items-center justify-start gap-3">
@@ -209,6 +221,31 @@ export default function Hero({
           ))}
         </div>
       </div>
+
+      {/* Champagne CTA sheen + hover — pseudo-element effects (can't be inline),
+          mirroring the Wealth Horizon card CTA (.wh-cta). */}
+      <style>{`
+        .hero-cta-champ {
+          transition: transform .25s ease, box-shadow .25s ease, filter .25s ease;
+        }
+        .hero-cta-champ:hover {
+          filter: brightness(1.03);
+          transform: translateY(-1px);
+          box-shadow: inset 0 1px 0 rgba(255,255,255,.5), inset 0 -1px 0 rgba(94,70,26,.3), 0 6px 18px -4px rgba(0,0,0,.5) !important;
+        }
+        .hero-cta-champ::after {
+          content: "";
+          position: absolute;
+          inset: -2px;
+          pointer-events: none;
+          background: linear-gradient(105deg, transparent 42%, rgba(255,255,255,.45) 50%, transparent 58%);
+          transform: translateX(-130%);
+        }
+        .hero-cta-champ:hover::after { transform: translateX(130%); transition: transform .9s ease .05s; }
+        @media (prefers-reduced-motion: reduce) {
+          .hero-cta-champ, .hero-cta-champ::after { transition: none; }
+        }
+      `}</style>
 
     </section>
   );

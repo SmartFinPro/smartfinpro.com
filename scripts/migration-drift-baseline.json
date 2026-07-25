@@ -1,0 +1,24 @@
+{
+  "_comment": [
+    "Known, already-existing migration drift — accepted by npm run check:migrations so that",
+    "NEW drift fails CI instead of drowning in a permanently red check.",
+    "",
+    "Every entry below is real: the objects were confirmed absent in production on 2026-07-20",
+    "via a direct PostgREST request (HTTP 404 / PGRST205), not just via the OpenAPI schema cache.",
+    "Each one is referenced by live application code, so each is a latent runtime failure of the",
+    "same kind as 20260306100000_blocked_ips.sql (lib/security/ip-blocklist.ts ran fail-open).",
+    "",
+    "deploy.yml runs no migrations, so these have to be applied out-of-band (Supabase dashboard",
+    "SQL editor). Apply one, then DELETE its entry here — the check fails on stale entries, so",
+    "this file cannot quietly outlive the problem it documents.",
+    "Run `node scripts/check-migration-drift.mjs --strict` to fail on these too."
+  ],
+  "known_drift": {
+    "003_subscribers.sql": "Live subscribers table has a different shape (market, confirmed) and lacks status/source/country_code/user_agent/resubscribed_at/created_at/updated_at. 022_security_and_performance.sql already redefines the newsletter_subscribers view against the live shape, so the app works — but 003 as written was never applied.",
+    "004_email_sequences.sql": "email_sequence_logs absent (HTTP 404/PGRST205) plus 3 columns missing on subscribers. Used by app/api/webhooks/resend/route.ts and lib/email/nurture-sequence.ts.",
+    "20260306110000_compliance_overrides.sql": "compliance_overrides absent (HTTP 404/PGRST205). Used by lib/actions/compliance-db.ts.",
+    "20260309100000_xray_score.sql": "product_profiles and xray_results absent (HTTP 404/PGRST205). Used by lib/xray/* and app/api/xray/*.",
+    "20260524190000_compliance_audit_runs.sql": "compliance_audit_runs absent (HTTP 404/PGRST205). Used by lib/actions/compliance-audit.ts and the system-integrity dashboard widget.",
+    "20260530160000_create_dashboard_saved_views.sql": "dashboard_saved_views absent (HTTP 404/PGRST205). Used by lib/actions/saved-views.ts."
+  }
+}

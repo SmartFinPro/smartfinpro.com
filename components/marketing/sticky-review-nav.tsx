@@ -37,6 +37,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import Link from 'next/link';
+import { affiliatePrefetch } from '@/lib/affiliate/prefetch';
 import { ArrowRight, ShieldCheck, ExternalLink, Zap, Globe } from 'lucide-react';
 import { RegulatorBadge } from '@/components/marketing/regulator-badge';
 import { PreQualQuiz } from '@/components/marketing/pre-qual-quiz';
@@ -503,6 +504,7 @@ export function StickyReviewNav({
               {/* CTA Button BELOW badge */}
               <Link
                 href={enablePreQual ? '#' : cta.url}
+                prefetch={affiliatePrefetch(cta.url)}
                 target={enablePreQual ? undefined : '_blank'}
                 rel="noopener noreferrer nofollow"
                 tabIndex={visible ? 0 : -1}
@@ -573,6 +575,7 @@ export function StickyReviewNav({
           {/* CTA Button BELOW badge */}
           <Link
             href={enablePreQual ? '#' : cta.url}
+            prefetch={affiliatePrefetch(cta.url)}
             target={enablePreQual ? undefined : '_blank'}
             rel="noopener noreferrer nofollow"
             tabIndex={visible ? 0 : -1}

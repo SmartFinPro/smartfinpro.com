@@ -43,6 +43,8 @@ import { PortalSidebar } from '@/components/marketing/portal-sidebar';
 import { ReportCard } from '@/components/marketing/report-card';
 import { ReportPagination } from '@/components/marketing/report-pagination';
 import UKBrokerHeroSlider from '@/components/home/uk-broker-hero-slider';
+import { WealthHorizonHeroCard } from '@/components/home/wealth-horizon-hero-card';
+import { whBandGradient } from '@/lib/home/wealth-horizon-palette';
 import {
   BestXIndex,
   CategoryShowcase,
@@ -248,6 +250,10 @@ export default async function MarketHomePage({ params, searchParams }: MarketPag
       reviewCount: item.meta.reviewCount,
     }));
 
+  // Per-market banderole gradient derived from the featured card's own palette
+  // (depth → lift) so the flush band reads as the same family as the card.
+  const whBandBg = whBandGradient(marketData);
+
   return (
     // The `<main id="main-content">` landmark is already provided by the shared
     // MarketingLayout (app/(marketing)/layout.tsx) — a second one here would
@@ -262,23 +268,52 @@ export default async function MarketHomePage({ params, searchParams }: MarketPag
       {/* ═══════════════════════════════════════════════════════════════
           1. HERO SECTION
       ═══════════════════════════════════════════════════════════════ */}
-      <Hero
-        title={heroContent.title}
-        subtitle={heroContent.subtitle}
-        backgroundImageSrc={getMarketHomeHeroImage(marketData)}
-        primaryCta={heroContent.primaryCta}
-        secondaryCta={heroContent.secondaryCta}
+      {/* ═══════════════════════════════════════════════════════════════
+          2. FEATURED WEALTH HORIZON CARD (desktop) — wide, flat band centered
+             on the hero's bottom edge. Absolutely positioned (out of flow) so
+             the ComplianceBar below sits FLUSH against the hero's bottom edge
+             with no gap; the card straddles that junction. On mobile the
+             original PlatformStats bar stays.
+      ═══════════════════════════════════════════════════════════════ */}
+      <div className="relative">
+        <Hero
+          title={heroContent.title}
+          subtitle={heroContent.subtitle}
+          backgroundImageSrc={getMarketHomeHeroImage(marketData)}
+          primaryCta={heroContent.primaryCta}
+          secondaryCta={heroContent.secondaryCta}
+          hideCtas
+        />
+        <WealthHorizonHeroCard
+          market={marketData}
+          className="pointer-events-auto absolute bottom-0 left-1/2 z-20 hidden w-[700px] -translate-x-1/2 translate-y-1/2 lg:block"
+        />
+      </div>
+
+      {/* ═══════════════════════════════════════════════════════════════
+          2b/3. Below the hero on DESKTOP: a clean, label-free sky band flush
+             against the hero's bottom edge — the featured card straddles onto
+             it. On MOBILE the original PlatformStats + ComplianceBar (with the
+             regulatory trust labels) are kept.
+      ═══════════════════════════════════════════════════════════════ */}
+      <div
+        className="hidden w-full lg:block"
+        aria-hidden="true"
+        style={{
+          // Exact match of the top nav bar's gradient
+          // (components/marketing/header.tsx), full-width — the hero is now
+          // framed top + bottom by the same blue band; the card straddles it.
+          // Per-market gradient derived from the card's own palette (depth →
+          // lift), so the band reads as the same family as the featured card.
+          background: whBandBg,
+          borderBottom: '1px solid rgba(255,255,255,0.1)',
+          height: '50px',
+        }}
       />
-
-      {/* ═══════════════════════════════════════════════════════════════
-          2. PLATFORM STATS — Key numbers bar
-      ═══════════════════════════════════════════════════════════════ */}
-      <PlatformStats totalReviews={allReviews.length} totalTools={countLiveConcepts()} />
-
-      {/* ═══════════════════════════════════════════════════════════════
-          3. COMPLIANCE BAR — Regulatory trust signals
-      ═══════════════════════════════════════════════════════════════ */}
-      <ComplianceBar />
+      <div className="lg:hidden">
+        <PlatformStats totalReviews={allReviews.length} totalTools={countLiveConcepts()} />
+        <ComplianceBar />
+      </div>
 
       {/* ═══════════════════════════════════════════════════════════════
           4. CATEGORY SHOWCASE — 6 sectors with icons + counts

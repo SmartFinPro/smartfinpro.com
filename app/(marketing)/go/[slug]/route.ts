@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { trackClick } from '@/lib/affiliate/tracker';
 import { resolveLink } from '@/lib/affiliate/link-registry';
+import { speculativeRequestReason } from '@/lib/affiliate/prefetch';
 import { affiliateRedirectLimiter } from '@/lib/security/rate-limit';
 import { isIpBlocked, blockIp } from '@/lib/security/ip-blocklist';
 import { logger } from '@/lib/logging';
@@ -217,21 +218,38 @@ export async function GET(
   };
 
   try {
+  // ── Money Invariant: no click without a human ────────────────
+  // FIRST, ahead of every other gate. A prefetch/prerender/RSC request is not a
+  // click: it must not reach trackClick (phantom rows in `link_clicks` plus an
+  // outbound ping to the affiliate network on every page view), must not spend
+  // a real visitor's rate-limit budget, and must never get their IP blocked by
+  // the bot gate — behind carrier NAT that would lock real users out of every
+  // affiliate redirect. 204 is deliberate: nothing to follow, nothing to cache.
+  const speculative = speculativeRequestReason(request);
+  if (speculative) {
+    return new NextResponse(null, {
+      status: 204,
+      headers: { ...noCacheHeaders, 'x-sfp-speculative': speculative },
+    });
+  }
+
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
   const ua = request.headers.get('user-agent');
 
   // ── Click-Fraud: Bot UA Detection ────────────────────────────
-  // Return 403 silently — bots should not get a helpful redirect
+  // Return 403 silently — bots should not get a helpful redirect. No click is
+  // recorded and NO persistent block is written.
+  //
+  // A single User-Agent match is deliberately NOT enough to ban an IP: the UA is
+  // trivially spoofed, and behind carrier NAT / corporate proxies / VPN exits one
+  // crawler request would lock every real user sharing that IP out of all
+  // affiliate redirects. The 403 below already stops the bot for this request;
+  // persisting it only added collateral damage. Persistent blocks are reserved
+  // for the rate-limit path (1h, below) and manual dashboard blocks.
   if (isBotUserAgent(ua)) {
     logger.warn('[affiliate] Bot UA blocked', {
       ip,
       ua: ua?.slice(0, 200) ?? '(empty)',
-    });
-    // Persist 24h block for confirmed bots (cluster-safe via Supabase)
-    void blockIp(ip, 'bot_ua_detected', {
-      durationMs: 24 * 60 * 60 * 1000,
-      path: request.url,
-      ua: ua ?? undefined,
     });
     return new NextResponse(null, { status: 403 });
   }
@@ -249,12 +267,26 @@ export async function GET(
   // In-memory per-worker; complements the persistent blocklist.
   if (!affiliateRedirectLimiter.check(ip)) {
     logger.warn('[affiliate] Rate limit exceeded — auto-blocking IP', { ip, ua: ua?.slice(0, 100) });
-    // Auto-block for 1 hour and persist to Supabase
-    void blockIp(ip, 'rate_limit_exceeded', {
-      durationMs: 60 * 60 * 1000,
-      path: request.url,
-      ua: ua ?? undefined,
-    });
+    // Behavioural signal (>10 req/min), so a temporary persistent block is
+    // warranted — unlike a bot UA, this cannot be faked by a single request.
+    // Capped at 1 hour with an explicit reason and expiry; longer or permanent
+    // blocks are reserved for repeatedly confirmed abuse and manual dashboard
+    // blocks. Nothing in the automated path may exceed this ceiling.
+    //
+    // EXCEPT the literal 'unknown' (missing x-forwarded-for): the limiter is
+    // in-memory and keyed by that string, so every request lacking a forwarded
+    // IP — behind a misconfigured proxy, a health checker, unrelated traffic —
+    // shares one bucket and can trip it together. Persisting a block on
+    // 'unknown' would then 403 every future request in that shape, for real
+    // visitors, for up to an hour. The request in front of us still gets
+    // rate-limited below; only the persistent write is skipped.
+    if (ip !== 'unknown') {
+      void blockIp(ip, 'rate_limit_exceeded', {
+        durationMs: 60 * 60 * 1000,
+        path: request.url,
+        ua: ua ?? undefined,
+      });
+    }
     return new NextResponse('Too many requests', { status: 429 });
   }
 
