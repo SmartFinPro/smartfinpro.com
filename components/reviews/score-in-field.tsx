@@ -108,6 +108,33 @@ const DOT_INSET_PX = 6;
 /** Tabular lining figures in the house sans — the "numbers" voice of the card. */
 const NUM: CSSProperties = { fontVariantNumeric: 'tabular-nums' };
 
+/**
+ * The card's type scale — four steps, and every piece of text uses one of them.
+ *
+ * This replaces eight ad-hoc sizes (11, 11.5, 12, 12.5, 13, 14, 19, 30), six of
+ * which were crowded between 11px and 14px. Steps that close together do not
+ * read as hierarchy; a half-pixel difference is not a level, it is a wobble,
+ * and the accumulation of them is what made the card look unsettled rather than
+ * composed. Each step here is a ROLE, so adding a size means adding a role and
+ * having to justify it.
+ *
+ *   display — the score. Appears exactly once; it is the focal figure.
+ *   title   — the card headline.
+ *   body    — everything that is read as language or as a primary datum:
+ *             notes, figure caption, the pin label, the rail-end values, the
+ *             rank line, the hover label.
+ *   micro   — supporting marks that are scanned, not read: axis numerals, the
+ *             provider names under the rail ends, the rank/score caveat.
+ *
+ * Line heights belong to the step, not to the call site, for the same reason.
+ */
+const TYPE = {
+  display: { fontSize: '30px', lineHeight: 1 },
+  title: { fontSize: '19px', lineHeight: 1.25 },
+  body: { fontSize: '13px', lineHeight: 1.55 },
+  micro: { fontSize: '11px', lineHeight: 1.4 },
+} as const satisfies Record<string, CSSProperties>;
+
 function isFiniteNumber(value: unknown): value is number {
   return typeof value === 'number' && Number.isFinite(value);
 }
@@ -242,7 +269,7 @@ export function ScoreInField({ field, position, fieldCount }: ScoreInFieldProps)
           id="score-in-field-heading"
           style={{
             fontFamily: 'var(--font-secondary)',
-            fontSize: '19px',
+            ...TYPE.title,
             fontWeight: 400,
             letterSpacing: '-0.01em',
             lineHeight: 1.3,
@@ -255,19 +282,18 @@ export function ScoreInField({ field, position, fieldCount }: ScoreInFieldProps)
           <div
             style={{
               fontFamily: 'var(--font-secondary)',
-              fontSize: '30px',
-              lineHeight: 1,
+              ...TYPE.display,
               letterSpacing: '-0.01em',
               ...NUM,
             }}
           >
             {you.toFixed(1)}
-            <span style={{ fontSize: '14px', color: 'var(--sfp-slate)' }}>&thinsp;/&thinsp;10</span>
+            <span style={{ ...TYPE.body, color: 'var(--sfp-slate)' }}>&thinsp;/&thinsp;10</span>
           </div>
           {showRank && (
             <div
               style={{
-                fontSize: '12px',
+                ...TYPE.body,
                 color: 'var(--sfp-slate)',
                 marginTop: '3px',
                 whiteSpace: 'nowrap',
@@ -289,7 +315,7 @@ export function ScoreInField({ field, position, fieldCount }: ScoreInFieldProps)
         <div
           aria-hidden="true"
           className="flex justify-between"
-          style={{ fontSize: '11px', color: 'var(--sfp-slate)', marginBottom: '5px', ...NUM }}
+          style={{ ...TYPE.micro, color: 'var(--sfp-slate)', marginBottom: '5px', ...NUM }}
         >
           <span>0</span>
           <span>5</span>
@@ -395,7 +421,7 @@ export function ScoreInField({ field, position, fieldCount }: ScoreInFieldProps)
               style={{
                 fontFamily: 'var(--font-secondary)',
                 fontStyle: 'italic',
-                fontSize: '13px',
+                ...TYPE.body,
                 color: 'var(--sfp-slate)',
                 textAlign: 'center',
                 margin: '2px 0 0',
@@ -417,7 +443,7 @@ export function ScoreInField({ field, position, fieldCount }: ScoreInFieldProps)
                 marginTop: '10px',
               }}
             >
-              <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--sfp-navy)', textAlign: 'center' }}>
+              <span style={{ ...TYPE.body, fontWeight: 600, color: 'var(--sfp-navy)', textAlign: 'center' }}>
                 {name} <span style={NUM}>{you.toFixed(1)}</span>
               </span>
             </div>
@@ -516,7 +542,7 @@ export function ScoreInField({ field, position, fieldCount }: ScoreInFieldProps)
                           style={{
                             display: 'block',
                             whiteSpace: 'nowrap',
-                            fontSize: '12px',
+                            ...TYPE.body,
                             fontWeight: 600,
                             color: '#fff',
                             background: 'var(--sfp-ink)',
@@ -580,11 +606,11 @@ export function ScoreInField({ field, position, fieldCount }: ScoreInFieldProps)
 
             {/* Rail ends as real text — the axis labels stay in the a11y tree. */}
             <div className="flex items-start justify-between gap-4" style={{ marginTop: '6px' }}>
-              <span style={{ fontSize: '11.5px', color: 'var(--sfp-slate)', lineHeight: 1.35 }}>
+              <span style={{ ...TYPE.micro, color: 'var(--sfp-slate)' }}>
                 <b
                   style={{
                     display: 'block',
-                    fontSize: '13px',
+                    ...TYPE.body,
                     fontWeight: 600,
                     color: 'var(--sfp-ink)',
                     ...NUM,
@@ -594,11 +620,11 @@ export function ScoreInField({ field, position, fieldCount }: ScoreInFieldProps)
                 </b>
                 {lowName ? `${lowName} · lowest` : 'lowest'}
               </span>
-              <span style={{ fontSize: '11.5px', color: 'var(--sfp-slate)', lineHeight: 1.35, textAlign: 'right' }}>
+              <span style={{ ...TYPE.micro, color: 'var(--sfp-slate)', textAlign: 'right' }}>
                 <b
                   style={{
                     display: 'block',
-                    fontSize: '13px',
+                    ...TYPE.body,
                     fontWeight: 600,
                     color: 'var(--sfp-ink)',
                     ...NUM,
@@ -618,7 +644,7 @@ export function ScoreInField({ field, position, fieldCount }: ScoreInFieldProps)
               each rail. Every sentence here is the textual equivalent of a
               graphical statement above, visible to everyone. ---- */}
       <div style={{ marginTop: '16px', borderTop: '1px solid var(--sfp-hairline)', paddingTop: '12px' }}>
-        <p style={{ fontSize: '12.5px', lineHeight: 1.55, color: 'var(--sfp-slate)', margin: 0 }}>
+        <p style={{ ...TYPE.body, color: 'var(--sfp-slate)', margin: 0 }}>
           {isLevel ? (
             plotted === 1 ? (
               <>
@@ -643,7 +669,7 @@ export function ScoreInField({ field, position, fieldCount }: ScoreInFieldProps)
         </p>
 
         {!isLevel && (
-          <p style={{ fontSize: '12.5px', lineHeight: 1.55, color: 'var(--sfp-slate)', margin: '6px 0 0' }}>
+          <p style={{ ...TYPE.body, color: 'var(--sfp-slate)', margin: '6px 0 0' }}>
             {/* Exact equality against the axis end, not an epsilon. With an
                 epsilon a product 0.02 behind the last-placed provider is called
                 "the lowest in this field" while the axis label right above it
@@ -671,7 +697,7 @@ export function ScoreInField({ field, position, fieldCount }: ScoreInFieldProps)
         )}
 
         {!isLevel && showRank && !rankOrderMatchesScore && (
-          <p style={{ fontSize: '12px', lineHeight: 1.5, color: 'var(--sfp-slate)', margin: '6px 0 0' }}>
+          <p style={{ ...TYPE.micro, color: 'var(--sfp-slate)', margin: '6px 0 0' }}>
             Positions on this rail are plotted by score. The rank also weighs cost and our editorial
             pick, so it can differ from the score order.
           </p>
