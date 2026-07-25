@@ -63,6 +63,7 @@
 import { createContext, useContext, type ReactNode } from 'react';
 import type { SectionVerdicts } from '@/lib/reviews/verdict-frontmatter';
 import { MDX_ANCHOR_IDS, type MdxAnchorId } from '@/lib/reviews/section-anchors';
+import { CALLOUT_ARTICLE } from '@/lib/reviews/callout-style';
 
 const SectionVerdictsContext = createContext<SectionVerdicts | null>(null);
 
@@ -113,23 +114,13 @@ export function SectionVerdict({ id }: SectionVerdictProps) {
   // also drops a 9.5px uppercase micro-line — the kind of shouted eyebrow
   // that made this design read as a dashboard rather than as research.
   // With the label gone the two stacked divs have no reason to exist, so this
-  // is one element and the padding is whole again.
+  // is one element and the padding is whole again. The look itself is
+  // CALLOUT_ARTICLE — shared with the opening verdict summary and the
+  // editorial aside, which is the point: same kind of thing, same appearance.
   return (
     <div
       style={{
-        // Sans at the body size — same face and size as the paragraphs around
-        // it, per the dollarscout reference. The tint and the navy rule carry
-        // the emphasis.
-        fontFamily: 'var(--font-primary)',
-        // Matched to the running text (review-layout-v2 sets body to 18px).
-        // A highlighted summary set smaller than the paragraphs it summarises
-        // inverts the emphasis.
-        fontSize: '18px',
-        lineHeight: 1.6,
-        background: 'var(--sfp-gray)',
-        borderLeft: '2px solid var(--sfp-navy)',
-        padding: '12px 15px',
-        color: 'var(--sfp-ink)',
+        ...CALLOUT_ARTICLE,
         margin: '20px 0',
       }}
     >
@@ -174,18 +165,7 @@ export interface SmartFinProTakeProps {
 /** MDX tag `<SmartFinProTake>...</SmartFinProTake>` — a short editorial aside. Sky background, Navy edge — never red/gold (Regel: Rot nur Cons/Risiko, Gold nur CTA). */
 export function SmartFinProTake({ children }: SmartFinProTakeProps) {
   return (
-    <div
-      style={{
-        margin: '20px 0',
-        background: 'var(--sfp-sky)',
-        borderLeft: '2px solid var(--sfp-navy)',
-        padding: '12px 15px',
-        fontFamily: 'var(--font-secondary)',
-        fontSize: '14px',
-        lineHeight: 1.5,
-        color: 'var(--sfp-ink)',
-      }}
-    >
+    <div style={{ ...CALLOUT_ARTICLE, margin: '20px 0' }}>
       {children}
     </div>
   );
