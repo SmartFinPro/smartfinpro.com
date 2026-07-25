@@ -321,6 +321,19 @@ export function ReviewLayoutV2({
 .review-v2-prose table th { font-family: var(--font-secondary); font-size: 18px; line-height: 1.65; }
 .review-v2-prose > * > p { margin: 0 0 1.15em; }
 .review-v2-prose table th { font-weight: 600; }
+/* Sticky-chrome offset for every in-page anchor target. The site header
+   (65px, top:0) and the section nav (44px, top:64) together cover the first
+   108px of the viewport, and the anchors — bare <span id> markers in the MDX
+   plus the two layout-owned ids — all sat at scroll-margin-top:0. Clicking a
+   nav item therefore scrolled its heading to y=0, i.e. underneath the two
+   bars, and the reader landed on the paragraph after it. 124px clears both
+   and leaves air above the heading.
+   One value, no breakpoint: the two bars measure the same 108px at 1440 and
+   at 390, so a mobile override would be a distinction without a difference.
+   Verified after the fix — headings land at 139-157px at both widths. */
+.review-v2-prose span[id],
+#verdict,
+#alternatives { scroll-margin-top: 124px; }
 @media (max-width: 640px) {
   .review-v2-prose p,
   .review-v2-prose li,
