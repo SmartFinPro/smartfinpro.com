@@ -27,7 +27,6 @@ const AFFILIATE_LINK_SITES: Array<{ file: string; href: RegExp; what: string }> 
   { file: 'components/marketing/tracked-cta.tsx', href: /^(href|option\.href)$/, what: 'TrackedCTA / ProductCTA / InlineCTA / DecisionCTA' },
   { file: 'components/marketing/frictionless-cta.tsx', href: /^affiliateUrl$/, what: 'FrictionlessCTA' },
   { file: 'components/marketing/smartfin-card.tsx', href: /^affiliateUrl$/, what: 'SmartFinCard' },
-  { file: 'components/marketing/review-template.tsx', href: /^review\.affiliateUrl$/, what: 'ReportLayout hero + closing CTA' },
   { file: 'components/marketing/ai-savings-calculator.tsx', href: /^affiliateUrl$/, what: 'AI savings calculator CTA' },
   { file: 'components/marketing/sticky-review-nav.tsx', href: /cta\.url/, what: 'Sticky review nav CTA' },
   { file: 'components/marketing/review-exit-intent.tsx', href: /^topPartner\.url$/, what: 'Exit-intent partner CTA' },
