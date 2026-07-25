@@ -92,6 +92,55 @@ describe('VerdictCard', () => {
     expect(html).toContain('How we score');
   });
 
+  it('places mobile actions after audience fit and before the limitation and summary', () => {
+    const html = renderToStaticMarkup(
+      h(VerdictCard, {
+        verdict: VERDICT,
+        position: POSITION,
+        fieldCount: 9,
+        mobileActions: h('div', { 'data-mobile-actions-marker': true }, 'Actions'),
+      }),
+    );
+
+    const score = html.indexOf('8.3');
+    const bestFor = html.indexOf('>Best for<');
+    const actions = html.indexOf('data-mobile-actions-marker');
+    const limitation = html.indexOf('Main limitation:');
+    const summary = html.indexOf('eToro is a strong pick for copy trading');
+
+    expect(score).toBeGreaterThan(-1);
+    expect(bestFor).toBeGreaterThan(score);
+    expect(actions).toBeGreaterThan(bestFor);
+    expect(limitation).toBeGreaterThan(actions);
+    expect(summary).toBeGreaterThan(limitation);
+  });
+
+  it('keeps desktop facts visible and offers the same facts behind a collapsed mobile details control', () => {
+    const html = renderToStaticMarkup(
+      h(VerdictCard, {
+        verdict: VERDICT,
+        position: POSITION,
+        fieldCount: 9,
+        essentialFacts: [
+          {
+            label: 'Options contract fee',
+            value: '$0 broker-imposed',
+            asOf: '2026-07-18',
+            sourceHref: 'https://www.etoro.com/en-us/trading/fees/',
+          },
+        ],
+      }),
+    );
+
+    expect(html).toContain('<details');
+    expect(html).not.toContain('<details open');
+    expect(html).toContain('<summary');
+    expect(html).toContain('Essential facts');
+    expect(html).toContain('hidden md:block');
+    expect(html).toContain('md:hidden');
+    expect((html.match(/Options contract fee/g) ?? []).length).toBe(2);
+  });
+
   it('Null-Degradation: position === null omits the BestXScore panel entirely and keeps the verdict prose single-column', () => {
     const html = renderToStaticMarkup(
       h(VerdictCard, { verdict: VERDICT, position: null, fieldCount: 9 }),

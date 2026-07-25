@@ -5,7 +5,7 @@
 //
 // Covers: Report-Info-Card (real logo vs BarChart3 fallback — resolveLogoSrc
 // checks the actual public/images/brokers/ filesystem, never a guessed src),
-// "Published {Month Year}" formatting, the DecisionBridge Market Check
+// exact "Data verified {day month year}" formatting, the DecisionBridge Market Check
 // widget with its internal CTA suppressed (showCta=false — the sidebar's own
 // button pair is the only Compare affordance), the Visit button gated on
 // affiliateUrl, and the affiliate/risk disclosure gated on affiliateUrl +
@@ -55,7 +55,7 @@ describe('ReviewSidebar', () => {
     const html = renderToStaticMarkup(
       h(ReviewSidebar, {
         productName: 'eToro',
-        publishDate: '2026-02-15',
+        verifiedDate: '2026-07-18',
         decisionBridge: makeDecisionBridge(),
         compareLabel: 'Compare all 9 trading platforms',
         affiliateUrl: 'https://www.etoro.com/en-us/',
@@ -66,8 +66,9 @@ describe('ReviewSidebar', () => {
 
     // a. Report Info Card
     expect(html).toContain('Expert Review');
-    expect(html).toContain('Published');
-    expect(html).toContain('February 2026');
+    expect(html).toContain('Data verified');
+    expect(html).toContain('18 Jul 2026');
+    expect(html).not.toContain('Published');
     // Real wordmark: etoro-seeklogo.svg exists in public/images/brokers/ and
     // wins over the generic etoro.svg icon (fs.existsSync-checked). The card
     // shows the wordmark big and drops the redundant "{name}" text (the
@@ -99,7 +100,7 @@ describe('ReviewSidebar', () => {
     const html = renderToStaticMarkup(
       h(ReviewSidebar, {
         productName: 'eToro',
-        publishDate: '2026-01-10',
+        verifiedDate: '2026-07-18',
         decisionBridge: makeDecisionBridge({}),
         compareLabel: 'Compare all 9 trading platforms',
         affiliateUrl: '/go/etoro',
@@ -116,7 +117,7 @@ describe('ReviewSidebar', () => {
     const html = renderToStaticMarkup(
       h(ReviewSidebar, {
         productName: 'Totally Fictional Broker',
-        publishDate: '2026-02-15',
+        verifiedDate: '2026-07-18',
         decisionBridge: makeDecisionBridge({
           position: {
             rank: 3,
@@ -144,7 +145,7 @@ describe('ReviewSidebar', () => {
       const html = renderToStaticMarkup(
         h(ReviewSidebar, {
           productName: 'eToro',
-          publishDate: '2026-02-15',
+          verifiedDate: '2026-07-18',
           decisionBridge: makeDecisionBridge({ position: null }),
           compareLabel: 'Compare all 9 trading platforms',
           affiliateUrl: null,
@@ -161,7 +162,7 @@ describe('ReviewSidebar', () => {
     const html = renderToStaticMarkup(
       h(ReviewSidebar, {
         productName: 'eToro',
-        publishDate: '2026-02-15',
+        verifiedDate: '2026-07-18',
         decisionBridge: makeDecisionBridge(),
         compareLabel: 'Compare all 9 trading platforms',
         affiliateUrl: null,
@@ -180,7 +181,7 @@ describe('ReviewSidebar', () => {
     const html = renderToStaticMarkup(
       h(ReviewSidebar, {
         productName: 'Mercury',
-        publishDate: '2026-02-15',
+        verifiedDate: '2026-07-18',
         decisionBridge: makeDecisionBridge({ category: 'business-banking', topic: 'business-banking', topicLabel: 'business banking' }),
         compareLabel: 'Compare all 9 business banking',
         affiliateUrl: 'https://mercury.com/',
@@ -196,7 +197,7 @@ describe('ReviewSidebar', () => {
     const html = renderToStaticMarkup(
       h(ReviewSidebar, {
         productName: 'Mercury',
-        publishDate: '2026-02-15',
+        verifiedDate: '2026-07-18',
         decisionBridge: makeDecisionBridge({ category: 'business-banking', topic: 'business-banking', topicLabel: 'business banking' }),
         compareLabel: 'Compare all 9 business banking',
         affiliateUrl: 'https://mercury.com/',

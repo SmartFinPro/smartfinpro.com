@@ -116,13 +116,19 @@ describe('AlternativesSection', () => {
     expect(html).not.toContain('<table');
   });
 
-  it('renders the "Which should you choose?" if/then line reusing whyInstead verbatim', () => {
+  it('renders each whyInstead EXACTLY once — the "Which should you choose?" list is gone', () => {
+    // Removed 2026-07-25: the list repeated whyInstead word for word from the
+    // card above it, and prefixed it with "Choose {name} instead if", which
+    // does not join to a standalone sentence.
     const html = renderToStaticMarkup(
       h(AlternativesSection, { productName: 'eToro', market: 'us', category: 'trading', alternatives: ALTERNATIVES }),
     );
-    expect(html).toContain('Which should you choose?');
-    expect(html).toContain('Choose Fidelity instead if');
-    expect(html).toContain('you want the field leader on overall score');
+    expect(html).not.toContain('Which should you choose?');
+    expect(html).not.toContain('Choose Fidelity instead if');
+
+    const needle = 'you want the field leader on overall score';
+    const occurrences = html.split(needle).length - 1;
+    expect(occurrences).toBe(1);
   });
 
   it('renders the Gold compare CTA only when cockpitHref, fieldCount, and topicLabel are all present', () => {

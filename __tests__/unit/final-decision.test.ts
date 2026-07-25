@@ -3,18 +3,19 @@
 // __tests__/unit/shell-rsc-smoke.test.ts) for
 // components/reviews/final-decision.tsx (T12, review-redesign V2).
 //
-// Covers: the "Final Decision" heading (never "Recommendation"), the
-// derived "Choose X if / Choose Y instead if" pairs built from
-// verdict.bestFor / alternatives[].whyInstead (see the file header for why),
-// and the plan's explicit Pflicht — no affiliateUrl leaves only the
-// editorial CTA.
+// Covers: the "Final Decision" heading (never "Recommendation"), the CTA
+// Null-Degradation Pflicht (no affiliateUrl leaves only the editorial CTA),
+// and — since 2026-07-25 — the removal of the derived "Choose X if / Choose Y
+// instead if" cards. Those cards restated `verdict.bestFor` and each
+// `alternatives[].whyInstead` verbatim; on the built page that meant `bestFor`
+// rendered twice and every `whyInstead` three times. The tests below assert the
+// removal, so the duplication cannot creep back in unnoticed.
 
 import { describe, it, expect } from 'vitest';
 import { createElement as h } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 
 import { FinalDecision } from '@/components/reviews/final-decision';
-import type { AlternativeEntry } from '@/lib/reviews/verdict-frontmatter';
 
 const FINAL_DECISION_TEXT =
   'eToro is a strong pick for copy trading and low-cost US options trading, backed by no broker-imposed ' +
@@ -22,16 +23,10 @@ const FINAL_DECISION_TEXT =
   'fast support matters more to you than copy trading tools, the field has stronger options — but for traders who ' +
   'value the combination eToro offers, it remains a solid, well-priced choice among the nine platforms compared here today.';
 
-const BEST_FOR = ['Copy traders', 'Options traders watching contract fees'];
-
-const ALTERNATIVES: AlternativeEntry[] = [
-  { slug: 'fidelity-review', name: 'Fidelity', whyInstead: 'you want the field leader on overall score and support' },
-];
-
 describe('FinalDecision', () => {
   it('renders the heading as "Final Decision" — never "Recommendation"', () => {
     const html = renderToStaticMarkup(
-      h(FinalDecision, { productName: 'eToro', finalDecision: FINAL_DECISION_TEXT, bestFor: BEST_FOR, alternatives: ALTERNATIVES }),
+      h(FinalDecision, { productName: 'eToro', finalDecision: FINAL_DECISION_TEXT }),
     );
     expect(html).toContain('Final Decision');
     expect(html).not.toContain('Recommendation');
@@ -39,19 +34,25 @@ describe('FinalDecision', () => {
 
   it('renders the finalDecision prose verbatim', () => {
     const html = renderToStaticMarkup(
-      h(FinalDecision, { productName: 'eToro', finalDecision: FINAL_DECISION_TEXT, bestFor: BEST_FOR, alternatives: ALTERNATIVES }),
+      h(FinalDecision, { productName: 'eToro', finalDecision: FINAL_DECISION_TEXT }),
     );
     expect(html).toContain('eToro is a strong pick for copy trading');
   });
 
-  it('derives "Choose {productName} if" from verdict.bestFor and "Choose {name} instead if" from alternatives[].whyInstead', () => {
+  it('renders NO "Choose … if" cards — the section is heading, prose, CTA and nothing else', () => {
     const html = renderToStaticMarkup(
-      h(FinalDecision, { productName: 'eToro', finalDecision: FINAL_DECISION_TEXT, bestFor: BEST_FOR, alternatives: ALTERNATIVES }),
+      h(FinalDecision, {
+        productName: 'eToro',
+        finalDecision: FINAL_DECISION_TEXT,
+        compareHref: '/us/trading/best/trading-platforms',
+        affiliateUrl: '/go/etoro/',
+      }),
     );
-    expect(html).toContain('Choose eToro if');
-    expect(html).toContain('Copy traders');
-    expect(html).toContain('Choose Fidelity instead if');
-    expect(html).toContain('you want the field leader on overall score and support');
+    expect(html).not.toContain('Choose eToro if');
+    expect(html).not.toContain('instead if');
+    // The broken join the cards produced ("Choose Fidelity instead if The
+    // category leader (9.6/10)…") is impossible once the prefix is gone.
+    expect(html).not.toContain('Choose ');
   });
 
   it('Null-Degradation Pflicht: no affiliateUrl leaves only the editorial CTA', () => {
@@ -59,8 +60,6 @@ describe('FinalDecision', () => {
       h(FinalDecision, {
         productName: 'eToro',
         finalDecision: FINAL_DECISION_TEXT,
-        bestFor: BEST_FOR,
-        alternatives: ALTERNATIVES,
         compareHref: '/us/trading/best/trading-platforms',
         compareLabel: 'Compare all 9 trading platforms',
       }),
@@ -75,8 +74,6 @@ describe('FinalDecision', () => {
       h(FinalDecision, {
         productName: 'eToro',
         finalDecision: FINAL_DECISION_TEXT,
-        bestFor: BEST_FOR,
-        alternatives: ALTERNATIVES,
         compareHref: '/us/trading/best/trading-platforms',
         affiliateUrl: '/go/etoro/',
       }),
@@ -90,31 +87,26 @@ describe('FinalDecision', () => {
 
   it('renders no CTA row at all when both compareHref and affiliateUrl are absent', () => {
     const html = renderToStaticMarkup(
-      h(FinalDecision, { productName: 'eToro', finalDecision: FINAL_DECISION_TEXT, bestFor: BEST_FOR, alternatives: ALTERNATIVES }),
+      h(FinalDecision, { productName: 'eToro', finalDecision: FINAL_DECISION_TEXT }),
     );
     expect(html).not.toContain('Compare');
     expect(html).not.toContain('Visit eToro');
   });
 
-  it('caps the alternative if/then cards at 3', () => {
-    const four: AlternativeEntry[] = [
-      ...ALTERNATIVES,
-      { slug: 'schwab-review', name: 'Charles Schwab', whyInstead: 'you want a large branch network' },
-      { slug: 'ibkr-review', name: 'Interactive Brokers', whyInstead: 'you want the widest global market access' },
-      { slug: 'merrill-edge-review', name: 'Merrill Edge', whyInstead: 'you are already a Bank of America client' },
-    ];
+  it('renders only the affiliate CTA when the layout withholds compareHref (AlternativesSection carries it)', () => {
+    // review-layout-v2.tsx passes compareHref={null} whenever an Alternatives
+    // section rendered above, because that section ends with the identical gold
+    // button pointing at the identical href.
     const html = renderToStaticMarkup(
-      h(FinalDecision, { productName: 'eToro', finalDecision: FINAL_DECISION_TEXT, bestFor: BEST_FOR, alternatives: four }),
+      h(FinalDecision, {
+        productName: 'eToro',
+        finalDecision: FINAL_DECISION_TEXT,
+        compareHref: null,
+        compareLabel: 'Compare all 9 trading platforms',
+        affiliateUrl: '/go/etoro/',
+      }),
     );
-    expect(html).toContain('Interactive Brokers');
-    expect(html).not.toContain('Merrill Edge');
-  });
-
-  it('omits the if/then grid entirely when both bestFor and alternatives are empty', () => {
-    const html = renderToStaticMarkup(
-      h(FinalDecision, { productName: 'eToro', finalDecision: FINAL_DECISION_TEXT, bestFor: [], alternatives: [] }),
-    );
-    expect(html).not.toContain('Choose eToro if');
-    expect(html).not.toContain('instead if');
+    expect(html).not.toContain('Compare all 9 trading platforms');
+    expect(html).toContain('Visit eToro');
   });
 });

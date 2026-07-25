@@ -205,14 +205,12 @@ export default function Header({ market: marketProp }: HeaderProps) {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-white/10" style={{ background: 'linear-gradient(to bottom, var(--sfp-navy), #2563EB)' }}>
-      {/* Skip-to-Content (Accessibility) */}
-      <a
-        href="#main-content"
-        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[60] focus:px-4 focus:py-2 focus:rounded-lg focus:text-sm focus:font-semibold focus:bg-white focus:shadow-lg"
-        style={{ color: 'var(--sfp-navy)' }}
-      >
-        Skip to main content
-      </a>
+      {/* No skip link here. MarketingLayout (app/(marketing)/layout.tsx) renders
+          one, and it renders it BEFORE this header — which is where a skip link
+          has to be, since its whole purpose is to be the first thing a keyboard
+          user reaches. A second copy inside the header sat after the landmark it
+          was meant to bypass and pointed at the same #main-content, so the two
+          differed only in which one the user hit first. */}
       <div>
         <nav className="flex h-16 items-center justify-between" style={{ maxWidth: '1140px', margin: '0 auto', padding: '0 40px' }}>
           {/* Logo */}

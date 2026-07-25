@@ -7,8 +7,8 @@
 // anchor list; it only orders the zones to match it:
 //
 //   ReviewHeader
-//     → #verdict   VerdictCard (BestXScore panel embeds ScoreBreakdown)
-//     → [mobile-only] ReviewSidebar in-flow, directly under #verdict
+//     → #verdict   VerdictCard (BestXScore + compact mobile actions)
+//     → ScoreInField
 //     → ReviewSectionNav (renders all 7 REVIEW_V2_ANCHORS)
 //     → MDX body, wrapped in SectionVerdictsProvider (5 mdx-owned H2 sections)
 //     → #alternatives  AlternativesSection (CTA-Zone 1)
@@ -29,10 +29,9 @@
 // sidebar now primary, only 2 CTA zones remain in the main column
 // (Alternatives, Final Decision), for 3 total incl. the sidebar — within
 // the Konzept's "max 3 CTA-Zonen" cap. On mobile (no room for a rail),
-// ReviewSidebar is rendered a second time in-flow, directly under the
-// #verdict zone, and hidden on desktop — the same dual-render-per-breakpoint
-// pattern components/marketing/report-layout.tsx already uses for its
-// ProtocolBridge "mobile fallback".
+// the compact ReviewMobileActions surface is inserted after BestForNotFor
+// inside VerdictCard. It deliberately omits the repeated provider card and
+// Market Check; ReviewSidebar renders only in the desktop rail.
 //
 // Deliberately still NOT rendered here (plan T0a, "Explizit NICHT drin"):
 // StickyReviewNav (V1), ReviewExitIntent, XRayScore, MiniQuiz, the V1 "Quick
@@ -65,6 +64,7 @@ import { VerdictCard } from './verdict-card';
 import { ScoreInField } from './score-in-field';
 import { ReviewSectionNav } from './review-section-nav';
 import { ReviewSidebar } from './review-sidebar';
+import { ReviewMobileActions } from './review-mobile-actions';
 import { SectionVerdictsProvider } from './section-blocks';
 import { AlternativesSection } from './alternatives-section';
 import { FinalDecision } from './final-decision';
@@ -151,6 +151,17 @@ export function ReviewLayoutV2({
   // every other cockpit-derived zone; a review with no resolved cockpit
   // field gets no sidebar, same as it gets no Market Check on V1.
   const hasSidebar = Boolean(decisionBridge);
+  const mobileActions = decisionBridge ? (
+    <ReviewMobileActions
+      productName={productName}
+      compareHref={decisionBridge.cockpitHref}
+      compareLabel={compareLabel as string}
+      affiliateUrl={affiliateUrl}
+      market={market}
+      category={category}
+      hasLeverageRisk={meta.hasLeverageRisk}
+    />
+  ) : null;
 
   return (
     <article style={{ background: '#fff' }}>
@@ -186,66 +197,101 @@ export function ReviewLayoutV2({
       )}
 
       <div className="container mx-auto px-4 py-10 lg:py-14">
-        <div className={hasSidebar ? 'lg:grid lg:grid-cols-[760px_300px] lg:gap-14 lg:justify-center' : ''}>
-        <div className={hasSidebar ? 'max-w-[760px] mx-auto lg:mx-0 lg:max-w-none' : 'max-w-[760px] mx-auto'}>
-          <ReviewHeader
-            title={title}
-            positioning={verdict?.positioning}
-            breadcrumbs={breadcrumbs}
-            category={category}
-            dataVerifiedDate={meta.dataVerifiedDate}
-            modifiedDate={meta.modifiedDate}
-          />
+        {/* TWO grid rows, every item placed EXPLICITLY (col-start/row-start).
+            Row 1 = article + sticky rail; row 2 = the CTA-bearing downstream
+            zones, column 1 only.
 
-          {/* #verdict — layout-owned nav anchor (REVIEW_V2_ANCHORS). The
-              sub-score breakdown lives INSIDE VerdictCard's BestXScore panel
+            Why two rows. Both children used to sit in row 1, which makes the
+            rail's grid item `align-self: stretch` — its containing block then
+            spans the WHOLE page, so `lg:sticky` kept the rail pinned all the
+            way down past Alternatives and Final Decision. Measured at 1440px:
+            four to five CTAs on screen at once (exact count depends on viewport
+            height), including two identical gold buttons 5px apart. Confining
+            the rail to row 1 lets it travel with the article — where it is
+            useful, the reader is deep in the text and far from any CTA — and
+            scroll away before the closing CTA zones begin.
+
+            Why EXPLICIT placement. Auto-placement walks the DOM: the rail comes
+            last in the JSX, so it would land in a third row UNDER the downstream
+            block instead of beside the article.
+
+            Why column 1 for row 2 rather than a `col-span-2` with its own
+            max-width: at 1024px column 1 measures 660px, so a 760px-capped
+            spanning block would stick out past the article above it. Sharing
+            the column makes the left edge identical at every width, by
+            construction rather than by arithmetic.
+
+            Why `gap-x` and not `gap`: `gap` applies to both axes and would
+            insert 32/56px of dead vertical space between the two new rows that
+            was never there before.
+
+            Why `minmax(0,760px)` instead of a flat `760px`: the fixed track
+            demanded 760+300+56 = 1116px while the container offers only 992px
+            of content width at `lg`, so the page scrolled sideways by 46px
+            (measured: scrollWidth 1070 against clientWidth 1024). The flexible
+            track shrinks to 660px there — 660+32+300 = 992, exact fit — and
+            grows back to the full 760px from `xl` up, where `justify-center`
+            centres it as before. `min-w-0` on the content items because grid
+            items default to `min-width: auto`, which a wide MDX table could
+            otherwise use to blow the track open again. */}
+        <div className={hasSidebar ? 'lg:grid lg:grid-cols-[minmax(0,760px)_300px] lg:gap-x-8 xl:gap-x-14 lg:justify-center' : ''}>
+        <div className={hasSidebar ? 'max-w-[760px] mx-auto lg:mx-0 lg:max-w-none lg:col-start-1 lg:row-start-1 lg:min-w-0' : 'max-w-[760px] mx-auto'}>
+          {/* #verdict — layout-owned nav anchor (REVIEW_V2_ANCHORS). It wraps
+              the WHOLE opening block, not just the card: on the card alone the
+              anchor sat below the H1, the positioning line and the meta line, so
+              opening the page at #verdict (or clicking "Verdict" in the nav)
+              left the H1 entirely above the viewport — the reader arrived at a
+              score with no idea which product it belonged to.
+              The `scroll-margin-top: 124px` rule in the scoped style block below
+              is unchanged and now applies to this wrapper.
+              The sub-score breakdown lives INSIDE VerdictCard's BestXScore panel
               (2026-07-19 compact redesign) — no separate full-width zone. */}
-          {verdict && (
-            <div id="verdict" style={{ marginBottom: '40px' }}>
-              <VerdictCard
-                verdict={verdict}
-                position={position}
-                fieldCount={fieldCount}
-                essentialFacts={essentialFacts}
-              />
-            </div>
-          )}
+          <div id="verdict">
+            <ReviewHeader
+              title={title}
+              positioning={verdict?.positioning}
+              breadcrumbs={breadcrumbs}
+              category={category}
+              dataVerifiedDate={meta.dataVerifiedDate}
+              modifiedDate={meta.modifiedDate}
+            />
 
-          {/* Mobile-only sidebar, in-flow directly under the Verdict zone —
-              hidden on desktop where the sticky right rail below takes over. */}
-          {hasSidebar && decisionBridge && (
-            <div className="lg:hidden" style={{ marginBottom: '40px' }}>
-              <ReviewSidebar
-                productName={productName}
-                publishDate={meta.publishDate}
-                decisionBridge={decisionBridge}
-                compareLabel={compareLabel as string}
-                affiliateUrl={affiliateUrl}
-                market={market}
-                category={category}
-                hasLeverageRisk={meta.hasLeverageRisk}
-              />
-            </div>
-          )}
+            {verdict && (
+              <div style={{ marginBottom: '40px' }}>
+                <VerdictCard
+                  verdict={verdict}
+                  position={position}
+                  fieldCount={fieldCount}
+                  essentialFacts={essentialFacts}
+                  mobileActions={mobileActions}
+                />
+              </div>
+            )}
 
-          {/* Where this product sits in the field — closes the opening block
-              (score → who it is for → hard facts → standing) before the nav
-              hands over to the deep dive. It plots the same audited
-              position/field numbers the sidebar lists as a table; the table
-              answers "who is above me", this answers "by how much", which is
-              the point the verdict prose makes in words ("1.6 points separate
-              first from last") and which no table can show.
-              Self-degrading: renders null without position/field, so a review
-              with no cockpit match simply has no such block. */}
-          {/* Gated on the same preconditions the component itself requires, so
-              a review without a cockpit match gets no empty 40px gap where the
-              block would have been (the wrapper's margin would survive a null
-              child). The component keeps its own, stricter validation. */}
-          {position && decisionBridge?.field && decisionBridge.field.length > 0 && (
-            <div style={{ marginBottom: '40px' }}>
-              <ScoreInField field={decisionBridge.field} position={position} fieldCount={fieldCount} />
-            </div>
-          )}
+            {!verdict && mobileActions && (
+              <div style={{ marginBottom: '40px' }}>{mobileActions}</div>
+            )}
+
+            {/* Where this product sits in the field — closes the opening block
+                (score → who it is for → mobile action → standing) before the nav hands over to
+                the deep dive. It plots the same audited position/field numbers
+                the sidebar lists as a table; the table answers "who is above
+                me", this answers "by how much", which is the point the verdict
+                prose makes in words ("1.6 points separate first from last") and
+                which no table can show.
+                Self-degrading: renders null without position/field, so a review
+                with no cockpit match simply has no such block. */}
+            {/* Gated on the same preconditions the component itself requires, so
+                a review without a cockpit match gets no empty 40px gap where the
+                block would have been (the wrapper's margin would survive a null
+                child). The component keeps its own, stricter validation. */}
+            {position && decisionBridge?.field && decisionBridge.field.length > 0 && (
+              <div style={{ marginBottom: '40px' }}>
+                <ScoreInField field={decisionBridge.field} position={position} fieldCount={fieldCount} />
+              </div>
+            )}
+
+          </div>
 
           <ReviewSectionNav />
 
@@ -303,6 +349,19 @@ export function ReviewLayoutV2({
 .review-v2-prose table td,
 .review-v2-prose table th { font-family: var(--font-secondary); font-size: 18px; line-height: 1.65; }
 .review-v2-prose > * > p { margin: 0 0 1.15em; }
+/* The MDX renderer's shared H2 is 16px because it also serves compact V1
+   contexts. Inside the 18px V2 article that inverted the hierarchy: section
+   headings were smaller than the paragraphs they introduced. Keep the
+   override local to Review V2 and restore a document-scale step. */
+.review-v2-prose h2 {
+  font-family: var(--font-secondary);
+  font-size: 24px;
+  line-height: 1.25;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--sfp-ink);
+  margin: 2.25em 0 0.7em;
+}
 /* Table headers in the article's own voice. StyledTh (lib/mdx/components.tsx,
    shared with all 216 V1 pages, so overridden here rather than edited) sets
    them uppercase with 0.9px tracking. Everything else about them already
@@ -335,6 +394,7 @@ export function ReviewLayoutV2({
   .review-v2-prose li,
   .review-v2-prose table td,
   .review-v2-prose table th { font-size: 17px; }
+  .review-v2-prose h2 { font-size: 22px; margin-top: 2em; }
 }
 `,
             }}
@@ -348,7 +408,14 @@ export function ReviewLayoutV2({
               )}
             </SectionVerdictsProvider>
           </div>
+        </div>
 
+        {/* Row 2, column 1 — the downstream zones, all of which carry their own
+            CTA. Sharing column 1 with the article above keeps the left edge
+            identical at every width; being in row 2 is what ends the sticky
+            rail's containing block, so the rail is gone by the time these CTAs
+            arrive. See the grid note at the top of this container. */}
+        <div className={hasSidebar ? 'max-w-[760px] mx-auto lg:mx-0 lg:max-w-none lg:col-start-1 lg:row-start-2 lg:min-w-0' : 'max-w-[760px] mx-auto'}>
           {/* #alternatives — layout-owned nav anchor; CTA-Zone 2 lives inside AlternativesSection */}
           {alternatives.length > 0 && (
             <div id="alternatives" style={{ marginBottom: '40px' }}>
@@ -365,15 +432,19 @@ export function ReviewLayoutV2({
             </div>
           )}
 
-          {/* Final Decision — CTA-Zone 3, no nav entry (T0a) */}
+          {/* Final Decision — CTA-Zone 3, no nav entry (T0a).
+              compareHref is withheld whenever AlternativesSection rendered
+              above: it ends with the identical gold button pointing at the
+              identical cockpit href, and the two came out ~5px apart. Passing
+              null here rather than editing FinalDecision keeps that component's
+              Null-Degradation contract intact — a review with no alternatives
+              has no other compare route and still gets the button. */}
           {meta.finalDecision && (
             <div style={{ marginBottom: '40px' }}>
               <FinalDecision
                 productName={productName}
                 finalDecision={meta.finalDecision}
-                bestFor={verdict?.bestFor ?? []}
-                alternatives={alternatives}
-                compareHref={decisionBridge?.cockpitHref}
+                compareHref={alternatives.length > 0 ? null : decisionBridge?.cockpitHref}
                 compareLabel={compareLabel}
                 affiliateUrl={affiliateUrl}
               />
@@ -384,8 +455,8 @@ export function ReviewLayoutV2({
           {/* Affiliate disclosure — moved out of ReviewHeader (operator,
               2026-07-21) to sit here, immediately before the methodology it
               refers to, instead of directly under the H1. The CTA-adjacent
-              disclosure is unaffected: ReviewSidebar renders its own beneath
-              the Visit button, at every breakpoint. */}
+              disclosure is unaffected: ReviewSidebar and ReviewMobileActions
+              each render it directly beside their own Visit button. */}
           <div style={{ marginBottom: '28px' }}>
             <ReviewDisclosure category={category} hasLeverageRisk={meta.hasLeverageRisk} />
           </div>
@@ -504,13 +575,17 @@ export function ReviewLayoutV2({
           )}
         </div>
 
-        {/* Desktop-only sticky right rail — hidden on mobile where ReviewSidebar
-            already rendered in-flow under #verdict above. */}
+        {/* Desktop-only sticky right rail — mobile/tablet use the compact
+            ReviewMobileActions surface inside VerdictCard above.
+            Explicitly placed in row 1: it is last in the JSX, so auto-placement
+            would drop it into a third row beneath the downstream block instead
+            of beside the article. Row 1 also bounds its containing block, which
+            is what stops the sticky behaviour before the closing CTA zones. */}
         {hasSidebar && decisionBridge && (
-          <div className="hidden lg:block">
+          <div className="hidden lg:block lg:col-start-2 lg:row-start-1 lg:mb-[124px]">
             <ReviewSidebar
               productName={productName}
-              publishDate={meta.publishDate}
+              verifiedDate={meta.dataVerifiedDate ?? meta.modifiedDate ?? meta.publishDate}
               decisionBridge={decisionBridge}
               compareLabel={compareLabel as string}
               affiliateUrl={affiliateUrl}

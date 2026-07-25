@@ -1,8 +1,9 @@
 // components/reviews/button-style.ts — the two review CTAs, defined once
 // ============================================================
-// A V2 review offers the same two actions in three places: "Compare all N …"
-// (internal, to the cockpit) and "Visit <product>" (the affiliate link). The
-// sidebar rendered them as rounded, hoverable buttons; the two in-body zones
+// A V2 review offers the same two actions across responsive and closing
+// surfaces: "Compare all N …" (internal, to the cockpit) and "Visit <product>"
+// (the affiliate link). The sidebar rendered them as rounded, hoverable
+// buttons; the two in-body zones
 // (Alternatives, Final Decision) rendered square boxes with no hover and no
 // focus ring — the same action in three different shapes. The operator asked
 // for the sidebar's design in the body, so it lives here and all three import
