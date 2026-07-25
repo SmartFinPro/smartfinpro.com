@@ -303,7 +303,20 @@ export function ReviewLayoutV2({
 .review-v2-prose table td,
 .review-v2-prose table th { font-family: var(--font-secondary); font-size: 18px; line-height: 1.65; }
 .review-v2-prose > * > p { margin: 0 0 1.15em; }
-.review-v2-prose table th { font-weight: 600; }
+/* Table headers in the article's own voice. StyledTh (lib/mdx/components.tsx,
+   shared with all 216 V1 pages, so overridden here rather than edited) sets
+   them uppercase with 0.9px tracking. Everything else about them already
+   matched the body — same Georgia, same 18px, verified at the rendering level
+   via CDP getPlatformFontsForNode, not just the declared font-family — but
+   capitals plus letter-spacing is exactly what makes text read as a DIFFERENT
+   typeface, which is how it was reported. Sentence case, no tracking; the
+   header keeps its weight and its navy, and the tinted header row already
+   marks it as a header without shouting. */
+.review-v2-prose table th {
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: normal;
+}
 /* Sticky-chrome offset for every in-page anchor target. The site header
    (65px, top:0) and the section nav (44px, top:64) together cover the first
    108px of the viewport, and the anchors — bare <span id> markers in the MDX
