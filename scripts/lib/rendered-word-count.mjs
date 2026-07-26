@@ -16,8 +16,15 @@
 // docs/superpowers/specs/2026-07-18-etoro-cockpit-audit.md and the parent
 // plan's Rev. 2.1 correction #4.
 //
-// Counts: MDX body + verdict.summary + essentialFacts[].context +
-// alternatives[].whyInstead + finalDecision + faq[].answer.
+// Counts everything the V2 layout actually renders: the MDX body plus the
+// structured frontmatter zones. Until 2026-07-26 it counted only the body,
+// verdict.summary, essentialFacts[].context, alternatives[].whyInstead,
+// finalDecision and faq[].answer — leaving out verdict.positioning, bestFor,
+// notFor, mainLimitation, all five sectionVerdicts, the essentialFacts
+// labels and values, and the faq questions. Those are all on the page, so
+// every V2 review measured roughly 300 words short and two migrations had
+// filler added to clear a floor they already met. One definition now, shared
+// by the SEO gate and lib/reviews/content-quality.ts.
 // ============================================================
 
 /** Target rendered-word-count range for a V2 review page. */
@@ -83,7 +90,10 @@ export function countRenderedWords(mdxBody, frontmatter = {}) {
   const verdictSummary = countWords(fm.verdict?.summary);
 
   const essentialFacts = Array.isArray(fm.essentialFacts)
-    ? fm.essentialFacts.reduce((sum, fact) => sum + countWords(fact?.context), 0)
+    ? fm.essentialFacts.reduce(
+        (sum, fact) => sum + countWords(fact?.label) + countWords(fact?.value) + countWords(fact?.context),
+        0,
+      )
     : 0;
 
   const alternatives = Array.isArray(fm.alternatives)
@@ -93,14 +103,38 @@ export function countRenderedWords(mdxBody, frontmatter = {}) {
   const finalDecision = countWords(textFromFinalDecision(fm.finalDecision));
 
   const faq = Array.isArray(fm.faq)
-    ? fm.faq.reduce((sum, item) => sum + countWords(item?.answer), 0)
+    ? fm.faq.reduce((sum, item) => sum + countWords(item?.question) + countWords(item?.answer), 0)
     : 0;
 
-  const total = body + verdictSummary + essentialFacts + alternatives + finalDecision + faq;
+  // Zones the verdict card and the section blocks render. Absent on V1
+  // frontmatter, where each term contributes zero.
+  const v = fm.verdict || {};
+  const sumList = (list) =>
+    Array.isArray(list) ? list.reduce((sum, item) => sum + countWords(item), 0) : 0;
+
+  const verdictLists =
+    countWords(v.positioning) +
+    sumList(v.bestFor) +
+    sumList(v.notFor) +
+    countWords(v.mainLimitation);
+
+  const sectionVerdicts = fm.sectionVerdicts
+    ? Object.values(fm.sectionVerdicts).reduce(
+        (sum, text) => sum + countWords(typeof text === 'string' ? text : ''),
+        0,
+      )
+    : 0;
+
+  const total =
+    body + verdictSummary + verdictLists + sectionVerdicts +
+    essentialFacts + alternatives + finalDecision + faq;
 
   return {
     total,
-    breakdown: { body, verdictSummary, essentialFacts, alternatives, finalDecision, faq },
+    breakdown: {
+      body, verdictSummary, verdictLists, sectionVerdicts,
+      essentialFacts, alternatives, finalDecision, faq,
+    },
   };
 }
 

@@ -13,7 +13,7 @@
 // body-only measurement reads it as nearly empty.
 // ============================================================
 
-import { countRenderedWords, countWords } from '@/scripts/lib/rendered-word-count.mjs';
+import { countRenderedWords } from '@/scripts/lib/rendered-word-count.mjs';
 import { REVIEW_V2_ANCHORS } from '@/lib/reviews/section-anchors';
 
 export interface ContentQuality {
@@ -52,11 +52,6 @@ function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-/** Sums countWords() across every string item of an array (non-strings count as 0). */
-function sumArrayWords(arr: unknown): number {
-  if (!Array.isArray(arr)) return 0;
-  return arr.reduce((sum: number, v: unknown) => sum + countWords(typeof v === 'string' ? v : ''), 0);
-}
 
 // V2 review-layout pages (frontmatter `reviewLayout: 'v2'`) target a much
 // leaner rendered word count (2,600–3,600 vs. V1's 4,000–7,000) because
@@ -69,38 +64,6 @@ function sumArrayWords(arr: unknown): number {
 // base, then adds the rendered frontmatter zones that shared helper doesn't
 // cover yet — verdict.positioning, verdict.bestFor/notFor, verdict.
 // mainLimitation, sectionVerdicts (all 5), essentialFacts[].label/value,
-// faq[].question — using the same countWords() primitive rather than a
-// second word-splitting implementation.
-function computeV2RenderedWordCount(content: string, fm: Record<string, any>): number {
-  const base = countRenderedWords(content, fm);
-  const verdict = (fm.verdict ?? {}) as Record<string, any>;
-
-  const sectionVerdicts = (fm.sectionVerdicts ?? {}) as Record<string, any>;
-  const sectionVerdictsWords = Object.values(sectionVerdicts).reduce(
-    (sum: number, v) => sum + countWords(typeof v === 'string' ? v : ''),
-    0
-  );
-
-  const essentialFacts = Array.isArray(fm.essentialFacts) ? fm.essentialFacts : [];
-  const essentialFactsLabelValueWords = essentialFacts.reduce(
-    (sum: number, f: any) => sum + countWords(f?.label) + countWords(f?.value),
-    0
-  );
-
-  const faqEntries = Array.isArray(fm.faq) ? fm.faq : [];
-  const faqQuestionWords = faqEntries.reduce((sum: number, f: any) => sum + countWords(f?.question), 0);
-
-  return (
-    base.total +
-    countWords(verdict.positioning) +
-    sumArrayWords(verdict.bestFor) +
-    sumArrayWords(verdict.notFor) +
-    countWords(verdict.mainLimitation) +
-    sectionVerdictsWords +
-    essentialFactsLabelValueWords +
-    faqQuestionWords
-  );
-}
 
 // V2 structure score: contract compliance (docs/reviews/broker-v2-standard.md
 // §B) instead of "more H2 is better" — the V2 contract mandates EXACTLY five
@@ -168,7 +131,7 @@ export function computeContentQuality(
   const fm = frontmatter ?? {};
 
   // ── Word Score (30% weight) ──
-  const effectiveWordCount = isV2 ? computeV2RenderedWordCount(content, fm) : wordCount;
+  const effectiveWordCount = isV2 ? countRenderedWords(content, fm).total : wordCount;
 
   let wordScore = 0;
   if (isV2) {
