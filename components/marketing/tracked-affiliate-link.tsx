@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import type { CSSProperties, ReactNode } from 'react';
 import { getOrCreateAnalyticsSessionId } from '@/lib/analytics/session';
+import { affiliatePrefetch } from '@/lib/affiliate/prefetch';
 
 interface TrackedAffiliateLinkProps {
   href: string;
@@ -62,6 +63,7 @@ export function TrackedAffiliateLink({
   return (
     <Link
       href={href}
+      prefetch={affiliatePrefetch(href)}
       target="_blank"
       rel="noopener sponsored"
       onClick={handleClick}

@@ -35,6 +35,9 @@ export interface CockpitTopicRow {
   visitClicks: number;
   reviewClicks: number;
   unavailableClicks: number;
+  /** DecisionBridge's single CTA (ctaMode: 'cockpit', surface: 'body') — never
+   *  a provider offer, see lib/analytics/cockpit-events.ts. */
+  cockpitClicks: number;
   mobileClicks: number;
   desktopClicks: number;
 }
@@ -103,7 +106,7 @@ export interface CockpitAnalyticsData {
     top3Ctr: number | null;
     restCtr: number | null;
   };
-  ctaSplit: { offer: number; visit: number; review: number; unavailable: number };
+  ctaSplit: { offer: number; visit: number; review: number; unavailable: number; cockpit: number };
   destinationSplit: Record<string, number>;
   deviceSplit: CockpitDeviceRow[];
   health: CockpitHealthRow[];
@@ -205,7 +208,7 @@ function emptyData(timeRange: CockpitTimeRange): CockpitAnalyticsData {
       top3Ctr: null,
       restCtr: null,
     },
-    ctaSplit: { offer: 0, visit: 0, review: 0, unavailable: 0 },
+    ctaSplit: { offer: 0, visit: 0, review: 0, unavailable: 0, cockpit: 0 },
     destinationSplit: {},
     deviceSplit: [],
     health: [],
@@ -356,6 +359,7 @@ export async function getCockpitAnalytics(
           visitClicks: 0,
           reviewClicks: 0,
           unavailableClicks: 0,
+          cockpitClicks: 0,
           mobileClicks: 0,
           desktopClicks: 0,
         };
@@ -365,7 +369,7 @@ export async function getCockpitAnalytics(
     };
     for (const path of pvByPath.keys()) ensureTopic(path);
 
-    const ctaSplit = { offer: 0, visit: 0, review: 0, unavailable: 0 };
+    const ctaSplit = { offer: 0, visit: 0, review: 0, unavailable: 0, cockpit: 0 };
     const destinationSplit: Record<string, number> = {};
     const deviceClicks = new Map<string, number>();
     const deviceViews = new Map<string, number>();
@@ -385,7 +389,7 @@ export async function getCockpitAnalytics(
       const mode = String(prop(e, 'ctaMode') || 'unknown');
       const dest = String(prop(e, 'destinationType') || 'unknown');
       destinationSplit[dest] = (destinationSplit[dest] || 0) + 1;
-      if (mode === 'offer' || mode === 'visit' || mode === 'review' || mode === 'unavailable') {
+      if (mode === 'offer' || mode === 'visit' || mode === 'review' || mode === 'unavailable' || mode === 'cockpit') {
         ctaSplit[mode] += 1;
       }
       const dev = e.device_type || 'unknown';
@@ -396,6 +400,7 @@ export async function getCockpitAnalytics(
         else if (mode === 'visit') row.visitClicks += 1;
         else if (mode === 'review') row.reviewClicks += 1;
         else if (mode === 'unavailable') row.unavailableClicks += 1;
+        else if (mode === 'cockpit') row.cockpitClicks += 1;
         if (dev === 'mobile') row.mobileClicks += 1;
         else if (dev === 'desktop') row.desktopClicks += 1;
       }

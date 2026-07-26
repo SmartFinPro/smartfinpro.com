@@ -31,6 +31,7 @@ const AFFILIATE_LINK_SITES: Array<{ file: string; href: RegExp; what: string }> 
   { file: 'components/marketing/sticky-review-nav.tsx', href: /cta\.url/, what: 'Sticky review nav CTA' },
   { file: 'components/marketing/review-exit-intent.tsx', href: /^topPartner\.url$/, what: 'Exit-intent partner CTA' },
   { file: 'components/home/uk-broker-hero-slider.tsx', href: /^slide\.href$/, what: 'UK broker hero slider CTA' },
+  { file: 'components/marketing/tracked-affiliate-link.tsx', href: /^href$/, what: 'TrackedAffiliateLink (V2 CTA)' },
 ];
 
 interface LinkTag {
