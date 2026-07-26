@@ -85,18 +85,21 @@ void KNOWN_BROKER_LOGO_SLUGS; // documentation constant — see resolveLogoSrc()
 /** Resolves the provider logo, preferring a real full wordmark (`{slug}-seeklogo.*`)
  *  over the generic square icon (`{slug}.svg`). `isWordmark` tells the card to show
  *  it big and drop the redundant text name (the wordmark already reads "eToro"),
- *  vs. the icon+text fallback layout. `squareLockup` lets a square seeklogo use the
+ *  vs. the icon+text fallback layout. Square seeklogos (mark stacked over name)
+ *  are named `{slug}-seeklogo-square.*`; `squareLockup` then lets the card use the
  *  PNG's transparent padding as a crop area instead of shrinking its visible mark.
  *  Filesystem-checked — a new logo dropped into public/images/brokers/ works without
- *  a code change. */
+ *  a code change (the contract forbids per-review style rules in code). */
 function resolveLogoSrc(
   slug: string | null | undefined,
 ): { src: string; isWordmark: boolean; squareLockup: boolean } | null {
   if (!slug) return null;
-  const candidates: Array<{ name: string; isWordmark: boolean }> = [
-    { name: `${slug}-seeklogo.svg`, isWordmark: true },
-    { name: `${slug}-seeklogo.png`, isWordmark: true },
-    { name: `${slug}.svg`, isWordmark: false },
+  const candidates: Array<{ name: string; isWordmark: boolean; squareLockup: boolean }> = [
+    { name: `${slug}-seeklogo-square.svg`, isWordmark: true, squareLockup: true },
+    { name: `${slug}-seeklogo-square.png`, isWordmark: true, squareLockup: true },
+    { name: `${slug}-seeklogo.svg`, isWordmark: true, squareLockup: false },
+    { name: `${slug}-seeklogo.png`, isWordmark: true, squareLockup: false },
+    { name: `${slug}.svg`, isWordmark: false, squareLockup: false },
   ];
   for (const c of candidates) {
     try {
@@ -104,7 +107,7 @@ function resolveLogoSrc(
         return {
           src: `/images/brokers/${c.name}`,
           isWordmark: c.isWordmark,
-          squareLockup: c.isWordmark && slug === 'charles-schwab',
+          squareLockup: c.squareLockup,
         };
       }
     } catch {

@@ -120,7 +120,7 @@ describe('ReviewSidebar', () => {
       }),
     );
 
-    expect(schwabHtml).toContain('/images/brokers/charles-schwab-seeklogo.png');
+    expect(schwabHtml).toContain('/images/brokers/charles-schwab-seeklogo-square.png');
     expect(schwabHtml).toContain('data-logo-presentation="square-lockup"');
     expect(schwabHtml).toContain('h-[110px]');
     expect(schwabHtml).toContain('h-44 w-44');
