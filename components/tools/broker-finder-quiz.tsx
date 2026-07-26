@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -22,6 +22,9 @@ import {
   Award,
 } from 'lucide-react';
 import { usePathname } from 'next/navigation';
+import { useToolTracking, type ToolTracker } from '@/lib/analytics/tool-tracking';
+import { getTool } from '@/lib/tools/registry';
+import type { ToolContext } from '@/lib/analytics/tool-events';
 
 /* ─── Tracking Hook ─── */
 function useQuizTracking() {
@@ -377,6 +380,24 @@ export function BrokerFinderQuiz() {
   const { trackEvent } = useQuizTracking();
   const [ctaVariant] = useState<'A' | 'B'>(() => getQuizCtaVariant());
 
+  // tool_v1 (FDL 1.3, strictly ADDITIVE): a parallel, second tracking
+  // pipeline alongside useQuizTracking() above — the quiz_* singles, the
+  // sfp_session_id sessionStorage block and the sfp_quiz_cta_variant A/B
+  // key (getQuizCtaVariant()) are all untouched by this. Single registered
+  // Registry variant is 'us'; the global ?market= split for uk/ca/au
+  // arrives with PR 3.2 (Broker Decision Journey consolidation).
+  const pathname = usePathname();
+  const toolContext: ToolContext = useMemo(
+    () => ({
+      toolId: 'broker-finder',
+      market: 'us',
+      variantPath: pathname ?? getTool('broker-finder').variants[0].path,
+      shellMode: getTool('broker-finder').shellMode,
+    }),
+    [pathname],
+  );
+  const tracker = useToolTracking(toolContext);
+
   const currentQuestion = questions[currentStep];
 
   // Track quiz start
@@ -387,6 +408,12 @@ export function BrokerFinderQuiz() {
       hasTrackedStart.current = true;
     }
   }, [trackEvent]);
+
+  // tool_v1 tool_view — deduped 1×/funnel key inside the tracker itself,
+  // parallel to (not a replacement for) the legacy quiz_started single above.
+  useEffect(() => {
+    tracker.trackView();
+  }, [tracker]);
 
   // Track step view
   useEffect(() => {
@@ -435,6 +462,14 @@ export function BrokerFinderQuiz() {
 
     const newAnswers = { ...answers, [currentQuestion.id]: optionId };
     setAnswers(newAnswers);
+
+    // tool_v1 (additive): tool_start dedupes once per funnel key regardless
+    // of which question triggers it; tool_input_change uses the question id
+    // as inputKey and the answer id itself as a categorical bucket — NEVER
+    // numeric-bucketed, since a bucket kind like 'currency'/'count' would
+    // destroy the answer slug's identity (Spec 10.2).
+    tracker.trackStart(currentQuestion.id);
+    tracker.trackCategoricalInputChange(currentQuestion.id, optionId);
 
     // Track answer
     trackEvent('quiz_answer', {
@@ -507,6 +542,15 @@ export function BrokerFinderQuiz() {
       value: 1,
       properties: { broker: broker.name, score: broker.score, affiliateUrl: broker.affiliateUrl, isHighIntent: true, isTopMatch, ctaVariant, ctaText },
     });
+    // tool_v1 (additive): the primary result CTA opens an external
+    // affiliate/partner link — kind 'provider'.
+    tracker.trackNextAction('provider', broker.affiliateUrl);
+  };
+
+  // tool_v1 (additive): the secondary "Compare X vs Y" result CTA links to
+  // an internal editorial review page — kind 'review'.
+  const handleReviewClick = (broker: BrokerResult) => {
+    tracker.trackNextAction('review', `/reviews/${broker.slug}`);
   };
 
   /* ─── Results View ─── */
@@ -522,7 +566,9 @@ export function BrokerFinderQuiz() {
         ctaVariant={ctaVariant}
         onReset={handleReset}
         onCtaClick={handleCtaClick}
+        onReviewClick={handleReviewClick}
         trackEvent={trackEvent}
+        tracker={tracker}
         quizStartTime={resultElapsedMs}
       />
     );
@@ -646,6 +692,7 @@ function ResultCard({
   ctaVariant,
   otherBrokerName,
   onCtaClick,
+  onReviewClick,
   delay = 0,
 }: {
   broker: BrokerResult;
@@ -653,6 +700,7 @@ function ResultCard({
   ctaVariant: 'A' | 'B';
   otherBrokerName: string;
   onCtaClick: (broker: BrokerResult, isTopMatch: boolean) => void;
+  onReviewClick: (broker: BrokerResult) => void;
   delay?: number;
 }) {
   const animatedScore = useAnimatedCounter(broker.score);
@@ -762,6 +810,7 @@ function ResultCard({
               </a>
               <Link
                 href={`/reviews/${broker.slug}`}
+                onClick={() => onReviewClick(broker)}
                 className="inline-flex items-center justify-center gap-2 px-7 py-4 rounded-full font-medium text-sm transition-all hover:bg-gray-50"
                 style={{ color: 'var(--sfp-navy)', background: '#f5f5f7' }}
               >
@@ -793,7 +842,9 @@ function ResultsView({
   ctaVariant,
   onReset,
   onCtaClick,
+  onReviewClick,
   trackEvent,
+  tracker,
   quizStartTime,
 }: {
   top: BrokerResult;
@@ -801,7 +852,9 @@ function ResultsView({
   ctaVariant: 'A' | 'B';
   onReset: () => void;
   onCtaClick: (broker: BrokerResult, isTopMatch: boolean) => void;
+  onReviewClick: (broker: BrokerResult) => void;
   trackEvent: (eventName: string, options?: { category?: string; action?: string; label?: string; value?: number; properties?: Record<string, unknown> }) => void;
+  tracker: ToolTracker;
   quizStartTime: number;
 }) {
   const hasTrackedResult = useRef(false);
@@ -823,6 +876,12 @@ function ResultsView({
     }
   }, [trackEvent, top.name, runnerUp.name, ctaVariant, quizStartTime]);
 
+  // tool_v1 (additive): the result screen IS the first result — dedupes
+  // internally 1×/funnel key, parallel to the legacy quiz_result_view above.
+  useEffect(() => {
+    tracker.trackFirstResult();
+  }, [tracker]);
+
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       {/* Top Match */}
@@ -832,6 +891,7 @@ function ResultsView({
         ctaVariant={ctaVariant}
         otherBrokerName={runnerUp.name}
         onCtaClick={onCtaClick}
+        onReviewClick={onReviewClick}
         delay={0}
       />
 
@@ -842,6 +902,7 @@ function ResultsView({
         ctaVariant={ctaVariant}
         otherBrokerName={top.name}
         onCtaClick={onCtaClick}
+        onReviewClick={onReviewClick}
         delay={0.2}
       />
 

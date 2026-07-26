@@ -243,7 +243,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const QUERY_TIMEOUT = 10_000;
 
   const emptyStats = {
-    totalClicks: 0, totalClicksInRange: 0, totalRevenue: 0, activeLinks: 0,
+    totalClicks: 0, suspiciousClicksExcluded: 0, totalClicksInRange: 0, totalRevenue: 0, activeLinks: 0,
     conversionRate: '0.00', recentClicks: [], clicksOverTime: [], topLinks: [],
     geoStats: [], topPages: [], deviceStats: { mobile: 0, desktop: 0, tablet: 0, mobilePercent: 0, desktopPercent: 0, tabletPercent: 0 },
     funnelData: { clicks: 0, conversions: 0, approvedConversions: 0, approvedRevenue: 0 },
@@ -336,6 +336,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           stats={{
             revenueInRange: stats.revenueInRange,
             totalClicksInRange: stats.totalClicksInRange,
+            suspiciousClicksExcluded: stats.suspiciousClicksExcluded,
             leadsInRange: stats.leadsInRange,
             totalRevenue: stats.totalRevenue,
             totalClicks: stats.totalClicks,

@@ -8,9 +8,14 @@
 # The correct pattern is to use fetch('/api/...') instead.
 #
 # SCOPE: Only checks lib/mdx/ and components/marketing/ and
-# components/content/ and components/ui/ — Dashboard components
-# use server actions intentionally (rendered inside server
-# component pages). Type-only imports are always safe.
+# components/content/ and components/ui/ and components/tools/ —
+# Dashboard components use server actions intentionally (rendered
+# inside server component pages). Type-only imports are always safe.
+#
+# components/tools/ added in FDL PR 2.1: verified no existing
+# calculator widget imports @/lib/actions/* (MoneyLeakScanner and the
+# other 16 legacy widgets only fetch('/api/...')); the new
+# components/tools/shell/ tree must hold the same line.
 #
 # KNOWN EXCEPTIONS: none — all server actions must go through
 # API routes when called from client components.
@@ -27,12 +32,13 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 # No exceptions — all server actions must be called via API routes from client code.
 KNOWN_SAFE="__NONE__"
 
-# Directories to check — only MDX runtime & marketing components
+# Directories to check — MDX runtime, marketing, and tools components
 DIRS=(
   "$ROOT/lib/mdx"
   "$ROOT/components/marketing"
   "$ROOT/components/content"
   "$ROOT/components/ui"
+  "$ROOT/components/tools"
 )
 
 for dir in "${DIRS[@]}"; do

@@ -1,21 +1,16 @@
-import { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowLeft, TrendingUp, Lightbulb } from 'lucide-react';
 import { DynamicAIROICalculator } from '@/components/tools/dynamic-calculators';
 import { ToolRelatedReviews } from '@/components/marketing/tool-related-reviews';
+import { buildToolMetadata } from '@/lib/tools/registry/metadata';
+import { ToolJsonLd } from '@/components/tools/shell/tool-json-ld';
 
-export const metadata: Metadata = {
-  title: 'AI ROI Calculator - Calculate AI Tool Investment Returns | SmartFinPro',
-  description: 'Free AI ROI calculator. Calculate how much time and money your team can save with AI tools like Jasper AI, Copy.ai, and Writesonic.',
-  openGraph: {
-    title: 'AI ROI Calculator - Calculate AI Tool Investment Returns',
-    description: 'Free calculator to estimate ROI from AI writing and productivity tools.',
-  },
-};
+export const metadata = buildToolMetadata('ai-roi', 'us');
 
 export default function AIROICalculatorPage() {
   return (
     <div className="min-h-screen" style={{ background: 'var(--sfp-gray)' }}>
+      <ToolJsonLd toolId="ai-roi" market="us" />
       {/* Breadcrumb */}
       <div className="container mx-auto px-4 py-6">
         <Link href="/tools" className="inline-flex items-center gap-2 text-sm transition-colors" style={{ color: 'var(--sfp-slate)' }}>

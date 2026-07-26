@@ -24,6 +24,7 @@ import {
   type PriorityOption,
   type SliderConfig,
 } from '@/lib/xray/questions';
+import { getOrCreateAnalyticsSessionId } from '@/lib/analytics/session';
 
 // ── Types ─────────────────────────────────────────────────────────────
 
@@ -117,10 +118,7 @@ export function XRayScore({
   // ── Event tracking helper ─────────────────────────────────────
   const trackEvent = useCallback(
     (event: string, extra?: Record<string, unknown>) => {
-      const sessionId =
-        typeof window !== 'undefined'
-          ? sessionStorage.getItem('sfp_session') || 'anonymous' // safe — useCallback
-          : 'anonymous';
+      const sessionId = getOrCreateAnalyticsSessionId() ?? 'anonymous';
       fetch('/api/track', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -173,10 +171,7 @@ export function XRayScore({
     trackEvent('xray_submitted', { experience, teamSize, monthlyBudget, priority, hourlyValue });
 
     try {
-      const sessionId =
-        typeof window !== 'undefined'
-          ? sessionStorage.getItem('sfp_session') || undefined // safe — useCallback
-          : undefined;
+      const sessionId = getOrCreateAnalyticsSessionId() ?? undefined;
 
       const res = await fetch('/api/xray/score', {
         method: 'POST',

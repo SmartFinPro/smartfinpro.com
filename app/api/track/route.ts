@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/logging';
 import { createServiceClient } from '@/lib/supabase/server';
 import crypto from 'crypto';
-import { validate, TrackSchema, TrackEventBatchSchema } from '@/lib/validation';
+import { validate, TrackSchema, TrackEventBatchSchema, TrackToolEventBatchSchema } from '@/lib/validation';
 import { isBotUserAgent } from '@/lib/analytics/bot-detect';
 import { computeTrackRateLimitWeight } from '@/lib/analytics/cockpit-events';
+import { computeToolBatchWeight } from '@/lib/analytics/tool-events';
 
 // Rate limiting: simple in-memory store (use Redis in production)
 const rateLimitMap = new Map<string, { count: number; timestamp: number }>();
@@ -63,7 +64,9 @@ export async function POST(request: NextRequest) {
     const rawEventsLength = Array.isArray((body.data as { events?: unknown[] }).events)
       ? (body.data as { events: unknown[] }).events.length
       : undefined;
-    const weight = computeTrackRateLimitWeight(body.type, rawEventsLength);
+    const weight = body.type === 'tool_event_batch'
+      ? computeToolBatchWeight(rawEventsLength)
+      : computeTrackRateLimitWeight(body.type, rawEventsLength);
     if (!checkRateLimit(ip, weight)) {
       return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 });
     }
@@ -183,6 +186,36 @@ export async function POST(request: NextRequest) {
           if (process.env.NODE_ENV === 'development') logger.warn('Analytics: event batch insert failed');
         }
 
+        return NextResponse.json({ success: true });
+      }
+
+      case 'tool_event_batch': {
+        // tool_v1 sibling of event_batch — own strict schema, whole-batch bot gate.
+        const parsedBatch = TrackToolEventBatchSchema.safeParse(body.data.events);
+        if (!parsedBatch.success) {
+          return NextResponse.json({ error: 'Invalid tool event batch' }, { status: 400 });
+        }
+        // Every item's eventCategory is the literal 'tool' (schema-enforced) — a
+        // bot UA therefore drops the WHOLE batch, no partial filtering needed.
+        if (isBotUserAgent(userAgent)) {
+          return NextResponse.json({ success: true, skipped: true });
+        }
+        const rows = parsedBatch.data.map((e) => ({
+          session_id: body.sessionId,
+          event_name: e.eventName,
+          event_category: e.eventCategory,
+          event_action: e.eventAction || null,
+          event_label: e.eventLabel || null,
+          event_value: e.eventValue ?? null,
+          page_path: e.pagePath || null,
+          properties: e.properties,
+          device_type: deviceInfo.deviceType,
+          country_code: countryCode,
+        }));
+        const { error } = await supabase.from('analytics_events').insert(rows);
+        if (error) {
+          if (process.env.NODE_ENV === 'development') logger.warn('Analytics: tool event batch insert failed');
+        }
         return NextResponse.json({ success: true });
       }
 

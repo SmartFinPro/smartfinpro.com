@@ -78,8 +78,11 @@ test-results/
 audits/reports/verify-*.log
 audits/reports/verify-status.json
 
-# Test-Report-Artefakt (wird bei jedem Testlauf neu erzeugt)
+# Generated test-run artifact — vitest.config.ts writes this on every
+# `npx vitest run`; a committed copy is a stale snapshot, not a build input
+# (F10, 2026-07-26 editorial-integrity review).
 audits/reports/unit-latest.json
+screenshots/
 
 # Lokale Tool-/Scratch-Verzeichnisse
 .codex/

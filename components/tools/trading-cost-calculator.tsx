@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import {
   ArrowRight,
   TrendingUp,
@@ -15,6 +16,9 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
+import { useToolTracking } from '@/lib/analytics/tool-tracking';
+import { getTool } from '@/lib/tools/registry';
+import type { ToolContext } from '@/lib/analytics/tool-events';
 
 /* ─── Types ─── */
 type BrokerSlug = 'etoro' | 'capital-com' | 'ibkr' | 'investing' | 'revolut';
@@ -135,6 +139,63 @@ export function TradingCostCalculator() {
   const [leverage, setLeverage] = useState(1);
   const [showYearly, setShowYearly] = useState(true);
 
+  // tool_v1 (FDL 1.3): this widget previously had NO tracking at all — the
+  // instrumentation below is entirely new, not a replacement for anything.
+  // Single registered Registry variant is 'us'; the global ?market= split
+  // for uk/ca/au arrives with PR 3.2 (Broker Decision Journey consolidation).
+  const pathname = usePathname();
+  const toolContext: ToolContext = useMemo(
+    () => ({
+      toolId: 'trading-cost',
+      market: 'us',
+      variantPath: pathname ?? getTool('trading-cost').variants[0].path,
+      shellMode: getTool('trading-cost').shellMode,
+    }),
+    [pathname],
+  );
+  const tracker = useToolTracking(toolContext);
+  const interactedRef = useRef(false);
+
+  // dedupes internally (tool_start fires once/funnel key); tool_input_change
+  // is additionally debounced+gated per inputKey inside the tracker itself.
+  const markInteracted = useCallback(
+    (inputKey: string) => {
+      interactedRef.current = true;
+      tracker.trackStart(inputKey);
+    },
+    [tracker],
+  );
+
+  useEffect(() => {
+    tracker.trackView();
+  }, [tracker]);
+
+  const updateAmount = (v: number) => {
+    markInteracted('amount');
+    tracker.trackInputChange('amount', v, 'currency');
+    setAmount(v);
+  };
+  const updateTradesPerMonth = (v: number) => {
+    markInteracted('tradesPerMonth');
+    tracker.trackInputChange('tradesPerMonth', v, 'count');
+    setTradesPerMonth(v);
+  };
+  const updateLeverage = (v: number) => {
+    markInteracted('leverage');
+    tracker.trackInputChange('leverage', v, 'count');
+    setLeverage(v);
+  };
+  const selectInstrument = (v: InstrumentType) => {
+    markInteracted('instrument');
+    tracker.trackCategoricalInputChange('instrument', v);
+    setInstrument(v);
+  };
+  const selectHolding = (v: HoldingPeriod) => {
+    markInteracted('holding');
+    tracker.trackCategoricalInputChange('holding', v);
+    setHolding(v);
+  };
+
   /* ─── Calculate costs ─── */
   const results: BrokerCostResult[] = useMemo(() => {
     const slugs: BrokerSlug[] = ['etoro', 'capital-com', 'ibkr', 'investing', 'revolut'];
@@ -174,6 +235,14 @@ export function TradingCostCalculator() {
   const avgCost = tradingBrokers.reduce((sum, r) => sum + (showYearly ? r.yearlyCost.total : r.monthlyCost.total), 0) / tradingBrokers.length;
   const savingsVsAvg = avgCost - (showYearly ? cheapest.yearlyCost.total : cheapest.monthlyCost.total);
 
+  // tool_v1: `results` recomputes live on every control change — fire
+  // tool_first_result off that live recomputation, gated on having actually
+  // interacted (the default state is identical for every visitor).
+  // trackFirstResult() dedupes internally (once/funnel key).
+  useEffect(() => {
+    if (interactedRef.current) tracker.trackFirstResult();
+  }, [results, tracker]);
+
   return (
     <div className="max-w-4xl mx-auto">
       <div className="grid lg:grid-cols-2 gap-8">
@@ -192,7 +261,7 @@ export function TradingCostCalculator() {
                 {instrumentLabels.map((item) => (
                   <button
                     key={item.id}
-                    onClick={() => setInstrument(item.id)}
+                    onClick={() => selectInstrument(item.id)}
                     className={`p-3 rounded-xl border text-left transition-all ${
                       instrument === item.id
                         ? 'border-gray-200'
@@ -215,7 +284,7 @@ export function TradingCostCalculator() {
                   ${amount.toLocaleString('en-US')}
                 </span>
               </div>
-              <Slider value={[amount]} onValueChange={(v) => setAmount(v[0])} min={100} max={100000} step={100} className="py-2" />
+              <Slider value={[amount]} onValueChange={(v) => updateAmount(v[0])} min={100} max={100000} step={100} className="py-2" />
               <div className="flex justify-between text-xs mt-1" style={{ color: 'var(--sfp-slate)' }}>
                 <span>$100</span>
                 <span>$50k</span>
@@ -231,7 +300,7 @@ export function TradingCostCalculator() {
                   {tradesPerMonth} trades
                 </span>
               </div>
-              <Slider value={[tradesPerMonth]} onValueChange={(v) => setTradesPerMonth(v[0])} min={1} max={100} step={1} className="py-2" />
+              <Slider value={[tradesPerMonth]} onValueChange={(v) => updateTradesPerMonth(v[0])} min={1} max={100} step={1} className="py-2" />
               <div className="flex justify-between text-xs mt-1" style={{ color: 'var(--sfp-slate)' }}>
                 <span>1</span>
                 <span>50</span>
@@ -247,7 +316,7 @@ export function TradingCostCalculator() {
                   {leverage}x
                 </span>
               </div>
-              <Slider value={[leverage]} onValueChange={(v) => setLeverage(v[0])} min={1} max={30} step={1} className="py-2" />
+              <Slider value={[leverage]} onValueChange={(v) => updateLeverage(v[0])} min={1} max={30} step={1} className="py-2" />
               <div className="flex justify-between text-xs mt-1" style={{ color: 'var(--sfp-slate)' }}>
                 <span>1x</span>
                 <span>15x</span>
@@ -262,7 +331,7 @@ export function TradingCostCalculator() {
                 {holdingLabels.map((item) => (
                   <button
                     key={item.id}
-                    onClick={() => setHolding(item.id)}
+                    onClick={() => selectHolding(item.id)}
                     className={`p-3 rounded-xl border text-left transition-all ${
                       holding === item.id
                         ? 'border-gray-200'

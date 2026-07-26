@@ -620,6 +620,7 @@ function dashboardLoginPage(
       display: flex;
       align-items: center;
       gap: 14px;
+      text-decoration: none;
     }
     .lp-icon {
       width: 42px; height: 42px;
@@ -699,6 +700,7 @@ function dashboardLoginPage(
       align-items: center;
       gap: 10px;
       margin-bottom: 32px;
+      text-decoration: none;
     }
     @media(min-width:900px){ .mob-brand { display: none; } }
     .mob-icon {
@@ -909,20 +911,20 @@ function dashboardLoginPage(
 
 <!-- ── Left Panel — 1:1 header style ── -->
 <div class="lp">
-  <div class="lp-brand">
+  <a href="/" class="lp-brand">
     <div class="lp-icon"><svg viewBox="0 0 18 18" fill="none"><rect x="6.5" y="1" width="5" height="16" rx="1.5" fill="#FFC942"/><rect x="1" y="6.5" width="16" height="5" rx="1.5" fill="#FFC942"/></svg></div>
     <div class="lp-name">Smart<span>Fin</span>Pro</div>
-  </div>
+  </a>
 </div>
 
 <!-- ── Right Panel ── -->
 <div class="rp">
   <div class="login-wrap">
 
-    <div class="mob-brand">
+    <a href="/" class="mob-brand">
       <div class="mob-icon"><svg viewBox="0 0 18 18" fill="none"><rect x="6.5" y="1" width="5" height="16" rx="1.5" fill="#FFC942"/><rect x="1" y="6.5" width="16" height="5" rx="1.5" fill="#FFC942"/></svg></div>
       <div class="mob-name">Smart<span>Fin</span>Pro</div>
-    </div>
+    </a>
 
     <div class="card-glow">
       <div class="form-card">

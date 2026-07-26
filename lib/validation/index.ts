@@ -6,6 +6,7 @@
 
 import { z, ZodSchema, ZodError } from 'zod';
 import { NextResponse } from 'next/server';
+import { TOOL_ID_VALUES } from '@/lib/tools/registry';
 
 // ── Shared constants ───────────────────────────────────────────────────────
 export const VALID_MARKETS = ['us', 'uk', 'ca', 'au'] as const;
@@ -40,7 +41,7 @@ export function validate<T>(schema: ZodSchema<T>, body: unknown): ValidationResu
 
 /** POST /api/track */
 export const TrackSchema = z.object({
-  type: z.enum(['pageview', 'event', 'event_batch', 'scroll', 'time_on_page']),
+  type: z.enum(['pageview', 'event', 'event_batch', 'tool_event_batch', 'scroll', 'time_on_page']),
   sessionId: z.string().min(8).max(128),
   data: z.record(z.string(), z.unknown()).default({}), // Zod v4: explicit key + value types
 });
@@ -141,6 +142,53 @@ export type TrackEventItem = z.infer<typeof TrackEventItemSchema>;
 
 /** Hard cap must stay in sync with EVENT_BATCH_HARD_CAP in lib/analytics/cockpit-events.ts */
 export const TrackEventBatchSchema = z.array(TrackEventItemSchema).min(1).max(20);
+
+// ── tool_v1 (strictly additive sibling of the cockpit_v1 schemas above) ─────
+
+const TOOL_EVENT_NAMES = [
+  'tool_view', 'tool_start', 'tool_input_change', 'tool_first_result',
+  'tool_qualified_decision', 'tool_scenario_compare', 'tool_result_share',
+  'tool_report_download', 'tool_report_email', 'tool_next_action_click',
+  'tool_cockpit_cta_click', 'tool_calculation_error',
+] as const;
+
+/** Strict tool_v1 properties bag — unknown keys rejected (.strict()).
+ *  Keep in sync with ToolV1Properties in lib/analytics/tool-events.ts. */
+const ToolV1PropertiesSchema = z
+  .object({
+    schemaVersion: z.literal('tool_v1'),
+    toolId: z.enum(TOOL_ID_VALUES),
+    market: z.enum(VALID_MARKETS),
+    variantPath: z.string().max(300),
+    shellMode: z.enum(['live-canvas', 'guided-journey', 'precision-worksheet']),
+    resultState: z.enum(['example', 'yours', 'shared']).optional(),
+    inputKey: z.string().max(60).optional(),
+    inputBucket: z.string().max(40).optional(),
+    controlRole: z.enum(['field', 'lever']).optional(),
+    ttfvMs: z.number().int().min(0).max(86_400_000).optional(),
+    qualifiedVia: z.enum(['scenario_compare', 'lever', 'next_action', 'share', 'report', 'visibility']).optional(),
+    scenario: z.string().max(40).optional(),
+    shareFieldCount: z.number().int().min(0).max(40).optional(),
+    format: z.enum(['pdf', 'email']).optional(),
+    nextActionKind: z.enum(['cockpit', 'review', 'provider', 'tool']).optional(),
+    bridgeHref: z.string().max(300).optional(),
+    errorKind: z.string().max(80).optional(),
+  })
+  .strict();
+
+export const TrackToolEventItemSchema = z.object({
+  eventName: z.enum(TOOL_EVENT_NAMES),
+  eventCategory: z.literal('tool'),
+  eventAction: z.string().max(40).optional(),
+  eventLabel: z.string().max(300).optional(),
+  eventValue: z.number().finite().optional(),
+  pagePath: z.string().max(300).optional(),
+  properties: ToolV1PropertiesSchema,          // Pflicht — der Vertrag gehört dem Schema
+});
+export type TrackToolEventItem = z.infer<typeof TrackToolEventItemSchema>;
+
+/** Hard cap must stay in sync with TOOL_EVENT_BATCH_HARD_CAP in lib/analytics/tool-events.ts */
+export const TrackToolEventBatchSchema = z.array(TrackToolEventItemSchema).min(1).max(20);
 
 /** POST /api/track-cta */
 export const TrackCtaSchema = z.object({

@@ -67,7 +67,11 @@ export interface LeadQualityData {
 }
 
 export interface DashboardStats {
+  /** All-time clicks EXCLUDING is_suspicious — the denominator for CR / EPC. */
   totalClicks: number;
+  /** All-time clicks filtered out as suspicious. Surfaced in the UI so the
+   *  denominator change is visible rather than a silent drop. */
+  suspiciousClicksExcluded: number;
   totalClicksInRange: number;
   totalRevenue: number;
   activeLinks: number;
@@ -428,7 +432,8 @@ async function _getDashboardStats(range: TimeRange = '24h'): Promise<DashboardSt
   // ── Build all conditional queries upfront ────────────────────────────────
   let clicksQuery = supabase
     .from('link_clicks')
-    .select('id, link_id, country_code, clicked_at, utm_source, referrer, user_agent');
+    .select('id, link_id, country_code, clicked_at, utm_source, referrer, user_agent')
+    .not('is_suspicious', 'is', true); // exclude bot/off-target clicks from metrics
   if (rangeStart) {
     clicksQuery = clicksQuery.gte('clicked_at', rangeStart.toISOString());
   }
@@ -470,11 +475,13 @@ async function _getDashboardStats(range: TimeRange = '24h'): Promise<DashboardSt
     prevLeadsResult,
     visitorViewsResult,
     conversionRowsResult,
+    suspiciousClicksResult,
   ] = await Promise.all([
     // 1. Clicks in selected range (ordered newest-first)
     clicksQuery.order('clicked_at', { ascending: false }),
     // 2. All-time click count (for conversion rate denominator) — head:true = count only, no rows
-    supabase.from('link_clicks').select('*', { count: 'exact', head: true }),
+    //    Excludes is_suspicious=true so bot/off-target clicks don't dilute CR/EPC.
+    supabase.from('link_clicks').select('*', { count: 'exact', head: true }).not('is_suspicious', 'is', true),
     // 3. All-time conversions (for EPC / totalRevenue) — limit to 10K most recent to avoid timeout
     supabase.from('conversions').select('link_id, commission_earned, currency, status').order('converted_at', { ascending: false }).limit(10000),
     // 4. Active affiliate links count
@@ -496,6 +503,7 @@ async function _getDashboardStats(range: TimeRange = '24h'): Promise<DashboardSt
       ? supabase
           .from('link_clicks')
           .select('*', { count: 'exact', head: true })
+          .not('is_suspicious', 'is', true)
           .gte('clicked_at', previousPeriod.start.toISOString())
           .lt('clicked_at', previousPeriod.end.toISOString())
       : noop,
@@ -553,12 +561,16 @@ async function _getDashboardStats(range: TimeRange = '24h'): Promise<DashboardSt
       if (rangeStart) q = q.gte('converted_at', rangeStart.toISOString());
       return q;
     })(),
+    // 16. All-time suspicious clicks — the count excluded from query 2's
+    //     denominator. Reported in the UI so the exclusion is transparent.
+    supabase.from('link_clicks').select('*', { count: 'exact', head: true }).is('is_suspicious', true),
   ]);
 
   // ── Extract typed results ─────────────────────────────────────────────────
   type ClickRecord = Pick<LinkClick, 'id' | 'link_id' | 'country_code' | 'clicked_at' | 'utm_source' | 'referrer' | 'user_agent'>;
   const clicks = (clicksInRangeResult.data || []) as ClickRecord[];
   const totalClicks = totalClicksResult.count || 0;
+  const suspiciousClicksExcluded = suspiciousClicksResult.count || 0;
 
   type ConversionRecord = Pick<Conversion, 'link_id' | 'commission_earned' | 'currency' | 'status'>;
   const conversions = (allConversionsResult.data || []) as ConversionRecord[];
@@ -1096,6 +1108,7 @@ async function _getDashboardStats(range: TimeRange = '24h'): Promise<DashboardSt
 
   return {
     totalClicks,
+    suspiciousClicksExcluded,
     totalClicksInRange,
     totalRevenue,
     activeLinks,
@@ -1220,7 +1233,8 @@ export async function getGlobalMarketIntelligence(range: TimeRange = '7d'): Prom
   // ── Build conditional queries upfront ────────────────────────────────────
   let clicksQuery = supabase
     .from('link_clicks')
-    .select('id, link_id, country_code, clicked_at, referrer');
+    .select('id, link_id, country_code, clicked_at, referrer')
+    .not('is_suspicious', 'is', true); // exclude bot/off-target clicks from market metrics
   if (rangeStart) {
     clicksQuery = clicksQuery.gte('clicked_at', rangeStart.toISOString());
   }
@@ -1257,6 +1271,7 @@ export async function getGlobalMarketIntelligence(range: TimeRange = '7d'): Prom
       ? supabase
           .from('link_clicks')
           .select('country_code')
+          .not('is_suspicious', 'is', true)
           .gte('clicked_at', previousPeriod.start.toISOString())
           .lt('clicked_at', previousPeriod.end.toISOString())
       : gmiNoop,

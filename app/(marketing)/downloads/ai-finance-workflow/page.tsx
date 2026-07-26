@@ -140,7 +140,7 @@ Tonfall: Professionell aber nahbar. Länge: 150-200 Wörter.`}
                       </td>
                       <td className="p-4 text-center">
                         <Button asChild size="sm" variant="outline">
-                          <Link href="/go/jasper-ai">
+                          <Link href="/go/jasper-ai" prefetch={false}>
                             Testen
                             <ArrowRight className="h-3 w-3 ml-1" />
                           </Link>
@@ -162,7 +162,7 @@ Tonfall: Professionell aber nahbar. Länge: 150-200 Wörter.`}
                       </td>
                       <td className="p-4 text-center">
                         <Button asChild size="sm" variant="outline">
-                          <Link href="/go/claude-ai">
+                          <Link href="/go/claude-ai" prefetch={false}>
                             Testen
                             <ArrowRight className="h-3 w-3 ml-1" />
                           </Link>
@@ -184,7 +184,7 @@ Tonfall: Professionell aber nahbar. Länge: 150-200 Wörter.`}
                       </td>
                       <td className="p-4 text-center">
                         <Button asChild size="sm" variant="outline">
-                          <Link href="/go/make">
+                          <Link href="/go/make" prefetch={false}>
                             Testen
                             <ArrowRight className="h-3 w-3 ml-1" />
                           </Link>
@@ -254,7 +254,7 @@ Tonfall: Professionell aber nahbar. Länge: 150-200 Wörter.`}
                 Jasper AI ist unser #1 Tool für Finanz-Content. Starte jetzt mit einer kostenlosen Testphase.
               </p>
               <Button asChild size="lg" className="gap-2">
-                <Link href="/go/jasper-ai">
+                <Link href="/go/jasper-ai" prefetch={false}>
                   Jasper AI kostenlos testen
                   <ArrowRight className="h-4 w-4" />
                 </Link>

@@ -75,11 +75,32 @@ const config: Config = {
           slate: "var(--sfp-slate)",
           "silo-tint": "var(--sfp-silo-tint)",
         },
+        // FDL Tool-Tokens (PR 2.1, SPEC 7.1) — additive, mapped 1:1 from the
+        // --tool-*/--sfp-warning-* CSS variables in app/globals.css.
+        "tool-surface": "var(--tool-surface)",
+        "tool-surface-muted": "var(--tool-surface-muted)",
+        "tool-border": "var(--tool-border)",
+        "tool-border-strong": "var(--tool-border-strong)",
+        "warning-bg": "var(--sfp-warning-bg)",
+        "warning-border": "var(--sfp-warning-border)",
+        "warning-foreground": "var(--sfp-warning-foreground)",
+        "warning-icon": "var(--sfp-warning-icon)",
       },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+        "tool-control": "var(--tool-radius-control)",
+        "tool-panel": "var(--tool-radius-panel)",
+      },
+      boxShadow: {
+        tool: "var(--tool-shadow)",
+      },
+      transitionTimingFunction: {
+        tool: "cubic-bezier(0.2, 0, 0, 1)",
+      },
+      transitionDuration: {
+        tool: "200ms",
       },
       fontFamily: {
         sans: ["var(--font-inter)", "system-ui", "sans-serif"],

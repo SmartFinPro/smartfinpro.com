@@ -217,11 +217,6 @@ export function ComparisonTable({
                               />
                             ))}
                           </div>
-                          {product.reviewCount != null && (
-                            <span className="text-xs" style={{ color: 'var(--sfp-slate)' }}>
-                              ({String(product.reviewCount)})
-                            </span>
-                          )}
                         </div>
                       )}
                     </div>

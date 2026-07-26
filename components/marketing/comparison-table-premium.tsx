@@ -234,7 +234,6 @@ export function ComparisonTablePremium({
                   <StarRatingInline value={item.rating} />
                   <span className="text-xs tabular-nums" style={{ color: 'var(--sfp-slate)' }}>
                     {item.rating}/5
-                    {item.reviewCount && ` (${item.reviewCount.toLocaleString('en-US')})`}
                   </span>
                 </div>
               </div>

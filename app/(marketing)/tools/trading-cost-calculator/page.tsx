@@ -1,21 +1,16 @@
-import { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowLeft, BarChart3, Lightbulb, DollarSign, Clock, TrendingUp } from 'lucide-react';
 import { DynamicTradingCostCalculator } from '@/components/tools/dynamic-calculators';
 import { ToolRelatedReviews } from '@/components/marketing/tool-related-reviews';
+import { buildToolMetadata } from '@/lib/tools/registry/metadata';
+import { ToolJsonLd } from '@/components/tools/shell/tool-json-ld';
 
-export const metadata: Metadata = {
-  title: 'Trading Cost Calculator - Compare Broker Fees | SmartFinPro',
-  description: 'Free trading cost calculator. Compare spreads, commissions, and overnight fees across top brokers. See exactly how much you could save.',
-  openGraph: {
-    title: 'Trading Cost Calculator - Compare Broker Fees',
-    description: 'Compare real trading costs across eToro, Capital.com, IBKR, and more. Free calculator.',
-  },
-};
+export const metadata = buildToolMetadata('trading-cost', 'us');
 
 export default function TradingCostCalculatorPage() {
   return (
     <div className="min-h-screen" style={{ background: 'var(--sfp-gray)' }}>
+      <ToolJsonLd toolId="trading-cost" market="us" />
       {/* Breadcrumb */}
       <div className="container mx-auto px-4 py-6">
         <Link

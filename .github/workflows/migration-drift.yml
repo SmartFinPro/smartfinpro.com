@@ -1,0 +1,63 @@
+name: Migration Drift (trusted, main only)
+
+# Live-schema verification of the migration history. This is the ONLY place the
+# production Supabase credential is handed to the drift checker, and it runs
+# EXCLUSIVELY against trusted code:
+#   - push to main        → verify after every merge
+#   - workflow_dispatch   → manual re-check
+#   - schedule (daily)    → catch drift introduced out-of-band (migrations are
+#                           applied manually in the Supabase SQL editor, so the
+#                           live schema can change without a code push)
+#
+# It NEVER runs on pull_request and NEVER checks out or executes PR-head code,
+# so untrusted contributions can never reach the secret. The pull_request
+# workflow (pr-checks.yml) runs the same checker WITHOUT credentials.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+  schedule:
+    # 05:30 UTC daily — after the nightly cron window, before the working day.
+    - cron: '30 5 * * *'
+
+# Read-only token. This job needs no write scope on the repo.
+permissions:
+  contents: read
+
+# Never run two live checks against prod concurrently; newest wins.
+concurrency:
+  group: migration-drift-main
+  cancel-in-progress: true
+
+jobs:
+  drift:
+    name: Verify migrations against live schema (--strict)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout trusted main
+        uses: actions/checkout@v4
+        with:
+          # Pin to the trusted branch explicitly and drop the checkout token —
+          # the drift check needs neither write access nor PR-head code.
+          ref: main
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # No `npm ci`: the checker (scripts/check-migration-drift.mjs + lib) uses
+      # only Node built-ins and global fetch; `pg` is imported lazily and only
+      # when SUPABASE_DB_URL is set (it is not here). Skipping the install keeps
+      # this trusted job's dependency surface at zero.
+      - name: Check migration drift against live schema (--strict)
+        # --strict: a missing secret makes this FAIL loudly instead of passing as
+        # a silent "nothing verified" skip. Baselined known-drift is tolerated
+        # (that is what scripts/migration-drift-baseline.json is for); a genuinely
+        # new drift or a stale baseline entry fails the job.
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: npm run check:migrations -- --strict
