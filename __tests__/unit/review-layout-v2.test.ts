@@ -249,7 +249,7 @@ describe('ReviewLayoutV2', () => {
     expect(h1Idx).toBeGreaterThan(anchorIdx);
   });
 
-  it('opening block reads score → who it is for → CTA → standing without a mobile Market Check', () => {
+  it('opening block reads score → who it is for → CTA, without a mobile Market Check or a ScoreInField repeat', () => {
     const html = renderToStaticMarkup(
       h(ReviewLayoutV2, {
         meta: FULL_META,
@@ -265,11 +265,12 @@ describe('ReviewLayoutV2', () => {
     const region = html.slice(html.indexOf('id="verdict"'));
     const bestForIdx = region.indexOf('>Best for<');
     const mobileActionsIdx = region.indexOf('data-review-mobile-actions');
-    const scoreInFieldIdx = region.indexOf('id="score-in-field-heading"');
     expect(bestForIdx).toBeGreaterThan(-1);
     expect(mobileActionsIdx).toBeGreaterThan(bestForIdx);
-    expect(scoreInFieldIdx).toBeGreaterThan(-1);
-    expect(scoreInFieldIdx).toBeGreaterThan(mobileActionsIdx);
+    // ScoreInField was removed from this layout (operator, 2026-07-25): the
+    // sidebar's "How X compares" table already carries the same audited
+    // position/field numbers on this page, so the card read as a repeat.
+    expect(region).not.toContain('id="score-in-field-heading"');
     expect((region.match(/data-testid="decision-bridge"/g) ?? []).length).toBe(1);
   });
 
@@ -285,7 +286,7 @@ describe('ReviewLayoutV2', () => {
     );
     const region = html.slice(html.indexOf('id="verdict"'));
     const bestForIdx = region.indexOf('>Best for<');
-    const limitationIdx = region.indexOf('Main limitation:');
+    const limitationIdx = region.indexOf('>Main limitation<');
     // A fragment WITHOUT the leading "eToro's": React escapes the apostrophe to
     // &#x27; in the rendered card, while the JSON-LD (dangerouslySetInnerHTML)
     // keeps it raw. Matching on the raw form finds only the schema copy — which

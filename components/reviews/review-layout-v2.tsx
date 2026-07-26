@@ -8,7 +8,6 @@
 //
 //   ReviewHeader
 //     → #verdict   VerdictCard (BestXScore + compact mobile actions)
-//     → ScoreInField
 //     → ReviewSectionNav (renders all 7 REVIEW_V2_ANCHORS)
 //     → MDX body, wrapped in SectionVerdictsProvider (5 mdx-owned H2 sections)
 //     → #alternatives  AlternativesSection (CTA-Zone 1)
@@ -61,7 +60,6 @@
 import Link from 'next/link';
 import { ReviewHeader } from './review-header';
 import { VerdictCard } from './verdict-card';
-import { ScoreInField } from './score-in-field';
 import { ReviewSectionNav } from './review-section-nav';
 import { ReviewSidebar } from './review-sidebar';
 import { ReviewMobileActions } from './review-mobile-actions';
@@ -272,24 +270,11 @@ export function ReviewLayoutV2({
               <div style={{ marginBottom: '40px' }}>{mobileActions}</div>
             )}
 
-            {/* Where this product sits in the field — closes the opening block
-                (score → who it is for → mobile action → standing) before the nav hands over to
-                the deep dive. It plots the same audited position/field numbers
-                the sidebar lists as a table; the table answers "who is above
-                me", this answers "by how much", which is the point the verdict
-                prose makes in words ("1.6 points separate first from last") and
-                which no table can show.
-                Self-degrading: renders null without position/field, so a review
-                with no cockpit match simply has no such block. */}
-            {/* Gated on the same preconditions the component itself requires, so
-                a review without a cockpit match gets no empty 40px gap where the
-                block would have been (the wrapper's margin would survive a null
-                child). The component keeps its own, stricter validation. */}
-            {position && decisionBridge?.field && decisionBridge.field.length > 0 && (
-              <div style={{ marginBottom: '40px' }}>
-                <ScoreInField field={decisionBridge.field} position={position} fieldCount={fieldCount} />
-              </div>
-            )}
+            {/* ScoreInField ("Where X sits in the field") removed from this slot
+                (operator, 2026-07-25): the sidebar's "How X compares" table
+                covers the same audited position/field numbers on this page, so
+                the extra card read as a repeat. The component and its tests
+                remain in the repo for surfaces without the sidebar table. */}
 
           </div>
 
@@ -345,9 +330,7 @@ export function ReviewLayoutV2({
             dangerouslySetInnerHTML={{
               __html: `
 .review-v2-prose p,
-.review-v2-prose li,
-.review-v2-prose table td,
-.review-v2-prose table th { font-family: var(--font-secondary); font-size: 18px; line-height: 1.65; }
+.review-v2-prose li { font-family: var(--font-secondary); font-size: 18px; line-height: 1.65; }
 .review-v2-prose > * > p { margin: 0 0 1.15em; }
 /* The MDX renderer's shared H2 is 16px because it also serves compact V1
    contexts. Inside the 18px V2 article that inverted the hierarchy: section
@@ -362,20 +345,14 @@ export function ReviewLayoutV2({
   color: var(--sfp-ink);
   margin: 2.25em 0 0.7em;
 }
-/* Table headers in the article's own voice. StyledTh (lib/mdx/components.tsx,
-   shared with all 216 V1 pages, so overridden here rather than edited) sets
-   them uppercase with 0.9px tracking. Everything else about them already
-   matched the body — same Georgia, same 18px, verified at the rendering level
-   via CDP getPlatformFontsForNode, not just the declared font-family — but
-   capitals plus letter-spacing is exactly what makes text read as a DIFFERENT
-   typeface, which is how it was reported. Sentence case, no tracking; the
-   header keeps its weight and its navy, and the tinted header row already
-   marks it as a header without shouting. */
-.review-v2-prose table th {
-  font-weight: 600;
-  text-transform: none;
-  letter-spacing: normal;
-}
+/* Tables render with StyledTable/StyledTh/StyledTd's own, un-overridden
+   styling (lib/mdx/components.tsx, shared with all 216 V1 pages) — sans,
+   uppercase+tracked header on the sky band — instead of the article's serif
+   voice (operator, 2026-07-26: match V1's table look for consistency across
+   review versions). Earlier this file forced tables into the 18px Georgia
+   body font and stripped the header's uppercase/tracking; both overrides are
+   gone, so a V2 table is now visually identical to the same component on a
+   V1 page. */
 /* Sticky-chrome offset for every in-page anchor target. The site header
    (65px, top:0) and the section nav (44px, top:64) together cover the first
    108px of the viewport, and the anchors — bare <span id> markers in the MDX
@@ -391,9 +368,7 @@ export function ReviewLayoutV2({
 #alternatives { scroll-margin-top: 124px; }
 @media (max-width: 640px) {
   .review-v2-prose p,
-  .review-v2-prose li,
-  .review-v2-prose table td,
-  .review-v2-prose table th { font-size: 17px; }
+  .review-v2-prose li { font-size: 17px; }
   .review-v2-prose h2 { font-size: 22px; margin-top: 2em; }
 }
 `,
@@ -416,25 +391,11 @@ export function ReviewLayoutV2({
             rail's containing block, so the rail is gone by the time these CTAs
             arrive. See the grid note at the top of this container. */}
         <div className={hasSidebar ? 'max-w-[760px] mx-auto lg:mx-0 lg:max-w-none lg:col-start-1 lg:row-start-2 lg:min-w-0' : 'max-w-[760px] mx-auto'}>
-          {/* #alternatives — layout-owned nav anchor; CTA-Zone 2 lives inside AlternativesSection */}
-          {alternatives.length > 0 && (
-            <div id="alternatives" style={{ marginBottom: '40px' }}>
-              <AlternativesSection
-                productName={productName}
-                market={market}
-                category={category}
-                alternatives={alternatives}
-                field={decisionBridge?.field}
-                fieldCount={decisionBridge?.fieldCount}
-                topicLabel={decisionBridge?.topicLabel}
-                cockpitHref={decisionBridge?.cockpitHref}
-              />
-            </div>
-          )}
-
-          {/* Final Decision — CTA-Zone 3, no nav entry (T0a).
-              compareHref is withheld whenever AlternativesSection rendered
-              above: it ends with the identical gold button pointing at the
+          {/* Final Decision — CTA-Zone 3, no nav entry (T0a). Rendered before
+              Alternatives (operator, 2026-07-25): the closing judgement comes
+              first, then the alternatives it references.
+              compareHref is withheld whenever AlternativesSection renders
+              below: it ends with the identical gold button pointing at the
               identical cockpit href, and the two came out ~5px apart. Passing
               null here rather than editing FinalDecision keeps that component's
               Null-Degradation contract intact — a review with no alternatives
@@ -452,6 +413,22 @@ export function ReviewLayoutV2({
             </div>
           )}
 
+          {/* #alternatives — layout-owned nav anchor; CTA-Zone 2 lives inside AlternativesSection */}
+          {alternatives.length > 0 && (
+            <div id="alternatives" style={{ marginBottom: '40px' }}>
+              <AlternativesSection
+                productName={productName}
+                market={market}
+                category={category}
+                alternatives={alternatives}
+                field={decisionBridge?.field}
+                fieldCount={decisionBridge?.fieldCount}
+                topicLabel={decisionBridge?.topicLabel}
+                cockpitHref={decisionBridge?.cockpitHref}
+              />
+            </div>
+          )}
+
           {/* Affiliate disclosure — moved out of ReviewHeader (operator,
               2026-07-21) to sit here, immediately before the methodology it
               refers to, instead of directly under the H1. The CTA-adjacent
@@ -466,10 +443,12 @@ export function ReviewLayoutV2({
             <MethodologySection essentialFacts={essentialFacts} updateLog={meta.updateLog} />
           </div>
 
-          {/* FAQ — no nav entry (T0a); includeSchema=false, the script above already emitted FAQPage */}
+          {/* FAQ — no nav entry (T0a); includeSchema=false, the script above already
+              emitted FAQPage. defaultOpen=false (operator, 2026-07-25): V2 reviews
+              keep answers collapsed until clicked, unlike the sitewide default. */}
           {meta.faq && meta.faq.length > 0 && (
             <div style={{ marginBottom: '40px' }}>
-              <FAQSection faqs={meta.faq} includeSchema={false} />
+              <FAQSection faqs={meta.faq} includeSchema={false} defaultOpen={false} />
             </div>
           )}
 
