@@ -3,8 +3,8 @@
   "definition": "Broker review file with numeric rating in frontmatter, category is trading or forex, filename ends with -review.mdx, not under content/_templates/",
   "totals": {
     "brokerReviews": 36,
-    "v2": 1,
-    "candidates": 35
+    "v2": 3,
+    "candidates": 33
   },
   "reviews": [
     {
@@ -701,28 +701,16 @@
       "market": "us",
       "category": "trading",
       "slug": "charles-schwab-review",
-      "reviewLayout": null,
+      "reviewLayout": "v2",
       "h2": [
-        "Charles Schwab: The All-in-One Platform for Serious Investors",
-        "US Pricing & Plans 2026",
-        "Key Features for US Investors",
-        "Charles Schwab Features Deep-Dive",
-        "Fee Comparison: Schwab vs. Major US Brokers",
-        "Annual Cost Comparison: Three US Investor Profiles",
-        "SEC/FINRA Compliance & Security",
-        "Who Should Use Charles Schwab",
-        "Customer Support: Our Testing Results",
-        "What US Users Are Saying",
-        "How Charles Schwab Makes Money",
-        "How to Sign Up for Charles Schwab",
-        "When to Choose an Alternative",
-        "Schwab vs. Alternatives for US Investors",
-        "How We Tested Charles Schwab",
-        "Our Verdict: 4.4/5 for Most US Investors",
-        "Frequently Asked Questions"
+        "Fees",
+        "Markets & Tools",
+        "Platform Experience",
+        "Safety & Regulation",
+        "Support"
       ],
-      "hasClaimSections": true,
-      "wordCount": 7468
+      "hasClaimSections": false,
+      "wordCount": 2656
     },
     {
       "path": "content/us/trading/etoro-review.mdx",
@@ -774,28 +762,16 @@
       "market": "us",
       "category": "trading",
       "slug": "fidelity-review",
-      "reviewLayout": null,
+      "reviewLayout": "v2",
       "h2": [
-        "Fidelity: The Gold Standard for Research and Fund Investing",
-        "US Pricing & Plans 2026",
-        "Key Features for US Investors",
-        "Fidelity Features Deep-Dive",
-        "Fee Comparison: Fidelity vs. Major US Brokers",
-        "Annual Cost Comparison: Three US Investor Profiles",
-        "SEC/FINRA Compliance & Security",
-        "Who Should Use Fidelity",
-        "Customer Support: Our Testing Results",
-        "What US Users Are Saying",
-        "How Fidelity Makes Money",
-        "How to Sign Up for Fidelity",
-        "When to Choose an Alternative",
-        "Fidelity vs. Alternatives for US Investors",
-        "How We Tested Fidelity",
-        "Our Verdict: 4.5/5 for Research-Focused and Fund Investors",
-        "Frequently Asked Questions"
+        "Fees",
+        "Markets & Tools",
+        "Platform Experience",
+        "Safety & Regulation",
+        "Support"
       ],
-      "hasClaimSections": true,
-      "wordCount": 8647
+      "hasClaimSections": false,
+      "wordCount": 2184
     },
     {
       "path": "content/us/trading/interactive-brokers-review.mdx",

@@ -96,6 +96,52 @@ describe('ReviewSidebar', () => {
     expect(html).toContain('lg:sticky');
   });
 
+  it('enlarges the Charles Schwab square lockup without changing the eToro wordmark', () => {
+    const schwabHtml = renderToStaticMarkup(
+      h(ReviewSidebar, {
+        productName: 'Charles Schwab',
+        verifiedDate: '2026-07-26',
+        decisionBridge: makeDecisionBridge({
+          position: {
+            rank: 2,
+            slug: 'charles-schwab',
+            name: 'Charles Schwab',
+            score: 9.3,
+            subScores: { fees: 8.6, features: 9.4, ux: 8.8, support: 8.6 },
+            confidence: 'high',
+            dataVerifiedAt: '2026-07-26',
+            isTopPick: false,
+          },
+        }),
+        compareLabel: 'Compare all 9 trading platforms',
+        affiliateUrl: '/go/charles-schwab',
+        market: 'us',
+        category: 'trading',
+      }),
+    );
+
+    expect(schwabHtml).toContain('/images/brokers/charles-schwab-seeklogo-square.png');
+    expect(schwabHtml).toContain('data-logo-presentation="square-lockup"');
+    expect(schwabHtml).toContain('h-[110px]');
+    expect(schwabHtml).toContain('h-44 w-44');
+
+    const etoroHtml = renderToStaticMarkup(
+      h(ReviewSidebar, {
+        productName: 'eToro',
+        verifiedDate: '2026-07-18',
+        decisionBridge: makeDecisionBridge(),
+        compareLabel: 'Compare all 9 trading platforms',
+        affiliateUrl: '/go/etoro',
+        market: 'us',
+        category: 'trading',
+      }),
+    );
+
+    expect(etoroHtml).toContain('/images/brokers/etoro-seeklogo.svg');
+    expect(etoroHtml).not.toContain('data-logo-presentation="square-lockup"');
+    expect(etoroHtml).not.toContain('h-[110px]');
+  });
+
   it('with hasLeverageRisk=true (a real CFD broker): shows the prominent CFD RiskWarningBox, not the general-risk line', () => {
     const html = renderToStaticMarkup(
       h(ReviewSidebar, {

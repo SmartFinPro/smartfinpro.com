@@ -13,6 +13,8 @@ describe('countRenderedWords', () => {
     expect(breakdown).toEqual({
       body: 5,
       verdictSummary: 0,
+      verdictLists: 0,
+      sectionVerdicts: 0,
       essentialFacts: 0,
       alternatives: 0,
       finalDecision: 0,
@@ -20,33 +22,45 @@ describe('countRenderedWords', () => {
     });
   });
 
-  it('sums MDX body + verdict.summary + essentialFacts[].context + alternatives[].whyInstead + finalDecision + faq[].answer', () => {
+  it('sums every zone the V2 layout renders, not just the body and the long-form fields', () => {
     const body = 'word '.repeat(10).trim(); // 10 words
     const frontmatter = {
-      verdict: { summary: 'word '.repeat(20).trim() }, // 20
+      verdict: {
+        summary: 'word '.repeat(20).trim(), // 20 -> verdictSummary
+        positioning: 'word '.repeat(4).trim(), // 4  \
+        bestFor: ['word word', 'word'], //         3   > verdictLists = 12
+        notFor: ['word word'], //                  2  /
+        mainLimitation: 'word word word', //       3 /
+      },
+      sectionVerdicts: {
+        fees: 'word word', // 2
+        markets: 'word', //   1  -> sectionVerdicts = 3
+      },
       essentialFacts: [
-        { context: 'word '.repeat(5).trim() }, // 5
-        { context: 'word '.repeat(5).trim() }, // 5
+        { label: 'word', value: 'word', context: 'word '.repeat(5).trim() }, // 7
+        { label: 'word', value: 'word', context: 'word '.repeat(5).trim() }, // 7
       ],
       alternatives: [
         { whyInstead: 'word '.repeat(8).trim() }, // 8
       ],
       finalDecision: 'word '.repeat(15).trim(), // 15
       faq: [
-        { answer: 'word '.repeat(7).trim() }, // 7
-        { answer: 'word '.repeat(3).trim() }, // 3
+        { question: 'word word', answer: 'word '.repeat(7).trim() }, // 9
+        { question: 'word', answer: 'word '.repeat(3).trim() }, //     4
       ],
     };
     const { total, breakdown } = countRenderedWords(body, frontmatter);
     expect(breakdown).toEqual({
       body: 10,
       verdictSummary: 20,
-      essentialFacts: 10,
+      verdictLists: 12,
+      sectionVerdicts: 3,
+      essentialFacts: 14,
       alternatives: 8,
       finalDecision: 15,
-      faq: 10,
+      faq: 13,
     });
-    expect(total).toBe(10 + 20 + 10 + 8 + 15 + 10);
+    expect(total).toBe(10 + 20 + 12 + 3 + 14 + 8 + 15 + 13);
   });
 
   it('accepts finalDecision as an object with a summary field', () => {

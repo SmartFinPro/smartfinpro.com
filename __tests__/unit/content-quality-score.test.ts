@@ -62,9 +62,13 @@ describe('content quality score — V1 regression guard', () => {
   // V1 scoring must not shift when the V2 branches change. These are real
   // files; if a future edit to the V2 path leaks into the shared code, the
   // numbers below move and this test fails.
+  // charles-schwab-review and fidelity-review are deliberately absent: both
+  // have been migrated to V2 and no longer score on the V1 path. Each
+  // migration tripped this test first, which is the behaviour intended — a
+  // file changing tier should never pass silently.
   const V1_EXPECTED: Record<string, number> = {
-    'content/us/trading/fidelity-review.mdx': 87,
-    'content/us/trading/charles-schwab-review.mdx': 87,
+    'content/us/trading/etrade-review.mdx': 87,
+    'content/us/trading/tastytrade-review.mdx': 87,
     'content/us/trading/robinhood-review.mdx': 87,
     'content/us/trading/webull-review.mdx': 87,
     'content/us/forex/oanda-review.mdx': 87,
@@ -77,7 +81,7 @@ describe('content quality score — V1 regression guard', () => {
   }
 
   it('ignores frontmatter for V1 files — they are scored on the body alone', () => {
-    const file = 'content/us/trading/fidelity-review.mdx';
+    const file = 'content/us/trading/robinhood-review.mdx';
     const { content, data } = read(file);
     const withFm = computeContentQuality(content, bodyWords(content), false, data);
     const withoutFm = computeContentQuality(content, bodyWords(content), false, {});

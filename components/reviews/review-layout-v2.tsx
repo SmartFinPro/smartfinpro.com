@@ -106,7 +106,15 @@ export function ReviewLayoutV2({
   crossCategoryContent,
 }: ReviewLayoutV2Props) {
   const title = meta.seoTitle || meta.title;
-  const productName = meta.title.split(' ')[0];
+  // The audited cockpit row carries the real product name ("Charles Schwab").
+  // The old fallback — meta.title.split(' ')[0] — took the FIRST WORD of the
+  // headline, which is right only for single-word brands. It went unnoticed
+  // while eToro was the sole V2 review; on the Schwab pilot it rendered the
+  // affiliate CTA as "Visit Charles" and the logo alt as "Charles logo".
+  // Half the broker corpus (18 of 36) has a multi-word name, so this would
+  // have shipped on most of the rollout. The split stays as the last resort
+  // for a review with no cockpit match, where nothing better is available.
+  const productName = decisionBridge?.position?.name || meta.title.split(' ')[0];
   const categoryName = categoryConfig[category]?.name || category.replace('-', ' ');
   const marketPrefix = `/${market}`;
   const breadcrumbs = buildBreadcrumbs(market, category, title, slug);
