@@ -132,7 +132,6 @@
       "slug": "cmc-markets-review",
       "reviewLayout": null,
       "h2": [
-        "Platform Evidence & Screenshots",
         "CMC Markets: Australia's Widest-Range ASIC-Regulated Trading Platform",
         "Australian Pricing & Trading Costs 2026",
         "Key Features for Australian Traders",
@@ -152,7 +151,7 @@
         "Frequently Asked Questions"
       ],
       "hasClaimSections": true,
-      "wordCount": 8123
+      "wordCount": 7861
     },
     {
       "path": "content/au/trading/plus500-review.mdx",
@@ -336,7 +335,6 @@
       "slug": "questrade-forex-review",
       "reviewLayout": null,
       "h2": [
-        "Platform Evidence & Screenshots",
         "Questrade Forex: Canada's Integrated Brokerage for Stocks and Currency Trading",
         "Canadian Pricing & Plans 2026 (CAD)",
         "Key Features for Canadian Traders",
@@ -356,7 +354,7 @@
         "Frequently Asked Questions"
       ],
       "hasClaimSections": true,
-      "wordCount": 7924
+      "wordCount": 7755
     },
     {
       "path": "content/ca/forex/questrade-review.mdx",
@@ -466,7 +464,6 @@
       "slug": "freetrade-review",
       "reviewLayout": null,
       "h2": [
-        "Platform Evidence & Screenshots",
         "Freetrade: Commission-Free ISA Investing for UK Retail Investors",
         "UK Pricing & Plans 2026",
         "Key Features for UK Investors",
@@ -484,7 +481,7 @@
         "Frequently Asked Questions"
       ],
       "hasClaimSections": true,
-      "wordCount": 6491
+      "wordCount": 6262
     },
     {
       "path": "content/uk/trading/hargreaves-lansdown-review.mdx",
@@ -564,7 +561,6 @@
       "slug": "forex-com-review",
       "reviewLayout": null,
       "h2": [
-        "Platform Evidence & Screenshots",
         "Forex.com: Commission-Based Pricing for Serious US Traders",
         "US Pricing & Plans 2026",
         "Key Features for US Traders",
@@ -585,7 +581,7 @@
         "Further Resources"
       ],
       "hasClaimSections": true,
-      "wordCount": 8479
+      "wordCount": 8244
     },
     {
       "path": "content/us/forex/ig-markets-review.mdx",
@@ -594,7 +590,6 @@
       "slug": "ig-markets-review",
       "reviewLayout": null,
       "h2": [
-        "Platform Evidence & Screenshots",
         "IG Markets US: 80+ Currency Pairs for Serious Forex Traders",
         "US Pricing & Plans 2026",
         "Key Features for US Traders",
@@ -615,7 +610,7 @@
         "Further Resources"
       ],
       "hasClaimSections": true,
-      "wordCount": 8210
+      "wordCount": 7960
     },
     {
       "path": "content/us/forex/interactive-brokers-forex-review.mdx",
@@ -624,7 +619,6 @@
       "slug": "interactive-brokers-forex-review",
       "reviewLayout": null,
       "h2": [
-        "Platform Evidence & Screenshots",
         "Interactive Brokers: Institutional-Grade Forex for Professional Traders",
         "US Pricing & Plans 2026",
         "Key Features for US Forex Traders",
@@ -644,7 +638,7 @@
         "Frequently Asked Questions"
       ],
       "hasClaimSections": true,
-      "wordCount": 8182
+      "wordCount": 7919
     },
     {
       "path": "content/us/forex/oanda-review.mdx",
@@ -653,7 +647,6 @@
       "slug": "oanda-review",
       "reviewLayout": null,
       "h2": [
-        "Platform Evidence & Screenshots",
         "OANDA: The Most Accessible US Forex Broker for 2026",
         "US Pricing & Plans 2026 (USD)",
         "Key Features for US Traders",
@@ -673,7 +666,7 @@
         "Frequently Asked Questions"
       ],
       "hasClaimSections": true,
-      "wordCount": 7984
+      "wordCount": 7738
     },
     {
       "path": "content/us/forex/tastyfx-review.mdx",
@@ -682,7 +675,6 @@
       "slug": "tastyfx-review",
       "reviewLayout": null,
       "h2": [
-        "Platform Evidence & Screenshots",
         "tastyfx: Zero-Commission Forex Trading for US Traders",
         "US Pricing & Plans 2026 (USD)",
         "Key Features for US Traders",
@@ -702,7 +694,7 @@
         "Frequently Asked Questions"
       ],
       "hasClaimSections": true,
-      "wordCount": 8072
+      "wordCount": 7823
     },
     {
       "path": "content/us/trading/charles-schwab-review.mdx",
@@ -711,7 +703,6 @@
       "slug": "charles-schwab-review",
       "reviewLayout": null,
       "h2": [
-        "Platform Evidence & Screenshots",
         "Charles Schwab: The All-in-One Platform for Serious Investors",
         "US Pricing & Plans 2026",
         "Key Features for US Investors",
@@ -731,7 +722,7 @@
         "Frequently Asked Questions"
       ],
       "hasClaimSections": true,
-      "wordCount": 7689
+      "wordCount": 7468
     },
     {
       "path": "content/us/trading/etoro-review.mdx",
@@ -785,7 +776,6 @@
       "slug": "fidelity-review",
       "reviewLayout": null,
       "h2": [
-        "Platform Evidence & Screenshots",
         "Fidelity: The Gold Standard for Research and Fund Investing",
         "US Pricing & Plans 2026",
         "Key Features for US Investors",
@@ -805,7 +795,7 @@
         "Frequently Asked Questions"
       ],
       "hasClaimSections": true,
-      "wordCount": 8944
+      "wordCount": 8647
     },
     {
       "path": "content/us/trading/interactive-brokers-review.mdx",
@@ -830,7 +820,7 @@
         "Further Resources"
       ],
       "hasClaimSections": false,
-      "wordCount": 7198
+      "wordCount": 7002
     },
     {
       "path": "content/us/trading/robinhood-review.mdx",
@@ -839,7 +829,6 @@
       "slug": "robinhood-review",
       "reviewLayout": null,
       "h2": [
-        "Platform Evidence & Screenshots",
         "Robinhood: Zero-Barrier Investing for the Next Generation",
         "US Pricing & Plans 2026",
         "Key Features for US Investors",
@@ -859,7 +848,7 @@
         "Frequently Asked Questions"
       ],
       "hasClaimSections": true,
-      "wordCount": 7882
+      "wordCount": 7626
     },
     {
       "path": "content/us/trading/tastytrade-review.mdx",
@@ -921,7 +910,6 @@
       "slug": "webull-review",
       "reviewLayout": null,
       "h2": [
-        "Platform Evidence & Screenshots",
         "Webull: Advanced Free Charting for Serious Retail Traders",
         "US Pricing & Fee Structure 2026",
         "Key Features for US Traders",
@@ -941,7 +929,7 @@
         "Frequently Asked Questions"
       ],
       "hasClaimSections": true,
-      "wordCount": 7732
+      "wordCount": 7476
     }
   ]
 }
