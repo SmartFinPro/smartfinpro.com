@@ -40,6 +40,9 @@ Regeln für JEDE Session dieses Plans:
 - `audits/reports/unit-latest.json` NIE stagen/committen — vor jedem Commit `git status --short` prüfen.
 - Reviews = frische Independent-Reviewer-Session (Opus) laut `docs/governance/model-roles.md`.
 - Nach jedem Merge auf `main`: Deploy am **run conclusion** prüfen, nicht am Watch-Exit.
+- **MERGE-GATE (verbindlich, alle vier Merges):** Kein `gh pr merge` ohne (a) bestandenes
+  unabhängiges Review UND (b) explizite Freigabe des Betreibers im Chat. Das Review-Ergebnis
+  wird ihm vollständig vorgelegt; zwischen den Gates läuft die Ausführung selbstständig.
 
 ---
 
@@ -74,6 +77,9 @@ Regeln für JEDE Session dieses Plans:
 ```bash
 gh pr review 103 --approve --body "Independent review (Opus, model-roles.md): SHIP. Gates lokal grün (ci + voller Build), genau 1 V2-Review (eToro), keine fabrizierten Reviewer im Build-Output. Details im Review-Protokoll der Session."
 ```
+
+- [ ] **Step 3b: MERGE-GATE** — Review-Verdikt + Findings dem Betreiber vorlegen.
+  Step 4 erst nach seiner expliziten Freigabe (der Merge deployt unmittelbar auf main).
 
 - [ ] **Step 4: Merge (Squash) — Basis-Branch NICHT löschen**
 
@@ -160,7 +166,7 @@ Erwartung: `"mergeable":"MERGEABLE"`.
   > dem PR laufen gegen einen Prod-Build (`npm run build` + `next start`); (4) kein
   > verwaister `<EvidenceCarousel>`-Import bleibt.
 
-- [ ] **Step 6: Review dokumentieren + Merge + Deploy prüfen**
+- [ ] **Step 6: Review dokumentieren; MERGE-GATE (explizite Freigabe des Betreibers); dann Merge + Deploy prüfen**
 
 ```bash
 gh pr review 105 --approve --body "Independent review (Opus): SHIP nach main-Update. check:evidence grün, e2e 6/6 gegen Prod-Build, keine main-Regression im Range-Diff."
@@ -813,7 +819,7 @@ EOF
   > `scripts/quality-exact.mjs`; (5) Vertrag/Guard/Inventar konsistent (36/1/35);
   > (6) `npm run ci` + `npm run build` lokal grün.
 
-- [ ] **Step 3: Review dokumentieren + Merge + Deploy prüfen**
+- [ ] **Step 3: Review dokumentieren; MERGE-GATE (explizite Freigabe des Betreibers); dann Merge + Deploy prüfen**
 
 ```bash
 gh pr review <PR-NR> --approve --body "Independent review (Opus): SHIP. Range-Diff sauber, Readiness-Snapshot spec-konform, Gates lokal grün."
@@ -940,7 +946,7 @@ gh pr create --base main --head feat/charles-schwab-v2-pilot \
   > Pilot-Commits; (6) `npm run ci` + `npm run build` grün; (7) un-gated e2e grün
   > gegen Prod-Build.
 
-- [ ] **Step 3: Review dokumentieren + Merge + Deploy prüfen**
+- [ ] **Step 3: Review dokumentieren; MERGE-GATE (explizite Freigabe des Betreibers); dann Merge + Deploy prüfen**
 
 ```bash
 gh pr review <PR-NR> --approve --body "Independent review (Opus): SHIP. Fakten-Stichproben gegen Quellen ok, Vertrag+Gates grün, Metriktabelle plausibel."
