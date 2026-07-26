@@ -199,7 +199,9 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
   );
 
   return (
-    <main id="main-content">
+    // The `<main id="main-content">` landmark is already provided by the shared
+    // MarketingLayout (app/(marketing)/layout.tsx) — a second one here would
+    // duplicate both the element and the id (invalid HTML, confuses a11y tree).
     <article className="min-h-screen" style={{ background: 'var(--sfp-gray)' }}>
       {/* Schema.org JSON-LD */}
       {pillarContent && (
@@ -556,7 +558,6 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
         </div>
       </section>
     </article>
-    </main>
   );
 }
 

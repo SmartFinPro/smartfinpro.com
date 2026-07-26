@@ -63,6 +63,7 @@
 import { createContext, useContext, type ReactNode } from 'react';
 import type { SectionVerdicts } from '@/lib/reviews/verdict-frontmatter';
 import { MDX_ANCHOR_IDS, type MdxAnchorId } from '@/lib/reviews/section-anchors';
+import { CALLOUT_ARTICLE } from '@/lib/reviews/callout-style';
 
 const SectionVerdictsContext = createContext<SectionVerdicts | null>(null);
 
@@ -107,36 +108,23 @@ export function SectionVerdict({ id }: SectionVerdictProps) {
   const text = sectionVerdicts?.[id];
   if (!text) return null;
 
+  // No "Verdict" label. The word named what the reader can already see: a
+  // short, set-apart summary at the head of a section. The tinted panel and
+  // the navy rule mark it as an aside on their own, and dropping the label
+  // also drops a 9.5px uppercase micro-line — the kind of shouted eyebrow
+  // that made this design read as a dashboard rather than as research.
+  // With the label gone the two stacked divs have no reason to exist, so this
+  // is one element and the padding is whole again. The look itself is
+  // CALLOUT_ARTICLE — shared with the opening verdict summary and the
+  // editorial aside, which is the point: same kind of thing, same appearance.
   return (
-    <div style={{ margin: '20px 0' }}>
-      <div
-        style={{
-          fontFamily: 'var(--font-primary)',
-          fontSize: '9.5px',
-          letterSpacing: '0.16em',
-          textTransform: 'uppercase',
-          color: 'var(--sfp-navy)',
-          fontWeight: 700,
-          background: 'var(--sfp-gray)',
-          borderLeft: '2px solid var(--sfp-navy)',
-          padding: '9px 13px 0',
-        }}
-      >
-        Verdict
-      </div>
-      <div
-        style={{
-          fontFamily: 'var(--font-secondary)',
-          fontSize: '14px',
-          lineHeight: 1.5,
-          background: 'var(--sfp-gray)',
-          borderLeft: '2px solid var(--sfp-navy)',
-          padding: '2px 13px 9px',
-          color: 'var(--sfp-ink)',
-        }}
-      >
-        {text}
-      </div>
+    <div
+      style={{
+        ...CALLOUT_ARTICLE,
+        margin: '20px 0',
+      }}
+    >
+      {text}
     </div>
   );
 }
@@ -177,18 +165,7 @@ export interface SmartFinProTakeProps {
 /** MDX tag `<SmartFinProTake>...</SmartFinProTake>` — a short editorial aside. Sky background, Navy edge — never red/gold (Regel: Rot nur Cons/Risiko, Gold nur CTA). */
 export function SmartFinProTake({ children }: SmartFinProTakeProps) {
   return (
-    <div
-      style={{
-        margin: '20px 0',
-        background: 'var(--sfp-sky)',
-        borderLeft: '2px solid var(--sfp-navy)',
-        padding: '12px 15px',
-        fontFamily: 'var(--font-secondary)',
-        fontSize: '14px',
-        lineHeight: 1.5,
-        color: 'var(--sfp-ink)',
-      }}
-    >
+    <div style={{ ...CALLOUT_ARTICLE, margin: '20px 0' }}>
       {children}
     </div>
   );

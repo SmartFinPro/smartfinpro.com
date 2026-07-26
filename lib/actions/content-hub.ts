@@ -2,6 +2,11 @@
 'use server';
 import 'server-only';
 import { logger } from '@/lib/logging';
+import { computeContentQuality, EMPTY_QUALITY } from '@/lib/reviews/content-quality';
+import type { ContentQuality } from '@/lib/reviews/content-quality';
+// Type-only re-export: components/dashboard/content-hub-table-body.tsx imports
+// ContentQuality from here. Types are erased, so this is legal in 'use server'.
+export type { ContentQuality } from '@/lib/reviews/content-quality';
 
 import fs from 'fs';
 import path from 'path';
@@ -21,14 +26,6 @@ export interface SeoHealth {
   overall: HealthStatus;
 }
 
-export interface ContentQuality {
-  score: number;          // 0-100 overall
-  wordScore: number;      // 0-100 word count quality
-  structureScore: number; // 0-100 heading structure
-  linkScore: number;      // 0-100 internal + external links
-  componentScore: number; // 0-100 MDX components usage
-  breakdown: string;      // "W:85 S:90 L:70 C:95" short form
-}
 
 export interface ContentHubRow {
   url: string;
@@ -179,98 +176,6 @@ function computeSeoHealth(seoTitle: string | undefined, description: string | un
   };
 }
 
-// ── Content Quality Scoring ─────────────────────────────────────
-
-// <ExpertBox> and <EvidenceCarousel> were removed 2026-07-18 (T0e audit):
-// they rewarded fabricated reviewer identities / non-existent test
-// screenshots — see docs/superpowers/specs/2026-07-18-etoro-cockpit-audit.md.
-const MDX_COMPONENTS = [
-  '<TrustAuthority', '<Rating', '<AffiliateButton',
-  '<ExecutiveSummary', '<CollapsibleSection', '<ComparisonTable',
-  '<SimpleComparison', '<BrokerComparison', '<EnterpriseTable',
-  '<FAQ', '<Pros', '<Cons', '<Info', '<Warning', '<Tip',
-  '<NewsletterBox', '<WinnerAtGlance',
-];
-
-// V2 review-layout pages (frontmatter `reviewLayout: 'v2'`) target a much
-// leaner rendered word count (2,600–3,600 vs. V1's 4,000–7,000) because
-// most of their editorial content lives in structured frontmatter zones
-// (verdict/essentialFacts/alternatives), not the MDX body — see
-// scripts/lib/rendered-word-count.mjs for the counting rationale.
-function computeContentQuality(content: string, wordCount: number, isV2 = false): ContentQuality {
-  // ── Word Score (30% weight) ──
-  let wordScore = 0;
-  if (isV2) {
-    if (wordCount >= 2600 && wordCount <= 3600) wordScore = 100;
-    else if (wordCount >= 2200 && wordCount < 2600) wordScore = 70;
-    else if (wordCount > 3600 && wordCount <= 4200) wordScore = 80;
-    else if (wordCount >= 1800 && wordCount < 2200) wordScore = 50;
-    else if (wordCount > 4200) wordScore = 60;
-    else if (wordCount >= 900) wordScore = 30;
-    else wordScore = 10;
-  } else {
-    if (wordCount >= 4000 && wordCount <= 7000) wordScore = 100;
-    else if (wordCount >= 3000 && wordCount < 4000) wordScore = 70;
-    else if (wordCount > 7000 && wordCount <= 9000) wordScore = 80;
-    else if (wordCount >= 2000 && wordCount < 3000) wordScore = 50;
-    else if (wordCount > 9000) wordScore = 60;
-    else if (wordCount >= 1000) wordScore = 30;
-    else wordScore = 10;
-  }
-
-  // ── Structure Score (25% weight) — headings + FAQ ──
-  const h2Count = (content.match(/^## /gm) || []).length;
-  const h3Count = (content.match(/^### /gm) || []).length;
-  const hasFaq = /(<FAQ|^## .*FAQ|^## .*Frequently Asked)/im.test(content);
-  const hasProsCons = /<Pros|<Cons|^## .*Pros|^## .*Cons/im.test(content);
-
-  let structureScore = 0;
-  structureScore += Math.min(h2Count, 8) * 8;  // Up to 64 points for H2s
-  structureScore += Math.min(h3Count, 6) * 3;  // Up to 18 points for H3s
-  if (hasFaq) structureScore += 10;
-  if (hasProsCons) structureScore += 8;
-  structureScore = Math.min(structureScore, 100);
-
-  // ── Link Score (20% weight) — internal + external ──
-  const internalLinks = (content.match(/\]\(\//g) || []).length;
-  const externalLinks = (content.match(/\]\(https?:\/\//g) || []).length;
-
-  let linkScore = 0;
-  linkScore += Math.min(internalLinks, 8) * 7;  // Up to 56 pts for internal
-  linkScore += Math.min(externalLinks, 6) * 7;  // Up to 42 pts for external
-  linkScore = Math.min(linkScore, 100);
-
-  // ── Component Score (25% weight) — MDX components usage ──
-  let componentCount = 0;
-  for (const comp of MDX_COMPONENTS) {
-    if (content.includes(comp)) componentCount++;
-  }
-  const imageCount = (content.match(/!\[.*?\]/g) || []).length;
-
-  let componentScore = 0;
-  componentScore += Math.min(componentCount, 6) * 12; // Up to 72 pts for components
-  // V2 pages have no image requirement (real product screenshots are
-  // editorial illustration only, never fabricated "test evidence") — award
-  // the full 28 pts unconditionally instead of gating on imageCount.
-  componentScore += isV2 ? 28 : Math.min(imageCount, 4) * 7;
-  componentScore = Math.min(componentScore, 100);
-
-  // ── Weighted overall score ──
-  const score = Math.round(
-    wordScore * 0.30 +
-    structureScore * 0.25 +
-    linkScore * 0.20 +
-    componentScore * 0.25
-  );
-
-  const breakdown = `W:${wordScore} S:${structureScore} L:${linkScore} C:${componentScore}`;
-
-  return { score, wordScore, structureScore, linkScore, componentScore, breakdown };
-}
-
-const EMPTY_QUALITY: ContentQuality = {
-  score: 0, wordScore: 0, structureScore: 0, linkScore: 0, componentScore: 0, breakdown: '—',
-};
 
 // ── Core Page Quality (SEO-only, no body content) ───────────────
 function computeCoreQuality(seoTitle: string, description: string): ContentQuality {
@@ -467,7 +372,7 @@ function scanMdxFiles(): ContentHubRow[] {
             httpStatus: null,
             httpHealth: 'yellow',
             seoHealth: computeSeoHealth(seoTitle, description),
-            contentQuality: computeContentQuality(content, wordCount, isV2),
+            contentQuality: computeContentQuality(content, wordCount, isV2, fm),
             lastUpdated,
             cpsScore: null,
             cpsSource: 'unavailable',
@@ -546,7 +451,7 @@ function scanMdxFiles(): ContentHubRow[] {
           httpStatus: null,
           httpHealth: 'yellow',
           seoHealth: computeSeoHealth(seoTitle, description),
-          contentQuality: computeContentQuality(content, wordCount, isV2),
+          contentQuality: computeContentQuality(content, wordCount, isV2, fm),
           lastUpdated,
           cpsScore: null,
           cpsSource: 'unavailable',

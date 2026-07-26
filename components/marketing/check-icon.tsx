@@ -10,20 +10,36 @@ interface StatusIconProps {
   color?: string;
   style?: React.CSSProperties;
   'aria-label'?: string;
+  /** 'solid' (default) is the flat filled disc used on comparison/cockpit
+   * pages. 'subtle' is a thin-stroke outline for editorial contexts (e.g.
+   * best-for-not-for.tsx) where a solid disc reads as heavier than the
+   * hairline-bordered cards around it. */
+  variant?: 'solid' | 'subtle';
 }
 
-export function CheckCircleIcon({ size = 16, className, color = 'var(--sfp-green)', style, 'aria-label': ariaLabel }: StatusIconProps) {
+export function CheckCircleIcon({ size = 16, className, color = 'var(--sfp-green)', style, 'aria-label': ariaLabel, variant = 'solid' }: StatusIconProps) {
+  const shared = {
+    width: size,
+    height: size,
+    viewBox: '0 0 16 16',
+    className,
+    style,
+    'aria-label': ariaLabel,
+    'aria-hidden': ariaLabel ? undefined : true,
+    role: ariaLabel ? 'img' : undefined,
+  } as const;
+
+  if (variant === 'subtle') {
+    return (
+      <svg {...shared} fill="none">
+        <circle cx="8" cy="8" r="7.25" stroke={color} strokeWidth="1.25" />
+        <path d="M4.8 8.2 6.8 10.2 11.2 5.6" stroke={color} strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    );
+  }
+
   return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 16 16"
-      className={className}
-      style={style}
-      aria-label={ariaLabel}
-      aria-hidden={ariaLabel ? undefined : true}
-      role={ariaLabel ? 'img' : undefined}
-    >
+    <svg {...shared}>
       <path
         fill={color}
         fillRule="evenodd"
@@ -35,18 +51,29 @@ export function CheckCircleIcon({ size = 16, className, color = 'var(--sfp-green
 }
 
 // Con/negative counterpart — same flat-circle technique, minus-bar cutout.
-export function MinusCircleIcon({ size = 16, className, color = 'var(--sfp-red)', style, 'aria-label': ariaLabel }: StatusIconProps) {
+export function MinusCircleIcon({ size = 16, className, color = 'var(--sfp-red)', style, 'aria-label': ariaLabel, variant = 'solid' }: StatusIconProps) {
+  const shared = {
+    width: size,
+    height: size,
+    viewBox: '0 0 16 16',
+    className,
+    style,
+    'aria-label': ariaLabel,
+    'aria-hidden': ariaLabel ? undefined : true,
+    role: ariaLabel ? 'img' : undefined,
+  } as const;
+
+  if (variant === 'subtle') {
+    return (
+      <svg {...shared} fill="none">
+        <circle cx="8" cy="8" r="7.25" stroke={color} strokeWidth="1.25" />
+        <path d="M4.8 8h6.4" stroke={color} strokeWidth="1.25" strokeLinecap="round" />
+      </svg>
+    );
+  }
+
   return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 16 16"
-      className={className}
-      style={style}
-      aria-label={ariaLabel}
-      aria-hidden={ariaLabel ? undefined : true}
-      role={ariaLabel ? 'img' : undefined}
-    >
+    <svg {...shared}>
       <path
         fill={color}
         fillRule="evenodd"

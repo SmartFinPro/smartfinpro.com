@@ -26,8 +26,11 @@ import type { DecisionBridgeData, DecisionBridgeFieldRow } from '@/lib/compariso
 import { buildWeaknessClause } from '@/lib/comparison/verdict';
 import { CockpitImpression } from '@/components/marketing/cockpit-impression';
 import { useCockpitTracking } from '@/lib/analytics/cockpit-tracking';
+import { CALLOUT_RAIL } from '@/lib/reviews/callout-style';
 
-const FONT_NUM = 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace';
+// Numerals render in the house sans with tabular-nums (score-in-field.tsx's
+// documented rule: "no monospace, tabular figures in the house sans") — a
+// monospace stack read as a terminal/data-feed rather than printed research.
 
 const DecisionBridgeContext = createContext<DecisionBridgeData | null>(null);
 
@@ -172,7 +175,6 @@ export function DecisionBridge({ showCta = true }: DecisionBridgeProps = {}): Re
           </span>
           <span
             style={{
-              fontFamily: FONT_NUM,
               fontSize: '12.5px',
               color: 'var(--sfp-slate)',
               fontVariantNumeric: 'tabular-nums',
@@ -182,7 +184,7 @@ export function DecisionBridge({ showCta = true }: DecisionBridgeProps = {}): Re
           >
             {data.position ? (
               <>
-                <b style={{ color: 'var(--sfp-ink)', fontWeight: 600 }}>#{data.position.rank}</b> of {data.fieldCount}
+                <b style={{ color: 'var(--sfp-ink)', fontWeight: 600 }}>{data.position.rank}</b> of {data.fieldCount}
               </>
             ) : (
               <>
@@ -276,7 +278,7 @@ function StateA({
     footItems.push(
       <span key="verified">
         Verified{' '}
-        <b style={{ color: 'var(--sfp-ink)', fontWeight: 600, fontFamily: FONT_NUM, fontVariantNumeric: 'tabular-nums' }}>
+        <b style={{ color: 'var(--sfp-ink)', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
           {verifiedLabel}
         </b>
       </span>,
@@ -285,7 +287,7 @@ function StateA({
   if (data.officialSourceCount > 0) {
     footItems.push(
       <span key="sources">
-        <b style={{ color: 'var(--sfp-ink)', fontWeight: 600, fontFamily: FONT_NUM, fontVariantNumeric: 'tabular-nums' }}>
+        <b style={{ color: 'var(--sfp-ink)', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
           {data.officialSourceCount}
         </b>{' '}
         official sources
@@ -316,13 +318,13 @@ function StateA({
         >
           <span style={{ color: 'var(--sfp-slate)' }}>
             Strongest:{' '}
-            <b style={{ color: 'var(--sfp-ink)', fontWeight: 600, fontFamily: FONT_NUM, fontVariantNumeric: 'tabular-nums' }}>
+            <b style={{ color: 'var(--sfp-ink)', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
               {humanizeSubScoreKey(strongest[0])} {strongest[1].toFixed(1)}
             </b>
           </span>
           <span style={{ color: 'var(--sfp-slate)' }}>
             Weakest:{' '}
-            <b style={{ color: 'var(--sfp-ink)', fontWeight: 600, fontFamily: FONT_NUM, fontVariantNumeric: 'tabular-nums' }}>
+            <b style={{ color: 'var(--sfp-ink)', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
               {humanizeSubScoreKey(weakest[0])} {weakest[1].toFixed(1)}
             </b>
           </span>
@@ -341,7 +343,6 @@ function StateA({
                     <td
                       style={{
                         padding: '3px 0',
-                        fontFamily: FONT_NUM,
                         fontSize: '11.5px',
                         color: 'var(--sfp-slate)',
                         borderBottom: rowBorder,
@@ -363,7 +364,6 @@ function StateA({
                     style={{
                       padding: '5px 0',
                       width: '24px',
-                      fontFamily: FONT_NUM,
                       fontSize: '11.5px',
                       color: row.isYou ? 'var(--sfp-navy)' : 'var(--sfp-slate)',
                       fontVariantNumeric: 'tabular-nums',
@@ -390,9 +390,11 @@ function StateA({
                       padding: '5px 9px 5px 0',
                       width: '52px',
                       textAlign: 'right',
-                      fontFamily: FONT_NUM,
                       fontVariantNumeric: 'tabular-nums',
-                      fontWeight: 600,
+                      // No own fontWeight — inherits the tr's conditional 600
+                      // (rowStyle above) so only the eToro row is bold, same
+                      // as the name cell already does. Every row forcing 600
+                      // here flattened that distinction.
                       borderBottom: rowBorder,
                       boxShadow: row.isYou ? 'inset -2px 0 0 var(--sfp-navy)' : undefined,
                     }}
@@ -406,32 +408,14 @@ function StateA({
         </table>
       )}
 
-      <div
-        style={{
-          fontSize: '9.5px',
-          letterSpacing: '0.16em',
-          textTransform: 'uppercase',
-          color: 'var(--sfp-navy)',
-          fontWeight: 700,
-          background: 'var(--sfp-gray)',
-          borderLeft: '2px solid var(--sfp-navy)',
-          padding: '9px 13px 0',
-          marginTop: '12px',
-        }}
-      >
-        Verdict
-      </div>
-      <div
-        style={{
-          fontFamily: 'var(--font-secondary)',
-          fontSize: '14px',
-          lineHeight: 1.5,
-          background: 'var(--sfp-gray)',
-          borderLeft: '2px solid var(--sfp-navy)',
-          padding: '2px 13px 9px',
-          color: 'var(--sfp-ink)',
-        }}
-      >
+      {/* No "Verdict" label (operator, 2026-07-21) — the tinted panel and the
+          navy rule already say "this is the conclusion", and the 9.5px
+          uppercase eyebrow was the loudest thing in a quiet sidebar. One
+          element now, so the padding is whole.
+          Size stays at the sidebar's own scale rather than the article's 18px:
+          this column is roughly a third of the width, where body-size type
+          would break to very short lines. */}
+      <div style={{ ...CALLOUT_RAIL, marginTop: '12px' }}>
         {verdictText}
       </div>
 
@@ -540,7 +524,6 @@ function ScoreDetails({
                     style={{
                       padding: '5px 0',
                       textAlign: 'right',
-                      fontFamily: FONT_NUM,
                       fontVariantNumeric: 'tabular-nums',
                       fontSize: '13px',
                       borderBottom: '1px solid var(--sfp-hairline-row)',
@@ -552,7 +535,6 @@ function ScoreDetails({
                     style={{
                       padding: '5px 0',
                       textAlign: 'right',
-                      fontFamily: FONT_NUM,
                       fontVariantNumeric: 'tabular-nums',
                       fontSize: '13px',
                       color: 'var(--sfp-slate)',
@@ -596,7 +578,6 @@ function StateB({
     marginBottom: '4px',
   };
   const bStyle: React.CSSProperties = {
-    fontFamily: FONT_NUM,
     fontSize: '17px',
     fontVariantNumeric: 'tabular-nums',
     display: 'block',

@@ -12,20 +12,17 @@
 
 import type { VerdictBlock } from '@/lib/reviews/verdict-frontmatter';
 import { CheckCircleIcon, MinusCircleIcon } from '@/components/marketing/check-icon';
+import { SECTION_LABEL } from '@/lib/reviews/callout-style';
 
 export interface BestForNotForProps {
   bestFor: VerdictBlock['bestFor'];
   notFor: VerdictBlock['notFor'];
 }
 
-const EYEBROW_STYLE = {
-  fontSize: '10.5px',
-  letterSpacing: '0.14em',
-  textTransform: 'uppercase' as const,
-  color: 'var(--sfp-slate)',
-  fontWeight: 600,
-  marginBottom: '10px',
-};
+// Label style is the shared SECTION_LABEL (operator, 2026-07-26) — same
+// uppercase-tracked sans eyebrow as Score Breakdown, Essential Facts and
+// Main limitation elsewhere in this card, rather than its own serif variant.
+const LABEL_STYLE = SECTION_LABEL;
 
 const LIST_STYLE = {
   listStyle: 'none',
@@ -36,16 +33,31 @@ const LIST_STYLE = {
   gap: '6px',
 };
 
+// Serif at the article's running size. These are read as sentences, not
+// scanned as data, so they belong to the same voice as the paragraphs and the
+// callouts — they were 14px sans against 18px serif body, which is what made
+// the page look like text with widgets dropped into it.
 const ITEM_STYLE = {
   display: 'flex',
   alignItems: 'flex-start' as const,
   gap: '8px',
-  fontSize: '14px',
-  lineHeight: 1.5,
+  fontFamily: 'var(--font-secondary)',
+  fontSize: '18px',
+  lineHeight: 1.55,
   color: 'var(--sfp-ink)',
 };
 
-const ICON_STYLE = { flexShrink: 0, marginTop: '2px' } as const;
+const ICON_STYLE = { flexShrink: 0, marginTop: '4px' } as const;
+
+/**
+ * Both marks are navy, not green/red. The two lists are told apart by the
+ * icon's SHAPE — a check against a minus — which is what an accessible
+ * distinction requires anyway: colour alone may not carry meaning (WCAG
+ * 1.4.1), and a red/green pair is the worst case for the most common form of
+ * colour blindness. It also stops the block shouting in two accent colours
+ * that the rest of the card does not use.
+ */
+const ICON_COLOR = 'var(--sfp-navy)';
 
 export function BestForNotFor({ bestFor, notFor }: BestForNotForProps) {
   const best = bestFor.slice(0, 3);
@@ -53,14 +65,20 @@ export function BestForNotFor({ bestFor, notFor }: BestForNotForProps) {
   if (best.length === 0 && not.length === 0) return null;
 
   return (
-    <div className="grid gap-x-8 gap-y-6 sm:grid-cols-2" style={{ fontFamily: 'var(--font-primary)' }}>
+    // Stacked, not side by side. The block used to be a full-width band of its
+    // own; inside the verdict card it lives in a ~440px column, and splitting
+    // that into two ~200px columns put roughly 20 characters on a line — "Futures
+    // traders (not offered on the US platform)" wrapped to three. The pro/con
+    // symmetry is not worth that; the two eyebrow labels separate the lists
+    // perfectly well one above the other.
+    <div className="grid gap-y-5" style={{ fontFamily: 'var(--font-primary)' }}>
       {best.length > 0 && (
         <div>
-          <div style={EYEBROW_STYLE}>Best for</div>
+          <div style={LABEL_STYLE}>Best for</div>
           <ul style={LIST_STYLE}>
             {best.map((item, i) => (
               <li key={`${i}-${item}`} style={ITEM_STYLE}>
-                <CheckCircleIcon size={16} style={ICON_STYLE} />
+                <CheckCircleIcon size={17} color={ICON_COLOR} style={ICON_STYLE} variant="subtle" />
                 {item}
               </li>
             ))}
@@ -69,11 +87,11 @@ export function BestForNotFor({ bestFor, notFor }: BestForNotForProps) {
       )}
       {not.length > 0 && (
         <div>
-          <div style={EYEBROW_STYLE}>Not for</div>
+          <div style={LABEL_STYLE}>Not for</div>
           <ul style={LIST_STYLE}>
             {not.map((item, i) => (
               <li key={`${i}-${item}`} style={ITEM_STYLE}>
-                <MinusCircleIcon size={16} style={ICON_STYLE} />
+                <MinusCircleIcon size={17} color={ICON_COLOR} style={ICON_STYLE} variant="subtle" />
                 {item}
               </li>
             ))}

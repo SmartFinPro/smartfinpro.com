@@ -4,7 +4,7 @@
 // components/reviews/verdict-card.tsx (T8, review-redesign V2).
 //
 // Covers the plan's explicit T8 contract: verdict prose + top-3-strengths
-// cap + single mainLimitation + optional bestAlternative link/plain-text
+// single mainLimitation
 // fallback, and — the Pflicht requirement — Null-Degradation: `position ===
 // null` omits the BestXScore panel entirely (never falls back to a
 // frontmatter rating) while the verdict prose still renders single-column.
@@ -43,45 +43,38 @@ const POSITION: ReviewPosition = {
 };
 
 describe('VerdictCard', () => {
-  it('renders the verdict summary, caps topStrengths at 3, and renders exactly one mainLimitation', () => {
+  it('renders the summary and exactly one mainLimitation, and no longer renders topStrengths', () => {
     const html = renderToStaticMarkup(
       h(VerdictCard, { verdict: VERDICT, position: POSITION, fieldCount: 9 }),
     );
-    expect(html).toContain('Our Verdict');
+    // The summary itself, not a label: "Our Verdict" was removed as redundant
+    // above the opening paragraph of a review.
+    expect(html).not.toContain('Our Verdict');
     expect(html).toContain('eToro is a strong pick for copy trading');
-    expect(html).toContain('No broker-imposed options contract fees');
-    expect(html).toContain('Copy trading at scale');
-    expect(html).toContain('Wide asset coverage');
-    // 4th topStrength must be dropped (schema caps at 3, component slices defensively)
-    expect(html).not.toContain('Simple mobile app');
-    expect(html).toContain('Main limitation:');
+    expect(html).toContain('>Main limitation<');
     expect(html).toContain('Support response times trail the field leaders.');
+
+    // topStrengths is no longer rendered (operator: too much information in
+    // this block). Asserted against a fixture that still HAS the list, so
+    // re-adding the render fails here — a check on absent data would not.
+    expect(VERDICT.topStrengths.length).toBeGreaterThan(0);
+    for (const strength of VERDICT.topStrengths) {
+      expect(html).not.toContain(strength);
+    }
   });
 
-  it('links the best alternative when a resolved href is provided', () => {
-    const html = renderToStaticMarkup(
-      h(VerdictCard, { verdict: VERDICT, position: POSITION, fieldCount: 9, bestAlternativeHref: '/trading/fidelity-review' }),
-    );
-    expect(html).toContain('href="/trading/fidelity-review"');
-    expect(html).toContain('Fidelity');
-    expect(html).toContain('higher overall score and faster support');
-  });
-
-  it('renders the best alternative as plain text (never a dead link) when no href is resolved', () => {
+  it('never renders a best-alternative line, even when the frontmatter carries one', () => {
+    // Removed from the card (operator, 2026-07-21). The fixture still has
+    // `bestAlternative` — the frontmatter field and its Zod schema are
+    // untouched — so this asserts the RENDER drops it rather than the data
+    // being absent, which is what would silently regress if someone re-added
+    // the block.
     const html = renderToStaticMarkup(
       h(VerdictCard, { verdict: VERDICT, position: POSITION, fieldCount: 9 }),
     );
-    expect(html).not.toContain('<a href=""');
-    expect(html).toContain('Fidelity');
-  });
-
-  it('omits the best-alternative line entirely when verdict.bestAlternative is absent', () => {
-    const { bestAlternative, ...withoutAlt } = VERDICT;
-    void bestAlternative;
-    const html = renderToStaticMarkup(
-      h(VerdictCard, { verdict: withoutAlt as VerdictBlock, position: POSITION, fieldCount: 9 }),
-    );
+    expect(VERDICT.bestAlternative).toBeTruthy();
     expect(html).not.toContain('Best alternative');
+    expect(html).not.toContain('higher overall score and faster support');
   });
 
   it('BestXScore renders score, band label, rank phrase, and the mandatory methodology sentence + link', () => {
@@ -99,19 +92,71 @@ describe('VerdictCard', () => {
     expect(html).toContain('How we score');
   });
 
+  it('places mobile actions after audience fit and before the limitation and summary', () => {
+    const html = renderToStaticMarkup(
+      h(VerdictCard, {
+        verdict: VERDICT,
+        position: POSITION,
+        fieldCount: 9,
+        mobileActions: h('div', { 'data-mobile-actions-marker': true }, 'Actions'),
+      }),
+    );
+
+    const score = html.indexOf('8.3');
+    const bestFor = html.indexOf('>Best for<');
+    const actions = html.indexOf('data-mobile-actions-marker');
+    const limitation = html.indexOf('>Main limitation<');
+    const summary = html.indexOf('eToro is a strong pick for copy trading');
+
+    expect(score).toBeGreaterThan(-1);
+    expect(bestFor).toBeGreaterThan(score);
+    expect(actions).toBeGreaterThan(bestFor);
+    expect(limitation).toBeGreaterThan(actions);
+    expect(summary).toBeGreaterThan(limitation);
+  });
+
+  it('keeps desktop facts visible and offers the same facts behind a collapsed mobile details control', () => {
+    const html = renderToStaticMarkup(
+      h(VerdictCard, {
+        verdict: VERDICT,
+        position: POSITION,
+        fieldCount: 9,
+        essentialFacts: [
+          {
+            label: 'Options contract fee',
+            value: '$0 broker-imposed',
+            asOf: '2026-07-18',
+            sourceHref: 'https://www.etoro.com/en-us/trading/fees/',
+          },
+        ],
+      }),
+    );
+
+    expect(html).toContain('<details');
+    expect(html).not.toContain('<details open');
+    expect(html).toContain('<summary');
+    expect(html).toContain('Essential facts');
+    expect(html).toContain('hidden md:block');
+    expect(html).toContain('md:hidden');
+    expect((html.match(/Options contract fee/g) ?? []).length).toBe(2);
+  });
+
   it('Null-Degradation: position === null omits the BestXScore panel entirely and keeps the verdict prose single-column', () => {
     const html = renderToStaticMarkup(
       h(VerdictCard, { verdict: VERDICT, position: null, fieldCount: 9 }),
     );
-    // Verdict prose still renders.
-    expect(html).toContain('Our Verdict');
+    // Verdict prose still renders (without the removed label).
     expect(html).toContain('eToro is a strong pick for copy trading');
     // BestXScore panel is gone — no score digits, no band label markup, no methodology sentence/link.
     expect(html).not.toContain('/10');
     expect(html).not.toContain('How we score');
     expect(html).not.toContain('Calculated from verified data points');
     expect(html).not.toContain('href="/methodology"');
-    // Two-column grid class is not applied when there is no right panel.
-    expect(html).not.toContain('grid-cols');
+    // The CARD's own two-column grid is not applied when there is no right
+    // panel. Asserted on the card's specific class rather than the substring
+    // "grid-cols": Best for / Not for now renders inside the card and brings
+    // its own `sm:grid-cols-2`, which is a different grid and legitimately
+    // present here.
+    expect(html).not.toContain('md:grid-cols-[minmax(0,1fr)_260px]');
   });
 });

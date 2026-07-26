@@ -77,7 +77,7 @@ export function Footer({ market: marketProp }: FooterProps) {
     >
       {/* ── Newsletter Section ─────────────────────────────────── */}
       <div className="border-b border-[#E2E8F0]">
-        <div className="mx-auto max-w-[1200px] px-8 py-12">
+        <div className="mx-auto max-w-[1200px] px-6 py-12 sm:px-8">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
             <div className="max-w-lg">
               <h3 className="text-lg font-bold mb-2" style={{ color: 'var(--sfp-ink)' }}>Join our newsletter</h3>
@@ -116,7 +116,7 @@ export function Footer({ market: marketProp }: FooterProps) {
 
       {/* ── Main Footer Grid ──────────────────────────────────── */}
       <div className="border-b border-[#E2E8F0]">
-        <div className="mx-auto max-w-[1200px] px-8 py-12">
+        <div className="mx-auto max-w-[1200px] px-6 py-12 sm:px-8">
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-8 lg:gap-6">
 
             {/* Column 1: Trust & Legal (E-E-A-T) */}
@@ -242,10 +242,10 @@ export function Footer({ market: marketProp }: FooterProps) {
       </div>
 
       {/* ── Bottom Bar ────────────────────────────────────────── */}
-      <div className="mx-auto max-w-[1200px] px-8 py-6">
+      <div className="mx-auto max-w-[1200px] px-6 py-6 sm:px-8">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
           {/* Logo + Social Icons */}
-          <div className="flex items-center gap-6">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
             <Link href={prefix || '/'} className="flex items-center gap-2">
               <span className="flex items-center justify-center w-[22px] h-[22px] rounded-[5px] flex-shrink-0" style={{ background: 'var(--sfp-navy)' }}>
                 <svg viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" width="13" height="13">
@@ -304,7 +304,7 @@ export function Footer({ market: marketProp }: FooterProps) {
               Imprint
             </Link>
             <span className="text-sm" style={{ color: 'var(--sfp-slate)' }} suppressHydrationWarning>
-              &copy; {new Date().getFullYear()} SmartFinPro.com — All rights reserved. Unauthorized reproduction, copying or distribution of content, reviews or data is strictly prohibited.
+              &copy; {new Date().getFullYear()} SmartFinPro.com. All rights reserved. Unauthorized reproduction, copying or distribution of content, reviews or data is strictly prohibited.
             </span>
           </div>
         </div>

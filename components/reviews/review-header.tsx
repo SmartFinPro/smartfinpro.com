@@ -2,7 +2,9 @@
 // ============================================================
 // Server Component (no state/events/browser APIs — pure prop-driven render).
 // Renders the Betreiber-Konzept §6.2 header contract: breadcrumb slot, H1,
-// positioning lead line, MetaLine, DisclosureLine. See the parent plan
+// positioning lead line, MetaLine. The DisclosureLine moved OUT (operator,
+// 2026-07-21) — it now renders immediately before the Methodology section, see
+// components/reviews/review-disclosure.tsx. See the parent plan
 // (users-christianb-library-mobile-documen-atomic-charm.md, Phase 2 / T7)
 // for the exact wording and structure this implements.
 //
@@ -21,7 +23,6 @@
 // drop their MetaLine segment entirely — no placeholder, no synthetic date.
 // ============================================================
 
-import Link from 'next/link';
 import { Breadcrumb } from '@/components/marketing/breadcrumb';
 import type { BreadcrumbItem } from '@/lib/breadcrumbs';
 import type { Category } from '@/lib/i18n/config';
@@ -44,15 +45,6 @@ function formatIsoDate(iso: string): string | null {
   return `${d} ${MONTHS[m - 1]} ${y}`;
 }
 
-/**
- * Categories where the DisclosureLine gets a terse leverage-risk addendum.
- * This condenses the same CFD/leverage fact already carried in full by
- * lib/reviews/category-disclaimers.ts (the trading/forex disclaimer
- * rendered elsewhere via CategoryRiskDisclosure) — it is a one-clause echo
- * for this compact header line, not a replacement for the full disclosure.
- */
-const LEVERAGE_RISK_CATEGORIES: ReadonlySet<Category> = new Set(['trading', 'forex']);
-
 export interface ReviewHeaderProps {
   /** Page H1, rendered as-is — WITHOUT the V1 " — Expert Review & Analysis Report {year}" suffix. */
   title: string;
@@ -65,10 +57,6 @@ export interface ReviewHeaderProps {
   dataVerifiedDate?: string;
   /** ISO YYYY-MM-DD — ContentMeta.modifiedDate. Segment omitted (not placeholder'd) when absent or malformed. */
   modifiedDate?: string;
-  /** Product-level leverage/CFD flag. The leverage-risk addendum shows ONLY
-   *  when the product actually carries that risk — not for every trading/forex
-   *  page (eToro US offers no CFDs). */
-  hasLeverageRisk?: boolean;
 }
 
 export function ReviewHeader({
@@ -78,7 +66,6 @@ export function ReviewHeader({
   category,
   dataVerifiedDate,
   modifiedDate,
-  hasLeverageRisk,
 }: ReviewHeaderProps) {
   const verifiedLabel = dataVerifiedDate ? formatIsoDate(dataVerifiedDate) : null;
   const updatedLabel = modifiedDate ? formatIsoDate(modifiedDate) : null;
@@ -87,11 +74,31 @@ export function ReviewHeader({
   if (verifiedLabel) metaSegments.push(`Data verified ${verifiedLabel}`);
   if (updatedLabel) metaSegments.push(`Updated ${updatedLabel}`);
 
-  const showRiskAddendum = LEVERAGE_RISK_CATEGORIES.has(category) && Boolean(hasLeverageRisk);
-
   return (
     <header style={{ fontFamily: 'var(--font-primary)' }}>
-      <Breadcrumb items={breadcrumbs} />
+      {/* The leaf crumb is the full page title — left alone it wrapped to
+          several lines and pushed the H1 far below the fold. The shared
+          Breadcrumb also serves V1 pages, so the constraint is scoped HERE
+          via descendant selectors instead of editing the shared component.
+          Below sm the leaf is hidden outright rather than truncated. Two
+          reasons, both measured:
+            - Truncating it forced shrink-0 onto the ancestor crumbs (they
+              otherwise collapse to min-content and wrap instead), and those
+              three fixed-width crumbs plus chevrons overflow a 320px
+              viewport: document.scrollWidth 349 against clientWidth 320,
+              i.e. the whole page scrolled sideways — a WCAG 1.4.10 failure
+              at exactly the width 1.4.10 is tested at.
+            - What survived truncation at 390px was "e…". A single letter
+              followed by an ellipsis reads as a rendering fault, not as an
+              abbreviation, and the leaf is not a link (it is the current
+              page) whose full text stands directly below as the H1.
+          The label stays in the DOM and in the BreadcrumbList JSON-LD, which
+          components/marketing/breadcrumb.tsx builds from the data rather
+          than the DOM — so the schema keeps all four positions either way.
+          From sm up there is room and the full leaf is shown. */}
+      <div className="[&_nav]:min-w-0 [&_nav>span:last-child]:hidden sm:[&_nav>span:last-child]:flex sm:[&_nav>span:not(:last-child)]:shrink-0 sm:[&_nav>span:last-child]:min-w-0 sm:[&_nav>span:last-child>svg]:shrink-0 sm:[&_nav>span:last-child>span:last-child]:truncate">
+        <Breadcrumb items={breadcrumbs} />
+      </div>
 
       <h1
         style={{
@@ -133,25 +140,6 @@ export function ReviewHeader({
       >
         {metaSegments.join(' · ')}
       </div>
-
-      <p
-        className="text-xs"
-        style={{
-          fontFamily: 'var(--font-primary)',
-          color: 'var(--sfp-slate)',
-          lineHeight: 1.5,
-          margin: 0,
-          maxWidth: '66ch',
-        }}
-      >
-        SmartFinPro may earn a commission from partner links. This never affects our BEST-X Score.{' '}
-        <Link href="/affiliate-disclosure" style={{ color: 'var(--sfp-navy)' }}>
-          How we make money
-        </Link>
-        {showRiskAddendum
-          ? ' Leveraged trading products carry a high risk of losing money rapidly.'
-          : null}
-      </p>
     </header>
   );
 }

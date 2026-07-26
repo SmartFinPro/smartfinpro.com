@@ -142,6 +142,15 @@ const CROSS_CATEGORY: ContentItem = {
   readingTime: { text: '6 min read', minutes: 6, time: 360000, words: 1400 },
 };
 
+/** The Final Decision <section> alone — the desktop rail is DOM-last and would
+ *  otherwise be swept into any slice that runs to the end of the document. */
+function finalDecisionSection(html: string): string {
+  const start = html.indexOf('id="final-decision-heading"');
+  if (start === -1) return '';
+  const end = html.indexOf('</section>', start);
+  return html.slice(start, end === -1 ? undefined : end);
+}
+
 describe('ReviewLayoutV2', () => {
   it('full fixture: renders every zone, exactly one FAQPage emission, and no Person schema anywhere', () => {
     const html = renderToStaticMarkup(
@@ -153,28 +162,28 @@ describe('ReviewLayoutV2', () => {
         decisionBridge: DECISION_BRIDGE,
         siblingReviews: [SIBLING],
         crossCategoryContent: [CROSS_CATEGORY],
-        bestAlternativeHref: '/us/trading/fidelity-review',
       }),
     );
 
     // Header
     expect(html).toContain('eToro Review');
-    // Sidebar (2026-07-18 sidebar rework) — dual-rendered once for the
-    // mobile in-flow fallback (under #verdict) and once for the desktop
-    // sticky rail; both carry the Report-Info-Card + Market Check + button
-    // pair, so "decision-bridge" testid appears exactly twice.
+    // The full Sidebar is desktop-only. Mobile gets the compact action surface
+    // inside VerdictCard, so Market Check appears exactly once and is never
+    // repeated immediately after ScoreInField.
     expect(html).toContain('Expert Review');
-    expect(html).toContain('Published');
+    expect(html).toContain('Data verified');
     expect(html).toContain('/images/brokers/etoro-seeklogo.svg'); // real wordmark, fs-checked
     const decisionBridgeTestIdCount = (html.match(/data-testid="decision-bridge"/g) ?? []).length;
-    expect(decisionBridgeTestIdCount).toBe(2);
+    expect(decisionBridgeTestIdCount).toBe(1);
+    expect((html.match(/data-review-mobile-actions/g) ?? []).length).toBe(1);
     // Sidebar's own Compare/Visit button pair (the former "CTA-Zone 1" — a
     // duplicate pair rendered between ReviewHeader and #verdict — was
     // removed; the sidebar is now the primary CTA surface).
     expect(html).toContain('Compare all 9 trading platforms');
     expect(html).toContain('Visit eToro');
-    // Verdict zone (+ score breakdown)
-    expect(html).toContain('Our Verdict');
+    // Verdict zone (+ score breakdown). Asserted by the summary text — the
+    // "Our Verdict" label was removed.
+    expect(html).toContain(FULL_META.verdict!.summary.slice(0, 40));
     expect(html).toContain('Score Breakdown');
     // BestForNotFor
     expect(html).toContain('Best for');
@@ -215,6 +224,138 @@ describe('ReviewLayoutV2', () => {
     expect(html).not.toContain('★');
   });
 
+  // ── Structural contracts from the 2026-07-25 design-audit fix ────────────
+  // These four were regressions waiting to happen: each is a single className
+  // or a single JSX position, invisible in a diff, and each one silently
+  // undoes a measured fix. See the plan file
+  // bitte-den-fix-planen-gleaming-elephant.md.
+
+  it('#verdict wraps the WHOLE opening block, so the H1 sits INSIDE it', () => {
+    // On the card alone the anchor sat below the H1: opening the page at
+    // #verdict left the H1 entirely above the viewport, so the reader arrived
+    // at a score with no idea which product it belonged to.
+    const html = renderToStaticMarkup(
+      h(ReviewLayoutV2, {
+        meta: FULL_META,
+        market: 'us',
+        category: 'trading',
+        slug: 'etoro-review',
+        decisionBridge: DECISION_BRIDGE,
+      }),
+    );
+    const anchorIdx = html.indexOf('id="verdict"');
+    const h1Idx = html.indexOf('<h1');
+    expect(anchorIdx).toBeGreaterThan(-1);
+    expect(h1Idx).toBeGreaterThan(anchorIdx);
+  });
+
+  it('opening block reads score → who it is for → CTA, without a mobile Market Check or a ScoreInField repeat', () => {
+    const html = renderToStaticMarkup(
+      h(ReviewLayoutV2, {
+        meta: FULL_META,
+        market: 'us',
+        category: 'trading',
+        slug: 'etoro-review',
+        decisionBridge: DECISION_BRIDGE,
+      }),
+    );
+    // Scoped to the opening block. The JSON-LD scripts above it repeat the
+    // verdict prose verbatim, so an unscoped indexOf finds the schema copy and
+    // reports an order that has nothing to do with the layout.
+    const region = html.slice(html.indexOf('id="verdict"'));
+    const bestForIdx = region.indexOf('>Best for<');
+    const mobileActionsIdx = region.indexOf('data-review-mobile-actions');
+    expect(bestForIdx).toBeGreaterThan(-1);
+    expect(mobileActionsIdx).toBeGreaterThan(bestForIdx);
+    // ScoreInField was removed from this layout (operator, 2026-07-25): the
+    // sidebar's "How X compares" table already carries the same audited
+    // position/field numbers on this page, so the card read as a repeat.
+    expect(region).not.toContain('id="score-in-field-heading"');
+    expect((region.match(/data-testid="decision-bridge"/g) ?? []).length).toBe(1);
+  });
+
+  it('verdict card leads with Best for / Not for and closes with the summary prose', () => {
+    const html = renderToStaticMarkup(
+      h(ReviewLayoutV2, {
+        meta: FULL_META,
+        market: 'us',
+        category: 'trading',
+        slug: 'etoro-review',
+        decisionBridge: DECISION_BRIDGE,
+      }),
+    );
+    const region = html.slice(html.indexOf('id="verdict"'));
+    const bestForIdx = region.indexOf('>Best for<');
+    const limitationIdx = region.indexOf('>Main limitation<');
+    // A fragment WITHOUT the leading "eToro's": React escapes the apostrophe to
+    // &#x27; in the rendered card, while the JSON-LD (dangerouslySetInnerHTML)
+    // keeps it raw. Matching on the raw form finds only the schema copy — which
+    // sits above this region and would make the assertion untestable here.
+    const summaryIdx = region.indexOf('ranks 8th of the 9 trading platforms');
+    expect(bestForIdx).toBeGreaterThan(-1);
+    expect(summaryIdx).toBeGreaterThan(-1);
+    expect(limitationIdx).toBeGreaterThan(bestForIdx);
+    expect(summaryIdx).toBeGreaterThan(limitationIdx);
+  });
+
+  it('grid places all three items explicitly and never hands the rail to auto-placement', () => {
+    // Without explicit placement the rail — last in the JSX — lands in a third
+    // row beneath the downstream block instead of beside the article, and the
+    // sticky behaviour that the two-row split exists to bound comes back.
+    const html = renderToStaticMarkup(
+      h(ReviewLayoutV2, {
+        meta: FULL_META,
+        market: 'us',
+        category: 'trading',
+        slug: 'etoro-review',
+        decisionBridge: DECISION_BRIDGE,
+      }),
+    );
+    expect(html).toContain('lg:grid-cols-[minmax(0,760px)_300px]');
+    // gap-x only: a plain `gap` would insert dead vertical space between the
+    // two rows that was never there before.
+    expect(html).toContain('lg:gap-x-8');
+    expect(html).not.toMatch(/class="[^"]*\blg:gap-14\b/);
+    expect(html).toContain('lg:col-start-1 lg:row-start-1');
+    expect(html).toContain('lg:col-start-1 lg:row-start-2');
+    expect(html).toContain('lg:col-start-2 lg:row-start-1');
+  });
+
+  it('renders the compare CTA once: Alternatives carries it, Final Decision does not', () => {
+    // Both used the same gold button pointing at the same cockpit href and
+    // rendered ~5px apart.
+    const html = renderToStaticMarkup(
+      h(ReviewLayoutV2, {
+        meta: FULL_META,
+        market: 'us',
+        category: 'trading',
+        slug: 'etoro-review',
+        decisionBridge: DECISION_BRIDGE,
+      }),
+    );
+    // Scoped to the Final Decision <section> itself. Slicing to the end of the
+    // document would sweep in the desktop rail, which is DOM-last and carries
+    // its own (legitimate) compare button.
+    expect(html).toContain('Alternatives to eToro');
+    expect(finalDecisionSection(html)).not.toContain('Compare all 9 trading platforms');
+    expect(finalDecisionSection(html)).toContain('Visit eToro');
+  });
+
+  it('keeps the compare CTA in Final Decision when there are no alternatives to carry it', () => {
+    const noAlternatives = { ...FULL_META, alternatives: [] };
+    const html = renderToStaticMarkup(
+      h(ReviewLayoutV2, {
+        meta: noAlternatives as ContentMeta,
+        market: 'us',
+        category: 'trading',
+        slug: 'etoro-review',
+        decisionBridge: DECISION_BRIDGE,
+      }),
+    );
+    expect(html).not.toContain('Alternatives to eToro');
+    expect(finalDecisionSection(html)).toContain('Compare all 9 trading platforms');
+  });
+
   it('position === null: no reviewRating in the Review JSON-LD, but the verdict prose still renders', () => {
     const html = renderToStaticMarkup(
       h(ReviewLayoutV2, {
@@ -226,7 +367,7 @@ describe('ReviewLayoutV2', () => {
       }),
     );
     expect(html).not.toContain('reviewRating');
-    expect(html).toContain('Our Verdict');
+    expect(html).toContain(FULL_META.verdict!.summary.slice(0, 40));
     expect(html).not.toContain('Score Breakdown');
     // No decisionBridge → no sidebar at all (gated on decisionBridge, same as V1's Market Check).
     expect(html).not.toContain('Expert Review');
@@ -251,8 +392,9 @@ describe('ReviewLayoutV2', () => {
           decisionBridge: null,
         }),
       );
-      // Verdict-derived zones omitted.
-      expect(html).not.toContain('Our Verdict');
+      // Verdict-derived zones omitted. Asserted on the summary text: with the
+      // label gone, checking for "Our Verdict" would pass no matter what.
+      expect(html).not.toContain(FULL_META.verdict!.summary.slice(0, 40));
       expect(html).not.toContain('Best for');
       expect(html).not.toContain('Alternatives to eToro');
       expect(html).not.toContain('Final Decision');

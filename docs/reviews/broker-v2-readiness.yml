@@ -1,0 +1,329 @@
+# Generierter Cockpit-Snapshot — nicht von Hand editieren (npm run readiness:reviews).
+# empty-field = Row vorhanden, aber Felder/Prüfdatum/Score unvollständig.
+version: 1
+generatedAt: 2026-07-26T14:55:05.802Z
+reviews:
+  content/au/forex/cmc-markets-review.mdx:
+    status: missing-product
+    topic: null
+    productSlug: null
+    reviewSlug: cmc-markets-review
+    rank: null
+    fieldCount: null
+    dataVerifiedAt: null
+    auditedAt: 2026-07-26
+  content/au/forex/etoro-review.mdx:
+    status: missing-product
+    topic: null
+    productSlug: null
+    reviewSlug: etoro-review
+    rank: null
+    fieldCount: null
+    dataVerifiedAt: null
+    auditedAt: 2026-07-26
+  content/au/forex/ic-markets-review.mdx:
+    status: missing-product
+    topic: null
+    productSlug: null
+    reviewSlug: ic-markets-review
+    rank: null
+    fieldCount: null
+    dataVerifiedAt: null
+    auditedAt: 2026-07-26
+  content/au/forex/interactive-brokers-review.mdx:
+    status: missing-product
+    topic: null
+    productSlug: null
+    reviewSlug: interactive-brokers-review
+    rank: null
+    fieldCount: null
+    dataVerifiedAt: null
+    auditedAt: 2026-07-26
+  content/au/forex/pepperstone-review.mdx:
+    status: missing-product
+    topic: null
+    productSlug: null
+    reviewSlug: pepperstone-review
+    rank: null
+    fieldCount: null
+    dataVerifiedAt: null
+    auditedAt: 2026-07-26
+  content/au/trading/cmc-markets-review.mdx:
+    status: missing-product
+    topic: null
+    productSlug: null
+    reviewSlug: cmc-markets-review
+    rank: null
+    fieldCount: null
+    dataVerifiedAt: null
+    auditedAt: 2026-07-26
+  content/au/trading/plus500-review.mdx:
+    status: missing-product
+    topic: null
+    productSlug: null
+    reviewSlug: plus500-review
+    rank: null
+    fieldCount: null
+    dataVerifiedAt: null
+    auditedAt: 2026-07-26
+  content/au/trading/selfwealth-trading-review.mdx:
+    status: missing-product
+    topic: null
+    productSlug: null
+    reviewSlug: selfwealth-trading-review
+    rank: null
+    fieldCount: null
+    dataVerifiedAt: null
+    auditedAt: 2026-07-26
+  content/ca/forex/cmc-markets-review.mdx:
+    status: missing-product
+    topic: null
+    productSlug: null
+    reviewSlug: cmc-markets-review
+    rank: null
+    fieldCount: null
+    dataVerifiedAt: null
+    auditedAt: 2026-07-26
+  content/ca/forex/etoro-review.mdx:
+    status: missing-product
+    topic: null
+    productSlug: null
+    reviewSlug: etoro-review
+    rank: null
+    fieldCount: null
+    dataVerifiedAt: null
+    auditedAt: 2026-07-26
+  content/ca/forex/forex-com-review.mdx:
+    status: missing-product
+    topic: null
+    productSlug: null
+    reviewSlug: forex-com-review
+    rank: null
+    fieldCount: null
+    dataVerifiedAt: null
+    auditedAt: 2026-07-26
+  content/ca/forex/interactive-brokers-review.mdx:
+    status: missing-product
+    topic: null
+    productSlug: null
+    reviewSlug: interactive-brokers-review
+    rank: null
+    fieldCount: null
+    dataVerifiedAt: null
+    auditedAt: 2026-07-26
+  content/ca/forex/oanda-review.mdx:
+    status: missing-product
+    topic: null
+    productSlug: null
+    reviewSlug: oanda-review
+    rank: null
+    fieldCount: null
+    dataVerifiedAt: null
+    auditedAt: 2026-07-26
+  content/ca/forex/questrade-forex-review.mdx:
+    status: missing-product
+    topic: null
+    productSlug: null
+    reviewSlug: questrade-forex-review
+    rank: null
+    fieldCount: null
+    dataVerifiedAt: null
+    auditedAt: 2026-07-26
+  content/ca/forex/questrade-review.mdx:
+    status: missing-product
+    topic: null
+    productSlug: null
+    reviewSlug: questrade-review
+    rank: null
+    fieldCount: null
+    dataVerifiedAt: null
+    auditedAt: 2026-07-26
+  content/uk/forex/ig-markets-review.mdx:
+    status: missing-product
+    topic: null
+    productSlug: null
+    reviewSlug: ig-markets-review
+    rank: null
+    fieldCount: null
+    dataVerifiedAt: null
+    auditedAt: 2026-07-26
+  content/uk/forex/pepperstone-review.mdx:
+    status: missing-product
+    topic: null
+    productSlug: null
+    reviewSlug: pepperstone-review
+    rank: null
+    fieldCount: null
+    dataVerifiedAt: null
+    auditedAt: 2026-07-26
+  content/uk/trading/etoro-review.mdx:
+    status: missing-product
+    topic: null
+    productSlug: null
+    reviewSlug: etoro-review
+    rank: null
+    fieldCount: null
+    dataVerifiedAt: null
+    auditedAt: 2026-07-26
+  content/uk/trading/freetrade-review.mdx:
+    status: missing-product
+    topic: null
+    productSlug: null
+    reviewSlug: freetrade-review
+    rank: null
+    fieldCount: null
+    dataVerifiedAt: null
+    auditedAt: 2026-07-26
+  content/uk/trading/hargreaves-lansdown-review.mdx:
+    status: missing-product
+    topic: null
+    productSlug: null
+    reviewSlug: hargreaves-lansdown-review
+    rank: null
+    fieldCount: null
+    dataVerifiedAt: null
+    auditedAt: 2026-07-26
+  content/uk/trading/ig-markets-review.mdx:
+    status: missing-product
+    topic: null
+    productSlug: null
+    reviewSlug: ig-markets-review
+    rank: null
+    fieldCount: null
+    dataVerifiedAt: null
+    auditedAt: 2026-07-26
+  content/uk/trading/plus500-review.mdx:
+    status: missing-product
+    topic: null
+    productSlug: null
+    reviewSlug: plus500-review
+    rank: null
+    fieldCount: null
+    dataVerifiedAt: null
+    auditedAt: 2026-07-26
+  content/us/forex/forex-com-review.mdx:
+    status: ready
+    topic: forex-brokers
+    productSlug: forex-com
+    reviewSlug: forex-com-review
+    rank: 4
+    fieldCount: 13
+    dataVerifiedAt: 2026-07-03
+    auditedAt: 2026-07-26
+  content/us/forex/ig-markets-review.mdx:
+    status: missing-product
+    topic: null
+    productSlug: null
+    reviewSlug: ig-markets-review
+    rank: null
+    fieldCount: null
+    dataVerifiedAt: null
+    auditedAt: 2026-07-26
+  content/us/forex/interactive-brokers-forex-review.mdx:
+    status: ready
+    topic: forex-brokers
+    productSlug: interactive-brokers-forex
+    reviewSlug: interactive-brokers-forex-review
+    rank: 2
+    fieldCount: 13
+    dataVerifiedAt: 2026-07-03
+    auditedAt: 2026-07-26
+  content/us/forex/oanda-review.mdx:
+    status: ready
+    topic: forex-brokers
+    productSlug: oanda
+    reviewSlug: oanda-review
+    rank: 3
+    fieldCount: 13
+    dataVerifiedAt: 2026-07-03
+    auditedAt: 2026-07-26
+  content/us/forex/tastyfx-review.mdx:
+    status: ready
+    topic: forex-brokers
+    productSlug: tastyfx
+    reviewSlug: tastyfx-review
+    rank: 1
+    fieldCount: 13
+    dataVerifiedAt: 2026-07-03
+    auditedAt: 2026-07-26
+  content/us/trading/charles-schwab-review.mdx:
+    status: ready
+    topic: trading-platforms
+    productSlug: charles-schwab
+    reviewSlug: charles-schwab-review
+    rank: 2
+    fieldCount: 15
+    dataVerifiedAt: 2026-07-03
+    auditedAt: 2026-07-26
+  content/us/trading/etoro-review.mdx:
+    status: ready
+    topic: trading-platforms
+    productSlug: etoro
+    reviewSlug: etoro-review
+    rank: 8
+    fieldCount: 15
+    dataVerifiedAt: 2026-07-03
+    auditedAt: 2026-07-26
+  content/us/trading/etrade-review.mdx:
+    status: ready
+    topic: trading-platforms
+    productSlug: etrade
+    reviewSlug: etrade-review
+    rank: 7
+    fieldCount: 15
+    dataVerifiedAt: 2026-07-03
+    auditedAt: 2026-07-26
+  content/us/trading/fidelity-review.mdx:
+    status: ready
+    topic: trading-platforms
+    productSlug: fidelity
+    reviewSlug: fidelity-review
+    rank: 1
+    fieldCount: 15
+    dataVerifiedAt: 2026-07-03
+    auditedAt: 2026-07-26
+  content/us/trading/interactive-brokers-review.mdx:
+    status: ready
+    topic: trading-platforms
+    productSlug: interactive-brokers
+    reviewSlug: interactive-brokers-review
+    rank: 3
+    fieldCount: 15
+    dataVerifiedAt: 2026-07-03
+    auditedAt: 2026-07-26
+  content/us/trading/robinhood-review.mdx:
+    status: ready
+    topic: trading-platforms
+    productSlug: robinhood
+    reviewSlug: robinhood-review
+    rank: 5
+    fieldCount: 15
+    dataVerifiedAt: 2026-07-03
+    auditedAt: 2026-07-26
+  content/us/trading/tastytrade-review.mdx:
+    status: ready
+    topic: trading-platforms
+    productSlug: tastytrade
+    reviewSlug: tastytrade-review
+    rank: 4
+    fieldCount: 15
+    dataVerifiedAt: 2026-07-03
+    auditedAt: 2026-07-26
+  content/us/trading/td-ameritrade-review.mdx:
+    status: missing-product
+    topic: null
+    productSlug: null
+    reviewSlug: td-ameritrade-review
+    rank: null
+    fieldCount: null
+    dataVerifiedAt: null
+    auditedAt: 2026-07-26
+  content/us/trading/webull-review.mdx:
+    status: ready
+    topic: trading-platforms
+    productSlug: webull
+    reviewSlug: webull-review
+    rank: 6
+    fieldCount: 15
+    dataVerifiedAt: 2026-07-03
+    auditedAt: 2026-07-26

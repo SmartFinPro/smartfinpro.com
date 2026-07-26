@@ -1,0 +1,196 @@
+---
+# ════════════════════════════════════════════════════════════════════════
+# Broker-Review V2 — Vorlage
+#
+# Vertrag: docs/reviews/broker-v2-standard.md
+# Referenz: content/us/trading/etoro-review.mdx
+#
+# Prüfen mit:  npm run check:review-v2
+#
+# Diese Datei liegt in content/_templates/ und wird vom Guard übersprungen;
+# ein eigener Fixture-Test hält sie trotzdem vertragstreu.
+#
+# Jeder Fakt braucht eine echte, überprüfbare Quelle. Nichts aus den
+# DB-Feldern best_for/pros/cons/deep_dive übernehmen — die sind ungeprüft.
+# ════════════════════════════════════════════════════════════════════════
+
+title: 'PLATZHALTER Review 2026: Kernnutzen in einem Halbsatz'   # 45-60 Zeichen
+description: 'PLATZHALTER — was das Produkt kostet oder kann, plus die wichtigste Einschränkung. Ein Satz, keine Werbung.'  # 140-160 Zeichen
+author: SmartFinPro Trading Team
+publishDate: 'JJJJ-MM-TT'
+modifiedDate: 'JJJJ-MM-TT'        # PFLICHT: bei JEDER Änderung aktualisieren
+category: trading                 # trading | forex
+market: us                        # us | uk | ca | au
+rating: 0.0
+affiliateUrl: /go/PLATZHALTER
+reviewLayout: 'v2'                # schaltet auf das V2-Layout — aktiviert den Guard
+dataVerifiedDate: 'JJJJ-MM-TT'    # PFLICHT: nur nach echter Faktenprüfung, nie älter als das jüngste asOf
+
+# ── Verdict ────────────────────────────────────────────────────────────
+verdict:
+  positioning: >-
+    PLATZHALTER: Was ist dieses Produkt, für wen, mit welcher Einschränkung.
+    18 bis 30 Wörter, ein Satz.
+  summary: >-
+    PLATZHALTER: Die Kernaussage der Review in 70 bis 120 Wörtern. Wo steht das
+    Produkt im Feld, was kann es besonders gut, was kostet es, und wo liegt die
+    Schwäche. Zahlen nur, wenn sie unter essentialFacts belegt sind. Keine
+    Behauptungen über eigene Tests.
+  bestFor:                        # 1-3 Einträge, konkrete Personas
+    - PLATZHALTER Nutzergruppe eins
+    - PLATZHALTER Nutzergruppe zwei
+  notFor:                         # 1-3 Einträge — Personas, keine Faktenaussagen
+    - PLATZHALTER Nutzergruppe, für die es nicht passt
+    - PLATZHALTER zweite Nutzergruppe
+  topStrengths:                   # 1-3 Einträge (wird derzeit nicht gerendert, bleibt im Schema)
+    - PLATZHALTER Stärke eins
+  mainLimitation: >-
+    PLATZHALTER: Die wichtigste messbare Einschränkung, mit Zahl und
+    Feldvergleich. Das ist eine Faktenaussage, keine Persona.
+  bestAlternative:
+    name: PLATZHALTER
+    slug: platzhalter-review
+    reason: PLATZHALTER, warum diese Alternative in Frage kommt
+
+# ── Sektions-Verdikte ──────────────────────────────────────────────────
+# PFLICHT: alle fünf Keys, je 15-30 Wörter. Werden nur ausgegeben, wenn im
+# Body das passende <SectionVerdict id="…" /> steht.
+sectionVerdicts:
+  fees: >-
+    PLATZHALTER: Ein Satz zu den Kosten, 15 bis 30 Wörter.
+  markets: >-
+    PLATZHALTER: Ein Satz zum Angebot an Märkten und Werkzeugen.
+  platform: >-
+    PLATZHALTER: Ein Satz zur Plattform und ihrer Bedienung.
+  safety: >-
+    PLATZHALTER: Ein Satz zu Regulierung und Einlagensicherung.
+  support: >-
+    PLATZHALTER: Ein Satz zum Kundenservice, mit Feldvergleich.
+
+# ── Final Decision ─────────────────────────────────────────────────────
+finalDecision: >-
+  PLATZHALTER: Das abschließende Urteil in 80 bis 140 Wörtern. Für wen lohnt
+  sich das Produkt konkret, für wen nicht, und welche Alternative ist die
+  bessere Wahl unter welcher Bedingung. Schließt mit dem Hinweis, das Feld vor
+  der Kontoeröffnung zu vergleichen.
+
+# ── Essential Facts ────────────────────────────────────────────────────
+# PFLICHT: 4-6 Einträge. Jeder mit echter Quell-URL und eigenem Prüfdatum.
+essentialFacts:
+  - label: PLATZHALTER Gebühr
+    value: PLATZHALTER Betrag
+    context: PLATZHALTER Einschränkung oder Detail
+    asOf: 'JJJJ-MM-TT'
+    sourceHref: https://PLATZHALTER-offizielle-anbieterseite
+  - label: PLATZHALTER Mindesteinlage
+    value: PLATZHALTER Betrag
+    context: PLATZHALTER
+    asOf: 'JJJJ-MM-TT'
+    sourceHref: https://PLATZHALTER-offizielle-anbieterseite
+  - label: PLATZHALTER Handelskosten
+    value: PLATZHALTER
+    context: PLATZHALTER
+    asOf: 'JJJJ-MM-TT'
+    sourceHref: https://PLATZHALTER-offizielle-anbieterseite
+  - label: Regulierung
+    value: PLATZHALTER Aufsicht und Einlagensicherung
+    context: PLATZHALTER Rechtsträger
+    asOf: 'JJJJ-MM-TT'
+    sourceHref: https://PLATZHALTER-regulator-register
+
+# ── Alternativen ───────────────────────────────────────────────────────
+# PFLICHT: 2-3 Einträge. Jeder slug muss als Review im selben Markt und
+# derselben Kategorie existieren. Keine Selbstverlinkung.
+alternatives:
+  - slug: platzhalter-eins-review
+    name: PLATZHALTER Eins
+    whyInstead: >-
+      PLATZHALTER: Warum jemand dieses Produkt stattdessen wählen würde.
+  - slug: platzhalter-zwei-review
+    name: PLATZHALTER Zwei
+    whyInstead: >-
+      PLATZHALTER: Der andere Grund, konkret und vergleichend.
+
+# ── Änderungsprotokoll ─────────────────────────────────────────────────
+# PFLICHT: mindestens ein Eintrag. Die Migration selbst ist protokollpflichtig.
+updateLog:
+  - date: 'JJJJ-MM-TT'
+    change: 'Auf das V2-Format umgestellt; Fakten gegen Primärquellen geprüft'
+
+# ── FAQ ────────────────────────────────────────────────────────────────
+# PFLICHT: 4-8 Einträge, Antworten je 40-100 Wörter.
+faq:
+  - question: PLATZHALTER Frage eins?
+    answer: >-
+      PLATZHALTER: Antwort in 40 bis 100 Wörtern. Beantwortet die Frage direkt
+      im ersten Satz, ergänzt dann den Kontext. Keine Zahl ohne Deckung durch
+      essentialFacts oder eine im Text genannte Quelle.
+  - question: PLATZHALTER Frage zwei?
+    answer: >-
+      PLATZHALTER: Zweite Antwort, ebenfalls 40 bis 100 Wörter, gleiche Regeln.
+      Direkt zuerst, Kontext danach.
+  - question: PLATZHALTER Frage drei?
+    answer: >-
+      PLATZHALTER: Dritte Antwort, 40 bis 100 Wörter. Fragen sollten dem
+      entsprechen, was Leser tatsächlich suchen, nicht dem, was gut klingt.
+  - question: PLATZHALTER Frage vier?
+    answer: >-
+      PLATZHALTER: Vierte Antwort, 40 bis 100 Wörter. Vier ist das Minimum,
+      acht das Maximum.
+---
+
+{/* ══════════════════════════════════════════════════════════════════════
+    BODY — genau fünf Sektionen, feste Reihenfolge, je ein Dreier aus
+    <span id> + ## Titel + <SectionVerdict id>.
+
+    Keine H1 (kommt aus dem Layout), keine zusätzlichen H2.
+
+    Nicht übernehmen aus V1: "Platform Evidence & Screenshots",
+    "Our Testing Results", "What Users Are Saying" — Behauptungen über
+    eigene Tests ohne Belege.
+    ══════════════════════════════════════════════════════════════════ */}
+
+<span id="fees"></span>
+
+## Fees
+
+<SectionVerdict id="fees" />
+
+PLATZHALTER: Fließtext zu den Kosten. Jede Zahl entweder unter essentialFacts
+belegt oder mit Inline-Quelle. Tabellen sind erlaubt und übernehmen automatisch
+den Standard-Look.
+
+<span id="markets"></span>
+
+## Markets & Tools
+
+<SectionVerdict id="markets" />
+
+PLATZHALTER: Welche Anlageklassen, welche Werkzeuge, was fehlt.
+
+<span id="platform"></span>
+
+## Platform Experience
+
+<SectionVerdict id="platform" />
+
+PLATZHALTER: Bedienung, App, Besonderheiten. Beschreibend, nicht aus eigener
+Nutzung behauptet, sofern nicht belegbar.
+
+<span id="safety"></span>
+
+## Safety & Regulation
+
+<SectionVerdict id="safety" />
+
+PLATZHALTER: Rechtsträger, Aufsicht, Einlagensicherung, offene Punkte. Nicht
+Verifizierbares ausdrücklich als unbestätigt kennzeichnen, nicht weglassen.
+
+<span id="support"></span>
+
+## Support
+
+<SectionVerdict id="support" />
+
+PLATZHALTER: Kanäle, Zeiten, Lücken. Reaktionszeiten nur mit Quelle, nie aus
+eigener Messung behauptet.

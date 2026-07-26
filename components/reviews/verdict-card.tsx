@@ -18,16 +18,30 @@
 // `deep_dive`. `position` (score/rank) is the T0b-audited cockpit row —
 // never frontmatter `rating`.
 //
+// `verdict.topStrengths` is deliberately NOT rendered (operator, 2026-07-21:
+// "too much information here"). Two of its three items restate `bestFor`
+// exactly — "No broker-imposed per-contract fee on US options" against "US
+// options traders avoiding broker contract fees", and the $100,000 practice
+// account against two separate bestFor lines — and both facts appear a THIRD
+// time in the Essential Facts rail. The one item that was unique
+// (TradingView charting) is carried by the body. The field stays in the
+// frontmatter and its schema; only this rendering drops.
+//
 // Above-the-fold word budget (Konzept §7.4, 300-380 words total) is
 // enforced upstream by the verdict-frontmatter Zod schema's per-field word
 // counts, not by truncating here.
 // ============================================================
 
 import Link from 'next/link';
+import type { ReactNode } from 'react';
 import type { VerdictBlock } from '@/lib/reviews/verdict-frontmatter';
 import type { DecisionBridgeData } from '@/lib/comparison/types';
 import { scoreLabel, rankPhrase } from '@/lib/reviews/score-label';
 import { ScoreBreakdown } from './score-breakdown';
+import { EssentialFactsGrid } from './essential-facts-grid';
+import { CALLOUT_ARTICLE, SECTION_LABEL } from '@/lib/reviews/callout-style';
+import { BestForNotFor } from './best-for-not-for';
+import type { EssentialFact } from '@/lib/reviews/verdict-frontmatter';
 
 /** The audited cockpit position for the reviewed product — same shape as
  *  DecisionBridgeData['position'], reused rather than redefined. */
@@ -35,33 +49,31 @@ export type ReviewPosition = NonNullable<DecisionBridgeData['position']>;
 
 export interface VerdictCardProps {
   verdict: VerdictBlock;
-  /**
-   * Resolved internal review link for verdict.bestAlternative, or
-   * null/undefined when that competitor has no review yet — rendered as
-   * plain text, never a dead link (same convention as
-   * DecisionBridgeFieldRow.reviewHref in lib/comparison/types.ts).
-   */
-  bestAlternativeHref?: string | null;
+  /** Rendered in the right rail under the score, filling space the score
+   *  panel leaves empty — see the note at the render site. */
+  essentialFacts?: EssentialFact[];
   /** Audited cockpit position (T0b) — null when the product isn't in this field yet. */
   position: ReviewPosition | null;
   /** Total field size — required to phrase `position`'s rank; ignored when `position` is null. */
   fieldCount: number;
   /** Defaults to '/methodology' — the same target decision-bridge.tsx's "How we score" link uses. */
   scoreHref?: string;
+  /** Compact CTA/disclosure surface, inserted after audience fit on mobile/tablet. */
+  mobileActions?: ReactNode;
 }
 
 export function VerdictCard({
   verdict,
-  bestAlternativeHref,
   position,
   fieldCount,
+  essentialFacts,
   scoreHref = '/methodology',
+  mobileActions,
 }: VerdictCardProps) {
-  const topStrengths = verdict.topStrengths.slice(0, 3);
 
   return (
     <div
-      className={position ? 'grid gap-8 md:grid-cols-[minmax(0,1fr)_260px]' : ''}
+      className={position ? 'grid gap-x-8 gap-y-6 md:grid-cols-[minmax(0,1fr)_260px]' : ''}
       style={{
         border: '1px solid var(--sfp-hairline-strong)',
         borderRadius: '18px',
@@ -69,117 +81,122 @@ export function VerdictCard({
         background: '#fff',
       }}
     >
-      <div>
-        {/* Betreiber-Wunsch 2026-07-19: back to a small label — no navy
-            left border, no H2-scale type. --sfp-gray background still
-            unifies label + paragraph into one box (no borderLeft accent). */}
-        <div style={{ margin: '0 0 18px' }}>
-          <div
-            style={{
-              fontFamily: 'var(--font-primary)',
-              fontSize: '13px',
-              fontWeight: 600,
-              color: 'var(--sfp-navy)',
-              background: 'var(--sfp-gray)',
-              padding: '10px 14px 4px',
-            }}
-          >
-            Our Verdict
-          </div>
-          <p
-            style={{
-              fontFamily: 'var(--font-secondary)',
-              fontSize: '16.5px',
-              lineHeight: 1.7,
-              background: 'var(--sfp-gray)',
-              padding: '2px 14px 12px',
-              margin: 0,
-              color: 'var(--sfp-ink)',
-            }}
-          >
+      {/* Score panel FIRST in the DOM, positioned into the right rail on
+          desktop (md:col-start-2 md:row-start-1) — see BestXScore's own note.
+          Measured before this change: on a 390px viewport the score sat
+          2,509px down the page, roughly three screens below the fold, because
+          it stacked after the full verdict prose. The single number the whole
+          page is about was effectively invisible on mobile.
+          Reordering in the DOM rather than with CSS `order` on purpose: the
+          panel contains a "How we score" link, so a visual-only reorder would
+          leave screen-reader and keyboard order contradicting what is on
+          screen (WCAG 1.3.2 / 2.4.3). Desktop layout is unchanged. */}
+      {position && (
+<BestXScore position={position} fieldCount={fieldCount} scoreHref={scoreHref} />
+      )}
+
+      <div className={position ? 'md:col-start-1 md:row-start-1 md:row-span-2' : ''}>
+        {/* Best for / Not for FIRST (operator, 2026-07-25, after an external
+            design audit). It used to close the card, behind the summary prose
+            and the limitation. Measured on a 390px viewport that put "Best for"
+            1.90 viewport heights down the page: a reader had to scroll past
+            roughly 400px of numbers and a 546px block of prose before finding
+            out whether the product was meant for them at all — the one question
+            an opening block exists to answer.
+            The card now reads score → who it is for → what holds it back →
+            the argument in full.
+            This reorders the DOM, not just the visual order (no CSS `order`):
+            these are lists a screen reader walks in sequence, and the same
+            WCAG 1.3.2 / 2.4.3 reasoning that governs the score panel above
+            applies here.
+            Inside the card rather than as its own band below it (operator,
+            2026-07-21). The left column ran out of content well before the
+            score rail beside it ran out of height, so the card ended on a large
+            empty rectangle while a closely related pair of lists sat in a
+            separate block underneath. Same four lists, one container, and every
+            mark in this card is the same icon in the same navy — the
+            limitation and both of these — so it reads as one argument instead
+            of four widgets. */}
+        <BestForNotFor bestFor={verdict.bestFor} notFor={verdict.notFor} />
+
+        {mobileActions}
+
+        {/* Set apart from Not for with its own label and a hairline
+            (operator, 2026-07-26): it used to run on as an unmarked 4th
+            bullet with the same icon and indent as the three Not-for
+            personas above it, but it is a different kind of statement (a
+            measured fact about the product, not a "who this isn't for"
+            persona) and reads better broken out rather than blended in. */}
+        <div style={{ marginTop: '18px', paddingTop: '14px', borderTop: '1px solid var(--sfp-hairline)' }}>
+          <div style={SECTION_LABEL}>Main limitation</div>
+          <p style={{ fontFamily: 'var(--font-secondary)', fontSize: '18px', lineHeight: 1.55, color: 'var(--sfp-ink)', margin: 0 }}>
+            {verdict.mainLimitation}
+          </p>
+        </div>
+
+        {/* No "Our Verdict" label (operator, 2026-07-21). It sat directly
+            under an H1 naming the product and above the summary itself — the
+            reader knows what an opening paragraph in a tinted panel is. The
+            panel does the marking; the word only took a line.
+            Styling comes from CALLOUT_ARTICLE so this panel, the per-section
+            verdicts and the editorial aside are one look — they had drifted
+            into three backgrounds and two typefaces.
+            The hairline moved up here with the prose (2026-07-25): it separates
+            the full argument from the quick answers above it, which is the
+            break the card now has. */}
+        <div style={{ marginTop: '22px', paddingTop: '20px', borderTop: '1px solid var(--sfp-hairline-row)' }}>
+          <p style={{ ...CALLOUT_ARTICLE, margin: 0 }}>
             {verdict.summary}
           </p>
         </div>
-
-        {topStrengths.length > 0 && (
-          <ul
-            style={{
-              listStyle: 'none',
-              margin: '0 0 16px',
-              padding: 0,
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '6px',
-            }}
-          >
-            {topStrengths.map((strength, i) => (
-              <li
-                key={`${i}-${strength}`}
-                style={{
-                  display: 'flex',
-                  gap: '8px',
-                  fontFamily: 'var(--font-primary)',
-                  fontSize: '14px',
-                  lineHeight: 1.5,
-                  color: 'var(--sfp-ink)',
-                }}
-              >
-                <span aria-hidden="true" style={{ color: 'var(--sfp-green)', fontWeight: 700 }}>
-                  ✓
-                </span>
-                {strength}
-              </li>
-            ))}
-          </ul>
-        )}
-
-        <div
-          style={{
-            display: 'flex',
-            gap: '8px',
-            fontFamily: 'var(--font-primary)',
-            fontSize: '14px',
-            lineHeight: 1.5,
-            color: 'var(--sfp-ink)',
-            marginBottom: '14px',
-          }}
-        >
-          <span aria-hidden="true" style={{ color: 'var(--sfp-red)', fontWeight: 700 }}>
-            −
-          </span>
-          <span>
-            <strong style={{ fontWeight: 600 }}>Main limitation:</strong> {verdict.mainLimitation}
-          </span>
-        </div>
-
-        {verdict.bestAlternative && (
-          <p
-            style={{
-              fontFamily: 'var(--font-primary)',
-              fontSize: '13.5px',
-              lineHeight: 1.5,
-              color: 'var(--sfp-slate)',
-              margin: 0,
-            }}
-          >
-            Best alternative:{' '}
-            {bestAlternativeHref ? (
-              <Link
-                href={bestAlternativeHref}
-                style={{ color: 'var(--sfp-navy)', textDecoration: 'none', borderBottom: '1px solid var(--sfp-hairline)' }}
-              >
-                {verdict.bestAlternative.name}
-              </Link>
-            ) : (
-              <strong style={{ color: 'var(--sfp-ink)', fontWeight: 600 }}>{verdict.bestAlternative.name}</strong>
-            )}
-            {' — '}
-            {verdict.bestAlternative.reason}
-          </p>
-        )}
       </div>
 
-      {position && <BestXScore position={position} fieldCount={fieldCount} scoreHref={scoreHref} />}
+      {/* Essential Facts, in the score rail rather than as a separate band of
+          tiles below the card (operator, 2026-07-21). The score panel is short
+          and the verdict column beside it is long, so this rail used to run
+          empty for most of its height while a five-tile grid took a full
+          screen-width block further down. Same information, one section fewer.
+
+          Desktop keeps that col 2 / row 2 rail. Mobile receives the same facts
+          behind a collapsed native details control: every value and source
+          remains available, but the five-row block no longer consumes the
+          opening before a reader asks for it. */}
+      {position && essentialFacts && essentialFacts.length > 0 && (
+        <>
+          <div
+            className="hidden md:block md:col-start-2 md:row-start-2"
+            style={{ borderTop: '1px solid var(--sfp-hairline-row)', paddingTop: '16px' }}
+          >
+            <EssentialFactsGrid facts={essentialFacts} />
+          </div>
+          <details
+            className="md:hidden"
+            style={{
+              borderTop: '1px solid var(--sfp-hairline-row)',
+              paddingTop: '16px',
+              fontFamily: 'var(--font-primary)',
+            }}
+          >
+            <summary
+              className="cursor-pointer list-none [&::-webkit-details-marker]:hidden"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                color: 'var(--sfp-navy)',
+                fontSize: '13.5px',
+                fontWeight: 600,
+              }}
+            >
+              Essential facts
+              <span aria-hidden="true" style={{ color: 'var(--sfp-slate)', fontSize: '18px' }}>+</span>
+            </summary>
+            <div style={{ paddingTop: '16px' }}>
+              <EssentialFactsGrid facts={essentialFacts} />
+            </div>
+          </details>
+        </>
+      )}
     </div>
   );
 }
@@ -200,7 +217,11 @@ function BestXScore({
 }) {
   return (
     <div
-      className="mt-6 border-t pt-6 md:mt-0 md:border-t-0 md:border-l md:pl-8 md:pt-0"
+      // Mobile: the panel now sits ABOVE the verdict prose, so its separator
+      // is a bottom rule, not a top one. Desktop: unchanged — second column,
+      // left rule, no horizontal rule. col/row-start pin it to the right rail
+      // even though it comes first in the DOM.
+      className="mb-6 border-b pb-6 md:col-start-2 md:row-start-1 md:mb-0 md:border-b-0 md:border-l md:pb-0 md:pl-8"
       style={{ borderColor: 'var(--sfp-hairline)', fontFamily: 'var(--font-primary)' }}
     >
       <div

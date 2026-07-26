@@ -30,19 +30,20 @@
 // numbers right — same idiom as the V15 `.subs`/`.strip` tables. Renders
 // null when no alternative carries a `facts` array.
 //
-// "Which should you choose?" — design note (Abweichung, flagged per the
-// plan's "Abweichungen explizit" ask): the plan calls for
-// "Wenn-Dann-Zeilen aus Frontmatter", but verdict-frontmatter.ts's
-// AlternativeEntrySchema (T5, out of scope here) has no dedicated
-// if/then field — only `whyInstead`. Rather than inventing new prose or a
-// new schema field, this section reuses `whyInstead` verbatim as the
-// "Choose {name} instead if {whyInstead}" clause — the exact same,
-// already-audited string the card above renders. See also
-// components/reviews/final-decision.tsx, which documents the equivalent
-// choice for its own "Choose X if / Choose Y instead if" pairs.
+// "Which should you choose?" — REMOVED (2026-07-25, external design audit).
+// The plan called for "Wenn-Dann-Zeilen aus Frontmatter", but
+// AlternativeEntrySchema has no if/then field, only `whyInstead`. Reusing
+// `whyInstead` verbatim avoided inventing prose — and produced a list that
+// repeated, word for word, the card eight lines above it. Two further problems
+// only showed once it was measured on the page: with final-decision.tsx doing
+// the same thing, every `whyInstead` appeared THREE times; and the
+// "Choose {name} instead if" prefix does not join to a standalone sentence, so
+// it rendered as "Choose Fidelity instead if The category leader (9.6/10)…".
+// The card at the top of this section is now the single rendering.
 // ============================================================
 
 import Link from 'next/link';
+import { BUTTON_COMPARE } from './button-style';
 import type { Market, Category } from '@/lib/i18n/config';
 import type { AlternativeEntry } from '@/lib/reviews/verdict-frontmatter';
 import type { DecisionBridgeFieldRow } from '@/lib/comparison/types';
@@ -150,41 +151,8 @@ export function AlternativesSection({
 
       <ComparisonFactsTable items={items} />
 
-      <div style={{ margin: '0 0 24px' }}>
-        <h3 style={{ fontFamily: 'var(--font-secondary)', fontSize: '16px', fontWeight: 400, color: 'var(--sfp-ink)', margin: '0 0 10px' }}>
-          Which should you choose?
-        </h3>
-        <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          {items.map((alt) => (
-            <li
-              key={alt.slug}
-              style={{
-                fontSize: '14px',
-                lineHeight: 1.6,
-                color: 'var(--sfp-ink)',
-                borderTop: '1px solid var(--sfp-hairline-row)',
-                paddingTop: '8px',
-              }}
-            >
-              <strong style={{ fontWeight: 600 }}>Choose {alt.name} instead if</strong> {alt.whyInstead}
-            </li>
-          ))}
-        </ul>
-      </div>
-
       {showCta && (
-        <Link
-          href={cockpitHref as string}
-          style={{
-            display: 'inline-block',
-            background: 'var(--sfp-gold)',
-            color: 'var(--sfp-ink)',
-            fontWeight: 600,
-            fontSize: '13.5px',
-            padding: '9px 16px',
-            textDecoration: 'none',
-          }}
-        >
+        <Link href={cockpitHref as string} className={BUTTON_COMPARE}>
           Compare all {fieldCount} {topicLabel} →
         </Link>
       )}
