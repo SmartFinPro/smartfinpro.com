@@ -62,9 +62,13 @@ describe('content quality score — V1 regression guard', () => {
   // V1 scoring must not shift when the V2 branches change. These are real
   // files; if a future edit to the V2 path leaks into the shared code, the
   // numbers below move and this test fails.
+  // charles-schwab-review is deliberately absent: it was the V2 pilot and no
+  // longer scores on the V1 path. Its migration is what first tripped this
+  // test, which is the behaviour intended — a file changing tier should not
+  // pass silently.
   const V1_EXPECTED: Record<string, number> = {
     'content/us/trading/fidelity-review.mdx': 87,
-    'content/us/trading/charles-schwab-review.mdx': 87,
+    'content/us/trading/etrade-review.mdx': 87,
     'content/us/trading/robinhood-review.mdx': 87,
     'content/us/trading/webull-review.mdx': 87,
     'content/us/forex/oanda-review.mdx': 87,
