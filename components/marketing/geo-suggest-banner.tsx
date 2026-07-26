@@ -5,23 +5,13 @@ import { usePathname } from 'next/navigation';
 import { LazyMotion, domAnimation, m, AnimatePresence } from 'framer-motion';
 import { X, ArrowRight } from 'lucide-react';
 import { getVisitorMarketFromCookie } from '@/lib/geo/geo-cookie';
+import { getCookie, setCookie } from '@/lib/utils/cookies';
 import { marketConfig } from '@/lib/i18n/config';
 import type { MarketCode } from '@/lib/geo/detect-market';
 
-// ── Cookie helpers ──────────────────────────────────────────
+// ── Cookie keys ─────────────────────────────────────────────
 const DISMISSED_KEY = 'sfp-geo-dismissed';
 const PREF_KEY = 'sfp-market-pref';
-
-function getCookie(name: string): string | null {
-  if (typeof document === 'undefined') return null;
-  const match = document.cookie.split('; ').find((c) => c.startsWith(`${name}=`));
-  return match ? match.split('=')[1] : null;
-}
-
-function setCookie(name: string, value: string, days: number) {
-  const expires = new Date(Date.now() + days * 86_400_000).toUTCString();
-  document.cookie = `${name}=${value}; expires=${expires}; path=/; SameSite=Lax`;
-}
 
 // ── Market metadata ─────────────────────────────────────────
 const MARKET_META: Record<MarketCode, { tagline: string }> = {
