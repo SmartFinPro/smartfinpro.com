@@ -12,27 +12,17 @@
 
 import type { VerdictBlock } from '@/lib/reviews/verdict-frontmatter';
 import { CheckCircleIcon, MinusCircleIcon } from '@/components/marketing/check-icon';
+import { SECTION_LABEL } from '@/lib/reviews/callout-style';
 
 export interface BestForNotForProps {
   bestFor: VerdictBlock['bestFor'];
   notFor: VerdictBlock['notFor'];
 }
 
-/**
- * Sentence case in the article's serif, not an uppercase letter-spaced
- * eyebrow. Same reasoning as the table headers: capitals plus tracking read
- * as a different typeface and as dashboard chrome, which is exactly the look
- * this design has been moving away from. The label sits in the body's voice,
- * one step down in size and in slate, so it separates the lists without
- * announcing itself.
- */
-const LABEL_STYLE = {
-  fontFamily: 'var(--font-secondary)',
-  fontSize: '15px',
-  color: 'var(--sfp-slate)',
-  fontWeight: 600,
-  marginBottom: '8px',
-};
+// Label style is the shared SECTION_LABEL (operator, 2026-07-26) — same
+// uppercase-tracked sans eyebrow as Score Breakdown, Essential Facts and
+// Main limitation elsewhere in this card, rather than its own serif variant.
+const LABEL_STYLE = SECTION_LABEL;
 
 const LIST_STYLE = {
   listStyle: 'none',
@@ -88,7 +78,7 @@ export function BestForNotFor({ bestFor, notFor }: BestForNotForProps) {
           <ul style={LIST_STYLE}>
             {best.map((item, i) => (
               <li key={`${i}-${item}`} style={ITEM_STYLE}>
-                <CheckCircleIcon size={17} color={ICON_COLOR} style={ICON_STYLE} />
+                <CheckCircleIcon size={17} color={ICON_COLOR} style={ICON_STYLE} variant="subtle" />
                 {item}
               </li>
             ))}
@@ -101,7 +91,7 @@ export function BestForNotFor({ bestFor, notFor }: BestForNotForProps) {
           <ul style={LIST_STYLE}>
             {not.map((item, i) => (
               <li key={`${i}-${item}`} style={ITEM_STYLE}>
-                <MinusCircleIcon size={17} color={ICON_COLOR} style={ICON_STYLE} />
+                <MinusCircleIcon size={17} color={ICON_COLOR} style={ICON_STYLE} variant="subtle" />
                 {item}
               </li>
             ))}

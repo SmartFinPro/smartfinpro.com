@@ -25,6 +25,7 @@
 // ============================================================
 
 import type { SubScores } from '@/lib/comparison/types';
+import { SECTION_LABEL } from '@/lib/reviews/callout-style';
 
 /** Field size beyond which only the first N sub-scores are shown (plan: "max 5 sichtbar"). */
 const MAX_VISIBLE_SUBSCORES = 5;
@@ -51,16 +52,7 @@ export function ScoreBreakdown({ subScores }: ScoreBreakdownProps) {
 
   return (
     <div style={{ fontFamily: 'var(--font-primary)' }}>
-      <div
-        style={{
-          fontSize: '10px',
-          letterSpacing: '0.14em',
-          textTransform: 'uppercase',
-          color: 'var(--sfp-slate)',
-          fontWeight: 600,
-          marginBottom: '10px',
-        }}
-      >
+      <div style={SECTION_LABEL}>
         Score Breakdown
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>

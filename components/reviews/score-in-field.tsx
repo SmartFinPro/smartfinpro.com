@@ -26,8 +26,12 @@
 //   Rail 1 — fixed 0-10 axis with integer ticks, the field's span highlighted
 //            as one short solid bar. This is the "the field is tight"
 //            statement, legible in a second.
-//   Rail 2 — that same highlighted slice, magnified, with every provider as a
-//            tick mark and this product as a labelled pin.
+//   Rail 2 — that same highlighted slice, magnified, as a LABELLED dot plot:
+//            one row per provider — name, dot on the shared magnified axis,
+//            score — sorted by score, this product's row highlighted.
+//            (Operator, 2026-07-25: the earlier strip plot revealed names only
+//            on hover, which is mouse-only and made the figure a puzzle at
+//            first glance. Direct labels are the redesign's whole point.)
 // The two rails are joined into ONE figure by an SVG "zoom lens" connector — a
 // tinted cone opening from the ends of the highlighted band out to the full
 // width of the detail axis (the standard print-graphics inset convention), and
@@ -230,18 +234,23 @@ export function ScoreInField({ field, position, fieldCount }: ScoreInFieldProps)
   const contextWidthPct = Math.max(contextEndPct - contextStartPct, 0.8); // floor keeps a level field visible as a mark, not a hairline
   const youContextPct = toPercent(you, 0, SCORE_SCALE_MAX);
 
-  const youPct = isLevel ? 50 : toPercent(you, domainMin, domainMax);
-  // The pin label is laid out in three zones rather than positioned exactly
-  // over the pin. Exact positioning cannot be made safe here: the label's width
-  // depends on the product name, the rail's width depends on the viewport, and
-  // neither is knowable while rendering on the server — a threshold calibrated
-  // on "eToro" (5 characters) puts "Charles Schwab Intelligent Portfolios" at
-  // left: -45px on a 320px viewport, i.e. cut off. Real names in the field hit
-  // this: Interactive Brokers, Merrill Edge Self-Directed, Vanguard Digital
-  // Advisor. Three zones cost a little precision — the stem and pin still mark
-  // the exact score — and cannot clip at any name length or viewport.
-  const labelAlign: 'flex-start' | 'center' | 'flex-end' =
-    youPct <= 33 ? 'flex-start' : youPct >= 67 ? 'flex-end' : 'center';
+  // Rows for the labelled dot plot, sorted by score (the axis order). The
+  // reviewed product is always synthesized from `position` rather than taken
+  // from the field rows, for the same reason the old pin was: a stale row set
+  // may not contain it, and the domain already grew to include `you` above.
+  // On a tie the reviewed row sorts first so its highlight is never hidden
+  // under a competitor row of equal score.
+  const plotRows: Array<{ name: string; score: number; isYou: boolean }> = [
+    ...rows.filter((r) => !r.isYou).map((r) => ({ name: r.name, score: r.score, isYou: false })),
+    { name, score: you, isYou: true },
+  ].sort((a, b) => b.score - a.score || (a.isYou ? -1 : b.isYou ? 1 : 0));
+
+  // One shared column template for every plot row AND the axis-bounds row —
+  // all three tracks are content-independent (clamp/1fr/fixed), so separate
+  // per-row grids resolve to identical widths and the rails always align.
+  // A content-sized track here would let "Interactive Brokers" widen its own
+  // row's name column and knock its rail out of line with the others.
+  const PLOT_COLS = 'clamp(96px, 30%, 170px) 1fr 36px';
 
   const aboveLowest = you - domainMin;
   const belowHighest = domainMax - you;
@@ -427,210 +436,133 @@ export function ScoreInField({ field, position, fieldCount }: ScoreInFieldProps)
               Inside that {spread.toFixed(1)}-point band, magnified
             </p>
 
-            {/* Pin label sits in its own row above the rail so it can never
-                collide with the tick marks, and comes first in DOM order so a
-                screen reader hears "eToro 8.3" before the (hidden) rail. */}
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: labelAlign,
-                paddingLeft: `${DOT_INSET_PX}px`,
-                paddingRight: `${DOT_INSET_PX}px`,
-                minHeight: '20px',
-                marginTop: '10px',
-              }}
-            >
-              <span style={{ ...TYPE.body, fontWeight: 600, color: 'var(--sfp-navy)', textAlign: 'center' }}>
-                {name} <span style={NUM}>{you.toFixed(1)}</span>
-              </span>
-            </div>
-
-            <div aria-hidden="true" style={{ position: 'relative', height: '26px' }}>
-              {/* Detail axis line */}
-              <div
-                style={{
-                  position: 'absolute',
-                  left: 0,
-                  right: 0,
-                  top: '15px',
-                  height: '1px',
-                  background: 'var(--sfp-hairline-strong)',
-                }}
-              />
-              <div style={{ position: 'absolute', left: `${DOT_INSET_PX}px`, right: `${DOT_INSET_PX}px`, top: 0, bottom: 0 }}>
-                {/* Competitors as strip-plot tick marks crossing the axis —
-                    slate (4.8:1) rather than a pale hairline tone, which would
-                    fall under the 3:1 floor for non-text marks. The white ring
-                    keeps two near-identical scores readable as two marks
-                    instead of one blob. */}
-                {rows.map((row, i) => {
-                  if (row.isYou) return null;
-                  const pct = toPercent(row.score, domainMin, domainMax);
-                  // Keep the flyout inside the rail at the extremes: anchor it
-                  // by its left edge near the start, its right edge near the
-                  // end, centred everywhere between. Without this the first and
-                  // last competitor's label is half cut off by the card.
-                  const anchor =
-                    pct < 12 ? 'translateX(0)' : pct > 88 ? 'translateX(-100%)' : 'translateX(-50%)';
-                  return (
+            {/* Labelled dot plot — one row per provider: name, dot on the
+                shared magnified axis, score. Every value is visible text
+                (operator, 2026-07-25 — replaces hover-only flyouts and their
+                sr-only duplicate), so the figure reads at a glance, on touch,
+                and in the accessibility tree; only the track and dot in each
+                row are decorative. Names and scores are real text in a sane
+                reading order (best score first). */}
+            <div style={{ marginTop: '10px' }}>
+              {plotRows.map((r, i) => {
+                const pct = toPercent(r.score, domainMin, domainMax);
+                return (
+                  <div
+                    key={`${r.name}-${i}`}
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: PLOT_COLS,
+                      alignItems: 'center',
+                      columnGap: '10px',
+                      padding: '4px 8px',
+                      borderRadius: '8px',
+                      background: r.isYou ? 'var(--sfp-sky)' : 'transparent',
+                    }}
+                  >
                     <span
-                      key={`${row.rank}-${row.name}-${i}`}
-                      // The wrapper is the hit area: 22px, far wider than the
-                      // 2px tick, because a 2px hover target is unusable in
-                      // practice — the tick itself stays 2px.
-                      // NOT focusable on purpose. This whole rail is aria-hidden,
-                      // and a focusable element inside an aria-hidden subtree is
-                      // a defect in itself; making it focusable properly would
-                      // also add one tab stop per competitor. The hover label is
-                      // a mouse-only enhancement, and every value it can reveal
-                      // is available to assistive tech in the visually-hidden
-                      // list below the rail.
-                      className="group absolute"
                       style={{
-                        left: `${pct}%`,
-                        top: 0,
-                        width: '22px',
-                        height: '26px',
-                        marginLeft: '-11px',
-                        cursor: 'default',
+                        ...TYPE.body,
+                        fontWeight: r.isYou ? 600 : 400,
+                        color: r.isYou ? 'var(--sfp-navy)' : 'var(--sfp-ink)',
                       }}
                     >
+                      {r.name}
+                      {r.isYou && (
+                        <span style={{ ...TYPE.micro, fontWeight: 600, color: 'var(--sfp-navy)', whiteSpace: 'nowrap' }}>
+                          {' '}· this review
+                        </span>
+                      )}
+                    </span>
+                    <span aria-hidden="true" style={{ position: 'relative', height: '16px' }}>
+                      {/* Track */}
                       <span
-                        aria-hidden="true"
                         style={{
                           position: 'absolute',
-                          left: '50%',
-                          top: '9px',
-                          width: '2px',
-                          height: '13px',
-                          marginLeft: '-1px',
-                          background: 'var(--sfp-slate)',
-                          boxShadow: '0 0 0 1px #fff',
+                          left: 0,
+                          right: 0,
+                          top: '50%',
+                          height: '1px',
+                          marginTop: '-0.5px',
+                          background: 'var(--sfp-hairline-strong)',
                         }}
                       />
-                      {/* Name + score of the competitor behind this mark. Hidden
-                          by opacity rather than display so it is laid out (and
-                          therefore correctly positioned) before it is shown. */}
-                      <span
-                        // HOVERABLE (WCAG 1.4.13). The flyout is a CHILD of the
-                        // hovered wrapper and keeps its pointer events, so moving
-                        // the pointer onto it keeps the ancestor in :hover and the
-                        // label stays up — someone at 200% zoom can actually read
-                        // it. paddingBottom bridges the gap down to the mark so the
-                        // pointer never crosses dead space on the way. An earlier
-                        // pointer-events-none version failed this: the label
-                        // vanished the moment you moved toward it.
-                        // Dismissible is NOT met — that needs an Esc handler, and
-                        // this is a Server Component with no client JS. The
-                        // trade-off is deliberate and cheap here: every name and
-                        // score the flyout can show is also visible in the
-                        // sidebar's ranking table and present in the sr-only list
-                        // below, so a user who cannot dismiss it loses nothing.
-                        className="absolute opacity-0 transition-opacity duration-150 group-hover:opacity-100"
-                        style={{
-                          left: '50%',
-                          bottom: '14px',
-                          transform: anchor,
-                          paddingBottom: '8px',
-                          zIndex: 2,
-                        }}
-                      >
+                      {/* Dot layer inset so a mark at 0%/100% is never clipped.
+                          Size + white ring keep the reviewed product's mark
+                          distinct in greyscale; slate fill clears the 3:1
+                          non-text floor for the competitor dots. */}
+                      <span style={{ position: 'absolute', left: `${DOT_INSET_PX}px`, right: `${DOT_INSET_PX}px`, top: 0, bottom: 0 }}>
                         <span
                           style={{
-                            display: 'block',
-                            whiteSpace: 'nowrap',
-                            ...TYPE.body,
-                            fontWeight: 600,
-                            color: '#fff',
-                            background: 'var(--sfp-ink)',
-                            padding: '4px 8px',
-                            borderRadius: '6px',
+                            position: 'absolute',
+                            left: `${pct}%`,
+                            top: '50%',
+                            width: r.isYou ? '12px' : '8px',
+                            height: r.isYou ? '12px' : '8px',
+                            transform: 'translate(-50%, -50%)',
+                            borderRadius: '50%',
+                            background: r.isYou ? 'var(--sfp-navy)' : 'var(--sfp-slate)',
+                            boxShadow: r.isYou ? '0 0 0 2px #fff' : '0 0 0 1px #fff',
                           }}
-                        >
-                          {row.name}{' '}
-                          <span style={NUM}>{row.score.toFixed(1)}</span>
-                        </span>
+                        />
                       </span>
                     </span>
-                  );
-                })}
-                {/* This product — a stem from its label down to a filled pin on
-                    the axis. Shape and size carry the distinction (circle vs.
-                    plain tick), so it survives greyscale. */}
-                <span
-                  style={{
-                    position: 'absolute',
-                    left: `${youPct}%`,
-                    top: 0,
-                    width: '2px',
-                    height: '12px',
-                    marginLeft: '-1px',
-                    background: 'var(--sfp-navy)',
-                  }}
-                />
-                <span
-                  style={{
-                    position: 'absolute',
-                    left: `${youPct}%`,
-                    top: '10px',
-                    width: '12px',
-                    height: '12px',
-                    marginLeft: '-6px',
-                    borderRadius: '50%',
-                    background: 'var(--sfp-navy)',
-                    boxShadow: '0 0 0 2px #fff',
-                  }}
-                />
+                    <span
+                      style={{
+                        ...TYPE.body,
+                        fontWeight: r.isYou ? 600 : 400,
+                        color: r.isYou ? 'var(--sfp-navy)' : 'var(--sfp-ink)',
+                        textAlign: 'right',
+                        ...NUM,
+                      }}
+                    >
+                      {r.score.toFixed(1)}
+                    </span>
+                  </div>
+                );
+              })}
+
+              {/* Axis bounds under the rail column — same column template as
+                  the rows above, so 8.0/9.6 sit under the actual rail extremes
+                  rather than under the card edge. Real text, stays in the
+                  a11y tree; an end is only NAMED when a plotted provider
+                  really owns that extreme. */}
+              <div style={{ display: 'grid', gridTemplateColumns: PLOT_COLS, columnGap: '10px', padding: '2px 8px 0' }}>
+                <span />
+                <div
+                  className="flex items-start justify-between gap-4"
+                  style={{ paddingLeft: `${DOT_INSET_PX}px`, paddingRight: `${DOT_INSET_PX}px` }}
+                >
+                  <span style={{ ...TYPE.micro, color: 'var(--sfp-slate)' }}>
+                    <b
+                      style={{
+                        display: 'block',
+                        ...TYPE.body,
+                        fontWeight: 600,
+                        color: 'var(--sfp-ink)',
+                        ...NUM,
+                      }}
+                    >
+                      {domainMin.toFixed(1)}
+                    </b>
+                    {lowName ? `${lowName} · lowest` : 'lowest'}
+                  </span>
+                  <span style={{ ...TYPE.micro, color: 'var(--sfp-slate)', textAlign: 'right' }}>
+                    <b
+                      style={{
+                        display: 'block',
+                        ...TYPE.body,
+                        fontWeight: 600,
+                        color: 'var(--sfp-ink)',
+                        ...NUM,
+                      }}
+                    >
+                      {domainMax.toFixed(1)}
+                    </b>
+                    {highName ? `${highName} · highest` : 'highest'}
+                  </span>
+                </div>
+                <span />
               </div>
-            </div>
-
-            {/* The full field in text. The marks reveal each competitor's name
-                and score on hover, which is a mouse-only affordance — this list
-                makes exactly the same values available to screen readers,
-                keyboard-only users and anyone on a touch device, so no one gets
-                less than the mouse user does. `sr-only` rather than aria-label
-                on each mark: the marks sit inside an aria-hidden rail, and one
-                continuous list reads far better than nine isolated
-                announcements. */}
-            <ul className="sr-only">
-              {rows.map((row, i) => (
-                <li key={`sr-${row.rank}-${row.name}-${i}`}>
-                  {row.name}: {row.score.toFixed(1)} out of 10
-                  {row.isYou ? ' (the product reviewed on this page)' : ''}
-                </li>
-              ))}
-            </ul>
-
-            {/* Rail ends as real text — the axis labels stay in the a11y tree. */}
-            <div className="flex items-start justify-between gap-4" style={{ marginTop: '6px' }}>
-              <span style={{ ...TYPE.micro, color: 'var(--sfp-slate)' }}>
-                <b
-                  style={{
-                    display: 'block',
-                    ...TYPE.body,
-                    fontWeight: 600,
-                    color: 'var(--sfp-ink)',
-                    ...NUM,
-                  }}
-                >
-                  {domainMin.toFixed(1)}
-                </b>
-                {lowName ? `${lowName} · lowest` : 'lowest'}
-              </span>
-              <span style={{ ...TYPE.micro, color: 'var(--sfp-slate)', textAlign: 'right' }}>
-                <b
-                  style={{
-                    display: 'block',
-                    ...TYPE.body,
-                    fontWeight: 600,
-                    color: 'var(--sfp-ink)',
-                    ...NUM,
-                  }}
-                >
-                  {domainMax.toFixed(1)}
-                </b>
-                {highName ? `${highName} · highest` : 'highest'}
-              </span>
             </div>
           </>
         )}

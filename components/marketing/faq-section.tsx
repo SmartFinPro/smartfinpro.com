@@ -14,21 +14,23 @@ interface FAQSectionProps {
   faqs: FAQ[];
   title?: string;
   includeSchema?: boolean;
+  /** All answers open on arrival (operator, 2026-07-21): unopened answers are
+   * still in the HTML, but burying the page's most quotable, question-shaped
+   * content behind a click is the opposite of what an answer engine needs.
+   * Still collapsible either way; this only sets the initial state.
+   * V2 reviews opt out (operator, 2026-07-25) — closed until the reader clicks. */
+  defaultOpen?: boolean;
 }
 
 export function FAQSection({
   faqs,
   title = 'Frequently Asked Questions',
   includeSchema = true,
+  defaultOpen = true,
 }: FAQSectionProps) {
-  // All answers open on arrival (operator, 2026-07-21). Previously only the
-  // first was expanded, so eight of nine answers were a click away — and a
-  // reader who does not click never sees them. It also matters beyond the
-  // reader: an answer hidden behind an interaction is still in the HTML, but
-  // burying the page's most quotable, question-shaped content behind a click
-  // is the opposite of what an answer engine needs. Still collapsible; the
-  // chevron and the toggle stay, the DEFAULT is what changed.
-  const [closed, setClosed] = useState<Set<number>>(() => new Set());
+  const [closed, setClosed] = useState<Set<number>>(() =>
+    defaultOpen || !Array.isArray(faqs) ? new Set() : new Set(faqs.map((_, i) => i))
+  );
   const isOpen = (i: number) => !closed.has(i);
   const toggle = (i: number) =>
     setClosed((prev) => {

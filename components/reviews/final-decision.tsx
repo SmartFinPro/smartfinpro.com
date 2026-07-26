@@ -55,14 +55,19 @@ export function FinalDecision({
 
   return (
     <section aria-labelledby="final-decision-heading" style={{ fontFamily: 'var(--font-primary)' }}>
+      {/* Matches the shared MDX H2 (lib/mdx/components.tsx) — same font-size
+          step (22px mobile / 24px desktop), weight, and navy color as every
+          other H2-level section heading on the page (e.g. "Support"), so
+          this layout-owned zone doesn't read as a lighter, smaller tier. */}
       <h2
         id="final-decision-heading"
+        className="text-[22px] sm:text-[24px]"
         style={{
           fontFamily: 'var(--font-secondary)',
-          fontSize: '22px',
-          fontWeight: 400,
+          fontWeight: 600,
+          lineHeight: 1.25,
           letterSpacing: '-0.01em',
-          color: 'var(--sfp-ink)',
+          color: 'var(--sfp-navy)',
           margin: '0 0 16px',
         }}
       >

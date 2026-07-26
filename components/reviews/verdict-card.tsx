@@ -39,9 +39,8 @@ import type { DecisionBridgeData } from '@/lib/comparison/types';
 import { scoreLabel, rankPhrase } from '@/lib/reviews/score-label';
 import { ScoreBreakdown } from './score-breakdown';
 import { EssentialFactsGrid } from './essential-facts-grid';
-import { CALLOUT_ARTICLE } from '@/lib/reviews/callout-style';
+import { CALLOUT_ARTICLE, SECTION_LABEL } from '@/lib/reviews/callout-style';
 import { BestForNotFor } from './best-for-not-for';
-import { MinusCircleIcon } from '@/components/marketing/check-icon';
 import type { EssentialFact } from '@/lib/reviews/verdict-frontmatter';
 
 /** The audited cockpit position for the reviewed product — same shape as
@@ -122,21 +121,17 @@ export function VerdictCard({
 
         {mobileActions}
 
-        <div
-          style={{
-            display: 'flex',
-            gap: '8px',
-            fontFamily: 'var(--font-secondary)',
-            fontSize: '18px',
-            lineHeight: 1.55,
-            color: 'var(--sfp-ink)',
-            marginTop: '18px',
-          }}
-        >
-          <MinusCircleIcon size={17} color="var(--sfp-navy)" style={{ flexShrink: 0, marginTop: '4px' }} />
-          <span>
-            <strong style={{ fontWeight: 600 }}>Main limitation:</strong> {verdict.mainLimitation}
-          </span>
+        {/* Set apart from Not for with its own label and a hairline
+            (operator, 2026-07-26): it used to run on as an unmarked 4th
+            bullet with the same icon and indent as the three Not-for
+            personas above it, but it is a different kind of statement (a
+            measured fact about the product, not a "who this isn't for"
+            persona) and reads better broken out rather than blended in. */}
+        <div style={{ marginTop: '18px', paddingTop: '14px', borderTop: '1px solid var(--sfp-hairline)' }}>
+          <div style={SECTION_LABEL}>Main limitation</div>
+          <p style={{ fontFamily: 'var(--font-secondary)', fontSize: '18px', lineHeight: 1.55, color: 'var(--sfp-ink)', margin: 0 }}>
+            {verdict.mainLimitation}
+          </p>
         </div>
 
         {/* No "Our Verdict" label (operator, 2026-07-21). It sat directly

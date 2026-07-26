@@ -22,6 +22,7 @@
 // ============================================================
 
 import type { EssentialFact } from '@/lib/reviews/verdict-frontmatter';
+import { SECTION_LABEL } from '@/lib/reviews/callout-style';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -54,16 +55,7 @@ export function EssentialFactsGrid({ facts }: EssentialFactsGridProps) {
 
   return (
     <div style={{ fontFamily: 'var(--font-primary)' }}>
-      <div
-        style={{
-          fontSize: '10px',
-          letterSpacing: '0.14em',
-          textTransform: 'uppercase',
-          color: 'var(--sfp-slate)',
-          fontWeight: 600,
-          marginBottom: '10px',
-        }}
-      >
+      <div style={SECTION_LABEL}>
         Essential Facts
       </div>
 

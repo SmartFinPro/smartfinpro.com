@@ -90,14 +90,15 @@ describe('Review V2 audit follow-up', () => {
     expect(html).toContain('Visit eToro');
   });
 
-  it('places the compact mobile actions before the field-position visualization', () => {
+  it('renders the compact mobile actions and no field-position card (removed as a sidebar repeat)', () => {
     const html = render();
     const opening = html.slice(html.indexOf('id="verdict"'));
     const actions = opening.indexOf('data-review-mobile-actions');
-    const standing = opening.indexOf('id="score-in-field-heading"');
 
     expect(actions).toBeGreaterThan(-1);
-    expect(standing).toBeGreaterThan(actions);
+    // ScoreInField was removed from this layout (operator, 2026-07-25): the
+    // sidebar's "How X compares" table covers the same audited numbers.
+    expect(html).not.toContain('id="score-in-field-heading"');
   });
 
   it('keeps the primary mobile actions when a bridge resolves but the verdict block is absent', () => {

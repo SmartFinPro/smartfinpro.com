@@ -51,7 +51,7 @@ describe('VerdictCard', () => {
     // above the opening paragraph of a review.
     expect(html).not.toContain('Our Verdict');
     expect(html).toContain('eToro is a strong pick for copy trading');
-    expect(html).toContain('Main limitation:');
+    expect(html).toContain('>Main limitation<');
     expect(html).toContain('Support response times trail the field leaders.');
 
     // topStrengths is no longer rendered (operator: too much information in
@@ -105,7 +105,7 @@ describe('VerdictCard', () => {
     const score = html.indexOf('8.3');
     const bestFor = html.indexOf('>Best for<');
     const actions = html.indexOf('data-mobile-actions-marker');
-    const limitation = html.indexOf('Main limitation:');
+    const limitation = html.indexOf('>Main limitation<');
     const summary = html.indexOf('eToro is a strong pick for copy trading');
 
     expect(score).toBeGreaterThan(-1);

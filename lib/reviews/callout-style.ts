@@ -51,3 +51,21 @@ export const CALLOUT_RAIL: CSSProperties = {
   lineHeight: 1.55,
   color: 'var(--sfp-ink)',
 };
+
+/**
+ * The one section-eyebrow every zone of the verdict card uses: "Best for",
+ * "Not for", "Main limitation", "Score Breakdown", "Essential Facts"
+ * (operator, 2026-07-26). Two conventions had accumulated — the first two
+ * in the article serif at sentence case, the rest in this uppercase-tracked
+ * sans — which read as two different label languages in one card. This is
+ * the sans, uppercase-tracked one; it wins because it was already the
+ * majority convention (Score Breakdown + Essential Facts).
+ */
+export const SECTION_LABEL: CSSProperties = {
+  fontSize: '10px',
+  letterSpacing: '0.14em',
+  textTransform: 'uppercase',
+  color: 'var(--sfp-slate)',
+  fontWeight: 600,
+  marginBottom: '10px',
+};
