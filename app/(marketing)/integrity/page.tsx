@@ -723,11 +723,11 @@ export default function IntegrityPage() {
                 name: 'SmartFinPro Technical Board',
               },
             },
-            reviewedBy: EXPERTS.slice(0, 6).map((expert) => ({
-              '@type': 'Person',
-              name: expert.name,
-              jobTitle: expert.credentials,
-            })),
+            // `reviewedBy` Person nodes removed (2026-07-26 editorial-integrity
+            // review, F1): the underlying EXPERTS entries are not real people —
+            // see lib/seo/schema.ts for the Organization-only pattern this page
+            // now follows. Visible page content (EXPERTS rendering above) is
+            // untouched — this is a machine-readable-only fix.
           }),
         }}
       />

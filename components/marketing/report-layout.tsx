@@ -3,7 +3,6 @@
 // Two-column layout: Content (left) + Sticky CTA Sidebar (right)
 
 import Link from 'next/link';
-import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import {
   ArrowRight,
@@ -19,7 +18,6 @@ import {
   Share2,
   BarChart3,
   ChevronDown,
-  BadgeCheck,
   AlertTriangle,
 } from 'lucide-react';
 import { Breadcrumb } from './breadcrumb';
@@ -28,22 +26,22 @@ import { ComparisonTable } from './comparison-table';
 import { ComparisonTablePremium } from './comparison-table-premium';
 import { DebtReliefMiniRecommender } from './debt-relief-mini-recommender';
 import { TrackedAffiliateLink } from './tracked-affiliate-link';
-import { ExpertVerifier } from '@/components/marketing/expert-verifier';
 import { ProtocolBridge } from '@/components/marketing/ProtocolBridge';
 import { FrictionlessCTA } from '@/components/marketing/frictionless-cta';
 import { StickyFooterCTA } from '@/components/marketing/sticky-footer-cta';
 import { SafeMDX } from '@/components/content/SafeMDX';
+import { DecisionBridgeProvider, DecisionBridge } from '@/components/marketing/decision-bridge';
+import type { DecisionBridgeData } from '@/lib/comparison/types';
 import { TrustBlockTracker } from '@/components/marketing/trust-block-tracker';
 import { MiniQuiz } from '@/components/marketing/mini-quiz';
-import { generateReviewSchema, generatePersonSchema, generateArticleSchema, generateBreadcrumbSchema, generateFAQSchema } from '@/lib/seo/schema';
+import { generateReviewSchema, generateArticleSchema, generateFAQSchema } from '@/lib/seo/schema';
 import { RiskWarningBox } from '@/components/marketing/risk-warning';
 import { AffiliateDisclosure } from '@/components/ui/affiliate-disclosure';
 import { categoryConfig } from '@/lib/i18n/config';
 import type { Market, Category } from '@/lib/i18n/config';
 import { buildBreadcrumbs } from '@/lib/breadcrumbs';
-import { normalizeExpertName, resolveExpertImage } from '@/lib/experts/image-routing';
 import type { ContentItem } from '@/lib/mdx';
-import type { ReviewData, ExpertData } from '@/types';
+import type { ReviewData } from '@/types';
 import type { MDXRemoteSerializeResult } from '@/lib/mdx/types';
 import { getFirstMondayOfMonth } from '@/lib/utils/date-helpers';
 import { CTASlot } from '@/components/marketing/cta-slot';
@@ -51,6 +49,7 @@ import type { EnrichedCtaPartner } from '@/lib/types/page-cta';
 import { StickyReviewNav } from '@/components/marketing/sticky-review-nav';
 import { ReviewExitIntent } from '@/components/marketing/review-exit-intent';
 import { XRayScore } from '@/components/marketing/xray-score';
+import { CategoryRiskDisclosure } from '@/components/reviews/category-risk-disclosure';
 
 // ── Auto-Quiz: derive topic from page category ──────────────────
 type QuizTopic = 'trading' | 'personal-finance' | 'forex' | 'business-banking' | 'ai-tools' | 'broker' | 'banking';
@@ -83,7 +82,6 @@ interface ReportLayoutProps {
   mdxSource?: MDXRemoteSerializeResult;
   relatedArticles?: ContentItem[];
   siblingReviews?: ContentItem[];
-  expert?: ExpertData;
   market: Market;
   category: Category;
   /** Optional MiniQuiz config — rendered after MDX content, outside MDX pipeline */
@@ -96,23 +94,9 @@ interface ReportLayoutProps {
   crossCategoryContent?: ContentItem[];
   /** Optional sidebar bridge into a dark "Protocol" landing page (e.g. the Financial Firewall). */
   protocolBridge?: { href: string; title: string; subtitle?: string; chips?: string[] };
-}
-
-function looksLikeRole(text: string): boolean {
-  return /(attorney|analyst|specialist|planner|researcher|expert|advisor|editor|examiner)/i.test(text);
-}
-
-function parseReviewedBy(reviewedBy?: string): { name: string; details: string[] } {
-  if (!reviewedBy) return { name: '', details: [] };
-  const parts = reviewedBy
-    .split(',')
-    .map((part) => part.trim())
-    .filter(Boolean);
-
-  return {
-    name: parts[0] || '',
-    details: parts.slice(1),
-  };
+  /** Market Check ("DecisionBridge") payload for this article, or null when no
+   *  cockpit resolves (Zustand C). Never throws upstream — see lib/comparison/bridge.ts. */
+  decisionBridge?: DecisionBridgeData | null;
 }
 
 export function ReportLayout({
@@ -121,13 +105,13 @@ export function ReportLayout({
   relatedArticles,
   siblingReviews,
   crossCategoryContent,
-  expert,
   market,
   category,
   miniQuiz,
   ctaPartners,
   slug,
   protocolBridge,
+  decisionBridge,
 }: ReportLayoutProps) {
   const marketPrefix = `/${market}`;
   const categoryName = categoryConfig[category]?.name || category.replace('-', ' ');
@@ -136,9 +120,6 @@ export function ReportLayout({
     month: 'short',
     year: 'numeric',
   });
-  const reportId = Math.abs(
-    review.title.split('').reduce((a, c) => a + c.charCodeAt(0), 0) * 17 + 100000
-  );
   // Guide mode: no rating, no CTA, no pros/cons — clean research paper style
   const isGuide = review.isGuide || false;
   const hasRating = !isGuide && review.rating > 0;
@@ -152,43 +133,6 @@ export function ReportLayout({
     day: 'numeric',
     year: 'numeric',
   });
-  const expertImage = resolveExpertImage({
-    reviewedBy: review.reviewedBy,
-    expertName: expert?.name,
-    expertImageUrl: expert?.image_url,
-    market,
-    category,
-  });
-  const parsedReviewedBy = parseReviewedBy(review.reviewedBy);
-  const reviewerName = parsedReviewedBy.name || expert?.name || 'Expert Reviewer';
-  const sameReviewerAsExpert =
-    normalizeExpertName(parsedReviewedBy.name) &&
-    normalizeExpertName(parsedReviewedBy.name) === normalizeExpertName(expert?.name);
-  const firstDetail = parsedReviewedBy.details[0] || '';
-  const inferredRole = firstDetail && looksLikeRole(firstDetail) ? firstDetail : '';
-  const reviewerTitle = inferredRole || (sameReviewerAsExpert ? expert?.role : '') || 'Expert Reviewer';
-  const reviewerCredentials = (() => {
-    if (parsedReviewedBy.details.length > 0) {
-      if (inferredRole) {
-        return parsedReviewedBy.details.slice(1);
-      }
-      return parsedReviewedBy.details;
-    }
-    return expert?.credentials || [];
-  })();
-  const reviewerBio = (() => {
-    if (sameReviewerAsExpert && expert?.bio) return expert.bio;
-    // Generate a contextual fallback bio from available data
-    const creds = reviewerCredentials.length > 0 ? reviewerCredentials.join(', ') : '';
-    const roleSnippet = reviewerTitle && reviewerTitle !== 'Expert Reviewer' ? reviewerTitle : 'financial analyst';
-    const categoryLabel = categoryConfig[category]?.name || category.replace(/-/g, ' ');
-    if (creds) {
-      return `${reviewerName} is a ${roleSnippet} with ${creds} certification${reviewerCredentials.length > 1 ? 's' : ''}. Specializing in ${categoryLabel}, they bring hands-on expertise to every review.`;
-    }
-    return `${reviewerName} is a ${roleSnippet} specializing in ${categoryLabel}. They evaluate products through hands-on testing and primary-source research.`;
-  })();
-  const reviewerLinkedIn = sameReviewerAsExpert ? expert?.linkedin_url || undefined : undefined;
-  const showExpertCards = reviewerName !== 'SmartFinPro Team';
 
   return (
     <article className="min-h-screen" style={{ background: 'var(--sfp-gray)' }}>
@@ -246,59 +190,13 @@ export function ReportLayout({
               modifiedDate: review.modifiedDate,
               author: review.author || 'SmartFinPro Editorial Team',
               url: `https://smartfinpro.com/${market === 'us' ? '' : `${market}/`}${category}/${slug || review.productName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}`,
-              // Phase 1 GEO — Fact-Checker Integration
-              ...(showExpertCards && reviewerName && {
-                reviewedBy: reviewerName,
-                reviewedByUrl: reviewerLinkedIn || 'https://smartfinpro.com/about',
-              }),
             })),
           }}
         />
       )}
 
-      {/* Schema.org JSON-LD — Person schema for expert reviewer (EEAT) */}
-      {showExpertCards && reviewerName && (
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify(generatePersonSchema({
-              name: reviewerName,
-              // url = canonical SFP profile; LinkedIn goes into sameAs
-              url: 'https://smartfinpro.com/about',
-              jobTitle: reviewerTitle !== 'Expert Reviewer' ? reviewerTitle : undefined,
-              image: expertImage ? `https://smartfinpro.com${expertImage}` : undefined,
-              description: reviewerBio,
-              // Phase 2 GEO — LinkedIn sameAs (external social proof signal)
-              ...(reviewerLinkedIn && {
-                sameAs: [reviewerLinkedIn],
-              }),
-              // Phase 2 GEO — Credentials as EducationalOccupationalCredential nodes
-              ...(reviewerCredentials.length > 0 && {
-                credentials: reviewerCredentials,
-              }),
-              // Phase 2 GEO — Expert knowledge scope for AI crawlers
-              knowsAbout: [
-                categoryConfig[category]?.name || categoryName,
-                'Financial Product Reviews',
-                'Investment Analysis',
-              ],
-            })),
-          }}
-        />
-      )}
-
-      {/* Schema.org JSON-LD — BreadcrumbList for navigation rich snippets */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(generateBreadcrumbSchema(
-            buildBreadcrumbs(market, category, review.title, slug).map(item => ({
-              name: item.label,
-              url: `https://smartfinpro.com${item.href || ''}`,
-            }))
-          )),
-        }}
-      />
+      {/* Schema.org JSON-LD — BreadcrumbList is emitted once by <Breadcrumb>
+          in the hero section below; intentionally NOT duplicated here. */}
 
       {/* F-07: Schema.org JSON-LD — FAQPage (Rich Results + AI-Overview citability).
           Frontmatter `faqs:` already exists on 180+ MDX files; only the wiring was missing. */}
@@ -348,35 +246,9 @@ export function ReportLayout({
               </div>
               <div className="w-px h-4 bg-gray-300 hidden md:block" />
               <div className="flex items-center gap-2" style={{ color: 'var(--sfp-slate)' }}>
-                <span>Report ID: <strong style={{ color: 'var(--sfp-ink)' }}>{reportId}</strong></span>
-              </div>
-              <div className="w-px h-4 bg-gray-300 hidden md:block" />
-              <div className="flex items-center gap-2" style={{ color: 'var(--sfp-slate)' }}>
                 <FileText className="h-3.5 w-3.5" />
                 <span>Sections: <strong style={{ color: 'var(--sfp-ink)' }}>{review.sections?.length || 0}</strong></span>
               </div>
-              {hasRating && (
-                <>
-                  <div className="w-px h-4 bg-gray-300 hidden md:block" />
-                  <div className="flex items-center gap-1.5">
-                    {[...Array(5)].map((_, i) => (
-                      <Star
-                        key={i}
-                        className={`h-4 w-4 ${
-                          i < Math.floor(review.rating)
-                            ? 'text-amber-400 fill-amber-400'
-                            : 'text-gray-300'
-                        }`}
-                      />
-                    ))}
-                    {review.reviewCount > 0 && (
-                      <span className="text-sm font-semibold ml-1" style={{ color: 'var(--sfp-ink)' }}>
-                        ({review.reviewCount})
-                      </span>
-                    )}
-                  </div>
-                </>
-              )}
               <div className="w-px h-4 bg-gray-300 hidden md:block" />
               <div className="flex items-center gap-2" style={{ color: 'var(--sfp-slate)' }}>
                 <span>Format: <strong style={{ color: 'var(--sfp-ink)' }}>{isGuide ? 'Expert Guide' : 'Expert Review'}</strong></span>
@@ -617,7 +489,9 @@ export function ReportLayout({
             <div className="rounded-2xl border border-[#E2E8F0] bg-white p-6 md:p-8 shadow-[0_1px_3px_rgba(0,0,0,0.04)] mb-8">
               <div className="prose prose-lg max-w-none">
                 {mdxSource ? (
-                  <SafeMDX source={mdxSource} />
+                  <DecisionBridgeProvider data={decisionBridge ?? null}>
+                    <SafeMDX source={mdxSource} />
+                  </DecisionBridgeProvider>
                 ) : (
                   <p style={{ color: 'var(--sfp-slate)' }}>Review content is being prepared.</p>
                 )}
@@ -640,21 +514,6 @@ export function ReportLayout({
             {ctaPartners && ctaPartners.length > 0 && (
               <div className="mb-8">
                 <CTASlot partners={ctaPartners} placement={2} market={market} category={category} />
-              </div>
-            )}
-
-            {/* Expert Verifier */}
-            {showExpertCards && (
-              <div className="mb-8">
-                <ExpertVerifier
-                  name={reviewerName}
-                  title={reviewerTitle}
-                  credentials={reviewerCredentials.length > 0 ? reviewerCredentials : ['Expert Reviewer']}
-                  lastFactChecked={factCheckedDate}
-                  bio={reviewerBio}
-                  image={expertImage}
-                  linkedInUrl={reviewerLinkedIn}
-                />
               </div>
             )}
 
@@ -688,7 +547,7 @@ export function ReportLayout({
                   <User className="h-4 w-4 mt-0.5 flex-shrink-0" style={{ color: 'var(--sfp-slate)' }} />
                   <div>
                     <span className="font-medium" style={{ color: 'var(--sfp-ink)' }}>Reviewed by: </span>
-                    <span style={{ color: 'var(--sfp-slate)' }}>{reviewerName}</span>
+                    <span style={{ color: 'var(--sfp-slate)' }}>SmartFinPro Research</span>
                   </div>
                 </div>
                 <div className="flex items-start gap-2">
@@ -774,7 +633,7 @@ export function ReportLayout({
                     <strong>Last fact-check:</strong> {factCheckedLabel}
                   </p>
                   <p>
-                    <strong>Data points reviewed:</strong> {(review.reviewCount ?? 0).toLocaleString('en-US')} consumer records, lender pricing pages, and public regulator guidance.
+                    Reviewed against provider disclosures and public regulator guidance.
                   </p>
                   <p>
                     <strong>Primary sources:</strong> {
@@ -875,9 +734,7 @@ export function ReportLayout({
                     ]}
                     expandableVerdict={true}
                   />
-                  <div className="mt-3 text-xs" style={{ color: 'var(--sfp-slate)' }}>
-                    Not legal, tax, or bankruptcy advice. Terms vary by state and credit profile.
-                  </div>
+                  <CategoryRiskDisclosure category={category} />
                 </div>
               );
             })()}
@@ -965,9 +822,6 @@ export function ReportLayout({
                                 }`}
                               />
                             ))}
-                            <span className="ml-1 font-medium" style={{ color: 'var(--sfp-ink)' }}>
-                              ({item.meta.reviewCount || 0})
-                            </span>
                           </div>
                         )}
                         <div className="w-px h-3 bg-gray-300" />
@@ -997,164 +851,18 @@ export function ReportLayout({
           <aside className="lg:w-[300px] flex-shrink-0 hidden lg:block">
             <div className="lg:sticky lg:top-24 space-y-6">
 
-              {/* Expert Photo Card */}
-              {showExpertCards && (
-                <div className="rounded-2xl border border-[#E2E8F0] bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)] overflow-hidden">
-                  {expertImage && (
-                    <div className="relative w-full aspect-[4/3] overflow-hidden" style={{ background: 'var(--sfp-sky)' }}>
-                      <Image
-                        src={expertImage}
-                        alt={`${reviewerName} — ${reviewerTitle}`}
-                        fill
-                        className="object-cover object-top"
-                        sizes="300px"
-                        priority
-                      />
-                    </div>
-                  )}
-                  <div className="p-4 text-center">
-                    <div className="text-[10px] font-semibold uppercase tracking-widest mb-2" style={{ color: 'var(--sfp-green)' }}>
-                      ✓ Reviewed &amp; Verified
-                    </div>
-                    <div className="flex items-center justify-center gap-1.5 mb-1">
-                      <span className="text-sm font-bold" style={{ color: 'var(--sfp-ink)' }}>{reviewerName}</span>
-                      <BadgeCheck className="h-4 w-4" style={{ color: 'var(--sfp-navy)' }} />
-                    </div>
-                    <div className="text-xs mb-2" style={{ color: 'var(--sfp-slate)' }}>{reviewerTitle}</div>
-                    {reviewerBio && (
-                      <p
-                        className="text-[11px] leading-relaxed mb-2.5 line-clamp-3"
-                        style={{ color: 'var(--sfp-slate)' }}
-                      >
-                        {reviewerBio}
-                      </p>
-                    )}
-                    {reviewerCredentials.length > 0 && (
-                      <div className="flex flex-wrap justify-center gap-1.5">
-                        {reviewerCredentials.slice(0, 3).map((cred, i) => (
-                          <span
-                            key={i}
-                            className="text-[10px] font-medium px-2 py-0.5 rounded-full border"
-                            style={{ color: 'var(--sfp-navy)', background: 'var(--sfp-sky)', borderColor: 'rgba(27,79,140,0.15)' }}
-                          >
-                            {cred}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                    {reviewerLinkedIn && (
-                      <a
-                        href={reviewerLinkedIn}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 text-[10px] mt-2 no-underline hover:underline"
-                        style={{ color: 'var(--sfp-navy)' }}
-                      >
-                        View Profile →
-                      </a>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Protocol bridge (e.g. Financial Firewall) — sidebar, above "About the Reviewer" */}
+              {/* Protocol bridge (e.g. Financial Firewall) — sidebar */}
               {protocolBridge && <ProtocolBridge {...protocolBridge} className="" />}
 
-              {/* Expert Bio Card — below photo, compact authority signal */}
-              {showExpertCards && (
-                <div className="rounded-2xl border border-[#E2E8F0] bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)] overflow-hidden p-4">
-                  <h4 className="text-[10px] font-semibold uppercase tracking-widest mb-3" style={{ color: 'var(--sfp-navy)' }}>
-                    About the Reviewer
-                  </h4>
-
-                  {/* Bio text */}
-                  {reviewerBio && (
-                    <p className="text-xs leading-relaxed mb-3" style={{ color: 'var(--sfp-slate)' }}>
-                      {reviewerBio}
-                    </p>
-                  )}
-
-                  {/* Focus areas — derived from category */}
-                  <div className="mb-3">
-                    <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--sfp-ink)' }}>
-                      Focus Areas
-                    </span>
-                    <div className="flex flex-wrap gap-1.5 mt-1.5">
-                      {(() => {
-                        const focusMap: Record<string, string[]> = {
-                          'ai-tools': ['AI & Fintech', 'Automation', 'Machine Learning'],
-                          'cybersecurity': ['Enterprise Security', 'Data Protection', 'Threat Analysis'],
-                          'trading': ['Equities', 'Options', 'Platform Analysis'],
-                          'forex': ['Currency Markets', 'CFD Trading', 'Broker Regulation'],
-                          'personal-finance': ['Investing', 'Credit', 'Wealth Management'],
-                          'business-banking': ['SMB Banking', 'Payment Processing', 'Cash Flow'],
-                          'debt-relief': ['Debt Management', 'Credit Recovery', 'Financial Planning'],
-                          'credit-repair': ['Credit Scoring', 'Dispute Resolution', 'Credit Building'],
-                          'credit-score': ['FICO Analysis', 'Score Optimization', 'Credit Monitoring'],
-                        };
-                        const areas = focusMap[category] || ['Financial Products', 'Market Analysis', 'Consumer Protection'];
-                        return areas.map((area, i) => (
-                          <span
-                            key={i}
-                            className="text-[10px] font-medium px-2 py-0.5 rounded-full"
-                            style={{ color: 'var(--sfp-green)', background: 'rgba(26,107,58,0.08)' }}
-                          >
-                            {area}
-                          </span>
-                        ));
-                      })()}
-                    </div>
-                  </div>
-
-                  {/* Credentials + last verified */}
-                  {reviewerCredentials.length > 0 && (
-                    <div className="mb-3">
-                      <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--sfp-ink)' }}>
-                        Credentials
-                      </span>
-                      <div className="flex flex-wrap gap-1.5 mt-1.5">
-                        {reviewerCredentials.map((cred, i) => (
-                          <span
-                            key={i}
-                            className="text-[10px] font-medium px-2 py-0.5 rounded-full border"
-                            style={{ color: 'var(--sfp-navy)', background: 'var(--sfp-sky)', borderColor: 'rgba(27,79,140,0.15)' }}
-                          >
-                            {cred}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Last review date */}
-                  <div className="pt-2.5 border-t border-gray-100 flex items-center gap-1.5">
-                    <Clock className="h-3 w-3" style={{ color: 'var(--sfp-slate)' }} />
-                    <span className="text-[10px]" style={{ color: 'var(--sfp-slate)' }}>
-                      Last reviewed: {factCheckedLabel}
-                    </span>
-                  </div>
-
-                  {/* LinkedIn profile link */}
-                  {reviewerLinkedIn && (
-                    <a
-                      href={reviewerLinkedIn}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 text-[11px] font-medium mt-2.5 no-underline hover:underline"
-                      style={{ color: 'var(--sfp-navy)' }}
-                    >
-                      <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
-                      View LinkedIn Profile
-                    </a>
-                  )}
-                </div>
-              )}
-
-              {/* Report Info Card */}
+              {/* Report Info Card — trimmed (editorial integrity remediation,
+                  2026-07-17): the "Report ID" was a hash decoration
+                  (Math.abs(title-charcodes * 17 + 100000)), never a real
+                  register, and the sidebar CTA duplicated the always-visible
+                  sticky top CTA (StickyReviewNav). Both removed; only the two
+                  real facts — product + publish date — remain. */}
               <div className="rounded-2xl border border-[#E2E8F0] bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)] overflow-hidden">
-                {/* Report Details */}
                 <div className="p-5">
-                  <div className="rounded-xl p-4 mb-4" style={{ background: 'var(--sfp-sky)' }}>
+                  <div className="rounded-xl p-4" style={{ background: 'var(--sfp-sky)' }}>
                     <div className="flex items-center gap-3 mb-3">
                       <div
                         className="w-12 h-12 rounded-lg flex items-center justify-center shrink-0"
@@ -1171,83 +879,27 @@ export function ReportLayout({
                         </div>
                       </div>
                     </div>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span style={{ color: 'var(--sfp-slate)' }}>Report ID</span>
-                        <span className="font-semibold" style={{ color: 'var(--sfp-ink)' }}>{reportId}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span style={{ color: 'var(--sfp-slate)' }}>Published</span>
-                        <span className="font-semibold" style={{ color: 'var(--sfp-ink)' }}>{formattedDate}</span>
-                      </div>
-                      {hasRating && (
-                        <div className="flex justify-between items-center">
-                          <span style={{ color: 'var(--sfp-slate)' }}>Rating</span>
-                          <div className="flex items-center gap-1">
-                            {[...Array(5)].map((_, i) => (
-                              <Star
-                                key={i}
-                                className={`h-3.5 w-3.5 ${
-                                  i < Math.floor(review.rating)
-                                    ? 'text-amber-400 fill-amber-400'
-                                    : 'text-gray-300'
-                                }`}
-                              />
-                            ))}
-                            <span className="text-xs font-semibold ml-1" style={{ color: 'var(--sfp-ink)' }}>
-                              ({review.reviewCount})
-                            </span>
-                          </div>
-                        </div>
-                      )}
+                    <div className="flex justify-between text-sm">
+                      <span style={{ color: 'var(--sfp-slate)' }}>Published</span>
+                      <span className="font-semibold" style={{ color: 'var(--sfp-ink)' }}>{formattedDate}</span>
                     </div>
                   </div>
-
-                  {/* Primary CTA (reviews with affiliate only) */}
-                  {hasAffiliate && (
-                    <div className="pt-3 border-t border-gray-100">
-                      <TrackedAffiliateLink
-                        href={review.affiliateUrl}
-                        className="w-full h-12 text-base font-normal border-0 shadow-md hover:shadow-lg transition-all rounded-2xl inline-flex items-center justify-center no-underline hover:no-underline hover:brightness-110"
-                        style={{ background: 'var(--sfp-gold)', color: 'var(--sfp-ink)', textDecoration: 'none' }}
-                        eventLabel={primaryCtaLabel}
-                        market={market}
-                        category={category}
-                        pageType="review"
-                        layoutVariant="decision_first"
-                        placement="sidebar_primary"
-                      >
-                        {primaryCtaLabel} <ArrowRight className="ml-2 h-4 w-4" />
-                      </TrackedAffiliateLink>
-                      <p className="mt-2 text-[11px] leading-snug" style={{ color: 'var(--sfp-slate)' }}>
-                        No obligation. Approval, fees, and outcomes depend on your debt profile and state regulations.
-                      </p>
-                    </div>
-                  )}
                 </div>
               </div>
 
-              {/* Trust Badge Card */}
-              <div className="rounded-2xl border border-[#E2E8F0] bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.04)] text-center">
-                <div className="text-sm font-semibold mb-2" style={{ color: 'var(--sfp-ink)' }}>
-                  Trusted by <strong style={{ color: 'var(--sfp-navy)' }}>50,000+</strong> professionals
+              {/* Market Check (DecisionBridge) — replaces the fabricated
+                  "Trusted by 50,000+ professionals" / "Expert-reviewed &
+                  independently verified" / "✓ Verified" / "By {reviewedBy}"
+                  card with real, cockpit-derived rank/score data. Renders
+                  nothing when no cockpit resolves for this article (Zustand
+                  C) — see docs/superpowers/specs/2026-07-17-cockpit-bridge-design.md. */}
+              {decisionBridge && (
+                <div className="rounded-2xl border border-[#E2E8F0] bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)] overflow-hidden p-5">
+                  <DecisionBridgeProvider data={decisionBridge}>
+                    <DecisionBridge />
+                  </DecisionBridgeProvider>
                 </div>
-                <p className="text-xs mb-3" style={{ color: 'var(--sfp-slate)' }}>
-                  Expert-reviewed &amp; independently verified
-                </p>
-                <div className="flex items-center justify-center gap-4">
-                  <div className="flex items-center gap-1">
-                    <Shield className="h-4 w-4" style={{ color: 'var(--sfp-green)' }} />
-                    <span className="text-xs font-medium" style={{ color: 'var(--sfp-green)' }}>Verified</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <User className="h-4 w-4" style={{ color: 'var(--sfp-navy)' }} />
-                    <span className="text-xs font-medium" style={{ color: 'var(--sfp-navy)' }}>
-                      {review.reviewedBy ? `By ${review.reviewedBy.split(',')[0]}` : 'Expert Review'}
-                    </span>
-                  </div>
-                </div>
-              </div>
+              )}
 
               {/* Author Info */}
               <div className="rounded-2xl border border-[#E2E8F0] bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
@@ -1275,6 +927,14 @@ export function ReportLayout({
                 </div>
               </div>
 
+              {/* Affiliate disclosure — unobtrusive, category-neutral (editorial
+                  integrity remediation, 2026-07-17). Replaces a debt-relief-specific
+                  disclaimer ("depend on your debt profile and state regulations")
+                  that was rendering on every category, including this one. */}
+              <p className="px-1 text-[10px] leading-snug" style={{ color: 'var(--sfp-slate)' }}>
+                SmartFinPro may earn an affiliate commission when you use links on this page. Commissions do not influence our rankings or ratings.
+              </p>
+
             </div>
           </aside>
 
@@ -1300,7 +960,6 @@ export function ReportLayout({
                         }`}
                       />
                     ))}
-                    <span className="text-xs ml-1" style={{ color: 'var(--sfp-slate)' }}>({review.reviewCount})</span>
                   </div>
                 )}
               </div>

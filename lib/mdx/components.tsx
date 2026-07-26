@@ -63,12 +63,9 @@ import { CTABox } from '@/components/marketing/cta-box';
 import { FAQSection } from '@/components/marketing/faq-section';
 import { ComparisonTable, SimpleComparison } from '@/components/marketing/comparison-table';
 import { StarRating, TrustBadges } from '@/components/marketing/trust-badges';
-import {
-  ExpertBox,
-  ExpertEndorsement,
-  TrustAuthority,
-  MethodologyBox,
-} from '@/components/marketing/expert-box';
+import { TrustAuthority, MethodologyBox } from '@/components/marketing/trust-blocks';
+import { DecisionBridge } from '@/components/marketing/decision-bridge';
+import { SectionVerdict, KeyEvidence, SmartFinProTake } from '@/components/reviews/section-blocks';
 import {
   TrackedCTA,
   HighlightCTA,
@@ -121,7 +118,7 @@ import { RiskWarningBox } from '@/components/marketing/risk-warning';
 import { QuickVerdictCard } from '@/components/marketing/quick-verdict-card';
 import { SmartFinCard } from '@/components/marketing/smartfin-card';
 import { ProviderCard } from '@/components/marketing/provider-card';
-import { ExpertVerdictBox } from '@/components/marketing/expert-verdict-box';
+import { EditorialVerdictBox } from '@/components/marketing/editorial-verdict-box';
 import { QuickSummary } from '@/components/marketing/quick-summary';
 import {
   SpreadComparison,
@@ -143,7 +140,6 @@ import { AnalysisTable, ScopeTable, RankingTable } from '@/components/marketing/
 import { FrictionlessCTA } from '@/components/marketing/frictionless-cta';
 import { EvidenceCarousel } from '@/components/marketing/evidence-carousel';
 import { StickyComparisonBar } from '@/components/marketing/sticky-comparison-bar';
-import { ExpertVerifier } from '@/components/marketing/expert-verifier';
 import { ProtocolBridge } from '@/components/marketing/ProtocolBridge';
 import { ContentTypeTag } from '@/components/marketing/ContentTypeTag';
 import { WinnerAtGlance } from '@/components/marketing/winner-at-glance';
@@ -154,6 +150,16 @@ import { TrustBar } from '@/components/marketing/trust-bar';
 // MiniQuiz uses Dialog which causes Turbopack bundling issues in mdxComponents.
 // Render MiniQuiz via ReportLayout instead (outside MDX pipeline).
 function MiniQuiz() { return null; }
+
+// Editorial integrity remediation (2026-07-17): <ExpertBox>, <ExpertEndorsement>,
+// and <ExpertVerifier> rendered fabricated names/credentials/quotes across 203
+// review MDX files (see docs/superpowers/specs/2026-07-17-cockpit-bridge-design.md).
+// Repointing the three tags here — instead of editing every MDX file — retires
+// the fabrication everywhere at once. Props are intentionally untyped/ignored:
+// whatever an MDX author writes into these tags never reaches the DOM. The real
+// components stay on disk (components/marketing/expert-box.tsx,
+// expert-verifier.tsx) but are no longer reachable from the MDX pipeline.
+function NullPersonaBlock(_props: Record<string, unknown>) { return null; }
 
 // Tip Component — Sky background + Navy left border (per Konzept 7.3 Info-Box)
 function Tip({ children }: { children: React.ReactNode }) {
@@ -413,7 +419,11 @@ function AffiliateButton({
 
 // Collapsible Section — Split-Panel Proof Design Accordion
 // Uses native <details>/<summary> for zero-JS open/close
-function CollapsibleSection({
+// Exported (T12, 2026-07-18 review-redesign V2) so V2 layout components
+// (components/reviews/methodology-section.tsx) can reuse it directly instead
+// of re-implementing the same accordion — it was previously a module-private
+// helper referenced only by the mdxComponents registry below.
+export function CollapsibleSection({
   title,
   count,
   defaultOpen = false,
@@ -738,26 +748,19 @@ function StyledH1({ children, ...props }: React.HTMLAttributes<HTMLHeadingElemen
 }
 
 function StyledH2({ children, ...props }: React.HTMLAttributes<HTMLHeadingElement>) {
+  // Betreiber-Wunsch 2026-07-19: Abstand ueber Zwischenueberschriften
+  // verkleinert (mt-14→mt-8, Separator mb-8→mb-5) — vorher ~88px Luft
+  // ueber jedem H2, jetzt ~52px.
   return (
-    <div className="relative mt-14 mb-6 not-prose">
+    <div className="relative mt-8 mb-6 not-prose">
       {/* Subtle section separator */}
       <div
-        className="mb-8 h-px w-full"
+        className="mb-5 h-px w-full"
         style={{ background: 'linear-gradient(90deg, transparent, rgba(27,79,140,0.12), transparent)' }}
       />
-      <div className="flex items-center gap-4">
-        <div
-          className="w-1 h-8 rounded-full shrink-0"
-          style={{ background: 'linear-gradient(180deg, var(--sfp-navy), var(--sfp-gold))' }}
-        />
-        <h2 className="text-[32px] md:text-[36px] font-semibold tracking-tight" style={{ color: 'var(--sfp-navy)' }} {...props}>
-          {children}
-        </h2>
-      </div>
-      <div
-        className="mt-3 ml-5 h-px w-32"
-        style={{ background: 'linear-gradient(90deg, var(--sfp-gold), transparent)' }}
-      />
+      <h2 className="text-[32px] md:text-[36px] font-semibold tracking-tight" style={{ color: 'var(--sfp-navy)' }} {...props}>
+        {children}
+      </h2>
     </div>
   );
 }
@@ -1831,10 +1834,14 @@ export const mdxComponents = {
   SimpleComparison,
   StarRating,
   TrustBadges,
-  ExpertBox,
-  ExpertEndorsement,
+  ExpertBox: NullPersonaBlock,
+  ExpertEndorsement: NullPersonaBlock,
   TrustAuthority,
   MethodologyBox,
+  DecisionBridge,
+  SectionVerdict,
+  KeyEvidence,
+  SmartFinProTake,
   TrackedCTA,
   HighlightCTA,
   InlineCTA,
@@ -1854,7 +1861,7 @@ export const mdxComponents = {
   QuickVerdictCard,
   SmartFinCard,
   ProviderCard,
-  ExpertVerdictBox,
+  EditorialVerdictBox,
   QuickSummary,
   SpreadComparison,
   CostBreakdownGrid,
@@ -1877,7 +1884,7 @@ export const mdxComponents = {
   ComparisonHub,
   FrictionlessCTA,
   StickyComparisonBar,
-  ExpertVerifier,
+  ExpertVerifier: NullPersonaBlock,
   ProtocolBridge,
   ContentTypeTag,
   WinnerAtGlance,

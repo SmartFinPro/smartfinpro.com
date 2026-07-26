@@ -87,19 +87,10 @@ export function generateReviewSchema(review: ReviewData) {
       worstRating: 1,
     },
     author: {
-      '@type': 'Person',
-      name: review.author || 'SmartFinPro Editorial Team',
-      url: `${BASE_URL}/about`,
+      '@type': 'Organization',
+      name: 'SmartFinPro',
+      url: BASE_URL,
     },
-    // Phase 1 GEO — Fact-Checker Integration (separate from author)
-    // reviewedBy = the expert who fact-checked and reviewed the article
-    ...(review.reviewedBy && {
-      reviewedBy: {
-        '@type': 'Person',
-        name: review.reviewedBy.split(',')[0].trim(),
-        url: `${BASE_URL}/about`,
-      },
-    }),
     publisher: {
       '@type': 'Organization',
       name: 'SmartFinPro',
@@ -128,6 +119,96 @@ export function generateReviewSchema(review: ReviewData) {
         name: con,
       })),
     } : undefined,
+  };
+}
+
+/**
+ * T6 (2026-07-18 review-redesign V2 foundation): Review JSON-LD for the
+ * BEST-X 0-10 score model — a SEPARATE, additive function from
+ * {@link generateReviewSchema} (V1, 5-point `rating`/`reviewCount`
+ * scale). generateReviewSchema is not modified by this addition (see
+ * schema.test.ts's byte-for-byte V1 regression guard).
+ *
+ * Deliberately does NOT emit `itemReviewed` — unlike V1, this input has no
+ * product/pricing fields (title/verdictSummary/score come from hand-
+ * verified V2 frontmatter per lib/reviews/verdict-frontmatter.ts, not an
+ * unaudited DB product row), so there is nothing defensible to build a
+ * SoftwareApplication `itemReviewed` node from yet.
+ */
+export interface BestXReviewSchemaInput {
+  title: string;
+  /** Absolute canonical URL of the review page. */
+  url: string;
+  /** The V2 verdict block's `summary` — becomes `reviewBody`. */
+  verdictSummary: string;
+  /** BEST-X score on a 0-10 scale, or `null` when no audited score exists yet (T0b). */
+  score: number | null;
+  topStrengths: string[];
+  mainLimitation: string;
+  market: string;
+  datePublished: string;
+  dateModified: string;
+}
+
+export function generateBestXReviewSchema(input: BestXReviewSchemaInput) {
+  const { title, url, verdictSummary, score, topStrengths, mainLimitation, datePublished, dateModified } = input;
+
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Review',
+    name: title,
+    url,
+    // `score === null` ⇒ no visible score AND no reviewRating (T0d) — the
+    // key is omitted entirely (not set to `undefined`), matching the "kein
+    // reviewRating-Feld" requirement.
+    ...(score !== null
+      ? {
+          reviewRating: {
+            '@type': 'Rating',
+            ratingValue: score,
+            bestRating: 10,
+            worstRating: 0,
+          },
+        }
+      : {}),
+    author: {
+      '@type': 'Organization',
+      name: 'SmartFinPro',
+      url: BASE_URL,
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: 'SmartFinPro',
+      logo: {
+        '@type': 'ImageObject',
+        url: `${BASE_URL}/icon.png`,
+      },
+    },
+    datePublished,
+    dateModified,
+    reviewBody: verdictSummary,
+    positiveNotes: topStrengths.length
+      ? {
+          '@type': 'ItemList',
+          itemListElement: topStrengths.map((strength, index) => ({
+            '@type': 'ListItem',
+            position: index + 1,
+            name: strength,
+          })),
+        }
+      : undefined,
+    negativeNotes: mainLimitation
+      ? {
+          '@type': 'ItemList',
+          itemListElement: [
+            {
+              '@type': 'ListItem',
+              position: 1,
+              name: mainLimitation,
+            },
+          ],
+        }
+      : undefined,
   };
 }
 
@@ -243,18 +324,10 @@ export function generateArticleSchema(article: {
     description: article.description,
     image: article.image || `${BASE_URL}/og-image.png`,
     author: {
-      '@type': 'Person',
-      name: article.author || 'SmartFinPro Editorial Team',
-      url: `${BASE_URL}/about`,
+      '@type': 'Organization',
+      name: 'SmartFinPro',
+      url: BASE_URL,
     },
-    // Fact-Checker / Reviewer node — boosts EEAT trust signal for AI crawlers
-    ...(article.reviewedBy && {
-      reviewedBy: {
-        '@type': 'Person',
-        name: article.reviewedBy,
-        url: article.reviewedByUrl || `${BASE_URL}/about`,
-      },
-    }),
     publisher: {
       '@type': 'Organization',
       name: 'SmartFinPro',
@@ -269,59 +342,6 @@ export function generateArticleSchema(article: {
       '@type': 'WebPage',
       '@id': article.url,
     },
-  };
-}
-
-/**
- * Person Schema - For author/expert profiles
- * Used to identify individual contributors and experts on the site
- *
- * Phase 2 GEO: Added sameAs (LinkedIn) + hasCredential (CFA, CFP, etc.)
- */
-export function generatePersonSchema(person: {
-  name: string;
-  url?: string;
-  image?: string;
-  jobTitle?: string;
-  description?: string;
-  affiliateLinks?: string[];
-  /** External profile URLs (LinkedIn, etc.) — emitted as sameAs array */
-  sameAs?: string[];
-  /** Professional credentials / certifications (CFA, CFP, CIM, CISI, …) */
-  credentials?: string[];
-  /** Topics the expert is known for — boosts relevance for AI models */
-  knowsAbout?: string[];
-}) {
-  return {
-    '@context': 'https://schema.org',
-    '@type': 'Person',
-    name: person.name,
-    url: person.url || `${BASE_URL}/about`,
-    image: person.image,
-    jobTitle: person.jobTitle || 'Financial Expert',
-    description: person.description,
-    // External social profiles — primary GEO signal for AI crawlers
-    ...(person.sameAs && person.sameAs.length > 0 && {
-      sameAs: person.sameAs,
-    }),
-    // Professional credentials as EducationalOccupationalCredential nodes
-    ...(person.credentials && person.credentials.length > 0 && {
-      hasCredential: person.credentials.map((cred) => ({
-        '@type': 'EducationalOccupationalCredential',
-        credentialCategory: cred,
-        name: cred,
-      })),
-    }),
-    // Expert topic coverage — helps AI models understand authority scope
-    ...(person.knowsAbout && person.knowsAbout.length > 0 && {
-      knowsAbout: person.knowsAbout,
-    }),
-    ...(person.affiliateLinks && {
-      affiliation: person.affiliateLinks.map(link => ({
-        '@type': 'Organization',
-        url: link,
-      })),
-    }),
   };
 }
 

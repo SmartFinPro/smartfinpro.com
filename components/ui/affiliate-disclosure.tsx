@@ -9,7 +9,7 @@ interface AffiliateDisclosureProps {
   /** 'compact' renders a single short sentence + regulatory tag — for dense
    *  in-tool placements (e.g. Wealth Horizon's product row). Default 'full'
    *  is unchanged and stays what the Best-X cockpit routes render. */
-  variant?: "full" | "compact";
+  variant?: "full" | "compact" | "minimal";
 }
 
 /**
@@ -79,6 +79,24 @@ export function AffiliateDisclosure({
   };
 
   const disclaimer = disclaimers[market];
+
+  if (variant === "minimal") {
+    // Whisper variant — no border, no fill, no icon. A quiet grey line for
+    // dense rails where the disclosure must be present and legible (FTC
+    // "clear and conspicuous" = not hidden, not micro-type) but must not
+    // compete with the editorial content. Still real 11px slate text, never
+    // greyed-into-invisibility.
+    const c = compactTexts[market];
+    return (
+      <p
+        className={cn("m-0 text-[11px] leading-snug text-sfp-slate", className)}
+        role="note"
+        aria-label="Affiliate disclosure"
+      >
+        {c.text}
+      </p>
+    );
+  }
 
   if (variant === "compact") {
     const c = compactTexts[market];
