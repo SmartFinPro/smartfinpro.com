@@ -30,6 +30,8 @@
     "check:review-v2": "npx tsx scripts/validate-review-v2.mts",
     "readiness:reviews": "npx tsx --env-file=.env.local scripts/generate-broker-v2-readiness.mts",
     "check:readiness": "npx tsx --env-file=.env.local scripts/generate-broker-v2-readiness.mts --check",
+    "review:quality": "npx tsx scripts/review-quality.mts",
+    "review:claims": "npx tsx scripts/check-claims-path.mts",
     "test:e2e:comparison": "playwright test e2e/comparison-page.spec.ts",
     "inventory:reviews": "node scripts/inventory-broker-reviews.mjs",
     "check:seo": "node scripts/check-seo-quality.mjs --report",
