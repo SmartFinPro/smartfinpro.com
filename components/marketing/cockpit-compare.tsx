@@ -46,8 +46,12 @@ export function CockpitCompare({ all, selectedSlugs, config, market, inputs, onT
   const bySlug = new Map(all.map((p) => [p.slug, p]));
   const ps = selectedSlugs.map((s) => bySlug.get(s)).filter((p): p is ProductForComparison => !!p);
 
+  // 'Our rating' is omitted for topics whose rating column has no
+  // provenance (TopicConfig.ratingsUnsourced); the audited score row stays.
   const rows: Row[] = [
-    { key: 'rating', label: 'Our rating', render: (p) => (p.reviewCount === 0 ? 'Not yet rated' : p.rating.toFixed(1)), score: (p) => p.rating },
+    ...(config.ratingsUnsourced
+      ? []
+      : [{ key: 'rating', label: 'Our rating', render: (p: ProductForComparison) => (p.reviewCount === 0 ? 'Not yet rated' : p.rating.toFixed(1)), score: (p: ProductForComparison) => p.rating } as Row]),
     { key: 'cost', label: formatCostLabel(config.costModel, inputs), render: (p) => formatMoney(costOverTime(p, config.costModel, inputs), market), score: (p) => -costOverTime(p, config.costModel, inputs), indigo: true },
     ...config.compareRows.map((r) => ({ key: r.key, label: r.label, render: r.accessor, score: r.score ?? (() => 0) })),
   ];

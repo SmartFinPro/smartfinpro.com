@@ -6,6 +6,7 @@ import { Sparkles, Zap, Calculator, ArrowRight, Coins, Percent, Wallet, Star, Us
 import type { Market } from '@/lib/i18n/config';
 import type { ProductForComparison } from '@/lib/comparison/types';
 import type { TopicConfig } from '@/lib/comparison/topics/types';
+import { visiblePriorityChips } from '@/lib/comparison/topics/types';
 import { formatMoney } from '@/lib/comparison/money';
 
 const C = {
@@ -146,7 +147,7 @@ export function CockpitDecisionBar({
             <Zap size={13} aria-hidden="true" /> In a hurry?
           </div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            {config.priorityChips.map((chip) => {
+            {visiblePriorityChips(config).map((chip) => {
               const Ic = CHIP_ICON[chip.icon] ?? Coins;
               return (
                 <button key={chip.id} type="button" className="ck-pill" data-on={activeSort === chip.sort} onClick={() => onIntent(chip.sort)}>

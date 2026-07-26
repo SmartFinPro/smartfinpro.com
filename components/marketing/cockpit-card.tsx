@@ -232,8 +232,11 @@ export function CockpitCard({
 
       {/* Dashed divider + rating row */}
       <div style={{ borderTop: `1px dashed ${C.borderStrong}`, margin: '16px 0' }} />
-      <div className="ck-card-rating-row">
-        {p.reviewCount === 0 ? (
+      <div className="ck-card-rating-row" data-no-rating={config.ratingsUnsourced ? 'true' : undefined}>
+        {/* Star block only where the rating can be attributed. On topics with
+            TopicConfig.ratingsUnsourced the CTA row below still renders — only
+            the unattributed number and its stars drop out. */}
+        {config.ratingsUnsourced ? null : p.reviewCount === 0 ? (
           <div style={{ display: 'flex', alignItems: 'center', height: 26 }}>
             <span style={{ fontSize: 14, color: C.slate, fontStyle: 'italic' }}>Not yet rated</span>
           </div>

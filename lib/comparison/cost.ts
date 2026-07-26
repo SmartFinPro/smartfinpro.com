@@ -5,6 +5,7 @@
 
 import type { ProductForComparison } from './types';
 import type { CostModelDef, TopicConfig } from './topics/types';
+import { visibleSortOptions } from './topics/types';
 import { annualCost, DEFAULT_USAGE } from './ranking';
 
 export interface CostInputs {
@@ -80,7 +81,9 @@ export function orderProducts(
   sort: CockpitSortKey,
   dir: 'asc' | 'desc' = 'desc',
 ): ProductForComparison[] {
-  const opt = config.sortOptions.find((o) => o.value === sort);
+  // visibleSortOptions, not config.sortOptions: a suppressed rating sort must
+  // not be reachable via ?sort=rating either — it falls through to p.score.
+  const opt = visibleSortOptions(config).find((o) => o.value === sort);
   const metric = (p: ProductForComparison): number =>
     sort === 'cost'
       ? -costOverTime(p, config.costModel, inputs)

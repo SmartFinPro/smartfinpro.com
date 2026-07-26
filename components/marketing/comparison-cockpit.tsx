@@ -13,6 +13,7 @@ import { LayoutGrid, Table as TableIcon, Columns3, Columns2 } from 'lucide-react
 import type { Market, Category } from '@/lib/i18n/config';
 import type { ProductForComparison } from '@/lib/comparison/types';
 import { getTopicConfig } from '@/lib/comparison/topics/index';
+import { visibleSortOptions } from '@/lib/comparison/topics/types';
 import { costOverTime, orderProducts, type CostInputs } from '@/lib/comparison/cost';
 import { useCockpitTracking } from '@/lib/analytics/cockpit-tracking';
 import type { CockpitCompareToggleSource, CockpitCtaClickMeta } from '@/lib/analytics/cockpit-events';
@@ -385,6 +386,7 @@ export function ComparisonCockpit({ products, market, category, topic }: Compari
         .ck-root .ck-card-spec{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin:18px 0 4px}
         .ck-root .ck-card-proscons{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin:16px 0 2px}
         .ck-root .ck-card-rating-row{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+        .ck-root .ck-card-rating-row[data-no-rating]{justify-content:flex-end}
         .ck-root .ck-card-rating-actions{display:flex;gap:10px}
         .ck-root .ck-card-head > *,.ck-root .ck-card-spec > *,.ck-root .ck-card-proscons > *,.ck-root .ck-card-rating-actions > *{min-width:0}
         .ck-root .ck-scroll-x{-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain}
@@ -485,7 +487,7 @@ export function ComparisonCockpit({ products, market, category, topic }: Compari
             <label htmlFor="ck-sort">Sort</label>
             <select
               id="ck-sort"
-              value={config.sortOptions.some((o) => o.value === sort) ? sort : 'smart'}
+              value={visibleSortOptions(config).some((o) => o.value === sort) ? sort : 'smart'}
               onChange={(e) => {
                 setSort(e.target.value);
                 setDir('desc');
@@ -493,7 +495,7 @@ export function ComparisonCockpit({ products, market, category, topic }: Compari
               }}
               style={{ border: `1px solid ${C.border}`, borderRadius: 9, padding: '7px 10px', background: '#fff', color: C.ink, fontSize: 13, cursor: 'pointer' }}
             >
-              {config.sortOptions.map((o) => (
+              {visibleSortOptions(config).map((o) => (
                 <option key={o.value} value={o.value}>
                   {o.label}
                 </option>
