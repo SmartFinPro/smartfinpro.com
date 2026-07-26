@@ -89,6 +89,12 @@
     --sfp-hairline: #D8E0EC;
     --sfp-hairline-strong: #B4C2D6;
     --sfp-hairline-row: #EEF2F7;
+    /* Dark ink text for the gold CTA button in DecisionBridge (F9,
+       2026-07-26 editorial-integrity review) — was a hardcoded hex, now a
+       token per CLAUDE.md's "never hardcode hex" rule. Not --sfp-ink
+       (#1A1A2E, near-black) on purpose: this warmer brown reads better on
+       the gold background. */
+    --sfp-gold-ink: #3B2A05;
 
     /* === Typography System (AP-04) === */
     /* Inter ist via next/font/google geladen → --font-inter auf <body> */
@@ -865,6 +871,7 @@ article a:not([href^="/go/"]):not([href^="http"]):not([data-slot="button"]):not(
   --sfp-hairline: #D8E0EC;
   --sfp-hairline-strong: #B4C2D6;
   --sfp-hairline-row: #EEF2F7;
+  --sfp-gold-ink: #3B2A05;   /* DecisionBridge gold-CTA text — see note above */
 
   /* Typography System (AP-04) */
   --font-primary:      var(--font-inter), system-ui, Arial, sans-serif;

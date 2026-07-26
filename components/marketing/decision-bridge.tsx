@@ -221,7 +221,7 @@ function CtaLink({
       style={{
         margin: '14px 0 4px',
         background: 'var(--sfp-gold)',
-        color: '#3B2A05',
+        color: 'var(--sfp-gold-ink)',
         fontWeight: 600,
         fontSize: '13.5px',
         padding: '9px 16px',
