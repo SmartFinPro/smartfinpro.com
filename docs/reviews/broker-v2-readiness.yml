@@ -1,5 +1,7 @@
+# Generierter Cockpit-Snapshot — nicht von Hand editieren (npm run readiness:reviews).
+# empty-field = Row vorhanden, aber Felder/Prüfdatum/Score unvollständig.
 version: 1
-generatedAt: 2026-07-26T14:40:15.134Z
+generatedAt: 2026-07-26T14:55:05.802Z
 reviews:
   content/au/forex/cmc-markets-review.mdx:
     status: missing-product

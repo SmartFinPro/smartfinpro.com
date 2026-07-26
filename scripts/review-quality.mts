@@ -9,6 +9,10 @@ import { computeContentQuality } from '@/lib/reviews/content-quality';
 const args = process.argv.slice(2);
 const minIdx = args.indexOf('--min');
 const min = minIdx >= 0 ? Number(args[minIdx + 1]) : 90;
+if (!Number.isFinite(min)) {
+  console.error('--min braucht einen numerischen Wert, z. B. --min 90');
+  process.exit(2);
+}
 const files = args.filter((a, i) => a !== '--min' && (minIdx < 0 || i !== minIdx + 1));
 if (files.length === 0) {
   console.error('usage: review-quality.mts [--min N] <file.mdx> ...');

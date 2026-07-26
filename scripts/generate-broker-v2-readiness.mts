@@ -39,7 +39,13 @@ function yamlEscape(v: string | number | null): string {
 }
 
 function emitYaml(entries: Map<string, ReadinessEntry>, generatedAt: string): string {
-  const lines = ['version: 1', `generatedAt: ${generatedAt}`, 'reviews:'];
+  const lines = [
+    '# Generierter Cockpit-Snapshot — nicht von Hand editieren (npm run readiness:reviews).',
+    '# empty-field = Row vorhanden, aber Felder/Prüfdatum/Score unvollständig.',
+    'version: 1',
+    `generatedAt: ${generatedAt}`,
+    'reviews:',
+  ];
   for (const [p, e] of [...entries.entries()].sort(([a], [b]) => a.localeCompare(b))) {
     lines.push(`  ${p}:`);
     lines.push(`    status: ${e.status}`);
@@ -54,8 +60,11 @@ function emitYaml(entries: Map<string, ReadinessEntry>, generatedAt: string): st
   return lines.join('\n') + '\n';
 }
 
-/** generatedAt ist Rauschen — für --check auf beiden Seiten entfernen. */
-const stripGeneratedAt = (s: string) => s.replace(/^generatedAt: .*$/m, 'generatedAt: <ignored>');
+/** generatedAt + auditedAt sind Lauf-Zeitstempel, kein Sach-Drift — für --check beidseitig neutralisieren. */
+const stripVolatile = (s: string) =>
+  s
+    .replace(/^generatedAt: .*$/m, 'generatedAt: <ignored>')
+    .replace(/^( +)auditedAt: .*$/gm, '$1auditedAt: <ignored>');
 
 async function main() {
   const inv: InventoryFile = JSON.parse(fs.readFileSync(INVENTORY, 'utf8'));
@@ -66,6 +75,7 @@ async function main() {
   const auditedAt = new Date().toISOString().slice(0, 10);
   const generatedAt = new Date().toISOString();
   const entries = new Map<string, ReadinessEntry>();
+  let hadAuditError = false;
 
   // Ein Query pro (market, category) — Topics kommen aus dem Manifest (pure data).
   const groups = new Map<string, ReadinessCandidate[]>();
@@ -80,7 +90,7 @@ async function main() {
       .filter((e) => e.market === market && e.category === category)
       .map((e) => e.topic);
 
-    let rowsByTopic = new Map<string, CockpitRowLite[]>();
+    const rowsByTopic = new Map<string, CockpitRowLite[]>();
     let auditError = false;
     if (topics.length > 0) {
       const { data, error } = await supabase
@@ -92,6 +102,7 @@ async function main() {
       if (error) {
         console.error(`[audit-error] ${k}: ${error.message}`);
         auditError = true;
+        hadAuditError = true;
       } else {
         for (const row of (data ?? []) as CockpitRowLite[]) {
           rowsByTopic.set(row.topic, [...(rowsByTopic.get(row.topic) ?? []), row]);
@@ -112,9 +123,14 @@ async function main() {
 
   const yaml = emitYaml(entries, generatedAt);
 
+  if (hadAuditError) {
+    console.error('❌ audit-error bei mindestens einer (market, category)-Query — Snapshot unvollständig, nichts geschrieben.');
+    process.exit(1);
+  }
+
   if (CHECK) {
     const existing = fs.existsSync(OUT) ? fs.readFileSync(OUT, 'utf8') : '';
-    if (stripGeneratedAt(existing) !== stripGeneratedAt(yaml)) {
+    if (stripVolatile(existing) !== stripVolatile(yaml)) {
       console.error('❌ readiness drift — run: npx tsx --env-file=.env.local scripts/generate-broker-v2-readiness.mts');
       process.exit(1);
     }
