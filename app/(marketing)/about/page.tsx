@@ -726,7 +726,7 @@ export default function AboutPage() {
             // `founders` Person nodes removed (2026-07-26 editorial-integrity
             // review, F1): allAuthors are not real founders — see
             // lib/seo/schema.ts for the Organization-only pattern this page
-            // now follows. Visible page content (allAuthors rendering below)
+            // now follows. Visible page content (allAuthors rendering above)
             // is untouched — this is a machine-readable-only fix.
             knowsAbout: [
               'Financial Services',
