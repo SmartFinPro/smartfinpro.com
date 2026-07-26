@@ -3,8 +3,8 @@
   "definition": "Broker review file with numeric rating in frontmatter, category is trading or forex, filename ends with -review.mdx, not under content/_templates/",
   "totals": {
     "brokerReviews": 36,
-    "v2": 1,
-    "candidates": 35
+    "v2": 3,
+    "candidates": 33
   },
   "reviews": [
     {
@@ -132,6 +132,7 @@
       "slug": "cmc-markets-review",
       "reviewLayout": null,
       "h2": [
+        "Platform Evidence & Screenshots",
         "CMC Markets: Australia's Widest-Range ASIC-Regulated Trading Platform",
         "Australian Pricing & Trading Costs 2026",
         "Key Features for Australian Traders",
@@ -151,7 +152,7 @@
         "Frequently Asked Questions"
       ],
       "hasClaimSections": true,
-      "wordCount": 7861
+      "wordCount": 8123
     },
     {
       "path": "content/au/trading/plus500-review.mdx",
@@ -335,6 +336,7 @@
       "slug": "questrade-forex-review",
       "reviewLayout": null,
       "h2": [
+        "Platform Evidence & Screenshots",
         "Questrade Forex: Canada's Integrated Brokerage for Stocks and Currency Trading",
         "Canadian Pricing & Plans 2026 (CAD)",
         "Key Features for Canadian Traders",
@@ -354,7 +356,7 @@
         "Frequently Asked Questions"
       ],
       "hasClaimSections": true,
-      "wordCount": 7755
+      "wordCount": 7924
     },
     {
       "path": "content/ca/forex/questrade-review.mdx",
@@ -464,6 +466,7 @@
       "slug": "freetrade-review",
       "reviewLayout": null,
       "h2": [
+        "Platform Evidence & Screenshots",
         "Freetrade: Commission-Free ISA Investing for UK Retail Investors",
         "UK Pricing & Plans 2026",
         "Key Features for UK Investors",
@@ -481,7 +484,7 @@
         "Frequently Asked Questions"
       ],
       "hasClaimSections": true,
-      "wordCount": 6262
+      "wordCount": 6491
     },
     {
       "path": "content/uk/trading/hargreaves-lansdown-review.mdx",
@@ -561,6 +564,7 @@
       "slug": "forex-com-review",
       "reviewLayout": null,
       "h2": [
+        "Platform Evidence & Screenshots",
         "Forex.com: Commission-Based Pricing for Serious US Traders",
         "US Pricing & Plans 2026",
         "Key Features for US Traders",
@@ -581,7 +585,7 @@
         "Further Resources"
       ],
       "hasClaimSections": true,
-      "wordCount": 8244
+      "wordCount": 8479
     },
     {
       "path": "content/us/forex/ig-markets-review.mdx",
@@ -590,6 +594,7 @@
       "slug": "ig-markets-review",
       "reviewLayout": null,
       "h2": [
+        "Platform Evidence & Screenshots",
         "IG Markets US: 80+ Currency Pairs for Serious Forex Traders",
         "US Pricing & Plans 2026",
         "Key Features for US Traders",
@@ -610,7 +615,7 @@
         "Further Resources"
       ],
       "hasClaimSections": true,
-      "wordCount": 7960
+      "wordCount": 8210
     },
     {
       "path": "content/us/forex/interactive-brokers-forex-review.mdx",
@@ -619,6 +624,7 @@
       "slug": "interactive-brokers-forex-review",
       "reviewLayout": null,
       "h2": [
+        "Platform Evidence & Screenshots",
         "Interactive Brokers: Institutional-Grade Forex for Professional Traders",
         "US Pricing & Plans 2026",
         "Key Features for US Forex Traders",
@@ -638,7 +644,7 @@
         "Frequently Asked Questions"
       ],
       "hasClaimSections": true,
-      "wordCount": 7919
+      "wordCount": 8182
     },
     {
       "path": "content/us/forex/oanda-review.mdx",
@@ -647,6 +653,7 @@
       "slug": "oanda-review",
       "reviewLayout": null,
       "h2": [
+        "Platform Evidence & Screenshots",
         "OANDA: The Most Accessible US Forex Broker for 2026",
         "US Pricing & Plans 2026 (USD)",
         "Key Features for US Traders",
@@ -666,7 +673,7 @@
         "Frequently Asked Questions"
       ],
       "hasClaimSections": true,
-      "wordCount": 7738
+      "wordCount": 7984
     },
     {
       "path": "content/us/forex/tastyfx-review.mdx",
@@ -675,6 +682,7 @@
       "slug": "tastyfx-review",
       "reviewLayout": null,
       "h2": [
+        "Platform Evidence & Screenshots",
         "tastyfx: Zero-Commission Forex Trading for US Traders",
         "US Pricing & Plans 2026 (USD)",
         "Key Features for US Traders",
@@ -694,35 +702,23 @@
         "Frequently Asked Questions"
       ],
       "hasClaimSections": true,
-      "wordCount": 7823
+      "wordCount": 8072
     },
     {
       "path": "content/us/trading/charles-schwab-review.mdx",
       "market": "us",
       "category": "trading",
       "slug": "charles-schwab-review",
-      "reviewLayout": null,
+      "reviewLayout": "v2",
       "h2": [
-        "Charles Schwab: The All-in-One Platform for Serious Investors",
-        "US Pricing & Plans 2026",
-        "Key Features for US Investors",
-        "Charles Schwab Features Deep-Dive",
-        "Fee Comparison: Schwab vs. Major US Brokers",
-        "Annual Cost Comparison: Three US Investor Profiles",
-        "SEC/FINRA Compliance & Security",
-        "Who Should Use Charles Schwab",
-        "Customer Support: Our Testing Results",
-        "What US Users Are Saying",
-        "How Charles Schwab Makes Money",
-        "How to Sign Up for Charles Schwab",
-        "When to Choose an Alternative",
-        "Schwab vs. Alternatives for US Investors",
-        "How We Tested Charles Schwab",
-        "Our Verdict: 4.4/5 for Most US Investors",
-        "Frequently Asked Questions"
+        "Fees",
+        "Markets & Tools",
+        "Platform Experience",
+        "Safety & Regulation",
+        "Support"
       ],
-      "hasClaimSections": true,
-      "wordCount": 7468
+      "hasClaimSections": false,
+      "wordCount": 2699
     },
     {
       "path": "content/us/trading/etoro-review.mdx",
@@ -774,28 +770,16 @@
       "market": "us",
       "category": "trading",
       "slug": "fidelity-review",
-      "reviewLayout": null,
+      "reviewLayout": "v2",
       "h2": [
-        "Fidelity: The Gold Standard for Research and Fund Investing",
-        "US Pricing & Plans 2026",
-        "Key Features for US Investors",
-        "Fidelity Features Deep-Dive",
-        "Fee Comparison: Fidelity vs. Major US Brokers",
-        "Annual Cost Comparison: Three US Investor Profiles",
-        "SEC/FINRA Compliance & Security",
-        "Who Should Use Fidelity",
-        "Customer Support: Our Testing Results",
-        "What US Users Are Saying",
-        "How Fidelity Makes Money",
-        "How to Sign Up for Fidelity",
-        "When to Choose an Alternative",
-        "Fidelity vs. Alternatives for US Investors",
-        "How We Tested Fidelity",
-        "Our Verdict: 4.5/5 for Research-Focused and Fund Investors",
-        "Frequently Asked Questions"
+        "Fees",
+        "Markets & Tools",
+        "Platform Experience",
+        "Safety & Regulation",
+        "Support"
       ],
-      "hasClaimSections": true,
-      "wordCount": 8647
+      "hasClaimSections": false,
+      "wordCount": 2031
     },
     {
       "path": "content/us/trading/interactive-brokers-review.mdx",
@@ -820,7 +804,7 @@
         "Further Resources"
       ],
       "hasClaimSections": false,
-      "wordCount": 7002
+      "wordCount": 7198
     },
     {
       "path": "content/us/trading/robinhood-review.mdx",
@@ -829,6 +813,7 @@
       "slug": "robinhood-review",
       "reviewLayout": null,
       "h2": [
+        "Platform Evidence & Screenshots",
         "Robinhood: Zero-Barrier Investing for the Next Generation",
         "US Pricing & Plans 2026",
         "Key Features for US Investors",
@@ -848,7 +833,7 @@
         "Frequently Asked Questions"
       ],
       "hasClaimSections": true,
-      "wordCount": 7626
+      "wordCount": 7882
     },
     {
       "path": "content/us/trading/tastytrade-review.mdx",
@@ -910,6 +895,7 @@
       "slug": "webull-review",
       "reviewLayout": null,
       "h2": [
+        "Platform Evidence & Screenshots",
         "Webull: Advanced Free Charting for Serious Retail Traders",
         "US Pricing & Fee Structure 2026",
         "Key Features for US Traders",
@@ -929,7 +915,7 @@
         "Frequently Asked Questions"
       ],
       "hasClaimSections": true,
-      "wordCount": 7476
+      "wordCount": 7732
     }
   ]
 }

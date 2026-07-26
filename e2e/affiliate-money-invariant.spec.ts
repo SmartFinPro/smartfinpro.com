@@ -30,7 +30,7 @@ import { test, expect, type Page } from '@playwright/test';
 // The surfaces that render affiliate CTAs as `<Link>` (the Comparison Cockpit
 // renders plain `<a>`, and its unverified providers are behind the attribution
 // gate, so it has no /go href to speculate on).
-const V1_REVIEW = '/us/trading/fidelity-review';   // classic ReportLayout review
+const V1_REVIEW = '/us/trading/robinhood-review';  // classic ReportLayout review
 const V2_REVIEW = '/us/trading/etoro-review';      // reviewLayout: 'v2'
 
 const isAffiliateRedirect = (url: string) => new URL(url).pathname.startsWith('/go/');

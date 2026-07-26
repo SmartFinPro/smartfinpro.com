@@ -18,7 +18,11 @@
 
 import { test, expect, type Page, type TestInfo } from '@playwright/test';
 
-const V1_REVIEW = '/us/trading/fidelity-review';   // classic ReportLayout review
+// A review still on the classic ReportLayout. Fidelity held this slot until it
+// was migrated to V2 (2026-07-26). Whichever page sits here, the assertions
+// below are structural rather than brand-specific, so the next migration only
+// needs this constant repointed — not the test rewritten.
+const V1_REVIEW = '/us/trading/robinhood-review';  // classic ReportLayout review
 const V2_REVIEW = '/us/trading/etoro-review';      // reviewLayout: 'v2'
 const COCKPIT = '/us/trading/best/trading-platforms';
 const COMPARE_SLUGS = ['fidelity', 'charles-schwab'];
@@ -205,12 +209,14 @@ test.describe('Review + Cockpit structural regression', () => {
     expect(response?.status()).toBe(200);
 
     await expect(page.locator('h1')).toHaveCount(1);
-    await expect(page.locator('h1')).toContainText('Fidelity');
-    // The central review section of the V1 (ReportLayout) template.
-    await expect(page.getByRole('heading', { name: 'Quick Verdict', exact: true })).toBeVisible();
+    // Structural proof this really is the V1 template: the V2 layout wraps its
+    // MDX body in .review-v2-prose, so its absence is what distinguishes the
+    // two. Asserting a brand-specific heading here is what tied this test to
+    // Fidelity and broke it on migration.
+    await expect(page.locator('.review-v2-prose')).toHaveCount(0);
     await expect(page.getByRole('heading', { name: /frequently asked questions/i }).first()).toBeVisible();
     // The money path: at least one cloaked affiliate CTA (never a raw URL).
-    await expect(visibleAffiliateCta(page, 'fidelity').first()).toBeVisible();
+    await expect(visibleAffiliateCta(page, 'robinhood').first()).toBeVisible();
 
     await expectCanonicalPath(page, V1_REVIEW);
     await evidence(page, testInfo, 'v1-review-desktop');
