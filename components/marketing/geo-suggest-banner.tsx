@@ -19,8 +19,8 @@ function getCookie(name: string): string | null {
 }
 
 function setCookie(name: string, value: string, days: number) {
-  const maxAge = days * 86_400;
-  document.cookie = `${name}=${value}; max-age=${maxAge}; path=/; SameSite=Lax`;
+  const expires = new Date(Date.now() + days * 86_400_000).toUTCString();
+  document.cookie = `${name}=${value}; expires=${expires}; path=/; SameSite=Lax`;
 }
 
 // ── Market metadata ─────────────────────────────────────────
