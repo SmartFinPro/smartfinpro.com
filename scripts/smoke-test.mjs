@@ -20,8 +20,10 @@
  *                    node scripts/smoke-test.mjs http://localhost:3000 https://smartfinpro.com
  *
  * Integrated into deploy.yml:
- *   Step 11b — CDN smoke test (BASE_URL = prod URL)
- *   Step 11c — Origin smoke test via SSH (BASE_URL = localhost, CANONICAL_BASE = prod URL)
+ *   Step 11b — Origin smoke test via SSH (BASE_URL = localhost, CANONICAL_BASE = prod URL)
+ *              → DEPLOY GATE: failure triggers rollback
+ *   Step 11c — CDN smoke test (BASE_URL = prod URL) — best-effort, NOT a gate
+ *              (Cloudflare intermittently bot-challenges GH-Actions runner IPs)
  */
 
 const BASE_URL = (process.argv[2] || process.env.NEXT_PUBLIC_SITE_URL || 'https://smartfinpro.com')
@@ -42,7 +44,7 @@ const CRITICAL_URLS = [
   // Category hub / pillar pages
   // /us/trading is EXCLUDED from CDN test — Cloudflare Bot Fight Mode serves a JS
   // interstitial (no <title>) to GH Actions datacenter IPs for the "trading" keyword.
-  // It is fully covered by the origin smoke test (Step 11c, SSH→localhost:3000).
+  // It is fully covered by the origin smoke test (Step 11b, SSH→localhost:3000).
   // /us/personal-finance — EXCLUDED: category page returns empty response (no route handler)
   // /us/cybersecurity/nordvpn-review — EXCLUDED: MDX page renders empty on VPS
   // TODO: fix these pages and re-add to smoke test

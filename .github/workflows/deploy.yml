@@ -231,11 +231,12 @@ jobs:
             echo "❌ Health check failed after 3 attempts"
             exit 1'
 
-      # ── 11b-pre. Purge Cloudflare cache BEFORE smoke test ────
-      # Purge EVERYTHING (not just the critical URLs): the smoke test hits hub and
-      # review URLs, and a stale/poisoned edge entry there (e.g. a cached RSC
-      # text/x-component payload) would fail an otherwise-healthy deploy. A clean
-      # cache before the smoke test guarantees it tests the new build's origin.
+      # ── 11b-pre. Purge Cloudflare cache BEFORE smoke tests ────
+      # Purge EVERYTHING (not just the critical URLs): the CDN smoke test hits hub
+      # and review URLs, and a stale/poisoned edge entry there (e.g. a cached RSC
+      # text/x-component payload) would false-flag the best-effort CDN check and
+      # keep serving the old build to visitors. A clean cache before the smoke
+      # tests guarantees the CDN check exercises the new build's origin.
       - name: Purge Cloudflare cache (pre-smoke)
         if: steps.healthcheck.outcome == 'success'
         continue-on-error: true
@@ -244,14 +245,16 @@ jobs:
           CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
         run: node scripts/purge-cloudflare.mjs --everything
 
-      # ── 11b-warm. Warm-up `/` (best-effort) BEFORE the gated smoke test ──
+      # ── 11b-warm. Warm-up `/` (best-effort) BEFORE the smoke tests ──
       # After PM2 restart + CF purge, the first CDN hit to `/` is a cache MISS
       # against a freshly-restarted origin → the heavy homepage can render slowly
       # on the very first request, causing a transient smoke-test FAIL (observed
       # on deploy of #19). This probe warms `/` on origin (via SSH) AND CDN with
-      # bounded retries so the gated Smoke Test below hits a ready, cached `/`.
-      # It NEVER gates the deploy (continue-on-error): the Smoke Test stays the
-      # hard gate and rollback remains keyed to its outcome.
+      # bounded retries so the smoke tests below hit a ready, cached `/`.
+      # It NEVER gates the deploy (continue-on-error): the Origin Smoke Test
+      # below is the hard gate. A CDN loop that never reaches 200 (e.g. a 403
+      # series from a Cloudflare bot challenge) is surfaced as a ::warning::
+      # annotation + job-summary entry instead of vanishing in the step log.
       - name: Warm-up `/` before smoke test
         if: steps.healthcheck.outcome == 'success'
         continue-on-error: true
@@ -267,15 +270,31 @@ jobs:
              done
              echo "  origin not 200 after retries (continuing — smoke test is the gate)"; exit 0'
           echo "── Warming CDN / (primes Cloudflare after pre-smoke purge) ──"
-          # Same UA as scripts/smoke-test.mjs: Cloudflare 403-challenges the
-          # default curl UA from GH Actions datacenter IPs, so without this the
-          # warm-up never gets a 200 and never primes the cache.
+          # Same UA as scripts/smoke-test.mjs. NOTE (2026-07-26, run 30208225666):
+          # Cloudflare bot-challenges some GH-Actions runner IPs regardless of
+          # this UA (full 403 series) — whether the warm-up passes is an
+          # IP-reputation lottery, so a no-200 series is reported below.
+          CODES=""
+          CDN_OK=0
           for i in 1 2 3 4 5 6; do
-            S=$(curl -sf -H "User-Agent: SmartFinPro-SmokeTest/1.0" -o /dev/null -w "%{http_code}" "${{ secrets.NEXT_PUBLIC_SITE_URL }}/" 2>/dev/null || echo "000")
+            S=$(curl -s -o /dev/null -w "%{http_code}" -H "User-Agent: SmartFinPro-SmokeTest/1.0" "${{ secrets.NEXT_PUBLIC_SITE_URL }}/" 2>/dev/null || true)
+            [ -n "$S" ] || S="000"
             echo "  cdn attempt $i: HTTP $S"
-            [ "$S" = "200" ] && { echo "  cdn ready"; break; }
+            CODES="${CODES:+$CODES,}$S"
+            [ "$S" = "200" ] && { echo "  cdn ready"; CDN_OK=1; break; }
             sleep 5
           done
+          if [ "$CDN_OK" != "1" ]; then
+            {
+              echo "### ⚠️ CDN-Warm-up blockiert (kein 200 erreicht)"
+              echo ""
+              echo "Alle Warm-up-Versuche gegen \`/\` via Cloudflare scheiterten — HTTP-Codes: \`${CODES}\`."
+              echo "Eine 403-Serie heißt: Cloudflare bot-challengt diese Runner-IP. Der Edge-Cache für \`/\` wurde nicht vorgewärmt; der best-effort CDN-Smoke-Test wird dann meist ebenfalls rot."
+              echo "Das Deploy-Gate (Origin-Smoke via SSH) ist davon unabhängig."
+              echo ""
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "::warning title=CDN warm-up blocked::No 200 after 6 attempts (HTTP: ${CODES}) — likely Cloudflare bot challenge on this runner IP"
+          fi
 
       # ── 11b-warm-img. Pre-warm hero + tile images referenced on `/` ──
       # The image optimizer (sharp) encodes each image/width/format combo
@@ -310,24 +329,20 @@ jobs:
              rm -f /tmp/warm-urls.txt
              echo "  done"'
 
-      # ── 11b. Smoke Test — 15 Critical URLs ───────────────────
-      # Gate: failure triggers rollback (same as health check failure).
-      # continue-on-error is intentionally NOT set so the outcome is 'failure'.
-      - name: Smoke Test
-        id: smoketest
-        if: steps.healthcheck.outcome == 'success'
-        run: sleep 5 && node scripts/smoke-test.mjs ${{ secrets.NEXT_PUBLIC_SITE_URL }}
-
-      # ── 11c. Origin Smoke Test — bypasses Cloudflare via SSH → localhost ────
-      # Reuses the same smoke-test.mjs script (identical tier logic, checks, URLs).
-      # Second arg overrides canonical host comparison: fetches from localhost:3000
+      # ── 11b. Origin Smoke Test (via SSH) — DEPLOY GATE ────────
+      # Runs the full smoke test (identical tier logic, checks, URLs) against
+      # origin via SSH → localhost:3000, bypassing Cloudflare entirely.
+      # Second arg overrides canonical host comparison: fetches from localhost
       # but validates canonicals against the production hostname.
-      # Currently continue-on-error (observational). Remove after 2-3 stable deploys
-      # to promote to hard gate alongside CDN smoke test.
-      - name: Origin Smoke Test (via SSH)
+      # Promoted to hard gate 2026-07-26: the old CDN-gated smoke test rolled
+      # back healthy builds whenever Cloudflare bot-challenged the runner IP
+      # (415 on `/` + 403 warm-up series, run 30208225666 — an IP-reputation
+      # lottery, misdiagnosed for months as a "415 cold-start flake").
+      # Rollback (step 12) and the success path (14b/15) key on THIS outcome.
+      # continue-on-error is intentionally NOT set so the outcome is 'failure'.
+      - name: Origin Smoke Test (via SSH) — deploy gate
         id: origin_smoketest
         if: steps.healthcheck.outcome == 'success'
-        continue-on-error: true
         run: |
           scp -i ~/.ssh/deploy_key \
             -o StrictHostKeyChecking=no \
@@ -338,11 +353,41 @@ jobs:
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
             "node /tmp/sfp-smoke-test.mjs http://localhost:3000 ${{ secrets.NEXT_PUBLIC_SITE_URL }}; EXIT=\$?; rm -f /tmp/sfp-smoke-test.mjs; exit \$EXIT"
 
+      # ── 11c. CDN Smoke Test — best-effort (NOT a gate) ────────
+      # Same URLs through Cloudflare. Runner IPs get intermittently
+      # bot-challenged (403/415) regardless of the smoke UA, so a failure here
+      # proves nothing about the build — it is surfaced as a ::warning:: +
+      # job-summary entry instead of triggering a rollback (rolling back the
+      # origin can never fix a CDN-side challenge). If this stays red across
+      # several deploys WITHOUT a 403 warm-up series, suspect a real edge
+      # problem (2026-04-11 style poisoned cache) and check with ?cachebust=.
+      - name: CDN Smoke Test (best-effort)
+        id: smoketest
+        if: steps.healthcheck.outcome == 'success'
+        continue-on-error: true
+        run: |
+          sleep 5
+          if node scripts/smoke-test.mjs ${{ secrets.NEXT_PUBLIC_SITE_URL }}; then
+            echo "✅ CDN smoke test passed"
+          else
+            {
+              echo "### ⚠️ CDN-Smoke-Test rot (best-effort, kein Gate)"
+              echo ""
+              echo "Der Smoke-Test über Cloudflare ist fehlgeschlagen — wahrscheinlichste Ursache ist eine Cloudflare-Bot-Challenge der GitHub-Runner-IP (403/415-Lotterie, siehe Run 30208225666)."
+              echo "Deploy-Gate ist der Origin-Smoke-Test (SSH → localhost:3000); dieser war grün, sonst wäre zurückgerollt worden."
+              echo ""
+              echo "Bleibt dieser Check über mehrere Deploys rot, ohne dass der Warm-up eine 403-Serie meldet → echtes CDN-Problem möglich (Stil 2026-04-11, vergifteter Edge-Cache): \`curl -sI 'https://smartfinpro.com/?cachebust=123'\` prüfen."
+              echo ""
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "::warning title=CDN smoke test failed (best-effort)::Likely Cloudflare bot challenge on the runner IP — the origin smoke test is the deploy gate"
+            exit 1
+          fi
+
       # ── 12. Auto-Rollback bei Fehler ─────────────────────────
       # always() ensures this runs even if a prior step crashed (not just 'failure' outcome).
       # Without always(), GitHub Actions skips subsequent steps after an unhandled step error.
       - name: Rollback on failure
-        if: ${{ always() && (steps.healthcheck.outcome == 'failure' || steps.smoketest.outcome == 'failure') }}
+        if: ${{ always() && (steps.healthcheck.outcome == 'failure' || steps.origin_smoketest.outcome == 'failure') }}
         run: |
           echo "🔄 Rolling back to previous version..."
           ssh -i ~/.ssh/deploy_key \
@@ -362,7 +407,7 @@ jobs:
 
       # ── 13. Log failed deploy to dashboard ───────────────────
       - name: Log deploy failure to dashboard
-        if: ${{ always() && (steps.healthcheck.outcome == 'failure' || steps.smoketest.outcome == 'failure') }}
+        if: ${{ always() && (steps.healthcheck.outcome == 'failure' || steps.origin_smoketest.outcome == 'failure') }}
         continue-on-error: true
         env:
           COMMIT_MSG: ${{ github.event.head_commit.message }}
@@ -394,16 +439,16 @@ jobs:
 
       # ── 14. Workflow als fehlgeschlagen markieren ─────────────
       - name: Fail workflow after rollback
-        if: ${{ always() && (steps.healthcheck.outcome == 'failure' || steps.smoketest.outcome == 'failure') }}
+        if: ${{ always() && (steps.healthcheck.outcome == 'failure' || steps.origin_smoketest.outcome == 'failure') }}
         run: exit 1
 
       # ── 14b. Purge Cloudflare cache ───────────────────────────
-      # Runs only when health check + smoke test passed. Prevents stale CF
+      # Runs only when health check + origin smoke test passed. Prevents stale CF
       # cache (e.g. cached error pages from origin hiccups) and guarantees
       # the next visitor gets a fresh response from the new build.
       # See scripts/purge-cloudflare.mjs for the rationale (2026-04-11 incident).
       - name: Purge Cloudflare cache
-        if: steps.healthcheck.outcome == 'success' && steps.smoketest.outcome == 'success'
+        if: steps.healthcheck.outcome == 'success' && steps.origin_smoketest.outcome == 'success'
         continue-on-error: true
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -412,7 +457,7 @@ jobs:
 
       # ── 15. Log successful deploy to dashboard ──────────────
       - name: Log deploy success to dashboard
-        if: steps.healthcheck.outcome == 'success' && steps.smoketest.outcome == 'success'
+        if: steps.healthcheck.outcome == 'success' && steps.origin_smoketest.outcome == 'success'
         continue-on-error: true
         env:
           COMMIT_MSG: ${{ github.event.head_commit.message }}
