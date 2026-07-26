@@ -85,9 +85,13 @@ void KNOWN_BROKER_LOGO_SLUGS; // documentation constant — see resolveLogoSrc()
 /** Resolves the provider logo, preferring a real full wordmark (`{slug}-seeklogo.*`)
  *  over the generic square icon (`{slug}.svg`). `isWordmark` tells the card to show
  *  it big and drop the redundant text name (the wordmark already reads "eToro"),
- *  vs. the icon+text fallback layout. Filesystem-checked — a new logo dropped into
- *  public/images/brokers/ works without a code change. */
-function resolveLogoSrc(slug: string | null | undefined): { src: string; isWordmark: boolean } | null {
+ *  vs. the icon+text fallback layout. `squareLockup` lets a square seeklogo use the
+ *  PNG's transparent padding as a crop area instead of shrinking its visible mark.
+ *  Filesystem-checked — a new logo dropped into public/images/brokers/ works without
+ *  a code change. */
+function resolveLogoSrc(
+  slug: string | null | undefined,
+): { src: string; isWordmark: boolean; squareLockup: boolean } | null {
   if (!slug) return null;
   const candidates: Array<{ name: string; isWordmark: boolean }> = [
     { name: `${slug}-seeklogo.svg`, isWordmark: true },
@@ -97,7 +101,11 @@ function resolveLogoSrc(slug: string | null | undefined): { src: string; isWordm
   for (const c of candidates) {
     try {
       if (fs.existsSync(path.join(process.cwd(), 'public', 'images', 'brokers', c.name))) {
-        return { src: `/images/brokers/${c.name}`, isWordmark: c.isWordmark };
+        return {
+          src: `/images/brokers/${c.name}`,
+          isWordmark: c.isWordmark,
+          squareLockup: c.isWordmark && slug === 'charles-schwab',
+        };
       }
     } catch {
       /* ignore and try next */
@@ -156,16 +164,31 @@ export function ReviewSidebar({
                   >
                     Expert Review
                   </div>
-                  {/* Full-width wordmark — as large as the card's inner sky box
-                      allows (Betreiber-Wunsch 2026-07-19). w-full + h-auto lets
-                      the 3:1 wordmark scale to the box width; object-contain keeps
-                      the aspect ratio. */}
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={logo.src}
-                    alt={`${productName} logo`}
-                    className="mt-2 w-full h-auto max-h-24 object-contain"
-                  />
+                  {logo.squareLockup ? (
+                    <div
+                      className="mt-2 flex h-[110px] w-full items-center justify-center overflow-hidden"
+                      data-logo-presentation="square-lockup"
+                    >
+                      {/* The 176px source canvas contains roughly 33px of
+                          transparent padding per edge. A 110px viewport clips
+                          only that padding and leaves the full blue lockup. */}
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={logo.src}
+                        alt={`${productName} logo`}
+                        className="h-44 w-44 max-w-none shrink-0 object-contain"
+                      />
+                    </div>
+                  ) : (
+                    // Full-width wordmark — as large as the card's inner sky box
+                    // allows. The 3:1 eToro mark keeps its approved proportions.
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={logo.src}
+                      alt={`${productName} logo`}
+                      className="mt-2 h-auto max-h-24 w-full object-contain"
+                    />
+                  )}
                 </div>
               ) : (
                 <div className="flex items-center gap-3 mb-3">
