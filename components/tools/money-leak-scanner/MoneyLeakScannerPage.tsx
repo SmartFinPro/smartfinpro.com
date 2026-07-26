@@ -2,6 +2,8 @@ import Link from 'next/link';
 import { ArrowLeft, ShieldCheck, Lightbulb, Zap } from 'lucide-react';
 import { MoneyLeakScanner } from './MoneyLeakScanner';
 import { generateFAQSchema, generateHowToSchema } from '@/lib/seo/schema';
+import { getTool, getVariant } from '@/lib/tools/registry';
+import type { ToolContext } from '@/lib/analytics/tool-events';
 import type { Market } from '@/types';
 
 interface MoneyLeakScannerPageProps {
@@ -65,6 +67,19 @@ const HOWTO_STEPS = [
 ];
 
 export function MoneyLeakScannerPage({ market, canonicalUrl }: MoneyLeakScannerPageProps) {
+  // tool_v1 (FDL 1.3): ToolContext is built here, once, from the Registry —
+  // the RSC page tree passes it down as props; the client (MoneyLeakScanner)
+  // never derives toolId/market/variantPath/shellMode itself.
+  const toolContext: ToolContext = {
+    toolId: 'money-leak-scanner',
+    market,
+    // Fallback only matters if the Registry ever drops a variant it
+    // currently guarantees for all 4 markets — derive a bare path from the
+    // canonical URL rather than leaking the full origin into variantPath.
+    variantPath: getVariant('money-leak-scanner', market)?.path ?? new URL(canonicalUrl).pathname,
+    shellMode: getTool('money-leak-scanner').shellMode,
+  };
+
   const howtoSchema = generateHowToSchema({
     name: `Money Leak Scanner — ${MARKET_LABEL[market]}`,
     description:
@@ -127,7 +142,7 @@ export function MoneyLeakScannerPage({ market, canonicalUrl }: MoneyLeakScannerP
       </div>
 
       {/* Scanner */}
-      <MoneyLeakScanner market={market} />
+      <MoneyLeakScanner market={market} toolContext={toolContext} />
 
       {/* Info section */}
       <section className="py-16 border-t" style={{ borderColor: '#E5E7EB' }}>

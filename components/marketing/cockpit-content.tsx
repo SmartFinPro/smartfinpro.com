@@ -4,16 +4,22 @@
 // (methodology, buyer's guide, FAQ, reviewer) renders BELOW it.
 //
 // Server component — receives ONLY plain props (never the TopicConfig, which holds
-// functions). The client islands (FAQSection, ExpertVerifier) get plain arrays/strings
-// + includeSchema={false}: the route owns the single FAQPage + Person JSON-LD. Custom
-// compact verdict markup (not WinnerAtGlance) so the heading is a proper <h2> and pick
-// links respect the attribution gate (no blanket rel="sponsored").
+// functions). The client islands (FAQSection) get plain arrays/strings + includeSchema={false}:
+// the route owns the single FAQPage JSON-LD. Custom compact verdict markup (not
+// WinnerAtGlance) so the heading is a proper <h2> and pick links respect the
+// attribution gate (no blanket rel="sponsored").
+//
+// 2026-07-17 editorial-integrity fix: this file used to render an ExpertVerifier
+// "About our reviewer" block sourced from the (fabricated) experts DB. That block
+// and the reviewer/reviewerName/reviewerCredential props that fed it were removed —
+// attribution is now the static "SmartFinPro Research" string, no persona.
 
 import Image from 'next/image';
 import { Star, ArrowUpRight, Clock } from 'lucide-react';
 import { CheckCircleIcon } from './check-icon';
 import { FAQSection } from './faq-section';
-import { ExpertVerifier } from './expert-verifier';
+import { CockpitVerdictCta } from './cockpit-verdict-cta';
+import type { CockpitCtaMode, CockpitDestinationType } from '@/lib/analytics/cockpit-events';
 
 const BORDER = '#E1E7F0';
 
@@ -119,14 +125,22 @@ export interface VerdictPick {
   href: string;
   external: boolean;
   ctaLabel: string;
+  // cockpit_v1 tracking fields — derived from the rendered link via
+  // resolveCockpitCta in page.tsx buildVerdictPicks.
+  productSlug: string;
+  ctaMode: CockpitCtaMode;
+  destinationType: CockpitDestinationType;
+  productCtaMode: string;
+  isTopPick: boolean;
 }
 
 interface CockpitVerdictProps {
   intro: string;
   picks: VerdictPick[];
   verifiedDate: string; // ISO YYYY-MM-DD
-  reviewerName: string;
-  reviewerCredential?: string;
+  market: string;
+  category: string;
+  topic: string;
 }
 
 /** Tier 1 — compact decision block, rendered above the cockpit.
@@ -138,8 +152,9 @@ export function CockpitVerdict({
   intro,
   picks,
   verifiedDate,
-  reviewerName,
-  reviewerCredential,
+  market,
+  category,
+  topic,
 }: CockpitVerdictProps) {
   return (
     <section className="mb-6">
@@ -148,8 +163,7 @@ export function CockpitVerdict({
           Expert Reviews &amp; Ratings
         </h2>
         <p className="m-0 text-xs" style={{ color: 'var(--sfp-slate)' }}>
-          Data verified {fmtDate(verifiedDate)} · Reviewed by {reviewerName}
-          {reviewerCredential ? `, ${reviewerCredential}` : ''} ·{' '}
+          Data verified {fmtDate(verifiedDate)} · Reviewed by SmartFinPro Research ·{' '}
           <a href="#how-we-test" className="underline" style={{ color: 'var(--sfp-navy)' }}>
             How we test
           </a>
@@ -164,41 +178,7 @@ export function CockpitVerdict({
             the cockpit's winner-cell green) — light enough that the ink/slate text
             stays readable, so no color flips needed. */}
         {picks.map((p) => (
-          <a
-            key={p.rank}
-            href={p.href}
-            {...(p.external ? { target: '_blank', rel: 'nofollow sponsored noopener' } : {})}
-            className="group flex flex-col rounded-2xl border bg-white px-4 py-3.5 no-underline shadow-sm transition-all duration-200 hover:border-[rgba(26,107,58,0.25)] hover:bg-[linear-gradient(135deg,#F0F8F3_0%,#E2F0E7_100%)] hover:shadow-md"
-            style={{ borderColor: BORDER }}
-          >
-            <span className="flex flex-wrap items-baseline gap-x-2">
-              <span className="text-[15px] font-bold leading-tight text-[color:var(--sfp-ink)]">
-                {p.name}
-              </span>
-              {p.rank === 1 && (
-                <span className="rounded bg-[rgba(245,166,35,0.14)] px-1.5 py-0.5 text-[9.5px] font-bold uppercase tracking-[0.8px] text-[color:var(--sfp-gold-dark)]">
-                  Top pick
-                </span>
-              )}
-            </span>
-            <span className="mt-0.5 block truncate text-[12.5px] leading-snug text-[color:var(--sfp-slate)]">
-              {p.why}
-            </span>
-            <span className="mt-2.5 flex items-center justify-between">
-              <span className="inline-flex items-center gap-1 text-[13px] font-semibold text-[color:var(--sfp-ink)]">
-                {p.reviewCount === 0 ? (
-                  <span style={{ fontStyle: 'italic', color: 'var(--sfp-slate)' }}>Not yet rated</span>
-                ) : (
-                  <>
-                    <Star size={12} aria-hidden="true" style={{ color: 'var(--sfp-gold)' }} /> {p.rating.toFixed(1)}
-                  </>
-                )}
-              </span>
-              <span className="inline-flex items-center gap-1 text-[13px] font-semibold text-[color:var(--sfp-navy)] transition-all duration-200 group-hover:translate-x-0.5 group-hover:text-[color:var(--sfp-green)]">
-                {p.ctaLabel} <ArrowUpRight size={13} aria-hidden="true" />
-              </span>
-            </span>
-          </a>
+          <CockpitVerdictCta key={p.rank} {...p} market={market} category={category} topic={topic} />
         ))}
       </div>
     </section>
@@ -210,14 +190,6 @@ interface CockpitBodyProps {
   methodology: string;
   buyerGuide: { h3: string; body: string }[];
   faq: { q: string; a: string }[];
-  reviewer: {
-    name: string;
-    role: string;
-    bio: string | null;
-    image_url: string | null;
-    credentials: string[];
-    linkedin_url: string | null;
-  };
   verifiedDate: string; // ISO
   /** Config-authored external authority references (regulator registers,
    *  official protection-limit/fee pages) — SEO addendum §8. */
@@ -235,7 +207,6 @@ export function CockpitBody({
   methodology,
   buyerGuide,
   faq,
-  reviewer,
   verifiedDate,
   sources,
   relatedLinks,
@@ -326,23 +297,6 @@ export function CockpitBody({
       )}
 
       <FAQSection faqs={faq.map((f) => ({ question: f.q, answer: f.a }))} title="Frequently asked questions" includeSchema={false} />
-
-      <section>
-        <h2 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--sfp-ink)' }}>
-          About our reviewer
-        </h2>
-        <ExpertVerifier
-          variant="default"
-          includeSchema={false}
-          name={reviewer.name}
-          title={reviewer.role}
-          credentials={reviewer.credentials}
-          image={reviewer.image_url ?? undefined}
-          bio={reviewer.bio ?? undefined}
-          lastFactChecked={verifiedDate}
-          linkedInUrl={reviewer.linkedin_url ?? undefined}
-        />
-      </section>
     </div>
   );
 }

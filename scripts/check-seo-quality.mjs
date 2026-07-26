@@ -5,15 +5,24 @@
 // Scans all MDX review files and FAILS THE BUILD (exit 1) if any
 // file scores below the minimum threshold or regresses vs. baseline.
 //
-// Scoring rubric (13 dimensions → 10.0 max):
+// V1 scoring rubric (7 dimensions → 10.0 max):
 //   -1.5  NO_FAQ       No <details>/<FAQSection>/FAQPage schema
 //   -1.0  NO_AB        No <AffiliateButton> component
 //   -0.5  NO_TA        No <TrustAuthority> component
-//   -1.0  NO_EB        No <ExpertBox> or reviewedBy frontmatter
 //   -1.0  NO_AD        No <AutoDisclaimer> component
 //   -0.3  NO_RATING    No top-level rating: in frontmatter
 //   -0.5  TITLE_LONG   title > 65 characters
 //   -1.5  WC_LOW       Word count < 2800
+//
+// (2026-07-18 T0e audit: the former NO_EB check — "no <ExpertBox> or
+// reviewedBy: frontmatter" — is removed. It actively rewarded fabricated
+// reviewer identities and penalized the editorial-integrity remediation
+// that stripped them; see docs/superpowers/specs/2026-07-18-etoro-cockpit-audit.md.)
+//
+// V2 review-layout pages (frontmatter `reviewLayout: 'v2'`) use a separate
+// rubric entirely — see scripts/lib/seo-quality-v2.mjs — checking
+// structural frontmatter completeness (verdict/essentialFacts/alternatives)
+// and rendered-editorial word count (2,600–3,600) instead of MDX tags.
 //
 // Usage:
 //   node scripts/check-seo-quality.mjs               # CI gate (default)
@@ -27,6 +36,8 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import matter from 'gray-matter';
+import { isV2Frontmatter, scoreV2File } from './lib/seo-quality-v2.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname  = path.dirname(__filename);
@@ -77,11 +88,24 @@ function scoreFile(filePath) {
   const { fm, body } = parseMdx(content);
   const rel = path.relative(path.join(ROOT, 'content'), filePath);
 
+  // Structured frontmatter (for V2 detection + V2 zones). Parsed separately
+  // from the raw `fm`/`body` split above so the V1 regex-based checks below
+  // are byte-for-byte unchanged (no regression risk from switching parsers).
+  let frontmatterData = {};
+  try {
+    frontmatterData = matter(content).data || {};
+  } catch {
+    frontmatterData = {};
+  }
+
+  if (isV2Frontmatter(frontmatterData)) {
+    return { file: rel, ...scoreV2File({ fm, body, frontmatterData }) };
+  }
+
   const checks = {
     hasFaq:      /<details/i.test(body) || /<FAQSection/i.test(body) || /FAQPage/.test(body),
     hasAffBtn:   /<AffiliateButton/.test(body),
     hasTrustAuth:/<TrustAuthority/.test(body),
-    hasExpertBox:/<ExpertBox/.test(body) || /reviewedBy:/.test(fm),
     hasAutoDiscl:/<AutoDisclaimer/.test(body),
     hasRating:   /^rating:\s*\d/m.test(fm),
   };
@@ -96,7 +120,6 @@ function scoreFile(filePath) {
   if (!checks.hasFaq)       { score -= 1.5; issues.push('NO_FAQ'); }
   if (!checks.hasAffBtn)    { score -= 1.0; issues.push('NO_AB'); }
   if (!checks.hasTrustAuth) { score -= 0.5; issues.push('NO_TA'); }
-  if (!checks.hasExpertBox) { score -= 1.0; issues.push('NO_EB'); }
   if (!checks.hasAutoDiscl) { score -= 1.0; issues.push('NO_AD'); }
   if (!checks.hasRating)    { score -= 0.3; issues.push('NO_RATING'); }
   if (titleLen > 65)        { score -= 0.5; issues.push(`TITLE_${titleLen}c`); }

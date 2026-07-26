@@ -1,34 +1,47 @@
 // app/(marketing)/au/tools/superannuation-calculator/page.tsx
-import { Metadata } from 'next';
 import { SuperannuationCalculator } from '@/components/tools/superannuation-calculator';
 import { AnswerBlock } from '@/components/ui/answer-block';
 import { AffiliateDisclosure } from '@/components/ui/affiliate-disclosure';
+import { buildToolMetadata } from '@/lib/tools/registry/metadata';
+import { ToolJsonLd } from '@/components/tools/shell/tool-json-ld';
+import type { FAQ } from '@/types';
 
-export const metadata: Metadata = {
-  title: 'Superannuation Calculator AU 2026 | Retirement Savings Projection',
-  description:
-    'Use our free superannuation calculator to project your retirement savings. See how contributions, returns, and time affect your super balance and retirement income.',
-  alternates: {
-    canonical: 'https://smartfinpro.com/au/tools/superannuation-calculator',
-    languages: {
-      'en-US': 'https://smartfinpro.com/tools/debt-payoff-calculator',
-      'en-GB': 'https://smartfinpro.com/uk/tools/remortgage-calculator',
-      'en-CA': 'https://smartfinpro.com/ca/tools/debt-payoff-calculator',
-      'en-AU': 'https://smartfinpro.com/au/tools/superannuation-calculator',
-    },
+export const metadata = buildToolMetadata('superannuation', 'au');
+
+// Mirrors the visible "FAQ: Superannuation Calculator" section below verbatim — never
+// add questions here that aren't rendered on the page.
+const FAQ_ITEMS: FAQ[] = [
+  {
+    question: 'How accurate is this superannuation calculator?',
+    answer:
+      'This calculator uses standard retirement projection models with published assumptions for investment returns and inflation. Results are estimates and depend heavily on your actual investment performance. Consult a licensed financial adviser for personalised advice.',
   },
-  openGraph: {
-    title: 'Superannuation Calculator AU 2026 | SmartFinPro',
-    description:
-      'Project your retirement savings with our free super calculator. See how contributions and investment returns build your nest egg.',
-    url: 'https://smartfinpro.com/au/tools/superannuation-calculator',
-    type: 'website',
+  {
+    question: 'Can I access my super early?',
+    answer:
+      'Limited circumstances allow early access: severe financial hardship, permanent incapacity, and a few others. Generally, super is locked in until you reach preservation age (60) or retirement age (67+). First Home Super Saver Scheme allows limited withdrawals for home purchases.',
   },
-};
+  {
+    question: 'Do I need to worry about super fees?',
+    answer:
+      "Absolutely. Over 30 years, a difference of 0.5% in annual fees can reduce your super balance by 15-20%. Compare your provider's fees (admin fee + investment fee + insurance fees). Many public sector super schemes have very low fees.",
+  },
+  {
+    question: 'What happens to my super when I change jobs?',
+    answer:
+      "Your super remains in your existing fund unless you choose to move it. You'll get a new employer account when you start a new job. Most people consolidate into one fund, but don't auto-consolidate without reviewing fees and performance first.",
+  },
+  {
+    question: 'Is super income-tested in retirement?',
+    answer:
+      'Super pensions are not income-tested for Age Pension purposes (after reaching age 60), but lump sums and earnings are. Work with a financial planner to structure your retirement income tax-efficiently.',
+  },
+];
 
 export default function SuperannuationCalculatorPage() {
   return (
     <main className="min-h-screen bg-white">
+      <ToolJsonLd toolId="superannuation" market="au" faq={FAQ_ITEMS} />
       {/* Hero */}
       <section
         className="relative py-20 px-6"
@@ -91,7 +104,7 @@ export default function SuperannuationCalculatorPage() {
               <strong style={{ color: 'var(--sfp-navy)' }}>Input Your Current Age & Retirement Age:</strong> Typically 67 for current workers, but you can retire from 60 if you meet requirements
             </li>
             <li>
-              <strong style={{ color: 'var(--sfp-navy)' }}>Add Your Annual Salary:</strong> This determines employer contributions (currently 11.5% of ordinary time earnings)
+              <strong style={{ color: 'var(--sfp-navy)' }}>Add Your Annual Salary:</strong> This determines employer contributions (currently 12% of ordinary time earnings)
             </li>
             <li>
               <strong style={{ color: 'var(--sfp-navy)' }}>Include Salary Sacrifice Contributions:</strong> Pre-tax contributions save up to 32% in taxes versus post-tax contributions
@@ -108,7 +121,7 @@ export default function SuperannuationCalculatorPage() {
 
           <h3 style={{ color: 'var(--sfp-navy)' }}>Compulsory Employer Contributions (Super Guarantee)</h3>
           <p style={{ color: 'var(--sfp-ink)' }}>
-            Since 1 July 2025, employers must contribute 11.5% of ordinary time earnings into your super. This rate is legislated to increase to 12% in 2025-26. This is compulsory and separate from your salary — employers pay it directly to your super fund.
+            Since 1 July 2025, employers must contribute 12% of ordinary time earnings into your super — the final legislated step of the Super Guarantee phase-in. This is compulsory and separate from your salary — employers pay it directly to your super fund.
           </p>
 
           <h3 style={{ color: 'var(--sfp-navy)' }}>Salary Sacrifice Contributions</h3>

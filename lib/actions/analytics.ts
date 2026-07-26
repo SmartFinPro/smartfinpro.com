@@ -136,9 +136,51 @@ function categorizeTrafficSource(referrer: string | null, utmSource: string | nu
 // Main Analytics Function
 // ============================================================
 
+function isSupabaseConfigured(): boolean {
+  return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_KEY);
+}
+
+function emptyAnalyticsStats(range: TimeRange, now: Date): AnalyticsStats {
+  return {
+    overview: {
+      totalPageViews: 0,
+      uniqueSessions: 0,
+      avgTimeOnPage: 0,
+      avgScrollDepth: 0,
+      bounceRate: 0,
+      pageViewsInRange: 0,
+    },
+    trafficSources: [],
+    utmStats: [],
+    browserStats: [],
+    osStats: [],
+    landingPages: [],
+    referrers: [],
+    pageViewsOverTime: buildPageViewTimeSeries([], range, now),
+  };
+}
+
 async function fetchAnalyticsStats(range: TimeRange, market?: string): Promise<AnalyticsStats> {
-  const supabase = createServiceClient();
   const now = new Date();
+
+  // Fast-fail when Supabase isn't configured (CI, local dev without .env.local,
+  // or a Supabase outage) — matches the getCockpitData() fallback pattern in
+  // lib/comparison/loader.ts so the Suspense boundary around this page always
+  // resolves quickly instead of throwing on the service-client stub.
+  if (!isSupabaseConfigured()) {
+    return emptyAnalyticsStats(range, now);
+  }
+
+  try {
+    return await fetchAnalyticsStatsFromSupabase(range, market, now);
+  } catch (err) {
+    logger.error('Analytics stats fetch failed', err instanceof Error ? err.message : err);
+    return emptyAnalyticsStats(range, now);
+  }
+}
+
+async function fetchAnalyticsStatsFromSupabase(range: TimeRange, market: string | undefined, now: Date): Promise<AnalyticsStats> {
+  const supabase = createServiceClient();
   const rangeStart = getTimeRangeStart(range);
   const marketFilter = market && market !== 'all' ? market : null;
 

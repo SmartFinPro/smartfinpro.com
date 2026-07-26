@@ -1,0 +1,143 @@
+<title>FDL State Board — ResultPanel-Zustände</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{ --desk:#eef1f5; --paper:#fff; --wire:#8a97a8; --wire-soft:#c6cfda; --ink:#25303e; --note:#c2410c; --fill:#f3f5f8; --warnbg:#fff8e6; --warnbd:#e8c978; --warnfg:#8a5a00; --err:#d64045; --good:#1a6b3a; --sky:#e8f0fb; --navy:#1b4f8c; }
+  :root[data-theme="dark"]{ --desk:#1b2028 } :root[data-theme="light"]{ --desk:#eef1f5 }
+  @media (prefers-color-scheme: dark){ :root{ --desk:#1b2028 } }
+  *{box-sizing:border-box}
+  body{background:var(--desk);color:var(--ink);font:15px/1.5 ui-sans-serif,system-ui,sans-serif;margin:0;padding:24px}
+  header{max-width:1200px;margin:0 auto 8px} header h1{font-size:22px;margin:0}
+  header p{color:#6b7788;margin:4px 0 0;max-width:78ch}
+  @media (prefers-color-scheme: dark){ header h1,header p{color:#dfe5ee} }
+  :root[data-theme="dark"] header h1,:root[data-theme="dark"] header p{color:#dfe5ee}
+  :root[data-theme="light"] header h1{color:#25303e} :root[data-theme="light"] header p{color:#6b7788}
+  .matrix{max-width:1200px;margin:20px auto 0;display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),1fr));gap:20px}
+  .card{background:var(--paper);border:1px solid var(--wire);border-radius:4px;padding:14px;display:flex;flex-direction:column;gap:8px}
+  .card h2{font-size:13px;margin:0;font-family:ui-monospace,Menlo,monospace;color:var(--note)}
+  .card .allowed{font:10px ui-monospace,monospace;color:#5b6878}
+  .panel{border:1.5px solid var(--wire);border-radius:4px;padding:10px;display:flex;flex-direction:column;gap:6px;font-size:12px;min-height:150px}
+  .chip{border:1px solid var(--wire);border-radius:999px;padding:1px 9px;font-size:10px;display:inline-block;width:fit-content}
+  .chip.example{border-style:dashed;color:#5b6878}
+  .chip.yours{background:var(--navy);border-color:var(--navy);color:#fff}
+  .chip.shared{background:var(--sky);border-color:var(--navy);color:var(--navy)}
+  .num{font-size:24px;font-weight:700;font-variant-numeric:tabular-nums}
+  .hatch{background:repeating-linear-gradient(45deg,transparent 0 6px,var(--wire-soft) 6px 7px);border:1px solid var(--wire);border-radius:3px;height:44px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#5b6878}
+  .skel{background:linear-gradient(90deg,var(--fill) 25%,#e6eaf0 50%,var(--fill) 75%);border-radius:3px;height:24px;width:140px}
+  .btnw{border:1.5px solid var(--ink);border-radius:3px;padding:5px 9px;font-size:11px;width:fit-content;background:var(--fill)}
+  .warn{background:var(--warnbg);border:1px solid var(--warnbd);color:var(--warnfg);border-radius:4px;padding:8px;font-size:11px}
+  .errbox{border:1.5px solid var(--err);color:var(--err);border-radius:4px;padding:8px;font-size:11px}
+  .miss{border:1.5px dashed var(--wire);border-radius:4px;padding:8px;font-size:11px;color:#5b6878}
+  .note{font:10px ui-monospace,monospace;color:var(--note)}
+  .rules{max-width:1200px;margin:26px auto 0;background:var(--paper);border:1px dashed var(--note);border-radius:4px;padding:12px 16px;font-size:12.5px}
+  .rules ul{margin:6px 0 0;padding-left:18px}
+</style>
+
+<header>
+  <h1>State Board — ResultPanel: 7 Zustände × Ergebniszustand-Chips</h1>
+  <p>Verbindliche Referenz für alle drei Shell-Modi (Spec 6.5). Chips: <span class="chip example">Example result</span> <span class="chip yours">Your result</span> <span class="chip shared">Shared scenario</span>. Layout-Regel: Zahlenbereiche haben reservierte Breiten — kein Zustandswechsel darf Layout Shift erzeugen.</p>
+</header>
+
+<div class="matrix">
+  <div class="card">
+    <h2>1 · initial</h2>
+    <span class="allowed">Chips: nur Example — SSR-Zustand, auch ohne JS sichtbar</span>
+    <div class="panel">
+      <span class="chip example">Example result</span>
+      <span>A household like this example leaks about <strong>$210–$340</strong>/mo.</span>
+      <span class="num">$275<span style="font-size:11px;font-weight:400">/mo</span></span>
+      <div class="hatch">Worked-Example-Visual (statisches SVG, RSC)</div>
+      <span class="btnw">Start with your numbers</span>
+    </div>
+    <span class="note">Inputs zeigen defaultValue · CTA = erster Schritt/Feld-Fokus</span>
+  </div>
+
+  <div class="card">
+    <h2>2 · ready</h2>
+    <span class="allowed">Chips: Example (bis 1. Resultat) · LiveCanvas: Preview aktualisiert · GuidedJourney: Continue aktiv</span>
+    <div class="panel">
+      <span class="chip example">Example result</span>
+      <span style="color:#5b6878">on track towards ~<strong>$610k–$890k</strong> (in today's money)</span>
+      <div class="hatch">Preview-Visual (debounced 600 ms)</div>
+      <span class="btnw" style="border-width:2px">Continue →</span>
+    </div>
+    <span class="note">genug Inputs für Berechnung · noch kein tool_first_result</span>
+  </div>
+
+  <div class="card">
+    <h2>3 · calculating</h2>
+    <span class="allowed">Chip = Vorzustand: VOR dem ersten eigenen Resultat „Example", danach „Your result" · Dauer 180–240 ms · reduced-motion: sofort</span>
+    <div class="panel">
+      <span class="chip example">Example result</span>
+      <div class="skel" aria-hidden="true"></div>
+      <div class="hatch" style="opacity:.5">Visual bleibt stehen (dimmt), KEIN Spinner-Overlay</div>
+      <span class="note">Skeleton NUR im Zahlenbereich · Breiten reserviert → kein Shift</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>4 · result</h2>
+    <span class="allowed">Chips: Your ODER Shared · volle Sektionsreihenfolge 1→6</span>
+    <div class="panel">
+      <span class="chip yours">Your result</span>
+      <span><strong>1</strong> You may be leaking about <strong>$180–$290</strong>/mo.</span>
+      <span class="num">$235<span style="font-size:11px;font-weight:400">/mo · range $180–$290</span></span>
+      <div class="hatch">3 · Signatur-Visual</div>
+      <span style="font-size:10px">4 · [Lever A] [Lever B] [Lever C] · 5 · ▸ Assumptions &amp; sources · 6 · Next action →</span>
+    </div>
+    <span class="note">aria-live: 1 zusammengefasster Satz, ≤1/s, nie während Slider-Drag</span>
+  </div>
+
+  <div class="card">
+    <h2>4b · result (shared)</h2>
+    <span class="allowed">Nur nach gültigem #s=-Fragment · client-seitig dekodiert</span>
+    <div class="panel">
+      <span class="chip shared">Shared scenario</span>
+      <span>This shared scenario leaks about <strong>$310–$450</strong>/mo.</span>
+      <span class="num">$380<span style="font-size:11px;font-weight:400">/mo</span></span>
+      <div class="hatch">Visual aus geteilten (gerundeten) Werten</div>
+      <span class="btnw">Make it yours — edit inputs</span>
+    </div>
+    <span class="note">SSR zeigt weiterhin Example · Payload nur Allowlist-Felder</span>
+  </div>
+
+  <div class="card">
+    <h2>5 · insufficient-data</h2>
+    <span class="allowed">Chips: keiner (kein Resultat) · listet fehlende Felder mit Sprung-Links</span>
+    <div class="panel">
+      <div class="miss">We need a bit more to calculate:<br>· <u>Monthly net income</u><br>· <u>At least one spending category</u></div>
+      <span class="note">keine leeren Zahlen, kein $0-Ergebnis</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>6 · stale-data</h2>
+    <span class="allowed">Chips: wie Resultat · Ergebnis bleibt nutzbar · Warning-Token-Set</span>
+    <div class="panel">
+      <span class="chip yours">Your result</span>
+      <div class="warn">⚠ Some rules were last verified 2025-08-01 — results may be outdated. <u>See sources</u></div>
+      <span class="num" style="opacity:.85">$235<span style="font-size:11px;font-weight:400">/mo</span></span>
+      <span class="note">Trigger: kritische Rule über Freshness-SLA (rate 90 d · limit/tax 400 d · assumption 365 d)</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>7 · error</h2>
+    <span class="allowed">Chips: keiner · Eingaben bleiben erhalten · feuert tool_calculation_error</span>
+    <div class="panel">
+      <div class="errbox">Something went wrong while calculating. Your inputs are safe — try again.</div>
+      <span class="btnw">Try again</span>
+      <span class="note">role="alert" · errorKind ohne PII/Stacktrace</span>
+    </div>
+  </div>
+</div>
+
+<div class="rules">
+  <strong>Übergangs-Regeln (bindend):</strong>
+  <ul>
+    <li>initial → ready → calculating → result ist der Normalpfad; calculating dauert 180–240 ms (CSS-Transition), unter <code>prefers-reduced-motion</code> 0 ms.</li>
+    <li>Example → Yours: mit dem ersten EIGENEN Resultat (<code>tool_first_result</code>) — der Chip beschreibt das angezeigte Ergebnis, nicht die Eingaben; Eingaben allein (<code>tool_start</code>) wechseln den Chip nicht. Nie zurück zu Example innerhalb der Session.</li>
+    <li>Shared gilt nur bei gültigem Fragment-Payload; jede Bearbeitung wechselt auf Yours.</li>
+    <li>stale-data ist ein Overlay-Zustand von result (Ergebnis + Warnbanner), kein Ersatz.</li>
+    <li>insufficient-data und error zeigen NIE Zahlenwerte; ResultMiniBar (mobil) erscheint in diesen Zuständen nicht.</li>
+  </ul>
+</div>

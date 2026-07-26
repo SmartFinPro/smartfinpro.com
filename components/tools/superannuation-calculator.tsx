@@ -1,7 +1,7 @@
 // components/tools/superannuation-calculator.tsx
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { LazyMotion, domAnimation, m } from 'framer-motion';
 import {
   TrendingUp,
@@ -15,6 +15,10 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
+import { getToolEntryHref } from '@/lib/tools/registry';
+import { encodeShare, decodeShare, buildShareUrl } from '@/lib/decision/share-codec';
+import { bandMidpoint, clamp, roundToStep } from '@/lib/decision/wealth-horizon-prefill';
+import { toInputBucket } from '@/lib/analytics/tool-events';
 
 interface SuperannuationResults {
   finalBalance: number;
@@ -47,8 +51,52 @@ export function SuperannuationCalculator() {
   const [currentAge, setCurrentAge] = useState(35);
   const [currentBalance, setCurrentBalance] = useState(150000);
   const [annualSalary, setAnnualSalary] = useState(90000);
-  const [contributionRate, setContributionRate] = useState(11.5);
+  const [contributionRate, setContributionRate] = useState(12);
   const [additionalMonthly, setAdditionalMonthly] = useState(0);
+
+  // FDL 4.4 — Wealth Horizon rücklink prefill (SPEC 8.7 / PR 4.4). Reads
+  // `#s=` ONLY after mount (never during SSR) so there is no hydration
+  // mismatch; without a fragment this is a no-op and behavior is byte-
+  // identical to before. Applies whichever of age/balance/monthly
+  // contribution the Wealth Horizon share payload actually carries.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const match = /^#s=(.+)$/.exec(window.location.hash);
+    if (!match) return;
+    const payload = decodeShare(match[1]);
+    if (!payload || payload.t !== 'wealth-horizon') return;
+
+    const ageBand = payload.i.ageBand;
+    if (typeof ageBand === 'string') {
+      const mid = bandMidpoint(ageBand);
+      if (mid !== null) setCurrentAge(Math.round(clamp(mid, 18, 67)));
+    }
+    const balanceBand = payload.i.balanceBand;
+    if (typeof balanceBand === 'string') {
+      const mid = bandMidpoint(balanceBand);
+      if (mid !== null) setCurrentBalance(roundToStep(clamp(mid, 0, 1_000_000), 10_000));
+    }
+    const contributionBand = payload.i.contributionBand;
+    if (typeof contributionBand === 'string') {
+      const mid = bandMidpoint(contributionBand);
+      if (mid !== null) setAdditionalMonthly(roundToStep(clamp(mid, 0, 5_000), 100));
+    }
+  }, []);
+
+  // FDL 4.4 — "Project this in Wealth Horizon" deep link (SPEC 8.7). Path
+  // comes from the registry (getToolEntryHref), never hardcoded; the
+  // fragment carries only bucketed bands via the superannuation
+  // shareableFields allowlist — never the raw currentBalance/additionalMonthly.
+  const wealthHorizonHref = useMemo(() => {
+    const path = getToolEntryHref('wealth-horizon', 'au');
+    if (!path) return null;
+    const encoded = encodeShare('superannuation', {
+      ageBand: toInputBucket(currentAge, 'years'),
+      balanceBand: toInputBucket(currentBalance, 'currency'),
+      contributionBand: toInputBucket(additionalMonthly, 'currency'),
+    });
+    return encoded ? buildShareUrl('', path, encoded) : path;
+  }, [currentAge, currentBalance, additionalMonthly]);
 
   const results: SuperannuationResults = useMemo(() => {
     let balance = currentBalance;
@@ -281,11 +329,11 @@ export function SuperannuationCalculator() {
               />
               <div className="flex justify-between text-xs mt-1" style={{ color: 'var(--sfp-slate)' }}>
                 <span>9.5% (SG)</span>
-                <span>11.5% (Current)</span>
+                <span>12% (current since July 2025)</span>
                 <span>15%</span>
               </div>
               <p className="text-xs mt-2" style={{ color: 'var(--sfp-slate)' }}>
-                SG (Superannuation Guarantee) is 11.5% from July 2024, increasing to 12% by 2025.
+                SG (Superannuation Guarantee): the legislated 12% rate applies since 1 July 2025.
               </p>
             </div>
 
@@ -321,7 +369,7 @@ export function SuperannuationCalculator() {
               </div>
               <p className="text-xs mt-2" style={{ color: 'var(--sfp-slate)' }}>
                 Salary sacrifice contributions can reduce your taxable income. Annual concessional
-                contribution limit: A$27,500 (2024-25).
+                contribution limit: A$32,500 (2026-27).
               </p>
             </div>
           </div>
@@ -380,6 +428,19 @@ export function SuperannuationCalculator() {
               </p>
             </m.div>
           </LazyMotion>
+
+          {/* FDL 4.4 — dezenter Deep-Link, keine Verdrängung des Affiliate-CTA weiter unten */}
+          {wealthHorizonHref ? (
+            <a
+              href={wealthHorizonHref}
+              data-testid="wh-deep-link"
+              className="inline-flex items-center gap-1.5 text-sm font-semibold no-underline hover:underline"
+              style={{ color: 'var(--sfp-navy)' }}
+            >
+              Project this in Wealth Horizon
+              <ArrowRight className="h-3.5 w-3.5" />
+            </a>
+          ) : null}
 
           {/* Stats Grid */}
           <div className="grid grid-cols-2 gap-4">

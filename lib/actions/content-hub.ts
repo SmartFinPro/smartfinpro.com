@@ -181,24 +181,42 @@ function computeSeoHealth(seoTitle: string | undefined, description: string | un
 
 // ── Content Quality Scoring ─────────────────────────────────────
 
+// <ExpertBox> and <EvidenceCarousel> were removed 2026-07-18 (T0e audit):
+// they rewarded fabricated reviewer identities / non-existent test
+// screenshots — see docs/superpowers/specs/2026-07-18-etoro-cockpit-audit.md.
 const MDX_COMPONENTS = [
-  '<TrustAuthority', '<ExpertBox', '<Rating', '<AffiliateButton',
+  '<TrustAuthority', '<Rating', '<AffiliateButton',
   '<ExecutiveSummary', '<CollapsibleSection', '<ComparisonTable',
   '<SimpleComparison', '<BrokerComparison', '<EnterpriseTable',
   '<FAQ', '<Pros', '<Cons', '<Info', '<Warning', '<Tip',
-  '<EvidenceCarousel', '<NewsletterBox', '<WinnerAtGlance',
+  '<NewsletterBox', '<WinnerAtGlance',
 ];
 
-function computeContentQuality(content: string, wordCount: number): ContentQuality {
-  // ── Word Score (30% weight) — target: 4000-7000 words ──
+// V2 review-layout pages (frontmatter `reviewLayout: 'v2'`) target a much
+// leaner rendered word count (2,600–3,600 vs. V1's 4,000–7,000) because
+// most of their editorial content lives in structured frontmatter zones
+// (verdict/essentialFacts/alternatives), not the MDX body — see
+// scripts/lib/rendered-word-count.mjs for the counting rationale.
+function computeContentQuality(content: string, wordCount: number, isV2 = false): ContentQuality {
+  // ── Word Score (30% weight) ──
   let wordScore = 0;
-  if (wordCount >= 4000 && wordCount <= 7000) wordScore = 100;
-  else if (wordCount >= 3000 && wordCount < 4000) wordScore = 70;
-  else if (wordCount > 7000 && wordCount <= 9000) wordScore = 80;
-  else if (wordCount >= 2000 && wordCount < 3000) wordScore = 50;
-  else if (wordCount > 9000) wordScore = 60;
-  else if (wordCount >= 1000) wordScore = 30;
-  else wordScore = 10;
+  if (isV2) {
+    if (wordCount >= 2600 && wordCount <= 3600) wordScore = 100;
+    else if (wordCount >= 2200 && wordCount < 2600) wordScore = 70;
+    else if (wordCount > 3600 && wordCount <= 4200) wordScore = 80;
+    else if (wordCount >= 1800 && wordCount < 2200) wordScore = 50;
+    else if (wordCount > 4200) wordScore = 60;
+    else if (wordCount >= 900) wordScore = 30;
+    else wordScore = 10;
+  } else {
+    if (wordCount >= 4000 && wordCount <= 7000) wordScore = 100;
+    else if (wordCount >= 3000 && wordCount < 4000) wordScore = 70;
+    else if (wordCount > 7000 && wordCount <= 9000) wordScore = 80;
+    else if (wordCount >= 2000 && wordCount < 3000) wordScore = 50;
+    else if (wordCount > 9000) wordScore = 60;
+    else if (wordCount >= 1000) wordScore = 30;
+    else wordScore = 10;
+  }
 
   // ── Structure Score (25% weight) — headings + FAQ ──
   const h2Count = (content.match(/^## /gm) || []).length;
@@ -231,7 +249,10 @@ function computeContentQuality(content: string, wordCount: number): ContentQuali
 
   let componentScore = 0;
   componentScore += Math.min(componentCount, 6) * 12; // Up to 72 pts for components
-  componentScore += Math.min(imageCount, 4) * 7;      // Up to 28 pts for images
+  // V2 pages have no image requirement (real product screenshots are
+  // editorial illustration only, never fabricated "test evidence") — award
+  // the full 28 pts unconditionally instead of gating on imageCount.
+  componentScore += isV2 ? 28 : Math.min(imageCount, 4) * 7;
   componentScore = Math.min(componentScore, 100);
 
   // ── Weighted overall score ──
@@ -427,6 +448,7 @@ function scanMdxFiles(): ContentHubRow[] {
           const description = (fm.description as string) || '';
           const wordCount = content.split(/\s+/).filter(Boolean).length;
           const sizeKB = Math.round((stats.size / 1024) * 10) / 10;
+          const isV2 = fm.reviewLayout === 'v2';
           const lastUpdated =
             normalizeDateString(fm.modifiedDate) ??
             normalizeDateString(fm.publishDate) ??
@@ -445,7 +467,7 @@ function scanMdxFiles(): ContentHubRow[] {
             httpStatus: null,
             httpHealth: 'yellow',
             seoHealth: computeSeoHealth(seoTitle, description),
-            contentQuality: computeContentQuality(content, wordCount),
+            contentQuality: computeContentQuality(content, wordCount, isV2),
             lastUpdated,
             cpsScore: null,
             cpsSource: 'unavailable',
@@ -505,6 +527,7 @@ function scanMdxFiles(): ContentHubRow[] {
         const description = (fm.description as string) || '';
         const wordCount = content.split(/\s+/).filter(Boolean).length;
         const sizeKB = Math.round((stats.size / 1024) * 10) / 10;
+        const isV2 = fm.reviewLayout === 'v2';
         const lastUpdated =
           normalizeDateString(fm.modifiedDate) ??
           normalizeDateString(fm.publishDate) ??
@@ -523,7 +546,7 @@ function scanMdxFiles(): ContentHubRow[] {
           httpStatus: null,
           httpHealth: 'yellow',
           seoHealth: computeSeoHealth(seoTitle, description),
-          contentQuality: computeContentQuality(content, wordCount),
+          contentQuality: computeContentQuality(content, wordCount, isV2),
           lastUpdated,
           cpsScore: null,
           cpsSource: 'unavailable',

@@ -513,7 +513,12 @@ const nextConfig: SmartFinNextConfig = {
       // 1h CDN-Cache, Browser revalidiert immer.
       // ============================================================
       {
-        source: '/:path((?!api|_next|static|favicon|dashboard).*)',
+        // `go` is excluded: this catch-all comes last and would otherwise
+        // override the no-store rule above with `s-maxage=3600`. An edge-cached
+        // /go/[slug] response is a dead CTA for an hour — and since the route
+        // now answers speculative requests with 204, caching one would serve
+        // that 204 to every real clicker.
+        source: '/:path((?!api|_next|static|favicon|dashboard|go).*)',
         missing: [{ type: 'header', key: 'rsc' }],
         headers: [
           {
@@ -670,6 +675,15 @@ const nextConfig: SmartFinNextConfig = {
       {
         source: '/:market(uk|ca|au)/tools/credit-score-simulator',
         destination: '/tools/credit-score-simulator',
+        permanent: true,
+      },
+
+      // ── gold-roi-calculator moved from /tools/ to /au/tools/ (FDL 0.3) ────
+      // Tool is AU-only content; the page physically moved, so the legacy
+      // US-style path now 308s to the correct market-prefixed route.
+      {
+        source: '/tools/gold-roi-calculator',
+        destination: '/au/tools/gold-roi-calculator',
         permanent: true,
       },
 

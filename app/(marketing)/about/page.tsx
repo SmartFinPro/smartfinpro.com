@@ -723,11 +723,11 @@ export default function AboutPage() {
               description:
                 'Independent expert reviews of financial products across AI tools, cybersecurity, trading, forex, personal finance, and business banking.',
             },
-            founders: allAuthors.map((author) => ({
-              '@type': 'Person',
-              name: author.name,
-              url: `https://smartfinpro.com/authors/${author.slug}`,
-            })),
+            // `founders` Person nodes removed (2026-07-26 editorial-integrity
+            // review, F1): allAuthors are not real founders — see
+            // lib/seo/schema.ts for the Organization-only pattern this page
+            // now follows. Visible page content (allAuthors rendering below)
+            // is untouched — this is a machine-readable-only fix.
             knowsAbout: [
               'Financial Services',
               'Personal Finance',

@@ -9,6 +9,8 @@ import type { ProductForComparison } from '@/lib/comparison/types';
 import type { TopicConfig } from '@/lib/comparison/topics/types';
 import { costOverTime, type CostInputs } from '@/lib/comparison/cost';
 import { formatMoney, formatCostLabel } from '@/lib/comparison/money';
+import { resolveCockpitCta } from '@/lib/comparison/cta';
+import type { CockpitCompareToggleSource, CockpitCtaClickMeta } from '@/lib/analytics/cockpit-events';
 
 const C = {
   ink: '#1A1F36',
@@ -36,11 +38,11 @@ export interface CockpitCompareProps {
   config: TopicConfig;
   market: Market;
   inputs: CostInputs;
-  onToggleSelect: (slug: string) => void;
-  onOfferClick: (product: ProductForComparison) => void;
+  onToggleSelect: (slug: string, source?: CockpitCompareToggleSource) => void;
+  onCtaClick: (product: ProductForComparison, meta: CockpitCtaClickMeta) => void;
 }
 
-export function CockpitCompare({ all, selectedSlugs, config, market, inputs, onToggleSelect, onOfferClick }: CockpitCompareProps) {
+export function CockpitCompare({ all, selectedSlugs, config, market, inputs, onToggleSelect, onCtaClick }: CockpitCompareProps) {
   const bySlug = new Map(all.map((p) => [p.slug, p]));
   const ps = selectedSlugs.map((s) => bySlug.get(s)).filter((p): p is ProductForComparison => !!p);
 
@@ -68,7 +70,7 @@ export function CockpitCompare({ all, selectedSlugs, config, market, inputs, onT
               <button
                 key={p.slug}
                 type="button"
-                onClick={() => onToggleSelect(p.slug)}
+                onClick={() => onToggleSelect(p.slug, 'compare_chip')}
                 aria-pressed={on}
                 disabled={atMax}
                 style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '7px 13px', borderRadius: 20, fontSize: 12.5, fontWeight: 500, cursor: atMax ? 'not-allowed' : 'pointer', opacity: atMax ? 0.45 : 1, background: on ? C.navy : '#fff', color: on ? '#fff' : C.navy, border: `1px solid ${on ? C.navy : C.border}`, fontFamily: 'inherit' }}
@@ -87,20 +89,12 @@ export function CockpitCompare({ all, selectedSlugs, config, market, inputs, onT
           {/* Header row */}
           <div className="ck-cmp-corner" style={{ background: C.navy, color: '#fff', padding: '12px', display: 'flex', alignItems: 'flex-end', fontSize: 12.5, fontWeight: 600 }}>Side-by-side</div>
           {ps.map((p) => {
-            const reviewHref = p.reviewSlug ? `/${p.market}/${p.category}/${p.reviewSlug}` : null;
             // Mirror the card's primary CTA: always green, never /go for unverified.
-            const cta =
-              p.ctaMode === 'offer'
-                ? { label: 'View offer', href: `/go/${p.slug}`, external: false, tracked: true }
-                : p.externalUrl
-                  ? { label: 'Visit site', href: p.externalUrl, external: true, tracked: false }
-                  : reviewHref
-                    ? { label: 'Read review', href: reviewHref, external: false, tracked: false }
-                    : { label: 'Visit site', href: '#', external: true, tracked: false };
+            const cta = resolveCockpitCta(p);
             return (
               <div key={p.slug} style={{ background: C.navy, color: '#fff', padding: '12px', textAlign: 'center', position: 'relative' }}>
                 {ps.length > 2 && (
-                  <button type="button" className="ck-cmp-remove" onClick={() => onToggleSelect(p.slug)} aria-label={`Remove ${p.displayName}`} style={{ position: 'absolute', top: 6, right: 8, background: 'none', border: 'none', color: '#fff', opacity: 0.85, cursor: 'pointer', padding: 0 }}>
+                  <button type="button" className="ck-cmp-remove" onClick={() => onToggleSelect(p.slug, 'compare_remove')} aria-label={`Remove ${p.displayName}`} style={{ position: 'absolute', top: 6, right: 8, background: 'none', border: 'none', color: '#fff', opacity: 0.85, cursor: 'pointer', padding: 0 }}>
                     <X size={14} aria-hidden="true" />
                   </button>
                 )}
@@ -112,7 +106,7 @@ export function CockpitCompare({ all, selectedSlugs, config, market, inputs, onT
                   href={cta.href}
                   className="cmp-cta"
                   {...(cta.external ? { target: '_blank', rel: 'nofollow sponsored noopener' } : {})}
-                  onClick={cta.tracked ? () => onOfferClick(p) : undefined}
+                  onClick={() => onCtaClick(p, { surface: 'compare', ctaPosition: 'primary', rank: all.findIndex((x) => x.slug === p.slug) + 1, ctaMode: cta.ctaMode, destinationType: cta.destinationType })}
                   style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 8, padding: '6px 12px', borderRadius: 8, fontSize: 11.5, fontWeight: 600, textDecoration: 'none', whiteSpace: 'nowrap', background: C.ctaGreen, color: '#fff', border: 'none' }}
                 >
                   {cta.label} <ArrowRight size={12} aria-hidden="true" />

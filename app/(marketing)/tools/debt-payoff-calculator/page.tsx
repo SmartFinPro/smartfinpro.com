@@ -1,36 +1,43 @@
 // app/(marketing)/tools/debt-payoff-calculator/page.tsx
-import { Metadata } from 'next';
 import { DebtPayoffCalculator } from '@/components/tools/debt-payoff-calculator';
 import { AnswerBlock } from '@/components/ui/answer-block';
 import { AffiliateDisclosure } from '@/components/ui/affiliate-disclosure';
+import { buildToolMetadata } from '@/lib/tools/registry/metadata';
+import { ToolJsonLd } from '@/components/tools/shell/tool-json-ld';
+import type { FAQ } from '@/types';
 
-export const metadata: Metadata = {
-  title: 'Debt Payoff Calculator 2026 | Free Debt Paydown Timeline Tool',
-  description:
-    'Calculate how long it will take to pay off your debt. Free debt payoff calculator shows payment schedules, total interest, and strategies to become debt-free faster.',
-  // noindex: "Coming Soon" placeholder — remove once fully built
-  robots: { index: false, follow: true },
-  alternates: {
-    canonical: 'https://smartfinpro.com/tools/debt-payoff-calculator',
-    languages: {
-      'en-US': 'https://smartfinpro.com/tools/debt-payoff-calculator',
-      'en-GB': 'https://smartfinpro.com/tools/debt-payoff-calculator',
-      'en-CA': 'https://smartfinpro.com/tools/debt-payoff-calculator',
-      'en-AU': 'https://smartfinpro.com/tools/debt-payoff-calculator',
-    },
+// noindex kommt jetzt aus der Registry (indexable: false) — siehe SPEC 9.2
+export const metadata = buildToolMetadata('debt-payoff', 'us');
+
+// Mirrors the visible "FAQ: Debt Payoff Calculator" section below verbatim — never add
+// questions here that aren't rendered on the page.
+const FAQ_ITEMS: FAQ[] = [
+  {
+    question: 'How accurate is this debt payoff calculator?',
+    answer:
+      'The calculator uses standard amortization formulas and is highly accurate for fixed-rate debt. For variable-rate debt (like credit cards that change APR), results are estimates based on the current rate you enter.',
   },
-  openGraph: {
-    title: 'Debt Payoff Calculator 2026 | SmartFinPro',
-    description:
-      'Calculate how long it will take to pay off your debt with our free tool. See payment schedules and interest savings.',
-    url: 'https://smartfinpro.com/tools/debt-payoff-calculator',
-    type: 'website',
+  {
+    question: 'Should I pay off debt or save money first?',
+    answer:
+      "Build a small emergency fund ($500-$1,000) first to avoid new debt from unexpected expenses. Then focus on paying off high-interest debt (18%+). Once that's clear, balance debt payoff with retirement savings.",
   },
-};
+  {
+    question: 'What happens if I miss a payment?',
+    answer:
+      "Missing payments adds late fees, increases your interest rate, and extends your payoff timeline. If you're struggling, contact your creditor immediately — many offer hardship programs.",
+  },
+  {
+    question: 'Can I pay off debt early without penalty?',
+    answer:
+      'Most credit cards and personal loans have no prepayment penalty. Some auto loans and mortgages do. Check your loan agreement or contact your lender to confirm.',
+  },
+];
 
 export default function DebtPayoffCalculatorPage() {
   return (
     <main className="min-h-screen bg-white">
+      <ToolJsonLd toolId="debt-payoff" market="us" faq={FAQ_ITEMS} />
       {/* Hero */}
       <section
         className="relative py-20 px-6"

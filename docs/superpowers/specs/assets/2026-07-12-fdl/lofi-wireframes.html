@@ -1,0 +1,438 @@
+<title>FDL Lo-Fi Wireframes — Hub & 4 Major Tools</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    --desk:#eef1f5; --paper:#ffffff; --wire:#8a97a8; --wire-soft:#c6cfda;
+    --ink:#25303e; --muted:#5b6878; --note:#c2410c; --fill:#f3f5f8;
+    --good:#1a6b3a;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --desk:#1b2028; --ink-page:#e5e9ef; }
+  }
+  :root[data-theme="dark"]{ --desk:#1b2028; }
+  :root[data-theme="light"]{ --desk:#eef1f5; }
+  *{box-sizing:border-box}
+  body{background:var(--desk); color:var(--ink); font:15px/1.5 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif; margin:0; padding:24px}
+  header.page{max-width:1360px;margin:0 auto 20px}
+  header.page h1{font-size:22px;margin:0 0 4px}
+  header.page p{margin:0;color:#6b7788;max-width:70ch}
+  :root[data-theme="dark"] header.page h1, :root[data-theme="dark"] header.page p{color:#dfe5ee}
+  @media (prefers-color-scheme: dark){ header.page h1, header.page p{color:#dfe5ee} :root[data-theme="light"] header.page h1{color:#25303e} :root[data-theme="light"] header.page p{color:#6b7788} }
+  nav.toc{max-width:1360px;margin:0 auto 28px;display:flex;flex-wrap:wrap;gap:8px}
+  nav.toc a{font:12px ui-monospace,Menlo,monospace;color:var(--note);text-decoration:none;border:1px solid var(--note);border-radius:3px;padding:3px 8px;background:var(--paper)}
+  nav.toc a:focus-visible{outline:2px solid var(--note);outline-offset:2px}
+  section.screen{max-width:1360px;margin:0 auto 44px}
+  section.screen>h2{font-size:16px;margin:0 0 2px}
+  section.screen>p.sub{margin:0 0 12px;color:#6b7788;font-size:13px;max-width:80ch}
+  @media (prefers-color-scheme: dark){ section.screen>h2,section.screen>p.sub{color:#dfe5ee} }
+  :root[data-theme="dark"] section.screen>h2, :root[data-theme="dark"] section.screen>p.sub{color:#dfe5ee}
+  :root[data-theme="light"] section.screen>h2{color:#25303e} :root[data-theme="light"] section.screen>p.sub{color:#6b7788}
+  .frames{display:flex;gap:24px;align-items:flex-start;flex-wrap:wrap}
+  .frame-wrap{overflow-x:auto;max-width:100%}
+  figure.frame{margin:0;background:var(--paper);border:1px solid var(--wire);border-radius:4px;padding:14px;color:var(--ink)}
+  figure.frame.w1280{width:1000px} /* 1280 skaliert dargestellt; Maße gelten für 1280 — Redlines nennen Sollwerte */
+  figure.frame.w390{width:330px}
+  figure.frame figcaption{font:11px ui-monospace,Menlo,monospace;color:var(--note);margin:-4px 0 10px}
+  .wire{border:1.5px solid var(--wire);border-radius:4px;background:var(--paper);padding:8px;font-size:12px;color:var(--ink)}
+  .wire.soft{border-color:var(--wire-soft)}
+  .wire.fill{background:var(--fill)}
+  .hatch{background:repeating-linear-gradient(45deg,transparent 0 6px,var(--wire-soft) 6px 7px);border:1.5px solid var(--wire);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:11px;color:#5b6878}
+  .btnw{border:1.5px solid var(--ink);border-radius:3px;padding:6px 10px;font-size:12px;display:inline-block;background:var(--fill)}
+  .chip{border:1px solid var(--wire);border-radius:999px;padding:1px 8px;font-size:10px;display:inline-block;background:var(--paper)}
+  .chip.ex{border-style:dashed}
+  .note{font:11px ui-monospace,Menlo,monospace;color:var(--note)}
+  .row{display:flex;gap:10px}
+  .col{display:flex;flex-direction:column;gap:8px}
+  .grid12{display:grid;grid-template-columns:repeat(12,1fr);gap:12px} /* Redline: real 24-32px Gutter */
+  .sp{height:6px}
+  .bar{height:10px;border-radius:2px;background:var(--wire-soft)}
+  .lbl{font-size:10px;color:#5b6878;text-transform:uppercase;letter-spacing:.04em}
+  .legend{display:flex;flex-wrap:wrap;gap:14px;background:var(--paper);border:1px dashed var(--note);border-radius:4px;padding:10px 14px;max-width:1360px;margin:0 auto 32px;font-size:12px;color:var(--ink)}
+  .legend .item{display:flex;align-items:center;gap:6px}
+  .legend .sw{width:26px;height:16px;border-radius:3px;flex:0 0 auto}
+</style>
+
+<header class="page">
+  <h1>Financial Decision Lab — Lo-Fi-Wireframes v1</h1>
+  <p>Struktur-Validierung vor High-Fi. Alle Maße als Redline-Annotationen (Sollwerte bei 1280 px bzw. 390 px). Quelle: Spec Kapitel 6, 12.07.2026. Farben/Typografie sind hier bewusst schematisch — Token folgen im High-Fi.</p>
+</header>
+
+<nav class="toc" aria-label="Screens">
+  <a href="#hub">01 Hub Decision Launcher</a>
+  <a href="#moneyleak">02 Money Leak · LiveCanvas</a>
+  <a href="#horizon">03 Wealth Horizon · GuidedJourney</a>
+  <a href="#broker">04 Broker Journey · Fluss</a>
+  <a href="#homelab">05 Home Lab · PrecisionWorksheet</a>
+</nav>
+
+<div class="legend" role="note">
+  <strong style="font-size:12px">Legende:</strong>
+  <span class="item"><span class="sw hatch"></span> Chart/Visual (echtes SVG im High-Fi)</span>
+  <span class="item"><span class="sw" style="border:1.5px solid var(--ink);background:var(--fill)"></span> interaktives Element</span>
+  <span class="item"><span class="sw" style="border:1.5px dashed var(--wire)"></span> zustandsabhängig</span>
+  <span class="item"><span class="note">orange mono = Redline/Maß</span></span>
+</div>
+
+<!-- ============ 01 HUB ============ -->
+<section class="screen" id="hub">
+  <h2>01 · Hub „Decision Launcher" — /tools (+ 3 Markt-Hubs)</h2>
+  <p class="sub">AK: Bei 1280×720 sind alle Major Decisions des aktiven Markts erkennbar — <strong>US: exakt 3</strong> (kein Home-Panel, solange kein US-Home-Tool existiert; keine Ersatzroute), <strong>UK/CA/AU: 4</strong>. Kein Hero, kein Gradient. Miniaturen = echte Mini-Charts aus Worked-Example-Daten, jede mit „Example"-Chip. Frame unten zeigt den US-Hub.</p>
+  <div class="frames">
+    <div class="frame-wrap">
+    <figure class="frame w1280">
+      <figcaption>1280 px · Workspace max 1240 px zentriert · Gutter 32 px</figcaption>
+      <div class="col">
+        <div class="row" style="justify-content:space-between;align-items:flex-start">
+          <div class="col" style="gap:4px">
+            <div class="wire soft" style="border:none;padding:0"><strong style="font-size:17px">What financial decision are you making today?</strong></div>
+            <div class="lbl">Subline: One question at a time — free, data-verified tools.</div>
+          </div>
+          <div class="row" role="group" aria-label="Market">
+            <span class="btnw" style="border-width:2px">US</span><span class="btnw">UK</span><span class="btnw">CA</span><span class="btnw">AU</span>
+          </div>
+        </div>
+        <div class="note">↑ H1-Bereich gesamt ≤ 220 px · Marktumschalter 44 px hoch</div>
+        <div class="grid12">
+          <div class="wire col" style="grid-column:span 4;min-height:150px">
+            <span class="lbl">Find where my money is going</span>
+            <strong>Money Leak Scanner</strong>
+            <div class="hatch" style="height:56px">mini: Kategorie-Leisten</div>
+            <div class="row" style="justify-content:space-between;align-items:center"><span class="chip ex">Example</span><span class="btnw">Start →</span></div>
+          </div>
+          <div class="wire col" style="grid-column:span 4;min-height:150px">
+            <span class="lbl">Plan my financial future</span>
+            <strong>Wealth Horizon</strong>
+            <div class="hatch" style="height:56px">mini: Szenariokorridor</div>
+            <div class="row" style="justify-content:space-between;align-items:center"><span class="chip ex">Example</span><span class="btnw">Start →</span></div>
+          </div>
+          <div class="wire col" style="grid-column:span 4;min-height:150px">
+            <span class="lbl">Choose the right broker</span>
+            <strong>Broker Decision Journey</strong>
+            <div class="hatch" style="height:56px">mini: Match + Kosten</div>
+            <div class="row" style="justify-content:space-between;align-items:center"><span class="chip ex">Example</span><span class="btnw">Start →</span></div>
+          </div>
+        </div>
+        <div class="note">US: exakt 3 Panels à span-4 — kein Home-Panel, keine Ersatzroute (Major-Decision-Tabelle SPEC 4.2, bindend) · Miniatur ~120×64 px · Radius 8 px</div>
+        <div class="sp"></div>
+        <div class="wire soft col">
+          <span class="lbl">Supporting tools — US-Hub (real nach availableMarkets gefiltert; kein UK/CA/AU-Tool sichtbar)</span>
+          <div class="row" style="flex-wrap:wrap">
+            <div class="wire col" style="width:220px"><span class="lbl">Debt &amp; credit</span><span>· Debt Payoff</span><span>· Credit Utilization</span><span>· Loan</span></div>
+            <div class="wire col" style="width:220px"><span class="lbl">Trading &amp; brokers</span><span>· Trading Cost</span><span>· Broker Comparison</span></div>
+            <div class="wire col" style="width:220px"><span class="lbl">Cards &amp; rewards</span><span>· Credit Card Rewards</span></div>
+            <div class="wire col" style="width:220px"><span class="lbl">Business</span><span>· AI ROI</span></div>
+          </div>
+          <div class="note">KEINE „Popular"-Badges bis Mindeststichprobe (≥500 tool_view / 28 Tage)</div>
+        </div>
+      </div>
+    </figure>
+    </div>
+    <div class="frame-wrap">
+    <figure class="frame" style="width:1000px">
+      <figcaption>1280 px · /uk/tools — lokalisierter Markt: 4 Panels à span-3, UK-gefiltertes Supporting</figcaption>
+      <div class="col">
+        <div class="row" style="justify-content:space-between;align-items:flex-start">
+          <div class="col" style="gap:4px">
+            <div class="wire soft" style="border:none;padding:0"><strong style="font-size:16px">What financial decision are you making today?</strong></div>
+            <div class="lbl">Subline + Marktumschalter (UK aktiv)</div>
+          </div>
+          <div class="row"><span class="btnw">US</span><span class="btnw" style="border-width:2px">UK</span><span class="btnw">CA</span><span class="btnw">AU</span></div>
+        </div>
+        <div class="grid12">
+          <div class="wire col" style="grid-column:span 3;min-height:120px">
+            <span class="lbl">Find where my money is going</span><strong style="font-size:12px">Money Leak Scanner</strong>
+            <div class="hatch" style="height:44px">mini</div>
+            <div class="row" style="justify-content:space-between"><span class="chip ex">Example</span><span class="note">/uk/tools/…</span></div>
+          </div>
+          <div class="wire col" style="grid-column:span 3;min-height:120px">
+            <span class="lbl">Plan my financial future</span><strong style="font-size:12px">Wealth Horizon</strong>
+            <div class="hatch" style="height:44px">mini</div>
+            <div class="row" style="justify-content:space-between"><span class="chip ex">Example</span><span class="note">/uk/tools/pension-…</span></div>
+          </div>
+          <div class="wire col" style="grid-column:span 3;min-height:120px">
+            <span class="lbl">Choose the right broker</span><strong style="font-size:12px">Broker Journey</strong>
+            <div class="hatch" style="height:44px">mini</div>
+            <div class="row" style="justify-content:space-between"><span class="chip ex">Example</span><span class="note">?market=uk</span></div>
+          </div>
+          <div class="wire col" style="grid-column:span 3;min-height:120px">
+            <span class="lbl">Understand what home I can afford</span><strong style="font-size:12px">Home Lab: UK Remortgage</strong>
+            <div class="hatch" style="height:44px">mini</div>
+            <div class="row" style="justify-content:space-between"><span class="chip ex">Example</span><span class="note">/uk/tools/remortgage-…</span></div>
+          </div>
+        </div>
+        <div class="wire soft col">
+          <span class="lbl">Supporting tools — UK-Hub (real gefiltert: keine US-only-Tools wie Loan/Rewards/AI ROI)</span>
+          <div class="row" style="flex-wrap:wrap">
+            <div class="wire col" style="width:240px"><span class="lbl">Retirement &amp; investing</span><span>· ISA Tax Savings</span></div>
+            <div class="wire col" style="width:240px"><span class="lbl">Trading &amp; brokers</span><span>· Trading Cost <em style="font-size:9px">?market=uk</em></span><span>· Broker Comparison <em style="font-size:9px">?market=uk</em></span></div>
+          </div>
+        </div>
+      </div>
+    </figure>
+    </div>
+    <div class="frame-wrap">
+    <figure class="frame w390">
+      <figcaption>390 px · Panel 1 vollständig im 1. Viewport</figcaption>
+      <div class="col">
+        <strong style="font-size:15px">What financial decision are you making today?</strong>
+        <div class="row"><span class="btnw" style="flex:1;text-align:center;border-width:2px">US</span><span class="btnw" style="flex:1;text-align:center">UK</span><span class="btnw" style="flex:1;text-align:center">CA</span><span class="btnw" style="flex:1;text-align:center">AU</span></div>
+        <div class="wire row" style="align-items:center;min-height:64px">
+          <div class="col" style="flex:1;gap:2px"><span class="lbl">Find where my money is going</span><strong style="font-size:12px">Money Leak Scanner</strong><span class="chip ex">Example</span></div>
+          <div class="hatch" style="width:96px;height:52px;flex:0 0 auto">mini</div>
+        </div>
+        <div class="wire row" style="align-items:center;min-height:64px">
+          <div class="col" style="flex:1;gap:2px"><span class="lbl">Plan my financial future</span><strong style="font-size:12px">Wealth Horizon</strong><span class="chip ex">Example</span></div>
+          <div class="hatch" style="width:96px;height:52px;flex:0 0 auto">mini</div>
+        </div>
+        <div class="wire row" style="align-items:center;min-height:64px">
+          <div class="col" style="flex:1;gap:2px"><span class="lbl">Choose the right broker</span><strong style="font-size:12px">Broker Journey</strong><span class="chip ex">Example</span></div>
+          <div class="hatch" style="width:96px;height:52px;flex:0 0 auto">mini</div>
+        </div>
+        <div class="note">US-Hub mobil: exakt diese 3 Panels — kein Home-Panel (SPEC 4.2); UK/CA/AU mobil: 4 Panels analog dem UK-Desktop-Frame · ~132 px je Panel · Touch ≥44 px</div>
+      </div>
+    </figure>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 02 MONEY LEAK ============ -->
+<section class="screen" id="moneyleak">
+  <h2>02 · Money Leak Scanner — LiveCanvas (Pilot)</h2>
+  <p class="sub">SSR zeigt Worked Example („Example result"-Chip). Erste Eingabe wechselt auf „Your result". Ergebnisreihenfolge fix 1→6.</p>
+  <div class="frames">
+    <div class="frame-wrap">
+    <figure class="frame w1280">
+      <figcaption>1280 px · Inputs col-span-5 · Results col-span-7 · Results sticky nur wenn Input-Spalte länger als Viewport</figcaption>
+      <div class="col">
+        <div class="lbl">Home › Tools › Money Leak Scanner</div>
+        <div><strong style="font-size:17px">Money Leak Scanner</strong> — <span style="font-size:12px">Find hidden household overspend in about two minutes.</span></div>
+        <div class="wire soft row" style="align-items:center;font-size:11px">
+          <span>🇺🇸 US</span><span>· ~2 min</span><span>· Data verified 2026-07-12</span><span class="note">= min(verifiedAt kritischer Rules)</span>
+          <span style="margin-left:auto">Methodology · Privacy</span>
+        </div>
+        <div class="note">↑ Breadcrumb 24 px · H1-Block ≤96 px · TrustStrip 32 px</div>
+        <div class="grid12">
+          <div class="col" style="grid-column:span 5">
+            <div class="wire col">
+              <span class="lbl">Your household</span>
+              <div class="row"><div class="wire fill" style="flex:1">Monthly net income&nbsp; <strong>$ 5,400</strong></div><span class="chip">I'm not sure</span></div>
+              <div class="note">CurrencyField: Zahlenfeld PFLICHT, Slider optional · 44 px</div>
+              <div class="wire fill">Household size &nbsp;[1][2][3][4+] ← SegmentedControl</div>
+            </div>
+            <div class="wire col">
+              <span class="lbl">Monthly spending (sliders + fields)</span>
+              <div class="row" style="align-items:center"><span style="width:110px">Subscriptions</span><div class="bar" style="flex:1"></div><span class="wire fill" style="width:70px;text-align:right">$ 80</span></div>
+              <div class="row" style="align-items:center"><span style="width:110px">Insurance</span><div class="bar" style="flex:1"></div><span class="wire fill" style="width:70px;text-align:right">$ 320</span></div>
+              <div class="row" style="align-items:center"><span style="width:110px">Banking fees</span><div class="bar" style="flex:1"></div><span class="wire fill" style="width:70px;text-align:right">$ 24</span></div>
+            </div>
+            <div class="wire soft" style="border-style:dashed;font-size:11px" role="alert">Fehler-Summary-Region (nur bei Validierungsfehlern, verlinkt Felder)</div>
+          </div>
+          <div class="col" style="grid-column:span 7">
+            <div class="wire col">
+              <div class="row" style="justify-content:space-between"><span class="chip ex">Example result</span><span class="note">→ „Your result" nach 1. Eingabe · aria-live gedrosselt ≤1/s</span></div>
+              <div><strong>1&nbsp;·</strong> You may be leaking about <strong>$210–$340</strong> every month.</div>
+              <div class="row" style="align-items:baseline"><strong style="font-size:26px;font-variant-numeric:tabular-nums">$275</strong><span style="font-size:11px">/mo midpoint · range $210–$340</span></div>
+              <div class="note">2 · Ergebniszahl ≤44/52 · tabular-nums · reservierte Breite gegen Layout-Shift</div>
+              <div class="hatch" style="height:110px">3 · Signatur-Visual: priorisierte Kategorie-Leisten, direkt beschriftet, Muster-Overlay zusätzlich zu Farbe</div>
+              <div class="wire col"><span class="lbl">4 · Three prioritized fixes (exakt 3)</span>
+                <div class="row"><span class="btnw" style="flex:1">Cancel 2 unused subs · ~$38/mo</span><span class="btnw" style="flex:1">Re-shop insurance · ~$95/mo</span><span class="btnw" style="flex:1">Switch bank plan · ~$18/mo</span></div>
+                <div class="note">Lever-Klick = tool_input_change controlRole:'lever'</div>
+              </div>
+              <div class="wire soft">5 · ▸ Assumptions &amp; sources (natives &lt;details&gt;, je Quelle Effective + Verified Date)</div>
+              <div class="row" style="justify-content:space-between;align-items:center">
+                <span class="btnw" style="border-width:2px">6 · See best high-yield savings for the money you free up →</span>
+                <span class="note">GENAU 1 NextBestAction · markt-spezifisch</span>
+              </div>
+            </div>
+            <div class="note">Below-Fold (RSC): Methodology · Worked example · FAQ · Sources · Related tools</div>
+          </div>
+        </div>
+      </div>
+    </figure>
+    </div>
+    <div class="frame-wrap">
+    <figure class="frame w390">
+      <figcaption>390 px · H1 + Trust + 1. Input im 1. Viewport</figcaption>
+      <div class="col">
+        <div class="lbl">‹ Tools</div>
+        <strong style="font-size:14px">Money Leak Scanner</strong>
+        <div class="wire soft" style="font-size:10px">US · ~2 min · Data verified 2026-07-12</div>
+        <div class="wire fill">Monthly net income&nbsp;<strong>$ 5,400</strong></div>
+        <div class="wire col"><span class="lbl">Spending</span><div class="bar"></div><div class="bar" style="width:70%"></div><div class="bar" style="width:45%"></div></div>
+        <div class="wire col"><span class="chip ex">Example result</span><strong style="font-size:18px">$275<span style="font-size:10px">/mo</span></strong><div class="hatch" style="height:64px">Leisten</div></div>
+        <div class="wire" style="border-style:dashed;position:sticky;bottom:0;background:var(--fill)">
+          <div class="row" style="justify-content:space-between;align-items:center"><span style="font-size:11px"><strong>~$275/mo</strong> leaking</span><span class="btnw">View result</span></div>
+        </div>
+        <div class="note">ResultMiniBar 56 px · erst NACH belastbarem Resultat · verdeckt nichts (padding-bottom 72 px) · öffnet Result View (Scroll-Anker)</div>
+      </div>
+    </figure>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 03 WEALTH HORIZON ============ -->
+<section class="screen" id="horizon">
+  <h2>03 · Wealth Horizon — GuidedJourney (3 Schritte → Ergebnis-Canvas)</h2>
+  <p class="sub">Realwert-Modell, alle Beträge „in today's money". Interaktiver Ablauf: siehe prototype-wealth-horizon.html.</p>
+  <div class="frames">
+    <div class="frame-wrap">
+    <figure class="frame w1280">
+      <figcaption>1280 px · Schritt-Panel col-span-5 · Preview col-span-7 — Zustand: Schritt 2/3</figcaption>
+      <div class="col">
+        <div class="lbl">Home › Tools › Retirement Calculator</div>
+        <div><strong style="font-size:17px">Retirement &amp; Financial Freedom Calculator</strong> — <span style="font-size:12px">See your range, FI date and what moves it.</span></div>
+        <div class="wire soft row" style="font-size:11px"><span>US · ~3 min · Data verified 2026-07-12 · Methodology · Privacy</span></div>
+        <div class="grid12">
+          <div class="col" style="grid-column:span 5">
+            <div class="row" style="gap:4px"><div class="bar" style="flex:1;background:var(--ink)"></div><div class="bar" style="flex:1;background:var(--ink)"></div><div class="bar" style="flex:1"></div></div>
+            <div class="lbl">Step 2 of 3 · Savings &amp; contributions</div>
+            <div class="wire col">
+              <div class="wire fill">401(k) + IRA balance&nbsp;<strong>$ 85,000</strong>&nbsp;<span class="chip">I'm not sure</span></div>
+              <div class="wire fill">Taxable savings&nbsp;<strong>$ 20,000</strong></div>
+              <div class="wire fill">Monthly contribution&nbsp;<strong>$ 900</strong> <span class="note">clamp bei Rules-Cap + Quelle</span></div>
+              <div class="wire fill">Annual fees&nbsp;<strong>0.6 %</strong> ← PercentageField</div>
+            </div>
+            <div class="row"><span class="btnw">‹ Back</span><span class="btnw" style="border-width:2px;flex:1;text-align:center">Continue →</span></div>
+          </div>
+          <div class="col" style="grid-column:span 7">
+            <div class="wire col">
+              <div class="row" style="justify-content:space-between"><span class="chip ex">Example result</span><span class="lbl">on track towards ~$610k–$890k (in today's money)</span></div>
+              <div class="hatch" style="height:150px">Szenariokorridor (conservative→optimistic) · Basis-Linie · FI-Marker vertikal · Meilenstein-Punkte · Linienstile ≠ nur Farbe</div>
+              <div class="note">Zwischenergebnis aktualisiert live (debounced 600 ms) — volle Antwort erst nach Schritt 3</div>
+            </div>
+          </div>
+        </div>
+        <div class="wire soft col" style="border-style:dashed">
+          <span class="lbl">Nach Schritt 3: Ergebnis-Canvas ersetzt beide Spalten (12 col, intern 5/7)</span>
+          <div style="font-size:12px"><strong>1</strong> „You could reach financial independence around <strong>2049</strong> (base scenario)." · <strong>2</strong> $610k–$890k at 67 · <strong>3</strong> Korridor+FI+Meilensteine · <strong>4</strong> 3 Levers (Fees −0,5 pp / +$200 mo / retire +2 y) · <strong>5</strong> Assumptions (real returns 3/5/6.5 %, „Illustrative retirement withdrawal", Rate 2.5–5 % einstellbar) · <strong>6</strong> Brücke: Robo-Advisors-Cockpit</div>
+        </div>
+      </div>
+    </figure>
+    </div>
+    <div class="frame-wrap">
+    <figure class="frame w390">
+      <figcaption>390 px · sequenziell</figcaption>
+      <div class="col">
+        <div class="row" style="gap:3px"><div class="bar" style="flex:1;background:var(--ink);height:4px"></div><div class="bar" style="flex:1;height:4px"></div><div class="bar" style="flex:1;height:4px"></div></div>
+        <strong style="font-size:14px">Retirement Calculator</strong>
+        <div class="wire soft" style="font-size:10px">US · ~3 min · verified 2026-07-12</div>
+        <div class="lbl">Step 1 of 3 · About you</div>
+        <div class="wire fill">Your age&nbsp;<strong>38</strong></div>
+        <div class="wire fill">Retire at&nbsp;<strong>67</strong></div>
+        <div class="wire soft" style="font-size:11px">on track towards ~$610k–$890k</div>
+        <div class="btnw" style="text-align:center;border-width:2px">Continue →</div>
+        <div class="note">1 Fragenblock je Abschnitt · Zwischenergebnis-Zeile unter dem CTA · Ergebnis = eigener Result View</div>
+      </div>
+    </figure>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 04 BROKER JOURNEY ============ -->
+<section class="screen" id="broker">
+  <h2>04 · Broker Decision Journey — Fluss über bestehende Routen</h2>
+  <p class="sub">Zustand wandert via DecisionStateV1 (sessionStorage) mit. Keine Doppeleingabe. Interaktiv: prototype-broker-journey.html.</p>
+  <div class="frame-wrap">
+  <figure class="frame" style="width:1000px">
+    <figcaption>Fluss + Schlüssel-Wires · Routen bleiben SEO-stabil</figcaption>
+    <div class="row" style="align-items:stretch">
+      <div class="wire col" style="flex:1">
+        <span class="lbl">1 · /tools/broker-finder<em>?market=uk|ca|au</em></span>
+        <strong style="font-size:12px">Quiz (5 Fragen)</strong>
+        <div class="wire fill" style="font-size:11px">Q3: How often do you trade? [<u>Weekly</u>] [Monthly] [Rarely]</div>
+        <div class="note">validierter ?market= (Default us) → broker.market + profile + quizAnswers; Anbieter/Regulierung/Kosten je Markt gefiltert (availableMarkets)</div>
+      </div>
+      <div style="align-self:center" class="note">→</div>
+      <div class="wire col" style="flex:1.2">
+        <span class="lbl">2 · Shortlist (Quiz-Ergebnis)</span>
+        <div class="wire col" style="gap:4px">
+          <div class="row" style="justify-content:space-between"><strong style="font-size:12px">Broker A</strong><strong style="font-size:12px;font-variant-numeric:tabular-nums">92% match</strong></div>
+          <span style="font-size:10px">✓ low FX fees · ✓ your instruments · est. $240–$310/yr</span>
+          <span class="btnw" style="font-size:10px">+ Add to shortlist</span>
+        </div>
+        <div class="note">Match + Jahreskosten + Begründung = Signatur-Visual</div>
+      </div>
+      <div style="align-self:center" class="note">→</div>
+      <div class="wire col" style="flex:1">
+        <span class="lbl">3 · /tools/trading-cost-calculator</span>
+        <div class="wire soft" style="font-size:10px;border-style:dashed">Using your quiz answers — <u>edit</u></div>
+        <div class="wire fill" style="font-size:11px">Trades/month: <strong>12</strong> (prefilled)</div>
+        <div class="note">startet in State „ready"</div>
+      </div>
+      <div style="align-self:center" class="note">→</div>
+      <div class="wire col" style="flex:1">
+        <span class="lbl">4 · /tools/broker-comparison</span>
+        <div class="wire fill" style="font-size:11px">Shortlist prä-selektiert ✓</div>
+        <div class="hatch" style="height:40px">Kosten-Balken</div>
+      </div>
+      <div style="align-self:center" class="note">→</div>
+      <div class="wire col" style="flex:.9">
+        <span class="lbl">5 · Abschluss</span>
+        <span class="btnw" style="border-width:2px;font-size:11px">Compare top trading platforms →</span>
+        <div class="note">1 Brücke · tool_cockpit_cta_click · Cockpit liest Store NIE</div>
+      </div>
+    </div>
+  </figure>
+  </div>
+</section>
+
+<!-- ============ 05 HOME LAB ============ -->
+<section class="screen" id="homelab">
+  <h2>05 · Home Decision Lab — PrecisionWorksheet (AU Repayments · CA Affordability · UK Remortgage)</h2>
+  <p class="sub">Eine UX, drei Markt-Engines. Wire zeigt CA Affordability; AU/UK identische Anatomie mit Markt-Regeln.</p>
+  <div class="frames">
+    <div class="frame-wrap">
+    <figure class="frame w1280">
+      <figcaption>1280 px · Abschnitts-Formular col-span-5 · Annahmen + Detail col-span-7</figcaption>
+      <div class="col">
+        <div class="lbl">Home › Tools › Mortgage Affordability</div>
+        <div><strong style="font-size:17px">Canadian Mortgage Affordability Calculator</strong> — <span style="font-size:12px">GDS, TDS and the stress test, explained with your numbers.</span></div>
+        <div class="wire soft row" style="font-size:11px"><span>CA · ~4 min · Data verified 2026-07-12 · Methodology · Privacy</span></div>
+        <div class="grid12">
+          <div class="col" style="grid-column:span 5">
+            <div class="wire col"><span class="lbl">Section 1 · Income &amp; debts</span>
+              <div class="wire fill">Household income /yr&nbsp;<strong>$ 145,000</strong></div>
+              <div class="wire fill">Monthly debt payments&nbsp;<strong>$ 450</strong></div>
+            </div>
+            <div class="wire col"><span class="lbl">Section 2 · Property &amp; loan</span>
+              <div class="wire fill">Down payment&nbsp;<strong>$ 90,000</strong></div>
+              <div class="wire fill">Amortization&nbsp;<strong>25 y</strong> ← DurationField</div>
+            </div>
+            <div class="wire col"><span class="lbl">Section 3 · Rates &amp; fees</span>
+              <div class="wire fill">Contract rate&nbsp;<strong>4.6 %</strong></div>
+              <div class="note">Zins-Kontext mit Quelle+Datum aus Rules — nie „Live-Zins"</div>
+            </div>
+          </div>
+          <div class="col" style="grid-column:span 7">
+            <div class="wire soft row" style="font-size:10px"><span>Annahmen: GDS ≤32 % · TDS ≤44 % · Stress +2 pp · CMHC-Tier … ▸ Details</span></div>
+            <div class="wire col">
+              <span class="chip ex">Example result</span>
+              <div><strong>1 ·</strong> You can likely afford a home around <strong>$520k–$610k</strong>.</div>
+              <div class="hatch" style="height:34px">2/3a · Affordability Range-Balken · Marker „your target"</div>
+              <div class="hatch" style="height:56px">3b · Payment Stack: Principal | Interest | Fees | Insurance (direkt beschriftet, Muster je Segment)</div>
+              <div class="wire soft" style="font-size:11px">3c · Risikopuffer: at +2 pp → <strong>$2,940/mo</strong> — still affordable ✓</div>
+              <div class="row"><span class="btnw" style="flex:1">4 · Larger down payment +$20k</span><span class="btnw" style="flex:1">Extend amortization</span><span class="btnw" style="flex:1">Reduce target price</span></div>
+              <div class="wire soft">5 · ▸ Assumptions &amp; sources (CMHC/OSFI, dated)</div>
+              <span class="btnw" style="border-width:2px">6 · Talk to a mortgage broker — compare top brokers →</span>
+            </div>
+            <div class="note">GDS/TDS überschritten → Warning-Token-Block statt roher Zahlen (State-Board #6)</div>
+          </div>
+        </div>
+      </div>
+    </figure>
+    </div>
+    <div class="frame-wrap">
+    <figure class="frame w390">
+      <figcaption>390 px · Sektionen als Accordion (erste offen)</figcaption>
+      <div class="col">
+        <strong style="font-size:14px">Mortgage Affordability</strong>
+        <div class="wire soft" style="font-size:10px">CA · ~4 min · verified 2026-07-12</div>
+        <div class="wire col"><span class="lbl">▾ Income &amp; debts</span><div class="wire fill">Income /yr <strong>$145,000</strong></div></div>
+        <div class="wire soft"><span class="lbl">▸ Property &amp; loan</span></div>
+        <div class="wire soft"><span class="lbl">▸ Rates &amp; fees</span></div>
+        <div class="wire" style="border-style:dashed;background:var(--fill)"><div class="row" style="justify-content:space-between"><span style="font-size:11px"><strong>$520k–$610k</strong></span><span class="btnw">View result</span></div></div>
+      </div>
+    </figure>
+    </div>
+  </div>
+</section>

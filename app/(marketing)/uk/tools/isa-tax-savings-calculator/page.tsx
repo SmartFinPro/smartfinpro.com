@@ -1,27 +1,16 @@
-import { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowLeft, Shield, Lightbulb, AlertTriangle } from 'lucide-react';
 import { DynamicISATaxSavingsCalculator } from '@/components/tools/dynamic-calculators';
 import { ToolRelatedReviews } from '@/components/marketing/tool-related-reviews';
+import { buildToolMetadata } from '@/lib/tools/registry/metadata';
+import { ToolJsonLd } from '@/components/tools/shell/tool-json-ld';
 
-export const metadata: Metadata = {
-  title: 'ISA Tax Savings Calculator 2026: See Your Tax Shield | SmartFinPro',
-  description:
-    'Free ISA tax savings calculator. See how much you could save in capital gains tax and dividend tax by investing inside a Stocks and Shares ISA vs a General Investment Account.',
-  alternates: {
-    canonical: 'https://smartfinpro.com/uk/tools/isa-tax-savings-calculator',
-  },
-  openGraph: {
-    title: 'ISA Tax Savings Calculator — Visualise Your Tax Shield',
-    description:
-      'Calculate the tax advantage of investing inside a Stocks and Shares ISA over 5, 10, and 20 years.',
-    url: 'https://smartfinpro.com/uk/tools/isa-tax-savings-calculator',
-  },
-};
+export const metadata = buildToolMetadata('isa', 'uk');
 
 export default function ISATaxSavingsCalculatorPage() {
   return (
     <div className="min-h-screen" style={{ background: 'var(--sfp-gray)' }}>
+      <ToolJsonLd toolId="isa" market="uk" />
       {/* Breadcrumb */}
       <div className="container mx-auto px-4 py-6">
         <Link
@@ -95,11 +84,11 @@ export default function ISATaxSavingsCalculatorPage() {
                 <h3 className="font-semibold mb-3" style={{ color: 'var(--sfp-ink)' }}>Taxes Sheltered by an ISA</h3>
                 <ul className="space-y-2 text-sm" style={{ color: 'var(--sfp-slate)' }}>
                   <li>
-                    <strong style={{ color: 'var(--sfp-ink)' }}>Capital Gains Tax:</strong> 10% (basic) or
-                    24% (higher/additional) on profits above £3,000 annual allowance
+                    <strong style={{ color: 'var(--sfp-ink)' }}>Capital Gains Tax:</strong> 18% (basic rate) or
+                    24% (higher rate) on profits above £3,000 annual allowance
                   </li>
                   <li>
-                    <strong style={{ color: 'var(--sfp-ink)' }}>Dividend Tax:</strong> 8.75% (basic), 33.75%
+                    <strong style={{ color: 'var(--sfp-ink)' }}>Dividend Tax:</strong> 10.75% (basic), 35.75%
                     (higher), or 39.35% (additional) above £500 annual allowance
                   </li>
                   <li>
@@ -113,7 +102,7 @@ export default function ISATaxSavingsCalculatorPage() {
                 </ul>
               </div>
               <div className="rounded-xl p-6 border border-gray-200 bg-white shadow-sm">
-                <h3 className="font-semibold mb-3" style={{ color: 'var(--sfp-ink)' }}>Key ISA Rules (2025/26)</h3>
+                <h3 className="font-semibold mb-3" style={{ color: 'var(--sfp-ink)' }}>Key ISA Rules (2026/27)</h3>
                 <ul className="space-y-2 text-sm" style={{ color: 'var(--sfp-slate)' }}>
                   <li>
                     <strong style={{ color: 'var(--sfp-ink)' }}>Annual Allowance:</strong> £20,000 across all
@@ -130,6 +119,11 @@ export default function ISATaxSavingsCalculatorPage() {
                   <li>
                     <strong style={{ color: 'var(--sfp-ink)' }}>FSCS Protection:</strong> Up to £85,000 per
                     provider if the firm fails
+                  </li>
+                  <li>
+                    <strong style={{ color: 'var(--sfp-ink)' }}>Cash ISA Change (2027):</strong> From 6 April
+                    2027 the cash ISA allowance falls to £12,000 for under-65s, while the overall £20,000
+                    ISA allowance stays unchanged.
                   </li>
                 </ul>
               </div>

@@ -1,36 +1,48 @@
 // app/(marketing)/uk/tools/remortgage-calculator/page.tsx
-import { Metadata } from 'next';
 import { RemortgageCalculator } from '@/components/tools/remortgage-calculator';
 import { AnswerBlock } from '@/components/ui/answer-block';
 import { AffiliateDisclosure } from '@/components/ui/affiliate-disclosure';
+import { buildToolMetadata } from '@/lib/tools/registry/metadata';
+import { ToolJsonLd } from '@/components/tools/shell/tool-json-ld';
+import type { FAQ } from '@/types';
 
-export const metadata: Metadata = {
-  title: 'Remortgage Calculator UK 2026 | Calculate Interest Savings',
-  description:
-    'Use our free remortgage calculator to see if remortgaging your home will save you money. Compare rates, calculate savings, and find the best remortgage deal for your situation.',
-  // noindex: "Coming Soon" placeholder — remove once fully built
-  robots: { index: false, follow: true },
-  alternates: {
-    canonical: 'https://smartfinpro.com/uk/tools/remortgage-calculator',
-    languages: {
-      'en-US': 'https://smartfinpro.com/tools/debt-payoff-calculator',
-      'en-GB': 'https://smartfinpro.com/uk/tools/remortgage-calculator',
-      'en-CA': 'https://smartfinpro.com/ca/tools/debt-payoff-calculator',
-      'en-AU': 'https://smartfinpro.com/au/tools/debt-payoff-calculator',
-    },
+// noindex kommt jetzt aus der Registry (indexable: false) — siehe SPEC 9.2
+export const metadata = buildToolMetadata('remortgage', 'uk');
+
+// Mirrors the visible "FAQ: Remortgage Calculator" section below verbatim — never add
+// questions here that aren't rendered on the page.
+const FAQ_ITEMS: FAQ[] = [
+  {
+    question: 'How accurate is this remortgage calculator?',
+    answer:
+      'This calculator uses standard amortisation formulas and is accurate for illustrative purposes. Actual monthly payments may vary slightly depending on your lender and exact terms. Always request a formal illustration before committing.',
   },
-  openGraph: {
-    title: 'Remortgage Calculator UK 2026 | SmartFinPro',
-    description:
-      'Calculate your remortgage savings with our free tool. See if switching to a better rate will save you money.',
-    url: 'https://smartfinpro.com/uk/tools/remortgage-calculator',
-    type: 'website',
+  {
+    question: 'Can I remortgage while in a fixed-rate period?',
+    answer:
+      "Yes, but you'll pay an early repayment charge (ERC), typically 1-5% of your balance. This fee often outweighs the savings from a better rate unless you're remortgaging significantly lower.",
   },
-};
+  {
+    question: 'Will remortgaging affect my credit score?',
+    answer:
+      'A remortgage requires a hard credit check, which may temporarily lower your score by 5-10 points. However, the impact is minimal and recovers within weeks. Multiple applications for different lenders count as one search if done within 14 days.',
+  },
+  {
+    question: 'How long does remortgaging take?',
+    answer:
+      'Typically 4-8 weeks from application to completion. Start the process at least 6 weeks before your current term expires to avoid the SVR.',
+  },
+  {
+    question: 'Can I get a remortgage with bad credit?',
+    answer:
+      'Most remortgages require credit scores above 650-700. If your score is lower, focus on improving it for 6-12 months before remortgaging. Checking your score with Experian or Equifax is free.',
+  },
+];
 
 export default function RemortgageCalculatorPage() {
   return (
     <main className="min-h-screen bg-white">
+      <ToolJsonLd toolId="remortgage" market="uk" faq={FAQ_ITEMS} />
       {/* Hero */}
       <section
         className="relative py-20 px-6"

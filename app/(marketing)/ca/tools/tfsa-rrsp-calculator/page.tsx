@@ -1,34 +1,47 @@
 // app/(marketing)/ca/tools/tfsa-rrsp-calculator/page.tsx
-import { Metadata } from 'next';
 import { TfsaRrspCalculator } from '@/components/tools/tfsa-rrsp-calculator';
 import { AnswerBlock } from '@/components/ui/answer-block';
 import { AffiliateDisclosure } from '@/components/ui/affiliate-disclosure';
+import { buildToolMetadata } from '@/lib/tools/registry/metadata';
+import { ToolJsonLd } from '@/components/tools/shell/tool-json-ld';
+import type { FAQ } from '@/types';
 
-export const metadata: Metadata = {
-  title: 'TFSA vs RRSP Calculator Canada 2026 | Tax-Efficient Savings',
-  description:
-    'Compare TFSA and RRSP savings strategies with our free calculator. Determine which account structure maximises your after-tax wealth in Canada.',
-  alternates: {
-    canonical: 'https://smartfinpro.com/ca/tools/tfsa-rrsp-calculator',
-    languages: {
-      'en-US': 'https://smartfinpro.com/tools/debt-payoff-calculator',
-      'en-GB': 'https://smartfinpro.com/uk/tools/remortgage-calculator',
-      'en-CA': 'https://smartfinpro.com/ca/tools/tfsa-rrsp-calculator',
-      'en-AU': 'https://smartfinpro.com/au/tools/superannuation-calculator',
-    },
+export const metadata = buildToolMetadata('tfsa-rrsp', 'ca');
+
+// Mirrors the visible "FAQ: TFSA vs RRSP Calculator" section below verbatim — never add
+// questions here that aren't rendered on the page.
+const FAQ_ITEMS: FAQ[] = [
+  {
+    question: "What if my tax rate doesn't change in retirement?",
+    answer:
+      'If your tax rate stays roughly the same, TFSA becomes more attractive because you get tax-free growth forever and no forced withdrawals. RRSP only defers tax, not avoids it. Government employees often fall into this category.',
   },
-  openGraph: {
-    title: 'TFSA vs RRSP Calculator Canada 2026 | SmartFinPro',
-    description:
-      'Find the optimal TFSA and RRSP strategy for your situation. See which account structure maximises your wealth accumulation.',
-    url: 'https://smartfinpro.com/ca/tools/tfsa-rrsp-calculator',
-    type: 'website',
+  {
+    question: 'Can I have both TFSA and RRSP?',
+    answer:
+      'Yes! Most Canadians benefit from maximising both. They serve different purposes: RRSP defers tax and gives immediate refunds; TFSA provides tax-free growth and flexibility. The calculator shows the combined benefit.',
   },
-};
+  {
+    question: 'What happens to my TFSA if I leave Canada?',
+    answer:
+      'You cannot contribute to a TFSA as a non-resident, but existing balances remain tax-free. Investment growth continues untaxed. Withdraw before leaving to avoid non-resident withholding taxes.',
+  },
+  {
+    question: 'How accurate is this calculator?',
+    answer:
+      "This calculator uses standard tax assumptions and projection models. Provincial tax rates vary, and future tax law changes aren't predicted. Consult a Canadian tax accountant for personalised advice specific to your situation.",
+  },
+  {
+    question: 'Should I withdraw from RRSP to pay off debt?',
+    answer:
+      "Generally no. RRSP withdrawals trigger withholding tax (30%+) plus income tax on withdrawal. It's usually better to take a low-interest loan and keep your RRSP growing tax-deferred. Exception: extremely high-interest debt (credit cards at 20%+).",
+  },
+];
 
 export default function TfsaRrspCalculatorPage() {
   return (
     <main className="min-h-screen bg-white">
+      <ToolJsonLd toolId="tfsa-rrsp" market="ca" faq={FAQ_ITEMS} />
       {/* Hero */}
       <section
         className="relative py-20 px-6"
@@ -111,12 +124,12 @@ export default function TfsaRrspCalculatorPage() {
             The TFSA is a registered account where you can save any amount without paying income tax on growth or withdrawals. Introduced in 2009, it's a uniquely Canadian advantage for tax-efficient wealth building.
           </p>
 
-          <h3 style={{ color: 'var(--sfp-navy)' }}>2024-2025 TFSA Contribution Limits</h3>
+          <h3 style={{ color: 'var(--sfp-navy)' }}>2026 TFSA Contribution Limits</h3>
           <ul style={{ color: 'var(--sfp-ink)' }}>
-            <li>2024 annual limit: CAD $7,000</li>
+            <li>2026 annual limit: CAD $7,000</li>
             <li>Unused contribution room carries forward indefinitely</li>
             <li>Withdrawals add back to your contribution limit the next year</li>
-            <li>Lifetime room for those 18+ since 2009: CAD $95,000 (as of 2024)</li>
+            <li>Lifetime room for those 18+ since 2009: CAD $109,000 (as of 2026)</li>
           </ul>
 
           <h3 style={{ color: 'var(--sfp-navy)' }}>TFSA Key Advantages</h3>
@@ -143,9 +156,9 @@ export default function TfsaRrspCalculatorPage() {
             The RRSP is a registered savings account that provides an immediate tax deduction. Contributions reduce your taxable income, giving you a tax refund. Withdrawals in retirement are taxed as income, usually at a lower rate.
           </p>
 
-          <h3 style={{ color: 'var(--sfp-navy)' }}>2024-2025 RRSP Contribution Limits</h3>
+          <h3 style={{ color: 'var(--sfp-navy)' }}>2026 RRSP Contribution Limits</h3>
           <ul style={{ color: 'var(--sfp-ink)' }}>
-            <li>18% of previous year's earned income, up to CAD $31,560 (2024)</li>
+            <li>18% of previous year's earned income, up to CAD $33,810 (2026)</li>
             <li>Unused contribution room carries forward indefinitely</li>
             <li>Spousal RRSPs allow income splitting in retirement</li>
             <li>Home Buyers' Plan allows up to CAD $35,000 withdrawal for first home</li>

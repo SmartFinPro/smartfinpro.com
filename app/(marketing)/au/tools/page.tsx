@@ -1,7 +1,12 @@
 // app/(marketing)/au/tools/page.tsx
 import { Metadata } from 'next';
 import Link from 'next/link';
-import { Calculator, Home, TrendingUp, ArrowRight, Sparkles, Droplet } from 'lucide-react';
+import {
+  Calculator, ArrowRight, Sparkles,
+  ScanSearch, Compass, Columns3, Coins, Sunrise, House, TrendingUp,
+  type LucideIcon,
+} from 'lucide-react';
+import { getToolsForMarket } from '@/lib/tools/registry';
 
 export const metadata: Metadata = {
   title: 'Free Australian Financial Tools & Calculators | SmartFinPro',
@@ -16,29 +21,25 @@ export const metadata: Metadata = {
   },
 };
 
-const tools = [
-  {
-    title: 'Money Leak Scanner',
-    description: 'Find how much your household is overpaying across banking fees, subscriptions, credit cards, insurance, investing and FX — live, in 60 seconds.',
-    icon: Droplet,
-    href: '/au/tools/money-leak-scanner',
-    badge: 'New',
-  },
-  {
-    title: 'Superannuation Calculator',
-    description: 'Project your super balance at retirement. Model employer contributions, salary sacrifice, government co-contributions, and investment returns.',
-    icon: TrendingUp,
-    href: '/au/tools/superannuation-calculator',
-    badge: 'Popular',
-  },
-  {
-    title: 'AU Mortgage Calculator',
-    description: 'Calculate Australian home loan repayments, LVR, offset account savings, and stamp duty. Compare Big Four vs fintech lender rates.',
-    icon: Home,
-    href: '/au/tools/au-mortgage-calculator',
-    badge: 'New',
-  },
-];
+// Registry icon key (SPEC 9.1, lucide-Key) → Lucide component.
+const iconMap: Record<string, LucideIcon> = {
+  'scan-search': ScanSearch,
+  compass: Compass,
+  calculator: Calculator,
+  'columns-3': Columns3,
+  coins: Coins,
+  sunrise: Sunrise,
+  house: House,
+  'trending-up': TrendingUp,
+};
+
+const tools = getToolsForMarket('au').map((t) => ({
+  title: t.name,
+  description: t.blurb,
+  icon: iconMap[t.icon] ?? Calculator,
+  href: t.entryHref,
+  isNew: t.isNew,
+}));
 
 export default function AUToolsPage() {
   return (
@@ -90,13 +91,18 @@ export default function AUToolsPage() {
                 href={tool.href}
                 className="group relative rounded-2xl border border-gray-200 p-6 transition-all duration-300 hover:translate-y-[-4px] hover:shadow-lg bg-white"
               >
-                {tool.badge && (
-                  <span className="absolute top-4 right-4 text-[10px] px-2 py-0.5 rounded-full font-semibold" style={{ background: 'var(--sfp-sky)', color: 'var(--sfp-navy)' }}>
-                    {tool.badge}
-                  </span>
-                )}
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-4" style={{ background: 'var(--sfp-sky)', color: 'var(--sfp-navy)' }}>
-                  <tool.icon className="h-6 w-6" />
+                <div className="flex items-start justify-between gap-2 mb-4">
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: 'var(--sfp-sky)', color: 'var(--sfp-navy)' }}>
+                    <tool.icon className="h-6 w-6" />
+                  </div>
+                  {tool.isNew && (
+                    <span
+                      className="text-[10px] px-1.5 py-0.5 rounded-full font-medium whitespace-nowrap"
+                      style={{ background: 'rgba(245,166,35,0.15)', color: 'var(--sfp-gold-dark)' }}
+                    >
+                      New
+                    </span>
+                  )}
                 </div>
                 <h2 className="text-lg font-bold mt-1 mb-2 transition-colors" style={{ color: 'var(--sfp-ink)' }}>
                   {tool.title}

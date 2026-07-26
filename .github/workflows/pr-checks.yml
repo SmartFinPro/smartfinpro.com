@@ -48,6 +48,19 @@ jobs:
       - name: Unit tests
         run: npm run test
 
+      - name: Migration drift — parser/CLI smoke only (NO DB, NO secrets)
+        # SECURITY BOUNDARY — do NOT add secrets to this job.
+        # `pull_request` checks out and runs untrusted PR code. Any production
+        # secret exposed here could be exfiltrated by a malicious PR (e.g. POSTed
+        # to an attacker host) regardless of whether the value is ever printed —
+        # not logging it is not a defence. So this step runs the checker WITHOUT
+        # credentials: it prints a visible "NOTHING WAS VERIFIED" banner and
+        # exits 0. The parser/baseline logic is exercised by the unit tests above
+        # (npm run test → __tests__/unit/migration-drift.test.ts). The real
+        # live-schema verification runs only on trusted main, in the separate
+        # migration-drift.yml workflow and as a gate in deploy.yml.
+        run: npm run check:migrations
+
       - name: Check expert images
         run: npm run check:experts
 
@@ -122,11 +135,109 @@ jobs:
     name: Dashboard Smoke Tests (fixture-backed)
     runs-on: ubuntu-latest
     needs: quality-checks
-    # Only run when dashboard files are changed
-    if: |
-      contains(github.event.pull_request.changed_files, 'app/(dashboard)') ||
-      contains(github.event.pull_request.changed_files, 'components/dashboard') ||
-      github.event_name == 'workflow_dispatch'
+    # NOTE: previously gated on `contains(github.event.pull_request.changed_files, ...)`
+    # — changed_files is the PR's file COUNT (a number), not a file list, so that
+    # contains() check could never match and this job silently never ran except
+    # via workflow_dispatch. Replaced with an actual git-diff path check (same
+    # pattern as the "Verify generated indexes" step in quality-checks above).
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect dashboard changes
+        id: dashboard-changed
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            git fetch origin "${{ github.event.pull_request.base.ref }}" --depth=50 2>/dev/null || true
+            if git diff --name-only "origin/${{ github.event.pull_request.base.ref }}...HEAD" 2>/dev/null \
+                | grep -qE '^(app/\(dashboard\)/|components/dashboard/)'; then
+              echo "changed=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "changed=false" >> "$GITHUB_OUTPUT"
+            fi
+          fi
+
+      - name: Setup Node
+        if: steps.dashboard-changed.outputs.changed == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        if: steps.dashboard-changed.outputs.changed == 'true'
+        run: npm ci
+
+      - name: Install Playwright browser
+        if: steps.dashboard-changed.outputs.changed == 'true'
+        run: npx playwright install --with-deps chromium
+
+      - name: Start app (dev)
+        if: steps.dashboard-changed.outputs.changed == 'true'
+        env:
+          # NOTE: previously DASHBOARD_AUTH_DISABLED=true, which globally bypasses
+          # the /dashboard auth gate in proxy.ts — but the "unauthenticated shows
+          # login form" test (dashboard-smoke.spec.ts:65) requires auth to actually
+          # be ENFORCED, and every other test authenticates itself via
+          # injectDashboardCookie() (a cookie carrying DASHBOARD_SECRET, which
+          # proxy.ts's dashboard gate accepts directly — "legacy cookie
+          # compatibility", proxy.ts ~L493). Set DASHBOARD_SECRET here (server)
+          # to match the same value the test process injects as a cookie.
+          DASHBOARD_SECRET: "test-secret"
+          TEST_DASHBOARD_SECRET: "test-secret"
+        run: |
+          PORT=3001 npm run dev:webpack > /tmp/next-smoke.log 2>&1 &
+          echo $! > /tmp/next-smoke.pid
+
+      - name: Wait for app
+        if: steps.dashboard-changed.outputs.changed == 'true'
+        run: |
+          for i in $(seq 1 90); do
+            if curl -sf http://localhost:3001/ > /dev/null; then
+              echo "App is up"
+              exit 0
+            fi
+            sleep 2
+          done
+          cat /tmp/next-smoke.log || true
+          exit 1
+
+      - name: Run dashboard smoke tests
+        if: steps.dashboard-changed.outputs.changed == 'true'
+        env:
+          # localhost, NOT 127.0.0.1: e2e/dashboard-smoke.spec.ts's
+          # injectDashboardCookie() hardcodes `domain: 'localhost'` on the
+          # auth cookie it sets — against 127.0.0.1 that cookie silently
+          # never gets sent (different host), so every test that calls it
+          # would see the auth gate as if unauthenticated.
+          BASE_URL: http://localhost:3001
+          DASHBOARD_SECRET: test-secret
+          TEST_DASHBOARD_SECRET: test-secret
+        run: npm run test:dashboard-smoke
+
+      - name: Upload smoke test report on failure
+        if: failure() && steps.dashboard-changed.outputs.changed == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: dashboard-smoke-report
+          path: playwright-report/
+
+      - name: Stop app
+        if: always() && steps.dashboard-changed.outputs.changed == 'true'
+        run: |
+          if [ -f /tmp/next-smoke.pid ]; then
+            kill "$(cat /tmp/next-smoke.pid)" || true
+          fi
+
+  cockpit-tracking-e2e:
+    name: Cockpit Tracking E2E (cockpit_v1)
+    runs-on: ubuntu-latest
+    needs: quality-checks
 
     steps:
       - name: Checkout
@@ -145,42 +256,211 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Start app (dev)
-        env:
-          DASHBOARD_AUTH_DISABLED: "true"
-          TEST_DASHBOARD_SECRET: "test-secret"
         run: |
-          PORT=3001 npm run dev:webpack > /tmp/next-smoke.log 2>&1 &
-          echo $! > /tmp/next-smoke.pid
+          PORT=3000 npm run dev > /tmp/next-cockpit.log 2>&1 &
+          echo $! > /tmp/next-cockpit.pid
 
       - name: Wait for app
         run: |
           for i in $(seq 1 90); do
-            if curl -sf http://127.0.0.1:3001/ > /dev/null; then
+            if curl -sf http://localhost:3000/ > /dev/null; then
               echo "App is up"
               exit 0
             fi
             sleep 2
           done
-          cat /tmp/next-smoke.log || true
+          echo "App failed to start in time"
+          cat /tmp/next-cockpit.log || true
           exit 1
 
-      - name: Run dashboard smoke tests
+      - name: Run cockpit tracking E2E
         env:
-          BASE_URL: http://127.0.0.1:3001
-          DASHBOARD_SECRET: test-secret
-          TEST_DASHBOARD_SECRET: test-secret
-        run: npm run test:dashboard-smoke
+          # localhost, NOT 127.0.0.1 — empirically confirmed root cause of
+          # run #106's "5/7 failed, zero events observed": on 127.0.0.1 the
+          # cockpit tracker's session bootstrap
+          # (getOrCreateAnalyticsSessionId) never completes and no /api/track
+          # request is ever attempted, while the identical server on
+          # localhost tracks correctly (verified locally with .env.local
+          # removed to match CI's no-Supabase-config environment, both with
+          # and without Turbopack — hostname alone is the variable).
+          BASE_URL: http://localhost:3000
+        run: npm run test:cockpit-tracking
 
-      - name: Upload smoke test report on failure
+      - name: Upload report on failure
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: dashboard-smoke-report
+          name: cockpit-tracking-report
           path: playwright-report/
+
+      - name: Dump app log on failure
+        if: failure()
+        run: cat /tmp/next-cockpit.log || true
 
       - name: Stop app
         if: always()
         run: |
-          if [ -f /tmp/next-smoke.pid ]; then
-            kill "$(cat /tmp/next-smoke.pid)" || true
+          if [ -f /tmp/next-cockpit.pid ]; then
+            kill "$(cat /tmp/next-cockpit.pid)" || true
+          fi
+
+  tool-e2e:
+    name: Tool E2E (tool_v1, FDL)
+    runs-on: ubuntu-latest
+    needs: quality-checks
+    # Path-filter per FDL PR 2.1 brief (docs/superpowers/plans/2026-07-12-fdl-
+    # product-experience.md, PR 2.1 "CI-Job tool-e2e"): only runs when FDL
+    # tool code (or its e2e specs) actually changed — same git-diff pattern as
+    # the "Detect dashboard changes" step above (changed_files is a count, not
+    # a list, so contains() can't be used here either).
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # FDL PR 3.1 gate (docs/superpowers/plans/2026-07-12-fdl-product-
+      # experience.md, "PR 3.1 — DecisionState-Store"): lib/decision is a
+      # one-way bridge into the Financial Decision Lab tools — the existing
+      # Comparison Cockpit product (cockpit_v1, frozen per rule 0.1) must
+      # never read it, to keep the cockpit baseline uncontaminated. This runs
+      # unconditionally (not gated behind the tool-changed path filter above)
+      # so it is a real structural gate on every PR, not just tool-touching
+      # ones. Path list verified against the actual repo tree at authoring
+      # time (rg/find for *cockpit* + lib/comparison) — update it if new
+      # cockpit surfaces are added elsewhere.
+      - name: Decision-state / Cockpit isolation gate
+        run: |
+          set +e
+          MATCHES=$(grep -rn "lib/decision" \
+            lib/comparison \
+            components/marketing/comparison-hub.tsx \
+            components/marketing/comparison-cockpit.tsx \
+            components/marketing/cockpit-card.tsx \
+            components/marketing/cockpit-compare.tsx \
+            components/marketing/cockpit-content.tsx \
+            components/marketing/cockpit-decision-bar.tsx \
+            components/marketing/cockpit-impression.tsx \
+            components/marketing/cockpit-table.tsx \
+            components/marketing/cockpit-verdict-cta.tsx \
+            components/dashboard/cockpit-analytics.tsx \
+            lib/actions/cockpit-analytics.ts \
+            lib/analytics/cockpit-events.ts \
+            lib/analytics/cockpit-tracking.ts \
+            "app/api/dashboard/cockpit-analytics" \
+            "app/(dashboard)/dashboard/analytics/cockpits" \
+            scripts/validate-cockpit-rows.ts \
+            2>/dev/null)
+          set -e
+          if [ -n "$MATCHES" ]; then
+            echo "$MATCHES"
+            echo "::error::Cockpit code must never import lib/decision (one-way bridge — see docs/superpowers/plans/2026-07-12-fdl-product-experience.md, PR 3.1)."
+            exit 1
+          fi
+          echo "OK: no lib/decision import found in cockpit code."
+
+      - name: Detect tool changes
+        id: tool-changed
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            git fetch origin "${{ github.event.pull_request.base.ref }}" --depth=50 2>/dev/null || true
+            if git diff --name-only "origin/${{ github.event.pull_request.base.ref }}...HEAD" 2>/dev/null \
+                | grep -qE '^(components/tools/|lib/tools/|lib/calc/|lib/rules/|lib/decision/|lib/analytics/tool|lib/analytics/event-queue\.ts|e2e/tool-)'; then
+              echo "changed=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "changed=false" >> "$GITHUB_OUTPUT"
+            fi
+          fi
+
+      - name: Setup Node
+        if: steps.tool-changed.outputs.changed == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        if: steps.tool-changed.outputs.changed == 'true'
+        run: npm ci
+
+      - name: Install Playwright browser
+        if: steps.tool-changed.outputs.changed == 'true'
+        run: npx playwright install --with-deps chromium
+
+      # Standalone production build (not `npm run dev`) — matches the brief's
+      # "baut Standalone, startet Server" instruction, exercising the tool
+      # routes' actual SSR/RSC output the way production serves it, same
+      # placeholder-secrets pattern as pr-build.yml's "Production build (ohne
+      # private Secrets)" step.
+      - name: Production build (ohne private Secrets)
+        if: steps.tool-changed.outputs.changed == 'true'
+        run: npm run build
+        env:
+          NODE_OPTIONS: "--max-old-space-size=3072"
+          NEXT_PUBLIC_SITE_URL: ${{ secrets.NEXT_PUBLIC_SITE_URL }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_KEY: "ci-placeholder"
+          ANTHROPIC_API_KEY: "ci-placeholder"
+          RESEND_API_KEY: "ci-placeholder"
+          CRON_SECRET: "ci-placeholder"
+          SERPER_API_KEY: "ci-placeholder"
+          GOOGLE_INDEXING_JSON: "{}"
+
+      - name: Prepare standalone output
+        if: steps.tool-changed.outputs.changed == 'true'
+        run: |
+          cp -r .next/static .next/standalone/.next/static
+          cp -r public .next/standalone/public
+
+      - name: Start app (standalone)
+        if: steps.tool-changed.outputs.changed == 'true'
+        run: |
+          PORT=3002 node .next/standalone/server.js > /tmp/next-tool.log 2>&1 &
+          echo $! > /tmp/next-tool.pid
+
+      - name: Wait for app
+        if: steps.tool-changed.outputs.changed == 'true'
+        run: |
+          for i in $(seq 1 90); do
+            if curl -sf http://localhost:3002/ > /dev/null; then
+              echo "App is up"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "App failed to start in time"
+          cat /tmp/next-tool.log || true
+          exit 1
+
+      - name: Run tool E2E
+        if: steps.tool-changed.outputs.changed == 'true'
+        env:
+          # localhost, NOT 127.0.0.1 — same root cause as cockpit-tracking-e2e
+          # above (tool tracking's session bootstrap needs the same hostname).
+          BASE_URL: http://localhost:3002
+        # Spec list grows with the phases (brief: "Liste wächst mit den
+        # Phasen") — tool-instrumentation.spec.ts and others land in later
+        # PRs once the routes/harnesses they need exist.
+        run: npx playwright test e2e/tool-seo.spec.ts e2e/tool-tracking.spec.ts
+
+      - name: Upload report on failure
+        if: failure() && steps.tool-changed.outputs.changed == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: tool-e2e-report
+          path: playwright-report/
+
+      - name: Dump app log on failure
+        if: failure() && steps.tool-changed.outputs.changed == 'true'
+        run: cat /tmp/next-tool.log || true
+
+      - name: Stop app
+        if: always() && steps.tool-changed.outputs.changed == 'true'
+        run: |
+          if [ -f /tmp/next-tool.pid ]; then
+            kill "$(cat /tmp/next-tool.pid)" || true
           fi

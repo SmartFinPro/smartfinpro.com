@@ -44,6 +44,7 @@ import {
   getNavGroupsForMarket,
 } from '@/lib/i18n/config';
 import { detectMarketFromPath, marketSiloConfig } from '@/config/navigation';
+import { getHubPathForMarket } from '@/lib/tools/registry';
 
 interface HeaderProps {
   market?: Market;
@@ -87,7 +88,7 @@ interface ToolCard {
 const allToolCards: ToolCard[] = [
   { name: 'Broker Finder Quiz', description: 'Personalized broker match in 60 seconds', href: '/tools/broker-finder', icon: Target, badge: 'New', markets: 'all' },
   { name: 'Trading Cost Calculator', description: 'Compare fees across top brokers', href: '/tools/trading-cost-calculator', icon: BarChart3, badge: 'New', markets: 'all' },
-  { name: 'Fee Savings Calculator', description: 'See how much you save vs bank funds', href: '/ca/tools/wealthsimple-calculator', icon: DollarSign, badge: 'New', markets: ['ca'] },
+  { name: 'Wealthsimple Fee Savings Calculator', description: 'See how much you save vs bank funds', href: '/ca/tools/wealthsimple-calculator', icon: DollarSign, badge: 'New', markets: ['ca'] },
   { name: 'AI ROI Calculator', description: 'Calculate AI tool investment returns', href: '/tools/ai-roi-calculator', icon: TrendingUp, badge: null, markets: 'all' },
   { name: 'Loan Calculator', description: 'Monthly payments & amortization', href: '/tools/loan-calculator', icon: Calculator, badge: null, markets: 'all' },
   { name: 'AU Mortgage Calculator', description: 'Home loan repayments, LVR & offset', href: '/au/tools/au-mortgage-calculator', icon: Home, badge: 'New', markets: ['au'] },
@@ -257,7 +258,7 @@ export default function Header({ market: marketProp }: HeaderProps) {
               </DropdownMenuContent>
             </DropdownMenu>
             <Link
-              href="/tools"
+              href={getHubPathForMarket(market)}
               className="inline-flex items-center text-[11px] font-bold transition-colors"
               style={{ color: '#fff', background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)', padding: '5px 14px', borderRadius: '6px' }}
               onMouseOver={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.25)')}
@@ -335,7 +336,7 @@ export default function Header({ market: marketProp }: HeaderProps) {
                   </div>
                 </div>
                 <Button asChild className="w-full text-white border-0 mt-2 font-medium" style={{ background: 'var(--sfp-gold)', color: 'var(--sfp-ink)' }}>
-                  <Link href="/tools" onClick={() => setMobileMenuOpen(false)}>Get Started</Link>
+                  <Link href={getHubPathForMarket(market)} onClick={() => setMobileMenuOpen(false)}>Get Started</Link>
                 </Button>
               </nav>
             </SheetContent>
@@ -451,7 +452,7 @@ export default function Header({ market: marketProp }: HeaderProps) {
                     ))}
                   </div>
                   <div className="mt-4 pt-3 border-t border-white/10">
-                    <Link href="/tools" className="inline-flex items-center gap-2 text-sm font-medium transition-colors text-white hover:text-white/80" onClick={() => setActiveMenu(null)}>
+                    <Link href={getHubPathForMarket(market)} className="inline-flex items-center gap-2 text-sm font-medium transition-colors text-white hover:text-white/80" onClick={() => setActiveMenu(null)}>
                       View All Tools
                     </Link>
                   </div>

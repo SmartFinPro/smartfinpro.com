@@ -24,20 +24,19 @@ import {
   generateBreadcrumbSchema,
   generateComparisonItemListSchema,
   generateFAQSchema,
-  generatePersonSchema,
 } from '@/lib/seo/schema';
 import { getCockpitData, getCockpitRouteParams } from '@/lib/comparison/loader';
 import { computeCockpitModifiedDate } from '@/lib/comparison/dates';
 import { getTopicConfig } from '@/lib/comparison/topics/index';
 import { BEST_X_MANIFEST } from '@/lib/comparison/topics/manifest';
 import { buildRelatedComparisons } from '@/lib/comparison/related-comparisons';
-import { getMarketExpert } from '@/lib/actions/experts';
 import { ComparisonCockpit } from '@/components/marketing/comparison-cockpit';
 import { CockpitHero, CockpitBody, CockpitVerdict, type VerdictPick } from '@/components/marketing/cockpit-content';
 import { RelatedComparisons } from '@/components/marketing/related-comparisons';
 import { AffiliateDisclosure } from '@/components/ui/affiliate-disclosure';
 import type { ProductForComparison } from '@/lib/comparison/types';
 import type { TopicConfig } from '@/lib/comparison/topics/types';
+import { resolveCockpitCta } from '@/lib/comparison/cta';
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'https://smartfinpro.com';
 
@@ -76,33 +75,28 @@ function providerUrl(p: ProductForComparison, market: string, category: string, 
 function buildVerdictPicks(
   config: TopicConfig,
   products: ProductForComparison[],
-  market: string,
-  category: string,
 ): VerdictPick[] {
   const picks: VerdictPick[] = [];
   for (const pick of config.verdict.picks.slice(0, 3)) {
     const product = products.find((p) => p.slug === pick.slug);
     if (!product) continue;
-    const reviewHref = product.reviewSlug ? `/${market}/${category}/${product.reviewSlug}` : null;
-    let href: string;
-    let external = false;
-    let ctaLabel: string;
-    if (product.ctaMode === 'offer') {
-      href = `/go/${product.slug}`;
-      ctaLabel = 'View offer';
-    } else if (product.externalUrl) {
-      href = product.externalUrl;
-      external = true;
-      ctaLabel = 'Visit site';
-    } else if (reviewHref) {
-      href = reviewHref;
-      ctaLabel = 'Read review';
-    } else {
-      href = '#';
-      external = true;
-      ctaLabel = 'Visit site';
-    }
-    picks.push({ rank: picks.length + 1, name: product.displayName, why: pick.label, rating: product.rating, reviewCount: product.reviewCount, href, external, ctaLabel });
+    // Ladder lives in resolveCockpitCta — single source of truth for all surfaces.
+    const cta = resolveCockpitCta(product);
+    picks.push({
+      rank: picks.length + 1,
+      name: product.displayName,
+      why: pick.label,
+      rating: product.rating,
+      reviewCount: product.reviewCount,
+      href: cta.href,
+      external: cta.external,
+      ctaLabel: cta.label,
+      productSlug: product.slug,
+      ctaMode: cta.ctaMode,
+      destinationType: cta.destinationType,
+      productCtaMode: product.ctaMode,
+      isTopPick: product.isTopPick,
+    });
   }
   return picks;
 }
@@ -139,7 +133,6 @@ export async function generateMetadata({ params }: CockpitPageProps): Promise<Me
 
   // Article dates: publishDate from config; modifiedDate from the latest source re-verify.
   const products = await getCockpitData(market as Market, category as Category, topic);
-  const expert = await getMarketExpert(market as Market, category as Category);
   const modified = computeCockpitModifiedDate(products, config.publishedDate);
 
   return {
@@ -156,7 +149,7 @@ export async function generateMetadata({ params }: CockpitPageProps): Promise<Me
       locale: marketConfig[market as Market].locale.replace('-', '_'),
       publishedTime: config.publishedDate,
       modifiedTime: modified,
-      authors: [expert.name],
+      authors: ['SmartFinPro Research'],
       // No explicit `images` here — an explicit openGraph.images shadows the
       // file-convention opengraph-image.tsx route entirely (verified empirically:
       // with this field set, og:image kept pointing at the static /og-image.png
@@ -197,7 +190,6 @@ export default async function CockpitPage({ params }: CockpitPageProps) {
   });
   const faq = generateFAQSchema(config.faq.map((f) => ({ question: f.q, answer: f.a })));
 
-  const expert = await getMarketExpert(market as Market, category as Category);
   const modified = computeCockpitModifiedDate(products, config.publishedDate);
 
   const heroImage =
@@ -209,23 +201,13 @@ export default async function CockpitPage({ params }: CockpitPageProps) {
     image: heroImage ? `${SITE}${heroImage}` : undefined,
     publishDate: config.publishedDate,
     modifiedDate: modified,
-    author: expert.name,
+    author: 'SmartFinPro Research',
     url: pageUrl,
-    reviewedBy: expert.name,
-    reviewedByUrl: expert.linkedin_url ?? `${SITE}/about`,
-  });
-  const personSchema = generatePersonSchema({
-    name: expert.name,
-    jobTitle: expert.role,
-    credentials: expert.credentials,
-    image: expert.image_url ?? undefined,
-    sameAs: expert.linkedin_url ? [expert.linkedin_url] : undefined,
-    url: `${SITE}/about`,
   });
   // Per-provider FinancialProduct entities are already carried as the ItemList's
   // itemListElements (above) — a standalone set would duplicate them by URL.
 
-  const verdictPicks = buildVerdictPicks(config, products, market, category);
+  const verdictPicks = buildVerdictPicks(config, products);
   const relatedComparisons = buildRelatedComparisons(market, category, topic);
 
   // "Sources & references" — distinct per-provider primary sources (SEO §8).
@@ -258,8 +240,9 @@ export default async function CockpitPage({ params }: CockpitPageProps) {
             intro={config.verdict.intro}
             picks={verdictPicks}
             verifiedDate={modified}
-            reviewerName={expert.name}
-            reviewerCredential={expert.credentials[0]}
+            market={market}
+            category={category}
+            topic={topic}
           />
         </div>
       )}
@@ -281,7 +264,6 @@ export default async function CockpitPage({ params }: CockpitPageProps) {
           methodology={config.methodology}
           buyerGuide={config.buyerGuide}
           faq={config.faq}
-          reviewer={expert}
           verifiedDate={modified}
           sources={config.sources}
           relatedLinks={config.relatedLinks}
@@ -298,7 +280,6 @@ export default async function CockpitPage({ params }: CockpitPageProps) {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(itemList) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faq) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(article) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(personSchema) }} />
     </div>
   );
 }

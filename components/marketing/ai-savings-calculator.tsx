@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { affiliatePrefetch } from '@/lib/affiliate/prefetch';
 import {
   Calculator,
   Users,
@@ -283,7 +284,7 @@ export function AISavingsCalculator({
                 onClick={() => trackCTAClick(`start_saving_${productName}`)}
                 style={{ background: 'var(--sfp-gold)', color: 'var(--sfp-ink)', borderRadius: '1rem' }}
               >
-                <Link href={affiliateUrl} target="_blank" rel="noopener sponsored">
+                <Link href={affiliateUrl} prefetch={affiliatePrefetch(affiliateUrl)} target="_blank" rel="noopener sponsored">
                   Start Saving with {productName}
                   <ArrowRight className="h-5 w-5" />
                 </Link>
@@ -335,7 +336,7 @@ export function AISavingsCalculatorCompact({
         className="w-full gap-1.5 border-0 shadow-lg text-white"
         style={{ background: 'var(--sfp-gold)', color: 'var(--sfp-ink)', borderRadius: '1rem' }}
       >
-        <Link href={affiliateUrl} target="_blank" rel="noopener sponsored">
+        <Link href={affiliateUrl} prefetch={affiliatePrefetch(affiliateUrl)} target="_blank" rel="noopener sponsored">
           Calculate Your Savings
           <ArrowRight className="h-3.5 w-3.5" />
         </Link>

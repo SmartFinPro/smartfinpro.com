@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Money Leak Scanner (US) · High-Fi Referenz</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="hifi-tokens.css">
+</head>
+<body>
+
+<div class="workspace">
+  <nav class="breadcrumb" aria-label="Breadcrumb"><a href="/">Home</a> › <a href="/tools">Tools</a> › Money Leak Scanner</nav>
+
+  <div class="page-head">
+    <h1 class="t-h1">Money Leak Scanner</h1>
+    <p class="sub">Find hidden household overspend in about two minutes — and the three fixes that matter most.</p>
+  </div>
+
+  <div class="trust-strip">
+    <span>🇺🇸 <strong>US</strong></span>
+    <span>~2 min</span>
+    <span><strong>Data verified 2026-07-12</strong></span>
+    <span class="links"><a href="#methodology">Methodology</a><a href="#privacy">Privacy</a></span>
+  </div>
+
+  <div class="grid">
+    <!-- Inputs · col-5 -->
+    <div class="col-5 panel">
+      <div class="section">
+        <p class="section-label">Your household</p>
+        <div class="field">
+          <label for="income">Monthly net income</label>
+          <div class="control-row">
+            <span class="input-wrap"><span class="unit">$</span><input id="income" type="number" inputmode="numeric" value="5400"></span>
+            <button class="chip-btn" type="button">I’m not sure — estimate</button>
+          </div>
+        </div>
+        <div class="field">
+          <label id="hh-label">Household size</label>
+          <div class="seg" role="group" aria-labelledby="hh-label">
+            <button aria-pressed="false">1</button><button aria-pressed="true">2</button><button aria-pressed="false">3</button><button aria-pressed="false">4+</button>
+          </div>
+        </div>
+      </div>
+      <div class="section">
+        <p class="section-label">Monthly spending</p>
+        <div class="field">
+          <label for="subs">Subscriptions &amp; streaming</label>
+          <div class="control-row">
+            <span class="input-wrap"><span class="unit">$</span><input id="subs" type="number" inputmode="numeric" value="80" style="width:80px"></span>
+            <input type="range" min="0" max="400" value="80" aria-label="Subscriptions slider">
+          </div>
+        </div>
+        <div class="field">
+          <label for="ins">Insurance</label>
+          <div class="control-row">
+            <span class="input-wrap"><span class="unit">$</span><input id="ins" type="number" inputmode="numeric" value="320" style="width:80px"></span>
+            <input type="range" min="0" max="1000" value="320" aria-label="Insurance slider">
+          </div>
+        </div>
+        <div class="field">
+          <label for="bank">Banking &amp; account fees</label>
+          <div class="control-row">
+            <span class="input-wrap"><span class="unit">$</span><input id="bank" type="number" inputmode="numeric" value="24" style="width:80px"></span>
+            <input type="range" min="0" max="150" value="24" aria-label="Banking fees slider">
+          </div>
+          <span class="help">Number field first, slider for quick exploration — both stay in sync.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Result · col-7, Reihenfolge 1→6 -->
+    <div class="col-7 panel">
+      <div class="section" style="display:flex;flex-direction:column;gap:14px">
+        <div class="chip-row" style="justify-content:space-between">
+          <span class="result-chip yours">Your result</span>
+          <span class="t-meta">Updated as you type</span>
+        </div>
+
+        <p class="answer"><strong>You may be leaking about $210–$340 every month.</strong> Insurance is your biggest drain.</p>
+
+        <div style="display:flex;align-items:baseline;gap:10px">
+          <span class="t-num-hero">$275</span>
+          <span class="range-note">/month midpoint · realistic range <span class="num">$210–$340</span></span>
+        </div>
+
+        <svg viewBox="0 0 640 150" width="100%" role="img" aria-label="Your three leak categories: insurance about 95 dollars, subscriptions about 38 dollars, banking fees about 18 dollars per month. Bars are sorted largest first.">
+          <g font-family="Inter, sans-serif">
+            <text x="0" y="16" font-size="13" fill="#555555">Where it leaks · per month</text>
+            <rect x="0" y="30" width="420" height="24" rx="3" fill="#1B4F8C"/>
+            <text x="428" y="47" font-size="14" font-weight="600" fill="#1A1A2E">Insurance ~$95</text>
+            <rect x="0" y="64" width="180" height="24" rx="3" fill="#1B4F8C" opacity="0.72"/>
+            <text x="188" y="81" font-size="14" font-weight="600" fill="#1A1A2E">Subscriptions ~$38</text>
+            <rect x="0" y="98" width="86" height="24" rx="3" fill="#1B4F8C" opacity="0.48"/>
+            <text x="94" y="115" font-size="14" font-weight="600" fill="#1A1A2E">Banking fees ~$18</text>
+            <line x1="0" y1="138" x2="640" y2="138" stroke="#D9DEE8"/>
+            <text x="0" y="150" font-size="11" fill="#555555">Benchmarked against households like yours · verified 2026-07-12</text>
+          </g>
+        </svg>
+
+        <div>
+          <p class="section-label" style="margin-bottom:8px">Three fixes, in order of impact</p>
+          <div class="levers">
+            <button class="lever" type="button"><span class="t">Re-shop your insurance</span><span class="d">save ~$60–$95/mo</span></button>
+            <button class="lever" type="button"><span class="t">Cancel 2 unused subscriptions</span><span class="d">save ~$25–$38/mo</span></button>
+            <button class="lever" type="button"><span class="t">Switch to a no-fee account</span><span class="d">save ~$12–$18/mo</span></button>
+          </div>
+        </div>
+
+        <details class="assumptions">
+          <summary>Assumptions &amp; sources</summary>
+          <p style="margin:8px 0 0">Leak thresholds are benchmarked per market and household size; savings ranges reflect typical outcomes, not guarantees. Educational tool, not financial advice.</p>
+          <p class="src">CFPB household spending guidance — effective 2026-01-01, verified 2026-07-12 · SmartFinPro leak benchmarks v3 — verified 2026-07-12</p>
+        </details>
+
+        <div class="next-action">
+          <div>
+            <a href="/us/personal-finance/best/high-yield-savings">Park the money you free up: best high-yield savings →</a>
+            <div class="why">Because your biggest wins are recurring monthly savings.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Below the fold (SSR, ohne JS sichtbar) -->
+  <div class="below-fold">
+    <section id="methodology">
+      <h2 class="t-h2">How this scanner works</h2>
+      <p>We compare each spending category against benchmarks for your income band and household size. Anything meaningfully above the benchmark counts toward your leak estimate — shown as a range, because real households vary.</p>
+    </section>
+    <section>
+      <h2 class="t-h2">Worked example</h2>
+      <p class="muted">A two-person household with $5,400 net income, $80 subscriptions, $320 insurance and $24 banking fees sees an estimated leak of $210–$340/month — driven mostly by an insurance premium ~40% above the benchmark.</p>
+    </section>
+    <section>
+      <h2 class="t-h2">Frequently asked questions</h2>
+      <div class="faq-item"><h3>Is my data stored anywhere?</h3><p>No. Your inputs stay in your browser. Nothing is sent to a server unless you request the email report.</p></div>
+      <div class="faq-item"><h3>Why a range instead of one number?</h3><p>Because benchmarks are averages. A range is honest; a single number would be false precision.</p></div>
+    </section>
+    <section id="privacy">
+      <h2 class="t-h2">Sources &amp; data</h2>
+      <p class="muted">CFPB household spending guidance (effective 2026-01-01, verified 2026-07-12) · SmartFinPro leak benchmarks v3 (verified 2026-07-12)</p>
+    </section>
+  </div>
+</div>
+
+<!-- Mobile ResultMiniBar (erscheint erst nach belastbarem Resultat) -->
+<div class="mini-bar" role="region" aria-label="Result summary">
+  <span class="summary"><span class="v">~$275/mo leaking</span><span class="l">range $210–$340</span></span>
+  <a class="btn btn-primary" style="min-height:40px" href="#top">View result</a>
+</div>
+
+</body>
+</html>

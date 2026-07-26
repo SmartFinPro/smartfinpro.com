@@ -111,7 +111,6 @@ function scoreFile(filePath: string): FileScore {
   const hasFaq       = /<details/i.test(body) || /<FAQSection/i.test(body) || /FAQPage/.test(body);
   const hasAffBtn    = /<AffiliateButton/.test(body);
   const hasTrustAuth = /<TrustAuthority/.test(body);
-  const hasExpertBox = /<ExpertBox/.test(body) || /reviewedBy:/.test(fm);
   const hasAutoDiscl = /<AutoDisclaimer/.test(body);
   const hasRating    = /^rating:\s*\d/m.test(fm);
 
@@ -122,10 +121,14 @@ function scoreFile(filePath: string): FileScore {
   let score = 10.0;
   const issues: string[] = [];
 
+  // (2026-07-26 editorial-integrity review, F5: the former NO_EB check — "no
+  // <ExpertBox> or reviewedBy: frontmatter" — is removed here too, mirroring
+  // scripts/check-seo-quality.mjs's T0e removal. It actively rewarded
+  // fabricated reviewer identities and penalized the remediation that
+  // stripped them.)
   if (!hasFaq)       { score -= 1.5; issues.push('NO_FAQ'); }
   if (!hasAffBtn)    { score -= 1.0; issues.push('NO_AB'); }
   if (!hasTrustAuth) { score -= 0.5; issues.push('NO_TA'); }
-  if (!hasExpertBox) { score -= 1.0; issues.push('NO_EB'); }
   if (!hasAutoDiscl) { score -= 1.0; issues.push('NO_AD'); }
   if (!hasRating)    { score -= 0.3; issues.push('NO_RATING'); }
   if (titleLen > 65) { score -= 0.5; issues.push(`TITLE_${titleLen}c`); }
