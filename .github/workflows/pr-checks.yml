@@ -76,6 +76,9 @@ jobs:
       - name: Check prose-first (components after 100 words)
         run: npm run check:prose
 
+      - name: Validate Broker-V2 publication contract
+        run: npm run check:review-v2
+
   hydration-e2e:
     name: Hydration E2E Guardrail
     runs-on: ubuntu-latest
