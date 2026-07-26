@@ -78,16 +78,6 @@ const ENVIRONMENT_NOISE: Array<{ kind: 'environment' | 'known-defect'; pattern: 
  */
 const EXPECTED_REQUEST_FAILURES: Array<{ match: (url: string, status: number) => boolean; why: string }> = [
   {
-    // KNOWN PRODUCT DEFECT, pre-existing and unrelated to this branch: the
-    // review "Platform Evidence & Screenshots" sections reference 41 evidence
-    // image folders under public/images/evidence/, of which only revolut-au
-    // actually exists — so /_next/image 400s ("not a valid image") on ~40
-    // review pages. Allowlisted so this net is usable NOW, and reported
-    // separately rather than silently swallowed.
-    match: (url, status) => status === 400 && /_next\/image\?url=%2Fimages%2Fevidence%2F/.test(url),
-    why: 'Missing evidence screenshots (known content defect, tracked separately)',
-  },
-  {
     // BY DESIGN: /go/[slug] answers bot user-agents with a silent 403, and
     // headless Chromium's UA is treated as a bot. Next's RSC prefetch of the
     // CTA therefore 403s in tests while real users redirect normally.
