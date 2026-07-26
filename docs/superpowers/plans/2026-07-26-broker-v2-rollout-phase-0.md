@@ -26,7 +26,7 @@ Supabase JS (read-only SELECT auf Prod `product_attributes`) · gh CLI.
 
 | Branch | Worktree (absolut) | Zustand |
 |---|---|---|
-| `fix/editorial-integrity` (PR #103) | `/private/tmp/sfp-editorial-integrity` | existiert, eingerichtet |
+| `fix/editorial-integrity` (PR #103) | `/Users/christianb./Websites/smartfinpro.com/.worktrees/ei-review-103` | eingerichtet (der alte `/private/tmp/sfp-editorial-integrity` war verwaist — kein `.git`) |
 | `claude/optimistic-sanderson-a83dc7` (PR #105) | `/Users/christianb./Websites/smartfinpro.com/.worktrees/pr-105-evidence` | **neu anlegen** (Task 2) |
 | `feat/broker-v2-standard` | `/Users/christianb./Websites/smartfinpro.com/.worktrees/broker-v2-standard` | **neu anlegen** (Task 3) |
 | `feat/charles-schwab-v2-pilot` | `/Users/christianb./Websites/smartfinpro.com/.worktrees/editorial-merge` | existiert, eingerichtet |
