@@ -1186,6 +1186,49 @@ describe('loadMarketResearchContexts — singleflight under concurrent requests 
     deferred[2].resolve();
     await Promise.all([inFlightCall, secondCall]);
   });
+
+  it('a loader that throws SYNCHRONOUSLY does not permanently wedge the in-flight map — the topic is retried once the backoff window elapses (reviewer-reported latent race)', async () => {
+    // Deliberately NOT `async` — calling this function throws immediately,
+    // before it ever returns a Promise, unlike every other stub in this
+    // file (an `async` function's synchronous throw is automatically
+    // wrapped into a REJECTED PROMISE by the runtime before the caller's
+    // `await` ever sees it). `TopicOverlayLoader`'s type permits a plain
+    // synchronous function; the shipped Next.js wiring (`getCachedTopicOverlay`,
+    // an async `cachedCb`) happens to never be one, but this injectable test
+    // seam is, and the bug lives in `loadMarketResearchContexts` itself, not
+    // in any particular loader implementation.
+    let clock = 0;
+    const now = () => clock;
+    let businessBankingCalls = 0;
+    let synchronousThrow = true;
+    const loadTopic = (_market: string, entry: BestXManifestEntry): Promise<TopicOverlayResult> => {
+      if (entry.category === 'business-banking') {
+        businessBankingCalls += 1;
+        if (synchronousThrow) throw new Error('DB unavailable (sync)');
+      }
+      return Promise.resolve(stubResult(entry));
+    };
+
+    const first = await loadMarketResearchContexts('us', now, loadTopic);
+    const firstBB = first.find((r) => r.entry.category === 'business-banking')!;
+    expect(firstBB).toEqual({ ok: false, entry: firstBB.entry, reason: 'load_failed' });
+    expect(businessBankingCalls).toBe(1);
+
+    // Past the 60s backoff window with a now-healthy loader: a correctly
+    // identity-safe `finally` cleanup leaves the in-flight map empty once
+    // the settled attempt's registration completes, so this call reaches
+    // `loadTopic` again. The bug instead installs the already-settled
+    // `load_failed` promise into the map permanently (the `finally`'s
+    // identity check ran against `attemptRef === undefined` before the
+    // registration line below it ever executed), so the topic would return
+    // `load_failed` forever and `businessBankingCalls` would stay at 1.
+    clock = 61_000;
+    synchronousThrow = false;
+    const second = await loadMarketResearchContexts('us', now, loadTopic);
+    const secondBB = second.find((r) => r.entry.category === 'business-banking')!;
+    expect(businessBankingCalls).toBe(2);
+    expect(secondBB.ok).toBe(true);
+  });
 });
 
 // --- flattenQualifiedOverlayRows — thin back-compat helper (spec §5.3.1) ---

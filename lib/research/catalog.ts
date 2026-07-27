@@ -592,14 +592,6 @@ export async function loadMarketResearchContexts(
       // The whole attempt — loader call, catch, backoff write, warn — is
       // memoized as ONE promise so every concurrent awaiter (including this
       // very caller) shares the identical settled TopicOverlayResult.
-      //
-      // `attemptRef` (typed to allow `undefined`) exists only so the
-      // `finally` below can identity-check against the just-created attempt
-      // without TypeScript flagging a self-referential `const` as "used
-      // before being assigned" — by the time `finally` actually runs (always
-      // after the `await` inside `try`), the assignment right after the IIFE
-      // has long since completed synchronously.
-      let attemptRef: Promise<TopicOverlayResult> | undefined;
       const attempt: Promise<TopicOverlayResult> = (async (): Promise<TopicOverlayResult> => {
         try {
           const result = await loadTopic(market, entry, manifestOrder);
@@ -614,18 +606,47 @@ export async function loadMarketResearchContexts(
             reason: 'load_failed',
           });
           return { ok: false, entry, reason: 'load_failed' };
-        } finally {
-          // Identity-safe cleanup: only remove the map entry if it still
-          // holds THIS attempt. An older attempt settling late — e.g. after
-          // __resetTopicOverlayBackoffForTests cleared the map mid-flight and
-          // a newer attempt for the same key has already taken its place —
-          // must never delete a newer, still-pending entry out from under it.
-          if (inFlightTopicLoads.get(cockpitKey) === attemptRef) {
-            inFlightTopicLoads.delete(cockpitKey);
-          }
         }
       })();
-      attemptRef = attempt;
+
+      // Identity-safe cleanup, chained via `.finally()` on the SETTLED
+      // `attempt` promise rather than living inside the IIFE above
+      // (identity-safety regression fix, reviewer-reported): the ECMAScript
+      // spec guarantees a `.finally()` callback is always invoked as a
+      // QUEUED MICROTASK, never synchronously — even when the promise it's
+      // attached to is already settled at attachment time. That means the
+      // `inFlightTopicLoads.set(...)` two lines below is guaranteed to run
+      // BEFORE this callback ever can, for every `loadTopic` shape,
+      // including one that throws SYNCHRONOUSLY (calling it throws before
+      // it ever returns a Promise — a shape `TopicOverlayLoader`'s type
+      // permits even though the real `getCachedTopicOverlay` never does).
+      //
+      // The previous in-IIFE `finally` (plus a `let attemptRef` workaround
+      // solely to dodge TypeScript flagging a self-referential `const` as
+      // "used before being assigned") relied on `loadTopic`'s own internal
+      // `await` always yielding first — false for a synchronously-throwing
+      // loader, which ran the entire try/catch/finally synchronously,
+      // BEFORE `attemptRef`/`inFlightTopicLoads` were ever written. The
+      // identity check then compared `undefined === undefined`, "succeeded"
+      // as a no-op, and the already-settled failure promise got registered
+      // into the map immediately after — permanently, since a promise's own
+      // `finally` runs exactly once, at settlement, and never again. The
+      // topic then returned `load_failed` for the process lifetime, past
+      // every future backoff window, and the real loader was never called
+      // again. Moving cleanup to a statement strictly AFTER `attempt`'s own
+      // declaration also lets it reference `attempt` directly — no
+      // self-referential-const TDZ hazard, and no extra `attemptRef`
+      // variable to keep in sync.
+      attempt.finally(() => {
+        // Only remove the map entry if it still holds THIS attempt. An
+        // older attempt settling late — e.g. after
+        // __resetTopicOverlayBackoffForTests cleared the map mid-flight and
+        // a newer attempt for the same key has already taken its place —
+        // must never delete a newer, still-pending entry out from under it.
+        if (inFlightTopicLoads.get(cockpitKey) === attempt) {
+          inFlightTopicLoads.delete(cockpitKey);
+        }
+      });
 
       inFlightTopicLoads.set(cockpitKey, attempt);
       return attempt;
