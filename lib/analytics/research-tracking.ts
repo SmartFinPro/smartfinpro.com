@@ -32,28 +32,56 @@ import {
   type ResearchEventData,
   type ResearchEventName,
   type ResearchFacet,
+  type ResearchItemDimensions,
   type ResearchProductStatus,
+  type ResearchTrackOptions,
   type ResearchV1Properties,
   type ShortlistAction,
 } from '@/lib/analytics/research-events';
 import { getOrCreateAnalyticsSessionId } from '@/lib/analytics/session';
 
 export interface ResearchTracker {
-  /** Settled query only (never per keystroke); a zero-length query is dropped. */
-  trackSearch(queryLength: number, resultCount: number): void;
-  trackFilterChange(facet: ResearchFacet, value: string | null, active: boolean, resultCount: number): void;
-  /** Open only — closing a disclosure is not an event. */
-  trackEvidenceOpen(productSlug: string, status: ResearchProductStatus, dataPoints: number): void;
-  /** Immediate — the click navigates away. `position` is 1-based in the rendered list. */
+  /** Settled query only (never per keystroke); a zero-length query is dropped.
+   *  `options.surface` is 'hub' for every call site today (Task 6); item
+   *  dimensions (`topic`/`category`) are meaningless here — this is a GLOBAL
+   *  event and always reports the tracker's bound `ctx.topic` ('hub'). */
+  trackSearch(queryLength: number, resultCount: number, options?: ResearchTrackOptions): void;
+  /** Global event — same `surface`-only usage as `trackSearch` above. */
+  trackFilterChange(
+    facet: ResearchFacet,
+    value: string | null,
+    active: boolean,
+    resultCount: number,
+    options?: ResearchTrackOptions,
+  ): void;
+  /** Open only — closing a disclosure is not an event. ITEM event: pass
+   *  `options.topic`/`options.category` for the card's real projection. */
+  trackEvidenceOpen(
+    productSlug: string,
+    status: ResearchProductStatus,
+    dataPoints: number,
+    options?: ResearchTrackOptions,
+  ): void;
+  /** Immediate — the click navigates away. `position` is 1-based in the
+   *  rendered list. ITEM event: pass `options.topic`/`options.category`. */
   trackReviewClick(
     productSlug: string,
     status: ResearchProductStatus,
     rank: number | null,
     position: number,
+    options?: ResearchTrackOptions,
   ): void;
-  trackShortlistChange(action: ShortlistAction, productSlug: string | null, count: number): void;
-  /** Immediate — the handoff navigates to the Cockpit. */
-  trackCockpitHandoff(productSlugs: string[]): void;
+  /** ITEM event: pass `options.topic`/`options.category` for the shortlist's
+   *  scoped cockpitKey (null productSlug/no dimensions only for 'clear'). */
+  trackShortlistChange(
+    action: ShortlistAction,
+    productSlug: string | null,
+    count: number,
+    options?: ResearchTrackOptions,
+  ): void;
+  /** Immediate — the handoff navigates to the Cockpit. ITEM event: pass
+   *  `options.topic`/`options.category` for the shortlist's scoped cockpitKey. */
+  trackCockpitHandoff(productSlugs: string[], options?: ResearchTrackOptions): void;
   /** Flushes the shared queue — call on pagehide. */
   flush(): void;
 }
@@ -108,47 +136,68 @@ function getQueue(): EventQueue<ResearchEventData> {
 // ── Tracker factory (plain function — usable outside the React tree) ────────
 
 export function createResearchTracker(ctx: ResearchContext): ResearchTracker {
+  // Splits a call site's `ResearchTrackOptions` into the two shapes
+  // `buildResearchEventData` wants: `dimensions` (topic/category — NEVER
+  // serialized as-is, only applied while building `properties`) and the
+  // three scalar properties (surface/kind/trigger), which fold straight into
+  // `props` alongside the event's own fields. A call site that passes no
+  // `options` at all keeps every pre-Task-6 call site byte-identical:
+  // `dimensions` stays `{}` (topic falls back to the bound `ctx.topic`) and
+  // no surface/kind/trigger key is added.
   function enqueue(
     name: ResearchEventName,
     props: Omit<Partial<ResearchV1Properties>, 'schemaVersion' | 'market' | 'topic'> = {},
-    opts?: { immediate?: boolean },
+    options?: ResearchTrackOptions,
+    transportOpts?: { immediate?: boolean },
   ): void {
     if (!isEnabled()) return;
     try {
-      getQueue().enqueue(buildResearchEventData(name, ctx, props), opts);
+      const dimensions: Partial<ResearchItemDimensions> = {};
+      if (options?.topic !== undefined) dimensions.topic = options.topic;
+      if (options?.category !== undefined) dimensions.category = options.category;
+
+      const fullProps: Omit<Partial<ResearchV1Properties>, 'schemaVersion' | 'market' | 'topic'> = {
+        ...props,
+      };
+      if (options?.surface !== undefined) fullProps.surface = options.surface;
+      if (options?.kind !== undefined) fullProps.kind = options.kind;
+      if (options?.trigger !== undefined) fullProps.trigger = options.trigger;
+
+      getQueue().enqueue(buildResearchEventData(name, ctx, fullProps, dimensions), transportOpts);
     } catch {
       // fail-soft
     }
   }
 
   return {
-    trackSearch(queryLength, resultCount) {
+    trackSearch(queryLength, resultCount, options) {
       // An empty query is a reset, not a search (contract) — drop it here so
       // no call site can accidentally emit it.
       if (queryLength <= 0) return;
-      enqueue('research_search', { queryLength, resultCount });
+      enqueue('research_search', { queryLength, resultCount }, options);
     },
 
-    trackFilterChange(facet, value, active, resultCount) {
-      enqueue('research_filter_change', { facet, value, active, resultCount });
+    trackFilterChange(facet, value, active, resultCount, options) {
+      enqueue('research_filter_change', { facet, value, active, resultCount }, options);
     },
 
-    trackEvidenceOpen(productSlug, status, dataPoints) {
-      enqueue('research_evidence_open', { productSlug, status, dataPoints });
+    trackEvidenceOpen(productSlug, status, dataPoints, options) {
+      enqueue('research_evidence_open', { productSlug, status, dataPoints }, options);
     },
 
-    trackReviewClick(productSlug, status, rank, position) {
-      enqueue('research_review_click', { productSlug, status, rank, position }, { immediate: true });
+    trackReviewClick(productSlug, status, rank, position, options) {
+      enqueue('research_review_click', { productSlug, status, rank, position }, options, { immediate: true });
     },
 
-    trackShortlistChange(action, productSlug, count) {
-      enqueue('research_shortlist_change', { action, productSlug, count });
+    trackShortlistChange(action, productSlug, count, options) {
+      enqueue('research_shortlist_change', { action, productSlug, count }, options);
     },
 
-    trackCockpitHandoff(productSlugs) {
+    trackCockpitHandoff(productSlugs, options) {
       enqueue(
         'research_cockpit_handoff',
         { productSlugs, count: productSlugs.length },
+        options,
         { immediate: true },
       );
     },

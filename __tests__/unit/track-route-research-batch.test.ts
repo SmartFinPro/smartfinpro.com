@@ -150,6 +150,85 @@ describe('POST /api/track — research_event_batch case', () => {
     expect(insertMock).not.toHaveBeenCalled();
   });
 
+  // Task 6 (unified-research-discovery-pr2-hubs plan, spec §12) — the hub
+  // dimensions (`surface`/`kind`/`trigger`/`category`) are additive, but the
+  // properties bag stays `.strict()`: an unrelated unknown key is STILL a 400
+  // after this change, even sitting alongside otherwise-valid new fields —
+  // proves the extension never loosened the schema into "any object".
+  it('an unknown property alongside valid new hub dimensions → 400, 0 inserts', async () => {
+    const { POST } = await import('@/app/api/track/route');
+    const badItem = researchItem({
+      eventName: 'research_review_click',
+      eventAction: 'review_click',
+      eventLabel: 'fidelity',
+      properties: {
+        schemaVersion: 'research_v1',
+        market: 'us',
+        topic: 'trading-platforms',
+        category: 'trading',
+        surface: 'hub',
+        kind: 'dossier',
+        productSlug: 'fidelity',
+        status: 'audited',
+        rank: 1,
+        position: 1,
+        notInTheContract: 'nope',
+      },
+    });
+    const req = makeRequest(
+      { type: 'research_event_batch', sessionId: 'session-abc12345', data: { events: [badItem] } },
+      { 'x-forwarded-for': freshIp(), 'user-agent': NORMAL_UA },
+    );
+    const res = (await POST(req)) as unknown as MockedTrackResponse;
+    expect(res.status).toBe(400);
+    expect(insertMock).not.toHaveBeenCalled();
+  });
+
+  it('a valid batch WITH the new hub dimensions → 200, one insert per event', async () => {
+    const { POST } = await import('@/app/api/track/route');
+    const globalEvent = researchItem({
+      eventLabel: 'hub',
+      properties: {
+        schemaVersion: 'research_v1',
+        market: 'us',
+        topic: 'hub',
+        surface: 'hub',
+        queryLength: 6,
+        resultCount: 1,
+      },
+    });
+    const itemEvent = researchItem({
+      eventName: 'research_review_click',
+      eventAction: 'review_click',
+      eventLabel: 'fidelity',
+      properties: {
+        schemaVersion: 'research_v1',
+        market: 'us',
+        topic: 'trading-platforms',
+        category: 'trading',
+        kind: 'dossier',
+        productSlug: 'fidelity',
+        status: 'audited',
+        rank: 1,
+        position: 1,
+      },
+    });
+    const req = makeRequest(
+      {
+        type: 'research_event_batch',
+        sessionId: 'session-abc12345',
+        data: { events: [globalEvent, itemEvent] },
+      },
+      { 'x-forwarded-for': freshIp(), 'user-agent': NORMAL_UA },
+    );
+    const res = (await POST(req)) as unknown as MockedTrackResponse;
+    expect(res.status).toBe(200);
+    expect(insertMock).toHaveBeenCalledTimes(1);
+    const rows = insertMock.mock.calls[0][0] as Array<Record<string, unknown>>;
+    expect(rows).toHaveLength(2);
+    for (const row of rows) expect(row.event_category).toBe('research');
+  });
+
   it('rate-limit weight: a 20-event batch costs 20 tokens — the 6th request from one IP is 429', async () => {
     const { POST } = await import('@/app/api/track/route');
     const ip = freshIp();

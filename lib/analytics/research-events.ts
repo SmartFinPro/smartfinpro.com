@@ -1,7 +1,10 @@
 // lib/analytics/research-events.ts
 // Pure logic for the Research Library discovery surface (schema research_v1),
 // implementing docs/research-library/analytics-research-v1.md — that contract
-// is FROZEN; this file must not drift from it.
+// is FROZEN AT THE SCHEMA STRING; extensions are additive-only (spec §12,
+// unified-research-discovery-pr2-hubs plan Task 6) and must always change
+// together with the strict Zod schema (lib/validation/index.ts) and this
+// file's own doc comment set — never drift from either.
 //
 // Strictly ADDITIVE sibling of tool_v1 and the frozen cockpit_v1: it shares the
 // analytics_events table and POST /api/track, but carries its own event names,
@@ -13,6 +16,21 @@
 // leaves the browser. Only its trimmed character count (toQueryLength) and the
 // result count are ever sent. Slugs are our own editorial identifiers and are
 // safe; there are no prices and no identifiers beyond the anonymous session id.
+//
+// HUB DIMENSIONS (Task 6, spec §12): the universal hub is not scoped to one
+// topic the way the pilot was, so every event now carries an explicit
+// `topic` — 'hub' for the two GLOBAL events (research_search, the hub-wide
+// research_filter_change) and the selected DiscoveryProjection's real topic
+// for the four ITEM events (research_review_click, research_evidence_open,
+// research_shortlist_change, research_cockpit_handoff). `category` is the
+// item-event sibling of `topic`: together they are what keeps two
+// same-named topics in different categories (e.g. `us/credit-repair/companies`
+// vs `us/debt-relief/companies`) analytically separable — a bare topic string
+// alone cannot. `topicOverride`-style values are NEVER a serialized property;
+// they are the `dimensions` argument below and only ever replace
+// `properties.topic`/`properties.category` at build time.
+
+import type { Category } from '@/lib/i18n/config';
 
 export const RESEARCH_SCHEMA_VERSION = 'research_v1';
 export const RESEARCH_EVENT_CATEGORY = 'research';
@@ -46,6 +64,20 @@ export interface ResearchV1Properties {
   schemaVersion: typeof RESEARCH_SCHEMA_VERSION;
   market: string;
   topic: string;
+  /** ITEM events only (spec §12) — the projection's real category, so two
+   *  same-named topics in different categories stay analytically separable.
+   *  Never set directly by a call site; only via `dimensions` (see
+   *  `ResearchItemDimensions` / `buildResearchEventData`). */
+  category?: Category;
+  /** 'hub' (universal Research hub) — the only value today; 'finder'
+   *  (Homepage Quick Finder) ships in PR 3. */
+  surface?: 'hub' | 'finder';
+  /** The clicked/opened/shortlisted item's own kind — mirrors
+   *  `DiscoveryProjection['kind']`. */
+  kind?: 'review' | 'dossier';
+  /** research_finder_cta only (PR 3) — reserved here so the strict schema
+   *  never needs a second additive round just for this field. */
+  trigger?: 'view_all' | 'dossier_item';
   /** research_search — trimmed CHARACTER COUNT only, never the query itself. */
   queryLength?: number;
   /** research_search / research_filter_change — matches after the change. */
@@ -121,17 +153,47 @@ function deriveValue(name: ResearchEventName, p: ResearchV1Properties): number |
   }
 }
 
-/** Builds the /api/track `data` record for one research event. */
+/** The item-scoped analytics dimensions (spec §12): the real topic + category
+ *  of the selected `DiscoveryProjection`, as opposed to the `'hub'` topic (and
+ *  absent category) the two GLOBAL events use. Never a serialized property by
+ *  itself — see `buildResearchEventData`'s `dimensions` argument. */
+export interface ResearchItemDimensions {
+  topic: string;
+  category: Category;
+}
+
+/** Optional per-call overrides threaded through every `ResearchTracker`
+ *  method (lib/analytics/research-tracking.ts) — item dimensions plus the
+ *  three new scalar properties. All optional: an omitted `ResearchTrackOptions`
+ *  keeps a call's existing (pre-Task-6) behavior byte-identical. */
+export interface ResearchTrackOptions extends Partial<ResearchItemDimensions> {
+  surface?: 'hub' | 'finder';
+  kind?: 'review' | 'dossier';
+  trigger?: 'view_all' | 'dossier_item';
+}
+
+/** Builds the /api/track `data` record for one research event.
+ *
+ *  `dimensions` (spec §12) is NEVER itself serialized — `topicOverride` is a
+ *  build-time argument only. When present, `dimensions.topic` replaces
+ *  `ctx.topic` and `dimensions.category` is stamped onto `properties.category`;
+ *  omitted, `properties.topic` falls back to the tracker's bound `ctx.topic`
+ *  (which the hub binds to `'hub'` for its own lifetime) and no `category` is
+ *  set. This is what lets the SAME tracker instance emit both hub-wide events
+ *  (topic: 'hub') and item events carrying the clicked/opened item's own
+ *  topic + category, without rebinding a new tracker per card. */
 export function buildResearchEventData(
   name: ResearchEventName,
   ctx: ResearchContext,
   props: Omit<Partial<ResearchV1Properties>, 'schemaVersion' | 'market' | 'topic'> = {},
+  dimensions: Partial<ResearchItemDimensions> = {},
 ): ResearchEventData {
   const properties: ResearchV1Properties = {
     schemaVersion: RESEARCH_SCHEMA_VERSION,
     market: ctx.market,
-    topic: ctx.topic,
+    topic: dimensions.topic ?? ctx.topic,
     ...props,
+    ...(dimensions.category !== undefined ? { category: dimensions.category } : {}),
   };
   return {
     eventName: name,

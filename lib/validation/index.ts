@@ -8,6 +8,7 @@ import { z, ZodSchema, ZodError } from 'zod';
 import { NextResponse } from 'next/server';
 import { TOOL_ID_VALUES } from '@/lib/tools/registry';
 import { MAX_SHORTLIST } from '@/lib/research/shell-logic';
+import { categories as RESEARCH_V1_CATEGORIES } from '@/lib/i18n/config';
 
 // ── Shared constants ───────────────────────────────────────────────────────
 export const VALID_MARKETS = ['us', 'uk', 'ca', 'au'] as const;
@@ -196,6 +197,14 @@ export const TrackToolEventBatchSchema = z.array(TrackToolEventItemSchema).min(1
 // ("never send the raw search string") is enforced HERE, not just in the
 // client: the properties bag is .strict(), so there is no key a rogue client
 // could put a query into — only `queryLength` exists.
+//
+// Task 6 (unified-research-discovery-pr2-hubs plan, spec §12) added `surface`,
+// `kind`, `trigger` and `category` — additive only, the schema string stays
+// `research_v1` and `.strict()` stays on: an unknown key is still a 400 after
+// this change, never loosened. `category` uses the FULL 16-slug `Category`
+// union (lib/i18n/config.ts), not the narrower 6-item `VALID_CATEGORIES`
+// above (that list predates the multi-market comparison topics research_v1
+// items can belong to, e.g. `credit-repair`/`debt-relief`).
 
 const RESEARCH_EVENT_NAMES = [
   'research_search',
@@ -213,6 +222,14 @@ const ResearchV1PropertiesSchema = z
     schemaVersion: z.literal('research_v1'),
     market: z.string().max(10),
     topic: z.string().max(80),
+    // ITEM events only (spec §12) — the selected DiscoveryProjection's real
+    // category; absent for the two GLOBAL events (topic stays 'hub' there).
+    category: z.enum(RESEARCH_V1_CATEGORIES).optional(),
+    surface: z.enum(['hub', 'finder']).optional(),
+    kind: z.enum(['review', 'dossier']).optional(),
+    // research_finder_cta only (PR 3) — accepted now so the strict schema
+    // never needs a second additive round just for this field.
+    trigger: z.enum(['view_all', 'dossier_item']).optional(),
     // research_search — the trimmed CHARACTER COUNT, never the query itself.
     queryLength: z.number().int().min(0).max(500).optional(),
     resultCount: z.number().int().min(0).max(100_000).optional(),

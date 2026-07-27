@@ -156,6 +156,82 @@ describe('emission discipline', () => {
   });
 });
 
+// Task 6 (unified-research-discovery-pr2-hubs plan, spec §12) — every track
+// method's new optional `options` (`ResearchTrackOptions`) argument: item
+// dimensions (topic/category) are removed from the top-level serialized
+// props and folded into `properties` by the builder; surface/kind/trigger
+// forward straight through as properties. Omitting `options` entirely (every
+// call above this block) must keep behaving byte-identically — proven by the
+// pre-Task-6 tests above still passing unmodified.
+describe('ResearchTrackOptions (Task 6, spec §12)', () => {
+  it('a global call forwards surface without touching topic/category', async () => {
+    const env = stubBrowserEnv();
+    const { createResearchTracker } = await freshModule();
+    createResearchTracker({ market: 'us', topic: 'hub', pagePath: '/research' }).trackSearch(6, 1, {
+      surface: 'hub',
+    });
+    vi.advanceTimersByTime(800);
+
+    const props = allEvents(env)[0].properties as Record<string, unknown>;
+    expect(props.surface).toBe('hub');
+    expect(props.topic).toBe('hub');
+    expect(props.category).toBeUndefined();
+  });
+
+  it('an item call overrides topic/category and carries kind — the tracker-bound topic never leaks through', async () => {
+    const env = stubBrowserEnv();
+    const { createResearchTracker } = await freshModule();
+    createResearchTracker({ market: 'us', topic: 'hub', pagePath: '/research' }).trackReviewClick(
+      'fidelity',
+      'audited',
+      1,
+      1,
+      { topic: 'trading-platforms', category: 'trading', kind: 'dossier' },
+    );
+
+    const props = allEvents(env)[0].properties as Record<string, unknown>;
+    expect(props.topic).toBe('trading-platforms');
+    expect(props.category).toBe('trading');
+    expect(props.kind).toBe('dossier');
+    // The override REPLACES the bound context topic, never appends a second key.
+    expect(Object.keys(props).filter((k) => k === 'topic')).toHaveLength(1);
+  });
+
+  it('trackEvidenceOpen/trackShortlistChange/trackCockpitHandoff all thread options through', async () => {
+    const env = stubBrowserEnv();
+    const { createResearchTracker } = await freshModule();
+    const tracker = createResearchTracker({ market: 'us', topic: 'hub', pagePath: '/research' });
+    const dims = { topic: 'trading-platforms', category: 'trading' as const, kind: 'dossier' as const };
+
+    tracker.trackEvidenceOpen('fidelity', 'audited', 4, dims);
+    tracker.trackShortlistChange('add', 'fidelity', 1, dims);
+    vi.advanceTimersByTime(800);
+    tracker.trackCockpitHandoff(['fidelity'], dims);
+
+    const events = allEvents(env);
+    expect(events).toHaveLength(3);
+    for (const event of events) {
+      const props = event.properties as Record<string, unknown>;
+      expect(props.topic).toBe('trading-platforms');
+      expect(props.category).toBe('trading');
+      expect(props.kind).toBe('dossier');
+    }
+  });
+
+  it('an omitted options argument keeps topic bound to ctx and carries no surface/kind/trigger/category', async () => {
+    const env = stubBrowserEnv();
+    const { createResearchTracker } = await freshModule();
+    createResearchTracker(CTX).trackFilterChange('status', 'audited', true, 3);
+    vi.advanceTimersByTime(800);
+
+    const props = allEvents(env)[0].properties as Record<string, unknown>;
+    expect(props.topic).toBe('trading-platforms');
+    expect(props.surface).toBeUndefined();
+    expect(props.kind).toBeUndefined();
+    expect(props.category).toBeUndefined();
+  });
+});
+
 describe('killswitch + fail-soft', () => {
   it("NEXT_PUBLIC_ENABLE_ANALYTICS='false' silences every entry point", async () => {
     const env = stubBrowserEnv();

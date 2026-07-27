@@ -86,16 +86,36 @@ test.describe('Research Library tracking (research_v1)', () => {
     await expect(page.getByPlaceholder(SEARCH)).toBeVisible(); // hydrated
   });
 
+  // Reads the SR-live-region result count the hub itself renders
+  // (`aria-live="polite"` span, ResearchHub.tsx) — used below wherever a
+  // test needs "however many results the hub honestly shows right now"
+  // rather than a magic number. Task 6 generalized `/research` from the
+  // single-topic trading-platforms PILOT (where "schwab"/"provisional" each
+  // matched exactly one product) to the full multi-category hub, where the
+  // same query/facet legitimately matches many more products across every
+  // category — a hardcoded pilot-era count would just be a second, silently
+  // stale copy of a number the page already displays. This is the same
+  // non-brittleness principle commit 7c64d80 already established for the
+  // "Charles Schwab" collision in research-shell.spec.ts: the FIXTURE
+  // assumption changed with the generalization, not the counted behavior.
+  async function visibleResultCount(page: Page): Promise<number> {
+    const text = await page.locator('[aria-live="polite"]').first().textContent();
+    const match = text?.match(/\d+/);
+    if (!match) throw new Error(`Could not read a result count from "${text}"`);
+    return Number(match[0]);
+  }
+
   test('a settled search sends the query LENGTH and the result count — never the query', async ({ page }) => {
     await page.getByPlaceholder(SEARCH).fill('schwab');
     await expect(page).toHaveURL(/[?&]q=schwab/);
+    const expectedCount = await visibleResultCount(page);
     await expect.poll(() => named(batches, 'research_search').length).toBeGreaterThan(0);
 
     const events = named(batches, 'research_search');
     // One settled query typed → exactly one event, never one per keystroke.
     expect(events).toHaveLength(1);
     expect(props(events[0]).queryLength).toBe(6);
-    expect(props(events[0]).resultCount).toBe(1);
+    expect(props(events[0]).resultCount).toBe(expectedCount);
     expect(props(events[0]).schemaVersion).toBe('research_v1');
     expect(props(events[0]).market).toBe('us');
     // The privacy rule, asserted on the wire: the raw string is nowhere in it.
@@ -105,13 +125,14 @@ test.describe('Research Library tracking (research_v1)', () => {
   test('a filter chip sends the facet, its value and the resulting count', async ({ page }) => {
     await page.getByRole('button', { name: 'In verification', exact: true }).click();
     await expect(page).toHaveURL(/status=provisional/);
+    const expectedCount = await visibleResultCount(page);
     await expect.poll(() => named(batches, 'research_filter_change').length).toBeGreaterThan(0);
 
     const event = named(batches, 'research_filter_change')[0];
     expect(props(event).facet).toBe('status');
     expect(props(event).value).toBe('provisional');
     expect(props(event).active).toBe(true);
-    expect(props(event).resultCount).toBe(1);
+    expect(props(event).resultCount).toBe(expectedCount);
   });
 
   test('opening a card evidence disclosure sends research_evidence_open (open only)', async ({ page }) => {
@@ -151,19 +172,63 @@ test.describe('Research Library tracking (research_v1)', () => {
   });
 
   test('following a card review link sends research_review_click with its rendered position', async ({ page }) => {
-    // The featured winner dossier is position 1 in the browse view.
-    await page.getByRole('link', { name: /read research/i }).first().click();
+    // The first "Read research" link in DOM order is position 1 in the
+    // browse view — on the generalized (Task 6) multi-category hub this is
+    // whichever card happens to sort first across EVERY category, not
+    // necessarily the trading-platforms pilot's audited #1 winner, so the
+    // expected status is read from the card's own rendered verification
+    // line rather than assumed to always be 'audited' (same non-brittleness
+    // principle as `visibleResultCount` above).
+    const reviewLink = page.getByRole('link', { name: /read research/i }).first();
+    const cardText = (await reviewLink.locator('xpath=ancestor::article[1]').textContent()) ?? '';
+    const expectedStatus = cardText.includes('Verification in progress') ? 'provisional' : 'audited';
+
+    await reviewLink.click();
     await expect.poll(() => named(batches, 'research_review_click').length).toBeGreaterThan(0);
 
     const event = named(batches, 'research_review_click')[0];
     expect(props(event).position).toBe(1);
-    expect(props(event).status).toBe('audited');
+    expect(props(event).status).toBe(expectedStatus);
     expect(typeof props(event).productSlug).toBe('string');
   });
 
+  // Known-red audits/reports/research-discovery-pr2-known-red.md, #17 — operator
+  // obligation: this test used to pass VACUOUSLY (before Task 6, no events fired
+  // at all, so "0 review clicks" was trivially true regardless of what got
+  // clicked). It now also fires a POSITIVE control — a real review link, which
+  // IS counted — on the SAME page, proving the two negative cases above are
+  // filtered by the delegated listener's href comparison, not by dead tracking.
   test('the card compare and methodology links are NOT counted as review clicks', async ({ page }) => {
+    // Every link below is a REAL <a href> the delegated listener never calls
+    // preventDefault() on (contract: navigation must stay untouched), so
+    // each click genuinely navigates away — the test returns to /research
+    // between interactions, reusing the SAME `batches` accumulator the whole
+    // way through, which is what "on the same page" (operator obligation)
+    // means here: one continuous tracking session, not one unbroken URL.
+    async function backToResearch() {
+      await page.goto('/research');
+      await expect(page.getByPlaceholder(SEARCH)).toBeVisible();
+    }
+
+    // Negative case 1: the outline "Compare" CTA — the single-slug Cockpit
+    // handoff, never a review link (a card's compareHref and reviewHref are
+    // always distinct paths).
+    await page.getByRole('link', { name: 'Compare', exact: true }).first().click();
+    await expect(page).toHaveURL(/compare=/);
+    await backToResearch();
+
+    // Negative case 2: the "Why this score?" methodology link.
     await page.getByRole('link', { name: /why this score/i }).first().click();
+    await expect(page).toHaveURL(/\/methodology/);
     await page.waitForTimeout(1000);
     expect(named(batches, 'research_review_click')).toHaveLength(0);
+
+    // Positive control: a REAL review link, on the same tracking session,
+    // must still be counted — a green "0 review clicks" from tracking that
+    // never fires at all is not acceptable coverage.
+    await backToResearch();
+    await page.getByRole('link', { name: /read research/i }).first().click();
+    await expect.poll(() => named(batches, 'research_review_click').length).toBeGreaterThan(0);
+    expect(named(batches, 'research_review_click')).toHaveLength(1);
   });
 });

@@ -59,10 +59,27 @@
 // Shortlist UI (Task 5; spec §11) lives in components/research/ResearchShortlist.tsx
 // (the reducer/snapshot/restore contract) and is wired in here — the toggle
 // pill wrapping each dossier card, the fixed compare bar, and the cross-topic
-// switch dialog. Analytics (Task 6) still deliberately do not live here.
+// switch dialog.
+//
+// Analytics (Task 6; spec §12) also live here — the ONLY client entry point
+// for every card in the tree, since ResearchCard/CatalogCard stay Server
+// Components. Two DELEGATED-listener wrappers (`TrackedCard`,
+// `HandoffTrackingBoundary`) close that gap without turning either card type
+// into a client component — same pattern the pilot's `SelectableCard`
+// established (components/research/ResearchLibrary.tsx): a `click` listener
+// compares the nearest `<a>`'s href against the ONE href this wrapper was
+// told about, and a `toggle` listener (bound in the CAPTURE phase — native
+// `toggle` doesn't bubble) fires only for `<details data-research-evidence>`,
+// open only. The hub tracker itself binds `topic: 'hub'` for its whole
+// lifetime (the two GLOBAL events, search + the hub-wide filter chips, keep
+// that); every ITEM event (review click, evidence open, shortlist change,
+// Cockpit handoff) overrides `topic`/`category` per call from the entry (or
+// the shortlist's scoped cockpitKey) it actually concerns — never the bound
+// 'hub' value — so the two same-named `companies` topics
+// (`us/credit-repair` vs `us/debt-relief`) stay analytically separable.
 'use client';
 
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Search, SlidersHorizontal, X } from 'lucide-react';
 import { categoryConfig, type Category, type Market } from '@/lib/i18n/config';
@@ -92,6 +109,8 @@ import {
   ShortlistToggleCard,
   useScopedResearchShortlist,
 } from './ResearchShortlist';
+import { useResearchTracking } from '@/lib/analytics/research-tracking';
+import { toQueryLength, type ResearchFacet, type ResearchProductStatus } from '@/lib/analytics/research-events';
 
 const STATUS_LABEL: Record<ResearchStatus, string> = {
   audited: 'Audited',
@@ -147,6 +166,30 @@ export interface ResolvedEntry {
   cockpitKey: CockpitKey | null;
   productSlug: string | null;
   displayName: string | null;
+  // ── Analytics (Task 6; spec §12) — all optional so the hand-built fixture
+  // in __tests__/unit/research-hub-dossier-grouping.test.ts (predates this
+  // field set and constructs `ResolvedEntry`-shaped literals directly,
+  // without going through `resolveEntry`) keeps type-checking unchanged.
+  // `resolveEntry` itself always sets every one of them.
+  /** Cockpit verification status for research_review_click/research_evidence_open
+   *  — mirrors `context.status` for a dossier entry; 'unavailable' for a
+   *  review-kind entry (no Cockpit dossier data exists for it at all). */
+  status?: ResearchProductStatus;
+  /** Mirrors `context.auditedRank`; null for a review-kind entry. */
+  rank?: number | null;
+  /** Mirrors `context.dataPoints`; 0 for a review-kind entry — a CatalogCard
+   *  never renders an evidence disclosure, so this never surfaces there. */
+  dataPoints?: number;
+  /** The card's own review link (`item.review?.href`) — used ONLY by the
+   *  delegated click listener below to tell a genuine review click apart
+   *  from a card's other links (Compare, methodology, provider, evidence
+   *  source). The SAME value CatalogCard/ResearchCard render as their own
+   *  primary CTA. Null when the item has no review at all. */
+  reviewHref?: string | null;
+  /** The identifier reported on research_review_click/research_evidence_open
+   *  — the Cockpit product slug for a dossier entry, or the review's own MDX
+   *  slug for a review-kind entry (there is no Cockpit product to name). */
+  analyticsProductSlug?: string;
 }
 
 /** Resolves one projection to its already-built opaque node, applying the
@@ -160,6 +203,9 @@ function resolveEntry(
   if (projection.kind === 'review') {
     const key = projectionNodeKey(projection.itemId, null);
     const node = nodeByKey.get(key);
+    // A 'review' kind projection is only ever built when `item.review` is
+    // non-null (projectDiscoveryItems, lib/research/catalog-shell-logic.ts)
+    // — safe to read directly for the analytics fields below.
     return node
       ? {
           key,
@@ -172,6 +218,11 @@ function resolveEntry(
           cockpitKey: null,
           productSlug: null,
           displayName: null,
+          status: 'unavailable',
+          rank: null,
+          dataPoints: 0,
+          reviewHref: projection.item.review?.href ?? null,
+          analyticsProductSlug: projection.item.review?.slug,
         }
       : null;
   }
@@ -191,6 +242,11 @@ function resolveEntry(
       cockpitKey: context.cockpitKey,
       productSlug: context.productSlug,
       displayName: context.displayName,
+      status: context.status,
+      rank: context.auditedRank,
+      dataPoints: context.dataPoints,
+      reviewHref: item.review?.href ?? null,
+      analyticsProductSlug: context.productSlug,
     };
   }
 
@@ -209,11 +265,148 @@ function resolveEntry(
         cockpitKey: null,
         productSlug: null,
         displayName: null,
+        status: 'unavailable',
+        rank: null,
+        dataPoints: 0,
+        reviewHref: projection.item.review.href,
+        analyticsProductSlug: projection.item.review.slug,
       };
     }
   }
 
   return null;
+}
+
+// ── Analytics wrappers (Task 6; spec §12) ───────────────────────────────────
+// See the file header for why these exist: ResearchCard/CatalogCard are
+// Server Components with no onClick, so a DELEGATED listener on a thin client
+// wrapper is the only way to measure their interactions — the exact pattern
+// the pilot's SelectableCard established (components/research/ResearchLibrary.tsx).
+
+/** Wraps an already-built card node with delegated `click`/`toggle` listeners
+ *  for research_review_click / research_evidence_open. `click` -> nearest
+ *  `<a>`, counted only when its href equals THIS entry's own `reviewHref` (so
+ *  Compare / provider / evidence-source / methodology links on the SAME card
+ *  never count — they never share that href). `toggle` is bound in the
+ *  CAPTURE phase (native `toggle` doesn't bubble) and fires only for
+ *  `<details data-research-evidence>` (EvidenceDisclosure.tsx's own marker),
+ *  open only — the featured card's separate "Score breakdown" `<details>`
+ *  has no such marker and is correctly ignored. */
+function TrackedCard({
+  node,
+  reviewHref,
+  onReviewClick,
+  onEvidenceOpen,
+}: {
+  node: ReactNode;
+  reviewHref: string | null;
+  onReviewClick: () => void;
+  onEvidenceOpen: () => void;
+}) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  // Latest-value ref so the listeners bind exactly ONCE per card while still
+  // calling the current handlers (position/status/etc. can change on re-render).
+  const latest = useRef({ reviewHref, onReviewClick, onEvidenceOpen });
+  useEffect(() => {
+    latest.current = { reviewHref, onReviewClick, onEvidenceOpen };
+  });
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    const handleClick = (event: Event) => {
+      try {
+        const href = latest.current.reviewHref;
+        if (!href) return;
+        const anchor = (event.target as Element | null)?.closest?.('a');
+        if (!anchor || anchor.getAttribute('href') !== href) return;
+        latest.current.onReviewClick();
+      } catch {
+        /* fail-soft — tracking must never break a navigation */
+      }
+    };
+
+    const handleToggle = (event: Event) => {
+      try {
+        const details = event.target as HTMLDetailsElement | null;
+        if (!details?.hasAttribute?.('data-research-evidence')) return;
+        if (details.open) latest.current.onEvidenceOpen(); // open only, never close
+      } catch {
+        /* fail-soft */
+      }
+    };
+
+    el.addEventListener('click', handleClick);
+    el.addEventListener('toggle', handleToggle, true); // capture: toggle doesn't bubble
+    return () => {
+      el.removeEventListener('click', handleClick);
+      el.removeEventListener('toggle', handleToggle, true);
+    };
+  }, []);
+
+  return <div ref={containerRef}>{node}</div>;
+}
+
+/** Delegated click tracking for the Cockpit handoff. `ShortlistBar`'s
+ *  "Compare in the cockpit" anchor (components/research/ResearchShortlist.tsx)
+ *  is a plain `<a href>` with no onClick of its own — that file is not part
+ *  of this task's change set — so this wraps it the same way `TrackedCard`
+ *  wraps a server-rendered card: click -> nearest `<a>`, counted only when
+ *  its href equals the shortlist's OWN `compareUrl`. Fires IMMEDIATELY
+ *  (contract: the page is navigating away) and never calls
+ *  `preventDefault()`, so the real navigation is untouched. */
+function HandoffTrackingBoundary({
+  compareUrl,
+  onHandoff,
+  children,
+}: {
+  compareUrl: string | null;
+  onHandoff: () => void;
+  children: ReactNode;
+}) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const latest = useRef({ compareUrl, onHandoff });
+  useEffect(() => {
+    latest.current = { compareUrl, onHandoff };
+  });
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const handleClick = (event: Event) => {
+      try {
+        const href = latest.current.compareUrl;
+        if (!href) return;
+        const anchor = (event.target as Element | null)?.closest?.('a');
+        if (!anchor || anchor.getAttribute('href') !== href) return;
+        latest.current.onHandoff();
+      } catch {
+        /* fail-soft */
+      }
+    };
+    el.addEventListener('click', handleClick);
+    return () => el.removeEventListener('click', handleClick);
+  }, []);
+
+  return <div ref={containerRef}>{children}</div>;
+}
+
+/** A `CockpitKey` is literally `${market}/${category}/${topic}`
+ *  (`cockpitKeyFor`, lib/research/catalog-shell-logic.ts) — the shortlist's
+ *  scoped cockpitKey is the only handle `ShortlistBar`'s handoff/remove/clear
+ *  actions carry, so this recovers the real `topic`/`category` item
+ *  dimensions (spec §12) from it directly rather than re-scanning `items`
+ *  (which may no longer even contain the scoped product under the current
+ *  filters). `market` is always the caller's own bound market — a shortlist
+ *  is never cross-market. */
+function dimensionsForCockpitKey(
+  cockpitKey: CockpitKey,
+  market: Market,
+): { topic: string; category: Category } {
+  const rest = cockpitKey.slice(market.length + 1);
+  const slashIndex = rest.indexOf('/');
+  return { category: rest.slice(0, slashIndex) as Category, topic: rest.slice(slashIndex + 1) };
 }
 
 export interface DossierGroup {
@@ -414,6 +607,14 @@ export function ResearchHub({ market, items, nodes, scopeSnapshot }: ResearchHub
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
+  // research_v1 (docs/research-library/analytics-research-v1.md, spec §12) —
+  // bound ONCE for the hub's whole lifetime with topic: 'hub'. The two GLOBAL
+  // events (search, the hub-wide filter chips) keep that bound topic as-is;
+  // every ITEM event below overrides topic/category per call via
+  // ResearchTrackOptions — see the file header. Fail-soft by construction;
+  // the raw query never leaves the browser (only its length).
+  const tracker = useResearchTracking({ market, topic: 'hub', pagePath: pathname });
+
   // URL-derived filters (source of truth for everything except the live
   // search text, which needs to filter instantly while its own write to the
   // URL is still debouncing).
@@ -439,29 +640,28 @@ export function ResearchHub({ market, items, nodes, scopeSnapshot }: ResearchHub
   );
   const isActive = hasActiveDiscoveryFilters(activeFilters);
 
-  // Settled-query write: debounced router.replace() (mutates the CURRENT
-  // history entry, so typing never spams Back) — the only place `q` is
-  // written to the URL.
-  useEffect(() => {
-    const nextQuery = query.trim();
-    if (nextQuery === filters.query) return;
-    const id = setTimeout(() => {
-      const next: DiscoveryFilters = { ...filters, query: nextQuery };
-      const qs = buildDiscoverySearchParams(next).toString();
-      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
-    }, 300);
-    return () => clearTimeout(id);
-  }, [query, filters, pathname, router]);
-
   // Facet toggle: router.push() (a NEW history entry), so Back after a chip
   // click undoes just that chip, never the settled search underneath it.
+  // `tracked` is set ONLY for the three facets research_v1 actually measures
+  // (status/confidence/fresh, ResearchFacet — contract-frozen); `category`/
+  // `type` are hub-only browse dimensions with no analytics facet of their
+  // own and stay untracked, same as before this task. The result count is
+  // computed for the FILTER'S OWN next state (not read from `resultCount`,
+  // which describes the CURRENT render) — mirrors the pilot's `setParam`
+  // (components/research/ResearchLibrary.tsx).
   const applyFacet = useCallback(
-    (partial: Partial<DiscoveryFilters>) => {
+    (partial: Partial<DiscoveryFilters>, tracked?: { facet: ResearchFacet; value: string | null }) => {
       const next: DiscoveryFilters = { ...activeFilters, ...partial };
+      if (tracked) {
+        const nextCount = projectDiscoveryItems(items, next).length;
+        tracker.trackFilterChange(tracked.facet, tracked.value, tracked.value !== null, nextCount, {
+          surface: 'hub',
+        });
+      }
       const qs = buildDiscoverySearchParams(next).toString();
       router.push(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
     },
-    [activeFilters, pathname, router],
+    [activeFilters, pathname, router, items, tracker],
   );
 
   const resetAll = useCallback(() => {
@@ -492,6 +692,28 @@ export function ResearchHub({ market, items, nodes, scopeSnapshot }: ResearchHub
 
   const resultCount = resolvedEntries.length;
 
+  // Settled-query write: debounced router.replace() (mutates the CURRENT
+  // history entry, so typing never spams Back) — the only place `q` is
+  // written to the URL, and the only place research_search fires. Declared
+  // AFTER `resultCount` (pilot precedent, components/research/ResearchLibrary.tsx)
+  // so the settled query's own result count is the one read from the render
+  // that produced it — the debounce already restarts on every keystroke
+  // (`query`/`filters` below), so `resultCount` closing over the FINAL
+  // (settled) render's value is exactly the point, not a race. The tracker's
+  // own trackSearch drops a zero-length query itself (contract), so no
+  // separate empty-query guard is needed here.
+  useEffect(() => {
+    const nextQuery = query.trim();
+    if (nextQuery === filters.query) return;
+    const id = setTimeout(() => {
+      tracker.trackSearch(toQueryLength(nextQuery), resultCount, { surface: 'hub' });
+      const next: DiscoveryFilters = { ...filters, query: nextQuery };
+      const qs = buildDiscoverySearchParams(next).toString();
+      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+    }, 300);
+    return () => clearTimeout(id);
+  }, [query, filters, pathname, router, resultCount, tracker]);
+
   // Grounded in the static manifest for `market` (never in `resolvedEntries`,
   // which shrinks under an active filter) so a group's disambiguated
   // data-testid never depends on which filter happens to be narrowing the
@@ -515,24 +737,144 @@ export function ResearchHub({ market, items, nodes, scopeSnapshot }: ResearchHub
   // re-derived from `items` here.
   const shortlist = useScopedResearchShortlist(market, items, scopeSnapshot);
 
-  // Every dossier entry gets its shortlist toggle wrapped on BEFORE grouping —
-  // `DefaultResults`/`FilteredResults` stay plain layout components with no
-  // shortlist awareness of their own. A review-kind entry (no Cockpit
-  // identity) passes through unwrapped.
-  const entriesForRender: ResolvedEntry[] = resolvedEntries.map((entry) => {
-    if (entry.kind !== 'dossier' || !entry.cockpitKey || !entry.productSlug) return entry;
+  // research_shortlist_change for a CROSS-scope toggle (spec §11.3) can't be
+  // tracked at click time — nothing has actually changed yet, only a switch
+  // dialog is requested (or, rarely, a silent no-op if the target scope has
+  // gone `unavailable` mid-session; either way, an event now would describe a
+  // mutation that didn't happen). Remembers the ONE pending target between
+  // the toggle click and the dialog's own confirm/cancel — overwritten by a
+  // later cross-scope click, cleared on cancel, matching the reducer's own
+  // "latest request wins" pendingSwitch semantics.
+  const pendingSwitchTrackingRef = useRef<{
+    productSlug: string;
+    dimensions: { topic: string; category: Category };
+  } | null>(null);
+
+  const handleShortlistToggle = useCallback(
+    (cockpitKey: CockpitKey, productSlug: string, dimensions: { topic: string; category: Category }) => {
+      const { selected } = shortlist.cardState(cockpitKey, productSlug);
+      if (selected) {
+        // Removing FROM the active scope is always same-scope and immediate
+        // — deterministic, no ambiguity.
+        tracker.trackShortlistChange('remove', productSlug, shortlist.slugs.length - 1, {
+          ...dimensions,
+          kind: 'dossier',
+        });
+      } else if (shortlist.cockpitKey === null || shortlist.cockpitKey === cockpitKey) {
+        // A same-(or fresh-)scope add. The full-capacity block is a disabled
+        // button (ShortlistToggleCard) — onToggle never fires for it, so
+        // reaching this branch always means the add actually applies.
+        tracker.trackShortlistChange('add', productSlug, shortlist.slugs.length + 1, {
+          ...dimensions,
+          kind: 'dossier',
+        });
+      } else {
+        // Cross-scope: toggle() below will request the switch dialog (or, if
+        // the target scope is unavailable, silently no-op) — remember the
+        // target for the dialog's own confirm handler; nothing tracked yet.
+        pendingSwitchTrackingRef.current = { productSlug, dimensions };
+      }
+      shortlist.toggle(cockpitKey, productSlug);
+    },
+    [shortlist, tracker],
+  );
+
+  const handleConfirmSwitch = useCallback(() => {
+    const pending = pendingSwitchTrackingRef.current;
+    pendingSwitchTrackingRef.current = null;
+    if (pending) {
+      // confirm-switch always lands on exactly the one requested slug
+      // (shortlistReducer, components/research/ResearchShortlist.tsx) — the
+      // resulting count is always 1, never derived from the prior scope's size.
+      tracker.trackShortlistChange('add', pending.productSlug, 1, { ...pending.dimensions, kind: 'dossier' });
+    }
+    shortlist.confirmSwitch();
+  }, [shortlist, tracker]);
+
+  const handleCancelSwitch = useCallback(() => {
+    pendingSwitchTrackingRef.current = null;
+    shortlist.cancelSwitch();
+  }, [shortlist]);
+
+  const handleRemoveSlug = useCallback(
+    (slug: string) => {
+      if (shortlist.cockpitKey) {
+        tracker.trackShortlistChange('remove', slug, shortlist.slugs.length - 1, {
+          ...dimensionsForCockpitKey(shortlist.cockpitKey, market),
+          kind: 'dossier',
+        });
+      }
+      shortlist.removeSlug(slug);
+    },
+    [shortlist, tracker, market],
+  );
+
+  const handleClearAll = useCallback(() => {
+    if (shortlist.cockpitKey) {
+      tracker.trackShortlistChange('clear', null, 0, {
+        ...dimensionsForCockpitKey(shortlist.cockpitKey, market),
+        kind: 'dossier',
+      });
+    }
+    shortlist.clearAll();
+  }, [shortlist, tracker, market]);
+
+  const handleCockpitHandoff = useCallback(() => {
+    if (!shortlist.cockpitKey) return;
+    tracker.trackCockpitHandoff(shortlist.slugs, {
+      ...dimensionsForCockpitKey(shortlist.cockpitKey, market),
+      kind: 'dossier',
+    });
+  }, [shortlist, tracker, market]);
+
+  // Every entry is first wrapped with the delegated review-click/evidence-open
+  // listener (TrackedCard; Task 6), THEN — for a dossier entry only — with the
+  // shortlist toggle (Task 5). `DefaultResults`/`FilteredResults` stay plain
+  // layout components aware of neither. `position` is the entry's 1-based
+  // index in this FULL resolved/ordered list (research_v1 contract's
+  // `position` — the same order both grouped views render, just laid out
+  // differently), computed BEFORE grouping so it never depends on which
+  // dossier section a card lands in.
+  const entriesForRender: ResolvedEntry[] = resolvedEntries.map((entry, index) => {
+    const position = index + 1;
+    const status: ResearchProductStatus = entry.status ?? 'unavailable';
+    const rank = entry.rank ?? null;
+    const dataPoints = entry.dataPoints ?? 0;
+    const analyticsSlug = entry.analyticsProductSlug ?? entry.key;
+    const itemDimensions: { topic: string; category: Category } | undefined =
+      entry.kind === 'dossier' && entry.topic && entry.category
+        ? { topic: entry.topic, category: entry.category }
+        : undefined;
+
+    const trackedNode = (
+      <TrackedCard
+        node={entry.node}
+        reviewHref={entry.reviewHref ?? null}
+        onReviewClick={() =>
+          tracker.trackReviewClick(analyticsSlug, status, rank, position, { ...itemDimensions, kind: entry.kind })
+        }
+        onEvidenceOpen={() =>
+          tracker.trackEvidenceOpen(analyticsSlug, status, dataPoints, { ...itemDimensions, kind: entry.kind })
+        }
+      />
+    );
+
+    if (entry.kind !== 'dossier' || !entry.cockpitKey || !entry.productSlug || !itemDimensions) {
+      return { ...entry, node: trackedNode };
+    }
     const cockpitKey = entry.cockpitKey;
     const productSlug = entry.productSlug;
+    const dimensions = itemDimensions;
     const { selected, disabled } = shortlist.cardState(cockpitKey, productSlug);
     return {
       ...entry,
       node: (
         <ShortlistToggleCard
           name={entry.displayName ?? productSlug}
-          node={entry.node}
+          node={trackedNode}
           selected={selected}
           disabled={disabled}
-          onToggle={() => shortlist.toggle(cockpitKey, productSlug)}
+          onToggle={() => handleShortlistToggle(cockpitKey, productSlug, dimensions)}
         />
       ),
     };
@@ -591,7 +933,9 @@ export function ResearchHub({ market, items, nodes, scopeSnapshot }: ResearchHub
                   label: STATUS_LABEL[entry.value],
                   count: entry.count,
                 }))}
-                onChange={(value) => applyFacet({ status: value as ResearchStatus | null })}
+                onChange={(value) =>
+                  applyFacet({ status: value as ResearchStatus | null }, { facet: 'status', value })
+                }
               />
               <FilterChips
                 label="Confidence"
@@ -601,7 +945,9 @@ export function ResearchHub({ market, items, nodes, scopeSnapshot }: ResearchHub
                   label: CONFIDENCE_LABEL[entry.value],
                   count: entry.count,
                 }))}
-                onChange={(value) => applyFacet({ confidence: value as ResearchConfidence | null })}
+                onChange={(value) =>
+                  applyFacet({ confidence: value as ResearchConfidence | null }, { facet: 'confidence', value })
+                }
               />
               <FilterChips
                 label="Verified since"
@@ -609,7 +955,7 @@ export function ResearchHub({ market, items, nodes, scopeSnapshot }: ResearchHub
                 options={[...facets.freshnessDates]
                   .reverse()
                   .map((entry) => ({ value: entry.value, label: formatVerifiedDate(entry.value), count: entry.count }))}
-                onChange={(value) => applyFacet({ fresh: value })}
+                onChange={(value) => applyFacet({ fresh: value }, { facet: 'fresh', value })}
               />
             </div>
           )}
@@ -664,18 +1010,20 @@ export function ResearchHub({ market, items, nodes, scopeSnapshot }: ResearchHub
       {shortlist.pendingSwitchDescription && (
         <ShortlistSwitchDialog
           description={shortlist.pendingSwitchDescription}
-          onCancel={shortlist.cancelSwitch}
-          onConfirm={shortlist.confirmSwitch}
+          onCancel={handleCancelSwitch}
+          onConfirm={handleConfirmSwitch}
         />
       )}
 
-      <ShortlistBar
-        slugs={shortlist.slugs}
-        displayNameFor={shortlist.displayNameFor}
-        onRemove={shortlist.removeSlug}
-        onClearAll={shortlist.clearAll}
-        compareUrl={shortlist.compareUrl}
-      />
+      <HandoffTrackingBoundary compareUrl={shortlist.compareUrl} onHandoff={handleCockpitHandoff}>
+        <ShortlistBar
+          slugs={shortlist.slugs}
+          displayNameFor={shortlist.displayNameFor}
+          onRemove={handleRemoveSlug}
+          onClearAll={handleClearAll}
+          compareUrl={shortlist.compareUrl}
+        />
+      </HandoffTrackingBoundary>
     </div>
   );
 }

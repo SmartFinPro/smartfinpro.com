@@ -1,7 +1,16 @@
 # research_v1 — Event contract & success metrics
 
-Status: **contract frozen** (implement against this, don't drift).
-Scope: the Research Library discovery surface (`/research`). Pilot: US trading platforms.
+Status: **contract frozen** (implement against this, don't drift). The schema
+string (`research_v1`) and the six event names are frozen; the dimensions
+below are an ADDITIVE extension (unified-research-discovery-pr2-hubs plan
+Task 6, spec §12) — every future change here still lands in the TypeScript
+builder (`lib/analytics/research-events.ts`) and the strict Zod schema
+(`lib/validation/index.ts`) in the SAME commit as this doc, never one without
+the other.
+Scope: the Research Library discovery surface. Pilot: US trading platforms
+(`/research`). Generalized (Task 6) to every market hub — `/research`,
+`/uk/research`, `/ca/research`, `/au/research` — and every category/topic
+each hub's catalog contains.
 
 ## Why this exists
 
@@ -37,12 +46,12 @@ All events share: `sessionId`, `market`, `topic`, plus the properties below.
 
 | Event | When | Properties |
 |---|---|---|
-| `research_search` | after the search debounce settles / the URL `q` is stable — **never per keystroke** | `queryLength` (int), `resultCount` (int) |
-| `research_filter_change` | a filter chip is toggled | `facet` (`status`\|`confidence`\|`fresh`), `value` (string\|null), `active` (bool), `resultCount` (int) |
-| `research_evidence_open` | a card's "View evidence" disclosure is opened (open only, not close) | `productSlug`, `status`, `dataPoints` (int) |
-| `research_review_click` | a card's review link is followed | `productSlug`, `status`, `rank` (int\|null), `position` (1-based index in the rendered list) |
-| `research_shortlist_change` | shortlist mutates | `action` (`add`\|`remove`\|`clear`), `productSlug` (null for `clear`), `count` (new size) |
-| `research_cockpit_handoff` | "Compare in the cockpit" is followed | `productSlugs` (string[]), `count` (int) |
+| `research_search` | after the search debounce settles / the URL `q` is stable — **never per keystroke** | `queryLength` (int), `resultCount` (int), `surface` |
+| `research_filter_change` | a filter chip is toggled | `facet` (`status`\|`confidence`\|`fresh`), `value` (string\|null), `active` (bool), `resultCount` (int), `surface` |
+| `research_evidence_open` | a card's "View evidence" disclosure is opened (open only, not close) | `productSlug`, `status`, `dataPoints` (int), `kind`, `category` |
+| `research_review_click` | a card's review link is followed | `productSlug`, `status`, `rank` (int\|null), `position` (1-based index in the rendered list), `kind`, `category` |
+| `research_shortlist_change` | shortlist mutates | `action` (`add`\|`remove`\|`clear`), `productSlug` (null for `clear`), `count` (new size), `kind`, `category` |
+| `research_cockpit_handoff` | "Compare in the cockpit" is followed | `productSlugs` (string[]), `count` (int), `kind`, `category` |
 
 Emission discipline:
 - `research_search` fires on the **settled** query only (same debounce that writes
@@ -51,6 +60,51 @@ Emission discipline:
 - `research_cockpit_handoff` is sent **immediately** (not queued) — the page is
   navigating away.
 - A throwing tracker must never break the UI: every entry point is fail-soft.
+
+## Hub dimensions (v1.1, additive — Task 6, spec §12)
+
+The schema string stays `research_v1`; every addition below is optional and
+lands in the TypeScript builder + strict Zod schema together, never one
+without the other. `cockpit_v1` and `tool_v1` are untouched.
+
+New optional properties:
+
+```ts
+surface?: 'hub' | 'finder';
+kind?: 'review' | 'dossier';
+trigger?: 'view_all' | 'dossier_item';
+category?: Category;
+```
+
+- **`topic` for the two GLOBAL events is always `'hub'`**: `research_search`
+  and the hub-wide `research_filter_change`. These describe the surface as a
+  whole, not one product — there is no single topic to attach them to once a
+  hub spans every category/topic in a market.
+- **The four ITEM events use the selected `DiscoveryProjection`'s REAL topic
+  and category**: `research_review_click`, `research_evidence_open`,
+  `research_shortlist_change`, `research_cockpit_handoff`. This is what keeps
+  two same-named topics in different categories — e.g. `us/credit-repair/companies`
+  vs `us/debt-relief/companies` — analytically separable; a bare topic string
+  alone collapses them into one bucket.
+- **`topicOverride` is never a serialized property.** It is an optional
+  argument to the track functions (`buildResearchEventData`'s `dimensions`
+  parameter) and only ever replaces `properties.topic` (and stamps
+  `properties.category`) at build time — it never appears as its own key on
+  the wire.
+- **`surface`** identifies which discovery surface emitted the event —
+  `'hub'` for the universal Research hub (Task 6); `'finder'` is reserved for
+  the Homepage Quick Finder, which ships its own event name
+  (`research_finder_cta`, with `trigger: 'view_all'` or `'dossier_item'`) in
+  **PR 3** — accepting the `finder`/`trigger` values now means the strict
+  schema never needs a second additive round just for that later PR.
+- **`kind`** mirrors the clicked/opened/shortlisted item's own
+  `DiscoveryProjection['kind']` (`'review'` or `'dossier'`).
+- Raw search text is still never transmitted — this extension changes
+  dimensions, not the privacy rule above.
+
+Track functions accept an optional final `options` argument
+(`{ topic?, category?, surface?, kind?, trigger? }`) carrying these
+dimensions; omitting it keeps every pre-Task-6 call site byte-identical.
 
 ## Success metrics
 
