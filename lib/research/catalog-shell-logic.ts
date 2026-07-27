@@ -117,6 +117,12 @@ export const EMPTY_DISCOVERY_FILTERS: DiscoveryFilters = {
   specs: [],
 };
 
+/** Every value returned here has count > 0 and is genuinely selectable.
+ *  RENDER GATING IS THE CONSUMER'S JOB: spec §6.2 says a dimension is only
+ *  *shown* when at least two selectable values remain — this module reports
+ *  the data, the shell decides visibility (same split as the pilot's
+ *  `computeFacets` in shell-logic.ts). A surface that renders every returned
+ *  dimension unconditionally would ship single-value chips and violate §6.2. */
 export interface DiscoveryFacets {
   categories: Array<{ value: Category; count: number }>;
   types: Array<{ value: DiscoveryKind; count: number }>;
