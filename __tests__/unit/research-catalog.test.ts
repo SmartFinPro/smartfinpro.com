@@ -18,6 +18,7 @@ import type { ResearchProduct } from '@/lib/research/adapter';
 import {
   cockpitKeyFor,
   reviewItemId,
+  sortResearchContexts,
   type DiscoveryItem,
   type DiscoveryReview,
   type ResearchContext,
@@ -75,6 +76,7 @@ vi.mock('@/lib/logging', () => ({
 
 // Imported AFTER the mocks are registered.
 import {
+  attachLiveManifestOrder,
   buildDiscoveryCatalog,
   flattenQualifiedOverlayRows,
   loadMarketReviewItems,
@@ -577,7 +579,7 @@ describe('loadOneTopicOverlay', () => {
       ];
     });
 
-    const result = await loadOneTopicOverlay('us', entryFor('trading', 'trading-platforms'), 0);
+    const result = await loadOneTopicOverlay('us', entryFor('trading', 'trading-platforms'));
 
     expect(result.ok).toBe(true);
     if (!result.ok) throw new Error('expected ok:true');
@@ -594,7 +596,7 @@ describe('loadOneTopicOverlay', () => {
       return [];
     });
 
-    const result = await loadOneTopicOverlay('us', entryFor('forex', 'forex-brokers'), 2);
+    const result = await loadOneTopicOverlay('us', entryFor('forex', 'forex-brokers'));
 
     expect(result).toEqual({
       ok: true,
@@ -607,7 +609,7 @@ describe('loadOneTopicOverlay', () => {
   it('resolves ok:false missing_topic_config when the manifest entry has no resolvable TopicConfig', async () => {
     mockGetTopicConfig.mockReturnValue(null);
 
-    const result = await loadOneTopicOverlay('us', entryFor('trading', 'trading-platforms'), 0);
+    const result = await loadOneTopicOverlay('us', entryFor('trading', 'trading-platforms'));
 
     expect(result).toEqual({
       ok: false,
@@ -622,7 +624,7 @@ describe('loadOneTopicOverlay', () => {
       throw new Error('DB unavailable');
     });
 
-    await expect(loadOneTopicOverlay('us', entryFor('trading', 'trading-platforms'), 0)).rejects.toThrow(
+    await expect(loadOneTopicOverlay('us', entryFor('trading', 'trading-platforms'))).rejects.toThrow(
       'DB unavailable',
     );
   });
@@ -654,7 +656,7 @@ describe('loadOneTopicOverlay', () => {
       ];
     });
 
-    const result = await loadOneTopicOverlay('us', entryFor('trading', 'trading-platforms'), 0);
+    const result = await loadOneTopicOverlay('us', entryFor('trading', 'trading-platforms'));
     if (!result.ok) throw new Error('expected ok:true');
 
     const auditedRow = result.rows.find((r) => r.context.productSlug === 'audited-co')!;
@@ -669,6 +671,128 @@ describe('loadOneTopicOverlay', () => {
     expect(provisionalRow.context.confidence).toBeNull();
     expect(provisionalRow.context.auditedScore).toBeNull();
     expect(provisionalRow.context.auditedRank).toBeNull();
+  });
+});
+
+// --- attachLiveManifestOrder — post-cache-boundary manifest order (P2) -----
+// Decision A P2 (operator-reported): getCachedTopicOverlay's cache KEY
+// (['research-discovery-contexts', market, category, topic]) never included
+// manifestOrder, but until this fix loadOneTopicOverlay baked the CALL-TIME
+// manifestOrder into every context anyway — so a BEST_X_MANIFEST re-ordering
+// left an existing cache entry silently serving the OLD position (and so the
+// wrong sortResearchContexts order) for up to the full 3600s TTL.
+// loadOneTopicOverlay is now manifest-order-free (every context it builds
+// carries a `0` placeholder); attachLiveManifestOrder is the thin, cache-free
+// post-step getCachedTopicOverlay always applies afterwards (hit or miss),
+// tested directly here without going through unstable_cache (which requires
+// a Next.js request runtime this vitest suite doesn't have).
+
+describe('attachLiveManifestOrder', () => {
+  const entryFor = (category: string, topic: string): BestXManifestEntry =>
+    TEST_MANIFEST.find((e) => e.category === category && e.topic === topic) as unknown as BestXManifestEntry;
+
+  it('loadOneTopicOverlay itself is manifest-order-free: every context it builds carries the 0 placeholder, never a real position', async () => {
+    mockGetCockpitData.mockImplementation(async (_market: string, category: string) => {
+      if (category !== 'trading') return [];
+      return [
+        makeProduct({ slug: 'acme', category: 'trading', reviewSlug: null, researchStatus: 'audited', fieldSources: { fee: src() } }),
+      ];
+    });
+
+    const result = await loadOneTopicOverlay('us', entryFor('trading', 'trading-platforms'));
+    if (!result.ok) throw new Error('expected ok:true');
+
+    expect(result.contexts[0].manifestOrder).toBe(0);
+    expect(result.rows[0].context.manifestOrder).toBe(0);
+  });
+
+  it('overwrites a stale cached manifestOrder (0) with the live manifest order (3), reusing the cached payload with no re-fetch', async () => {
+    mockGetCockpitData.mockImplementation(async (_market: string, category: string) => {
+      if (category !== 'trading') return [];
+      return [
+        makeProduct({ slug: 'acme', category: 'trading', reviewSlug: null, researchStatus: 'audited', fieldSources: { fee: src() } }),
+      ];
+    });
+
+    // Simulates a fake cached payload built earlier (at manifestOrder 0) —
+    // exactly what a real unstable_cache entry from before a manifest
+    // re-ordering would still be serving.
+    const cachedPayload = await loadOneTopicOverlay('us', entryFor('trading', 'trading-platforms'));
+    if (!cachedPayload.ok) throw new Error('expected ok:true');
+    expect(cachedPayload.contexts[0].manifestOrder).toBe(0);
+
+    // The live manifest now places this topic at index 3 (e.g. after a
+    // BEST_X_MANIFEST re-ordering). The post-cache step must reflect that
+    // immediately, from the SAME cached payload, with no re-fetch.
+    mockGetCockpitData.mockClear();
+    const attached = attachLiveManifestOrder(cachedPayload, 3);
+
+    expect(mockGetCockpitData).not.toHaveBeenCalled(); // no re-fetch — the cached payload is reused as-is
+    if (!attached.ok) throw new Error('expected ok:true');
+    expect(attached.contexts.every((c) => c.manifestOrder === 3)).toBe(true);
+    expect(attached.rows.every((r) => r.context.manifestOrder === 3)).toBe(true);
+    expect(attached.contexts).toEqual(attached.rows.map((r) => r.context));
+
+    // The original cached object itself is never mutated in place — a real
+    // cache can hand the identical object to a second concurrent reader
+    // requesting a DIFFERENT live order (see the next test).
+    expect(cachedPayload.contexts[0].manifestOrder).toBe(0);
+  });
+
+  it('applies a DIFFERENT live order to the same cached payload on a second read, proving the order always comes from the live manifest, not from whatever was cached first', async () => {
+    mockGetCockpitData.mockImplementation(async (_market: string, category: string) => {
+      if (category !== 'trading') return [];
+      return [
+        makeProduct({ slug: 'acme', category: 'trading', reviewSlug: null, researchStatus: 'audited', fieldSources: { fee: src() } }),
+      ];
+    });
+    const cachedPayload = await loadOneTopicOverlay('us', entryFor('trading', 'trading-platforms'));
+    if (!cachedPayload.ok) throw new Error('expected ok:true');
+
+    const firstRead = attachLiveManifestOrder(cachedPayload, 3);
+    const secondRead = attachLiveManifestOrder(cachedPayload, 5);
+
+    if (!firstRead.ok || !secondRead.ok) throw new Error('expected ok:true');
+    expect(firstRead.contexts[0].manifestOrder).toBe(3);
+    expect(secondRead.contexts[0].manifestOrder).toBe(5);
+  });
+
+  it('leaves a failure result (missing_topic_config / load_failed / backoff) untouched — there are no contexts to reorder', () => {
+    const entry = entryFor('trading', 'trading-platforms');
+    const failure: TopicOverlayResult = { ok: false, entry, reason: 'load_failed' };
+
+    expect(attachLiveManifestOrder(failure, 3)).toEqual(failure);
+  });
+
+  it('downstream sortResearchContexts orders by the LIVE manifest position, not the stale cached one', async () => {
+    // Topic A was cached first (order 0 at cache-write time); topic B was
+    // cached second (order 1 at cache-write time). The live manifest has
+    // since swapped them — topic B is now first (0), topic A is now second
+    // (1). Ordering must follow the LIVE positions, not the cached ones.
+    mockGetCockpitData.mockImplementation(async (_market: string, category: string) => {
+      if (category === 'trading') {
+        return [
+          makeProduct({ slug: 'topic-a-co', category: 'trading', reviewSlug: null, researchStatus: 'audited', fieldSources: { fee: src() } }),
+        ];
+      }
+      if (category === 'forex') {
+        return [
+          makeProduct({ slug: 'topic-b-co', category: 'forex', reviewSlug: null, researchStatus: 'audited', fieldSources: { fee: src() } }),
+        ];
+      }
+      return [];
+    });
+
+    const cachedA = await loadOneTopicOverlay('us', entryFor('trading', 'trading-platforms'));
+    const cachedB = await loadOneTopicOverlay('us', entryFor('forex', 'forex-brokers'));
+    if (!cachedA.ok || !cachedB.ok) throw new Error('expected ok:true');
+
+    const liveA = attachLiveManifestOrder(cachedA, 1); // topic A is now SECOND
+    const liveB = attachLiveManifestOrder(cachedB, 0); // topic B is now FIRST
+    if (!liveA.ok || !liveB.ok) throw new Error('expected ok:true');
+
+    const sorted = sortResearchContexts([...liveA.contexts, ...liveB.contexts]);
+    expect(sorted.map((c) => c.productSlug)).toEqual(['topic-b-co', 'topic-a-co']);
   });
 });
 

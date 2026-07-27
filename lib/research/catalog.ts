@@ -288,11 +288,20 @@ export async function loadMarketReviewItems(market: Market): Promise<DiscoveryIt
  *  already-resolved `config` (the caller, `loadOneTopicOverlay`, owns the
  *  getTopicConfig null-check and its distinct `missing_topic_config` outcome)
  *  so THIS function's only failure mode is a genuine getCockpitData rejection
- *  — the caller settles that. */
+ *  — the caller settles that.
+ *
+ *  Deliberately manifest-order-free (spec §5.3.1 amendment, Decision A P2
+ *  fix): every context's `manifestOrder` is a `0` placeholder, never the real
+ *  `BEST_X_MANIFEST` position. This function's result is what
+ *  `getCachedTopicOverlay` caches, and a `BEST_X_MANIFEST` array position is
+ *  not part of a topic's own Cockpit data — baking it in here would let a
+ *  manifest re-ordering serve a stale position from an existing cache entry
+ *  for up to the full 3600s TTL. `attachLiveManifestOrder` overwrites this
+ *  placeholder with the CURRENT live position after every cache read (hit or
+ *  miss), outside the cache boundary entirely. */
 async function loadTopicOverlayRows(
   market: Market,
   entry: BestXManifestEntry,
-  manifestOrder: number,
   config: TopicConfig,
 ): Promise<NormalizedOverlayRow[]> {
   const products = await getCockpitData(entry.market, entry.category, entry.topic);
@@ -315,7 +324,9 @@ async function loadTopicOverlayRows(
       cockpitKey: cockpitKeyFor(market, entry.category, entry.topic),
       topic: entry.topic,
       topicLabel: entry.label,
-      manifestOrder,
+      // Placeholder — see the manifest-order-free note above. Overwritten by
+      // attachLiveManifestOrder() after every cache read, never trusted here.
+      manifestOrder: 0,
       productSlug: row.product.slug,
       displayName: row.product.displayName,
       tagline: row.product.tagline || null,
@@ -341,6 +352,11 @@ async function loadTopicOverlayRows(
 /** Uncached, single-topic overlay load (spec §5.3.1) — the function
  *  `getCachedTopicOverlay` wraps in a per-TOPIC `unstable_cache` entry
  *  (`['research-discovery-contexts', market, category, topic]`, 3600s).
+ *  Manifest-order-free (Decision A P2 fix, see loadTopicOverlayRows): does
+ *  NOT take a `manifestOrder` parameter, so the cached payload can never bake
+ *  in a `BEST_X_MANIFEST` position that could go stale relative to the cache
+ *  key. `getCachedTopicOverlay` applies the CURRENT live manifestOrder via
+ *  `attachLiveManifestOrder` after every cache read.
  *
  *  Resolves `{ok:false, reason:'missing_topic_config'}` — a normal, CACHEABLE
  *  return — when the manifest entry's TopicConfig doesn't resolve; that is a
@@ -361,7 +377,6 @@ async function loadTopicOverlayRows(
 export async function loadOneTopicOverlay(
   market: Market,
   entry: BestXManifestEntry,
-  manifestOrder: number,
 ): Promise<TopicOverlayResult> {
   const config = getTopicConfig(entry.category, entry.topic, entry.market);
   if (!config) {
@@ -374,8 +389,45 @@ export async function loadOneTopicOverlay(
     return { ok: false, entry, reason: 'missing_topic_config' };
   }
 
-  const rows = await loadTopicOverlayRows(market, entry, manifestOrder, config);
+  const rows = await loadTopicOverlayRows(market, entry, config);
   return { ok: true, entry, contexts: rows.map((row) => row.context), rows };
+}
+
+/** Post-cache-boundary manifest-order attachment (spec §5.3.1 amendment,
+ *  Decision A P2 fix). `getCachedTopicOverlay`'s cache KEY intentionally
+ *  excludes manifestOrder — only market/category/topic identify a topic's
+ *  own Cockpit data; a `BEST_X_MANIFEST` array POSITION is not part of that
+ *  data. Before this fix, `loadOneTopicOverlay` baked the CALL-TIME
+ *  manifestOrder into every context anyway, so a cached entry silently kept
+ *  serving the OLD position — and therefore the wrong `sortResearchContexts`
+ *  order (manifestOrder -> audited rank -> productSlug) — for up to the full
+ *  3600s TTL after a `BEST_X_MANIFEST` re-ordering.
+ *
+ *  `loadOneTopicOverlay` is now manifest-order-free (every context it builds
+ *  carries a `0` placeholder). This function is the thin, cache-free
+ *  post-step that overwrites every context — both the `contexts` projection
+ *  and each row's own `context` — with the CURRENT manifestOrder, read fresh
+ *  from the live `BEST_X_MANIFEST` at request time, regardless of what was
+ *  true when the entry was cached. Never mutates its input: a real cache can
+ *  hand the identical cached object to multiple concurrent readers, each
+ *  possibly requesting a different live order. A failure result has no
+ *  contexts and passes through unchanged.
+ *
+ *  @internal — exported only as a test seam so this can be verified without
+ *  going through `unstable_cache` (which requires a Next.js request runtime
+ *  this vitest suite doesn't have); production callers rely on
+ *  `getCachedTopicOverlay`, which always applies this after every cache read
+ *  (hit or miss). */
+export function attachLiveManifestOrder(
+  result: TopicOverlayResult,
+  manifestOrder: number,
+): TopicOverlayResult {
+  if (!result.ok) return result;
+  const rows = result.rows.map((row) => ({
+    ...row,
+    context: { ...row.context, manifestOrder },
+  }));
+  return { ...result, rows, contexts: rows.map((row) => row.context) };
 }
 
 /** Per-topic cache (spec §5.3.1): one `unstable_cache` entry per
@@ -384,17 +436,23 @@ export async function loadOneTopicOverlay(
  *  bad manifest topic can no longer hold the whole market's overlay hostage
  *  for an hour. Constructing `unstable_cache(...)` per call is cheap (pure
  *  closure setup, no I/O) and lets the key vary per topic without a
- *  module-level cache-function-per-topic registry. */
+ *  module-level cache-function-per-topic registry.
+ *
+ *  The cache key deliberately excludes `manifestOrder` (Decision A P2 fix):
+ *  `loadOneTopicOverlay` (what actually gets cached) is manifest-order-free,
+ *  and `attachLiveManifestOrder` stamps the CURRENT live position onto the
+ *  result every time, hit or miss — so a `BEST_X_MANIFEST` re-ordering is
+ *  reflected immediately instead of waiting out the 3600s TTL. */
 function getCachedTopicOverlay(
   market: Market,
   entry: BestXManifestEntry,
   manifestOrder: number,
 ): Promise<TopicOverlayResult> {
   return unstable_cache(
-    () => loadOneTopicOverlay(market, entry, manifestOrder),
+    () => loadOneTopicOverlay(market, entry),
     ['research-discovery-contexts', market, entry.category, entry.topic],
     { revalidate: 3600, tags: ['research-catalog'] },
-  )();
+  )().then((result) => attachLiveManifestOrder(result, manifestOrder));
 }
 
 const BACKOFF_WINDOW_MS = 60_000;
