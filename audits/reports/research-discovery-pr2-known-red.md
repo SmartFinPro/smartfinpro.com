@@ -63,14 +63,22 @@ Die erste Fassung war in sich widersprüchlich: Sie ordnete die A11y-/CWV-Tests 
 obwohl deren Helper (`research-a11y.spec.ts:52-63`) zwingend auf das Suchfeld wartet — und die
 Suche kehrt erst mit der Client-Shell in Task 4 zurück. Auflösung:
 
-- **Task 3 (Karten, Dossier-Knoten, Fallback, JSON-LD):** #1, #2 werden grün. Zusätzlich wird
-  der A11y-Helper vom Suchfeld **entkoppelt** und wartet stattdessen auf `main` plus die erste
-  gerenderte Katalogkarte. Das ist inhaltlich richtig, nicht bloß terminlich: A11y und Core Web
-  Vitals des SERVER-gerenderten Browse-Fallbacks — der die Crawlbarkeitslast trägt — dürfen
-  nicht von der Client-Shell abhängen. → #18, #19, #21 werden in Task 3 grün.
-- **Task 4 (Client-Shell, Filter, Facetten):** #3, #4, #5, #10 — und #20
-  („filtered + shortlisted state"), das die Shell inhaltlich BRAUCHT und deshalb ehrlich hier
-  bleibt statt vorgezogen zu werden.
+- **Task 3 (Karten, Dossier-Knoten, Fallback, JSON-LD) — ERLEDIGT, Ergebnis gemessen:**
+  Der A11y-Helper wurde vom Suchfeld **entkoppelt** (wartet auf `main` + erste gerenderte
+  Karte). Das ist inhaltlich richtig, nicht bloß terminlich: A11y und Core Web Vitals des
+  SERVER-gerenderten Browse-Fallbacks — der die Crawlbarkeitslast trägt — dürfen nicht von der
+  Client-Shell abhängen. → **#18, #19, #21 sind grün** (LCP 148–196 ms, CLS 0,0000).
+  **Korrektur gegenüber der ersten Prognose:** #1 und #2 bleiben rot. Ihre eigenen Assertions
+  wären erfüllbar, aber sie hängen am GETEILTEN Helper der Shell-Spec
+  (`research-shell.spec.ts:24-28`), der auf das Suchfeld wartet. Diesen ebenfalls zu entkoppeln
+  würde #3–#11 mit einer NEUEN Signatur rot machen (Eingabe in ein nicht existierendes Feld
+  statt Warte-Timeout) — also genau die Verwischung, die die Signatur-Regel verhindern soll.
+  #1 und #2 wandern deshalb ehrlich zu **Task 4**, wo der Helper mit der Shell ohnehin wieder
+  trägt. Ihre Signatur bleibt bis dahin die allowlistete.
+- **Task 4 (Client-Shell, Filter, Facetten):** #1, #2 (Helper-bedingt, s. o.), #3, #4, #5, #10 —
+  und #20 („filtered + shortlisted state"), das die Shell inhaltlich BRAUCHT und deshalb ehrlich
+  hier bleibt statt vorgezogen zu werden. #20 steht bis dahin als `test.fixme()` mit Verweis auf
+  diese Liste (skipped, nicht rot) — es wird in Task 4 wieder scharf gestellt, NICHT gelöscht.
 - **Task 5 (Shortlist-UI):** #6, #7, #8, #9, #11.
 - **Task 6 (Analytics):** #12–#17.
 - Ab Ende Task 6 gilt 21/21 wieder als hartes Gate.
