@@ -33,8 +33,9 @@ export interface DiscoveryReview {
   description: string;
   bestFor: string | null;
   editorialRating: number;
-  publishDate: string;
-  modifiedDate: string;
+  /** Null when the frontmatter carries no date — never invented (§4.3 fake-freshness guard). */
+  publishDate: string | null;
+  modifiedDate: string | null;
   readingWords: number;
   featured: boolean;
   pricing: string | null;

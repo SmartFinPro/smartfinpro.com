@@ -42,8 +42,10 @@ import { ReviewActionButtons } from './review-action-buttons';
 
 export interface ReviewSidebarProps {
   productName: string;
-  /** Latest available ISO YYYY-MM-DD review verification date. */
-  verifiedDate: string;
+  /** Latest available ISO YYYY-MM-DD review verification date. Absent when the
+   *  frontmatter carries no date at all — the verified row is omitted, never
+   *  stamped with an invented date. */
+  verifiedDate?: string;
   decisionBridge: DecisionBridgeData;
   /** Same string ReviewLayoutV2 already computes for FinalDecision's CTA
    *  ("Compare all {fieldCount} {topicLabel}") — reused, not recomputed, so
@@ -63,7 +65,8 @@ const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
  *  only ever renders on the server, so a `Date`-based format wouldn't risk
  *  a hydration mismatch here, but a manual parse keeps one date-formatting
  *  idiom across the V2 zones instead of introducing a second one. */
-function formatVerifiedDate(iso: string): string | null {
+function formatVerifiedDate(iso: string | undefined): string | null {
+  if (!iso) return null;
   const parts = iso.split('-');
   if (parts.length !== 3) return null;
   const [y, m, d] = parts.map(Number);

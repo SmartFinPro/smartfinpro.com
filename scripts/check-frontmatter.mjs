@@ -46,12 +46,17 @@ const REVIEW_REQUIRED = [
 // fabrication back, so removing it from a review is correct, not a defect.
 
 // ── Required fields for ALL content files ─────────────────
+// publishDate is required everywhere (legacy `date` is accepted via
+// normalizeFieldName). This is the build gate that lets lib/mdx/index.ts
+// keep missing dates as undefined instead of inventing "today"
+// (fake-freshness hazard — spec 2026-07-27 research-discovery §4.3).
 const BASE_REQUIRED = [
   'title',
   'description',
   'author',
   'category',
   'market',
+  'publishDate',
 ];
 
 // ── Detect if file is a review ────────────────────────────
