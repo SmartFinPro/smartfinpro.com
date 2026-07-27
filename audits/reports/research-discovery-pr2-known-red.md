@@ -84,6 +84,25 @@ Suche kehrt erst mit der Client-Shell in Task 4 zurück. Auflösung:
 - **Task 6 (Analytics):** #12–#17.
 - Ab Ende Task 6 gilt 21/21 wieder als hartes Gate.
 
+## Stand nach Task 5 + Nachbesserungen (27.07.)
+
+**16 grün, 5 rot, 0 skipped.** Grün: #1–#11 (Shell komplett, 15 Spec-Tests inkl. der neuen
+Task-5- und Kollisionsfälle), #18–#21 (A11y/CWV, **#20 wieder scharf gestellt und grün**).
+Rot: #12, #13, #14, #15, #16 — alle an der allowlisteten „0 events"-Signatur (Analytics erst
+Task 6). #17 weiterhin **vakuös** grün (siehe Auflage unten), zählt nicht als Abdeckung.
+
+Nach Task 5 wurden drei Befunde nachgezogen, alle mit RED-Nachweis:
+- `223c7f7` **Dossier-Gruppierung nach Cockpit-Key statt Topic-Name.** `us/credit-repair/companies`
+  und `us/debt-relief/companies` fielen in EINE Gruppe (Manifest-Index 7 gewann gegen 11), d. h.
+  Schuldenregulierungs-Produkte erschienen unter „Best Credit Repair". Testid-Regel: bare
+  `dossier-<topic>` wenn eindeutig, sonst `dossier-<category>-<topic>` — Mehrdeutigkeit aus dem
+  STATISCHEN Manifest abgeleitet, damit sich Selektoren nicht mit der Datenlage ändern.
+- `ce4efa3` **Typisierter Scope-Status über die RSC-Grenze** (P1): Der Client leitete den Snapshot
+  aus sichtbaren Contexts ab und konnte „autoritativ leer" nicht von „nicht verfügbar" trennen —
+  beide wurden `unknown_state`, die von Spec §11.2.1 Regel 4 geforderte Bereinigung unterblieb
+  still. Jetzt server-seitiges DTO aus den typisierten Ergebnissen, EIN Fan-out für Katalog und
+  Snapshot, und der Restore-Controller mountet auch im komplett leeren Katalog.
+
 ## Signatur-Fortschreibung nach Task 4 (Pflicht, sonst wird die Regel zu Rauschen)
 
 Stand nach Task 4 — Zählung korrigiert (Betreiber-Befund; meine erste Angabe „9 grün / 11 rot"
