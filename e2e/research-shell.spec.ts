@@ -53,7 +53,12 @@ test.describe('Research Library shell — desktop', () => {
     await page.getByPlaceholder(SEARCH).fill('schwab');
     await expect(page).toHaveURL(/[?&]q=schwab/);
     await expect(tradingDossier.locator('article')).toHaveCount(1);
-    await expect(page.getByRole('heading', { name: 'Charles Schwab' })).toBeVisible();
+    // Scoped like its siblings: searching "schwab" legitimately matches a SECOND
+    // product now — the Cockpit-only, provisional Schwab entry in us/forex, which
+    // is a distinct DiscoveryItem because category is part of a cockpit-only id
+    // (spec §4.1). Page-wide, this assertion would fail on strict mode, not on a
+    // defect. The trading dossier still holds exactly one match.
+    await expect(tradingDossier.getByRole('heading', { name: 'Charles Schwab' })).toBeVisible();
     await expect(tradingDossier.getByText('#1 Overall')).toHaveCount(0); // featured suppressed
   });
 
