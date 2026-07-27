@@ -74,7 +74,12 @@ vi.mock('@/lib/logging', () => ({
 }));
 
 // Imported AFTER the mocks are registered.
-import { buildDiscoveryCatalog, loadMarketReviewItems, loadMarketResearchContexts } from '@/lib/research/catalog';
+import {
+  buildDiscoveryCatalog,
+  loadMarketReviewItems,
+  loadMarketResearchContexts,
+  resolveOverlayContexts,
+} from '@/lib/research/catalog';
 
 beforeEach(() => {
   vi.resetAllMocks();
@@ -675,6 +680,50 @@ describe('loadMarketResearchContexts', () => {
     expect(catalog.items).toHaveLength(2);
     expect(catalog.items.find((i) => i.id === reviewA.id)?.id).toBe(reviewA.id);
     expect(catalog.items.find((i) => i.id === reviewB.id)?.id).toBe(reviewB.id);
+    expect(catalog.items.every((i) => i.researchContexts.length === 0)).toBe(true);
+  });
+});
+
+// --- resolveOverlayContexts — injectable seam around the cached overlay ----
+// Distinct from loadMarketResearchContexts's per-TOPIC resilience above: this
+// guards against the cache LAYER itself throwing (unstable_cache, or its own
+// logger), which .catch(() => []) used to swallow silently at the call site
+// with no diagnostic at all. `load` is injected here instead of mocking
+// next/cache, mirroring how the rest of this file bypasses the cache wrappers
+// entirely for direct, network-free unit coverage.
+
+describe('resolveOverlayContexts', () => {
+  it('logs exactly one structured warning and returns [] when the cache layer itself throws, and the bundle still carries the full review catalog', async () => {
+    const rejectingLoad = vi.fn(async () => {
+      throw new Error('unstable_cache blew up');
+    });
+
+    const overlay = await resolveOverlayContexts('us', rejectingLoad);
+
+    expect(overlay).toEqual([]);
+    expect(mockLoggerWarn).toHaveBeenCalledTimes(1);
+    expect(mockLoggerWarn).toHaveBeenCalledWith('Research discovery overlay cache unavailable', {
+      market: 'us',
+      scope: 'research-catalog-overlay-cache',
+      errorType: 'Error',
+    });
+
+    // The whole point of the fallback: every review survives untouched, no
+    // matter how badly the overlay cache layer itself failed.
+    const reviewA = makeDiscoveryItem({
+      id: reviewItemId('/us/personal-finance/rev-a'),
+      category: 'personal-finance',
+      review: makeReview({ slug: 'rev-a', href: '/us/personal-finance/rev-a' }),
+    });
+    const reviewB = makeDiscoveryItem({
+      id: reviewItemId('/us/forex/rev-b'),
+      category: 'forex',
+      review: makeReview({ slug: 'rev-b', href: '/us/forex/rev-b' }),
+    });
+
+    const { catalog } = buildDiscoveryCatalog('us', [reviewA, reviewB], overlay);
+
+    expect(catalog.items).toHaveLength(2);
     expect(catalog.items.every((i) => i.researchContexts.length === 0)).toBe(true);
   });
 });

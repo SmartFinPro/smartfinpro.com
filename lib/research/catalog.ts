@@ -407,6 +407,35 @@ const getCachedResearchContexts = unstable_cache(
   { revalidate: 3600, tags: ['research-catalog'] },
 );
 
+/** Resolves the cached Cockpit overlay for `market`, failing soft: a throw
+ *  from the cache LAYER itself — `unstable_cache`, or the logger it might
+ *  call — is caught, logged exactly once with a structured payload, and
+ *  turned into an empty overlay so the Hub still renders its full review
+ *  catalog (spec §13: HTTP 200 even when Cockpit data is unreachable). This
+ *  is distinct from loadMarketResearchContexts's own per-TOPIC resilience
+ *  (Promise.allSettled) above, which already isolates one bad manifest entry
+ *  from the rest — this seam guards the layer wrapping ALL of them together.
+ *  `load` defaults to the real cached loader and exists purely so tests can
+ *  inject a rejecting stub without mocking next/cache.
+ *
+ *  @internal — test seam only; production callers must use
+ *  getDiscoveryCatalog / getDiscoveryCatalogBundle. */
+export async function resolveOverlayContexts(
+  market: Market,
+  load: (market: Market) => Promise<NormalizedOverlayRow[]> = getCachedResearchContexts,
+): Promise<NormalizedOverlayRow[]> {
+  try {
+    return await load(market);
+  } catch (error) {
+    logger.warn('Research discovery overlay cache unavailable', {
+      market,
+      scope: 'research-catalog-overlay-cache',
+      errorType: error instanceof Error ? error.name : typeof error,
+    });
+    return [];
+  }
+}
+
 /** The serializable, <200 KB public catalog for one market (spec §5.3). */
 export async function getDiscoveryCatalog(market: Market): Promise<DiscoveryCatalog> {
   return (await getDiscoveryCatalogBundle(market)).catalog;
@@ -414,14 +443,13 @@ export async function getDiscoveryCatalog(market: Market): Promise<DiscoveryCata
 
 /** Full bundle for server rendering: `catalog` may cross the RSC/client
  *  boundary; `dossierRows` (full ResearchProduct per dossier) never does.
- *  The overlay promise is `.catch(() => [])`-guarded so a throw from the
- *  unstable_cache layer itself (or the logger it calls) still yields the
- *  reviews-only catalog instead of rejecting the whole page (spec §13:
- *  the Hub stays reachable at HTTP 200 even when Cockpit data is down). */
+ *  Overlay resolution goes through resolveOverlayContexts so a cache-layer
+ *  failure is logged once and degrades to a reviews-only catalog instead of
+ *  failing silently. */
 export async function getDiscoveryCatalogBundle(market: Market): Promise<DiscoveryCatalogBundle> {
   const [reviews, overlay] = await Promise.all([
     getCachedReviewItems(market),
-    getCachedResearchContexts(market).catch(() => []),
+    resolveOverlayContexts(market),
   ]);
   return buildDiscoveryCatalog(market, reviews, overlay);
 }
