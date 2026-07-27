@@ -83,6 +83,32 @@ Suche kehrt erst mit der Client-Shell in Task 4 zurück. Auflösung:
 - **Task 6 (Analytics):** #12–#17.
 - Ab Ende Task 6 gilt 21/21 wieder als hartes Gate.
 
+## Signatur-Fortschreibung nach Task 4 (Pflicht, sonst wird die Regel zu Rauschen)
+
+Stand nach Task 4: **9 grün** (#1, #2, #3, #4, #5, #10, #18, #19, #21) · **11 rot** · #20 skipped.
+Die verbliebenen roten Tests scheitern NICHT mehr an der ursprünglichen Signatur — das Suchfeld
+existiert jetzt. Sie sind einen Schritt weiter gescheitert, was zulässiger Fortschritt ist. Die
+neuen erwarteten Signaturen sind deshalb hier fortgeschrieben; ab jetzt gelten DIESE:
+
+- **#6, #7, #8, #9, #11 (Shortlist, → Task 5):** kein Button `/add .+ to shortlist/i` vorhanden.
+- **#12, #13, #14, #16 (Tracking, → Task 6):** 0 Events empfangen (Analytics noch nicht verdrahtet).
+- **#15 (Shortlist-Tracking, → Task 5 + 6):** kein Shortlist-Button; danach Event-Prüfung.
+
+**#3 — echter Fund, behoben (`7c64d80`):** Der Test scheiterte an einer NEUEN Signatur
+(`strict mode violation`, zwei Treffer für „Charles Schwab"). Ursache verifiziert und legitim:
+`lib/comparison/topics/forex-brokers.ts` führt einen eigenen, Cockpit-only, provisional
+Schwab-Eintrag (`review_slug: null` per Design). Weil bei Cockpit-only-Items die Kategorie Teil
+der Identität ist (Spec §4.1), bleibt das ein zweites, korrektes DiscoveryItem. Erst die jetzt
+funktionierende Suche brachte beide gleichzeitig auf die Seite. Behebung ausschließlich
+RÄUMLICH (Scoping auf den Trading-Dossier-Container, wie alle Geschwister-Assertions dieses
+Tests); keine Zahl, keine Erwartung geändert.
+
+**#17 — grün, aber VAKUÖS.** „compare/methodology-Links zählen NICHT als Review-Klick" besteht
+derzeit nur, weil überhaupt keine Events feuern. Das ist keine echte Abdeckung. **Auflage:**
+In Task 6 muss #17 nach dem Verdrahten der Analytics erneut belegt werden — mit dem Nachweis,
+dass Events fließen UND die genannten Links trotzdem nicht gezählt werden. Bis dahin gilt #17
+nicht als erfüllt.
+
 Nach der Entkopplung in Task 3 ändert sich die erwartete Signatur für #18, #19, #21: Sie müssen
 dann grün sein; bleiben sie rot, ist die Ursache zu benennen (axe-Verstoß = echter Fund,
 Timeout auf `main`/Karte = fehlender Fallback).
