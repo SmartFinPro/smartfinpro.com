@@ -700,6 +700,29 @@ export interface ScopedShortlist {
   slugs: string[];
 }
 
+/** `restoreScopedShortlist`'s actual return shape — a `ScopedShortlist` PLUS
+ *  one optional field that only Rules 2/2b (below) ever set. `cockpitKey`
+ *  above deliberately stays `null` for those two rules — never repurposed to
+ *  carry the unverifiable scope — because `persistScopedShortlist` treats
+ *  ANY non-null `cockpitKey` paired with an empty `slugs` as "the user
+ *  cleared this scope" and destructively removes BOTH its pointer and its
+ *  scoped storage entry (see its own `if (!shortlist.cockpitKey ||
+ *  shortlist.slugs.length === 0)` branch). Since every later state change
+ *  (e.g. `request-switch`) re-runs the persist effect with whatever
+ *  `cockpitKey` the reducer currently holds, putting the unverifiable key
+ *  there would eventually feed it straight into that branch and silently
+ *  destroy the exact storage entry Rule 2/2b exists to protect — defeating
+ *  the byte-identical guarantee one render later instead of immediately.
+ *  `unverifiableCockpitKey` is therefore a SEPARATE, never-persisted signal:
+ *  it lets a caller (the shortlist reducer) distinguish "no scope was ever
+ *  active" from "a scope IS active but its current load state can't be
+ *  verified right now", so a cross-scope toggle can still route through the
+ *  honest `describeScopeSwitch` "active-unavailable" dialog instead of
+ *  silently repointing the market pointer with no warning (spec §11.3.1). */
+export interface RestoredShortlist extends ScopedShortlist {
+  unverifiableCockpitKey?: CockpitKey | null;
+}
+
 /** Why a manifest Cockpit key currently has no authoritative slug set (spec
  *  §11.2.1). `load_failed` and `backoff` both come from the per-topic overlay
  *  loader (§5.3.1: a topic in its 60s post-failure backoff window is reported
@@ -919,17 +942,21 @@ const cockpitKeyFromPointer = (
  *     qualifying products), not an absence of information.
  *
  *  Callers get either a fully valid scope, nothing, or (rule 2/2b) an
- *  untouched pass-through — never a partial or silently-lost one. */
+ *  untouched pass-through — never a partial or silently-lost one. Rules 2/2b
+ *  additionally surface the untouched scope's key via
+ *  `RestoredShortlist.unverifiableCockpitKey` (see its own doc comment) —
+ *  `cockpitKey` itself stays `null`, so this is purely informational, never
+ *  something a persist path could mistake for a real active scope. */
 export function restoreScopedShortlist(
   storage: StorageLike,
   market: Market,
   snapshot: ShortlistScopeSnapshot,
-): ScopedShortlist {
+): RestoredShortlist {
   const pointerKey = shortlistPointerKey(market);
   const pointer = storage.getItem(pointerKey);
   if (!pointer) return { cockpitKey: null, slugs: [] };
 
-  const clearAndReturnEmpty = (): ScopedShortlist => {
+  const clearAndReturnEmpty = (): RestoredShortlist => {
     storage.removeItem(pointerKey);
     return { cockpitKey: null, slugs: [] };
   };
@@ -947,8 +974,11 @@ export function restoreScopedShortlist(
     // Rule 2: known but currently unverifiable (backoff / load failure /
     // missing topic config). Deliberately does NOT call
     // clearAndReturnEmpty() — that would remove the pointer. Nothing in
-    // storage is read, written, or removed here.
-    return { cockpitKey: null, slugs: [] };
+    // storage is read, written, or removed here. `cockpitKey` stays `null`
+    // (byte-identical guarantee — see RestoredShortlist's doc comment);
+    // `unverifiableCockpitKey` carries the scope a caller cannot currently
+    // verify, so it can still be told apart from "nothing was ever active".
+    return { cockpitKey: null, slugs: [], unverifiableCockpitKey: cockpitKey };
   }
 
   const validSlugs = snapshot.availableScopes.get(cockpitKey);
@@ -961,7 +991,8 @@ export function restoreScopedShortlist(
     // evidence this scope is empty or gone, so nothing is read, written, or
     // removed. Absence of information must never be a delete reason — that
     // was the whole point of splitting `validScopes` into three tiers.
-    return { cockpitKey: null, slugs: [] };
+    // Same `unverifiableCockpitKey` treatment as rule 2, for the same reason.
+    return { cockpitKey: null, slugs: [], unverifiableCockpitKey: cockpitKey };
   }
 
   const scopedKey = shortlistStorageKey(cockpitKey);

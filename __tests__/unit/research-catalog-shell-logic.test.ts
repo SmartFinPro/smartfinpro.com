@@ -809,7 +809,12 @@ it("[mandatory 2] a failed topic (unavailable/'load_failed') leaves storage byte
 
   const restored = restoreScopedShortlist(storage, "us", snapshot);
 
-  expect(restored).toEqual({ cockpitKey: null, slugs: [] });
+  // `cockpitKey` stays null (byte-identical guarantee); the scope Rule 2
+  // couldn't verify is still surfaced via `unverifiableCockpitKey` so a
+  // later cross-scope toggle can route through the honest
+  // "active-unavailable" dialog instead of a silent, unwarned repoint
+  // (spec §11.3.1 fix).
+  expect(restored).toEqual({ cockpitKey: null, slugs: [], unverifiableCockpitKey: tradingKey });
   expect(storage.snapshot()).toEqual(before);
 });
 
@@ -868,7 +873,7 @@ it("[mandatory 6] a known manifest topic with unresolvable config ('missing_topi
 
   const restored = restoreScopedShortlist(storage, "us", snapshot);
 
-  expect(restored).toEqual({ cockpitKey: null, slugs: [] });
+  expect(restored).toEqual({ cockpitKey: null, slugs: [], unverifiableCockpitKey: tradingKey });
   expect(storage.snapshot()).toEqual(before);
 });
 
@@ -891,7 +896,10 @@ it("a known scope missing from both maps preserves storage (absence of informati
 
   const restored = restoreScopedShortlist(storage, "us", snapshot);
 
-  expect(restored).toEqual({ cockpitKey: null, slugs: [] });
+  // Rule 2b gets the exact same `unverifiableCockpitKey` treatment as
+  // Rule 2 — an inconsistent snapshot is still "can't currently verify",
+  // never "known to be gone".
+  expect(restored).toEqual({ cockpitKey: null, slugs: [], unverifiableCockpitKey: tradingKey });
   expect(storage.snapshot()).toEqual(before);
 });
 

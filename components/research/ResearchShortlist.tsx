@@ -57,6 +57,7 @@ import {
   toggleScopedShortlist,
   type CockpitKey,
   type DiscoveryItem,
+  type RestoredShortlist,
   type ScopedShortlist,
   type ScopeSwitchDescription,
   type ShortlistScopeSnapshotDTO,
@@ -70,11 +71,22 @@ export interface ResearchShortlistState {
   hasRestored: boolean;
   cockpitKey: CockpitKey | null;
   slugs: string[];
+  /** Set only by a restore that landed on `RestoredShortlist`'s Rule 2/2b
+   *  (spec §11.3.1 fix, reviewer-reported): the market pointer named a scope
+   *  whose current load state can't be verified. `cockpitKey` above stays
+   *  `null` for this case — never repurposed — so the byte-identical
+   *  storage guarantee holds regardless of what happens to state afterward
+   *  (see `RestoredShortlist`'s own doc comment for why that matters).
+   *  Cleared once a genuine active scope is established (`set`/
+   *  `confirm-switch`) or the user explicitly clears everything; preserved
+   *  across `request-switch`/`cancel-switch` so the switch dialog and a
+   *  retried confirm can still read it. */
+  unverifiableCockpitKey: CockpitKey | null;
   pendingSwitch: { cockpitKey: CockpitKey; slug: string } | null;
 }
 
 export type ResearchShortlistAction =
-  | { type: 'restored'; value: ScopedShortlist }
+  | { type: 'restored'; value: RestoredShortlist }
   | { type: 'set'; value: ScopedShortlist }
   | { type: 'request-switch'; cockpitKey: CockpitKey; slug: string }
   | { type: 'cancel-switch' }
@@ -85,6 +97,7 @@ export const initialShortlistState = (): ResearchShortlistState => ({
   hasRestored: false,
   cockpitKey: null,
   slugs: [],
+  unverifiableCockpitKey: null,
   pendingSwitch: null,
 });
 
@@ -105,10 +118,11 @@ export function shortlistReducer(
         hasRestored: true,
         cockpitKey: action.value.cockpitKey,
         slugs: action.value.slugs,
+        unverifiableCockpitKey: action.value.unverifiableCockpitKey ?? null,
         pendingSwitch: null,
       };
     case 'set':
-      return { ...state, cockpitKey: action.value.cockpitKey, slugs: action.value.slugs };
+      return { ...state, cockpitKey: action.value.cockpitKey, slugs: action.value.slugs, unverifiableCockpitKey: null };
     case 'request-switch':
       return { ...state, pendingSwitch: { cockpitKey: action.cockpitKey, slug: action.slug } };
     case 'cancel-switch':
@@ -119,11 +133,12 @@ export function shortlistReducer(
         ...state,
         cockpitKey: state.pendingSwitch.cockpitKey,
         slugs: [state.pendingSwitch.slug],
+        unverifiableCockpitKey: null,
         pendingSwitch: null,
       };
     }
     case 'clear':
-      return { ...state, cockpitKey: null, slugs: [], pendingSwitch: null };
+      return { ...state, cockpitKey: null, slugs: [], unverifiableCockpitKey: null, pendingSwitch: null };
     default:
       return state;
   }
@@ -235,12 +250,34 @@ export function useScopedResearchShortlist(
     snapshot.availableScopes.get(cockpitKey) ?? new Set<string>();
 
   const toggle = (cockpitKey: CockpitKey, slug: string): void => {
-    const current: ScopedShortlist = { cockpitKey: state.cockpitKey, slugs: state.slugs };
+    // Feed toggleScopedShortlist the EFFECTIVE active key — a real
+    // `state.cockpitKey`, or (spec §11.3.1 fix, reviewer-reported) the
+    // restored-but-unverifiable key when there is one — so a toggle from a
+    // DIFFERENT scope is correctly recognized as a cross-scope switch
+    // instead of `toggleScopedShortlist`'s `sameScope` check treating a bare
+    // `null` as "compatible with anything" and silently repointing the
+    // market pointer with no warning. `current.slugs` stays `state.slugs`
+    // ([] whenever `unverifiableCockpitKey` is set — Rule 2/2b never
+    // restores any slugs), so this changes nothing when there IS no
+    // unverifiable scope.
+    const effectiveCockpitKey = state.cockpitKey ?? state.unverifiableCockpitKey;
+    const current: ScopedShortlist = { cockpitKey: effectiveCockpitKey, slugs: state.slugs };
     const result = toggleScopedShortlist(current, cockpitKey, slug, validSlugsFor(cockpitKey));
     if (result.requiresScopeSwitch) {
       dispatch({ type: 'request-switch', cockpitKey, slug });
       return;
     }
+    // A genuine no-op (invalid slug, already-full shortlist, etc.) always
+    // returns the SAME `current` reference back (toggleScopedShortlist never
+    // mutates or reconstructs it for these paths) — never dispatch that
+    // verbatim: `current.cockpitKey` may be the synthetic
+    // `unverifiableCockpitKey`, and echoing it into `state.cockpitKey` via
+    // 'set' would promote it to a REAL active scope with `slugs: []`, which
+    // the persist effect's very next run would read as "user cleared this
+    // scope" and destructively remove its (still-unverified, still real)
+    // storage entry — exactly the byte-identical guarantee Rule 2/2b exists
+    // to protect.
+    if (result.next === current) return;
     dispatch({ type: 'set', value: result.next });
   };
 
@@ -267,7 +304,12 @@ export function useScopedResearchShortlist(
 
   const confirmSwitch = (): void => {
     if (!state.pendingSwitch) return;
-    const previousCockpitKey = state.cockpitKey;
+    // Same effective-key reasoning as `toggle()` above: a confirmed switch
+    // away from a restored-but-unverifiable scope (spec §11.3.1 fix) must
+    // still clear ITS storage entry — that's the whole point of the
+    // "switching topics will still replace it" dialog copy — even though
+    // `state.cockpitKey` itself was never repointed to it.
+    const previousCockpitKey = state.cockpitKey ?? state.unverifiableCockpitKey;
     dispatch({ type: 'confirm-switch' });
     // Spec §11.3: "alten scoped Storage-Eintrag löschen" — the persist effect
     // (below) writes the NEW scope's pointer + value, but only this explicit
@@ -287,8 +329,13 @@ export function useScopedResearchShortlist(
 
   const pendingSwitchDescription = useMemo<ScopeSwitchDescription | null>(() => {
     if (!state.pendingSwitch) return null;
-    return describeScopeSwitch(snapshot, state.cockpitKey, state.pendingSwitch.cockpitKey);
-  }, [snapshot, state.cockpitKey, state.pendingSwitch]);
+    // Effective active key (see `toggle()` above) — this is what actually
+    // makes the honest "active-unavailable" dialog reachable at all: without
+    // it, `describeScopeSwitch` always received `null` for a
+    // restored-but-unverifiable scope and short-circuited to `no-switch`.
+    const activeCockpitKey = state.cockpitKey ?? state.unverifiableCockpitKey;
+    return describeScopeSwitch(snapshot, activeCockpitKey, state.pendingSwitch.cockpitKey);
+  }, [snapshot, state.cockpitKey, state.unverifiableCockpitKey, state.pendingSwitch]);
 
   const compareUrl = state.cockpitKey
     ? buildScopedCompareUrl(

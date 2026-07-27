@@ -50,14 +50,18 @@ import {
 import {
   buildShortlistScopeSnapshotDTO,
   cockpitKeyFor,
+  describeScopeSwitch,
   hydrateShortlistScopeSnapshot,
   knownScopesFor,
   restoreScopedShortlist,
   shortlistPointerKey,
   shortlistStorageKey,
+  toggleScopedShortlist,
   type CockpitKey,
   type DiscoveryItem,
   type ResearchContext,
+  type ScopedShortlist,
+  type ShortlistScopeSnapshot,
   type StorageLike,
   type TopicScopeResult,
 } from '@/lib/research/catalog-shell-logic';
@@ -219,6 +223,7 @@ describe('shortlistReducer', () => {
       hasRestored: true,
       cockpitKey: null,
       slugs: [],
+      unverifiableCockpitKey: null,
       pendingSwitch: null,
     });
   });
@@ -442,8 +447,150 @@ describe('empty-catalog restore scenario — server DTO -> hydrate -> restore (m
 
     const restored = restoreScopedShortlist(storage, 'us', snapshot);
 
-    expect(restored).toEqual({ cockpitKey: null, slugs: [] });
+    // `cockpitKey` stays null (byte-identical); `unverifiableCockpitKey`
+    // surfaces the scope Rule 2 couldn't verify (spec §11.3.1 fix).
+    expect(restored).toEqual({ cockpitKey: null, slugs: [], unverifiableCockpitKey: targetKey });
     expect(data).toEqual(before); // not a single key touched
+  });
+});
+
+// ── Cross-scope switch after a Rule-2 restore (spec §11.3.1 fix, reviewer-
+//    reported PR 2 review finding #3) ──────────────────────────────────────
+// `describeScopeSwitch` returns `active-unavailable` only when the ACTIVE
+// key is present in `unavailableScopes` — but before this fix, a Rule-2
+// restore's `state.cockpitKey` was always `null` (restoreScopedShortlist's
+// Rule 2/2b return `{cockpitKey: null, slugs: []}` on purpose, to keep
+// storage byte-identical), and `toggleScopedShortlist`'s own `sameScope`
+// check treats a `null` current cockpitKey as compatible with ANY target
+// scope — so a cross-scope add after a Rule-2 restore never even reached
+// `request-switch`, let alone the dialog: it silently repointed the market
+// pointer to the new scope with no warning, leaving the old (unverified,
+// still real) scoped entry unreachable in storage. This composes the exact
+// SAME pure primitives `useScopedResearchShortlist`'s `toggle()` /
+// `pendingSwitchDescription` / `confirmSwitch()` call (restoreScopedShortlist,
+// shortlistReducer, toggleScopedShortlist, describeScopeSwitch) using the
+// hook's own "effective active key" logic — proving the fix end-to-end at
+// the pure-logic level this file is scoped to (no DOM, no React rendering;
+// see file header).
+describe('cross-scope switch after a Rule-2 restore is reachable, not silently dropped (spec §11.3.1 fix)', () => {
+  const tradingKey: CockpitKey = 'us/trading/trading-platforms';
+  const roboKey: CockpitKey = 'us/personal-finance/robo-advisors';
+
+  const memoryStorage = (
+    initial: Record<string, string> = {},
+  ): StorageLike & { snapshot(): Record<string, string> } => {
+    const store = new Map(Object.entries(initial));
+    return {
+      getItem: (key) => (store.has(key) ? store.get(key)! : null),
+      setItem: (key, value) => {
+        store.set(key, value);
+      },
+      removeItem: (key) => {
+        store.delete(key);
+      },
+      snapshot: () => Object.fromEntries(store),
+    };
+  };
+
+  it('restore surfaces the unverifiable key with byte-identical storage; adding a product from a DIFFERENT scope then surfaces active-unavailable, and only an explicit confirm clears the old scope\'s storage', () => {
+    const storage = memoryStorage({
+      [shortlistPointerKey('us')]: 'trading:trading-platforms',
+      [shortlistStorageKey(tradingKey)]: JSON.stringify(['fidelity', 'charles-schwab']),
+    });
+    const before = storage.snapshot();
+
+    // trading-platforms is known but currently in backoff (unverifiable);
+    // robo-advisors is known and available with a real product.
+    const snapshot: ShortlistScopeSnapshot = {
+      knownScopes: new Set([tradingKey, roboKey]),
+      availableScopes: new Map([[roboKey, new Set(['betterment'])]]),
+      unavailableScopes: new Map([[tradingKey, 'backoff']]),
+    };
+
+    // --- Step 1: restore — storage must stay byte-identical, and the
+    //     unverifiable key must be surfaced (not silently dropped to null
+    //     with no trace). ------------------------------------------------
+    const restored = restoreScopedShortlist(storage, 'us', snapshot);
+    expect(restored).toEqual({ cockpitKey: null, slugs: [], unverifiableCockpitKey: tradingKey });
+    expect(storage.snapshot()).toEqual(before);
+
+    let state = shortlistReducer(initialShortlistState(), { type: 'restored', value: restored });
+    expect(state.cockpitKey).toBeNull();
+    expect(state.unverifiableCockpitKey).toBe(tradingKey);
+
+    // --- Step 2: user adds a product from a DIFFERENT (available) scope —
+    //     replicates useScopedResearchShortlist's toggle(), which feeds
+    //     toggleScopedShortlist the EFFECTIVE active key (state.cockpitKey
+    //     ?? state.unverifiableCockpitKey), not the bare (always-null)
+    //     state.cockpitKey the pre-fix code used. ------------------------
+    const effectiveKeyBeforeSwitch = state.cockpitKey ?? state.unverifiableCockpitKey;
+    const current: ScopedShortlist = { cockpitKey: effectiveKeyBeforeSwitch, slugs: state.slugs };
+    const result = toggleScopedShortlist(current, roboKey, 'betterment', new Set(['betterment']));
+    // THE bug this fix closes: with the old (always-null) effective key,
+    // toggleScopedShortlist's `sameScope` check treats `null` as compatible
+    // with ANY target scope, so this would have been `false` and the add
+    // would have applied silently, with no dialog at all.
+    expect(result.requiresScopeSwitch).toBe(true);
+    state = shortlistReducer(state, { type: 'request-switch', cockpitKey: roboKey, slug: 'betterment' });
+
+    // --- Step 3: the switch description is the honest active-unavailable
+    //     kind — not the old scope's real reason fabricated as
+    //     active-available, and not silently skipped as no-switch. --------
+    const activeCockpitKey = state.cockpitKey ?? state.unverifiableCockpitKey;
+    const description = describeScopeSwitch(snapshot, activeCockpitKey, state.pendingSwitch!.cockpitKey);
+    expect(description).toEqual({ kind: 'active-unavailable', activeCockpitKey: tradingKey, reason: 'backoff' });
+
+    // Cancelling leaves storage untouched and keeps the unverifiable key
+    // around for a possible retry.
+    const cancelled = shortlistReducer(state, { type: 'cancel-switch' });
+    expect(cancelled.pendingSwitch).toBeNull();
+    expect(cancelled.unverifiableCockpitKey).toBe(tradingKey);
+    expect(storage.snapshot()).toEqual(before);
+
+    // --- Step 4: only an EXPLICIT confirm applies the switch and clears
+    //     the old scope's (previously untouched) storage entry — mirrors
+    //     useScopedResearchShortlist's confirmSwitch(). -------------------
+    const previousCockpitKey = state.cockpitKey ?? state.unverifiableCockpitKey;
+    const confirmed = shortlistReducer(state, { type: 'confirm-switch' });
+    if (previousCockpitKey) storage.removeItem(shortlistStorageKey(previousCockpitKey));
+
+    expect(confirmed.cockpitKey).toBe(roboKey);
+    expect(confirmed.slugs).toEqual(['betterment']);
+    expect(confirmed.unverifiableCockpitKey).toBeNull();
+    expect(storage.getItem(shortlistPointerKey('us'))).toBe('trading:trading-platforms'); // unchanged by this step — the hook's own persist effect writes the new pointer separately
+    expect(storage.getItem(shortlistStorageKey(tradingKey))).toBeNull(); // old scope's storage explicitly cleared
+  });
+
+  it('a toggle attempt with an INVALID target slug is a true no-op — it never promotes the unverifiable key into a real cockpitKey (which would let the next persist wipe its storage)', () => {
+    const storage = memoryStorage({
+      [shortlistPointerKey('us')]: 'trading:trading-platforms',
+      [shortlistStorageKey(tradingKey)]: JSON.stringify(['fidelity']),
+    });
+    const before = storage.snapshot();
+    const snapshot: ShortlistScopeSnapshot = {
+      knownScopes: new Set([tradingKey, roboKey]),
+      availableScopes: new Map([[roboKey, new Set(['betterment'])]]),
+      unavailableScopes: new Map([[tradingKey, 'backoff']]),
+    };
+
+    const restored = restoreScopedShortlist(storage, 'us', snapshot);
+    const state = shortlistReducer(initialShortlistState(), { type: 'restored', value: restored });
+
+    // Replicates toggle()'s no-op guard: an invalid slug for the target
+    // scope returns the SAME `current` reference back, and the hook must
+    // skip dispatching it verbatim rather than echoing the synthetic
+    // effective key into `state.cockpitKey`.
+    const effectiveKey = state.cockpitKey ?? state.unverifiableCockpitKey;
+    const current: ScopedShortlist = { cockpitKey: effectiveKey, slugs: state.slugs };
+    const result = toggleScopedShortlist(current, roboKey, 'not-a-real-slug', new Set(['betterment']));
+    expect(result.requiresScopeSwitch).toBe(false);
+    expect(result.next).toBe(current); // referential identity — the true-no-op signal
+
+    // The hook must not dispatch 'set' for this — state (and therefore any
+    // later persist) stays exactly as restored.
+    expect(state.cockpitKey).toBeNull();
+    expect(state.unverifiableCockpitKey).toBe(tradingKey);
+    expect(storage.snapshot()).toEqual(before);
   });
 });
 
