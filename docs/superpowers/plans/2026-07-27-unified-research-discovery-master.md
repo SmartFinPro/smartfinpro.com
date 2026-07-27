@@ -34,9 +34,9 @@
 
 ## Source State and Worktree
 
-The design branch is `codex/research-discovery-design` at commit `88727d5`, based on `origin/main` commit `afeabcb`.
+The design branch is `codex/research-discovery-design`: the normative spec landed in `88727d5`, the six implementation-plan documents in `721743b` (branch tip), both based on `origin/main` commit `afeabcb`.
 
-At execution time, first land the spec through a documentation PR or cherry-pick `88727d5` into the PR 1 branch. Every code PR then starts from the latest `origin/main`, not from the dirty `design/fdl-high-fi` checkout.
+At execution time, first land the whole documentation package (spec + master + five PR plans) through a documentation PR from this branch. Every code PR then starts from the latest `origin/main`, not from the dirty `design/fdl-high-fi` checkout.
 
 Use one worktree per PR:
 
