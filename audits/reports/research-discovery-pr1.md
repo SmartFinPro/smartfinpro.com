@@ -162,3 +162,35 @@ uncovered invariants (1, 5, 11) got new tests in this task.
    task's file list.
 5. The 262-vs-241 route-line discrepancy noted above is recorded as observed,
    not silently reconciled — see the Build detail section.
+
+## Review fixes
+
+The Independent Reviewer's findings against Tasks 1–5 were addressed as four
+follow-up commits on this same branch, each TDD'd (RED→GREEN) where the fix
+changed behavior:
+
+| # | Commit | Files | Summary |
+|---|---|---|---|
+| 1 | `test(research): bound the catalog cache guard with realistic payloads` (`8bc723e`) | `research-catalog.test.ts`, this report | Reworked the 200 KB cache-size guard to model >=100 review-backed items + 30 dossier contexts at real-world string lengths instead of toy placeholders — see "Catalog size ceiling" above. Pure test rework, no production code changed. |
+| 2 | `fix(research): enforce unique discovery ids and directory-true categories` (`06169ea`) | `lib/research/catalog.ts`, `research-catalog.test.ts` | `buildDiscoveryCatalog` now throws on a duplicate discovery item id instead of silently keeping the last-write-wins item; `loadMarketReviewItems` now derives `category`/`href` from the directory it was loaded under (the loop's own category argument), not `contentItem.meta.category` — frontmatter drift could otherwise both collide ids and emit a 404 href, since `getContentBySlug` resolves by directory; guarded the previously-unguarded `categoryConfig[item.category].name` display fallback with `?? item.category`. |
+| 3 | `fix(research): degrade cleanly when the overlay cache layer fails` (`043ba4a`) | `lib/research/catalog.ts`, `lib/research/catalog-shell-logic.ts` | `getDiscoveryCatalogBundle` now `.catch(() => [])`s the cached-overlay promise so a throw from the `unstable_cache` layer (or its logger) still yields the reviews-only catalog instead of rejecting the page (spec §13: Hub stays at HTTP 200); `projectionNodeKey` now joins itemId and the cockpitKey/`"review"` suffix with a visible `:` separator (previously an invisible ASCII unit-separator, 0x1F — the same collision-safe joining pattern still used elsewhere in the file, e.g. `parseSpecGroups`'s `groupKey`, left untouched as out of scope); added `@internal` JSDoc tags to both uncached loaders and a doc comment on `DiscoveryFacets.freshnessDates` (ascending ISO order, reverse for newest-first). Code-only commit per its file list — no test file included, so no RED/GREEN cycle applies. |
+| 4 | `test(research): cover the remaining shortlist contract branches` (this commit) | `research-catalog-shell-logic.test.ts`, this report | Four new tests on already-correct `toggleScopedShortlist` / `persistScopedShortlist` / `restoreScopedShortlist` branches (cross-topic add returns `requiresScopeSwitch: true` without mutating the current state; removing the last slug clears the scope to `null`; persisting an empty shortlist removes both the scoped key and the pointer; restoring against a pointer naming a scope absent from `validScopes` clears both the pointer and that scope's stored key) plus one `sortFinderItems` test (featured beats a newer `sortDate`; equal featured+sortDate ties fall back to `item.id`). Pure test-coverage commit — no production code changed. |
+
+Updated totals after all four commits:
+
+| Command | Result |
+|---|---|
+| `npx tsc --noEmit` | exit 0, zero output |
+| `npx vitest run __tests__/unit/research-catalog-shell-logic.test.ts __tests__/unit/research-catalog.test.ts` | 2 files passed, **46 tests passed** (15 + 31, 0 failed) |
+| `npx vitest run` (full suite) | **125 files passed \| 1 skipped (126)**, **1635 tests passed \| 1 skipped (1636)**, exit 0 |
+
+`research-catalog.test.ts`: 13 → 15 tests (+2, commit 2: duplicate-id throw +
+directory-category test). `research-catalog-shell-logic.test.ts`: 26 → 31
+tests (+5, commit 4). Net +7 tests over the pre-review-fixes baseline of 1628
+passed/1 skipped (recorded in the Command gate section above) = **1635
+passed/1 skipped**, matching exactly; the 1 skip remains the pre-existing,
+unrelated `lib/editorial/forbidden-claims.test.ts` skip.
+
+`git diff --check` clean after every commit; `git status --short` shows only
+the pre-existing untracked `audits/reports/research-discovery-pr1-baseline.md`
+throughout.

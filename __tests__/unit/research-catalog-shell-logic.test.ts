@@ -5,13 +5,16 @@ import {
   computeDiscoveryFacets,
   countDiscoveryItems,
   migrateLegacyTradingShortlist,
+  persistScopedShortlist,
   productItemId,
   projectDiscoveryItems,
   researchBaseForMarket,
   restoreScopedShortlist,
   reviewItemId,
   shortlistStorageKey,
+  sortFinderItems,
   sortHubProjections,
+  toggleScopedShortlist,
 } from "@/lib/research/catalog-shell-logic";
 import type {
   CockpitKey,
@@ -19,6 +22,7 @@ import type {
   DiscoveryProjection,
   DiscoveryReview,
   ResearchContext,
+  ScopedShortlist,
   StorageLike,
 } from "@/lib/research/catalog-shell-logic";
 
@@ -371,6 +375,53 @@ it("hub sort uses manifest order, audited rank, then stable item id", () => {
   ).toEqual([rankOne.itemId, rankTwo.itemId, provisional.itemId]);
 });
 
+it("sortFinderItems: featured beats a newer sortDate, and equal featured+sortDate falls back to item.id", () => {
+  const featuredOlder = makeDiscoveryItem({
+    id: "review:/us/trading/a-review",
+    review: makeReview({ slug: "a-review", href: "/us/trading/a-review", featured: true }),
+    display: {
+      title: "A Review",
+      description: "Independent A review",
+      bestFor: null,
+      searchText: "a review trading",
+      sortDate: "2026-01-01",
+    },
+  });
+  const nonFeaturedNewer = makeDiscoveryItem({
+    id: "review:/us/trading/b-review",
+    review: makeReview({ slug: "b-review", href: "/us/trading/b-review", featured: false }),
+    display: {
+      title: "B Review",
+      description: "Independent B review",
+      bestFor: null,
+      searchText: "b review trading",
+      sortDate: "2026-07-01", // newer than both featured items below
+    },
+  });
+  const featuredOlderTie = makeDiscoveryItem({
+    id: "review:/us/trading/c-review",
+    review: makeReview({ slug: "c-review", href: "/us/trading/c-review", featured: true }),
+    display: {
+      title: "C Review",
+      description: "Independent C review",
+      bestFor: null,
+      searchText: "c review trading",
+      sortDate: "2026-01-01", // ties featuredOlder's sortDate exactly
+    },
+  });
+
+  const sorted = sortFinderItems(
+    [nonFeaturedNewer, featuredOlderTie, featuredOlder],
+    { query: "", category: null },
+  );
+
+  expect(sorted.map((item) => item.id)).toEqual([
+    featuredOlder.id, // featured, ties with featuredOlderTie -> id order ("a" < "c")
+    featuredOlderTie.id,
+    nonFeaturedNewer.id, // not featured -> last despite the newest sortDate
+  ]);
+});
+
 // In-memory StorageLike stub so the storage contract stays testable without
 // window.sessionStorage — mirrors what the PR 2 client adapter will inject.
 // Also exposes `snapshot()` (beyond the StorageLike contract) so idempotence
@@ -521,6 +572,79 @@ it("restore round-trip: a migrated shortlist is actually reachable", () => {
     cockpitKey: "us/trading/trading-platforms",
     slugs: ["fidelity", "charles-schwab"],
   });
+});
+
+it("toggleScopedShortlist: a cross-topic add requires a scope switch and never mutates the current state", () => {
+  const current: ScopedShortlist = {
+    cockpitKey: "us/trading/trading-platforms",
+    slugs: ["fidelity"],
+  };
+  const currentSnapshot = { cockpitKey: current.cockpitKey, slugs: [...current.slugs] };
+
+  const result = toggleScopedShortlist(
+    current,
+    "us/personal-finance/robo-advisors",
+    "betterment",
+    new Set(["betterment"]),
+  );
+
+  expect(result.requiresScopeSwitch).toBe(true);
+  expect(result.next).toEqual({
+    cockpitKey: "us/personal-finance/robo-advisors",
+    slugs: ["betterment"],
+  });
+  expect(current).toEqual(currentSnapshot);
+});
+
+it("toggleScopedShortlist: removing the last slug clears the scope back to null", () => {
+  const current: ScopedShortlist = {
+    cockpitKey: "us/trading/trading-platforms",
+    slugs: ["fidelity"],
+  };
+
+  const result = toggleScopedShortlist(
+    current,
+    "us/trading/trading-platforms",
+    "fidelity",
+    new Set(["fidelity"]),
+  );
+
+  expect(result.requiresScopeSwitch).toBe(false);
+  expect(result.next).toEqual({ cockpitKey: null, slugs: [] });
+});
+
+it("persistScopedShortlist: an empty shortlist removes both the scoped key and the pointer", () => {
+  const storage = memoryStorage({
+    "research-shortlist-active:us": "trading:trading-platforms",
+    "research-shortlist:us:trading:trading-platforms": '["fidelity"]',
+  });
+
+  persistScopedShortlist(storage, "us", {
+    cockpitKey: "us/trading/trading-platforms",
+    slugs: [],
+  });
+
+  expect(storage.getItem("research-shortlist-active:us")).toBeNull();
+  expect(
+    storage.getItem("research-shortlist:us:trading:trading-platforms"),
+  ).toBeNull();
+});
+
+it("restoreScopedShortlist: a pointer naming a scope absent from validScopes clears the pointer and that scope's stored key", () => {
+  const storage = memoryStorage({
+    "research-shortlist-active:us": "trading:trading-platforms",
+    "research-shortlist:us:trading:trading-platforms": '["fidelity"]',
+  });
+
+  const validScopes = new Map<CockpitKey, ReadonlySet<string>>(); // trading-platforms is not a known scope on this page
+
+  const restored = restoreScopedShortlist(storage, "us", validScopes);
+
+  expect(restored).toEqual({ cockpitKey: null, slugs: [] });
+  expect(storage.getItem("research-shortlist-active:us")).toBeNull();
+  expect(
+    storage.getItem("research-shortlist:us:trading:trading-platforms"),
+  ).toBeNull();
 });
 
 it("rejects slugs outside the active Cockpit key", () => {
