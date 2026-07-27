@@ -109,7 +109,7 @@ const buildSearchText = (
     if (context.tagline) parts.push(context.tagline);
     parts.push(context.topicLabel, context.productSlug.replace(/-/g, ' '));
   }
-  parts.push(categoryConfig[item.category].name);
+  parts.push(categoryConfig[item.category]?.name ?? item.category);
   return parts.filter((part) => part.trim().length > 0).join(' ');
 };
 
@@ -159,17 +159,25 @@ function computeDisplay(item: DiscoveryItem, sortedContexts: readonly ResearchCo
  *  dropped before this ever reaches a cache. `researchContexts` is always []
  *  here — buildDiscoveryCatalog attaches the overlay afterwards. */
 export async function loadMarketReviewItems(market: Market): Promise<DiscoveryItem[]> {
+  const categories = marketCategories[market];
   const categoryResults = await Promise.all(
-    marketCategories[market].map((category) => getContentByMarketAndCategory(market, category)),
+    categories.map((category) => getContentByMarketAndCategory(market, category)),
   );
 
   const items: DiscoveryItem[] = [];
-  for (const contentItems of categoryResults) {
+  for (let categoryIndex = 0; categoryIndex < categoryResults.length; categoryIndex += 1) {
+    // The directory category this batch was fetched under — NOT
+    // contentItem.meta.category, which is frontmatter and can drift from
+    // where the file actually lives. getContentBySlug resolves by
+    // directory, so trusting frontmatter here would both collide this
+    // item's id with a same-slug item in its true category and emit an
+    // href that 404s.
+    const category = categories[categoryIndex];
+    const contentItems = categoryResults[categoryIndex];
     for (const contentItem of contentItems) {
       if (contentItem.slug === 'index') continue;
       if (typeof contentItem.meta.rating !== 'number') continue;
 
-      const category = contentItem.meta.category;
       const href = `/${market}/${category}/${contentItem.slug}`;
       const review: DiscoveryReview = {
         slug: contentItem.slug,
@@ -312,7 +320,17 @@ export function buildDiscoveryCatalog(
   // Shallow-clone every item (and its own researchContexts array) so this
   // pure function never mutates the caller's (possibly cached) inputs.
   const items: DiscoveryItem[] = reviews.map((item) => ({ ...item, researchContexts: [...item.researchContexts] }));
-  const itemsById = new Map<string, DiscoveryItem>(items.map((item) => [item.id, item]));
+  // Built as an explicit loop (not `new Map(items.map(...))`) so a duplicate
+  // review id is a hard failure (spec §4.1: "Eine Kollision ist ein
+  // Testfehler, kein Last-write-wins-Fall") instead of the Map constructor
+  // silently keeping only the last-seen item.
+  const itemsById = new Map<string, DiscoveryItem>();
+  for (const item of items) {
+    if (itemsById.has(item.id)) {
+      throw new Error(`Duplicate discovery item id: ${item.id}`);
+    }
+    itemsById.set(item.id, item);
+  }
 
   const reviewJoinIndex = new Map<string, DiscoveryItem>();
   for (const item of items) {

@@ -415,6 +415,23 @@ describe('buildDiscoveryCatalog', () => {
     expect(catalog.items[0].researchContexts).toHaveLength(1);
   });
 
+  it('throws instead of silently dropping one item when two review items share the same id (spec §4.1: a collision is a test failure, not last-write-wins)', () => {
+    const reviewA = makeDiscoveryItem({
+      id: reviewItemId('/us/trading/dup'),
+      category: 'trading',
+      review: makeReview({ slug: 'dup', href: '/us/trading/dup' }),
+    });
+    const reviewB = makeDiscoveryItem({
+      id: reviewItemId('/us/trading/dup'),
+      category: 'trading',
+      review: makeReview({ slug: 'dup', href: '/us/trading/dup' }),
+    });
+
+    expect(() => buildDiscoveryCatalog('us', [reviewA, reviewB], [])).toThrow(
+      /review:\/us\/trading\/dup/,
+    );
+  });
+
   // Modeled capacity for the guard below: >=100 review-backed items + 30
   // dossier contexts per market at real-world string lengths (review title
   // 54 chars, description 156, bestFor 131; context tagline 40, bestFor 24;
@@ -502,6 +519,25 @@ describe('loadMarketReviewItems', () => {
     expect(items).toHaveLength(1);
     expect(items[0].review).not.toBeNull();
     expect(items[0].review!.slug).toBe('acme-review');
+  });
+
+  it('uses the directory category it was loaded under, not a drifted meta.category', async () => {
+    // getContentBySlug resolves content by directory, not by frontmatter —
+    // a content item physically living under content/us/forex/ is a forex
+    // item regardless of what its own `category` frontmatter field claims.
+    // Trusting meta.category here would both collide this item's id with a
+    // same-slug item actually living under content/us/trading/, and emit an
+    // href ('/us/trading/<slug>') that 404s because the file isn't there.
+    mockGetContentByMarketAndCategory.mockImplementation(async (_market: string, category: string) => {
+      if (category !== 'forex') return [];
+      return [makeContentItem({ slug: 'drifted-review', rating: 4.2, category: 'trading' })];
+    });
+
+    const items = await loadMarketReviewItems('us');
+
+    expect(items).toHaveLength(1);
+    expect(items[0].category).toBe('forex');
+    expect(items[0].review!.href).toBe('/us/forex/drifted-review');
   });
 });
 
