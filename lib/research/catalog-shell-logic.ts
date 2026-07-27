@@ -104,7 +104,7 @@ export const productItemId = (
 export const projectionNodeKey = (
   itemId: string,
   cockpitKey: CockpitKey | null,
-): string => `${itemId}${cockpitKey ?? "review"}`;
+): string => `${itemId}:${cockpitKey ?? "review"}`;
 
 export const EMPTY_DISCOVERY_FILTERS: DiscoveryFilters = {
   query: "",
@@ -122,6 +122,7 @@ export interface DiscoveryFacets {
   types: Array<{ value: DiscoveryKind; count: number }>;
   statuses: Array<{ value: ResearchStatus; count: number }>;
   confidences: Array<{ value: ResearchConfidence; count: number }>;
+  /** ascending ISO order; consumers wanting newest-first must reverse. */
   freshnessDates: Array<{ value: string; count: number }>;
   topics: Array<{ value: string; label: string; count: number }>;
 }

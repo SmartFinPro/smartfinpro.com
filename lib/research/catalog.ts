@@ -157,7 +157,10 @@ function computeDisplay(item: DiscoveryItem, sortedContexts: readonly ResearchCo
  *  maps each to a baseline DiscoveryItem (spec §5.1): `slug !== 'index'` and a
  *  numeric editorial rating are the only inclusion gates; the MDX body is
  *  dropped before this ever reaches a cache. `researchContexts` is always []
- *  here — buildDiscoveryCatalog attaches the overlay afterwards. */
+ *  here — buildDiscoveryCatalog attaches the overlay afterwards.
+ *
+ *  @internal — test seam only; production callers must use
+ *  getDiscoveryCatalog / getDiscoveryCatalogBundle. */
 export async function loadMarketReviewItems(market: Market): Promise<DiscoveryItem[]> {
   const categories = marketCategories[market];
   const categoryResults = await Promise.all(
@@ -273,7 +276,10 @@ async function loadTopicOverlayRows(
  *  a rejected topic logs exactly one structured warning (market, category,
  *  topic, error type) and is simply absent from the result — every other
  *  topic's rows, and all reviews (loaded independently), are unaffected. Never
- *  logs raw row contents or user data. */
+ *  logs raw row contents or user data.
+ *
+ *  @internal — test seam only; production callers must use
+ *  getDiscoveryCatalog / getDiscoveryCatalogBundle. */
 export async function loadMarketResearchContexts(market: Market): Promise<NormalizedOverlayRow[]> {
   const entries = BEST_X_MANIFEST.map((entry, manifestOrder) => ({ entry, manifestOrder })).filter(
     ({ entry }) => entry.market === market,
@@ -407,11 +413,15 @@ export async function getDiscoveryCatalog(market: Market): Promise<DiscoveryCata
 }
 
 /** Full bundle for server rendering: `catalog` may cross the RSC/client
- *  boundary; `dossierRows` (full ResearchProduct per dossier) never does. */
+ *  boundary; `dossierRows` (full ResearchProduct per dossier) never does.
+ *  The overlay promise is `.catch(() => [])`-guarded so a throw from the
+ *  unstable_cache layer itself (or the logger it calls) still yields the
+ *  reviews-only catalog instead of rejecting the whole page (spec §13:
+ *  the Hub stays reachable at HTTP 200 even when Cockpit data is down). */
 export async function getDiscoveryCatalogBundle(market: Market): Promise<DiscoveryCatalogBundle> {
   const [reviews, overlay] = await Promise.all([
     getCachedReviewItems(market),
-    getCachedResearchContexts(market),
+    getCachedResearchContexts(market).catch(() => []),
   ]);
   return buildDiscoveryCatalog(market, reviews, overlay);
 }
