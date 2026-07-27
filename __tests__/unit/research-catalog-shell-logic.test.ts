@@ -289,6 +289,36 @@ it("a status facet ignores its own active value but respects query", () => {
   ]);
 });
 
+it("computeDiscoveryFacets counts every reachable alternative through the real pipeline, not just the item's default projection (spec §6.2)", () => {
+  // The operator's exact regression scenario: `item` (defined above) has BOTH
+  // an audited trading-platforms context AND a provisional options-brokers
+  // context (a different manifest position). The buggy implementation only
+  // tallied whichever ONE context `projectDiscoveryItems`'s DEFAULT branch
+  // would pick for this item (its audited context — the default branch
+  // prefers a qualified dossier over the review) — silently dropping
+  // type=review, status=provisional, and topic=options-brokers even though
+  // each of those filters, applied directly via projectDiscoveryItems,
+  // yields exactly 1 result for this same item.
+  const facets = computeDiscoveryFacets([item], filters);
+
+  expect(facets.types).toEqual([
+    { value: "review", count: 1 },
+    { value: "dossier", count: 1 },
+  ]);
+  expect(facets.statuses).toEqual([
+    { value: "audited", count: 1 },
+    { value: "provisional", count: 1 },
+  ]);
+  expect(facets.topics.map(({ value, count }) => ({ value, count }))).toEqual([
+    { value: "trading-platforms", count: 1 },
+    { value: "options-brokers", count: 1 },
+  ]);
+  // Confidence stays audited-sourced (spec §6.2): the provisional context
+  // never contributes a candidate, even though this fixture happens to
+  // leave a non-null `confidence` on it (irrelevant to a provisional row).
+  expect(facets.confidences).toEqual([{ value: "high", count: 1 }]);
+});
+
 // Hub-sort fixtures: three dossier projections sharing one topic's manifest
 // position, so the comparator must fall through to audited rank and, for the
 // provisional entry, to productSlug.

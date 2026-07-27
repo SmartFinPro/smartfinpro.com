@@ -271,6 +271,26 @@ export function projectDiscoveryItems(
   return projections;
 }
 
+/** Disjunctive facet counting (spec §6.2): a facet's count for candidate
+ *  value `v` is measured by RUNNING THE REAL PIPELINE with that dimension SET
+ *  to `v` (every other active filter kept as-is) — never by clearing the
+ *  dimension and tallying whichever single "default" projection
+ *  `projectDiscoveryItems` happens to pick per item. The latter under-counts
+ *  any item with more than one qualifying context: `projectDiscoveryItems`
+ *  emits at most ONE projection per item (spec §6.1), so an item with both an
+ *  audited context and a provisional context would only ever register its
+ *  audited alternative, silently hiding that filtering directly by
+ *  type=review, status=provisional, or the provisional context's topic each
+ *  still yields this same item. Setting the dimension per candidate value
+ *  fixes this because each run picks its OWN qualifying context independently.
+ *
+ *  Candidate values are enumerated from the full item set, not from whatever
+ *  the current filters happen to leave visible — categories/types/statuses/
+ *  topics from every item and context; confidence and freshness stay
+ *  audited-sourced (only an audited context ever contributes a candidate).
+ *  Category is mathematically equivalent to the old clear-and-tally approach
+ *  (an item has exactly one category, never per-context), but is computed the
+ *  same uniform way here for consistency. */
 export function computeDiscoveryFacets(
   items: readonly DiscoveryItem[],
   filters: DiscoveryFilters,
@@ -278,109 +298,80 @@ export function computeDiscoveryFacets(
   const market = items[0]?.market ?? null;
   const categoryOrder: readonly Category[] = market ? marketCategories[market] : [];
 
-  const categoryCounts = new Map<Category, number>();
-  for (const projection of projectDiscoveryItems(items, {
-    ...filters,
-    category: EMPTY_DISCOVERY_FILTERS.category,
-  })) {
-    categoryCounts.set(
-      projection.item.category,
-      (categoryCounts.get(projection.item.category) ?? 0) + 1,
-    );
-  }
+  const candidateCategories = new Set<Category>();
+  const candidateStatuses = new Set<ResearchStatus>();
+  const candidateConfidences = new Set<ResearchConfidence>();
+  const candidateFreshnessDates = new Set<string>();
+  const candidateTopics = new Map<string, { label: string; order: number }>();
 
-  const typeCounts = new Map<DiscoveryKind, number>();
-  for (const projection of projectDiscoveryItems(items, {
-    ...filters,
-    type: EMPTY_DISCOVERY_FILTERS.type,
-  })) {
-    typeCounts.set(projection.kind, (typeCounts.get(projection.kind) ?? 0) + 1);
-  }
-
-  const statusCounts = new Map<ResearchStatus, number>();
-  for (const projection of projectDiscoveryItems(items, {
-    ...filters,
-    status: EMPTY_DISCOVERY_FILTERS.status,
-  })) {
-    if (projection.kind !== "dossier") continue;
-    statusCounts.set(
-      projection.context.status,
-      (statusCounts.get(projection.context.status) ?? 0) + 1,
-    );
-  }
-
-  const confidenceCounts = new Map<ResearchConfidence, number>();
-  for (const projection of projectDiscoveryItems(items, {
-    ...filters,
-    confidence: EMPTY_DISCOVERY_FILTERS.confidence,
-  })) {
-    if (projection.kind !== "dossier") continue;
-    if (projection.context.status !== "audited" || !projection.context.confidence) {
-      continue;
-    }
-    confidenceCounts.set(
-      projection.context.confidence,
-      (confidenceCounts.get(projection.context.confidence) ?? 0) + 1,
-    );
-  }
-
-  const freshnessCounts = new Map<string, number>();
-  for (const projection of projectDiscoveryItems(items, {
-    ...filters,
-    fresh: EMPTY_DISCOVERY_FILTERS.fresh,
-  })) {
-    if (projection.kind !== "dossier") continue;
-    if (projection.context.status !== "audited" || !projection.context.dataVerifiedAt) {
-      continue;
-    }
-    const value = projection.context.dataVerifiedAt;
-    freshnessCounts.set(value, (freshnessCounts.get(value) ?? 0) + 1);
-  }
-
-  const topicCounts = new Map<
-    string,
-    { label: string; order: number; count: number }
-  >();
-  for (const projection of projectDiscoveryItems(items, {
-    ...filters,
-    topic: EMPTY_DISCOVERY_FILTERS.topic,
-  })) {
-    if (projection.kind !== "dossier") continue;
-    const existing = topicCounts.get(projection.context.topic);
-    if (existing) {
-      existing.count += 1;
-    } else {
-      topicCounts.set(projection.context.topic, {
-        label: projection.context.topicLabel,
-        order: projection.context.manifestOrder,
-        count: 1,
-      });
+  for (const item of items) {
+    candidateCategories.add(item.category);
+    for (const context of item.researchContexts) {
+      candidateStatuses.add(context.status);
+      if (context.status === "audited" && context.confidence) {
+        candidateConfidences.add(context.confidence);
+      }
+      if (context.status === "audited" && context.dataVerifiedAt) {
+        candidateFreshnessDates.add(context.dataVerifiedAt);
+      }
+      if (!candidateTopics.has(context.topic)) {
+        candidateTopics.set(context.topic, {
+          label: context.topicLabel,
+          order: context.manifestOrder,
+        });
+      }
     }
   }
 
-  return {
-    categories: categoryOrder
-      .filter((category) => categoryCounts.has(category))
-      .map((category) => ({ value: category, count: categoryCounts.get(category)! })),
-    types: (["review", "dossier"] as const)
-      .filter((kind) => typeCounts.has(kind))
-      .map((kind) => ({ value: kind, count: typeCounts.get(kind)! })),
-    statuses: (["audited", "provisional"] as const)
-      .filter((status) => statusCounts.has(status))
-      .map((status) => ({ value: status, count: statusCounts.get(status)! })),
-    confidences: (["high", "medium", "low"] as const)
-      .filter((confidence) => confidenceCounts.has(confidence))
-      .map((confidence) => ({
-        value: confidence,
-        count: confidenceCounts.get(confidence)!,
-      })),
-    freshnessDates: [...freshnessCounts.entries()]
-      .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
-      .map(([value, count]) => ({ value, count })),
-    topics: [...topicCounts.entries()]
-      .sort(([, a], [, b]) => a.order - b.order)
-      .map(([value, meta]) => ({ value, label: meta.label, count: meta.count })),
-  };
+  const categories = categoryOrder
+    .filter((category) => candidateCategories.has(category))
+    .map((category) => ({
+      value: category,
+      count: projectDiscoveryItems(items, { ...filters, category }).length,
+    }))
+    .filter((entry) => entry.count > 0);
+
+  const types = (["review", "dossier"] as const)
+    .map((type) => ({
+      value: type,
+      count: projectDiscoveryItems(items, { ...filters, type }).length,
+    }))
+    .filter((entry) => entry.count > 0);
+
+  const statuses = (["audited", "provisional"] as const)
+    .filter((status) => candidateStatuses.has(status))
+    .map((status) => ({
+      value: status,
+      count: projectDiscoveryItems(items, { ...filters, status }).length,
+    }))
+    .filter((entry) => entry.count > 0);
+
+  const confidences = (["high", "medium", "low"] as const)
+    .filter((confidence) => candidateConfidences.has(confidence))
+    .map((confidence) => ({
+      value: confidence,
+      count: projectDiscoveryItems(items, { ...filters, confidence }).length,
+    }))
+    .filter((entry) => entry.count > 0);
+
+  const freshnessDates = [...candidateFreshnessDates]
+    .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0))
+    .map((fresh) => ({
+      value: fresh,
+      count: projectDiscoveryItems(items, { ...filters, fresh }).length,
+    }))
+    .filter((entry) => entry.count > 0);
+
+  const topics = [...candidateTopics.entries()]
+    .sort(([, a], [, b]) => a.order - b.order)
+    .map(([topic, meta]) => ({
+      value: topic,
+      label: meta.label,
+      count: projectDiscoveryItems(items, { ...filters, topic }).length,
+    }))
+    .filter((entry) => entry.count > 0);
+
+  return { categories, types, statuses, confidences, freshnessDates, topics };
 }
 
 /** Hub sort: dossiers ordered by their topic's manifest position, then
