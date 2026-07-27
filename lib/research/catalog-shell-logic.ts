@@ -30,6 +30,7 @@ export interface DiscoveryReview {
   href: string;
   title: string;
   description: string;
+  bestFor: string | null;
   editorialRating: number;
   publishDate: string;
   modifiedDate: string;

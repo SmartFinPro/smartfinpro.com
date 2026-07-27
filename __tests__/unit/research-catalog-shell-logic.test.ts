@@ -56,6 +56,7 @@ const makeReview = (over: Partial<DiscoveryReview> = {}): DiscoveryReview => ({
   href: "/us/trading/fidelity-review",
   title: "Fidelity Review",
   description: "Independent Fidelity review",
+  bestFor: null,
   editorialRating: 4.8,
   publishDate: "2026-06-01",
   modifiedDate: "2026-07-01",

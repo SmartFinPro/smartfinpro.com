@@ -191,6 +191,7 @@ const makeReview = (over: Partial<DiscoveryReview> = {}): DiscoveryReview => ({
   href: '/us/trading/acme-review',
   title: 'Acme Review',
   description: 'Independent Acme review',
+  bestFor: null,
   editorialRating: 4.5,
   publishDate: '2026-01-01',
   modifiedDate: '2026-02-01',
@@ -285,14 +286,24 @@ describe('buildDiscoveryCatalog', () => {
     const tradingReview = makeDiscoveryItem({
       id: reviewItemId('/us/trading/acme'),
       category: 'trading',
-      review: makeReview({ slug: 'acme', href: '/us/trading/acme' }),
+      review: makeReview({
+        slug: 'acme',
+        href: '/us/trading/acme',
+        bestFor: 'Editorial pick for active traders',
+      }),
     });
     const forexReview = makeDiscoveryItem({
       id: reviewItemId('/us/forex/acme'),
       category: 'forex',
       review: makeReview({ slug: 'acme', href: '/us/forex/acme' }),
     });
-    const row = makeOverlayRow({ category: 'trading', topic: 'trading-platforms', productSlug: 'acme', reviewSlug: 'acme' });
+    const row = makeOverlayRow({
+      category: 'trading',
+      topic: 'trading-platforms',
+      productSlug: 'acme',
+      reviewSlug: 'acme',
+      contextOver: { bestFor: 'Context bestFor should lose' },
+    });
 
     const { catalog } = buildDiscoveryCatalog('us', [tradingReview, forexReview], [row]);
 
@@ -301,6 +312,27 @@ describe('buildDiscoveryCatalog', () => {
     const forexItem = catalog.items.find((i) => i.id === forexReview.id)!;
     expect(tradingItem.researchContexts).toHaveLength(1);
     expect(forexItem.researchContexts).toHaveLength(0);
+    // Precedence: a review-backed item's display.bestFor uses the review's
+    // own MDX value, even when its attached context also carries a bestFor.
+    expect(tradingItem.display.bestFor).toBe('Editorial pick for active traders');
+  });
+
+  it('review-backed item without contexts keeps its MDX bestFor in display and searchText', () => {
+    const review = makeDiscoveryItem({
+      id: reviewItemId('/us/personal-finance/budget-app'),
+      category: 'personal-finance',
+      review: makeReview({
+        slug: 'budget-app',
+        href: '/us/personal-finance/budget-app',
+        bestFor: 'Hands-off budgeting teams',
+      }),
+    });
+
+    const { catalog } = buildDiscoveryCatalog('us', [review], []);
+
+    expect(catalog.items).toHaveLength(1);
+    expect(catalog.items[0].display.bestFor).toBe('Hands-off budgeting teams');
+    expect(catalog.items[0].display.searchText).toContain('budgeting');
   });
 
   it('keeps a rated review with zero contexts when no overlay row matches', () => {

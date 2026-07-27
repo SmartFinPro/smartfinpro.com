@@ -115,18 +115,19 @@ const buildSearchText = (
 
 /** Computes the final display fields for one item given its (already sorted)
  *  research contexts. Review-backed items take title/description/rating/date/
- *  featured/pricing exclusively from MDX (spec §4.3) — contexts never override
- *  them, only contribute `bestFor` and searchText terms. Cockpit-only items
- *  take title/description/sortDate from the first (manifest-order) context.
- *  No invented date, rating, or description text. */
+ *  featured/pricing exclusively from MDX (spec §4.3); `bestFor` also prefers
+ *  the review's own MDX value and only falls back to the first qualified
+ *  context when the review has none. Cockpit-only items take
+ *  title/description/sortDate/bestFor from the first (manifest-order)
+ *  context. No invented date, rating, or description text. */
 function computeDisplay(item: DiscoveryItem, sortedContexts: readonly ResearchContext[]): DiscoveryDisplay {
   const first = sortedContexts[0] ?? null;
-  const bestFor = first?.bestFor ?? null;
 
   if (item.review) {
     const title = item.review.title;
     const description = item.review.description;
     const sortDate = item.review.modifiedDate || item.review.publishDate || null;
+    const bestFor = item.review?.bestFor ?? first?.bestFor ?? null;
     return {
       title,
       description,
@@ -138,6 +139,7 @@ function computeDisplay(item: DiscoveryItem, sortedContexts: readonly ResearchCo
 
   // Cockpit-only (a DiscoveryItem without a review is only ever created once
   // at least one qualified context attaches, so `first` is never null here).
+  const bestFor = first?.bestFor ?? null;
   const title = first?.displayName ?? '';
   const description = first?.tagline || first?.bestFor || first?.topicLabel || '';
   return {
@@ -174,6 +176,10 @@ export async function loadMarketReviewItems(market: Market): Promise<DiscoveryIt
         href,
         title: contentItem.meta.seoTitle || contentItem.meta.title,
         description: contentItem.meta.description,
+        bestFor:
+          typeof contentItem.meta.bestFor === 'string' && contentItem.meta.bestFor.trim()
+            ? contentItem.meta.bestFor.trim()
+            : null,
         editorialRating: contentItem.meta.rating,
         publishDate: contentItem.meta.publishDate,
         modifiedDate: contentItem.meta.modifiedDate,

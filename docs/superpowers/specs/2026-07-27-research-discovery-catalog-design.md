@@ -117,6 +117,7 @@ interface DiscoveryReview {
   href: string;
   title: string;
   description: string;
+  bestFor: string | null;
   editorialRating: number; // 0–5
   publishDate: string;
   modifiedDate: string;
@@ -178,8 +179,10 @@ erhalten.
 
 ### 4.3 Display-Felder
 
-Review-backed Items beziehen Titel, Beschreibung, Rating, Datum, Featured und
-Pricing ausschließlich aus normalisiertem MDX-Frontmatter.
+Review-backed Items beziehen Titel, Beschreibung, bestFor, Rating, Datum,
+Featured und Pricing ausschließlich aus normalisiertem MDX-Frontmatter. Für
+`display.bestFor` gilt bei Review-backed Items das MDX-`bestFor`; nur wenn es
+fehlt, fällt es auf den ersten qualifizierten Context zurück.
 
 Für Review-backed Items ist `sortDate = modifiedDate || publishDate`. Besitzt
 ein Review zusätzlich Research-Contexts, bleibt dieses redaktionelle Datum die
