@@ -743,6 +743,136 @@ export interface ShortlistScopeSnapshot {
   unavailableScopes: ReadonlyMap<CockpitKey, UnavailableScopeReason>;
 }
 
+/** All manifest Cockpit keys for `market` — the static universe a
+ *  `ShortlistScopeSnapshot` classifies against (spec §11.2.1). Relocated here
+ *  (operator merge-blocker fix, 2026-07-27) from
+ *  components/research/ResearchShortlist.tsx's now-removed client-only
+ *  `buildShortlistScopeSnapshot`: the snapshot is built SERVER-SIDE now (see
+ *  `buildShortlistScopeSnapshotDTO` below, and lib/research/catalog.ts's
+ *  `buildDiscoveryScopeSnapshot`, which is the only caller that actually has
+ *  the typed per-topic `TopicOverlayResult[]` this needs to classify
+ *  correctly), never re-derived client-side from the already-flattened
+ *  `DiscoveryItem[]` the RSC boundary hands the client — that re-derivation
+ *  is exactly the bug this fix closes (see the DTO doc comment below). */
+export function knownScopesFor(market: Market): ReadonlySet<CockpitKey> {
+  const scopes = new Set<CockpitKey>();
+  for (const entry of BEST_X_MANIFEST) {
+    if (entry.market === market) scopes.add(cockpitKeyFor(market, entry.category, entry.topic));
+  }
+  return scopes;
+}
+
+// --- Serializable ShortlistScopeSnapshot DTO (spec §11.2.1, operator fix) --
+// A `ReadonlySet`/`ReadonlyMap` cannot cross the Server-Component ->
+// Client-Component (RSC) boundary — only plain, JSON-shaped arrays/objects
+// survive that serialization. `ShortlistScopeSnapshotDTO` is the wire shape;
+// `hydrateShortlistScopeSnapshot` turns it back into the Set/Map shape
+// `restoreScopedShortlist`/`describeScopeSwitch` already operate on. Building
+// the DTO itself requires the TYPED per-topic `TopicOverlayResult[]` load
+// (lib/research/catalog.ts, 'server-only') — this file stays import-clean of
+// that module (it must remain safely importable from a client component), so
+// `buildShortlistScopeSnapshotDTO` below takes the minimal, STRUCTURALLY
+// compatible `TopicScopeResult` shape instead of importing `TopicOverlayResult`
+// itself; catalog.ts's `buildDiscoveryScopeSnapshot` is the thin adapter that
+// maps its real typed results into this shape before calling here.
+
+export interface AvailableScopeEntryDTO {
+  cockpitKey: CockpitKey;
+  slugs: readonly string[];
+}
+
+export interface UnavailableScopeEntryDTO {
+  cockpitKey: CockpitKey;
+  reason: UnavailableScopeReason;
+}
+
+export interface ShortlistScopeSnapshotDTO {
+  knownScopes: readonly CockpitKey[];
+  availableScopes: readonly AvailableScopeEntryDTO[];
+  unavailableScopes: readonly UnavailableScopeEntryDTO[];
+}
+
+/** Pure reshaping only — every classification decision (available vs.
+ *  unavailable, and which reason) was already made SERVER-SIDE by
+ *  `buildShortlistScopeSnapshotDTO` from the real per-topic load; this
+ *  function never re-derives or second-guesses any of it, it only rebuilds
+ *  the Set/Map shape the rest of this file's restore/switch logic expects. */
+export function hydrateShortlistScopeSnapshot(
+  dto: ShortlistScopeSnapshotDTO,
+): ShortlistScopeSnapshot {
+  return {
+    knownScopes: new Set(dto.knownScopes),
+    availableScopes: new Map(
+      dto.availableScopes.map((entry) => [entry.cockpitKey, new Set(entry.slugs)]),
+    ),
+    unavailableScopes: new Map(
+      dto.unavailableScopes.map((entry) => [entry.cockpitKey, entry.reason]),
+    ),
+  };
+}
+
+/** One manifest topic's classification input for
+ *  `buildShortlistScopeSnapshotDTO` below — structurally compatible with (but
+ *  deliberately NOT importing) lib/research/catalog.ts's `TopicOverlayResult`
+ *  discriminated union, since that module is 'server-only' and this file must
+ *  stay importable from the client. `ok:true` with an EMPTY `slugs` array is
+ *  the authoritative "this topic loaded fine, zero qualifying products right
+ *  now" result (spec §11.2.1 Rule 4) — it must land in `availableScopes`,
+ *  never be guessed into `unavailableScopes` just because it looks the same
+ *  as a load failure once the slug count hits zero. */
+export interface TopicScopeResult {
+  cockpitKey: CockpitKey;
+  ok: boolean;
+  slugs: readonly string[];
+  reason: UnavailableScopeReason | null;
+}
+
+/** Builds the three-tier `ShortlistScopeSnapshotDTO` from ONE normalized
+ *  result per manifest topic (spec §11.2.1, operator merge-blocker fix
+ *  2026-07-27 — the third occurrence of the "same defect": a `[]` doing
+ *  double duty for two different meanings at a boundary). Every member of
+ *  `knownScopesFor(market)` lands in EXACTLY ONE of
+ *  `availableScopes`/`unavailableScopes`:
+ *
+ *  - A result with `ok:true` is ALWAYS available, even with a zero-length
+ *    `slugs` — that IS the authoritative "loaded fine, zero rows" case Rule 4
+ *    depends on to trigger its destructive shortlist cleanup.
+ *  - A result with `ok:false` carries its own real reason (`load_failed` |
+ *    `backoff` | `missing_topic_config`) straight through — never defaulted
+ *    to `unknown_state`.
+ *  - A known Cockpit key with NO corresponding result at all — a genuinely
+ *    missing result bucket (a manifest edit landing between two reads, or a
+ *    market-wide cache-layer failure that passes `results: []` because it
+ *    cannot vouch for ANY topic right now) — is the ONE place `unknown_state`
+ *    is used, and only as this fallback, never as a substitute for a real
+ *    ok:true-zero-rows or ok:false result. */
+export function buildShortlistScopeSnapshotDTO(
+  market: Market,
+  results: readonly TopicScopeResult[],
+): ShortlistScopeSnapshotDTO {
+  const knownScopes = knownScopesFor(market);
+  const resultByKey = new Map<CockpitKey, TopicScopeResult>();
+  for (const result of results) resultByKey.set(result.cockpitKey, result);
+
+  const availableScopes: AvailableScopeEntryDTO[] = [];
+  const unavailableScopes: UnavailableScopeEntryDTO[] = [];
+
+  for (const cockpitKey of knownScopes) {
+    const result = resultByKey.get(cockpitKey);
+    if (!result) {
+      unavailableScopes.push({ cockpitKey, reason: "unknown_state" });
+      continue;
+    }
+    if (result.ok) {
+      availableScopes.push({ cockpitKey, slugs: result.slugs });
+    } else {
+      unavailableScopes.push({ cockpitKey, reason: result.reason ?? "unknown_state" });
+    }
+  }
+
+  return { knownScopes: [...knownScopes], availableScopes, unavailableScopes };
+}
+
 export const shortlistStorageKey = (key: CockpitKey): string => {
   const [market, category, topic] = key.split("/");
   return `research-shortlist:${market}:${category}:${topic}`;

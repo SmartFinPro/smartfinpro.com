@@ -24,6 +24,7 @@ import type {
   DiscoveryProjection,
   DiscoveryReview,
   ResearchContext,
+  ShortlistScopeSnapshotDTO,
 } from '@/lib/research/catalog-shell-logic';
 import { cockpitKeyFor, reviewItemId } from '@/lib/research/catalog-shell-logic';
 
@@ -385,11 +386,26 @@ describe('ResearchHubBody — empty catalog', () => {
         verifiedDataPointCount: 0,
       },
     };
+    // Empty on purpose: this fixture only proves the empty-state markup and
+    // that mounting the (now-unconditional, operator merge-blocker fix
+    // 2026-07-27) `<ShortlistRestoreController>` doesn't add any visible
+    // output or crash a router-context-free static render. The controller's
+    // actual restore/cleanup BEHAVIOR against a real DTO is proven at the
+    // pure-logic level in __tests__/unit/research-shortlist-ui-state.test.ts.
+    const emptyScopeSnapshot: ShortlistScopeSnapshotDTO = {
+      knownScopes: [],
+      availableScopes: [],
+      unavailableScopes: [],
+    };
 
     const html = renderToStaticMarkup(
-      ResearchHubBody({ market: 'uk', catalog: emptyCatalog, copy, nodes: [] }) as Parameters<
-        typeof renderToStaticMarkup
-      >[0],
+      ResearchHubBody({
+        market: 'uk',
+        catalog: emptyCatalog,
+        copy,
+        nodes: [],
+        scopeSnapshot: emptyScopeSnapshot,
+      }) as Parameters<typeof renderToStaticMarkup>[0],
     );
 
     expect((html.match(/<h1[ >]/g) ?? []).length).toBe(1);

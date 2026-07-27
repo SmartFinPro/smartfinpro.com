@@ -78,11 +78,12 @@ vi.mock('@/lib/logging', () => ({
 import {
   attachLiveManifestOrder,
   buildDiscoveryCatalog,
+  buildDiscoveryScopeSnapshot,
   flattenQualifiedOverlayRows,
   loadMarketReviewItems,
   loadMarketResearchContexts,
   loadOneTopicOverlay,
-  resolveOverlayContexts,
+  resolveMarketResearchOverlay,
   __resetTopicOverlayBackoffForTests,
   type TopicOverlayResult,
 } from '@/lib/research/catalog';
@@ -1216,29 +1217,46 @@ describe('flattenQualifiedOverlayRows', () => {
   });
 });
 
-// --- resolveOverlayContexts — injectable seam around the cached overlay ----
-// Distinct from loadMarketResearchContexts's per-TOPIC resilience above: this
-// guards against the cache LAYER itself throwing (unstable_cache, or its own
+// --- resolveMarketResearchOverlay — injectable seam around the cached ------
+// overlay, ONE fan-out (operator merge-blocker fix, 2026-07-27). Distinct
+// from loadMarketResearchContexts's per-TOPIC resilience above: this guards
+// against the cache LAYER itself throwing (unstable_cache, or its own
 // logger), which .catch(() => []) used to swallow silently at the call site
 // with no diagnostic at all. `load` is injected here instead of mocking
 // next/cache, mirroring how the rest of this file bypasses the cache wrappers
-// entirely for direct, network-free unit coverage.
+// entirely for direct, network-free unit coverage. Renamed from the old
+// `resolveOverlayContexts` (which returned a bare `NormalizedOverlayRow[]`):
+// this function now returns BOTH the flattened rows AND the serializable
+// `ShortlistScopeSnapshotDTO` — derived from the identical `results` a single
+// `load(market)` call resolves, never two independent loader calls (spec
+// §11.2.1's "ONE fan-out, one source").
 
-describe('resolveOverlayContexts', () => {
-  it('logs exactly one structured warning and returns [] when the cache layer itself throws, and the bundle still carries the full review catalog', async () => {
+describe('resolveMarketResearchOverlay', () => {
+  it('logs exactly one structured warning, returns empty rows, and marks EVERY known scope unknown_state when the cache layer itself throws — the bundle still carries the full review catalog', async () => {
     const rejectingLoad = vi.fn(async () => {
       throw new Error('unstable_cache blew up');
     });
 
-    const overlay = await resolveOverlayContexts('us', rejectingLoad);
+    const overlay = await resolveMarketResearchOverlay('us', rejectingLoad);
 
-    expect(overlay).toEqual([]);
+    expect(overlay.rows).toEqual([]);
     expect(mockLoggerWarn).toHaveBeenCalledTimes(1);
     expect(mockLoggerWarn).toHaveBeenCalledWith('Research discovery overlay cache unavailable', {
       market: 'us',
       scope: 'research-catalog-overlay-cache',
       errorType: 'Error',
     });
+
+    // Requirement 6 (operator): a market-wide cache-LAYER failure cannot
+    // vouch for ANY topic, so every known scope — never just the ones that
+    // happened to load — is reported unavailable('unknown_state'), never
+    // guessed available-empty.
+    expect(overlay.scopeSnapshot.knownScopes).toHaveLength(TEST_MANIFEST.length);
+    expect(overlay.scopeSnapshot.availableScopes).toEqual([]);
+    expect(overlay.scopeSnapshot.unavailableScopes).toHaveLength(TEST_MANIFEST.length);
+    expect(overlay.scopeSnapshot.unavailableScopes.every((entry) => entry.reason === 'unknown_state')).toBe(
+      true,
+    );
 
     // The whole point of the fallback: every review survives untouched, no
     // matter how badly the overlay cache layer itself failed.
@@ -1253,9 +1271,131 @@ describe('resolveOverlayContexts', () => {
       review: makeReview({ slug: 'rev-b', href: '/us/forex/rev-b' }),
     });
 
-    const { catalog } = buildDiscoveryCatalog('us', [reviewA, reviewB], overlay);
+    const { catalog } = buildDiscoveryCatalog('us', [reviewA, reviewB], overlay.rows);
 
     expect(catalog.items).toHaveLength(2);
     expect(catalog.items.every((i) => i.researchContexts.length === 0)).toBe(true);
+  });
+
+  // --- Mandatory test (c) — one fan-out, one source (operator, binding) ----
+  it('invokes the per-topic loader EXACTLY ONCE per topic — the flattened catalog rows and the scope snapshot DTO are derived from the SAME single TopicOverlayResult[] load, never two independent loader calls', async () => {
+    mockGetCockpitData.mockImplementation(async (_market: string, category: string) => {
+      if (category === 'trading') {
+        return [
+          makeProduct({ slug: 'acme', category: 'trading', reviewSlug: null, researchStatus: 'audited', fieldSources: { fee: src() } }),
+        ];
+      }
+      return []; // business-banking, forex — load fine, zero qualifying rows
+    });
+
+    const callCountByTopic = new Map<string, number>();
+    const countingLoadTopic = async (
+      market: 'us' | 'uk' | 'ca' | 'au',
+      entry: BestXManifestEntry,
+      manifestOrder: number,
+    ): Promise<TopicOverlayResult> => {
+      const key = `${entry.category}/${entry.topic}`;
+      callCountByTopic.set(key, (callCountByTopic.get(key) ?? 0) + 1);
+      void manifestOrder;
+      return loadOneTopicOverlay(market, entry);
+    };
+
+    const overlay = await resolveMarketResearchOverlay('us', (market) =>
+      loadMarketResearchContexts(market, () => 0, countingLoadTopic),
+    );
+
+    // Exactly one call per manifest topic — never two (which a "fetch once
+    // for the catalog, fetch again for the snapshot" implementation would
+    // produce).
+    expect(callCountByTopic.size).toBe(TEST_MANIFEST.length);
+    for (const count of callCountByTopic.values()) expect(count).toBe(1);
+
+    // Both artifacts are actually populated FROM that one load, proving
+    // there's real substance behind the call-count assertion above — not
+    // just two vacuously-empty results.
+    expect(overlay.rows.length).toBeGreaterThan(0);
+    expect(overlay.scopeSnapshot.knownScopes).toHaveLength(TEST_MANIFEST.length);
+    const tradingScope = overlay.scopeSnapshot.availableScopes.find(
+      (entry) => entry.cockpitKey === 'us/trading/trading-platforms',
+    );
+    expect(tradingScope?.slugs).toEqual(['acme']);
+  });
+});
+
+// --- buildDiscoveryScopeSnapshot — the server-side DTO adapter -------------
+// (spec §11.2.1, operator merge-blocker fix 2026-07-27). Mandatory tests (a)
+// and (b)'s TYPED-data half: proves the adapter itself never collapses
+// "loaded fine, zero rows" (ok:true) and "failed/backed off" (ok:false) into
+// the same classification — the exact distinction the old client-side
+// buildShortlistScopeSnapshot (removed from ResearchShortlist.tsx) could not
+// make once data had already flattened into DiscoveryItem[]. The DTO's
+// consumption by restoreScopedShortlist (proving the actual storage
+// cleanup/preservation behavior for these same two cases) is covered in
+// __tests__/unit/research-shortlist-ui-state.test.ts, which hydrates this
+// exact function's output.
+
+describe('buildDiscoveryScopeSnapshot', () => {
+  const entryFor = (category: string, topic: string): BestXManifestEntry =>
+    TEST_MANIFEST.find((e) => e.category === category && e.topic === topic) as unknown as BestXManifestEntry;
+
+  it('(a) an ok:true result with an EMPTY contexts array is classified availableScopes with an empty slug set — never unavailable/unknown_state', () => {
+    const results: TopicOverlayResult[] = TEST_MANIFEST.map((m) =>
+      m.category === 'trading' && m.topic === 'trading-platforms'
+        ? { ok: true, entry: entryFor('trading', 'trading-platforms'), contexts: [], rows: [] }
+        : { ok: false, entry: entryFor(m.category, m.topic), reason: 'load_failed' },
+    );
+
+    const dto = buildDiscoveryScopeSnapshot('us', results);
+
+    const tradingEntry = dto.availableScopes.find((e) => e.cockpitKey === 'us/trading/trading-platforms');
+    expect(tradingEntry).toEqual({ cockpitKey: 'us/trading/trading-platforms', slugs: [] });
+    expect(dto.unavailableScopes.some((e) => e.cockpitKey === 'us/trading/trading-platforms')).toBe(false);
+  });
+
+  it('(b) an ok:false result carries its REAL reason straight through — never defaulted to unknown_state', () => {
+    const results: TopicOverlayResult[] = [
+      { ok: false, entry: entryFor('trading', 'trading-platforms'), reason: 'load_failed' },
+      { ok: true, entry: entryFor('business-banking', 'business-bank-accounts'), contexts: [], rows: [] },
+      { ok: true, entry: entryFor('forex', 'forex-brokers'), contexts: [], rows: [] },
+    ];
+
+    const dto = buildDiscoveryScopeSnapshot('us', results);
+
+    expect(dto.unavailableScopes).toEqual([
+      { cockpitKey: 'us/trading/trading-platforms', reason: 'load_failed' },
+    ]);
+  });
+
+  it('partitions every known scope into EXACTLY ONE of availableScopes/unavailableScopes for a full set of results — disjoint and gapless (merge-blocker invariant)', () => {
+    const results: TopicOverlayResult[] = [
+      { ok: true, entry: entryFor('trading', 'trading-platforms'), contexts: [], rows: [] },
+      { ok: false, entry: entryFor('business-banking', 'business-bank-accounts'), reason: 'backoff' },
+      { ok: false, entry: entryFor('forex', 'forex-brokers'), reason: 'missing_topic_config' },
+    ];
+
+    const dto = buildDiscoveryScopeSnapshot('us', results);
+
+    expect(dto.knownScopes).toHaveLength(TEST_MANIFEST.length);
+    for (const cockpitKey of dto.knownScopes) {
+      const inAvailable = dto.availableScopes.some((e) => e.cockpitKey === cockpitKey);
+      const inUnavailable = dto.unavailableScopes.some((e) => e.cockpitKey === cockpitKey);
+      expect(inAvailable && inUnavailable).toBe(false); // disjoint
+      expect(inAvailable || inUnavailable).toBe(true); // gapless
+    }
+  });
+
+  it('a known scope with NO corresponding result at all is the ONE case classified unknown_state (genuinely missing result bucket)', () => {
+    // Only two of the three TEST_MANIFEST topics have a result.
+    const results: TopicOverlayResult[] = [
+      { ok: true, entry: entryFor('trading', 'trading-platforms'), contexts: [], rows: [] },
+      { ok: false, entry: entryFor('business-banking', 'business-bank-accounts'), reason: 'backoff' },
+    ];
+
+    const dto = buildDiscoveryScopeSnapshot('us', results);
+
+    expect(dto.unavailableScopes).toContainEqual({
+      cockpitKey: 'us/forex/forex-brokers',
+      reason: 'unknown_state',
+    });
   });
 });

@@ -15,41 +15,41 @@
 // "validScopes" contract the plan's own Task 5 step-3 prose still describes
 // (that prose predates the amendment).
 //
-// SNAPSHOT PROVENANCE (binding requirement, this task): `buildShortlistScopeSnapshot`
-// below is deliberately CLIENT-ONLY — built from `items` (the full, unfiltered
-// market catalog `ResearchHub` already holds, never the current
-// search/category/topic projection) plus the static `BEST_X_MANIFEST` (plain
-// data, client-safe). It does NOT have access to the server's real per-topic
-// `TopicOverlayResult` (lib/research/catalog.ts) — that value is intentionally
-// never sent across the RSC boundary (only the joined, already-qualified
-// `DiscoveryItem[]` is). A manifest topic with ZERO observed contexts among
-// `items` is therefore classified `unavailableScopes` with the honest
-// `unknown_state` reason rather than guessed as an authoritatively-empty
-// `availableScopes` entry: the client cannot tell "this topic's server load
-// just failed/backed off" apart from "this topic loaded fine but currently
-// has zero qualifying products" — both collapse to the same zero-contexts
-// observation once data has crossed into DiscoveryItem[] (see catalog.ts's
-// TopicOverlayResult header comment for the server-side version of this same
-// problem). Rule 2's non-destructive treatment (lib/research/catalog-shell-logic.ts)
-// is IDENTICAL for both real causes, so this never risks a wrong destructive
-// delete — the only cost is that Rule 4's destructive cleanup of a genuinely,
-// authoritatively emptied topic never fires through this client-only path.
-// That trade is deliberate: protecting a user's stored shortlist always
-// outranks automatic tidiness. By construction, every `knownScopes` member
-// lands in EXACTLY ONE of `availableScopes`/`unavailableScopes` (never both,
-// never neither) — see the partition-invariant test in
+// SNAPSHOT PROVENANCE (SUPERSEDED 2026-07-27, operator merge-blocker fix):
+// this file used to build its own `ShortlistScopeSnapshot` CLIENT-SIDE from
+// `items` (the joined, already-flattened `DiscoveryItem[]` the RSC boundary
+// hands the client) — and, exactly like the `getDiscoveryCatalogBundle` bug
+// this same fix closes one layer down, that re-derivation could not tell a
+// manifest topic that loaded fine with zero qualifying products apart from
+// one whose load had failed or backed off: both collapse to the same
+// zero-observed-contexts signal once data has crossed into `DiscoveryItem[]`.
+// The practical cost was that spec §11.2.1 Rule 4's destructive cleanup (a
+// removed product's shortlist must eventually be cleared) could never fire —
+// every zero-context topic was classified `unavailableScopes` instead, which
+// is safe (Rule 2's non-destructive pass-through) but permanently disables
+// tidiness for a genuinely emptied topic.
+//
+// `useScopedResearchShortlist` now takes a `ShortlistScopeSnapshotDTO` built
+// SERVER-SIDE (lib/research/catalog.ts's `buildDiscoveryScopeSnapshot`, from
+// the real typed per-topic `TopicOverlayResult[]` — the one place that can
+// actually distinguish the two cases) and only HYDRATES it
+// (`hydrateShortlistScopeSnapshot`, catalog-shell-logic.ts) back into the
+// Set/Map shape this file's restore/switch logic already expects. This file
+// no longer classifies anything itself. By construction, every `knownScopes`
+// member still lands in EXACTLY ONE of `availableScopes`/`unavailableScopes`
+// (never both, never neither) — see the partition-invariant test, now
+// exercising the server-side builder, in
 // __tests__/unit/research-shortlist-ui-state.test.ts.
 'use client';
 
 import { useEffect, useMemo, useReducer, useRef, useState, type ReactNode } from 'react';
 import { GitCompare, X } from 'lucide-react';
 import type { Market } from '@/lib/i18n/config';
-import { BEST_X_MANIFEST } from '@/lib/comparison/topics/manifest';
 import {
   MAX_SHORTLIST,
   buildScopedCompareUrl,
-  cockpitKeyFor,
   describeScopeSwitch,
+  hydrateShortlistScopeSnapshot,
   migrateLegacyTradingShortlist,
   persistScopedShortlist,
   restoreScopedShortlist,
@@ -59,7 +59,7 @@ import {
   type DiscoveryItem,
   type ScopedShortlist,
   type ScopeSwitchDescription,
-  type ShortlistScopeSnapshot,
+  type ShortlistScopeSnapshotDTO,
 } from '@/lib/research/catalog-shell-logic';
 
 // ── Pure state (Task 5 Step 1/3) ────────────────────────────────────────────
@@ -137,55 +137,6 @@ export function shortlistPersistCommand(state: ResearchShortlistState): ScopedSh
   return state.hasRestored ? { cockpitKey: state.cockpitKey, slugs: state.slugs } : null;
 }
 
-// ── Client-only ShortlistScopeSnapshot (spec §11.2.1) ───────────────────────
-
-/** All manifest Cockpit keys for `market` — the static universe
- *  `buildShortlistScopeSnapshot` classifies against. Exported separately so a
- *  test can assert it against the real `BEST_X_MANIFEST` without rebuilding
- *  the whole snapshot. */
-export function knownScopesFor(market: Market): ReadonlySet<CockpitKey> {
-  const scopes = new Set<CockpitKey>();
-  for (const entry of BEST_X_MANIFEST) {
-    if (entry.market === market) scopes.add(cockpitKeyFor(market, entry.category, entry.topic));
-  }
-  return scopes;
-}
-
-/** Builds the three-tier `ShortlistScopeSnapshot` from the FULL, unfiltered
- *  `items` array — see the file header for why every zero-context known scope
- *  lands in `unavailableScopes` with reason `unknown_state` rather than being
- *  guessed as an authoritative empty result. Callers must always pass the
- *  page's complete market catalog (`ResearchHub`'s own `items` prop), never a
- *  search/category/topic-filtered subset — passing a filtered list would
- *  make a topic outside the current filter look "unavailable" even though it
- *  never actually failed to load, which is exactly the bug §11.2.1 exists to
- *  prevent. */
-export function buildShortlistScopeSnapshot(
-  market: Market,
-  items: readonly DiscoveryItem[],
-): ShortlistScopeSnapshot {
-  const knownScopes = knownScopesFor(market);
-
-  const availableScopes = new Map<CockpitKey, Set<string>>();
-  for (const item of items) {
-    for (const context of item.researchContexts) {
-      let slugs = availableScopes.get(context.cockpitKey);
-      if (!slugs) {
-        slugs = new Set<string>();
-        availableScopes.set(context.cockpitKey, slugs);
-      }
-      slugs.add(context.productSlug);
-    }
-  }
-
-  const unavailableScopes = new Map<CockpitKey, 'unknown_state'>();
-  for (const cockpitKey of knownScopes) {
-    if (!availableScopes.has(cockpitKey)) unavailableScopes.set(cockpitKey, 'unknown_state');
-  }
-
-  return { knownScopes, availableScopes, unavailableScopes };
-}
-
 /** Per-cockpitKey rendering metadata `ResearchHub` needs for the shortlist bar
  *  and the compare handoff — a product's display name (for chips) and the
  *  topic's Cockpit compare base href — both already present on every
@@ -231,10 +182,16 @@ export interface UseScopedResearchShortlistResult {
 export function useScopedResearchShortlist(
   market: Market,
   items: readonly DiscoveryItem[],
+  scopeSnapshot: ShortlistScopeSnapshotDTO,
 ): UseScopedResearchShortlistResult {
   const [state, dispatch] = useReducer(shortlistReducer, undefined, initialShortlistState);
 
-  const snapshot = useMemo(() => buildShortlistScopeSnapshot(market, items), [market, items]);
+  // Server-built (spec §11.2.1, operator fix 2026-07-27) — this hook only
+  // HYDRATES the DTO back into the Set/Map shape restoreScopedShortlist and
+  // describeScopeSwitch expect; it no longer classifies anything itself. See
+  // the file header for why the old client-side buildShortlistScopeSnapshot
+  // was removed.
+  const snapshot = useMemo(() => hydrateShortlistScopeSnapshot(scopeSnapshot), [scopeSnapshot]);
   const topicIndex = useMemo(() => buildCockpitTopicIndex(items), [items]);
 
   // Restore-on-mount (spec §11.2, amended §11.2.1): migrate the pilot's flat
@@ -365,6 +322,36 @@ export function useScopedResearchShortlist(
     confirmSwitch,
     cancelSwitch,
   };
+}
+
+/** Mount-only restore/cleanup controller for a market whose catalog
+ *  currently has zero items (spec §11.2.1 Rule 4 / operator merge-blocker,
+ *  2026-07-27). `ResearchHubBody`'s "research is on its way" empty state used
+ *  to `return` before ever reaching `<ResearchHub>` — the ONLY place that
+ *  mounted `useScopedResearchShortlist` — so a stored shortlist for a scope
+ *  that just went authoritatively empty (Rule 4: clean it up) or a scope
+ *  that's merely unverifiable right now (Rule 2: leave storage untouched)
+ *  never got either treatment; it just sat there, unexamined, forever.
+ *
+ *  The full interactive `ResearchHub` (search input, URL-backed facets,
+ *  `next/navigation` hooks) has nothing useful to show when there are zero
+ *  items and needs a Router context this static-friendly page never provides
+ *  on its own — so only the restore controller mounts here, not the whole
+ *  shell. With zero items, every known scope is by construction either
+ *  unavailable (storage left untouched) or available with an EMPTY slug set
+ *  (Rule 4's destructive cleanup fires), so `state.slugs` is always `[]` in
+ *  this branch and `<ShortlistBar>` would render `null` regardless — this
+ *  component exists solely to run the restore-on-mount effect, never to
+ *  display anything. */
+export function ShortlistRestoreController({
+  market,
+  scopeSnapshot,
+}: {
+  market: Market;
+  scopeSnapshot: ShortlistScopeSnapshotDTO;
+}) {
+  useScopedResearchShortlist(market, [], scopeSnapshot);
+  return null;
 }
 
 // ── Presentational pieces ───────────────────────────────────────────────────

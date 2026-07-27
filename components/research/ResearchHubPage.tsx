@@ -53,6 +53,7 @@ import {
   sortHubProjections,
   type CockpitKey,
   type DiscoveryProjection,
+  type ShortlistScopeSnapshotDTO,
 } from '@/lib/research/catalog-shell-logic';
 import { Breadcrumb } from '@/components/marketing/breadcrumb';
 import { generateComparisonItemListSchema } from '@/lib/seo/schema';
@@ -60,6 +61,7 @@ import { formatVerifiedDate } from './VerificationStatus';
 import { ResearchCard } from './ResearchCard';
 import { CatalogCard } from './CatalogCard';
 import { ResearchHub, type ResearchHubNodeEntry } from './ResearchHub';
+import { ShortlistRestoreController } from './ResearchShortlist';
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://smartfinpro.com';
 
@@ -378,13 +380,20 @@ export interface ResearchHubBodyProps {
   catalog: DiscoveryCatalog;
   copy: ResearchHubCopy;
   nodes: ResearchHubNode[];
+  /** Server-built, serializable shortlist scope snapshot (spec §11.2.1,
+   *  operator ONE-FAN-OUT merge-blocker fix 2026-07-27) — from
+   *  `getDiscoveryCatalogBundle(market).scopeSnapshot`, the SAME single
+   *  per-topic load `catalog`/`nodes` were also built from. Threaded straight
+   *  through to `<ResearchHub>` (non-empty branch) or
+   *  `<ShortlistRestoreController>` (empty branch) — never re-derived here. */
+  scopeSnapshot: ShortlistScopeSnapshotDTO;
 }
 
 /** Renders the whole hub given already-fetched data — separated from
  *  `ResearchHubPage` so unit tests (e.g. the empty-catalog case) can render
  *  it directly from a fixture bundle, without exercising the real
  *  'server-only' catalog I/O. */
-export function ResearchHubBody({ market, catalog, copy, nodes }: ResearchHubBodyProps) {
+export function ResearchHubBody({ market, catalog, copy, nodes, scopeSnapshot }: ResearchHubBodyProps) {
   const homeHref = market === 'us' ? '/' : `/${market}`;
 
   if (catalog.items.length === 0) {
@@ -405,6 +414,19 @@ export function ResearchHubBody({ market, catalog, copy, nodes }: ResearchHubBod
             </p>
           </div>
         </section>
+        {/* MERGE-BLOCKER FIX (operator, 2026-07-27): a market-wide-empty
+            catalog is not evidence that every scope is stale — a topic can
+            legitimately have loaded fine with zero qualifying products right
+            now (spec §11.2.1 Rule 4, which must still clear a stored
+            shortlist for it) or be temporarily unverifiable (Rule 2, which
+            must NOT touch storage). This branch used to `return` before ever
+            reaching `<ResearchHub>` — the only place that mounted the
+            shortlist restore effect — silently disabling that cleanup for as
+            long as the market stayed empty. The full interactive
+            `ResearchHub` shell has nothing to show here and needs a Router
+            context this page never provides on its own, so only the
+            restore-only controller mounts. */}
+        <ShortlistRestoreController market={market} scopeSnapshot={scopeSnapshot} />
       </article>
     );
   }
@@ -463,6 +485,7 @@ export function ResearchHubBody({ market, catalog, copy, nodes }: ResearchHubBod
           items={catalog.items}
           nodes={buildClientHubNodes(nodes)}
           browseFallback={<BrowseFallback nodes={nodes} />}
+          scopeSnapshot={scopeSnapshot}
         />
       </Suspense>
 
@@ -517,5 +540,13 @@ export async function ResearchHubPage({ market }: { market: Market }) {
     Promise.resolve(getResearchHubCopy(market)),
   ]);
   const nodes = buildResearchHubNodes(bundle);
-  return <ResearchHubBody market={market} catalog={bundle.catalog} copy={copy} nodes={nodes} />;
+  return (
+    <ResearchHubBody
+      market={market}
+      catalog={bundle.catalog}
+      copy={copy}
+      nodes={nodes}
+      scopeSnapshot={bundle.scopeSnapshot}
+    />
+  );
 }

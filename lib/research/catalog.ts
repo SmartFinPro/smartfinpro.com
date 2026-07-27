@@ -33,8 +33,24 @@
 // `import 'server-only'` guards the whole module: DiscoveryCatalogBundle.
 // dossierRows carries the complete ResearchProduct (full Cockpit provenance)
 // for every dossier row, and must never reach a client bundle — only
-// `bundle.catalog` (the serializable, <200 KB DiscoveryCatalog) crosses the
-// RSC/client boundary.
+// `bundle.catalog` and `bundle.scopeSnapshot` (both serializable, <200 KB)
+// cross the RSC/client boundary.
+//
+// ONE FAN-OUT, ONE SOURCE (operator merge-blocker fix, 2026-07-27, spec
+// §11.2.1): `resolveMarketResearchOverlay` is the ONE place that calls
+// `loadMarketResearchContexts` per request — it derives BOTH the flattened
+// `NormalizedOverlayRow[]` `buildDiscoveryCatalog` joins against AND the
+// serializable `ShortlistScopeSnapshotDTO` (`buildDiscoveryScopeSnapshot`)
+// from the SAME typed `TopicOverlayResult[]` array. This closes a third
+// occurrence of the same defect class the per-topic `TopicOverlayResult`
+// contract above already fixed once: `getDiscoveryCatalogBundle` used to
+// return only the flattened, already-qualified `DiscoveryItem[]`, and the
+// CLIENT re-derived its own shortlist scope snapshot from that flattened
+// shape — which, exactly like the old market-wide overlay cache, could not
+// tell "this topic loaded fine with zero rows" apart from "this topic's
+// load failed/backed off". The fix is the same shape both times: keep the
+// typed, discriminated result alive across the boundary instead of
+// re-flattening it one level up.
 
 import 'server-only';
 import { unstable_cache } from 'next/cache';
@@ -48,6 +64,7 @@ import { getCockpitData } from '@/lib/comparison/loader';
 import { buildResearchView, type ResearchProduct } from '@/lib/research/adapter';
 import { logger } from '@/lib/logging';
 import {
+  buildShortlistScopeSnapshotDTO,
   cockpitKeyFor,
   countDiscoveryItems,
   productItemId,
@@ -60,6 +77,8 @@ import {
   type DiscoveryItem,
   type DiscoveryReview,
   type ResearchContext,
+  type ShortlistScopeSnapshotDTO,
+  type TopicScopeResult,
   type UnavailableScopeReason,
 } from '@/lib/research/catalog-shell-logic';
 
@@ -80,9 +99,29 @@ export interface DiscoveryDossierRenderRow {
   researchProduct: ResearchProduct;
 }
 
-export interface DiscoveryCatalogBundle {
+/** `buildDiscoveryCatalog`'s own return shape — the pure join/merge/display
+ *  step (spec §5.2, §4) has no notion of a shortlist scope snapshot, so it is
+ *  kept separate from (and extended by) `DiscoveryCatalogBundle` below rather
+ *  than forcing every one of this function's many existing callers/fixtures
+ *  to also fabricate a `scopeSnapshot`. Only `getDiscoveryCatalogBundle`
+ *  actually adds one, from the same `resolveMarketResearchOverlay` load its
+ *  `overlay` rows already came from. */
+export interface DiscoveryCatalogJoin {
   catalog: DiscoveryCatalog;
   dossierRows: DiscoveryDossierRenderRow[];
+}
+
+export interface DiscoveryCatalogBundle extends DiscoveryCatalogJoin {
+  /** Serializable — safe to cross the RSC/client boundary (spec §11.2.1,
+   *  operator ONE-FAN-OUT fix 2026-07-27). Built from the EXACT SAME
+   *  `TopicOverlayResult[]` load `catalog`/`dossierRows` are built from (see
+   *  `resolveMarketResearchOverlay` below) — never a second loader call, and
+   *  never re-derived client-side from `catalog.items` (that re-derivation,
+   *  fixed here, is what silently disabled shortlist Rule 4's cleanup: the
+   *  client cannot tell "this topic loaded fine with zero rows" apart from
+   *  "this topic's load failed/backed off" once both have collapsed into the
+   *  same zero-context observation on `DiscoveryItem[]`). */
+  scopeSnapshot: ShortlistScopeSnapshotDTO;
 }
 
 /** One already-qualified (audited/provisional) Cockpit row, normalized to its
@@ -611,6 +650,41 @@ export function flattenQualifiedOverlayRows(
   return rows;
 }
 
+/** Adapts one typed `TopicOverlayResult` to the minimal, structural
+ *  `TopicScopeResult` shape catalog-shell-logic.ts's snapshot DTO builder
+ *  consumes — that file cannot import this 'server-only' module's own
+ *  `TopicOverlayResult` type (see its own header comment on why), so this
+ *  thin per-topic mapping is the only place the two shapes meet. */
+function toTopicScopeResult(market: Market, result: TopicOverlayResult): TopicScopeResult {
+  const cockpitKey = cockpitKeyFor(market, result.entry.category, result.entry.topic);
+  return result.ok
+    ? { cockpitKey, ok: true, slugs: result.contexts.map((context) => context.productSlug), reason: null }
+    : { cockpitKey, ok: false, slugs: [], reason: result.reason };
+}
+
+/** The server-computed, serializable `ShortlistScopeSnapshotDTO` for `market`
+ *  (spec §11.2.1, operator ONE-FAN-OUT merge-blocker fix 2026-07-27) — built
+ *  from the SAME typed `results` `flattenQualifiedOverlayRows` also consumes,
+ *  never a second loader call (see `resolveMarketResearchOverlay` below,
+ *  the only production caller, which passes both functions the identical
+ *  `results` array from one `loadMarketResearchContexts` invocation).
+ *  Delegates the actual three-tier classification to
+ *  catalog-shell-logic.ts's `buildShortlistScopeSnapshotDTO`; this function's
+ *  only job is the per-topic adaptation via `toTopicScopeResult` above. An
+ *  empty `results` array (the market-wide cache-layer-failure case) makes
+ *  EVERY known scope for `market` fall into that function's "genuinely
+ *  missing result bucket" branch — i.e. `unknown_state` for all of them,
+ *  exactly the defensive behavior a total cache-layer failure warrants. */
+export function buildDiscoveryScopeSnapshot(
+  market: Market,
+  results: readonly TopicOverlayResult[],
+): ShortlistScopeSnapshotDTO {
+  return buildShortlistScopeSnapshotDTO(
+    market,
+    results.map((result) => toTopicScopeResult(market, result)),
+  );
+}
+
 // ── Step 3: pure assembly — join reviews with the overlay (spec §5.2, §4) ───
 
 /** Pure — no I/O. Joins `reviews` with `overlay` into the final catalog:
@@ -626,7 +700,7 @@ export function buildDiscoveryCatalog(
   market: Market,
   reviews: readonly DiscoveryItem[],
   overlay: readonly NormalizedOverlayRow[],
-): DiscoveryCatalogBundle {
+): DiscoveryCatalogJoin {
   // Shallow-clone every item (and its own researchContexts array) so this
   // pure function never mutates the caller's (possibly cached) inputs.
   const items: DiscoveryItem[] = reviews.map((item) => ({ ...item, researchContexts: [...item.researchContexts] }));
@@ -709,40 +783,64 @@ const getCachedReviewItems = unstable_cache(
   { revalidate: 300, tags: ['market-reviews', 'research-catalog'] },
 );
 
-/** Default `load` for resolveOverlayContexts: runs the full per-topic
- *  cache + 60s-backoff pipeline, then flattens to the pre-Decision-A shape. */
-async function loadAndFlattenMarketOverlay(market: Market): Promise<NormalizedOverlayRow[]> {
-  return flattenQualifiedOverlayRows(await loadMarketResearchContexts(market));
+/** One market's Cockpit overlay, both shapes a single request needs — the
+ *  flattened `NormalizedOverlayRow[]` `buildDiscoveryCatalog` joins against,
+ *  and the serializable `ShortlistScopeSnapshotDTO` (spec §11.2.1) the client
+ *  shortlist restores against — derived from the exact SAME typed
+ *  `TopicOverlayResult[]` load (operator ONE-FAN-OUT fix 2026-07-27; see
+ *  `resolveMarketResearchOverlay` below). */
+export interface MarketResearchOverlay {
+  rows: NormalizedOverlayRow[];
+  scopeSnapshot: ShortlistScopeSnapshotDTO;
 }
 
-/** Resolves the cached Cockpit overlay for `market`, failing soft: a throw
- *  from the cache LAYER itself — `unstable_cache`, or the logger it might
- *  call — is caught, logged exactly once with a structured payload, and
- *  turned into an empty overlay so the Hub still renders its full review
- *  catalog (spec §13: HTTP 200 even when Cockpit data is unreachable). This is
- *  distinct from loadMarketResearchContexts's own per-TOPIC resilience above
- *  (typed results + 60s backoff, spec §5.3.1), which already isolates one bad
+/** Resolves the cached Cockpit overlay for `market` from a SINGLE
+ *  `TopicOverlayResult[]` load, failing soft: a throw from the cache LAYER
+ *  itself — `unstable_cache`, or the logger it might call — is caught,
+ *  logged exactly once with a structured payload, and degrades to an empty
+ *  overlay PLUS every known scope for `market` reported `unknown_state` (via
+ *  `buildDiscoveryScopeSnapshot(market, [])` — see its own doc comment) so
+ *  the Hub still renders its full review catalog (spec §13: HTTP 200 even
+ *  when Cockpit data is unreachable) while the shortlist restore logic
+ *  correctly treats every scope as currently unverifiable rather than
+ *  guessing any of them empty. This is distinct from
+ *  `loadMarketResearchContexts`'s own per-TOPIC resilience above (typed
+ *  results + 60s backoff, spec §5.3.1), which already isolates one bad
  *  manifest entry from the rest and never itself rejects — this seam guards
  *  defensively against the (now largely theoretical, but still checked) case
- *  of the surrounding layer throwing regardless. `load` defaults to the real
- *  cached+flattened loader and exists purely so tests can inject a rejecting
- *  stub without mocking next/cache.
+ *  of the surrounding layer throwing regardless.
+ *
+ *  ONE FAN-OUT, ONE SOURCE (operator, binding): `load` defaults to the real
+ *  `loadMarketResearchContexts` — the SAME per-topic-cached, singleflighted
+ *  pipeline `flattenQualifiedOverlayRows` and `buildDiscoveryScopeSnapshot`
+ *  both then read from the ONE resolved `results` array below. Neither is
+ *  ever fed a second, independently-refetched `results` — a retry or backoff
+ *  transition between two separate loads could otherwise leave the catalog
+ *  and the scope snapshot describing two different moments in time (a
+ *  topic's cards on screen while its snapshot reports it unavailable, or a
+ *  restore cleaning a scope whose cards are still showing). Injectable
+ *  purely so tests can supply a rejecting stub, or a call-counting wrapper
+ *  proving this single-load contract, without mocking next/cache.
  *
  *  @internal — test seam only; production callers must use
  *  getDiscoveryCatalog / getDiscoveryCatalogBundle. */
-export async function resolveOverlayContexts(
+export async function resolveMarketResearchOverlay(
   market: Market,
-  load: (market: Market) => Promise<NormalizedOverlayRow[]> = loadAndFlattenMarketOverlay,
-): Promise<NormalizedOverlayRow[]> {
+  load: (market: Market) => Promise<TopicOverlayResult[]> = loadMarketResearchContexts,
+): Promise<MarketResearchOverlay> {
   try {
-    return await load(market);
+    const results = await load(market);
+    return {
+      rows: flattenQualifiedOverlayRows(results),
+      scopeSnapshot: buildDiscoveryScopeSnapshot(market, results),
+    };
   } catch (error) {
     logger.warn('Research discovery overlay cache unavailable', {
       market,
       scope: 'research-catalog-overlay-cache',
       errorType: error instanceof Error ? error.name : typeof error,
     });
-    return [];
+    return { rows: [], scopeSnapshot: buildDiscoveryScopeSnapshot(market, []) };
   }
 }
 
@@ -751,15 +849,19 @@ export async function getDiscoveryCatalog(market: Market): Promise<DiscoveryCata
   return (await getDiscoveryCatalogBundle(market)).catalog;
 }
 
-/** Full bundle for server rendering: `catalog` may cross the RSC/client
- *  boundary; `dossierRows` (full ResearchProduct per dossier) never does.
- *  Overlay resolution goes through resolveOverlayContexts so a cache-layer
- *  failure is logged once and degrades to a reviews-only catalog instead of
- *  failing silently. */
+/** Full bundle for server rendering: `catalog` and `scopeSnapshot` may cross
+ *  the RSC/client boundary; `dossierRows` (full ResearchProduct per dossier)
+ *  never does. Overlay resolution goes through `resolveMarketResearchOverlay`
+ *  so a cache-layer failure is logged once and degrades to a reviews-only
+ *  catalog (plus an all-`unknown_state` scope snapshot) instead of failing
+ *  silently — and so the catalog rows and the scope snapshot always come
+ *  from the same single per-topic load (see that function's own doc
+ *  comment). */
 export async function getDiscoveryCatalogBundle(market: Market): Promise<DiscoveryCatalogBundle> {
   const [reviews, overlay] = await Promise.all([
     getCachedReviewItems(market),
-    resolveOverlayContexts(market),
+    resolveMarketResearchOverlay(market),
   ]);
-  return buildDiscoveryCatalog(market, reviews, overlay);
+  const bundle = buildDiscoveryCatalog(market, reviews, overlay.rows);
+  return { ...bundle, scopeSnapshot: overlay.scopeSnapshot };
 }

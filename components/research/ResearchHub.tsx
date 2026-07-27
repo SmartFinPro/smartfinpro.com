@@ -82,6 +82,7 @@ import {
   type DiscoveryProjection,
   type ResearchConfidence,
   type ResearchStatus,
+  type ShortlistScopeSnapshotDTO,
 } from '@/lib/research/catalog-shell-logic';
 import { formatVerifiedDate } from './VerificationStatus';
 import { FilterChips } from './FilterChips';
@@ -118,6 +119,13 @@ export interface ResearchHubProps {
   items: DiscoveryItem[];
   nodes: ResearchHubNodeEntry[];
   browseFallback: ReactNode;
+  /** Server-built, serializable shortlist scope snapshot (spec §11.2.1,
+   *  operator ONE-FAN-OUT fix 2026-07-27) — threaded straight from
+   *  `getDiscoveryCatalogBundle` through `ResearchHubPage` -> `ResearchHubBody`
+   *  -> here, never re-derived from `items` client-side (see
+   *  ResearchShortlist.tsx's file header for why that re-derivation was a
+   *  bug). */
+  scopeSnapshot: ShortlistScopeSnapshotDTO;
 }
 
 export interface ResolvedEntry {
@@ -401,7 +409,7 @@ const hasActiveDiscoveryFilters = (filters: DiscoveryFilters): boolean =>
 // for the crawlable/no-JS view, but once this component itself renders
 // client-side, `DefaultResults` (not `browseFallback`) owns the unfiltered
 // view so every dossier card can carry a shortlist toggle.
-export function ResearchHub({ market, items, nodes }: ResearchHubProps) {
+export function ResearchHub({ market, items, nodes, scopeSnapshot }: ResearchHubProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -502,8 +510,10 @@ export function ResearchHub({ market, items, nodes }: ResearchHubProps) {
   // `items`, the FULL unfiltered market catalog, never from `resolvedEntries`
   // (the current search/category/topic projection). See
   // components/research/ResearchShortlist.tsx for the three-tier
-  // ShortlistScopeSnapshot this depends on.
-  const shortlist = useScopedResearchShortlist(market, items);
+  // ShortlistScopeSnapshot this depends on. `scopeSnapshot` is the
+  // server-built DTO (spec §11.2.1, operator fix 2026-07-27) — never
+  // re-derived from `items` here.
+  const shortlist = useScopedResearchShortlist(market, items, scopeSnapshot);
 
   // Every dossier entry gets its shortlist toggle wrapped on BEFORE grouping —
   // `DefaultResults`/`FilteredResults` stay plain layout components with no
