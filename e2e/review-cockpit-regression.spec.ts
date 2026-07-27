@@ -261,14 +261,11 @@ test.describe('Review + Cockpit structural regression', () => {
     await assertNoClientErrors(faults, testInfo, COCKPIT);
   });
 
-  // PENDING IN THIS BRANCH, not broken. This spec was written on
-  // feat/research-library-pilot (commit 8640a59) and ported here for the
-  // 2026-07-25 design-audit work; the `#comparison` anchor it asserts is part
-  // of the cockpit compare work that lands with that branch and does not exist
-  // on design/review-v2-premium yet (verified: the served HTML contains no
-  // id="comparison"). Left as fixme rather than deleted, so it re-arms by
-  // itself once the branches meet — and shows as pending rather than passing.
-  test.fixme('Cockpit compare deep-link selects both slugs, shows the comparison and lands on the anchor', async ({ page }, testInfo) => {
+  // Re-armed 2026-07-26: this was left as fixme while the `#comparison` anchor
+  // lived only on feat/research-library-pilot. That branch now carries it (the
+  // cockpit topic page wraps its comparison surface in id="comparison"), so the
+  // assertion has a real target again and runs as a normal test.
+  test('Cockpit compare deep-link selects both slugs, shows the comparison and lands on the anchor', async ({ page }, testInfo) => {
     const faults = collectErrors(page);
     await seedCookieConsent(page);
 

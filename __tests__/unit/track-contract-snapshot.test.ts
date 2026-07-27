@@ -1,20 +1,22 @@
 // __tests__/unit/track-contract-snapshot.test.ts
-// Guard against accidental cockpit_v1 drift while adding the tool_v1
-// sibling schemas: locks the TrackSchema.type enum and re-validates a golden
-// cockpit_v1 batch fixture (all 12 event names) against the untouched
-// TrackEventBatchSchema.
+// Guard against accidental cockpit_v1 drift while adding sibling schemas
+// (tool_v1, then research_v1): locks the TrackSchema.type enum and
+// re-validates a golden cockpit_v1 batch fixture (all 12 event names) against
+// the untouched TrackEventBatchSchema. The enum snapshot is expected to grow
+// by exactly one entry per deliberately added sibling — never silently.
 
 import { describe, it, expect } from 'vitest';
 import { TrackSchema, TrackEventBatchSchema } from '@/lib/validation';
 
 describe('TrackSchema.type enum', () => {
-  it('is exactly [pageview, event, event_batch, tool_event_batch, scroll, time_on_page]', () => {
+  it('is exactly [pageview, event, event_batch, tool_event_batch, research_event_batch, scroll, time_on_page]', () => {
     expect(TrackSchema.shape.type.options).toMatchInlineSnapshot(`
       [
         "pageview",
         "event",
         "event_batch",
         "tool_event_batch",
+        "research_event_batch",
         "scroll",
         "time_on_page",
       ]

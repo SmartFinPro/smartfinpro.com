@@ -5,7 +5,7 @@ import { createServiceClient } from '@/lib/supabase/server';
 import { getLinksForMarketCategory } from '@/lib/affiliate/link-registry';
 import type { Market, Category } from '@/lib/i18n/config';
 import type { AffiliateLink } from '@/types';
-import type { Badge, CtaMode, FilterKey, ProductForComparison, SubScores } from './types';
+import type { Badge, CtaMode, FieldSource, FilterKey, ProductForComparison, SubScores } from './types';
 import type { TopicConfig } from './topics/types';
 import { getTopicConfig } from './topics/index';
 import { DEFAULT_USAGE, rankProducts } from './ranking';
@@ -239,6 +239,25 @@ export function mapCockpitRow(
     sourceUrl: row.source_url ?? null,
     dataVerifiedAt: row.data_verified_at ?? null,
     offerAttribution,
+
+    // Research Library (Discovery layer) — additive, nullable passthrough only.
+    // Columns arrive via `SELECT *` once *_research_data_contract.sql is applied;
+    // until then they are undefined → null. NO invariants are enforced here (the
+    // Research adapter owns validation/degradation). `confidence_reason` lives in
+    // the attributes JSONB (project convention), not a column.
+    researchStatus: row.research_status ?? null,
+    methodologyVersion: row.methodology_version ?? null,
+    // Read confidence_reason from the RAW attributes JSONB (not the schema-
+    // validated `parsed.data`) so it survives regardless of whether a topic's
+    // attributesSchema is strict or `.passthrough()`.
+    confidenceReason:
+      row.attributes && typeof (row.attributes as Record<string, unknown>).confidence_reason === 'string'
+        ? ((row.attributes as Record<string, unknown>).confidence_reason as string)
+        : null,
+    fieldSources:
+      row.research_sources && typeof row.research_sources === 'object'
+        ? (row.research_sources as Record<string, FieldSource>)
+        : null,
 
     market: row.market as Market,
     category: row.category as Category,

@@ -115,6 +115,19 @@ export interface ProductForComparison {
    */
   offerAttribution: 'verified' | 'dashboard_only' | null;
 
+  // ── Research Library (Discovery layer) — OPTIONAL & additive. mapCockpitRow
+  //    carries these as nullable raw values; the Research adapter (lib/research)
+  //    runs the Zod contract + deterministic degradation. Absent on ordinary
+  //    Cockpit reads, so the Comparison engine is completely unaffected.
+  //    `confidenceReason` is sourced from attributes.confidence_reason (the
+  //    project stores the reason inside the attributes JSONB, not a column —
+  //    see 20260718100000_audit_trading_platforms_options.sql). See
+  //    lib/research/types.ts and *_research_data_contract.sql.
+  researchStatus?: 'audited' | 'provisional' | 'unavailable' | null;
+  methodologyVersion?: string | null;
+  confidenceReason?: string | null;
+  fieldSources?: Record<string, FieldSource> | null;
+
   market: Market;
   category: Category;
 }
@@ -184,4 +197,33 @@ export interface DecisionBridgeData {
     dataVerifiedAt: string | null;
     isTopPick: boolean;
   } | null;
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Research Library — shared provenance vocabulary
+//
+// Row-level provenance already lives on ProductForComparison (sourceType /
+// confidence / sourceUrl / dataVerifiedAt). The Research Library's honest data
+// contract additionally needs per-Tier-1-fact provenance; FieldSource is that
+// shape, kept HERE (the shared Comparison core) so the DecisionBridge and the
+// Research adapter reference exactly ONE provenance type — no parallel
+// vocabulary. The runtime Zod schema for these lives in lib/research/types.ts
+// (this module stays pure: no zod, no server imports).
+// ─────────────────────────────────────────────────────────────────────────
+
+/** Provenance source class — mirrors product_attributes.source_type. */
+export type ProvenanceSourceType = 'official' | 'regulator' | 'editorial' | 'user_reviews';
+
+/** Data-confidence level — mirrors product_attributes.confidence. */
+export type ConfidenceLevel = 'high' | 'medium' | 'low';
+
+/** Provenance for ONE visible Tier-1 fact. Keyed (in
+ *  ProductForComparison.fieldSources / product_attributes.research_sources) by
+ *  the TopicConfig specColumn key it backs. */
+export interface FieldSource {
+  /** HTTPS URL of the primary source backing this fact. */
+  sourceUrl: string;
+  sourceType: ProvenanceSourceType;
+  /** ISO date (YYYY-MM-DD) the fact was last verified against the source. */
+  verifiedAt: string;
 }

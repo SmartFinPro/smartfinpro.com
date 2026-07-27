@@ -46,6 +46,7 @@ const landingPages = [
 
 // Other static pages (not market-prefixed)
 const staticPages = [
+  '/research',
   '/trading-platforms/tradingview',
   '/downloads/ai-finance-workflow',
   '/privacy',

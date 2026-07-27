@@ -7,6 +7,7 @@
 import { z, ZodSchema, ZodError } from 'zod';
 import { NextResponse } from 'next/server';
 import { TOOL_ID_VALUES } from '@/lib/tools/registry';
+import { MAX_SHORTLIST } from '@/lib/research/shell-logic';
 
 // ── Shared constants ───────────────────────────────────────────────────────
 export const VALID_MARKETS = ['us', 'uk', 'ca', 'au'] as const;
@@ -41,7 +42,7 @@ export function validate<T>(schema: ZodSchema<T>, body: unknown): ValidationResu
 
 /** POST /api/track */
 export const TrackSchema = z.object({
-  type: z.enum(['pageview', 'event', 'event_batch', 'tool_event_batch', 'scroll', 'time_on_page']),
+  type: z.enum(['pageview', 'event', 'event_batch', 'tool_event_batch', 'research_event_batch', 'scroll', 'time_on_page']),
   sessionId: z.string().min(8).max(128),
   data: z.record(z.string(), z.unknown()).default({}), // Zod v4: explicit key + value types
 });
@@ -189,6 +190,60 @@ export type TrackToolEventItem = z.infer<typeof TrackToolEventItemSchema>;
 
 /** Hard cap must stay in sync with TOOL_EVENT_BATCH_HARD_CAP in lib/analytics/tool-events.ts */
 export const TrackToolEventBatchSchema = z.array(TrackToolEventItemSchema).min(1).max(20);
+
+// ── research_v1 (strictly additive sibling of the schemas above) ────────────
+// Enforces docs/research-library/analytics-research-v1.md. The privacy rule
+// ("never send the raw search string") is enforced HERE, not just in the
+// client: the properties bag is .strict(), so there is no key a rogue client
+// could put a query into — only `queryLength` exists.
+
+const RESEARCH_EVENT_NAMES = [
+  'research_search',
+  'research_filter_change',
+  'research_evidence_open',
+  'research_review_click',
+  'research_shortlist_change',
+  'research_cockpit_handoff',
+] as const;
+
+/** Strict research_v1 properties bag — unknown keys rejected (.strict()).
+ *  Keep in sync with ResearchV1Properties in lib/analytics/research-events.ts. */
+const ResearchV1PropertiesSchema = z
+  .object({
+    schemaVersion: z.literal('research_v1'),
+    market: z.string().max(10),
+    topic: z.string().max(80),
+    // research_search — the trimmed CHARACTER COUNT, never the query itself.
+    queryLength: z.number().int().min(0).max(500).optional(),
+    resultCount: z.number().int().min(0).max(100_000).optional(),
+    facet: z.enum(['status', 'confidence', 'fresh']).optional(),
+    value: z.string().max(60).nullable().optional(),
+    active: z.boolean().optional(),
+    productSlug: z.string().max(200).nullable().optional(),
+    status: z.enum(['audited', 'provisional', 'unavailable']).optional(),
+    dataPoints: z.number().int().min(0).max(1000).optional(),
+    rank: z.number().int().min(0).max(1000).nullable().optional(),
+    position: z.number().int().min(1).max(1000).optional(),
+    action: z.enum(['add', 'remove', 'clear']).optional(),
+    count: z.number().int().min(0).max(1000).optional(),
+    // Capped at MAX_SHORTLIST — the shell can never hand off more than four.
+    productSlugs: z.array(z.string().max(200)).max(MAX_SHORTLIST).optional(),
+  })
+  .strict();
+
+export const TrackResearchEventItemSchema = z.object({
+  eventName: z.enum(RESEARCH_EVENT_NAMES),
+  eventCategory: z.literal('research'),
+  eventAction: z.string().max(40).optional(),
+  eventLabel: z.string().max(300).optional(),
+  eventValue: z.number().finite().optional(),
+  pagePath: z.string().max(300).optional(),
+  properties: ResearchV1PropertiesSchema,      // Pflicht — der Vertrag gehört dem Schema
+});
+export type TrackResearchEventItem = z.infer<typeof TrackResearchEventItemSchema>;
+
+/** Hard cap must stay in sync with RESEARCH_EVENT_BATCH_HARD_CAP in lib/analytics/research-events.ts */
+export const TrackResearchEventBatchSchema = z.array(TrackResearchEventItemSchema).min(1).max(20);
 
 /** POST /api/track-cta */
 export const TrackCtaSchema = z.object({
