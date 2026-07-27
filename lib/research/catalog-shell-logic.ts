@@ -637,12 +637,47 @@ export function persistScopedShortlist(
   );
 }
 
+/** Normalizes a legacy shortlist's raw JSON string into a slug list: keeps
+ *  only string entries, dedupes preserving first-seen order, and caps at
+ *  MAX_SHORTLIST. Returns null when `raw` is not valid JSON, does not parse
+ *  to an array, or normalizes to an empty list — the caller treats null as
+ *  "nothing worth migrating". */
+function normalizeLegacyShortlistValue(raw: string): string[] | null {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return null;
+  }
+  if (!Array.isArray(parsed)) return null;
+
+  const seen = new Set<string>();
+  const slugs: string[] = [];
+  for (const entry of parsed) {
+    if (typeof entry !== "string" || seen.has(entry)) continue;
+    seen.add(entry);
+    slugs.push(entry);
+    if (slugs.length >= MAX_SHORTLIST) break;
+  }
+
+  return slugs.length > 0 ? slugs : null;
+}
+
 /** One-time migration of the Research Library pilot's flat sessionStorage key
- *  into the v2 scoped key for us/trading/trading-platforms. Never overwrites
- *  an existing v2 value; always deletes the legacy key once resolved. Also
- *  points the us market pointer at the migrated scope so the restore path
- *  (which starts at the pointer) can actually find it — but never overwrites
- *  an existing pointer. */
+ *  into the v2 scoped key for us/trading/trading-platforms.
+ *
+ *  - Never overwrites an existing v2 value or an existing market pointer.
+ *  - The legacy value is normalized before being written (string entries
+ *    only, deduped in first-seen order, capped at MAX_SHORTLIST). A legacy
+ *    value that is malformed JSON, not an array, or normalizes to an empty
+ *    list is discarded outright: the v2 key and pointer are never written,
+ *    only the (worthless) legacy key is removed.
+ *  - Write order is v2 key, then pointer, then legacy removal — the legacy
+ *    key is deleted ONLY once every applicable write has actually
+ *    succeeded. The function is fail-soft like the rest of the storage
+ *    layer: a throwing `storage.setItem` is swallowed (not rethrown) and
+ *    the legacy key is left in place, so a later call can retry instead of
+ *    silently losing the user's shortlist. */
 export function migrateLegacyTradingShortlist(storage: StorageLike): void {
   const legacyKey = "research-shortlist:us:trading-platforms";
   const legacyValue = storage.getItem(legacyKey);
@@ -650,16 +685,31 @@ export function migrateLegacyTradingShortlist(storage: StorageLike): void {
 
   const cockpitKey: CockpitKey = "us/trading/trading-platforms";
   const v2Key = shortlistStorageKey(cockpitKey);
-  if (storage.getItem(v2Key) === null) {
-    storage.setItem(v2Key, legacyValue);
-  }
-  storage.removeItem(legacyKey);
-
   const pointerKey = shortlistPointerKey("us");
+
+  if (storage.getItem(v2Key) === null) {
+    const normalized = normalizeLegacyShortlistValue(legacyValue);
+    if (normalized === null) {
+      storage.removeItem(legacyKey);
+      return;
+    }
+    try {
+      storage.setItem(v2Key, JSON.stringify(normalized));
+    } catch {
+      return; // fail-soft: leave the legacy key intact for a later retry.
+    }
+  }
+
   if (storage.getItem(pointerKey) === null) {
     const [, category, topic] = cockpitKey.split("/");
-    storage.setItem(pointerKey, `${category}:${topic}`);
+    try {
+      storage.setItem(pointerKey, `${category}:${topic}`);
+    } catch {
+      return; // fail-soft: leave the legacy key intact for a later retry.
+    }
   }
+
+  storage.removeItem(legacyKey);
 }
 
 /** Toggles one slug within `cockpitKey`. Adding beyond MAX_SHORTLIST or a slug

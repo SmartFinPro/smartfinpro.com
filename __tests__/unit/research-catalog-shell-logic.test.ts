@@ -8,11 +8,13 @@ import {
   productItemId,
   projectDiscoveryItems,
   researchBaseForMarket,
+  restoreScopedShortlist,
   reviewItemId,
   shortlistStorageKey,
   sortHubProjections,
 } from "@/lib/research/catalog-shell-logic";
 import type {
+  CockpitKey,
   DiscoveryItem,
   DiscoveryProjection,
   DiscoveryReview,
@@ -371,7 +373,12 @@ it("hub sort uses manifest order, audited rank, then stable item id", () => {
 
 // In-memory StorageLike stub so the storage contract stays testable without
 // window.sessionStorage — mirrors what the PR 2 client adapter will inject.
-const memoryStorage = (initial: Record<string, string> = {}): StorageLike => {
+// Also exposes `snapshot()` (beyond the StorageLike contract) so idempotence
+// tests can assert on the storage's full state without knowing every key a
+// function under test might touch.
+const memoryStorage = (
+  initial: Record<string, string> = {},
+): StorageLike & { snapshot(): Record<string, string> } => {
   const store = new Map(Object.entries(initial));
   return {
     getItem: (key) => (store.has(key) ? store.get(key)! : null),
@@ -381,6 +388,7 @@ const memoryStorage = (initial: Record<string, string> = {}): StorageLike => {
     removeItem: (key) => {
       store.delete(key);
     },
+    snapshot: () => Object.fromEntries(store),
   };
 };
 
@@ -427,6 +435,92 @@ it("migration never overwrites an existing pointer", () => {
   expect(storage.getItem("research-shortlist-active:us")).toBe(
     "personal-finance:robo-advisors",
   );
+});
+
+it("normalizes the legacy value: strings only, deduped, capped at MAX_SHORTLIST", () => {
+  const storage = memoryStorage({
+    "research-shortlist:us:trading-platforms":
+      '["a","a","b","c","d","e",42]',
+  });
+  migrateLegacyTradingShortlist(storage);
+  expect(
+    storage.getItem("research-shortlist:us:trading:trading-platforms"),
+  ).toBe('["a","b","c","d"]');
+});
+
+it("a malformed legacy value is discarded without touching the v2 key or pointer", () => {
+  const storage = memoryStorage({
+    "research-shortlist:us:trading-platforms": "not json{",
+  });
+  migrateLegacyTradingShortlist(storage);
+  expect(
+    storage.getItem("research-shortlist:us:trading:trading-platforms"),
+  ).toBeNull();
+  expect(storage.getItem("research-shortlist-active:us")).toBeNull();
+  expect(
+    storage.getItem("research-shortlist:us:trading-platforms"),
+  ).toBeNull();
+});
+
+it("a throwing storage.setItem leaves the legacy key intact", () => {
+  const store = new Map<string, string>([
+    ["research-shortlist:us:trading-platforms", '["fidelity"]'],
+  ]);
+  const throwingStorage: StorageLike = {
+    getItem: (key) => (store.has(key) ? store.get(key)! : null),
+    setItem: () => {
+      throw new Error("quota exceeded");
+    },
+    removeItem: (key) => {
+      store.delete(key);
+    },
+  };
+
+  migrateLegacyTradingShortlist(throwingStorage);
+
+  expect(
+    throwingStorage.getItem("research-shortlist:us:trading-platforms"),
+  ).toBe('["fidelity"]');
+  expect(
+    throwingStorage.getItem("research-shortlist:us:trading:trading-platforms"),
+  ).toBeNull();
+});
+
+it("migration is idempotent end-to-end", () => {
+  const storage = memoryStorage({
+    "research-shortlist:us:trading-platforms":
+      '["fidelity","charles-schwab"]',
+  });
+
+  migrateLegacyTradingShortlist(storage);
+  const afterFirst = storage.snapshot();
+  migrateLegacyTradingShortlist(storage);
+  const afterSecond = storage.snapshot();
+
+  expect(afterSecond).toEqual(afterFirst);
+});
+
+it("restore round-trip: a migrated shortlist is actually reachable", () => {
+  const storage = memoryStorage({
+    "research-shortlist:us:trading-platforms":
+      '["fidelity","charles-schwab"]',
+  });
+
+  migrateLegacyTradingShortlist(storage);
+
+  const validScopes = new Map<CockpitKey, ReadonlySet<string>>([
+    [
+      "us/trading/trading-platforms",
+      new Set(["fidelity", "charles-schwab", "etrade"]),
+    ],
+  ]);
+
+  const restored = restoreScopedShortlist(storage, "us", validScopes);
+
+  expect(restored).toEqual({
+    cockpitKey: "us/trading/trading-platforms",
+    slugs: ["fidelity", "charles-schwab"],
+  });
 });
 
 it("rejects slugs outside the active Cockpit key", () => {

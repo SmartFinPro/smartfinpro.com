@@ -549,7 +549,10 @@ v2-Zustand wird nie überschrieben.
 
 Die Migration setzt zugleich den Markt-Pointer auf den migrierten Scope,
 sofern noch kein Pointer existiert; ein vorhandener Pointer wird nie
-überschrieben.
+überschrieben. Die Migration normalisiert den übernommenen Wert (nur Strings,
+dedupliziert, höchstens vier Slugs), schreibt erst Ziel-Key und Pointer und
+entfernt den Legacy-Key zuletzt; bei ungültigem Legacy-Wert wird nichts
+übernommen.
 
 ### 11.3 Cross-Topic-Verhalten
 
