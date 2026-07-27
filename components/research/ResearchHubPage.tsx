@@ -6,13 +6,20 @@
 //
 // Server Component ONLY: builds the discovery catalog for the given market,
 // the server-rendered dossier/card nodes, the audited-only JSON-LD, and a
-// COMPLETE browse fallback — no client JS, no searchParams/headers() access,
-// no client component anywhere in this file. That keeps `/research` (and its
-// three market siblings) statically prerenderable, and every review href
-// visible in raw HTML with JavaScript disabled (spec §8). The client shell
-// (`ResearchHub`, URL filters, shortlist) is Task 4/5 — this file renders the
-// full unfiltered browse view unconditionally, standing in for that shell's
-// eventual Suspense fallback.
+// COMPLETE browse fallback — no searchParams/headers() access anywhere in
+// THIS file itself. That keeps `/research` (and its three market siblings)
+// statically prerenderable, and every review href visible in raw HTML with
+// JavaScript disabled (spec §8).
+//
+// Task 4 wires the interactive client shell (`ResearchHub`, URL filters,
+// facets) in under a <Suspense> boundary, because `ResearchHub` reads
+// `useSearchParams()` — a hook that forces Next to bail the wrapped subtree
+// to client-only rendering during static generation. The Suspense `fallback`
+// is the SAME `<BrowseFallback>` element `ResearchHub` also receives as its
+// own `browseFallback` prop: one build of the topic-grouped, JSON-LD-backed
+// browse view serves both the crawlable static HTML (fallback) and the
+// hydrated client's own unfiltered state (prop) — never two independently
+// assembled views of the same catalog.
 //
 // MERGE-BLOCKER INVARIANT (operator-mandated, this task): the JSON-LD
 // ItemList and the raw rendered HTML must describe the SAME audited
@@ -25,7 +32,7 @@
 // id="main-content"> landmark for every page under app/(marketing) — this
 // component must not add a second one.
 
-import type { ReactNode } from 'react';
+import { Suspense, type ReactNode } from 'react';
 import Link from 'next/link';
 import type { Market } from '@/lib/i18n/config';
 import { marketConfig } from '@/lib/i18n/config';
@@ -49,6 +56,7 @@ import { generateComparisonItemListSchema } from '@/lib/seo/schema';
 import { formatVerifiedDate } from './VerificationStatus';
 import { ResearchCard } from './ResearchCard';
 import { CatalogCard } from './CatalogCard';
+import { ResearchHub, type ResearchHubNodeEntry } from './ResearchHub';
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://smartfinpro.com';
 
@@ -133,6 +141,22 @@ export function buildResearchHubNodes(
     });
   }
   return nodes;
+}
+
+/** Flattens `ResearchHubNode[]` into the plain, serializable shape
+ *  `ResearchHub` (client) needs (spec §8): the `projection` field carried a
+ *  `DiscoveryItem` and, for a dossier, a full `ResearchContext` — both
+ *  perfectly fine to serialize, but `cockpitKey` alone is what the client
+ *  needs to key its own node lookup by `projectionNodeKey(itemId, cockpitKey)`,
+ *  so this is the minimal cut rather than sending the whole projection twice
+ *  (once here, once inside `items` from the catalog). */
+function buildClientHubNodes(nodes: readonly ResearchHubNode[]): ResearchHubNodeEntry[] {
+  return nodes.map((entry) => ({
+    key: entry.key,
+    itemId: entry.projection.itemId,
+    cockpitKey: entry.projection.kind === 'dossier' ? entry.projection.context.cockpitKey : null,
+    node: entry.node,
+  }));
 }
 
 // ── Audited-only JSON-LD (spec §7.4) ─────────────────────────────────────────
@@ -399,7 +423,14 @@ export function ResearchHubBody({ market, catalog, copy, nodes }: ResearchHubBod
         </div>
       </section>
 
-      <BrowseFallback nodes={nodes} />
+      <Suspense fallback={<BrowseFallback nodes={nodes} />}>
+        <ResearchHub
+          market={market}
+          items={catalog.items}
+          nodes={buildClientHubNodes(nodes)}
+          browseFallback={<BrowseFallback nodes={nodes} />}
+        />
+      </Suspense>
 
       <section className="border-t border-gray-200 bg-white">
         <div className="mx-auto px-6 py-10" style={{ maxWidth: '1280px' }}>

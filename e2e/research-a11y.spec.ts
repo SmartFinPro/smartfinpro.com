@@ -139,14 +139,17 @@ test.describe('Research Library — WCAG 2.2 AA', () => {
    * sheet — so a scan that only ever sees the landing state proves little.
    */
   test('filtered + shortlisted state has no violations', async ({ page }) => {
-    // Genuinely needs the client shell (search + shortlist toggles), which
-    // Task 4/5 deliver — stays assigned there per the known-red baseline
-    // (audits/reports/research-discovery-pr2-known-red.md, #20). Decoupling
-    // this file's gotoResearch() from the search placeholder (Task 3) would
-    // otherwise turn this test red for a NEW reason (a `.fill()` timeout on
-    // a field that doesn't exist yet) instead of the allowlisted one, so it
-    // is explicitly parked here rather than left to fail differently.
-    test.fixme(true, 'Needs the Task 4 client shell (search field) — known-red #20');
+    // Re-armed at Task 4 (unified-research-discovery-pr2-hubs plan): the
+    // search field this test fills now exists (`ResearchHub`,
+    // components/research/ResearchHub.tsx), so the `.fill('trading')` call
+    // below no longer times out. What still doesn't exist is the shortlist
+    // — "add … to shortlist" toggles and the fixed shortlist bar are Task
+    // 5's `ResearchShortlist` deliverable, not this task's. Left as
+    // `test.fixme` (skipped, not red) rather than deleted or weakened, per
+    // the known-red baseline (audits/reports/research-discovery-pr2-known-red.md,
+    // #20) — it stays parked on the shortlist toggles specifically, and
+    // should come off `test.fixme` once Task 5 lands.
+    test.fixme(true, 'Needs the Task 5 shortlist UI (add-to-shortlist toggles) — known-red #20');
 
     await page.setViewportSize({ width: 1280, height: 800 });
     await gotoResearch(page);

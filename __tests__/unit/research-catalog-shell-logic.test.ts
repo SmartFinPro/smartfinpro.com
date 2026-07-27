@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildDiscoverySearchParams,
   buildScopedCompareUrl,
   cockpitKeyFor,
   computeDiscoveryFacets,
   countDiscoveryItems,
   describeScopeSwitch,
   migrateLegacyTradingShortlist,
+  parseDiscoverySearchParams,
   persistScopedShortlist,
   productItemId,
   projectDiscoveryItems,
@@ -954,4 +956,126 @@ it("rejects slugs outside the active Cockpit key", () => {
       new Set(["fidelity"]),
     ),
   ).toBeNull();
+});
+
+// --- parseDiscoverySearchParams / buildDiscoverySearchParams (spec §6.1) ----
+
+describe("parseDiscoverySearchParams", () => {
+  it("parses only valid market categories and known enum values", () => {
+    const parsed = parseDiscoverySearchParams(
+      new URLSearchParams(
+        "q=schwab&category=trading&type=dossier&status=audited&confidence=high&fresh=2026-07-01",
+      ),
+      "us",
+      [makeDiscoveryItem()],
+    );
+    expect(parsed).toEqual({
+      query: "schwab",
+      category: "trading",
+      type: "dossier",
+      status: "audited",
+      confidence: "high",
+      fresh: "2026-07-01",
+      topic: null,
+      specs: [],
+    });
+  });
+
+  it("drops invalid values instead of preserving them", () => {
+    expect(
+      buildDiscoverySearchParams(
+        parseDiscoverySearchParams(
+          new URLSearchParams("category=superannuation&type=bogus"),
+          "us",
+          [],
+        ),
+      ).toString(),
+    ).toBe("");
+  });
+
+  it("drops a category that is valid in general but not for this market", () => {
+    // "superannuation" is a real Category (AU market) but not one of the US
+    // market's categories — it must still be dropped for market="us".
+    const parsed = parseDiscoverySearchParams(
+      new URLSearchParams("category=superannuation"),
+      "us",
+      [],
+    );
+    expect(parsed.category).toBeNull();
+  });
+
+  it("trims the query but never rejects it", () => {
+    const parsed = parseDiscoverySearchParams(
+      new URLSearchParams("q=%20fidelity%20"),
+      "us",
+      [],
+    );
+    expect(parsed.query).toBe("fidelity");
+  });
+
+  it("accepts a topic only when it is present among the given items' contexts", () => {
+    const withTopic = makeDiscoveryItem({
+      researchContexts: [makeContext({ topic: "trading-platforms" })],
+    });
+    expect(
+      parseDiscoverySearchParams(
+        new URLSearchParams("topic=trading-platforms"),
+        "us",
+        [withTopic],
+      ).topic,
+    ).toBe("trading-platforms");
+    expect(
+      parseDiscoverySearchParams(
+        new URLSearchParams("topic=nonexistent-topic"),
+        "us",
+        [withTopic],
+      ).topic,
+    ).toBeNull();
+  });
+
+  it("keeps only spec tokens that match an actual topic/key/value in the given items", () => {
+    const withSpec = makeDiscoveryItem({
+      researchContexts: [
+        makeContext({ topic: "trading-platforms", keyFacts: { optionsFee: "$0.65" } }),
+      ],
+    });
+    const params = new URLSearchParams();
+    params.append("spec", "trading-platforms:optionsFee:$0.65");
+    params.append("spec", "trading-platforms:optionsFee:$9.99");
+    params.append("spec", "malformed-token-no-colons");
+    expect(parseDiscoverySearchParams(params, "us", [withSpec]).specs).toEqual([
+      "trading-platforms:optionsFee:$0.65",
+    ]);
+  });
+});
+
+describe("buildDiscoverySearchParams", () => {
+  it("round-trips a fully populated filter set", () => {
+    const filters = {
+      query: "schwab",
+      category: "trading" as const,
+      type: "dossier" as const,
+      status: "audited" as const,
+      confidence: "high" as const,
+      fresh: "2026-07-01",
+      topic: "trading-platforms",
+      specs: ["trading-platforms:optionsFee:$0.65"],
+    };
+    expect(buildDiscoverySearchParams(filters).toString()).toBe(
+      new URLSearchParams({
+        q: "schwab",
+        category: "trading",
+        type: "dossier",
+        status: "audited",
+        confidence: "high",
+        fresh: "2026-07-01",
+        topic: "trading-platforms",
+        spec: "trading-platforms:optionsFee:$0.65",
+      }).toString(),
+    );
+  });
+
+  it("produces an empty URLSearchParams for the empty filter set", () => {
+    expect(buildDiscoverySearchParams(filters).toString()).toBe("");
+  });
 });

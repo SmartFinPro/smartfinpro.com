@@ -117,6 +117,131 @@ export const EMPTY_DISCOVERY_FILTERS: DiscoveryFilters = {
   specs: [],
 };
 
+// --- URL round-trip (spec §6.1) ---------------------------------------------
+// The Research hub keeps every filter in the URL (query, category, type,
+// status, confidence, fresh) so a search is shareable and survives Back —
+// `ResearchHub` (Task 4) is the only consumer of these two functions today,
+// but `topic`/`specs` are parsed and serialized here too because
+// `DiscoveryFilters` is the one contract PR 4's topic/spec facets (spec §10)
+// will also read and write. An invalid or unrecognized raw value is DROPPED,
+// never preserved or defaulted to something else — a stale/bogus query
+// string degrades to "no filter", not to a thrown error.
+
+const isDiscoveryKind = (value: string): value is DiscoveryKind =>
+  value === "review" || value === "dossier";
+
+const isResearchStatus = (value: string): value is ResearchStatus =>
+  value === "audited" || value === "provisional";
+
+const isResearchConfidence = (value: string): value is ResearchConfidence =>
+  value === "high" || value === "medium" || value === "low";
+
+const FRESH_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+const collectKnownTopics = (items: readonly DiscoveryItem[]): Set<string> => {
+  const topics = new Set<string>();
+  for (const item of items) {
+    for (const context of item.researchContexts) topics.add(context.topic);
+  }
+  return topics;
+};
+
+/** Parses one `"<topic>:<key>:<value>"` spec token the same way
+ *  `parseSpecGroups` (below) does — splitting only the first two colons —
+ *  and reports whether ANY context in `items` actually has that
+ *  topic/key/value combination. A token nobody could ever match is dropped
+ *  at the URL boundary rather than silently carried into a filter that can
+ *  never select anything. */
+const specTokenIsKnown = (
+  items: readonly DiscoveryItem[],
+  token: string,
+): boolean => {
+  const firstColon = token.indexOf(":");
+  if (firstColon === -1) return false;
+  const secondColon = token.indexOf(":", firstColon + 1);
+  if (secondColon === -1) return false;
+  const topic = token.slice(0, firstColon);
+  const key = token.slice(firstColon + 1, secondColon);
+  const value = token.slice(secondColon + 1);
+  return items.some((item) =>
+    item.researchContexts.some(
+      (context) => context.topic === topic && context.keyFacts[key] === value,
+    ),
+  );
+};
+
+/** Reads `DiscoveryFilters` out of a `URLSearchParams`-shaped source, dropping
+ *  (never preserving) any value that isn't a recognized enum member, isn't a
+ *  market-valid category, isn't a topic/spec combination actually present in
+ *  `items`, or isn't a `YYYY-MM-DD` date. `query` is the one field with no
+ *  "invalid" state — it is only ever trimmed. */
+export function parseDiscoverySearchParams(
+  params: Pick<URLSearchParams, "get" | "getAll">,
+  market: Market,
+  items: readonly DiscoveryItem[],
+): DiscoveryFilters {
+  const rawCategory = params.get("category");
+  const validCategories: readonly string[] = marketCategories[market];
+  const category =
+    rawCategory && validCategories.includes(rawCategory)
+      ? (rawCategory as Category)
+      : null;
+
+  const rawType = params.get("type");
+  const type = rawType && isDiscoveryKind(rawType) ? rawType : null;
+
+  const rawStatus = params.get("status");
+  const status = rawStatus && isResearchStatus(rawStatus) ? rawStatus : null;
+
+  const rawConfidence = params.get("confidence");
+  const confidence =
+    rawConfidence && isResearchConfidence(rawConfidence) ? rawConfidence : null;
+
+  const rawFresh = params.get("fresh");
+  const fresh = rawFresh && FRESH_DATE_PATTERN.test(rawFresh) ? rawFresh : null;
+
+  const knownTopics = collectKnownTopics(items);
+  const rawTopic = params.get("topic");
+  const topic = rawTopic && knownTopics.has(rawTopic) ? rawTopic : null;
+
+  const specs = params
+    .getAll("spec")
+    .filter((token) => specTokenIsKnown(items, token));
+
+  return {
+    query: (params.get("q") ?? "").trim(),
+    category,
+    type,
+    status,
+    confidence,
+    fresh,
+    topic,
+    specs,
+  };
+}
+
+/** The inverse of `parseDiscoverySearchParams`: builds a `URLSearchParams`
+ *  containing only the filters that are actually set, via `.set()`/`.append()`
+ *  only (never the constructor's query-string form) — an empty/default
+ *  `DiscoveryFilters` round-trips to an empty `URLSearchParams`. */
+export function buildDiscoverySearchParams(
+  filters: DiscoveryFilters,
+): URLSearchParams {
+  const params = new URLSearchParams();
+
+  const trimmedQuery = filters.query.trim();
+  if (trimmedQuery) params.set("q", trimmedQuery);
+  if (filters.category) params.set("category", filters.category);
+  if (filters.type) params.set("type", filters.type);
+  if (filters.status) params.set("status", filters.status);
+  if (filters.confidence) params.set("confidence", filters.confidence);
+  if (filters.fresh) params.set("fresh", filters.fresh);
+  if (filters.topic) params.set("topic", filters.topic);
+  for (const spec of filters.specs) params.append("spec", spec);
+
+  return params;
+}
+
 /** Every value returned here has count > 0 and is genuinely selectable.
  *  RENDER GATING IS THE CONSUMER'S JOB: spec §6.2 says a dimension is only
  *  *shown* when at least two selectable values remain — this module reports
