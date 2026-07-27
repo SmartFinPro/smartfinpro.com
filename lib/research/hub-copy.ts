@@ -56,7 +56,7 @@ const HUB_COPY: Record<Market, ResearchHubCopy> = {
     areaServed: ['GB'],
   },
   ca: {
-    metadataTitle: 'Canada Financial Product Research',
+    metadataTitle: 'Canada Financial Product Research Library',
     h1: 'Canadian Financial Product Research',
     description:
       'Explore independent Canadian financial product reviews and verified research dossiers, with transparent ratings, dated evidence and comparison paths.',
@@ -64,7 +64,7 @@ const HUB_COPY: Record<Market, ResearchHubCopy> = {
     areaServed: ['CA'],
   },
   au: {
-    metadataTitle: 'Australia Financial Product Research',
+    metadataTitle: 'Australia Financial Product Research Library',
     h1: 'Australian Financial Product Research',
     description:
       'Explore independent Australian financial product reviews and verified research dossiers, with transparent ratings, dated evidence and comparison paths.',
