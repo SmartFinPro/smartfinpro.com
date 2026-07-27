@@ -11,6 +11,9 @@ export const metadata: Metadata = {
   },
 };
 
+// Update manually whenever the policy content on this page changes.
+const POLICY_LAST_UPDATED = '2026-02-24';
+
 export default function CorrectionsPolicyPage() {
   return (
     <main className="min-h-screen">
@@ -297,7 +300,7 @@ export default function CorrectionsPolicyPage() {
               url: 'https://smartfinpro.com',
             },
             datePublished: '2024-01-01',
-            dateModified: new Date().toISOString().split('T')[0],
+            dateModified: POLICY_LAST_UPDATED,
           }),
         }}
       />
