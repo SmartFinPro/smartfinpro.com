@@ -216,11 +216,11 @@ export function useScopedResearchShortlist(
   // lifetime, and restore must run exactly once regardless of any later
   // reference change in `items` (a fresh catalog only ever arrives via a full
   // page load, which remounts this hook anyway).
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     migrateLegacyTradingShortlist(sessionStorage);
     const restored = restoreScopedShortlist(sessionStorage, market, snapshot);
     dispatch({ type: 'restored', value: restored });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Persist on every change — but NEVER on the transition that merely

@@ -145,4 +145,19 @@ dann grün sein; bleiben sie rot, ist die Ursache zu benennen (axe-Verstoß = ec
 Timeout auf `main`/Karte = fehlender Fallback).
 
 Alle übrigen e2e-Specs des Repos bleiben durchgehend grün; Unit-Suite und Build sind bei jedem
-Task grün zu halten (aktuell 1657 Unit-Tests, Build exit 0, 4/4 Hub-Routen `○ Static`).
+Task grün zu halten (aktuell 1757 Unit-Tests passed + 1 skipped, Build exit 0, 4/4 Hub-Routen
+`○ Static`; korrigiert 2026-07-28, unabhängiger PR-2-Review — „1657" war veraltet/falsch, die
+tatsächlich gemessene Zahl zum damaligen Stand war 1757 passed + 1 skipped).
+
+## Nachtrag (unabhängiger PR-2-Review, 2026-07-28): latenter Zählfehler in `ResearchHub.tsx`
+
+`ResearchHub.tsx:657` trackt `projectDiscoveryItems(items, next).length`, während die sichtbare
+und angesagte Zahl (dem Nutzer gezeigt, Screenreadern angekündigt) `resolvedEntries.length` ist.
+Beide können nur auseinanderlaufen, wenn ein Item über einen Filter-selektierten Kontext verfügt,
+der NICHT sein Default-Kontext ist — `projectDiscoveryItems` projiziert dann u. U. einen anderen
+Kontext/Zähler als den, der tatsächlich zu einem gerenderten `resolvedEntries`-Eintrag wird. Alle
+vier Live-Hubs (us/uk/ca/au) haben aktuell NULL Multi-Context-Items, also ist das Auseinanderlaufen
+heute unerreichbar — kein aktiver Fehler, keine RED-Zeile hier. Als Beobachtungspunkt vermerkt:
+sobald Multi-Context-Daten live gehen (mehrere Cockpit-Themen für denselben Produkt-Slug in
+derselben Kategorie), muss geprüft werden, ob `projectDiscoveryItems(items, next).length` und
+`resolvedEntries.length` für ein gefiltertes Multi-Context-Item weiterhin übereinstimmen.
