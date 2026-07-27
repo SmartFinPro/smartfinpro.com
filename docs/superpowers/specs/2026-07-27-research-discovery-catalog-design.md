@@ -673,6 +673,16 @@ Prüfung "in validScopes oder nicht"):
    kein Ausfall: den gespeicherten Shortlist-Eintrag löschen (Pointer UND
    Scoped-Key), leerer Zustand.
 
+**Amendment (2026-07-27, Korrektur):** Ein vierter, defensiver Fall gehört
+explizit zu Regel 2, nicht zu Regel 1: Ein Scope, der in `knownScopes` steht,
+aber in KEINER der beiden Maps (`availableScopes` und `unavailableScopes`)
+auftaucht, wird wie `unavailable` behandelt (non-destruktiv, Storage
+byte-identisch) — niemals wie stale gelöscht. Nur `knownScopes`-Abwesenheit
+(Regel 1) oder eine erfolgreich geladene, autoritativ LEERE Slug-Menge (Regel
+4) dürfen gespeicherte Nutzerdaten löschen; das Fehlen von Information in
+beiden Maps ist keines von beidem und rechtfertigt für sich allein niemals
+eine Löschung.
+
 Ein Manifest-Eintrag, dessen `getTopicConfig` nicht auflöst, ist `unavailable`
 mit Reason `missing_topic_config` — non-destruktiv wie jeder andere
 `unavailable`-Fall (Regel 2), aber die Reason muss strukturiert geloggt werden

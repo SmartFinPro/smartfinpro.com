@@ -870,6 +870,29 @@ it("[mandatory 6] a known manifest topic with unresolvable config ('missing_topi
   expect(storage.snapshot()).toEqual(before);
 });
 
+it("a known scope missing from both maps preserves storage (absence of information is never a delete reason)", () => {
+  const tradingKey: CockpitKey = "us/trading/trading-platforms";
+  const storage = memoryStorage({
+    "research-shortlist-active:us": "trading:trading-platforms",
+    "research-shortlist:us:trading:trading-platforms":
+      '["fidelity","charles-schwab"]',
+  });
+  const before = storage.snapshot();
+
+  // tradingKey IS known (e.g. still a real manifest entry) but a snapshot
+  // builder bug (or a topic whose failure the builder forgot to record)
+  // leaves it in neither availableScopes nor unavailableScopes. Absence of
+  // positive evidence must never be treated as evidence of staleness:
+  // destructive cleanup requires EITHER "not in knownScopes" OR an
+  // authoritatively loaded EMPTY slug set — never "we simply don't know".
+  const snapshot = makeSnapshot({}, {}, [tradingKey]);
+
+  const restored = restoreScopedShortlist(storage, "us", snapshot);
+
+  expect(restored).toEqual({ cockpitKey: null, slugs: [] });
+  expect(storage.snapshot()).toEqual(before);
+});
+
 // --- describeScopeSwitch (spec §11.3.1) -------------------------------------
 
 describe("describeScopeSwitch", () => {
@@ -913,12 +936,12 @@ describe("describeScopeSwitch", () => {
     });
   });
 
-  it("reports active-unavailable for an active scope that is not in the snapshot at all (defensive: neither available nor unavailable)", () => {
+  it("reports active-unavailable with reason 'unknown_state' (never 'active-available') for an active scope that is not in the snapshot at all (defensive: neither available nor unavailable) — an inconsistent snapshot is never treated as safe", () => {
     const snapshot = makeSnapshot({ [roboKey]: ["betterment"] });
     expect(describeScopeSwitch(snapshot, tradingKey, roboKey)).toEqual({
       kind: "active-unavailable",
       activeCockpitKey: tradingKey,
-      reason: "load_failed",
+      reason: "unknown_state",
     });
   });
 });

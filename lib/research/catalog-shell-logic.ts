@@ -529,11 +529,18 @@ export interface ScopedShortlist {
  *  the same way as one that just failed, since neither can be verified right
  *  now); `missing_topic_config` is a manifest entry whose `getTopicConfig`
  *  never resolves — structurally different (a config problem, not a
- *  transient load problem) but identically non-destructive for restore. */
+ *  transient load problem) but identically non-destructive for restore.
+ *  `unknown_state` is NEVER assigned by the overlay loader into
+ *  `ShortlistScopeSnapshot.unavailableScopes` itself — it exists solely for
+ *  `describeScopeSwitch`'s defensive fallback, when a known Cockpit key is
+ *  present in NEITHER `availableScopes` NOR `unavailableScopes` (an
+ *  inconsistent-snapshot signal). Labelling that case `load_failed` would
+ *  fabricate a specific cause we do not actually know. */
 export type UnavailableScopeReason =
   | "load_failed"
   | "backoff"
-  | "missing_topic_config";
+  | "missing_topic_config"
+  | "unknown_state";
 
 /** Three-tier replacement for the old flat `ReadonlyMap<CockpitKey,
  *  ReadonlySet<string>>` "validScopes" contract (spec §11.2.1). The old flat
@@ -582,7 +589,9 @@ const cockpitKeyFromPointer = (
 
 /** Restores a scoped shortlist without an effect-order hazard: reads the
  *  market pointer, then classifies its Cockpit key against the three-tier
- *  `ShortlistScopeSnapshot` (spec §11.2.1) before touching anything:
+ *  `ShortlistScopeSnapshot` (spec §11.2.1) before touching anything. Only
+ *  POSITIVE evidence ever justifies destructive cleanup — its absence never
+ *  does:
  *
  *  1. Absent from `knownScopes` → genuinely stale: clear pointer + scoped
  *     storage, return empty.
@@ -590,15 +599,20 @@ const cockpitKeyFromPointer = (
  *     config) → storage stays BYTE-IDENTICAL (not even the pointer is
  *     touched); return empty so the UI goes temporarily inactive without
  *     destroying anything it cannot currently verify.
+ *  2b. Present in NEITHER map (defensive — an inconsistent-snapshot signal,
+ *      e.g. a snapshot-builder bug or a topic whose failure the builder
+ *      forgot to record; NOT evidence of staleness) → identical
+ *      non-destructive treatment as rule 2. Not knowing a scope's state is
+ *      never itself grounds to delete what's stored for it.
  *  3. Present in `availableScopes` → keep only unique persisted slugs that
  *     belong to that Cockpit's own authoritative product set (capped at
  *     MAX_SHORTLIST); an empty raw value, unparsable JSON, or an
  *     authoritatively empty slug set all clear the same as rule 1's stale
- *     case (they are not "unavailable" — the scope loaded fine and simply has
- *     nothing left to restore).
+ *     case — that IS positive evidence (a successful load reporting zero
+ *     qualifying products), not an absence of information.
  *
- *  Callers get either a fully valid scope, nothing, or (rule 2) an untouched
- *  pass-through — never a partial or silently-lost one. */
+ *  Callers get either a fully valid scope, nothing, or (rule 2/2b) an
+ *  untouched pass-through — never a partial or silently-lost one. */
 export function restoreScopedShortlist(
   storage: StorageLike,
   market: Market,
@@ -623,7 +637,8 @@ export function restoreScopedShortlist(
   }
 
   if (snapshot.unavailableScopes.has(cockpitKey)) {
-    // Rule 2: known but currently unverifiable. Deliberately does NOT call
+    // Rule 2: known but currently unverifiable (backoff / load failure /
+    // missing topic config). Deliberately does NOT call
     // clearAndReturnEmpty() — that would remove the pointer. Nothing in
     // storage is read, written, or removed here.
     return { cockpitKey: null, slugs: [] };
@@ -631,11 +646,15 @@ export function restoreScopedShortlist(
 
   const validSlugs = snapshot.availableScopes.get(cockpitKey);
   if (!validSlugs) {
-    // Defensive: known but present in neither map (should not happen if a
-    // snapshot builder is internally consistent) — treated like stale rather
-    // than silently trusting unvalidated storage.
-    storage.removeItem(shortlistStorageKey(cockpitKey));
-    return clearAndReturnEmpty();
+    // Rule 2b (defensive): known, but present in NEITHER map — a
+    // snapshot-builder bug, or a topic whose failure the builder forgot to
+    // record in `unavailableScopes`. This is an inconsistent-snapshot signal
+    // to whoever built `snapshot`, not proof of staleness. It gets the exact
+    // same non-destructive treatment as rule 2: we do not have positive
+    // evidence this scope is empty or gone, so nothing is read, written, or
+    // removed. Absence of information must never be a delete reason — that
+    // was the whole point of splitting `validScopes` into three tiers.
+    return { cockpitKey: null, slugs: [] };
   }
 
   const scopedKey = shortlistStorageKey(cockpitKey);
@@ -859,14 +878,18 @@ export function describeScopeSwitch(
     return { kind: "active-available", activeCockpitKey };
   }
 
-  // Defensive: the active scope isn't in either bucket (e.g. it vanished
-  // from the manifest entirely between renders). We cannot verify it any
-  // more than an explicit load failure would allow, so the dialog gets the
-  // same honest "can't verify, will still replace" treatment.
+  // Defensive: the active scope isn't in either bucket — an
+  // inconsistent-snapshot signal (a snapshot-builder bug, or a topic whose
+  // failure the builder forgot to record), not a real load failure. Reusing
+  // "load_failed" here would fabricate a cause we do not actually know, so
+  // this gets its own honest `unknown_state` reason — but the SAME
+  // non-destructive "can't verify, will still replace" `active-unavailable`
+  // treatment as an explicit failure. It must never be reported as
+  // `active-available`: absence of information is not evidence of safety.
   return {
     kind: "active-unavailable",
     activeCockpitKey,
-    reason: "load_failed",
+    reason: "unknown_state",
   };
 }
 
