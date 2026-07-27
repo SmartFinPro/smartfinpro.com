@@ -34,7 +34,7 @@
 
 import { Suspense, type ReactNode } from 'react';
 import Link from 'next/link';
-import type { Market } from '@/lib/i18n/config';
+import type { Category, Market } from '@/lib/i18n/config';
 import { marketConfig } from '@/lib/i18n/config';
 import {
   getDiscoveryCatalogBundle,
@@ -44,11 +44,14 @@ import {
 } from '@/lib/research/catalog';
 import { getResearchHubCopy, type ResearchHubCopy } from '@/lib/research/hub-copy';
 import {
+  computeAmbiguousDossierTopics,
+  dossierGroupTestId,
   EMPTY_DISCOVERY_FILTERS,
   projectDiscoveryItems,
   projectionNodeKey,
   researchBaseForMarket,
   sortHubProjections,
+  type CockpitKey,
   type DiscoveryProjection,
 } from '@/lib/research/catalog-shell-logic';
 import { Breadcrumb } from '@/components/marketing/breadcrumb';
@@ -239,36 +242,63 @@ function newestVerifiedAt(catalog: DiscoveryCatalog): string | null {
   return newest;
 }
 
-interface DossierGroup {
+export interface DossierGroup {
+  cockpitKey: CockpitKey;
   topic: string;
   topicLabel: string;
+  category: Category;
+  /** data-testid for this group's <section> — see `dossierGroupTestId`
+   *  (lib/research/catalog-shell-logic.ts) for the disambiguation rule. */
+  testId: string;
   entries: ResearchHubNode[];
 }
 
-/** Groups dossier nodes by Cockpit topic, preserving manifest order — every
- *  row for one topic is already contiguous in `sortHubProjections`'s output
- *  (manifestOrder is the primary sort key and identical for every row of one
- *  topic), so first-seen order here already IS manifest order. Review-only
- *  nodes are returned separately for the trailing review grid. */
-function groupBrowseNodes(nodes: readonly ResearchHubNode[]): {
+/** Groups dossier nodes by COCKPIT KEY (`market/category/topic`), never the
+ *  bare topic string — BEST_X_MANIFEST genuinely reuses one topic name
+ *  ("companies") across two different categories (credit-repair,
+ *  debt-relief), and a bare-topic Map key silently merged both into one
+ *  section under whichever entry's label was seen first (spec §4.1 already
+ *  makes category part of a Cockpit-only item's identity for exactly this
+ *  reason; this grouping now follows the same rule). Preserves manifest
+ *  order — every row for one Cockpit key is already contiguous in
+ *  `sortHubProjections`'s output (manifestOrder is the primary sort key and
+ *  identical for every row of one Cockpit key), so first-seen order here
+ *  already IS manifest order. Review-only nodes are returned separately for
+ *  the trailing review grid. */
+export function groupBrowseNodes(nodes: readonly ResearchHubNode[]): {
   dossierGroups: DossierGroup[];
   reviewEntries: ResearchHubNode[];
 } {
   const dossierGroups: DossierGroup[] = [];
-  const groupIndexByTopic = new Map<string, number>();
+  const groupIndexByCockpitKey = new Map<CockpitKey, number>();
   const reviewEntries: ResearchHubNode[] = [];
+  const ambiguousTopicsByMarket = new Map<Market, ReadonlySet<string>>();
 
   for (const entry of nodes) {
     if (entry.projection.kind !== 'dossier') {
       reviewEntries.push(entry);
       continue;
     }
-    const { topic, topicLabel } = entry.projection.context;
-    let index = groupIndexByTopic.get(topic);
+    const { cockpitKey, topic, topicLabel } = entry.projection.context;
+    let index = groupIndexByCockpitKey.get(cockpitKey);
     if (index === undefined) {
       index = dossierGroups.length;
-      groupIndexByTopic.set(topic, index);
-      dossierGroups.push({ topic, topicLabel, entries: [] });
+      groupIndexByCockpitKey.set(cockpitKey, index);
+      const category = entry.projection.item.category;
+      const market = entry.projection.item.market;
+      let ambiguousTopics = ambiguousTopicsByMarket.get(market);
+      if (!ambiguousTopics) {
+        ambiguousTopics = computeAmbiguousDossierTopics(market);
+        ambiguousTopicsByMarket.set(market, ambiguousTopics);
+      }
+      dossierGroups.push({
+        cockpitKey,
+        topic,
+        topicLabel,
+        category,
+        testId: dossierGroupTestId(topic, category, ambiguousTopics),
+        entries: [],
+      });
     }
     dossierGroups[index].entries.push(entry);
   }
@@ -277,12 +307,16 @@ function groupBrowseNodes(nodes: readonly ResearchHubNode[]): {
 }
 
 /** The complete, unsliced browse fallback (spec §8): every qualified dossier
- *  node grouped by its Cockpit topic (each topic keeps the stable
+ *  node grouped by its Cockpit KEY, never the bare topic string (see
+ *  `groupBrowseNodes` above) — each group keeps the stable
  *  `data-testid="dossier-<topic>"` scope the US trading-platforms pilot
- *  originated — spec DoD "bestehender US-Pilot bleibt mit neun
- *  Trading-Dossiers funktional"), followed by one review grid for every
- *  review-backed item not already shown in a dossier section. Never sliced
- *  or paginated. */
+ *  originated (spec DoD "bestehender US-Pilot bleibt mit neun
+ *  Trading-Dossiers funktional") when its topic name is unique in-market, and
+ *  falls back to `data-testid="dossier-<category>-<topic>"` only when
+ *  BEST_X_MANIFEST reuses that topic name across categories (e.g.
+ *  credit-repair vs. debt-relief "companies" — see `dossierGroupTestId`).
+ *  Followed by one review grid for every review-backed item not already
+ *  shown in a dossier section. Never sliced or paginated. */
 function BrowseFallback({ nodes }: { nodes: ResearchHubNode[] }) {
   const { dossierGroups, reviewEntries } = groupBrowseNodes(nodes);
 
@@ -299,8 +333,8 @@ function BrowseFallback({ nodes }: { nodes: ResearchHubNode[] }) {
 
         return (
           <section
-            key={group.topic}
-            data-testid={`dossier-${group.topic}`}
+            key={group.cockpitKey}
+            data-testid={group.testId}
             className="mx-auto px-6 py-8 sm:py-12"
             style={{ maxWidth: '1280px' }}
           >

@@ -1,5 +1,6 @@
 import type { Category, Market } from "@/lib/i18n/config";
 import { marketCategories } from "@/lib/i18n/config";
+import { BEST_X_MANIFEST } from "@/lib/comparison/topics/manifest";
 
 export type ResearchStatus = "audited" | "provisional";
 export type ResearchConfidence = "high" | "medium" | "low";
@@ -546,6 +547,57 @@ export function sortHubProjections(
   projections: readonly DiscoveryProjection[],
 ): DiscoveryProjection[] {
   return [...projections].sort(compareHubProjections);
+}
+
+/** Every topic name BEST_X_MANIFEST assigns to MORE THAN ONE category within
+ *  `market` — e.g. the bare string `"companies"` identifies both
+ *  `us/credit-repair/companies` and `us/debt-relief/companies`. This is the
+ *  defect the hub's dossier grouping (`ResearchHubPage.tsx`'s
+ *  `groupBrowseNodes`, `ResearchHub.tsx`'s `groupResolvedEntries`) fixes by
+ *  keying its Map on the full `cockpitKey` rather than the bare topic —
+ *  `dossierGroupTestId` below is the one remaining place a bare topic name
+ *  is still user-/DOM-visible (the `data-testid`), so it needs this same
+ *  ambiguity signal to stay collision-free.
+ *
+ *  Grounded in the STATIC manifest, never in live catalog rows (`items`,
+ *  qualifying dossier counts, etc.): a data-testid's shape must never flip
+ *  just because a topic's qualifying-row count changed today — only an
+ *  actual BEST_X_MANIFEST edit (adding/removing a topic/category pairing)
+ *  can change which topics are ambiguous. */
+export function computeAmbiguousDossierTopics(market: Market): ReadonlySet<string> {
+  const categoriesByTopic = new Map<string, Set<Category>>();
+  for (const entry of BEST_X_MANIFEST) {
+    if (entry.market !== market) continue;
+    let categories = categoriesByTopic.get(entry.topic);
+    if (!categories) {
+      categories = new Set();
+      categoriesByTopic.set(entry.topic, categories);
+    }
+    categories.add(entry.category);
+  }
+
+  const ambiguous = new Set<string>();
+  for (const [topic, categories] of categoriesByTopic) {
+    if (categories.size > 1) ambiguous.add(topic);
+  }
+  return ambiguous;
+}
+
+/** The Research hub's per-dossier-group `data-testid`. Bare `dossier-<topic>`
+ *  when `topic` is unique within this market — the stable, pre-existing shape
+ *  `dossier-trading-platforms` and `dossier-robo-advisors` already rely on
+ *  (e2e/research-shell.spec.ts), which this function NEVER renames.
+ *  `dossier-<category>-<topic>` only for a topic name `ambiguousTopics`
+ *  (built by `computeAmbiguousDossierTopics` above) actually flags as reused
+ *  across categories in this market — e.g. `dossier-credit-repair-companies`
+ *  vs. `dossier-debt-relief-companies`, so two same-named-topic sections can
+ *  never collide in the DOM. */
+export function dossierGroupTestId(
+  topic: string,
+  category: Category,
+  ambiguousTopics: ReadonlySet<string>,
+): string {
+  return ambiguousTopics.has(topic) ? `dossier-${category}-${topic}` : `dossier-${topic}`;
 }
 
 export function sortFinderItems(

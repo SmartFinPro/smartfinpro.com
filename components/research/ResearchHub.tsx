@@ -25,13 +25,18 @@
 //     filtered case below already diverges from the fallback's own DOM.
 //   - `nodes` is the flat, keyed map of the OTHER (already default-projected)
 //     cards, used only once a search/facet actually narrows the set. Building
-//     the filtered view still needs the same per-topic
-//     `data-testid="dossier-<topic>"` grouping the fallback uses (the pilot
-//     E2E scopes every assertion through that test id), so the grouping is
+//     the filtered view still needs the same per-COCKPIT-KEY grouping the
+//     fallback uses (`groupResolvedEntries`, mirroring `ResearchHubPage`'s
+//     server-side `groupBrowseNodes` — never the bare topic string, since
+//     BEST_X_MANIFEST reuses topic names like "companies" across categories;
+//     see both functions' own doc comments), so the grouping is
 //     re-implemented here — the CARD content is reused, the surrounding
 //     layout is not, and that split is exactly what "never re-render a card"
 //     means: it is a constraint on the opaque node, not on the plain <section>
-//     wrapper around it.
+//     wrapper around it. Each group's `data-testid` stays the pilot's
+//     `dossier-<topic>` (the E2E suite scopes every assertion through that
+//     test id) UNLESS the topic name is ambiguous in-market, in which case it
+//     is `dossier-<category>-<topic>` (`dossierGroupTestId`).
 //   - A multi-topic item's currently-selected context can, in principle,
 //     differ from the single DEFAULT context `ResearchHubPage` built a node
 //     for (e.g. an explicit `topic` filter picks the item's OTHER context).
@@ -63,7 +68,9 @@ import { Search, SlidersHorizontal, X } from 'lucide-react';
 import { categoryConfig, type Category, type Market } from '@/lib/i18n/config';
 import {
   buildDiscoverySearchParams,
+  computeAmbiguousDossierTopics,
   computeDiscoveryFacets,
+  dossierGroupTestId,
   parseDiscoverySearchParams,
   projectDiscoveryItems,
   projectionNodeKey,
@@ -113,11 +120,16 @@ export interface ResearchHubProps {
   browseFallback: ReactNode;
 }
 
-interface ResolvedEntry {
+export interface ResolvedEntry {
   key: string;
   kind: DiscoveryKind;
   topic: string | null;
   topicLabel: string | null;
+  // The dossier's category — null for a review-kind entry, same pattern as
+  // `cockpitKey`/`productSlug`/`displayName` below. Needed (alongside
+  // `topic`) to compute this entry's group's disambiguated data-testid
+  // (`dossierGroupTestId`) without re-deriving it from `cockpitKey`.
+  category: Category | null;
   isFeatured: boolean;
   node: ReactNode;
   // Cockpit identity for the shortlist toggle (spec §11.1) — null for a
@@ -146,6 +158,7 @@ function resolveEntry(
           kind: 'review',
           topic: null,
           topicLabel: null,
+          category: null,
           isFeatured: false,
           node,
           cockpitKey: null,
@@ -155,7 +168,7 @@ function resolveEntry(
       : null;
   }
 
-  const { context } = projection;
+  const { context, item } = projection;
   const key = projectionNodeKey(projection.itemId, context.cockpitKey);
   const node = nodeByKey.get(key);
   if (node) {
@@ -164,6 +177,7 @@ function resolveEntry(
       kind: 'dossier',
       topic: context.topic,
       topicLabel: context.topicLabel,
+      category: item.category,
       isFeatured: context.status === 'audited' && context.auditedRank === 1,
       node,
       cockpitKey: context.cockpitKey,
@@ -181,6 +195,7 @@ function resolveEntry(
         kind: 'review',
         topic: null,
         topicLabel: null,
+        category: null,
         isFeatured: false,
         node: reviewNode,
         cockpitKey: null,
@@ -193,33 +208,54 @@ function resolveEntry(
   return null;
 }
 
-interface DossierGroup {
+export interface DossierGroup {
+  cockpitKey: CockpitKey;
   topic: string;
   topicLabel: string;
+  category: Category;
+  /** data-testid for this group's <section> — see `dossierGroupTestId`
+   *  (lib/research/catalog-shell-logic.ts) for the disambiguation rule. */
+  testId: string;
   entries: ResolvedEntry[];
 }
 
-/** Groups resolved entries by Cockpit topic, preserving the order they arrive
- *  in (already manifest-order first, per `sortHubProjections`) — mirrors
- *  `ResearchHubPage`'s server-side `groupBrowseNodes` so a filtered result
- *  keeps the same `data-testid="dossier-<topic>"` scope the unfiltered
- *  fallback uses. Entries that degraded to a review (or never had a topic)
- *  fall into the trailing review grid instead. */
-function groupResolvedEntries(entries: readonly ResolvedEntry[]): {
+/** Groups resolved entries by COCKPIT KEY, never the bare topic string —
+ *  mirrors `ResearchHubPage`'s server-side `groupBrowseNodes` exactly (same
+ *  reason: BEST_X_MANIFEST reuses the topic string "companies" across
+ *  credit-repair and debt-relief, and a bare-topic Map key would silently
+ *  merge both categories' products into one section). Preserves the order
+ *  entries arrive in (already manifest-order first, per `sortHubProjections`).
+ *  `ambiguousTopics` (from `computeAmbiguousDossierTopics`, computed ONCE by
+ *  the caller from the full unfiltered market `items` — never from `entries`
+ *  itself) is what keeps a group's `data-testid` stable regardless of which
+ *  filter happens to be narrowing the currently-rendered set; see
+ *  `dossierGroupTestId`. Entries that degraded to a review (or never had a
+ *  topic/category) fall into the trailing review grid instead. */
+export function groupResolvedEntries(
+  entries: readonly ResolvedEntry[],
+  ambiguousTopics: ReadonlySet<string>,
+): {
   dossierGroups: DossierGroup[];
   reviewEntries: ResolvedEntry[];
 } {
   const dossierGroups: DossierGroup[] = [];
-  const indexByTopic = new Map<string, number>();
+  const indexByCockpitKey = new Map<CockpitKey, number>();
   const reviewEntries: ResolvedEntry[] = [];
 
   for (const entry of entries) {
-    if (entry.kind === 'dossier' && entry.topic && entry.topicLabel) {
-      let index = indexByTopic.get(entry.topic);
+    if (entry.kind === 'dossier' && entry.cockpitKey && entry.topic && entry.topicLabel && entry.category) {
+      let index = indexByCockpitKey.get(entry.cockpitKey);
       if (index === undefined) {
         index = dossierGroups.length;
-        indexByTopic.set(entry.topic, index);
-        dossierGroups.push({ topic: entry.topic, topicLabel: entry.topicLabel, entries: [] });
+        indexByCockpitKey.set(entry.cockpitKey, index);
+        dossierGroups.push({
+          cockpitKey: entry.cockpitKey,
+          topic: entry.topic,
+          topicLabel: entry.topicLabel,
+          category: entry.category,
+          testId: dossierGroupTestId(entry.topic, entry.category, ambiguousTopics),
+          entries: [],
+        });
       }
       dossierGroups[index].entries.push(entry);
     } else {
@@ -236,15 +272,21 @@ function groupResolvedEntries(entries: readonly ResolvedEntry[]): {
  *  #1) renders as a normal card in a uniform grid (pilot precedent: a pinned
  *  "winner" over a provisional/narrow search result reads as broken, not
  *  helpful). */
-function FilteredResults({ entries }: { entries: ResolvedEntry[] }) {
-  const { dossierGroups, reviewEntries } = groupResolvedEntries(entries);
+function FilteredResults({
+  entries,
+  ambiguousTopics,
+}: {
+  entries: ResolvedEntry[];
+  ambiguousTopics: ReadonlySet<string>;
+}) {
+  const { dossierGroups, reviewEntries } = groupResolvedEntries(entries, ambiguousTopics);
 
   return (
     <>
       {dossierGroups.map((group) => (
         <section
-          key={group.topic}
-          data-testid={`dossier-${group.topic}`}
+          key={group.cockpitKey}
+          data-testid={group.testId}
           className="mx-auto px-6 py-8 sm:py-12"
           style={{ maxWidth: '1280px' }}
         >
@@ -289,8 +331,14 @@ function FilteredResults({ entries }: { entries: ResolvedEntry[] }) {
  *  than reusing the `browseFallback` prop for this branch, precisely so the
  *  toggle can wrap each card: `browseFallback` is an opaque, already-built
  *  ReactNode tree with no per-card seam to inject into. */
-function DefaultResults({ entries }: { entries: ResolvedEntry[] }) {
-  const { dossierGroups, reviewEntries } = groupResolvedEntries(entries);
+function DefaultResults({
+  entries,
+  ambiguousTopics,
+}: {
+  entries: ResolvedEntry[];
+  ambiguousTopics: ReadonlySet<string>;
+}) {
+  const { dossierGroups, reviewEntries } = groupResolvedEntries(entries, ambiguousTopics);
 
   return (
     <>
@@ -300,8 +348,8 @@ function DefaultResults({ entries }: { entries: ResolvedEntry[] }) {
 
         return (
           <section
-            key={group.topic}
-            data-testid={`dossier-${group.topic}`}
+            key={group.cockpitKey}
+            data-testid={group.testId}
             className="mx-auto px-6 py-8 sm:py-12"
             style={{ maxWidth: '1280px' }}
           >
@@ -435,6 +483,14 @@ export function ResearchHub({ market, items, nodes }: ResearchHubProps) {
   }, [items, activeFilters, nodeByKey]);
 
   const resultCount = resolvedEntries.length;
+
+  // Grounded in the static manifest for `market` (never in `resolvedEntries`,
+  // which shrinks under an active filter) so a group's disambiguated
+  // data-testid never depends on which filter happens to be narrowing the
+  // currently-visible set — see `computeAmbiguousDossierTopics`'s own doc
+  // comment (lib/research/catalog-shell-logic.ts).
+  const ambiguousTopics = useMemo(() => computeAmbiguousDossierTopics(market), [market]);
+
   const hasAnyFacetRow =
     facets.categories.length >= 2 ||
     facets.types.length >= 2 ||
@@ -575,9 +631,9 @@ export function ResearchHub({ market, items, nodes }: ResearchHubProps) {
       </div>
 
       {!isActive ? (
-        <DefaultResults entries={entriesForRender} />
+        <DefaultResults entries={entriesForRender} ambiguousTopics={ambiguousTopics} />
       ) : resultCount > 0 ? (
-        <FilteredResults entries={entriesForRender} />
+        <FilteredResults entries={entriesForRender} ambiguousTopics={ambiguousTopics} />
       ) : (
         <div
           className="mx-auto px-6 py-16 text-center"

@@ -73,6 +73,37 @@ test.describe('Research Library shell — desktop', () => {
     await expect(page.getByTestId('dossier-trading-platforms')).toBeVisible();
   });
 
+  test('credit-repair and debt-relief render as two separate dossier sections, never merged under one heading', async ({
+    page,
+  }) => {
+    // us/credit-repair/companies and us/debt-relief/companies share the bare
+    // topic string "companies" (lib/comparison/topics/manifest.ts) but are
+    // different Cockpit keys (spec §4.1) — grouping by the bare topic string
+    // used to silently merge both categories' products into ONE section
+    // under whichever manifest entry's label was seen first (credit-repair),
+    // so a visitor would see debt-relief products under "Best Credit Repair".
+    // Fixed by grouping on cockpitKey (lib/research/catalog-shell-logic.ts's
+    // `computeAmbiguousDossierTopics` / `dossierGroupTestId`) — each category
+    // now gets its OWN section, its OWN heading, and its OWN disambiguated
+    // data-testid since "companies" is ambiguous in the us market.
+    const creditRepair = page.getByTestId('dossier-credit-repair-companies');
+    const debtRelief = page.getByTestId('dossier-debt-relief-companies');
+    await expect(creditRepair).toBeVisible();
+    await expect(debtRelief).toBeVisible();
+
+    // Two separate sections with two distinct headings — never one heading
+    // shared between both categories' products.
+    await expect(creditRepair.getByRole('heading', { name: 'Best Credit Repair' })).toBeVisible();
+    await expect(debtRelief.getByRole('heading', { name: 'Best Debt Relief Companies' })).toBeVisible();
+
+    // No cross-topic leakage: a real, currently-qualifying debt-relief
+    // product never renders inside the credit-repair section, and vice versa
+    // (same real slugs the "key collision" storage test below already
+    // relies on as currently-qualifying production data).
+    await expect(creditRepair.getByRole('heading', { name: 'National Debt Relief' })).toHaveCount(0);
+    await expect(debtRelief.getByRole('heading', { name: 'Credit Saint' })).toHaveCount(0);
+  });
+
   test('default browse shows the featured winner + all nine cards', async ({ page }) => {
     const tradingDossier = page.getByTestId('dossier-trading-platforms');
     await expect(tradingDossier.getByText('#1 Overall')).toBeVisible();
