@@ -1,12 +1,15 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildScopedCompareUrl,
   cockpitKeyFor,
   computeDiscoveryFacets,
   countDiscoveryItems,
+  migrateLegacyTradingShortlist,
   productItemId,
   projectDiscoveryItems,
   researchBaseForMarket,
   reviewItemId,
+  shortlistStorageKey,
   sortHubProjections,
 } from "@/lib/research/catalog-shell-logic";
 import type {
@@ -14,6 +17,7 @@ import type {
   DiscoveryProjection,
   DiscoveryReview,
   ResearchContext,
+  StorageLike,
 } from "@/lib/research/catalog-shell-logic";
 
 describe("Discovery identity", () => {
@@ -362,4 +366,47 @@ it("hub sort uses manifest order, audited rank, then stable item id", () => {
   expect(
     sortHubProjections([rankTwo, provisional, rankOne]).map((p) => p.itemId),
   ).toEqual([rankOne.itemId, rankTwo.itemId, provisional.itemId]);
+});
+
+// In-memory StorageLike stub so the storage contract stays testable without
+// window.sessionStorage — mirrors what the PR 2 client adapter will inject.
+const memoryStorage = (initial: Record<string, string> = {}): StorageLike => {
+  const store = new Map(Object.entries(initial));
+  return {
+    getItem: (key) => (store.has(key) ? store.get(key)! : null),
+    setItem: (key, value) => {
+      store.set(key, value);
+    },
+    removeItem: (key) => {
+      store.delete(key);
+    },
+  };
+};
+
+it("separates same-named topics in different categories", () => {
+  expect(shortlistStorageKey("us/credit-repair/companies")).not.toBe(
+    shortlistStorageKey("us/debt-relief/companies"),
+  );
+});
+
+it("does not overwrite an existing v2 value during pilot migration", () => {
+  const storage = memoryStorage({
+    "research-shortlist:us:trading-platforms": '["legacy"]',
+    "research-shortlist:us:trading:trading-platforms": '["v2"]',
+  });
+  migrateLegacyTradingShortlist(storage);
+  expect(
+    storage.getItem("research-shortlist:us:trading:trading-platforms"),
+  ).toBe('["v2"]');
+  expect(storage.getItem("research-shortlist:us:trading-platforms")).toBeNull();
+});
+
+it("rejects slugs outside the active Cockpit key", () => {
+  expect(
+    buildScopedCompareUrl(
+      "/us/trading/best/trading-platforms",
+      ["fidelity", "foreign"],
+      new Set(["fidelity"]),
+    ),
+  ).toBeNull();
 });

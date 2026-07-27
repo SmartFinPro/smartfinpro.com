@@ -479,3 +479,213 @@ export function countDiscoveryItems(
     verifiedDataPointCount,
   };
 }
+
+// --- Scoped shortlist storage & Cockpit compare handoff ---------------------
+// The shortlist reads/writes through an injected StorageLike rather than
+// window.sessionStorage directly, so it stays framework-free and unit-testable
+// here; the client wiring (PR 2) supplies the real adapter. Storage v2 scopes
+// every shortlist to one Cockpit key so same-named topics in different
+// categories (e.g. credit-repair/companies vs. debt-relief/companies) never
+// collide. See spec §11.
+
+export const MAX_SHORTLIST = 4;
+
+export interface StorageLike {
+  getItem(key: string): string | null;
+  setItem(key: string, value: string): void;
+  removeItem(key: string): void;
+}
+
+export interface ScopedShortlist {
+  cockpitKey: CockpitKey | null;
+  slugs: string[];
+}
+
+export const shortlistStorageKey = (key: CockpitKey): string => {
+  const [market, category, topic] = key.split("/");
+  return `research-shortlist:${market}:${category}:${topic}`;
+};
+
+export const shortlistPointerKey = (market: Market): string =>
+  `research-shortlist-active:${market}`;
+
+/** Reconstructs a CockpitKey from the market pointer's `${category}:${topic}`
+ *  value. Returns null when the pointer has no separator (malformed). */
+const cockpitKeyFromPointer = (
+  market: Market,
+  pointer: string,
+): CockpitKey | null => {
+  const separatorIndex = pointer.indexOf(":");
+  if (separatorIndex === -1) return null;
+  const category = pointer.slice(0, separatorIndex);
+  const topic = pointer.slice(separatorIndex + 1);
+  return `${market}/${category}/${topic}` as CockpitKey;
+};
+
+/** Restores a scoped shortlist without an effect-order hazard: reads the
+ *  market pointer, rejects any Cockpit key absent from the caller's
+ *  `validScopes` map, then keeps only unique persisted slugs that belong to
+ *  that Cockpit's own product set (capped at MAX_SHORTLIST). Any invalid step
+ *  clears the leftover pointer/scoped storage and returns a clean empty
+ *  state — callers get either a fully valid scope or nothing, never a partial
+ *  or stale one. */
+export function restoreScopedShortlist(
+  storage: StorageLike,
+  market: Market,
+  validScopes: ReadonlyMap<CockpitKey, ReadonlySet<string>>,
+): ScopedShortlist {
+  const pointerKey = shortlistPointerKey(market);
+  const pointer = storage.getItem(pointerKey);
+  if (!pointer) return { cockpitKey: null, slugs: [] };
+
+  const clearAndReturnEmpty = (): ScopedShortlist => {
+    storage.removeItem(pointerKey);
+    return { cockpitKey: null, slugs: [] };
+  };
+
+  const cockpitKey = cockpitKeyFromPointer(market, pointer);
+  if (!cockpitKey) return clearAndReturnEmpty();
+
+  const validSlugs = validScopes.get(cockpitKey);
+  if (!validSlugs) {
+    storage.removeItem(shortlistStorageKey(cockpitKey));
+    return clearAndReturnEmpty();
+  }
+
+  const scopedKey = shortlistStorageKey(cockpitKey);
+  const raw = storage.getItem(scopedKey);
+  if (!raw) return clearAndReturnEmpty();
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    storage.removeItem(scopedKey);
+    return clearAndReturnEmpty();
+  }
+  if (!Array.isArray(parsed)) {
+    storage.removeItem(scopedKey);
+    return clearAndReturnEmpty();
+  }
+
+  const seen = new Set<string>();
+  const slugs: string[] = [];
+  for (const entry of parsed) {
+    if (typeof entry !== "string" || !validSlugs.has(entry) || seen.has(entry)) {
+      continue;
+    }
+    seen.add(entry);
+    slugs.push(entry);
+    if (slugs.length >= MAX_SHORTLIST) break;
+  }
+
+  if (slugs.length === 0) {
+    storage.removeItem(scopedKey);
+    return clearAndReturnEmpty();
+  }
+
+  return { cockpitKey, slugs };
+}
+
+/** Persists a scoped shortlist: the pointer stores `${category}:${topic}`,
+ *  the scoped key stores the JSON slug array. An empty shortlist removes both
+ *  entries instead of writing an empty array. */
+export function persistScopedShortlist(
+  storage: StorageLike,
+  market: Market,
+  shortlist: ScopedShortlist,
+): void {
+  const pointerKey = shortlistPointerKey(market);
+
+  if (!shortlist.cockpitKey || shortlist.slugs.length === 0) {
+    storage.removeItem(pointerKey);
+    if (shortlist.cockpitKey) {
+      storage.removeItem(shortlistStorageKey(shortlist.cockpitKey));
+    }
+    return;
+  }
+
+  const [, category, topic] = shortlist.cockpitKey.split("/");
+  storage.setItem(pointerKey, `${category}:${topic}`);
+  storage.setItem(
+    shortlistStorageKey(shortlist.cockpitKey),
+    JSON.stringify(shortlist.slugs),
+  );
+}
+
+/** One-time migration of the Research Library pilot's flat sessionStorage key
+ *  into the v2 scoped key for us/trading/trading-platforms. Never overwrites
+ *  an existing v2 value; always deletes the legacy key once resolved. */
+export function migrateLegacyTradingShortlist(storage: StorageLike): void {
+  const legacyKey = "research-shortlist:us:trading-platforms";
+  const legacyValue = storage.getItem(legacyKey);
+  if (legacyValue === null) return;
+
+  const v2Key = shortlistStorageKey("us/trading/trading-platforms");
+  if (storage.getItem(v2Key) === null) {
+    storage.setItem(v2Key, legacyValue);
+  }
+  storage.removeItem(legacyKey);
+}
+
+/** Toggles one slug within `cockpitKey`. Adding beyond MAX_SHORTLIST or a slug
+ *  outside `validSlugs` is a no-op. Adding from a DIFFERENT cockpit than
+ *  `current.cockpitKey` never merges silently: it reports
+ *  `requiresScopeSwitch: true` and returns the post-switch state (the new
+ *  scope with exactly the requested slug) for the caller to apply only after
+ *  the user confirms "Switch & add" (spec §11.3). Removing the last slug
+ *  always clears the scope back to null, matching persistScopedShortlist's
+ *  "empty shortlist removes both" contract. */
+export function toggleScopedShortlist(
+  current: ScopedShortlist,
+  cockpitKey: CockpitKey,
+  slug: string,
+  validSlugs: ReadonlySet<string>,
+): { next: ScopedShortlist; requiresScopeSwitch: boolean } {
+  const sameScope = current.cockpitKey === null || current.cockpitKey === cockpitKey;
+
+  if (!sameScope) {
+    if (!validSlugs.has(slug)) {
+      return { next: current, requiresScopeSwitch: false };
+    }
+    return {
+      next: { cockpitKey, slugs: [slug] },
+      requiresScopeSwitch: true,
+    };
+  }
+
+  if (current.slugs.includes(slug)) {
+    const nextSlugs = current.slugs.filter((existing) => existing !== slug);
+    return {
+      next: {
+        cockpitKey: nextSlugs.length > 0 ? cockpitKey : null,
+        slugs: nextSlugs,
+      },
+      requiresScopeSwitch: false,
+    };
+  }
+
+  if (!validSlugs.has(slug) || current.slugs.length >= MAX_SHORTLIST) {
+    return { next: current, requiresScopeSwitch: false };
+  }
+
+  return {
+    next: { cockpitKey, slugs: [...current.slugs, slug] },
+    requiresScopeSwitch: false,
+  };
+}
+
+/** The Cockpit compare handoff URL, built only from `cockpitKey` and slugs
+ *  already confirmed against `validSlugs` — a foreign or stale slug can never
+ *  reach the URL. Null for fewer than two slugs, more than MAX_SHORTLIST,
+ *  duplicates, or any slug missing from the valid set. */
+export function buildScopedCompareUrl(
+  cockpitBase: string,
+  slugs: readonly string[],
+  validSlugs: ReadonlySet<string>,
+): string | null {
+  if (slugs.length < 2 || slugs.length > MAX_SHORTLIST) return null;
+  if (new Set(slugs).size !== slugs.length) return null;
+  if (!slugs.every((slug) => validSlugs.has(slug))) return null;
+  return `${cockpitBase}?compare=${slugs.map(encodeURIComponent).join(",")}&view=compare#comparison`;
+}
