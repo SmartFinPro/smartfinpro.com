@@ -117,6 +117,7 @@ interface DiscoveryReview {
   href: string;
   title: string;
   description: string;
+  bestFor: string | null;
   editorialRating: number; // 0–5
   publishDate: string;
   modifiedDate: string;
@@ -178,8 +179,10 @@ erhalten.
 
 ### 4.3 Display-Felder
 
-Review-backed Items beziehen Titel, Beschreibung, Rating, Datum, Featured und
-Pricing ausschließlich aus normalisiertem MDX-Frontmatter.
+Review-backed Items beziehen Titel, Beschreibung, bestFor, Rating, Datum,
+Featured und Pricing ausschließlich aus normalisiertem MDX-Frontmatter. Für
+`display.bestFor` gilt bei Review-backed Items das MDX-`bestFor`; nur wenn es
+fehlt, fällt es auf den ersten qualifizierten Context zurück.
 
 Für Review-backed Items ist `sortDate = modifiedDate || publishDate`. Besitzt
 ein Review zusätzlich Research-Contexts, bleibt dieses redaktionelle Datum die
@@ -543,6 +546,13 @@ Der alte Pilot-Key `research-shortlist:us:trading-platforms` wird nur dann
 einmalig in `research-shortlist:us:trading:trading-platforms` migriert, wenn
 der v2-Key noch nicht existiert, und anschließend gelöscht. Bestehender
 v2-Zustand wird nie überschrieben.
+
+Die Migration setzt zugleich den Markt-Pointer auf den migrierten Scope,
+sofern noch kein Pointer existiert; ein vorhandener Pointer wird nie
+überschrieben. Die Migration normalisiert den übernommenen Wert (nur Strings,
+dedupliziert, höchstens vier Slugs), schreibt erst Ziel-Key und Pointer und
+entfernt den Legacy-Key zuletzt; bei ungültigem Legacy-Wert wird nichts
+übernommen.
 
 ### 11.3 Cross-Topic-Verhalten
 
