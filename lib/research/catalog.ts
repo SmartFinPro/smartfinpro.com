@@ -405,34 +405,64 @@ const BACKOFF_WINDOW_MS = 60_000;
  *  single request. Cleared only in `__resetTopicOverlayBackoffForTests`. */
 const topicBackoffUntil = new Map<CockpitKey, number>();
 
-/** @internal test-only — clears the module-level backoff Map so each test in
+/** Module-level singleflight (Decision A P1 fix): the backoff Map above is a
+ *  check-then-act race under concurrent requests — several callers can all
+ *  read `topicBackoffUntil.get(cockpitKey)` and pass the `retryAfter > now()`
+ *  gate BEFORE the first failure ever writes the map, so N concurrent
+ *  requests for one topic each independently call `loadTopic` and each
+ *  independently warn. This map holds one shared, in-flight
+ *  `Promise<TopicOverlayResult>` per CockpitKey — the promise for the ENTIRE
+ *  attempt (the `loadTopic` call, its catch, the backoff-map write, AND the
+ *  `logger.warn`), never just the raw loader promise. That distinction
+ *  matters: if the map instead stored only the bare `loadTopic(...)` promise,
+ *  every concurrent awaiter would still run its OWN catch/backoff-write/warn
+ *  once that shared promise rejects — one loader call, but N backoff writes
+ *  and N warns, which is exactly the log storm this fix exists to close.
+ *  Storing the whole attempt means every concurrent caller instead receives
+ *  the SAME already-settled `TopicOverlayResult`. Cleared in a `finally`, but
+ *  only when the map still holds THIS SAME promise (identity check) —
+ *  otherwise an older attempt settling late could delete a newer, still
+ *  in-flight attempt's entry out from under it. Keyed by CockpitKey (not
+ *  global), so two different topics still load fully in parallel. */
+const inFlightTopicLoads = new Map<CockpitKey, Promise<TopicOverlayResult>>();
+
+/** @internal test-only — clears both module-level maps (the failure backoff
+ *  and the singleflight in-flight map) so each test in
  *  research-catalog.test.ts starts from a clean slate regardless of
  *  execution order or which CockpitKey an earlier test touched. Never called
  *  by production code. */
 export function __resetTopicOverlayBackoffForTests(): void {
   topicBackoffUntil.clear();
+  inFlightTopicLoads.clear();
 }
 
 /** Loads every manifest topic for `market` (spec §5.2, amended §5.3.1): each
  *  topic now resolves to a typed `TopicOverlayResult` — NOT a flattened array
  *  — instead of the old Promise.allSettled loader collapsing "loaded fine,
  *  zero qualifying rows" and "failed to load" into the same absent-from-array
- *  `[]`. No individual topic promise rejects out of this function: `loadTopic`
- *  (the real per-topic-cached loader by default) runs inside a try/catch that
- *  applies the 60s backoff and turns a rejection into
- *  `{ok:false, reason:'load_failed'}`.
+ *  `[]`. No individual topic promise rejects out of this function.
  *
  *  Per-topic flow:
  *  1. A `CockpitKey` already inside its backoff window is reported
  *     `{ok:false, reason:'backoff'}` WITHOUT calling `loadTopic` again — no
  *     repeat request to getCockpitData/getTopicConfig, no repeat warn.
- *  2. Otherwise `loadTopic` runs. Success clears any (possibly stale) backoff
- *     entry for that key. A rejection sets `retryAfterEpochMs = now() +
- *     60_000` and logs exactly once — this is the transition INTO a new
- *     backoff window, which is exactly why the log line lives in this catch
- *     branch and nowhere else: once step 1 above starts short-circuiting on
- *     the next call, this branch (and its warn) simply doesn't run again
- *     until the window has elapsed and a genuinely new failure occurs.
+ *  2. Otherwise the CockpitKey's singleflight entry (`inFlightTopicLoads`
+ *     above) is consulted: a caller that finds an in-flight attempt for its
+ *     key awaits THAT SAME attempt instead of starting a new one; the first
+ *     caller creates the attempt and registers it in the map SYNCHRONOUSLY,
+ *     before awaiting anything, so every other caller that arrives while it
+ *     is still pending shares the exact same attempt (one `loadTopic` call,
+ *     one backoff write, one warn — not N of each — Decision A P1 fix).
+ *     Success clears any (possibly stale) backoff entry for that key. A
+ *     rejection sets `retryAfterEpochMs = now() + 60_000` and logs exactly
+ *     once, inside the shared attempt itself, so every awaiter of that
+ *     attempt receives the identical `{ok:false, reason:'load_failed'}`
+ *     value rather than each running its own catch/warn — this is the
+ *     transition INTO a new backoff window, which is exactly why the log
+ *     line lives here and nowhere else: once step 1 above starts
+ *     short-circuiting on the next call, this branch (and its warn) simply
+ *     doesn't run again until the window has elapsed and a genuinely new
+ *     failure occurs.
  *
  *  `now` defaults to `Date.now` but is always injectable so tests can
  *  fast-forward the 60s window deterministically; `loadTopic` defaults to the
@@ -452,27 +482,56 @@ export async function loadMarketResearchContexts(
   );
 
   return Promise.all(
-    entries.map(async ({ entry, manifestOrder }): Promise<TopicOverlayResult> => {
+    entries.map(({ entry, manifestOrder }): Promise<TopicOverlayResult> => {
       const cockpitKey = cockpitKeyFor(market, entry.category, entry.topic);
       const retryAfter = topicBackoffUntil.get(cockpitKey);
       if (retryAfter !== undefined && retryAfter > now()) {
-        return { ok: false, entry, reason: 'backoff' };
+        return Promise.resolve({ ok: false, entry, reason: 'backoff' });
       }
 
-      try {
-        const result = await loadTopic(market, entry, manifestOrder);
-        topicBackoffUntil.delete(cockpitKey);
-        return result;
-      } catch {
-        topicBackoffUntil.set(cockpitKey, now() + BACKOFF_WINDOW_MS);
-        logger.warn('Research discovery topic unavailable', {
-          market,
-          category: entry.category,
-          topic: entry.topic,
-          reason: 'load_failed',
-        });
-        return { ok: false, entry, reason: 'load_failed' };
-      }
+      const existingAttempt = inFlightTopicLoads.get(cockpitKey);
+      if (existingAttempt) return existingAttempt;
+
+      // The whole attempt — loader call, catch, backoff write, warn — is
+      // memoized as ONE promise so every concurrent awaiter (including this
+      // very caller) shares the identical settled TopicOverlayResult.
+      //
+      // `attemptRef` (typed to allow `undefined`) exists only so the
+      // `finally` below can identity-check against the just-created attempt
+      // without TypeScript flagging a self-referential `const` as "used
+      // before being assigned" — by the time `finally` actually runs (always
+      // after the `await` inside `try`), the assignment right after the IIFE
+      // has long since completed synchronously.
+      let attemptRef: Promise<TopicOverlayResult> | undefined;
+      const attempt: Promise<TopicOverlayResult> = (async (): Promise<TopicOverlayResult> => {
+        try {
+          const result = await loadTopic(market, entry, manifestOrder);
+          topicBackoffUntil.delete(cockpitKey);
+          return result;
+        } catch {
+          topicBackoffUntil.set(cockpitKey, now() + BACKOFF_WINDOW_MS);
+          logger.warn('Research discovery topic unavailable', {
+            market,
+            category: entry.category,
+            topic: entry.topic,
+            reason: 'load_failed',
+          });
+          return { ok: false, entry, reason: 'load_failed' };
+        } finally {
+          // Identity-safe cleanup: only remove the map entry if it still
+          // holds THIS attempt. An older attempt settling late — e.g. after
+          // __resetTopicOverlayBackoffForTests cleared the map mid-flight and
+          // a newer attempt for the same key has already taken its place —
+          // must never delete a newer, still-pending entry out from under it.
+          if (inFlightTopicLoads.get(cockpitKey) === attemptRef) {
+            inFlightTopicLoads.delete(cockpitKey);
+          }
+        }
+      })();
+      attemptRef = attempt;
+
+      inFlightTopicLoads.set(cockpitKey, attempt);
+      return attempt;
     }),
   );
 }

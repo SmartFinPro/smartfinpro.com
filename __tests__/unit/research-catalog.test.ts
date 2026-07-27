@@ -859,6 +859,210 @@ describe('loadMarketResearchContexts — 60s failure backoff', () => {
   });
 });
 
+// --- loadMarketResearchContexts — singleflight under concurrent requests --
+// (Decision A P1, operator-reported): the 60s backoff above is a
+// check-then-act race — several concurrent requests can all read
+// topicBackoffUntil.get(cockpitKey) and pass the `retryAfter > now()` check
+// BEFORE the first failure ever writes the map, so N concurrent requests for
+// one topic each independently call loadTopic and each independently warn.
+// The fix is a process-local singleflight: one shared in-flight
+// Promise<TopicOverlayResult> per CockpitKey. Critically, the memoized
+// promise must cover the ENTIRE attempt — the loadTopic call, the catch, the
+// backoff-map write, and the logger.warn — not just the raw loader promise;
+// otherwise every awaiter would still run its own catch/warn once the shared
+// loader promise rejects, and the log storm the fix exists to close would
+// remain even though the loader itself was only called once. These tests
+// fire real concurrent requests (Promise.all) with the injected loader
+// resolving/rejecting only after a delay, so every caller genuinely arrives
+// while the first attempt is still in flight.
+
+const delay = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+describe('loadMarketResearchContexts — singleflight under concurrent requests (P1)', () => {
+  const stubResult = (entry: BestXManifestEntry): TopicOverlayResult => ({
+    ok: true,
+    entry,
+    contexts: [],
+    rows: [],
+  });
+
+  it('fires exactly one loader call and exactly one warn when 5 concurrent requests race for the same failing topic, and every caller receives the identical failure result', async () => {
+    let clock = 0;
+    const now = () => clock;
+    let businessBankingCalls = 0;
+    const loadTopic = vi.fn(async (_market: string, entry: BestXManifestEntry) => {
+      if (entry.category === 'business-banking') {
+        businessBankingCalls += 1;
+        await delay(15); // every concurrent caller below arrives inside this window
+        throw new Error('DB unavailable');
+      }
+      return stubResult(entry);
+    });
+
+    const N = 5;
+    const allResults = await Promise.all(
+      Array.from({ length: N }, () => loadMarketResearchContexts('us', now, loadTopic)),
+    );
+
+    expect(businessBankingCalls).toBe(1);
+    expect(mockLoggerWarn).toHaveBeenCalledTimes(1);
+    expect(mockLoggerWarn).toHaveBeenCalledWith('Research discovery topic unavailable', {
+      market: 'us',
+      category: 'business-banking',
+      topic: 'business-bank-accounts',
+      reason: 'load_failed',
+    });
+
+    const bbResults = allResults.map(
+      (results) => results.find((r) => r.entry.category === 'business-banking')!,
+    );
+    const first = bbResults[0];
+    expect(first.ok).toBe(false);
+    if (first.ok) throw new Error('expected ok:false');
+    expect(first.reason).toBe('load_failed');
+    for (const bb of bbResults) {
+      expect(bb).toBe(first); // every concurrent caller shares the IDENTICAL resolved failure object
+    }
+
+    // Behavioral proof the backoff map was actually written (exactly once,
+    // alongside the single warn above, not zero times and not repeatedly):
+    // the very next request in the same tick must be short-circuited as
+    // 'backoff' instead of attempting a fresh load.
+    loadTopic.mockClear();
+    const followUp = await loadMarketResearchContexts('us', now, loadTopic);
+    const followUpBB = followUp.find((r) => r.entry.category === 'business-banking')!;
+    expect(followUpBB).toEqual({ ok: false, entry: followUpBB.entry, reason: 'backoff' });
+    expect(loadTopic).not.toHaveBeenCalledWith(
+      'us',
+      expect.objectContaining({ category: 'business-banking' }),
+      expect.anything(),
+    );
+  });
+
+  it('fires exactly one loader call when 5 concurrent requests race for the same SUCCEEDING topic, and every caller receives the identical success result', async () => {
+    let clock = 0;
+    const now = () => clock;
+    let tradingCalls = 0;
+    const loadTopic = vi.fn(async (_market: string, entry: BestXManifestEntry) => {
+      if (entry.category === 'trading') {
+        tradingCalls += 1;
+        await delay(15);
+        return stubResult(entry);
+      }
+      return stubResult(entry);
+    });
+
+    const N = 5;
+    const allResults = await Promise.all(
+      Array.from({ length: N }, () => loadMarketResearchContexts('us', now, loadTopic)),
+    );
+
+    expect(tradingCalls).toBe(1);
+    const tradingResults = allResults.map(
+      (results) => results.find((r) => r.entry.category === 'trading')!,
+    );
+    const first = tradingResults[0];
+    expect(first.ok).toBe(true);
+    for (const trading of tradingResults) {
+      expect(trading).toBe(first); // every concurrent caller shares the IDENTICAL resolved success object
+    }
+  });
+
+  it('lets two different topics load in parallel — the singleflight guard is per CockpitKey, not a global lock', async () => {
+    let clock = 0;
+    const now = () => clock;
+    let active = 0;
+    let maxActive = 0;
+    const loadTopic = vi.fn(async (_market: string, entry: BestXManifestEntry) => {
+      active += 1;
+      maxActive = Math.max(maxActive, active);
+      await delay(15);
+      active -= 1;
+      return stubResult(entry);
+    });
+
+    const results = await loadMarketResearchContexts('us', now, loadTopic);
+
+    expect(loadTopic).toHaveBeenCalledTimes(TEST_MANIFEST.length);
+    expect(maxActive).toBeGreaterThanOrEqual(2);
+    expect(results.every((r) => r.ok)).toBe(true);
+  });
+
+  it('is identity-safe: an older attempt settling late must not evict a newer attempt in-flight entry for the same key', async () => {
+    let clock = 0;
+    const now = () => clock;
+    let businessBankingCalls = 0;
+    const deferred: Record<number, { resolve: () => void }> = {};
+    const loadTopic = vi.fn(async (_market: string, entry: BestXManifestEntry) => {
+      if (entry.category !== 'business-banking') return stubResult(entry);
+      businessBankingCalls += 1;
+      const myGeneration = businessBankingCalls;
+      return new Promise<TopicOverlayResult>((resolve) => {
+        deferred[myGeneration] = { resolve: () => resolve(stubResult(entry)) };
+      });
+    });
+
+    // Generation 1 starts and registers its own in-flight entry.
+    const gen1 = loadMarketResearchContexts('us', now, loadTopic);
+
+    // Simulate an external reset racing against a still-pending attempt
+    // (e.g. test teardown between suites) — clears the in-flight map WITHOUT
+    // generation 1 ever settling.
+    __resetTopicOverlayBackoffForTests();
+
+    // Generation 2 starts fresh (the map is empty) and registers ITS OWN
+    // in-flight entry for the identical CockpitKey.
+    const gen2 = loadMarketResearchContexts('us', now, loadTopic);
+
+    // A third caller, arriving while generation 2 is still pending, must
+    // join generation 2 rather than start a third real load.
+    const gen3 = loadMarketResearchContexts('us', now, loadTopic);
+    expect(businessBankingCalls).toBe(2);
+
+    // Let generation 1 settle LATE, after generations 2/3 already exist.
+    deferred[1].resolve();
+    await gen1;
+
+    // A caller arriving right after generation 1's cleanup ran must still
+    // join generation 2 — an identity-UNSAFE cleanup would have deleted
+    // generation 2's map entry here and forced a fresh (3rd) load instead.
+    const gen4 = loadMarketResearchContexts('us', now, loadTopic);
+    expect(businessBankingCalls).toBe(2);
+
+    deferred[2].resolve();
+    await Promise.all([gen2, gen3, gen4]);
+    expect(businessBankingCalls).toBe(2);
+  });
+
+  it('__resetTopicOverlayBackoffForTests clears the in-flight map too, so a reset genuinely re-enables a fresh loader call', async () => {
+    let clock = 0;
+    const now = () => clock;
+    let businessBankingCalls = 0;
+    const deferred: Record<number, { resolve: () => void }> = {};
+    const loadTopic = vi.fn(async (_market: string, entry: BestXManifestEntry) => {
+      if (entry.category !== 'business-banking') return stubResult(entry);
+      businessBankingCalls += 1;
+      const myGeneration = businessBankingCalls;
+      return new Promise<TopicOverlayResult>((resolve) => {
+        deferred[myGeneration] = { resolve: () => resolve(stubResult(entry)) };
+      });
+    });
+
+    const inFlightCall = loadMarketResearchContexts('us', now, loadTopic);
+    __resetTopicOverlayBackoffForTests();
+    const secondCall = loadMarketResearchContexts('us', now, loadTopic);
+
+    // If the reset had NOT cleared the in-flight map, secondCall would have
+    // found generation 1's stale (but still-registered) entry and reused it
+    // instead of starting a genuinely fresh load.
+    expect(businessBankingCalls).toBe(2);
+
+    deferred[1].resolve();
+    deferred[2].resolve();
+    await Promise.all([inFlightCall, secondCall]);
+  });
+});
+
 // --- flattenQualifiedOverlayRows — thin back-compat helper (spec §5.3.1) ---
 
 describe('flattenQualifiedOverlayRows', () => {
