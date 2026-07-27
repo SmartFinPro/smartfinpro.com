@@ -4,6 +4,7 @@ import {
   cockpitKeyFor,
   computeDiscoveryFacets,
   countDiscoveryItems,
+  describeScopeSwitch,
   migrateLegacyTradingShortlist,
   persistScopedShortlist,
   productItemId,
@@ -23,7 +24,9 @@ import type {
   DiscoveryReview,
   ResearchContext,
   ScopedShortlist,
+  ShortlistScopeSnapshot,
   StorageLike,
+  UnavailableScopeReason,
 } from "@/lib/research/catalog-shell-logic";
 
 describe("Discovery identity", () => {
@@ -473,6 +476,37 @@ const memoryStorage = (
   };
 };
 
+// Builds a ShortlistScopeSnapshot (spec §11.2.1) from plain object literals so
+// tests stay readable. `knownScopes` defaults to the union of every key
+// mentioned in `available`/`unavailable` (the normal production shape: every
+// manifest topic ends up in exactly one of the two buckets) plus whatever
+// `extraKnown` keys the test wants to add on top (e.g. a scope that is known
+// but — deliberately, for one defensive test — in neither bucket).
+const makeSnapshot = (
+  available: Record<string, string[]> = {},
+  unavailable: Record<string, UnavailableScopeReason> = {},
+  extraKnown: CockpitKey[] = [],
+): ShortlistScopeSnapshot => {
+  const availableScopes = new Map<CockpitKey, ReadonlySet<string>>(
+    Object.entries(available).map(([key, slugs]) => [
+      key as CockpitKey,
+      new Set(slugs),
+    ]),
+  );
+  const unavailableScopes = new Map<CockpitKey, UnavailableScopeReason>(
+    Object.entries(unavailable).map(([key, reason]) => [
+      key as CockpitKey,
+      reason,
+    ]),
+  );
+  const knownScopes = new Set<CockpitKey>([
+    ...availableScopes.keys(),
+    ...unavailableScopes.keys(),
+    ...extraKnown,
+  ]);
+  return { knownScopes, availableScopes, unavailableScopes };
+};
+
 it("separates same-named topics in different categories", () => {
   expect(shortlistStorageKey("us/credit-repair/companies")).not.toBe(
     shortlistStorageKey("us/debt-relief/companies"),
@@ -601,13 +635,10 @@ it("retries and completes after a partial failure: v2 write succeeds, pointer wr
   expect(storage.getItem(pointerKey)).toBe("trading:trading-platforms");
   expect(storage.getItem(legacyKey)).toBeNull();
 
-  const validScopes = new Map<CockpitKey, ReadonlySet<string>>([
-    [
-      "us/trading/trading-platforms",
-      new Set(["fidelity", "charles-schwab", "etrade"]),
-    ],
-  ]);
-  const restored = restoreScopedShortlist(storage, "us", validScopes);
+  const snapshot = makeSnapshot({
+    "us/trading/trading-platforms": ["fidelity", "charles-schwab", "etrade"],
+  });
+  const restored = restoreScopedShortlist(storage, "us", snapshot);
   expect(restored).toEqual({
     cockpitKey: "us/trading/trading-platforms",
     slugs: ["fidelity", "charles-schwab"],
@@ -636,14 +667,11 @@ it("restore round-trip: a migrated shortlist is actually reachable", () => {
 
   migrateLegacyTradingShortlist(storage);
 
-  const validScopes = new Map<CockpitKey, ReadonlySet<string>>([
-    [
-      "us/trading/trading-platforms",
-      new Set(["fidelity", "charles-schwab", "etrade"]),
-    ],
-  ]);
+  const snapshot = makeSnapshot({
+    "us/trading/trading-platforms": ["fidelity", "charles-schwab", "etrade"],
+  });
 
-  const restored = restoreScopedShortlist(storage, "us", validScopes);
+  const restored = restoreScopedShortlist(storage, "us", snapshot);
 
   expect(restored).toEqual({
     cockpitKey: "us/trading/trading-platforms",
@@ -707,21 +735,192 @@ it("persistScopedShortlist: an empty shortlist removes both the scoped key and t
   ).toBeNull();
 });
 
-it("restoreScopedShortlist: a pointer naming a scope absent from validScopes clears the pointer and that scope's stored key", () => {
+// --- ShortlistScopeSnapshot restore rules (spec §11.2.1) --------------------
+// Six operator-mandated cases. Each pins one of the four restore rules
+// verbatim from the spec: (1)+(4) prove the snapshot must always come from
+// the FULL market catalog, never a filtered view; (2)+(6) prove an
+// `unavailable` scope is non-destructive (byte-identical storage), distinct
+// from (3) genuinely-stale and (5) authoritative-empty, which both DO clear.
+
+it("[mandatory 4] a scope absent from knownScopes is cleared (pointer + scoped key)", () => {
   const storage = memoryStorage({
     "research-shortlist-active:us": "trading:trading-platforms",
     "research-shortlist:us:trading:trading-platforms": '["fidelity"]',
   });
 
-  const validScopes = new Map<CockpitKey, ReadonlySet<string>>(); // trading-platforms is not a known scope on this page
+  // trading-platforms is not a known scope at all on this page (e.g. dropped
+  // from the manifest) — this is the ONLY case that clears storage among the
+  // scenarios in this block.
+  const snapshot = makeSnapshot();
 
-  const restored = restoreScopedShortlist(storage, "us", validScopes);
+  const restored = restoreScopedShortlist(storage, "us", snapshot);
 
   expect(restored).toEqual({ cockpitKey: null, slugs: [] });
   expect(storage.getItem("research-shortlist-active:us")).toBeNull();
   expect(
     storage.getItem("research-shortlist:us:trading:trading-platforms"),
   ).toBeNull();
+});
+
+it("[mandatory 1] a filtered hub view preserves a foreign scope: the snapshot always comes from the full market catalog, so a scope invisible under the current filter is still known+available and its OWN storage is read normally — while an UNRELATED scope's storage is never touched by that restore", () => {
+  const tradingKey: CockpitKey = "us/trading/trading-platforms";
+  const roboKey: CockpitKey = "us/personal-finance/robo-advisors";
+  const storage = memoryStorage({
+    // The active pointer is the trading scope. This simulates a user who is
+    // currently viewing the hub with e.g. `?category=personal-finance` set —
+    // the trading topic is not part of what's rendered right now, but its
+    // stored shortlist is still perfectly valid.
+    "research-shortlist-active:us": "trading:trading-platforms",
+    "research-shortlist:us:trading:trading-platforms": '["fidelity"]',
+    // A second, unrelated scope's storage sitting untouched alongside it.
+    "research-shortlist:us:personal-finance:robo-advisors": '["betterment"]',
+  });
+  const roboScopedKey = "research-shortlist:us:personal-finance:robo-advisors";
+  const roboValueBefore = storage.getItem(roboScopedKey);
+
+  // The snapshot is built from the FULL, unfiltered market catalog (per
+  // §11.2.1) — both scopes are known+available, regardless of which category
+  // filter happens to be active in the UI right now.
+  const snapshot = makeSnapshot({
+    [tradingKey]: ["fidelity", "charles-schwab"],
+    [roboKey]: ["betterment", "wealthfront"],
+  });
+
+  const restored = restoreScopedShortlist(storage, "us", snapshot);
+
+  expect(restored).toEqual({ cockpitKey: tradingKey, slugs: ["fidelity"] });
+  // The foreign (robo) scope's own storage entry is byte-identical — restore
+  // only ever reads/writes the POINTER's own scope.
+  expect(storage.getItem(roboScopedKey)).toBe(roboValueBefore);
+});
+
+it("[mandatory 2] a failed topic (unavailable/'load_failed') leaves storage byte-identical", () => {
+  const tradingKey: CockpitKey = "us/trading/trading-platforms";
+  const storage = memoryStorage({
+    "research-shortlist-active:us": "trading:trading-platforms",
+    "research-shortlist:us:trading:trading-platforms":
+      '["fidelity","charles-schwab"]',
+  });
+  const before = storage.snapshot();
+
+  const snapshot = makeSnapshot({}, { [tradingKey]: "load_failed" });
+
+  const restored = restoreScopedShortlist(storage, "us", snapshot);
+
+  expect(restored).toEqual({ cockpitKey: null, slugs: [] });
+  expect(storage.snapshot()).toEqual(before);
+});
+
+it("[mandatory 3] after a later successful retry (same key now in availableScopes with its slugs) the shortlist restores to exactly those slugs", () => {
+  const tradingKey: CockpitKey = "us/trading/trading-platforms";
+  const storage = memoryStorage({
+    "research-shortlist-active:us": "trading:trading-platforms",
+    "research-shortlist:us:trading:trading-platforms":
+      '["fidelity","charles-schwab"]',
+  });
+
+  // The topic that was previously in backoff/failed has now loaded
+  // successfully and moved into availableScopes with its real slug set.
+  const snapshot = makeSnapshot({
+    [tradingKey]: ["fidelity", "charles-schwab", "etrade"],
+  });
+
+  const restored = restoreScopedShortlist(storage, "us", snapshot);
+
+  expect(restored).toEqual({
+    cockpitKey: tradingKey,
+    slugs: ["fidelity", "charles-schwab"],
+  });
+});
+
+it("[mandatory 5] an available scope with an EMPTY slug set clears the stored shortlist", () => {
+  const tradingKey: CockpitKey = "us/trading/trading-platforms";
+  const storage = memoryStorage({
+    "research-shortlist-active:us": "trading:trading-platforms",
+    "research-shortlist:us:trading:trading-platforms": '["fidelity"]',
+  });
+
+  // The topic loaded successfully but is authoritatively empty (e.g. every
+  // product was delisted) — this is NOT a failure, so it must still clear.
+  const snapshot = makeSnapshot({ [tradingKey]: [] });
+
+  const restored = restoreScopedShortlist(storage, "us", snapshot);
+
+  expect(restored).toEqual({ cockpitKey: null, slugs: [] });
+  expect(storage.getItem("research-shortlist-active:us")).toBeNull();
+  expect(
+    storage.getItem("research-shortlist:us:trading:trading-platforms"),
+  ).toBeNull();
+});
+
+it("[mandatory 6] a known manifest topic with unresolvable config ('missing_topic_config') preserves storage (non-destructive)", () => {
+  const tradingKey: CockpitKey = "us/trading/trading-platforms";
+  const storage = memoryStorage({
+    "research-shortlist-active:us": "trading:trading-platforms",
+    "research-shortlist:us:trading:trading-platforms":
+      '["fidelity","charles-schwab"]',
+  });
+  const before = storage.snapshot();
+
+  const snapshot = makeSnapshot({}, { [tradingKey]: "missing_topic_config" });
+
+  const restored = restoreScopedShortlist(storage, "us", snapshot);
+
+  expect(restored).toEqual({ cockpitKey: null, slugs: [] });
+  expect(storage.snapshot()).toEqual(before);
+});
+
+// --- describeScopeSwitch (spec §11.3.1) -------------------------------------
+
+describe("describeScopeSwitch", () => {
+  const tradingKey: CockpitKey = "us/trading/trading-platforms";
+  const roboKey: CockpitKey = "us/personal-finance/robo-advisors";
+
+  it("reports no-switch when there is no active scope", () => {
+    const snapshot = makeSnapshot({ [roboKey]: ["betterment"] });
+    expect(describeScopeSwitch(snapshot, null, roboKey)).toEqual({
+      kind: "no-switch",
+    });
+  });
+
+  it("reports no-switch when the active and target scopes are the same", () => {
+    const snapshot = makeSnapshot({ [tradingKey]: ["fidelity"] });
+    expect(describeScopeSwitch(snapshot, tradingKey, tradingKey)).toEqual({
+      kind: "no-switch",
+    });
+  });
+
+  it("reports active-available for a verified active scope, so the dialog can use the normal Switch & add wording", () => {
+    const snapshot = makeSnapshot({
+      [tradingKey]: ["fidelity"],
+      [roboKey]: ["betterment"],
+    });
+    expect(describeScopeSwitch(snapshot, tradingKey, roboKey)).toEqual({
+      kind: "active-available",
+      activeCockpitKey: tradingKey,
+    });
+  });
+
+  it("reports active-unavailable with the structured reason for a backoff active scope, so the dialog can render the honest replacement wording instead of a 'clear' claim", () => {
+    const snapshot = makeSnapshot(
+      { [roboKey]: ["betterment"] },
+      { [tradingKey]: "backoff" },
+    );
+    expect(describeScopeSwitch(snapshot, tradingKey, roboKey)).toEqual({
+      kind: "active-unavailable",
+      activeCockpitKey: tradingKey,
+      reason: "backoff",
+    });
+  });
+
+  it("reports active-unavailable for an active scope that is not in the snapshot at all (defensive: neither available nor unavailable)", () => {
+    const snapshot = makeSnapshot({ [roboKey]: ["betterment"] });
+    expect(describeScopeSwitch(snapshot, tradingKey, roboKey)).toEqual({
+      kind: "active-unavailable",
+      activeCockpitKey: tradingKey,
+      reason: "load_failed",
+    });
+  });
 });
 
 it("rejects slugs outside the active Cockpit key", () => {

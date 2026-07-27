@@ -523,6 +523,42 @@ export interface ScopedShortlist {
   slugs: string[];
 }
 
+/** Why a manifest Cockpit key currently has no authoritative slug set (spec
+ *  §11.2.1). `load_failed` and `backoff` both come from the per-topic overlay
+ *  loader (§5.3.1: a topic in its 60s post-failure backoff window is reported
+ *  the same way as one that just failed, since neither can be verified right
+ *  now); `missing_topic_config` is a manifest entry whose `getTopicConfig`
+ *  never resolves — structurally different (a config problem, not a
+ *  transient load problem) but identically non-destructive for restore. */
+export type UnavailableScopeReason =
+  | "load_failed"
+  | "backoff"
+  | "missing_topic_config";
+
+/** Three-tier replacement for the old flat `ReadonlyMap<CockpitKey,
+ *  ReadonlySet<string>>` "validScopes" contract (spec §11.2.1). The old flat
+ *  map could not distinguish "this scope doesn't exist" from "this scope
+ *  exists but couldn't be loaded right now" — both looked like "absent from
+ *  the map" and triggered the same destructive clear. Always built from the
+ *  FULL, unfiltered market catalog: a search/category/topic filter narrowing
+ *  what's currently visible must never shrink `knownScopes`, or a perfectly
+ *  valid stored shortlist for a topic the user simply isn't looking at right
+ *  now would be wiped out as "stale". */
+export interface ShortlistScopeSnapshot {
+  /** Every manifest Cockpit key for this market (static, from
+   *  BEST_X_MANIFEST). The universe against which "genuinely stale" is
+   *  judged. */
+  knownScopes: ReadonlySet<CockpitKey>;
+  /** Successfully loaded keys → their authoritative slug set (possibly
+   *  empty, meaning the topic loaded fine but currently qualifies zero
+   *  products). */
+  availableScopes: ReadonlyMap<CockpitKey, ReadonlySet<string>>;
+  /** Keys that failed to load, are inside the 60s post-failure backoff
+   *  window, or whose manifest entry has no resolvable TopicConfig — each
+   *  with a structured reason so a UI/log consumer knows which. */
+  unavailableScopes: ReadonlyMap<CockpitKey, UnavailableScopeReason>;
+}
+
 export const shortlistStorageKey = (key: CockpitKey): string => {
   const [market, category, topic] = key.split("/");
   return `research-shortlist:${market}:${category}:${topic}`;
@@ -545,16 +581,28 @@ const cockpitKeyFromPointer = (
 };
 
 /** Restores a scoped shortlist without an effect-order hazard: reads the
- *  market pointer, rejects any Cockpit key absent from the caller's
- *  `validScopes` map, then keeps only unique persisted slugs that belong to
- *  that Cockpit's own product set (capped at MAX_SHORTLIST). Any invalid step
- *  clears the leftover pointer/scoped storage and returns a clean empty
- *  state — callers get either a fully valid scope or nothing, never a partial
- *  or stale one. */
+ *  market pointer, then classifies its Cockpit key against the three-tier
+ *  `ShortlistScopeSnapshot` (spec §11.2.1) before touching anything:
+ *
+ *  1. Absent from `knownScopes` → genuinely stale: clear pointer + scoped
+ *     storage, return empty.
+ *  2. Present in `unavailableScopes` (backoff / load failure / missing topic
+ *     config) → storage stays BYTE-IDENTICAL (not even the pointer is
+ *     touched); return empty so the UI goes temporarily inactive without
+ *     destroying anything it cannot currently verify.
+ *  3. Present in `availableScopes` → keep only unique persisted slugs that
+ *     belong to that Cockpit's own authoritative product set (capped at
+ *     MAX_SHORTLIST); an empty raw value, unparsable JSON, or an
+ *     authoritatively empty slug set all clear the same as rule 1's stale
+ *     case (they are not "unavailable" — the scope loaded fine and simply has
+ *     nothing left to restore).
+ *
+ *  Callers get either a fully valid scope, nothing, or (rule 2) an untouched
+ *  pass-through — never a partial or silently-lost one. */
 export function restoreScopedShortlist(
   storage: StorageLike,
   market: Market,
-  validScopes: ReadonlyMap<CockpitKey, ReadonlySet<string>>,
+  snapshot: ShortlistScopeSnapshot,
 ): ScopedShortlist {
   const pointerKey = shortlistPointerKey(market);
   const pointer = storage.getItem(pointerKey);
@@ -568,8 +616,24 @@ export function restoreScopedShortlist(
   const cockpitKey = cockpitKeyFromPointer(market, pointer);
   if (!cockpitKey) return clearAndReturnEmpty();
 
-  const validSlugs = validScopes.get(cockpitKey);
+  if (!snapshot.knownScopes.has(cockpitKey)) {
+    // Rule 1: genuinely stale — this scope no longer exists at all.
+    storage.removeItem(shortlistStorageKey(cockpitKey));
+    return clearAndReturnEmpty();
+  }
+
+  if (snapshot.unavailableScopes.has(cockpitKey)) {
+    // Rule 2: known but currently unverifiable. Deliberately does NOT call
+    // clearAndReturnEmpty() — that would remove the pointer. Nothing in
+    // storage is read, written, or removed here.
+    return { cockpitKey: null, slugs: [] };
+  }
+
+  const validSlugs = snapshot.availableScopes.get(cockpitKey);
   if (!validSlugs) {
+    // Defensive: known but present in neither map (should not happen if a
+    // snapshot builder is internally consistent) — treated like stale rather
+    // than silently trusting unvalidated storage.
     storage.removeItem(shortlistStorageKey(cockpitKey));
     return clearAndReturnEmpty();
   }
@@ -754,6 +818,55 @@ export function toggleScopedShortlist(
   return {
     next: { cockpitKey, slugs: [...current.slugs, slug] },
     requiresScopeSwitch: false,
+  };
+}
+
+/** Discriminated result for the cross-topic switch dialog (spec §11.3.1): it
+ *  tells the UI only whether the CURRENTLY ACTIVE scope (the one about to be
+ *  replaced) is `available` (known-good, normal "Switch & add" wording) or
+ *  `unavailable` (backoff/load failure/missing topic config — the dialog must
+ *  say a currently-unverifiable stored shortlist will be REPLACED, and must
+ *  never claim the user can "clear" a topic they cannot see). No UI text and
+ *  no storage mutation live here; this is a pure read of the snapshot. */
+export type ScopeSwitchDescription =
+  | { kind: "no-switch" }
+  | { kind: "active-available"; activeCockpitKey: CockpitKey }
+  | {
+      kind: "active-unavailable";
+      activeCockpitKey: CockpitKey;
+      reason: UnavailableScopeReason;
+    };
+
+export function describeScopeSwitch(
+  snapshot: ShortlistScopeSnapshot,
+  activeCockpitKey: CockpitKey | null,
+  targetCockpitKey: CockpitKey,
+): ScopeSwitchDescription {
+  if (!activeCockpitKey || activeCockpitKey === targetCockpitKey) {
+    return { kind: "no-switch" };
+  }
+
+  const unavailableReason = snapshot.unavailableScopes.get(activeCockpitKey);
+  if (unavailableReason) {
+    return {
+      kind: "active-unavailable",
+      activeCockpitKey,
+      reason: unavailableReason,
+    };
+  }
+
+  if (snapshot.availableScopes.has(activeCockpitKey)) {
+    return { kind: "active-available", activeCockpitKey };
+  }
+
+  // Defensive: the active scope isn't in either bucket (e.g. it vanished
+  // from the manifest entirely between renders). We cannot verify it any
+  // more than an explicit load failure would allow, so the dialog gets the
+  // same honest "can't verify, will still replace" treatment.
+  return {
+    kind: "active-unavailable",
+    activeCockpitKey,
+    reason: "load_failed",
   };
 }
 
