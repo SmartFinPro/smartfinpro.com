@@ -68,20 +68,42 @@ change that.
 
 ## Catalog size ceiling (spec §5.3: <200 KB per market)
 
-From `__tests__/unit/research-catalog.test.ts` → `buildDiscoveryCatalog` →
-"keeps each market catalog under the 200 KB JSON size ceiling" (a synthetic
-stress fixture: 50 reviews + 15 topics × 12 products = 180 overlay rows per
-market), instrumented once with a temporary `console.log` (reverted before
-commit; not part of the committed diff):
+**Reviewer finding (addressed in the "Review fixes" commits below):** the
+original guard used toy-sized placeholder strings (single words/chars for
+title, description, bestFor, tagline, keyFacts), so its ~22% headroom claim
+did not reflect a real MDX review or a real Cockpit product row and
+understated the actual serialized weight per item. The reviewer's own
+real-world probe found the live `us` catalog today serializes to
+**≈112 KB** — informative context for how much slack this synthetic ceiling
+test still needs to leave for future content growth.
+
+The guard was reworked (commit `test(research): bound the catalog cache
+guard with realistic payloads`) to model the documented capacity — **>=100
+review-backed items + 30 dossier contexts per market** — at real-world
+string lengths instead of placeholders: review title 54 chars, description
+156, bestFor 131; context tagline 40, bestFor 24; 4 `keyFacts` entries at
+realistic label/value lengths (e.g. `"optionsFee": "$0.65 per options
+contract"` rather than `"fee": "$10"`). From
+`__tests__/unit/research-catalog.test.ts` → `buildDiscoveryCatalog` →
+"keeps each market catalog under the 200 KB JSON size ceiling at realistic
+scale (100 reviews + 30 dossier contexts)", instrumented once with a
+temporary `console.log` (reverted before commit; not part of the committed
+diff):
 
 | Market | Items | Serialized bytes | Ceiling |
 |---|---|---|---|
-| us | 230 | 155,825 | < 200,000 |
-| uk | 230 | 155,825 | < 200,000 |
-| ca | 230 | 155,825 | < 200,000 |
-| au | 230 | 155,825 | < 200,000 |
+| us | 130 | 183,983 | < 200,000 |
+| uk | 130 | 183,983 | < 200,000 |
+| ca | 130 | 183,983 | < 200,000 |
+| au | 130 | 183,983 | < 200,000 |
 
-All four markets pass with ~22% headroom under the synthetic stress fixture.
+All four markets pass with ~8% headroom (16,017 bytes) under this
+realistic-payload fixture — a materially tighter margin than the old toy
+fixture's ~22%, which is the point: the guard now bounds against a shape
+close to what real content actually costs, not placeholder strings. Per the
+test's own comment block, if this guard ever fails the serialized catalog
+shape must slim down; the fixture itself must not be shrunk to force a
+pass.
 
 ## Invariant → test mapping (spec §15, invariants 1–11)
 

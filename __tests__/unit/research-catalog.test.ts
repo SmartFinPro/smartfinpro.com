@@ -415,11 +415,32 @@ describe('buildDiscoveryCatalog', () => {
     expect(catalog.items[0].researchContexts).toHaveLength(1);
   });
 
-  it('keeps each market catalog under the 200 KB JSON size ceiling', () => {
+  // Modeled capacity for the guard below: >=100 review-backed items + 30
+  // dossier contexts per market at real-world string lengths (review title
+  // 54 chars, description 156, bestFor 131; context tagline 40, bestFor 24;
+  // 4 keyFacts entries at realistic label/value lengths) — not placeholder
+  // single-word/single-char strings. If this fails, the serialized catalog
+  // shape must slim down — do NOT shrink the fixture to force a pass; that
+  // would silently narrow the ceiling this guard exists to enforce.
+  const REALISTIC_TITLE = 'Fidelity Investments Review: Fees, Tools & Safety 2026'; // 54 chars
+  const REALISTIC_DESCRIPTION =
+    'An independent, fee-by-fee breakdown of trading platforms, account minimums, and customer support quality compared across major online brokers overall today'; // 156 chars
+  const REALISTIC_BEST_FOR =
+    'Long-term investors and retirees who want zero-commission stock trades, strong research tools, and a well-trusted online brokerage.'; // 131 chars
+  const REALISTIC_TAGLINE = 'Zero-commission trades, expert research.'; // 40 chars
+  const REALISTIC_CONTEXT_BEST_FOR = 'Long-term buy-and-holder'; // 24 chars
+  const REALISTIC_KEY_FACTS = {
+    optionsFee: '$0.65 per options contract',
+    stockTrades: '$0 commission per online trade',
+    minDeposit: '$0 account minimum to open',
+    accountFee: '$0 monthly maintenance fee',
+  };
+
+  it('keeps each market catalog under the 200 KB JSON size ceiling at realistic scale (100 reviews + 30 dossier contexts)', () => {
     const markets = ['us', 'uk', 'ca', 'au'] as const;
-    const REVIEW_COUNT = 50;
-    const TOPIC_COUNT = 15;
-    const PRODUCTS_PER_TOPIC = 12;
+    const REVIEW_COUNT = 100;
+    const TOPIC_COUNT = 5;
+    const PRODUCTS_PER_TOPIC = 6; // 5 * 6 = 30 overlay contexts across a few topics
 
     for (const market of markets) {
       const reviews: DiscoveryItem[] = Array.from({ length: REVIEW_COUNT }, (_, i) =>
@@ -427,7 +448,13 @@ describe('buildDiscoveryCatalog', () => {
           id: reviewItemId(`/${market}/trading/review-${i}`),
           market,
           category: 'trading',
-          review: makeReview({ slug: `review-${i}`, href: `/${market}/trading/review-${i}` }),
+          review: makeReview({
+            slug: `review-${i}`,
+            href: `/${market}/trading/review-${i}`,
+            title: REALISTIC_TITLE,
+            description: REALISTIC_DESCRIPTION,
+            bestFor: REALISTIC_BEST_FOR,
+          }),
           researchContexts: [],
         }),
       );
@@ -439,13 +466,21 @@ describe('buildDiscoveryCatalog', () => {
             topic: `topic-${topicIndex}`,
             manifestOrder: topicIndex,
             productSlug: `product-${topicIndex}-${productIndex}`,
+            contextOver: {
+              tagline: REALISTIC_TAGLINE,
+              bestFor: REALISTIC_CONTEXT_BEST_FOR,
+              keyFacts: REALISTIC_KEY_FACTS,
+            },
           }),
         ),
       ).flat();
 
       const { catalog } = buildDiscoveryCatalog(market, reviews, overlay);
       const byteLength = new TextEncoder().encode(JSON.stringify(catalog)).length;
-      expect(byteLength).toBeLessThan(200_000);
+      expect(
+        byteLength,
+        `serialized ${market} catalog at realistic scale (100 reviews + 30 dossier contexts): ${byteLength} bytes, ceiling 200,000`,
+      ).toBeLessThan(200_000);
     }
   });
 });
