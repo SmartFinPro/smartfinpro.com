@@ -2,10 +2,23 @@
 
 Gemessen am 27.07.2026 gegen einen Produktions-Build (`next start`) bei HEAD `29e6016`.
 
-**Regel (Betreiber):** Bis zu dem Task, der alle getesteten Funktionen wieder enthält
-(voraussichtlich Task 5), darf KEINE zusätzliche Spec rot werden, und die roten Tests müssen
-exakt die hier gelisteten sein — Namensgleichheit, nicht bloß gleiche Anzahl. 21/21 werden erst
-bei diesem Task erzwungen.
+**Regel (Betreiber):** Bis zu dem Task, der die jeweils getestete Funktion wieder enthält, darf
+KEINE zusätzliche Spec rot werden. Ein gelisteter Test muss aus **exakt der unten notierten
+Fehlersignatur** rot sein — bleibt er aus einem NEUEN Grund rot, ist das ebenfalls ein
+Stopp-Signal, nicht „weiterhin bekannt rot". Also Namens- UND Ursachengleichheit, nie bloß
+gleiche Anzahl.
+
+**Erwartete Fehlersignatur — für alle 21 identisch (verifiziert):**
+```
+Error: expect(locator).toBeVisible() failed
+Locator: getByPlaceholder('Search platforms…')
+Expected: visible
+Timeout: 5000ms
+```
+Alle drei Specs warten in ihrem Einstieg auf dasselbe Element (`SEARCH = 'Search platforms…'`):
+`research-shell.spec.ts:28`, `research-tracking.spec.ts:86`, `research-a11y.spec.ts:63`.
+Wichtig für die A11y-Tests: Sie scheitern damit VOR dem axe-Scan — es sind keine gefundenen
+WCAG-Verstöße. Ein echter axe-Verstoß wäre eine NEUE Signatur und damit ein Stopp.
 
 ## Ursache (eine einzige, verifiziert)
 
@@ -44,14 +57,27 @@ nicht um neue Verstöße, sondern um nicht erreichbare Vorbedingungen.
 20. WCAG 2.2 AA — filtered + shortlisted state
 21. Core Web Vitals budget (lab) — LCP < 2.5s, CLS < 0.1
 
-## Erwarteter Abbau
+## Erwarteter Abbau — KORRIGIERT (Betreiber-Befund)
 
-- Task 3 (Karten, Dossier-Knoten, Fallback, JSON-LD): #1, #2 und die A11y-/CWV-Tests #18–#21
-  sollten wieder grün werden, sobald Suchfeld und Karten gerendert sind.
-- Task 4 (Client-Shell, Filter, Facetten): #3, #4, #5, #10.
-- Task 5 (Shortlist-UI): #6, #7, #8, #9, #11.
-- Task 6 (Analytics): #12–#17.
-- Spätestens am Ende von Task 5 bzw. 6 gilt wieder 21/21 als hartes Gate.
+Die erste Fassung war in sich widersprüchlich: Sie ordnete die A11y-/CWV-Tests Task 3 zu,
+obwohl deren Helper (`research-a11y.spec.ts:52-63`) zwingend auf das Suchfeld wartet — und die
+Suche kehrt erst mit der Client-Shell in Task 4 zurück. Auflösung:
+
+- **Task 3 (Karten, Dossier-Knoten, Fallback, JSON-LD):** #1, #2 werden grün. Zusätzlich wird
+  der A11y-Helper vom Suchfeld **entkoppelt** und wartet stattdessen auf `main` plus die erste
+  gerenderte Katalogkarte. Das ist inhaltlich richtig, nicht bloß terminlich: A11y und Core Web
+  Vitals des SERVER-gerenderten Browse-Fallbacks — der die Crawlbarkeitslast trägt — dürfen
+  nicht von der Client-Shell abhängen. → #18, #19, #21 werden in Task 3 grün.
+- **Task 4 (Client-Shell, Filter, Facetten):** #3, #4, #5, #10 — und #20
+  („filtered + shortlisted state"), das die Shell inhaltlich BRAUCHT und deshalb ehrlich hier
+  bleibt statt vorgezogen zu werden.
+- **Task 5 (Shortlist-UI):** #6, #7, #8, #9, #11.
+- **Task 6 (Analytics):** #12–#17.
+- Ab Ende Task 6 gilt 21/21 wieder als hartes Gate.
+
+Nach der Entkopplung in Task 3 ändert sich die erwartete Signatur für #18, #19, #21: Sie müssen
+dann grün sein; bleiben sie rot, ist die Ursache zu benennen (axe-Verstoß = echter Fund,
+Timeout auf `main`/Karte = fehlender Fallback).
 
 Alle übrigen e2e-Specs des Repos bleiben durchgehend grün; Unit-Suite und Build sind bei jedem
 Task grün zu halten (aktuell 1657 Unit-Tests, Build exit 0, 4/4 Hub-Routen `○ Static`).
