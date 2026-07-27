@@ -33,6 +33,7 @@ const PROTECTED_PREFIXES = [
   '/tools',
   '/downloads',
   '/trading-platforms',
+  '/research',
 ] as const;
 
 const PROTECTED_EXACT = new Set([

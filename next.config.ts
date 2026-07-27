@@ -217,6 +217,42 @@ const nextConfig: SmartFinNextConfig = {
       },
     ];
 
+    // ============================================================
+    // Research Hub — Filter-State Noindex (spec §7.3, Task 7)
+    // Every known filter query key (q/category/type/status/confidence/
+    // fresh/topic/spec) gets its own `has: [{ type: 'query', key }]` rule so
+    // a filtered Research URL is noindex (still follow — link equity keeps
+    // flowing to the linked reviews/cockpits) while the filterless base
+    // (`/research`, `/:market(uk|ca|au)/research`) stays fully indexable.
+    // Canonical and OpenGraph URLs never carry these params
+    // (lib/research/hub-copy.ts) — this header is the crawler-facing half
+    // of that same contract. One rule per market shape × filter key keeps
+    // each `has` match exact rather than one regex trying to cover both.
+    // ============================================================
+    const researchFilterKeys = [
+      'q',
+      'category',
+      'type',
+      'status',
+      'confidence',
+      'fresh',
+      'topic',
+      'spec',
+    ] as const;
+
+    const researchNoindexHeaders = researchFilterKeys.flatMap((key) => [
+      {
+        source: '/research',
+        has: [{ type: 'query' as const, key }],
+        headers: [{ key: 'X-Robots-Tag', value: 'noindex, follow' }],
+      },
+      {
+        source: '/:market(uk|ca|au)/research',
+        has: [{ type: 'query' as const, key }],
+        headers: [{ key: 'X-Robots-Tag', value: 'noindex, follow' }],
+      },
+    ]);
+
     return [
       // ============================================================
       // Static Assets - Aggressive Caching (1 year, immutable)
@@ -536,6 +572,9 @@ const nextConfig: SmartFinNextConfig = {
         ],
       },
 
+      // Research Hub filter-state noindex rules (see const block above).
+      ...researchNoindexHeaders,
+
       // ============================================================
       // Sitemap & Robots - Moderate Caching
       // ============================================================
@@ -615,6 +654,18 @@ const nextConfig: SmartFinNextConfig = {
       {
         source: '/us',
         destination: '/',
+        permanent: true,
+      },
+
+      // ── Research hub: legacy /us/research → canonical /research ─────────
+      // researchBaseForMarket('us') === '/research' (lib/research/catalog-
+      // shell-logic.ts) — the US Research hub, like the US homepage above,
+      // is unprefixed. No `:path*`/named params in source or destination, so
+      // Next.js passes any incoming query string straight through
+      // (verified: /us/research?q=x&status=y → /research?q=x&status=y).
+      {
+        source: '/us/research',
+        destination: '/research',
         permanent: true,
       },
 
