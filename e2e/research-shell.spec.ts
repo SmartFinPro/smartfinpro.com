@@ -28,11 +28,42 @@ async function gotoResearch(page: Page) {
   await expect(page.getByPlaceholder(SEARCH)).toBeVisible();
 }
 
-/** Add the first N not-yet-shortlisted products. */
+/** Add the first N not-yet-shortlisted TRADING products. Scoped to the
+ *  trading dossier (unified-research-discovery-pr2-hubs plan, Task 5): the
+ *  generalized hub now shows every manifest topic on one page, and
+ *  robo-advisors — not trading-platforms — is first in BEST_X_MANIFEST order
+ *  (lib/comparison/topics/manifest.ts), so an unscoped "first N add buttons
+ *  on the page" would silently shortlist the wrong topic. Scoping-only fix,
+ *  same precedent as commit 7c64d80 (research-discovery-pr2-known-red.md,
+ *  "#3 — echter Fund, behoben") — every existing assertion this helper feeds
+ *  (max-of-four, the Cockpit handoff URL, the sessionStorage round-trip) is
+ *  specifically about the trading dossier and is unchanged. */
 async function shortlist(page: Page, n: number) {
+  const tradingDossier = page.getByTestId('dossier-trading-platforms');
   for (let i = 0; i < n; i++) {
-    await page.getByRole('button', { name: /add .+ to shortlist/i }).first().click();
+    await tradingDossier.getByRole('button', { name: /add .+ to shortlist/i }).first().click();
   }
+}
+
+// Storage v2 keys (lib/research/catalog-shell-logic.ts: shortlistPointerKey /
+// shortlistStorageKey) — read directly so a UI-only assertion can't hide a
+// storage-layer regression (spec's Task 5 Step 5: "Each test reads the exact
+// v2 storage key through page.evaluate()").
+const TRADING_POINTER_KEY = 'research-shortlist-active:us';
+const TRADING_SCOPED_KEY = 'research-shortlist:us:trading:trading-platforms';
+const CREDIT_REPAIR_SCOPED_KEY = 'research-shortlist:us:credit-repair:companies';
+const DEBT_RELIEF_SCOPED_KEY = 'research-shortlist:us:debt-relief:companies';
+
+async function sessionStorageItem(page: Page, key: string): Promise<string | null> {
+  return page.evaluate((k) => window.sessionStorage.getItem(k), key);
+}
+
+/** A full, order-independent sessionStorage snapshot — used to prove Cancel
+ *  leaves storage BYTE-IDENTICAL (spec §11.3.1): a key-by-key read could miss
+ *  an unexpected key appearing or disappearing elsewhere in storage; this
+ *  reads every entry. */
+async function fullSessionStorageSnapshot(page: Page): Promise<Record<string, string>> {
+  return page.evaluate(() => ({ ...window.sessionStorage }));
 }
 
 test.describe('Research Library shell — desktop', () => {
@@ -109,6 +140,12 @@ test.describe('Research Library shell — desktop', () => {
 
   test('shortlist survives the Cockpit round-trip via Back (sessionStorage)', async ({ page }) => {
     await shortlist(page, 2);
+    // The exact v2 storage key already holds both slugs BEFORE the handoff —
+    // proves persistence, not just the restore that follows.
+    const beforeHandoff = await sessionStorageItem(page, TRADING_SCOPED_KEY);
+    expect(beforeHandoff).not.toBeNull();
+    expect(JSON.parse(beforeHandoff!)).toHaveLength(2);
+
     await page.getByRole('region', { name: 'Research shortlist' }).getByRole('link', { name: /compare/i }).click();
     await expect(page).toHaveURL(/view=compare/);
 
@@ -120,6 +157,114 @@ test.describe('Research Library shell — desktop', () => {
     // "Remove … from shortlist" but carry no aria-pressed) don't inflate it.
     await expect(page.getByText('2/4')).toBeVisible();
     await expect(page.getByRole('button', { name: /shortlist/i, pressed: true })).toHaveCount(2);
+    // And the exact v2 key + pointer are what actually drove that restore —
+    // still holding the original two slugs, byte-for-byte.
+    expect(await sessionStorageItem(page, TRADING_POINTER_KEY)).toBe('trading:trading-platforms');
+    expect(await sessionStorageItem(page, TRADING_SCOPED_KEY)).toBe(beforeHandoff);
+  });
+
+  test('shortlist persists across a plain page reload (sessionStorage v2 key)', async ({ page }) => {
+    await shortlist(page, 2);
+    const stored = await sessionStorageItem(page, TRADING_SCOPED_KEY);
+    expect(stored).not.toBeNull();
+    expect(JSON.parse(stored!)).toHaveLength(2);
+
+    await page.reload();
+    await dismissCookies(page);
+    await expect(page.getByPlaceholder(SEARCH)).toBeVisible();
+
+    // Two pressed toggles restored, and the v2 Trading key is unchanged.
+    await expect(page.getByText('2/4')).toBeVisible();
+    await expect(page.getByRole('button', { name: /shortlist/i, pressed: true })).toHaveCount(2);
+    expect(await sessionStorageItem(page, TRADING_POINTER_KEY)).toBe('trading:trading-platforms');
+    expect(await sessionStorageItem(page, TRADING_SCOPED_KEY)).toBe(stored);
+  });
+
+  test('key collision: restoring one companies-topic scope leaves the other companies-topic scope untouched', async ({ page }) => {
+    // us/credit-repair/companies and us/debt-relief/companies share the bare
+    // topic string "companies" but are different Cockpit keys (spec §11.1) —
+    // preseed BOTH v2 scoped keys, point the market pointer at credit-repair
+    // only, and prove restoring it never reads or writes debt-relief's own
+    // entry. Real, currently-qualifying product slugs (not test fixtures).
+    const creditRepairValue = JSON.stringify(['credit-saint', 'sky-blue-credit']);
+    const debtReliefValue = JSON.stringify(['national-debt-relief', 'accredited-debt-relief']);
+
+    await page.addInitScript(
+      ({ pointerKey, creditRepairKey, creditRepairValue, debtReliefKey, debtReliefValue }) => {
+        window.sessionStorage.setItem(pointerKey, 'credit-repair:companies');
+        window.sessionStorage.setItem(creditRepairKey, creditRepairValue);
+        window.sessionStorage.setItem(debtReliefKey, debtReliefValue);
+      },
+      {
+        pointerKey: TRADING_POINTER_KEY,
+        creditRepairKey: CREDIT_REPAIR_SCOPED_KEY,
+        creditRepairValue,
+        debtReliefKey: DEBT_RELIEF_SCOPED_KEY,
+        debtReliefValue,
+      },
+    );
+
+    await gotoResearch(page);
+
+    // The credit-repair scope actually restored: both its products read as
+    // pressed. Located by exact accessible product name (not a dossier
+    // testid) since "companies" is shared between the two topics — and
+    // scoped by `pressed: true` (the card's own toggle carries aria-pressed;
+    // the shortlist bar's chip-✕ button shares the same accessible name but
+    // carries no aria-pressed, same collision the Back test above notes).
+    await expect(
+      page.getByRole('button', { name: 'Remove Credit Saint from shortlist', pressed: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: 'Remove Sky Blue Credit from shortlist', pressed: true }),
+    ).toBeVisible();
+
+    // debt-relief's own storage entry is byte-identical to what was seeded —
+    // restore only ever reads/writes the POINTER's own scope.
+    expect(await sessionStorageItem(page, DEBT_RELIEF_SCOPED_KEY)).toBe(debtReliefValue);
+    // And its products were never marked selected.
+    await expect(
+      page.getByRole('button', { name: /add national debt relief to shortlist/i }),
+    ).toBeVisible();
+  });
+
+  test('scope switch: adding from another research topic is blocked behind a dialog until "Switch & add"', async ({
+    page,
+  }) => {
+    const tradingDossier = page.getByTestId('dossier-trading-platforms');
+    await tradingDossier.getByRole('button', { name: /add .+ to shortlist/i }).first().click();
+    await expect(page.getByText('1/4')).toBeVisible();
+
+    const beforeAttempt = await fullSessionStorageSnapshot(page);
+
+    // robo-advisors is a DIFFERENT Cockpit topic (personal-finance, not
+    // trading) that always renders on /research — first in
+    // BEST_X_MANIFEST order, live with real qualifying products since
+    // 2026-06-29. Adding from it must be blocked, not silently applied.
+    const roboDossier = page.getByTestId('dossier-robo-advisors');
+    await roboDossier.getByRole('button', { name: /add .+ to shortlist/i }).first().click();
+
+    const dialog = page.getByRole('dialog', { name: 'Switch research topic' });
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByText('Shortlists compare within one research topic.')).toBeVisible();
+
+    // Cancel leaves storage byte-identical — the whole point of the dialog.
+    await dialog.getByRole('button', { name: 'Cancel' }).click();
+    await expect(dialog).toBeHidden();
+    await expect(page.getByText('1/4')).toBeVisible();
+    expect(await fullSessionStorageSnapshot(page)).toEqual(beforeAttempt);
+
+    // Retry, this time confirming: the old scope's key is gone, the new
+    // scope's pointer + key are set for the newly-added robo-advisors slug.
+    await roboDossier.getByRole('button', { name: /add .+ to shortlist/i }).first().click();
+    await expect(dialog).toBeVisible();
+    await dialog.getByRole('button', { name: 'Switch & add' }).click();
+    await expect(dialog).toBeHidden();
+
+    expect(await sessionStorageItem(page, TRADING_SCOPED_KEY)).toBeNull();
+    expect(await sessionStorageItem(page, TRADING_POINTER_KEY)).toBe('personal-finance:robo-advisors');
+    await expect(page.getByText('1/4')).toBeVisible();
+    await expect(roboDossier.getByRole('button', { name: /shortlist/i, pressed: true })).toHaveCount(1);
   });
 
   test('the affiliate disclosure is never hidden behind the fixed shortlist bar', async ({ page }) => {

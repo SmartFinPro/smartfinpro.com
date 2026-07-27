@@ -12,12 +12,17 @@
 // already-built nodes to show and where — never re-rendering a card.
 //
 //   - `browseFallback` is the exact same JSX tree `ResearchHubPage` also hands
-//     to the wrapping <Suspense fallback={...}> — the crawlable, unfiltered
-//     browse view (topic-grouped dossiers + featured pin + trailing review
-//     grid). When no filter is active, this component renders that SAME node
-//     verbatim, so there is no visual or structural difference between the
-//     server-rendered fallback a crawler sees and what a hydrated browser
-//     shows by default — no logic is duplicated for that case.
+//     to the wrapping <Suspense fallback={...}> — the crawlable, unfiltered,
+//     no-JS browse view (topic-grouped dossiers + featured pin + trailing
+//     review grid) a crawler or a JS-disabled visitor sees. Once hydrated,
+//     this component builds its OWN default-view render (`DefaultResults`,
+//     Task 5) instead of reusing that opaque node verbatim: every dossier
+//     card now needs a shortlist toggle wrapped onto it (spec §11), and
+//     `browseFallback` is an already-built ReactNode tree with no per-card
+//     seam to inject into. `DefaultResults` mirrors the fallback's grouping/
+//     featured-pin layout exactly (same `data-testid`s, same section
+//     structure) — only the presence of the toggle differs, matching how the
+//     filtered case below already diverges from the fallback's own DOM.
 //   - `nodes` is the flat, keyed map of the OTHER (already default-projected)
 //     cards, used only once a search/facet actually narrows the set. Building
 //     the filtered view still needs the same per-topic
@@ -46,8 +51,10 @@
 // search). `useSearchParams()` stays under the caller's <Suspense> so all
 // four hub routes remain `○ Static` (spec §8).
 //
-// Shortlist UI (Task 5) and analytics (Task 6) deliberately do not live here
-// yet — this component only shows/hides cards and reports the result count.
+// Shortlist UI (Task 5; spec §11) lives in components/research/ResearchShortlist.tsx
+// (the reducer/snapshot/restore contract) and is wired in here — the toggle
+// pill wrapping each dossier card, the fixed compare bar, and the cross-topic
+// switch dialog. Analytics (Task 6) still deliberately do not live here.
 'use client';
 
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
@@ -71,6 +78,12 @@ import {
 } from '@/lib/research/catalog-shell-logic';
 import { formatVerifiedDate } from './VerificationStatus';
 import { FilterChips } from './FilterChips';
+import {
+  ShortlistBar,
+  ShortlistSwitchDialog,
+  ShortlistToggleCard,
+  useScopedResearchShortlist,
+} from './ResearchShortlist';
 
 const STATUS_LABEL: Record<ResearchStatus, string> = {
   audited: 'Audited',
@@ -107,6 +120,13 @@ interface ResolvedEntry {
   topicLabel: string | null;
   isFeatured: boolean;
   node: ReactNode;
+  // Cockpit identity for the shortlist toggle (spec §11.1) — null for a
+  // review-kind entry (a plain MDX review has no Cockpit product to shortlist
+  // or compare; the shortlist only ever holds products from exactly one
+  // cockpitKey).
+  cockpitKey: CockpitKey | null;
+  productSlug: string | null;
+  displayName: string | null;
 }
 
 /** Resolves one projection to its already-built opaque node, applying the
@@ -121,7 +141,17 @@ function resolveEntry(
     const key = projectionNodeKey(projection.itemId, null);
     const node = nodeByKey.get(key);
     return node
-      ? { key, kind: 'review', topic: null, topicLabel: null, isFeatured: false, node }
+      ? {
+          key,
+          kind: 'review',
+          topic: null,
+          topicLabel: null,
+          isFeatured: false,
+          node,
+          cockpitKey: null,
+          productSlug: null,
+          displayName: null,
+        }
       : null;
   }
 
@@ -136,6 +166,9 @@ function resolveEntry(
       topicLabel: context.topicLabel,
       isFeatured: context.status === 'audited' && context.auditedRank === 1,
       node,
+      cockpitKey: context.cockpitKey,
+      productSlug: context.productSlug,
+      displayName: context.displayName,
     };
   }
 
@@ -150,6 +183,9 @@ function resolveEntry(
         topicLabel: null,
         isFeatured: false,
         node: reviewNode,
+        cockpitKey: null,
+        productSlug: null,
+        displayName: null,
       };
     }
   }
@@ -243,6 +279,65 @@ function FilteredResults({ entries }: { entries: ResolvedEntry[] }) {
   );
 }
 
+/** The default (unfiltered) browse view, rendered client-side once hydrated —
+ *  mirrors `ResearchHubPage`'s server-rendered `BrowseFallback` exactly
+ *  (same topic grouping, same per-topic featured-winner pin, same section
+ *  markup/testids), the one structural difference being that every dossier
+ *  entry here already carries its shortlist toggle (Task 5; `browseFallback`
+ *  itself — the Suspense fallback / no-JS view — never does, since the
+ *  shortlist is a pure client enhancement). Kept as its own function, rather
+ *  than reusing the `browseFallback` prop for this branch, precisely so the
+ *  toggle can wrap each card: `browseFallback` is an opaque, already-built
+ *  ReactNode tree with no per-card seam to inject into. */
+function DefaultResults({ entries }: { entries: ResolvedEntry[] }) {
+  const { dossierGroups, reviewEntries } = groupResolvedEntries(entries);
+
+  return (
+    <>
+      {dossierGroups.map((group) => {
+        const featured = group.entries.find((entry) => entry.isFeatured);
+        const rest = featured ? group.entries.filter((entry) => entry.key !== featured.key) : group.entries;
+
+        return (
+          <section
+            key={group.topic}
+            data-testid={`dossier-${group.topic}`}
+            className="mx-auto px-6 py-8 sm:py-12"
+            style={{ maxWidth: '1280px' }}
+          >
+            <h2 className="mb-6 text-2xl font-bold" style={{ color: 'var(--sfp-ink)' }}>
+              {group.topicLabel}
+            </h2>
+            {featured && <div className="mb-6">{featured.node}</div>}
+            <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+              {rest.map((entry) => (
+                <div key={entry.key}>{entry.node}</div>
+              ))}
+            </div>
+          </section>
+        );
+      })}
+
+      {reviewEntries.length > 0 && (
+        <section
+          data-testid="research-review-grid"
+          className="mx-auto px-6 py-8 sm:py-12"
+          style={{ maxWidth: '1280px' }}
+        >
+          <h2 className="mb-6 text-2xl font-bold" style={{ color: 'var(--sfp-ink)' }}>
+            More independent reviews
+          </h2>
+          <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+            {reviewEntries.map((entry) => (
+              <div key={entry.key}>{entry.node}</div>
+            ))}
+          </div>
+        </section>
+      )}
+    </>
+  );
+}
+
 const hasActiveDiscoveryFilters = (filters: DiscoveryFilters): boolean =>
   filters.query.trim() !== '' ||
   filters.category !== null ||
@@ -253,7 +348,12 @@ const hasActiveDiscoveryFilters = (filters: DiscoveryFilters): boolean =>
   filters.topic !== null ||
   filters.specs.length > 0;
 
-export function ResearchHub({ market, items, nodes, browseFallback }: ResearchHubProps) {
+// `browseFallback` is intentionally not destructured here — see the file
+// header: it's still what `ResearchHubPage` hands to `<Suspense fallback>`
+// for the crawlable/no-JS view, but once this component itself renders
+// client-side, `DefaultResults` (not `browseFallback`) owns the unfiltered
+// view so every dossier card can carry a shortlist toggle.
+export function ResearchHub({ market, items, nodes }: ResearchHubProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -341,6 +441,36 @@ export function ResearchHub({ market, items, nodes, browseFallback }: ResearchHu
     facets.statuses.length >= 2 ||
     facets.confidences.length >= 2 ||
     facets.freshnessDates.length >= 2;
+
+  // Restore-safe, multi-topic shortlist (Task 5; spec §11) — built from
+  // `items`, the FULL unfiltered market catalog, never from `resolvedEntries`
+  // (the current search/category/topic projection). See
+  // components/research/ResearchShortlist.tsx for the three-tier
+  // ShortlistScopeSnapshot this depends on.
+  const shortlist = useScopedResearchShortlist(market, items);
+
+  // Every dossier entry gets its shortlist toggle wrapped on BEFORE grouping —
+  // `DefaultResults`/`FilteredResults` stay plain layout components with no
+  // shortlist awareness of their own. A review-kind entry (no Cockpit
+  // identity) passes through unwrapped.
+  const entriesForRender: ResolvedEntry[] = resolvedEntries.map((entry) => {
+    if (entry.kind !== 'dossier' || !entry.cockpitKey || !entry.productSlug) return entry;
+    const cockpitKey = entry.cockpitKey;
+    const productSlug = entry.productSlug;
+    const { selected, disabled } = shortlist.cardState(cockpitKey, productSlug);
+    return {
+      ...entry,
+      node: (
+        <ShortlistToggleCard
+          name={entry.displayName ?? productSlug}
+          node={entry.node}
+          selected={selected}
+          disabled={disabled}
+          onToggle={() => shortlist.toggle(cockpitKey, productSlug)}
+        />
+      ),
+    };
+  });
 
   return (
     <div>
@@ -445,9 +575,9 @@ export function ResearchHub({ market, items, nodes, browseFallback }: ResearchHu
       </div>
 
       {!isActive ? (
-        browseFallback
+        <DefaultResults entries={entriesForRender} />
       ) : resultCount > 0 ? (
-        <FilteredResults entries={resolvedEntries} />
+        <FilteredResults entries={entriesForRender} />
       ) : (
         <div
           className="mx-auto px-6 py-16 text-center"
@@ -464,6 +594,22 @@ export function ResearchHub({ market, items, nodes, browseFallback }: ResearchHu
           </button>
         </div>
       )}
+
+      {shortlist.pendingSwitchDescription && (
+        <ShortlistSwitchDialog
+          description={shortlist.pendingSwitchDescription}
+          onCancel={shortlist.cancelSwitch}
+          onConfirm={shortlist.confirmSwitch}
+        />
+      )}
+
+      <ShortlistBar
+        slugs={shortlist.slugs}
+        displayNameFor={shortlist.displayNameFor}
+        onRemove={shortlist.removeSlug}
+        onClearAll={shortlist.clearAll}
+        compareUrl={shortlist.compareUrl}
+      />
     </div>
   );
 }
