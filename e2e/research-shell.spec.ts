@@ -312,6 +312,44 @@ test.describe('Research Library shell — desktop', () => {
   });
 });
 
+// unified-research-discovery-pr2-hubs plan, Task 8 (Global Constraints:
+// "Header and market switcher must work at 1024, 1100, and 1280 pixels") —
+// 1024px is the Tailwind `lg` breakpoint (components/marketing/header.tsx's
+// desktop nav is `hidden lg:flex`), the exact width where the desktop
+// Research link and market switcher first appear; 1100/1280 prove the gap
+// holds as the viewport grows. Needs real hydration (javaScriptEnabled,
+// already set file-wide above) — the header renders as the 'us' market
+// until it mounts (see research-hub-markets.spec.ts's own note on this).
+test.describe('Research hub header — responsive breakpoints', () => {
+  for (const width of [1024, 1100, 1280]) {
+    test(`at ${width}px the Research link and market switcher are both visible and never overlap`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto('/research');
+      await dismissCookies(page);
+
+      const researchLink = page.getByRole('link', { name: 'Research', exact: true });
+      const marketSwitcher = page.getByRole('button', { name: /United States/i });
+      await expect(researchLink).toBeVisible();
+      await expect(marketSwitcher).toBeVisible();
+
+      const researchBox = await researchLink.boundingBox();
+      const switcherBox = await marketSwitcher.boundingBox();
+      expect(researchBox, `Research link has no bounding box at ${width}px`).not.toBeNull();
+      expect(switcherBox, `market switcher has no bounding box at ${width}px`).not.toBeNull();
+
+      // The desktop nav reads left-to-right (nav groups -> Research ->
+      // market switcher -> Get Started), so the Research link's right edge
+      // must sit at or before the market switcher's left edge — no overlap.
+      expect(
+        researchBox!.x + researchBox!.width,
+        `Research link overlaps the market switcher at ${width}px`,
+      ).toBeLessThanOrEqual(switcherBox!.x + 1);
+    });
+  }
+});
+
 test.describe('Research Library shell — mobile', () => {
   test.use({ viewport: { width: 390, height: 844 } });
   test.beforeEach(async ({ page }) => gotoResearch(page));

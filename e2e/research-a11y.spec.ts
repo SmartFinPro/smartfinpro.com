@@ -70,6 +70,25 @@ async function gotoResearch(page: Page) {
   await expect(page.locator('main article').first()).toBeVisible();
 }
 
+/** Task 8 — this file audited only the US hub through Task 7; the plan's
+ *  release gate needs at least one NON-US market proven too, since a11y
+ *  bugs can hide in market-specific copy/data (e.g. a UK-only status mix,
+ *  FCA-labelled content) that /research's US catalog never exercises. UK is
+ *  the market every other Task-8 spec already treats as the second market
+ *  under test (research-hub-markets.spec.ts, the raw-HTML fixture). */
+async function gotoUkResearch(page: Page) {
+  await page.addInitScript(() => {
+    try {
+      window.localStorage.setItem('cookie-consent', 'essential');
+    } catch {
+      /* storage blocked — the banner shows, and axe audits it too. Acceptable. */
+    }
+  });
+  await page.goto('/uk/research');
+  await expect(page.locator('main')).toBeVisible();
+  await expect(page.locator('main article').first()).toBeVisible();
+}
+
 async function analyze(page: Page): Promise<AxeViolation[]> {
   // Freeze transitions before measuring. The shortlist buttons animate their
   // background (transition-colors), and axe sampling mid-transition reads the
@@ -153,6 +172,49 @@ test.describe('Research Library — WCAG 2.2 AA', () => {
     // The compare CTA appears at >= 2 — proof the bar is really mounted before
     // we audit it, instead of a bare timeout.
     await expect(page.getByRole('link', { name: /compare/i }).last()).toBeVisible();
+
+    const violations = await analyze(page);
+    expect(violations, `axe found ${violations.length} violation(s):${format(violations)}`).toEqual([]);
+  });
+});
+
+test.describe('Research Library — WCAG 2.2 AA (UK hub)', () => {
+  test('the UK default browse view has no violations (desktop)', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await gotoUkResearch(page);
+
+    const violations = await analyze(page);
+    expect(violations, `axe found ${violations.length} violation(s):${format(violations)}`).toEqual([]);
+  });
+
+  test('the UK default browse view has no violations (390px)', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await gotoUkResearch(page);
+
+    const violations = await analyze(page);
+    expect(violations, `axe found ${violations.length} violation(s):${format(violations)}`).toEqual([]);
+  });
+
+  test('the UK filtered + shortlisted state has no violations', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await gotoUkResearch(page);
+
+    // Shortlist two products — any two. The a11y surface under test is the
+    // fixed shortlist bar itself (aria-live count, the disabled-toggle
+    // title, the Edit sheet), not which products ended up in it.
+    await page.getByRole('button', { name: /add .+ to shortlist/i }).first().click();
+    await page.getByRole('button', { name: /add .+ to shortlist/i }).first().click();
+    await expect(page.getByRole('link', { name: /compare/i }).last()).toBeVisible();
+
+    // Apply a filter via the FIRST chip in the "Category" facet row — located
+    // by the facet's own visible label text, not a positional/aria-pressed
+    // guess, so this can never accidentally re-click one of the two shortlist
+    // toggles above (which also carry aria-pressed). The UK catalog spans
+    // nine BEST_X_MANIFEST topics across nine different categories
+    // (lib/comparison/topics/manifest.ts), so the Category facet is always
+    // rendered (>= 2 distinct values, spec §6.2's render gate).
+    const categoryChip = page.getByText('Category', { exact: true }).locator('xpath=following-sibling::button[1]');
+    await categoryChip.click();
 
     const violations = await analyze(page);
     expect(violations, `axe found ${violations.length} violation(s):${format(violations)}`).toEqual([]);

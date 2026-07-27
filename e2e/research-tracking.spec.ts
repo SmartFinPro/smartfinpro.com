@@ -162,6 +162,15 @@ test.describe('Research Library tracking (research_v1)', () => {
     expect(visibleCount).toBe(renderedCount);
     expect(props(events[0]).schemaVersion).toBe('research_v1');
     expect(props(events[0]).market).toBe('us');
+    // Task 8 — "on the wire" verification (unified-research-discovery-pr2-hubs
+    // plan): research_search is one of the two GLOBAL events (the hub itself
+    // binds its tracker with topic: 'hub' for its whole lifetime,
+    // ResearchHub.tsx), never an item event, so it always carries
+    // surface: 'hub' and topic: 'hub' — never the trading dossier's own
+    // topic, which only ITEM events (review click, evidence open, shortlist,
+    // handoff) report.
+    expect(props(events[0]).surface).toBe('hub');
+    expect(props(events[0]).topic).toBe('hub');
     // The privacy rule, asserted on the wire: the raw string is nowhere in it.
     expect(JSON.stringify(events[0]).toLowerCase()).not.toContain('schwab');
   });
@@ -181,6 +190,84 @@ test.describe('Research Library tracking (research_v1)', () => {
     // DOM cards, plus the secondary witness that the announcement matches.
     expect(props(event).resultCount).toBe(renderedCount);
     expect(visibleCount).toBe(renderedCount);
+    // Task 8 — same GLOBAL-event contract as research_search above: the
+    // hub-wide status/confidence/fresh chips always report surface: 'hub'
+    // and topic: 'hub', never an item's own topic.
+    expect(props(event).surface).toBe('hub');
+    expect(props(event).topic).toBe('hub');
+  });
+
+  // Task 8 (unified-research-discovery-pr2-hubs plan) — spec invariant 13
+  // ("Hero, Facetten, CTA und Events melden konsistente Counts", §15). The
+  // shipped PR 2 UI does not paint a literal number on each Category chip
+  // (FilterChips.tsx renders `option.label` only; `count` is computed by
+  // computeDiscoveryFacets but never painted) and has no distinct "view all"
+  // control of its own — that CTA is the Quick Finder's `trigger: 'view_all'`
+  // (lib/analytics/research-events.ts), which ships in PR 3. This test proves
+  // the invariant through the count-bearing surfaces that DO exist today:
+  // the hero's default catalog count, the sum of every Category chip's own
+  // (independently, DOM-counted) result — mathematically the same number
+  // computeDiscoveryFacets would report for that category, since every
+  // product has exactly one category — and one tracked
+  // research_filter_change's resultCount. Each is checked against the
+  // independently-rendered article count for ITS OWN state, never against
+  // another tracked/announced value, so this cannot pass by two numbers
+  // merely agreeing with each other while both are wrong.
+  test('invariant 13: hero, category totals, and a tracked filter all agree with what is actually rendered', async ({
+    page,
+  }) => {
+    test.setTimeout(45_000);
+
+    // The hero's default "Products" tile (components/research/
+    // ResearchHubPage.tsx's HeroMetricTile: a {value} div immediately
+    // followed by a {label} div) — read via its own visible label text,
+    // never a CSS-class or positional guess.
+    const heroValueText = await page
+      .getByText('Products', { exact: true })
+      .locator('xpath=preceding-sibling::div[1]')
+      .textContent();
+    const heroCount = Number(heroValueText);
+    expect(Number.isFinite(heroCount), `hero "Products" tile did not read as a number: "${heroValueText}"`).toBe(
+      true,
+    );
+
+    // Ground truth: every card actually rendered on the unfiltered page,
+    // across every dossier section AND the flat "more independent reviews"
+    // grid.
+    const defaultRenderedCount = await renderedResultCount(page);
+    expect(heroCount).toBe(defaultRenderedCount);
+
+    // Sum of category facet counts — click through every Category chip in
+    // turn (a REAL filter each time, not a stubbed number), counting the
+    // independently-rendered total, then Reset before the next chip. Located
+    // by the "Category" facet's own visible label text (never a positional/
+    // aria-pressed guess, which could just as easily hit a shortlist toggle).
+    const categoryChipsLocator = () =>
+      page.getByText('Category', { exact: true }).locator('xpath=following-sibling::button');
+    const categoryCount = await categoryChipsLocator().count();
+    expect(categoryCount, 'no Category facet chips found — is hasAnyFacetRow gated on it?').toBeGreaterThan(0);
+
+    let categorySum = 0;
+    for (let i = 0; i < categoryCount; i += 1) {
+      await categoryChipsLocator().nth(i).click();
+      await expect(page).toHaveURL(/[?&]category=/);
+      categorySum += await renderedResultCount(page);
+      await page.getByRole('button', { name: 'Reset' }).click();
+      await expect(page).toHaveURL(/\/research(\?)?$/);
+    }
+    expect(categorySum, 'sum of every Category chip’s own count must equal the unfiltered total').toBe(
+      defaultRenderedCount,
+    );
+
+    // A tracked filter's resultCount — the same status=provisional filter
+    // "a filter chip sends..." above already exercises — checked against the
+    // independently-rendered count for THAT filtered state.
+    await page.getByRole('button', { name: 'In verification', exact: true }).click();
+    await expect(page).toHaveURL(/status=provisional/);
+    const filteredRenderedCount = await renderedResultCount(page);
+    await expect.poll(() => named(batches, 'research_filter_change').length).toBeGreaterThan(0);
+    const filterEvent = named(batches, 'research_filter_change')[0];
+    expect(props(filterEvent).resultCount).toBe(filteredRenderedCount);
   });
 
   test('opening a card evidence disclosure sends research_evidence_open (open only)', async ({ page }) => {
