@@ -218,14 +218,14 @@ function WinnerPanel({
             </ul>
             <p className="mt-2 leading-relaxed" style={{ color: 'rgba(255,255,255,0.5)' }}>
               Component ratings — not a weighted formula.{' '}
-              <Link href="/research#methodology" className="underline" style={{ color: 'rgba(255,255,255,0.85)' }}>
+              <Link href="/methodology" className="underline" style={{ color: 'rgba(255,255,255,0.85)' }}>
                 Methodology
               </Link>
             </p>
           </details>
         ) : (
           <Link
-            href="/research#methodology"
+            href="/methodology"
             className="inline-flex items-center gap-1 text-xs font-semibold underline"
             style={{ color: 'rgba(255,255,255,0.85)' }}
           >
@@ -472,7 +472,7 @@ export function ResearchCard({ item, variant = 'standard' }: ResearchCardProps) 
           <div className="flex-shrink-0 text-right">
             <ScoreBadge score={audited.score} size="default" rank={rank} />
             <Link
-              href="/research#methodology"
+              href="/methodology"
               className="mt-1 inline-block text-[11px] font-medium underline"
               style={{ color: 'var(--sfp-navy)' }}
             >
