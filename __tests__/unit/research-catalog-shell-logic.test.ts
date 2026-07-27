@@ -402,6 +402,33 @@ it("does not overwrite an existing v2 value during pilot migration", () => {
   expect(storage.getItem("research-shortlist:us:trading-platforms")).toBeNull();
 });
 
+it("migration sets the market pointer when none exists", () => {
+  const storage = memoryStorage({
+    "research-shortlist:us:trading-platforms": '["fidelity"]',
+  });
+  migrateLegacyTradingShortlist(storage);
+  expect(storage.getItem("research-shortlist-active:us")).toBe(
+    "trading:trading-platforms",
+  );
+  expect(
+    storage.getItem("research-shortlist:us:trading:trading-platforms"),
+  ).toBe('["fidelity"]');
+  expect(
+    storage.getItem("research-shortlist:us:trading-platforms"),
+  ).toBeNull();
+});
+
+it("migration never overwrites an existing pointer", () => {
+  const storage = memoryStorage({
+    "research-shortlist:us:trading-platforms": '["fidelity"]',
+    "research-shortlist-active:us": "personal-finance:robo-advisors",
+  });
+  migrateLegacyTradingShortlist(storage);
+  expect(storage.getItem("research-shortlist-active:us")).toBe(
+    "personal-finance:robo-advisors",
+  );
+});
+
 it("rejects slugs outside the active Cockpit key", () => {
   expect(
     buildScopedCompareUrl(

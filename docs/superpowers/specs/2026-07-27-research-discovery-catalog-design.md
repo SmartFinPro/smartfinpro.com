@@ -547,6 +547,10 @@ einmalig in `research-shortlist:us:trading:trading-platforms` migriert, wenn
 der v2-Key noch nicht existiert, und anschließend gelöscht. Bestehender
 v2-Zustand wird nie überschrieben.
 
+Die Migration setzt zugleich den Markt-Pointer auf den migrierten Scope,
+sofern noch kein Pointer existiert; ein vorhandener Pointer wird nie
+überschrieben.
+
 ### 11.3 Cross-Topic-Verhalten
 
 Ein Add aus einem anderen Cockpit wird zunächst blockiert und erklärt:

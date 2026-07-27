@@ -639,17 +639,27 @@ export function persistScopedShortlist(
 
 /** One-time migration of the Research Library pilot's flat sessionStorage key
  *  into the v2 scoped key for us/trading/trading-platforms. Never overwrites
- *  an existing v2 value; always deletes the legacy key once resolved. */
+ *  an existing v2 value; always deletes the legacy key once resolved. Also
+ *  points the us market pointer at the migrated scope so the restore path
+ *  (which starts at the pointer) can actually find it — but never overwrites
+ *  an existing pointer. */
 export function migrateLegacyTradingShortlist(storage: StorageLike): void {
   const legacyKey = "research-shortlist:us:trading-platforms";
   const legacyValue = storage.getItem(legacyKey);
   if (legacyValue === null) return;
 
-  const v2Key = shortlistStorageKey("us/trading/trading-platforms");
+  const cockpitKey: CockpitKey = "us/trading/trading-platforms";
+  const v2Key = shortlistStorageKey(cockpitKey);
   if (storage.getItem(v2Key) === null) {
     storage.setItem(v2Key, legacyValue);
   }
   storage.removeItem(legacyKey);
+
+  const pointerKey = shortlistPointerKey("us");
+  if (storage.getItem(pointerKey) === null) {
+    const [, category, topic] = cockpitKey.split("/");
+    storage.setItem(pointerKey, `${category}:${topic}`);
+  }
 }
 
 /** Toggles one slug within `cockpitKey`. Adding beyond MAX_SHORTLIST or a slug
