@@ -75,17 +75,27 @@ Suche kehrt erst mit der Client-Shell in Task 4 zurück. Auflösung:
   statt Warte-Timeout) — also genau die Verwischung, die die Signatur-Regel verhindern soll.
   #1 und #2 wandern deshalb ehrlich zu **Task 4**, wo der Helper mit der Shell ohnehin wieder
   trägt. Ihre Signatur bleibt bis dahin die allowlistete.
-- **Task 4 (Client-Shell, Filter, Facetten):** #1, #2 (Helper-bedingt, s. o.), #3, #4, #5, #10 —
-  und #20 („filtered + shortlisted state"), das die Shell inhaltlich BRAUCHT und deshalb ehrlich
-  hier bleibt statt vorgezogen zu werden. #20 steht bis dahin als `test.fixme()` mit Verweis auf
-  diese Liste (skipped, nicht rot) — es wird in Task 4 wieder scharf gestellt, NICHT gelöscht.
+- **Task 4 (Client-Shell, Filter, Facetten):** #1, #2 (Helper-bedingt, s. o.), #3, #4, #5, #10.
+- **#20 („filtered + shortlisted state") gehört zu Task 5, nicht zu Task 4** (Betreiber-Korrektur):
+  Der gefilterte Teil des Zustands existiert seit Task 4, der SHORTLISTED-Teil braucht die
+  Shortlist-Toggles aus Task 5. Steht bis dahin als `test.fixme()` mit Verweis auf diese Liste
+  (skipped, nicht rot) und wird in Task 5 wieder scharf gestellt, NICHT gelöscht.
 - **Task 5 (Shortlist-UI):** #6, #7, #8, #9, #11.
 - **Task 6 (Analytics):** #12–#17.
 - Ab Ende Task 6 gilt 21/21 wieder als hartes Gate.
 
 ## Signatur-Fortschreibung nach Task 4 (Pflicht, sonst wird die Regel zu Rauschen)
 
-Stand nach Task 4: **9 grün** (#1, #2, #3, #4, #5, #10, #18, #19, #21) · **11 rot** · #20 skipped.
+Stand nach Task 4 — Zählung korrigiert (Betreiber-Befund; meine erste Angabe „9 grün / 11 rot"
+war inkonsistent, sie zählte #3 nach dem Fix als grün, ließ #17 aber aus der Grün-Spalte und
+korrigierte die Rot-Zahl nicht mit):
+
+- **Technisch:** 10 passed · 10 failed · 1 skipped (#20).
+- **Semantisch:** **9 belastbar grün** (#1, #2, #3, #4, #5, #10, #18, #19, #21) ·
+  **#17 vakuös bestanden** (zählt nicht als Abdeckung, s. u.) · **10 rot** · #20 skipped.
+
+Diese Doppelzählung ist Absicht: Die technische Zahl ist das, was der Runner meldet; die
+semantische ist das, worauf man sich berufen darf.
 Die verbliebenen roten Tests scheitern NICHT mehr an der ursprünglichen Signatur — das Suchfeld
 existiert jetzt. Sie sind einen Schritt weiter gescheitert, was zulässiger Fortschritt ist. Die
 neuen erwarteten Signaturen sind deshalb hier fortgeschrieben; ab jetzt gelten DIESE:
@@ -104,10 +114,12 @@ RÄUMLICH (Scoping auf den Trading-Dossier-Container, wie alle Geschwister-Asser
 Tests); keine Zahl, keine Erwartung geändert.
 
 **#17 — grün, aber VAKUÖS.** „compare/methodology-Links zählen NICHT als Review-Klick" besteht
-derzeit nur, weil überhaupt keine Events feuern. Das ist keine echte Abdeckung. **Auflage:**
-In Task 6 muss #17 nach dem Verdrahten der Analytics erneut belegt werden — mit dem Nachweis,
-dass Events fließen UND die genannten Links trotzdem nicht gezählt werden. Bis dahin gilt #17
-nicht als erfüllt.
+derzeit nur, weil überhaupt keine Events feuern. Das ist keine echte Abdeckung. **Auflage für
+Task 6 (Betreiber, verbindlich):** Der Test muss BEIDE behaupteten Negativfälle tatsächlich
+ausführen — einen Klick auf den **Compare**-Link UND einen auf den **Methodology**-Link — und
+zusätzlich ein **positives Kontroll-Event auf derselben Seite** auslösen (z. B. einen echten
+Review-Klick, der gezählt WIRD). Nur diese Kombination beweist, dass die Negativaussage aus
+korrekter Filterung stammt und nicht aus totem Tracking. Bis dahin gilt #17 nicht als erfüllt.
 
 Nach der Entkopplung in Task 3 ändert sich die erwartete Signatur für #18, #19, #21: Sie müssen
 dann grün sein; bleiben sie rot, ist die Ursache zu benennen (axe-Verstoß = echter Fund,
