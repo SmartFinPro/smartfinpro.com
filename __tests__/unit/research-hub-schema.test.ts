@@ -47,6 +47,14 @@ vi.mock('@/lib/comparison/topics/index', () => ({
 vi.mock('@/lib/comparison/cta', () => ({
   resolveCockpitCta: () => ({ label: 'Visit site', href: '#', external: false, tracked: false, ctaMode: 'unavailable', destinationType: 'unavailable' }),
 }));
+// The interactive client shell reads next/navigation's useSearchParams(),
+// which throws outside a real Next.js app-router context. Stubbed to a noop
+// component so a non-empty ResearchHubBody can be rendered under
+// renderToStaticMarkup — the hero metrics section this file's newest tests
+// assert on lives entirely OUTSIDE this component, in ResearchHubBody itself.
+vi.mock('@/components/research/ResearchHub', () => ({
+  ResearchHub: () => null,
+}));
 
 // Imported AFTER the mocks are registered.
 import { buildDiscoveryCatalog } from '@/lib/research/catalog';
@@ -417,5 +425,80 @@ describe('ResearchHubBody — empty catalog', () => {
     // No product ItemList for an empty catalog (Breadcrumb's own unrelated
     // BreadcrumbList JSON-LD is expected and fine).
     expect(html).not.toContain('"@type":"ItemList"');
+  });
+});
+
+// --- Hero "Updated" tile never dates a hub by rows that failed the audit ---
+// (PR 2 review finding #1, live defect): VerificationStatus.tsx documents
+// `dataVerifiedAt` as "ignored unless status === 'audited'" — a provisional
+// row can carry a real ISO date (data was collected, it just didn't clear
+// every audited invariant) and that date must never surface as the hub's
+// freshness claim. Measured live on uk/ca/au: hero read "Updated Jul 11,
+// 2026" beside "0 Audited" / "0 Verified data points" — sourced entirely
+// from a row that FAILED the gate.
+
+function renderHeroSection(market: 'us' | 'uk' | 'ca' | 'au', overlay: ReturnType<typeof makeOverlayRow>[]): string {
+  const { catalog, dossierRows } = buildDiscoveryCatalog(market, [], overlay);
+  const nodes = buildResearchHubNodes({ catalog, dossierRows });
+  const copy = getResearchHubCopy(market);
+  const scopeSnapshot: ShortlistScopeSnapshotDTO = { knownScopes: [], availableScopes: [], unavailableScopes: [] };
+  return renderToStaticMarkup(
+    ResearchHubBody({
+      market,
+      catalog,
+      copy,
+      nodes,
+      scopeSnapshot,
+    }) as Parameters<typeof renderToStaticMarkup>[0],
+  );
+}
+
+describe('ResearchHubBody — hero "Updated" tile date provenance (spec §13)', () => {
+  it('reads "Pending" when every context is provisional, even though one carries a real dataVerifiedAt', () => {
+    const provisionalRow = makeOverlayRow({
+      category: 'trading',
+      topic: 'trading-platforms',
+      productSlug: 'etoro',
+      status: 'provisional',
+    });
+    // A provisional row CAN legitimately carry a real collected-data date —
+    // this is the exact shape that fabricated the live "Updated Jul 11"
+    // claim. `dataVerifiedAt` is documented as ignored unless audited.
+    provisionalRow.context.dataVerifiedAt = '2026-07-11';
+
+    const html = renderHeroSection('uk', [provisionalRow]);
+
+    expect(html).toContain('>0</div>'); // 0 Audited
+    expect(html).toContain('Pending');
+    expect(html).not.toContain('Jul 11, 2026');
+  });
+
+  it('reads the newest AUDITED date, ignoring a newer provisional dataVerifiedAt', () => {
+    const olderAudited = makeOverlayRow({
+      category: 'trading',
+      topic: 'trading-platforms',
+      productSlug: 'fidelity',
+      status: 'audited',
+    });
+    olderAudited.context.dataVerifiedAt = '2026-07-05';
+    const newerAudited = makeOverlayRow({
+      category: 'trading',
+      topic: 'options-brokers',
+      productSlug: 'charles-schwab',
+      status: 'audited',
+    });
+    newerAudited.context.dataVerifiedAt = '2026-07-08';
+    const newestButProvisional = makeOverlayRow({
+      category: 'trading',
+      topic: 'forex-brokers',
+      productSlug: 'etoro',
+      status: 'provisional',
+    });
+    newestButProvisional.context.dataVerifiedAt = '2026-07-11';
+
+    const html = renderHeroSection('us', [olderAudited, newerAudited, newestButProvisional]);
+
+    expect(html).toContain('Jul 8, 2026');
+    expect(html).not.toContain('Jul 11, 2026');
   });
 });

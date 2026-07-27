@@ -230,13 +230,25 @@ function HeroMetricTile({ value, label }: { value: string; label: string }) {
   );
 }
 
-/** Newest genuine `dataVerifiedAt` across every research context in the
- *  catalog — never a fabricated freshness claim (spec §13). */
+/** Newest genuine `dataVerifiedAt` across every AUDITED research context in
+ *  the catalog — never a fabricated freshness claim (spec §13).
+ *  `dataVerifiedAt` is documented (VerificationStatus.tsx) as "ignored
+ *  unless status === 'audited'" — a provisional context can legitimately
+ *  carry a real collected-data date even though it failed the audit gate,
+ *  so scanning every context regardless of status let a hub with ZERO
+ *  audited products still show a fabricated "Updated {date}" claim sourced
+ *  from a row that never cleared the bar. Requiring `status === 'audited'`
+ *  here means an all-provisional/unavailable catalog correctly falls back
+ *  to the caller's 'Pending' label. */
 function newestVerifiedAt(catalog: DiscoveryCatalog): string | null {
   let newest: string | null = null;
   for (const item of catalog.items) {
     for (const context of item.researchContexts) {
-      if (context.dataVerifiedAt && (newest === null || context.dataVerifiedAt > newest)) {
+      if (
+        context.status === 'audited' &&
+        context.dataVerifiedAt &&
+        (newest === null || context.dataVerifiedAt > newest)
+      ) {
         newest = context.dataVerifiedAt;
       }
     }
