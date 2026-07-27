@@ -194,3 +194,35 @@ unrelated `lib/editorial/forbidden-claims.test.ts` skip.
 `git diff --check` clean after every commit; `git status --short` shows only
 the pre-existing untracked `audits/reports/research-discovery-pr1-baseline.md`
 throughout.
+
+## Operator findings round
+
+The operator's PR review found one functional merge blocker (P1) plus three
+P2s, addressed as four further commits on this same branch (TDD/RED-first for
+commits 1 and 3; commit 2 is test-only; commit 4 is docs-only):
+
+| # | Commit | Files | Summary |
+|---|---|---|---|
+| 1 | `fix(research): count every reachable facet alternative` (`7622432`) — **P1, merge blocker** | `lib/research/catalog-shell-logic.ts`, `research-catalog-shell-logic.test.ts` | `computeDiscoveryFacets` cleared each dimension's own filter but then tallied whichever single "default" projection `projectDiscoveryItems` picked per item — under-counting any item with more than one qualifying context (e.g. an audited + a provisional context silently hid `type=review`, `status=provisional`, and the provisional topic, even though each yields 1 result when applied directly). Fixed by counting each candidate value by actually running the pipeline with that dimension SET to the candidate (other active filters kept), enumerated from the full item set; confidence/freshness stay audited-sourced (spec §6.2). RED test used the operator's exact scenario (one item, audited trading-platforms + provisional options-brokers context) and failed pre-fix (`types` showed only `[{dossier,1}]`, missing `review`). The one pre-existing facet test was verified to still pass unchanged (its fixture items each carry exactly one context, so old and new logic coincide there). |
+| 2 | `test(research): cover the partial pointer-write failure and its retry` (`4507236`) — P2, test-only | `research-catalog-shell-logic.test.ts` | New test: a `StorageLike` stub whose `setItem` succeeds for the v2 key but throws for the pointer key on the first `migrateLegacyTradingShortlist` call (legacy key must survive); a second call with the throw disabled completes the migration (pointer set, legacy removed) and `restoreScopedShortlist` round-trips the slugs. Traced through and verified the existing production code **already handles this retry correctly** (v2 present → skip re-write → retry only the still-absent pointer → remove legacy) — the test passed on the first run with no production change. |
+| 3 | `fix(research): log and test the overlay cache-layer fallback` (`2ba9301`) — P2 | `lib/research/catalog.ts`, `research-catalog.test.ts` | The bare `.catch(() => [])` on the cached-overlay promise swallowed a cache-LAYER failure (as opposed to a single manifest topic rejecting, already logged by `loadMarketResearchContexts`) with zero diagnostic. Extracted `resolveOverlayContexts(market, load = getCachedResearchContexts)` (`@internal`, injectable `load` seam) that try/catches, logs exactly one structured `logger.warn('Research discovery overlay cache unavailable', { market, scope: 'research-catalog-overlay-cache', errorType })`, and returns `[]`; `getDiscoveryCatalogBundle` now calls it instead of the bare `.catch`. RED test injected a rejecting `load` and failed pre-fix with `resolveOverlayContexts is not a function` (the seam didn't exist yet); GREEN after implementing, and the composed `buildDiscoveryCatalog` call confirmed the full review catalog survives untouched. |
+| 4 | `docs(research): commit the referenced PR 1 baseline` (this commit) — docs-only | `audits/reports/research-discovery-pr1-baseline.md` (added as-is), this report | The pre-existing baseline file this report has referenced throughout (merge-base command-gate snapshot) was untracked; committed as-is with no content changes, plus this section. |
+
+Refreshed totals after all four commits:
+
+| Command | Result |
+|---|---|
+| `npx tsc --noEmit` | exit 0, zero output |
+| `npx vitest run __tests__/unit/research-catalog-shell-logic.test.ts __tests__/unit/research-catalog.test.ts` | 2 files passed, **49 tests passed** (33 + 16, 0 failed) |
+| `npx vitest run` (full suite) | **125 files passed \| 1 skipped (126)**, **1638 tests passed \| 1 skipped (1639)**, exit 0 |
+
+`research-catalog-shell-logic.test.ts`: 31 → 33 tests (+2: commit 1's new
+facets test, commit 2's retry test). `research-catalog.test.ts`: 15 → 16
+tests (+1: commit 3's `resolveOverlayContexts` test). Net +3 tests over this
+round's starting baseline of 1635 passed/1 skipped = **1638 passed/1
+skipped**, matching exactly; the 1 skip remains the same pre-existing,
+unrelated `lib/editorial/forbidden-claims.test.ts` skip.
+
+`git diff --check` clean after every commit in this round. `git status
+--short` is now **empty** — the pre-existing baseline file became tracked in
+commit 4, so nothing untracked remains.
