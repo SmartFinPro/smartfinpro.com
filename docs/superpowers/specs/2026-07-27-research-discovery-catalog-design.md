@@ -246,12 +246,92 @@ bleiben verfügbar.
 ### 5.3 Cache-Grenzen
 
 - MDX-Basis: 300 Sekunden, Tags `market-reviews` und `research-catalog`
-- Research-Overlay: 3600 Sekunden, Tag `research-catalog`
+- Research-Overlay: **pro Topic**, 3600 Sekunden, Tag `research-catalog`
 - öffentlicher Builder: Cache-Key enthält den Markt als Funktionsargument
 - serialisierter Katalog pro Markt muss unter 200 KB bleiben
 
 Sitemap-`lastmod` verwendet ausschließlich die ohnehin geladenen MDX-Daten und
 ist nie vom Supabase-Overlay abhängig.
+
+#### 5.3.1 Amendment (2026-07-27): Per-Topic-Overlay-Cache + 60s-Failure-Backoff
+
+Ersetzt die bisherige Ein-Eintrag-pro-Markt-Cache-Semantik des Overlays. Diese
+Änderung ist operator-approved und schützt gespeicherte Nutzerdaten (Shortlist,
+siehe §11.2), weil ein sauber wiederhergestelltes Ergebnis nur möglich ist,
+wenn ein einzelnes fehlgeschlagenes Topic nicht denselben Cache-Eintrag wie
+alle anderen Topics des Marktes vergiftet.
+
+**Problem mit der bisherigen Semantik:** `getCachedResearchContexts` cachte
+`loadMarketResearchContexts(market)` — also das Ergebnis für **alle**
+Manifest-Topics eines Marktes zusammen — unter einem einzigen Cache-Eintrag
+für 3600 Sekunden. `loadMarketResearchContexts` fängt einen einzelnen
+fehlschlagenden Topic-Load bereits per `Promise.allSettled` ab und lässt ihn
+einfach aus dem Ergebnis-Array heraus — aber genau dieses (nun lückenhafte)
+Ergebnis-Array wird als Ganzes für 3600 Sekunden gecacht. Ein einziges
+fehlgeschlagenes Topic hält damit **den gesamten Markt** eine Stunde lang auf
+dem degradierten Stand fest, selbst wenn die eigentliche Ursache (z. B. ein
+kurzer Supabase-Hänger) Sekunden später behoben ist.
+
+**Fix — zwei unabhängige Mechanismen:**
+
+1. **Cache wird pro Topic granular.** Statt eines Markt-weiten Cache-Eintrags
+   erhält jedes Manifest-Topic seinen eigenen `unstable_cache`-Eintrag mit dem
+   Key `['research-discovery-contexts', market, category, topic]` und
+   `revalidate: 3600`. Ein erfolgreich geladenes Topic bleibt wie bisher eine
+   Stunde lang gültig — unabhängig vom Zustand jedes anderen Topics.
+
+2. **Fehlgeschlagene Topics laufen NICHT über den `unstable_cache`-Erfolgspfad.**
+   Verifiziert in
+   `node_modules/next/dist/server/web/spec-extension/unstable-cache.js`:
+   `const result = await workUnitAsyncStorage.run(innerCacheStore, cb, ...args)`
+   läuft ungeschützt (kein umgebendes `try/catch`, das einen Fehler in einen
+   Erfolgswert umwandelt), und `cacheNewResult` — die Funktion, die einen
+   Rückgabewert tatsächlich in den Cache schreibt — wird ausschließlich danach,
+   also nur auf dem Erfolgspfad, aufgerufen. Ein geworfener Fehler wird von
+   `unstable_cache` **niemals** gecacht. Würde ein pro-Topic-Loader bei einem Fehler einfach
+   werfen, würde jeder einzelne nachfolgende Request (nicht nur einer pro
+   Stunde) denselben fehlschlagenden Upstream-Call erneut auslösen — ein
+   "cached sentinel" für den Fehlerzustand ist mit `unstable_cache` architektonisch
+   nicht möglich, weil dessen Cache ausschließlich Erfolge kennt.
+
+   Der Fix liegt **außerhalb** von `unstable_cache`, in einem separaten,
+   In-Prozess-Backoff: ein `Map<CockpitKey, retryAfterEpochMs>`, dessen "jetzt"
+   über eine **injizierbare Uhr** (`() => number`, Default `Date.now`) kommt,
+   damit Tests den 60-Sekunden-Ablauf deterministisch vorspulen können, ohne
+   echte Zeit verstreichen zu lassen. Ablauf pro Topic-Request:
+
+   - Liegt der `CockpitKey` in der Backoff-Map mit `retryAfterEpochMs > now()`:
+     sofort als degradiert behandeln (keine erneute Anfrage an
+     `getCockpitData`/`getTopicConfig`), **kein** erneuter `logger.warn` (siehe
+     unten).
+   - Andernfalls: der pro-Topic-Cache-Loader wird aufgerufen.
+     - Erfolg → Backoff-Eintrag (falls vorhanden) für diesen `CockpitKey`
+       entfernen, Ergebnis wie gewohnt zurückgeben (und für 3600s gecacht).
+     - Fehler → `retryAfterEpochMs = now() + 60_000` in die Map schreiben, das
+       Topic als degradiert (leer) behandeln.
+
+3. **Logging ist pro Backoff-FENSTER, nicht pro Request.** `logger.warn` feuert
+   genau einmal beim **Eintritt** in ein neues Backoff-Fenster (dem Übergang
+   von "kein Eintrag/abgelaufen" zu "neu gesetzt"), nicht bei jedem Request,
+   der währenddessen auf denselben degradierten Zustand trifft. Ohne diese
+   Unterscheidung würde ein populäres, dauerhaft fehlschlagendes Topic den
+   Log mit einem Eintrag pro eingehendem Request fluten.
+
+Nach Ablauf der 60 Sekunden wird beim nächsten Request automatisch erneut
+versucht (kein manueller Reset nötig) — trifft der erneute Versuch wieder auf
+einen Fehler, beginnt ein neues 60s-Fenster mit einem neuen `logger.warn`.
+
+**Scope-Hinweis:** Diese Amendment beschreibt den verbindlichen Vertrag. Die
+produktive Verdrahtung (Ersetzen von `getCachedResearchContexts` in
+`lib/research/catalog.ts` durch die pro-Topic-Cache- und Backoff-Logik) ist
+**nicht** Teil dieses Dokumentations-Commits und landet mit dem PR-2-Task, der
+den Hub tatsächlich gegen produktive Katalog-Daten verdrahtet (siehe
+Amended-Preconditions-Abschnitt im PR-2-Plan). Was bereits in diesem Commit
+verbindlich feststeht, ist der Vertrag selbst — inklusive der injizierbaren Uhr
+und der Pro-Fenster-Logging-Regel — sowie die direkte Kopplung an §11.2: ein
+Topic, das sich gerade im 60s-Backoff befindet, ist im
+`ShortlistScopeSnapshot` als `unavailableScopes`-Eintrag mit Reason
+`'backoff'` sichtbar, nicht als stiller Leerzustand.
 
 ### 5.4 Zählregeln
 
@@ -542,6 +622,75 @@ Persistenz hängt nicht mehr von der Reihenfolge zweier Effects ab:
 Ein stale oder beschädigter Pointer entfernt Pointer und zugehörige ungültige
 Daten und ergibt einen sauberen Leerzustand.
 
+#### 11.2.1 Amendment (2026-07-27): Drei-Stufen-Validierungs-Snapshot
+
+Ersetzt die bisherige flache `ReadonlyMap<CockpitKey, ReadonlySet<string>>`
+("validScopes") als Eingabe für Schritt 1–2 oben. Operator-approved; schützt
+gespeicherte Nutzerdaten, weil die flache Map keinen Unterschied zwischen
+"dieser Scope existiert nicht (mehr)" und "dieser Scope existiert, konnte aber
+gerade nicht geladen werden" kennt — beide Fälle sahen für die alte
+`restoreScopedShortlist`-Logik identisch aus (Scope fehlt in der Map) und
+lösten identisch die zerstörende Lösch-Aktion aus. Ein Topic im 60s-Backoff-
+Fenster (§5.3.1) oder ein einzelner `getCockpitData`-Timeout hätte damit einen
+gültigen, gespeicherten Shortlist-Eintrag ohne Not gelöscht.
+
+Der flache Vertrag wird durch einen dreistufigen Snapshot ersetzt:
+
+```ts
+interface ShortlistScopeSnapshot {
+  /** Alle Cockpit-Keys des Manifests für diesen Markt (statisch, aus
+   *  BEST_X_MANIFEST). Die Grundgesamtheit, gegen die "genuinely stale"
+   *  geprüft wird. */
+  knownScopes: ReadonlySet<CockpitKey>;
+  /** Erfolgreich geladene Keys → autoritative Slug-Menge. */
+  availableScopes: ReadonlyMap<CockpitKey, ReadonlySet<string>>;
+  /** Keys, die entweder fehlgeschlagen sind ODER sich gerade im 60s-Backoff-
+   *  Fenster befinden — je mit einem strukturierten Grund. */
+  unavailableScopes: ReadonlyMap<
+    CockpitKey,
+    "load_failed" | "backoff" | "missing_topic_config"
+  >;
+}
+```
+
+**Restore-Regeln** (ersetzen verbindlich die bisherige binäre
+Prüfung "in validScopes oder nicht"):
+
+1. **Nicht in `knownScopes`** → genuinely stale: Storage bereinigen (Pointer
+   UND zugehöriger Scoped-Key), leerer Zustand.
+2. **In `unavailableScopes`** → Storage BYTE-IDENTISCH belassen (kein
+   `removeItem`, kein `setItem` — nicht einmal der Pointer wird angefasst),
+   leerer Zustand zurückgeben (UI vorübergehend inaktiv). Der Unterschied zu
+   Regel 1 ist der ganze Punkt dieser Amendment: wir wissen hier nicht, ob die
+   gespeicherten Slugs noch gültig sind — wir wissen nur, dass wir es gerade
+   nicht verifizieren können. Nur-vorübergehend-unsichtbar darf niemals wie
+   dauerhaft-ungültig behandelt werden.
+3. **In `availableScopes`** → Slugs wie bisher normal gegen die autoritative
+   Slug-Menge validieren und bereinigen (unbekannte/doppelte Slugs entfernen,
+   auf `MAX_SHORTLIST` kappen).
+4. **In `availableScopes` mit LEERER Slug-Menge** → das ist ein autoritatives
+   Leer-Ergebnis (das Topic hat aktuell keine qualifizierten Produkte mehr),
+   kein Ausfall: den gespeicherten Shortlist-Eintrag löschen (Pointer UND
+   Scoped-Key), leerer Zustand.
+
+Ein Manifest-Eintrag, dessen `getTopicConfig` nicht auflöst, ist `unavailable`
+mit Reason `missing_topic_config` — non-destruktiv wie jeder andere
+`unavailable`-Fall (Regel 2), aber die Reason muss strukturiert geloggt werden
+(ein `logger.warn` mit Markt, Kategorie, Topic), damit ein dauerhaft falsch
+konfigurierter Manifest-Eintrag operational sichtbar bleibt und nicht als
+bloßer Backoff-Blip missverstanden wird.
+
+**Der Snapshot wird IMMER aus dem ungefilterten Markt-Katalog aufgebaut** —
+niemals aus der aktuell sichtbaren (such-/kategorie-/topic-gefilterten)
+Projektion. Ein aktiver Kategorie-Filter, der z. B. nur `personal-finance`
+zeigt, darf `us/trading/trading-platforms` nicht aus `knownScopes` entfernen:
+täte er das, würde ein Nutzer, der zufällig gerade eine andere Kategorie
+filtert, beim Reload seine völlig intakte Trading-Shortlist durch Regel 1
+verlieren, obwohl der Trading-Scope nie fehlgeschlagen ist — er war schlicht
+gerade nicht sichtbar. Sichtbarkeit (Suche/Kategorie/Topic-Projektion) ist ein
+reines Anzeige-Anliegen und darf niemals mit Verfügbarkeit (kann dieser Scope
+geladen werden) verwechselt werden.
+
 Der alte Pilot-Key `research-shortlist:us:trading-platforms` wird nur dann
 einmalig in `research-shortlist:us:trading:trading-platforms` migriert, wenn
 der v2-Key noch nicht existiert, und anschließend gelöscht. Bestehender
@@ -573,6 +722,41 @@ gebaut. Fremde Slugs können den URL-Builder nicht erreichen.
 
 Der bestehende Body-`paddingBottom`-Effekt bleibt erhalten und wird beim
 Verschwinden der Leiste vollständig zurückgesetzt.
+
+#### 11.3.1 Amendment (2026-07-27): Ehrlicher Dialog-Text für einen unverifizierbaren aktiven Scope
+
+Der obige Cross-Topic-Dialog geht implizit davon aus, dass der aktive Scope
+bekannt und verifiziert ist ("dieser Topic hat diese Produkte"). Mit dem
+Drei-Stufen-Snapshot (§11.2.1) kann der aktive Scope aber auch gerade
+`unavailable` sein (Backoff, Load-Fehler oder `missing_topic_config`) — in dem
+Fall weiß die UI nicht, ob die dort gespeicherten Slugs überhaupt noch
+existieren.
+
+Der Dialog MUSS diesen Unterschied explizit benennen:
+
+- **Aktiver Scope ist `available`** (Normalfall, wie bisher beschrieben):
+  „Shortlists compare within one research topic." + „Switch & add".
+- **Aktiver Scope ist `unavailable`**: Der Dialog muss explizit sagen, dass
+  eine gerade nicht verifizierbare gespeicherte Shortlist durch die neue
+  Auswahl ERSETZT wird — z. B. „We can't verify your current shortlist right
+  now, but switching topics will still replace it." Der Text darf NICHT so
+  formuliert sein, als könnte der Nutzer einen Topic „leeren"/„clear"en, den er
+  gerade gar nicht sehen kann (das würde suggerieren, es gäbe dort aktuell
+  nichts zu verlieren — das wissen wir nicht).
+
+In beiden Fällen gilt unverändert:
+
+- Erst nach expliziter Bestätigung („Switch & add") dürfen der alte Scoped-Key
+  und der Pointer gelöscht werden.
+- „Cancel" lässt Storage byte-identisch — unabhängig davon, ob der aktive
+  Scope `available` oder `unavailable` war.
+
+Die reine Hilfsfunktion `describeScopeSwitch(snapshot, activeCockpitKey,
+targetCockpitKey)` liefert der UI ausschließlich, ob der **aktive** Scope
+gerade `available` oder `unavailable` ist (und im letzteren Fall die
+strukturierte Reason) — sie enthält keinen UI-Text und keine
+Speicher-Mutation; das eigentliche Rendern der beiden Formulierungen und das
+Ausführen von „Switch & add" bleiben Aufgabe der Hub-UI (PR 2).
 
 ---
 
@@ -635,12 +819,14 @@ Messgrößen:
 
 | Zustand                                  | Verbindliches Verhalten                                                      |
 | ---------------------------------------- | ---------------------------------------------------------------------------- |
-| Ein Topic-Load scheitert                 | Topic fehlt; Reviews und andere Topics bleiben; strukturierter Warn-Log      |
+| Ein Topic-Load scheitert                 | Topic fehlt; Reviews und andere Topics bleiben; strukturierter Warn-Log; 60s-Backoff, danach automatischer Retry (§5.3.1) |
 | Gesamtes Overlay scheitert               | Hub bleibt als Review-Katalog mit HTTP 200 erreichbar                        |
 | Review-MDX ohne Rating                   | wie bisher nicht in den Discovery-Katalog aufnehmen                          |
 | Cockpit-only ohne qualifizierten Context | kein DiscoveryItem erzeugen                                                  |
 | Ungültiger Query-Wert                    | ignorieren und nicht persistieren                                            |
-| Stale Shortlist-Pointer                  | Storage bereinigen; leerer Zustand                                           |
+| Stale Shortlist-Pointer (Scope nicht in `knownScopes`) | Storage bereinigen (Pointer + Scoped-Key); leerer Zustand              |
+| Manifest-Topic ohne TopicConfig          | `unavailable`, Reason `missing_topic_config`, ein strukturierter `logger.warn`; Shortlist-Storage bleibt erhalten (byte-identisch) — nicht destruktiv |
+| Pointer-Scope ist `unavailable` (Backoff/Load-Fehler/`missing_topic_config`) | Storage byte-identisch unverändert; UI vorübergehend inaktiv (leerer Zustand ohne Löschung) |
 | Dossier-Node fehlt                       | Item degradiert auf Review, falls vorhanden; sonst aus Ergebnissen entfernen |
 | Kein Content im Markt                    | ehrlicher Leerzustand ohne erfundene Kennzahlen                              |
 | Analytics schlägt fehl                   | UI und Navigation funktionieren unverändert                                  |
