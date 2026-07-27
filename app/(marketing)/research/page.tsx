@@ -238,7 +238,11 @@ export default async function ResearchPage() {
         </section>
 
         {/* Research Cards */}
-        <section className="mx-auto px-6 py-8 sm:py-12" style={{ maxWidth: '1280px' }}>
+        <section
+          data-testid="dossier-trading-platforms"
+          className="mx-auto px-6 py-8 sm:py-12"
+          style={{ maxWidth: '1280px' }}
+        >
           <h2 className="text-2xl font-bold mb-1" style={{ color: 'var(--sfp-ink)' }}>
             Verified platform research
           </h2>

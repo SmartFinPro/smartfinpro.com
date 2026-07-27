@@ -38,29 +38,36 @@ async function shortlist(page: Page, n: number) {
 test.describe('Research Library shell — desktop', () => {
   test.beforeEach(async ({ page }) => gotoResearch(page));
 
+  test('the trading pilot has a stable topic scope', async ({ page }) => {
+    await expect(page.getByTestId('dossier-trading-platforms')).toBeVisible();
+  });
+
   test('default browse shows the featured winner + all nine cards', async ({ page }) => {
-    await expect(page.getByText('#1 Overall')).toBeVisible();
-    await expect(page.locator('section article')).toHaveCount(9);
+    const tradingDossier = page.getByTestId('dossier-trading-platforms');
+    await expect(tradingDossier.getByText('#1 Overall')).toBeVisible();
+    await expect(tradingDossier.locator('article')).toHaveCount(9);
   });
 
   test('search filters to matches and drops the featured pin', async ({ page }) => {
+    const tradingDossier = page.getByTestId('dossier-trading-platforms');
     await page.getByPlaceholder(SEARCH).fill('schwab');
     await expect(page).toHaveURL(/[?&]q=schwab/);
-    await expect(page.locator('section article')).toHaveCount(1);
+    await expect(tradingDossier.locator('article')).toHaveCount(1);
     await expect(page.getByRole('heading', { name: 'Charles Schwab' })).toBeVisible();
-    await expect(page.getByText('#1 Overall')).toHaveCount(0); // featured suppressed
+    await expect(tradingDossier.getByText('#1 Overall')).toHaveCount(0); // featured suppressed
   });
 
   test('status filter narrows, and Reset restores the browse view', async ({ page }) => {
+    const tradingDossier = page.getByTestId('dossier-trading-platforms');
     await page.getByRole('button', { name: 'In verification', exact: true }).click();
     await expect(page).toHaveURL(/status=provisional/);
-    await expect(page.locator('section article')).toHaveCount(1);
+    await expect(tradingDossier.locator('article')).toHaveCount(1);
     await expect(page.getByRole('heading', { name: 'eToro' })).toBeVisible();
 
     await page.getByRole('button', { name: 'Reset' }).click();
     await expect(page).toHaveURL(/\/research(\?)?$/);
-    await expect(page.getByText('#1 Overall')).toBeVisible(); // featured back
-    await expect(page.locator('section article')).toHaveCount(9);
+    await expect(tradingDossier.getByText('#1 Overall')).toBeVisible(); // featured back
+    await expect(tradingDossier.locator('article')).toHaveCount(9);
   });
 
   test('browser Back restores the search + filter state from the URL', async ({ page }) => {
