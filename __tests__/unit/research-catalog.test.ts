@@ -317,6 +317,38 @@ describe('buildDiscoveryCatalog', () => {
     expect(tradingItem.display.bestFor).toBe('Editorial pick for active traders');
   });
 
+  it('invariant 1 (spec §15) — two overlay rows from two topics, joined to one review, still yield exactly one item for that review href', () => {
+    // "Jedes qualifizierte Review erzeugt genau ein DiscoveryItem." Two
+    // different manifest topics both attach to the SAME review (matched by
+    // category + reviewSlug) — the join must not fan the review out into two
+    // items; both contexts must land on the one review-backed item instead.
+    const review = makeDiscoveryItem({
+      id: reviewItemId('/us/trading/acme'),
+      category: 'trading',
+      review: makeReview({ slug: 'acme', href: '/us/trading/acme' }),
+    });
+    const rowA = makeOverlayRow({
+      category: 'trading',
+      topic: 'trading-platforms',
+      productSlug: 'acme',
+      reviewSlug: 'acme',
+      manifestOrder: 0,
+    });
+    const rowB = makeOverlayRow({
+      category: 'trading',
+      topic: 'options-brokers',
+      productSlug: 'acme',
+      reviewSlug: 'acme',
+      manifestOrder: 1,
+    });
+
+    const { catalog } = buildDiscoveryCatalog('us', [review], [rowA, rowB]);
+
+    expect(catalog.items).toHaveLength(1);
+    expect(catalog.items[0].id).toBe(reviewItemId('/us/trading/acme'));
+    expect(catalog.items[0].researchContexts).toHaveLength(2);
+  });
+
   it('review-backed item without contexts keeps its MDX bestFor in display and searchText', () => {
     const review = makeDiscoveryItem({
       id: reviewItemId('/us/personal-finance/budget-app'),
@@ -497,5 +529,81 @@ describe('loadMarketResearchContexts', () => {
     const cockpitOnly = catalog.items.find((i) => i.id === 'product:us:trading:acme');
     expect(cockpitOnly).toBeTruthy();
     expect(cockpitOnly!.researchContexts).toHaveLength(1);
+  });
+
+  it('invariant 5 (spec §15) — only an audited context carries score, rank, and confidence; a provisional context nulls all three', async () => {
+    // deriveResearchScore only attempts the audited branch when
+    // researchStatus === 'audited' exactly, so setting 'provisional' here
+    // takes the editorial-ceiling branch regardless of otherwise-complete
+    // data (confidence/score/dataVerifiedAt all present on the input). That
+    // makes this a real test of catalog.ts's own `audited ? x : null`
+    // ternary in loadTopicOverlayRows — not merely of upstream nullness.
+    mockGetCockpitData.mockImplementation(async (_market: string, category: string) => {
+      if (category !== 'trading') return [];
+      return [
+        makeProduct({
+          slug: 'audited-co',
+          category: 'trading',
+          reviewSlug: null,
+          researchStatus: 'audited',
+          fieldSources: { fee: src() },
+        }),
+        makeProduct({
+          slug: 'provisional-co',
+          category: 'trading',
+          reviewSlug: null,
+          researchStatus: 'provisional',
+          fieldSources: { fee: src() },
+        }),
+      ];
+    });
+
+    const overlay = await loadMarketResearchContexts('us');
+
+    const auditedRow = overlay.find((r) => r.context.productSlug === 'audited-co')!;
+    const provisionalRow = overlay.find((r) => r.context.productSlug === 'provisional-co')!;
+
+    expect(auditedRow.context.status).toBe('audited');
+    expect(auditedRow.context.confidence).toBe('high');
+    expect(auditedRow.context.auditedScore).toBe(8);
+    expect(auditedRow.context.auditedRank).toBe(1);
+
+    expect(provisionalRow.context.status).toBe('provisional');
+    expect(provisionalRow.context.confidence).toBeNull();
+    expect(provisionalRow.context.auditedScore).toBeNull();
+    expect(provisionalRow.context.auditedRank).toBeNull();
+  });
+
+  it('invariant 11 (spec §15) — every overlay topic rejecting leaves review ids byte-identical and context-free', async () => {
+    // Spec §13 degradation matrix: "Gesamtes Overlay scheitert -> Hub bleibt
+    // als Review-Katalog mit HTTP 200 erreichbar." Unlike the "one topic
+    // rejects" test above, here EVERY manifest topic for the market throws —
+    // the review catalog must come through completely untouched.
+    mockGetCockpitData.mockImplementation(async () => {
+      throw new Error('Cockpit unreachable');
+    });
+
+    const overlay = await loadMarketResearchContexts('us');
+
+    expect(overlay).toHaveLength(0);
+    expect(mockLoggerWarn).toHaveBeenCalledTimes(TEST_MANIFEST.length);
+
+    const reviewA = makeDiscoveryItem({
+      id: reviewItemId('/us/personal-finance/rev-a'),
+      category: 'personal-finance',
+      review: makeReview({ slug: 'rev-a', href: '/us/personal-finance/rev-a' }),
+    });
+    const reviewB = makeDiscoveryItem({
+      id: reviewItemId('/us/forex/rev-b'),
+      category: 'forex',
+      review: makeReview({ slug: 'rev-b', href: '/us/forex/rev-b' }),
+    });
+
+    const { catalog } = buildDiscoveryCatalog('us', [reviewA, reviewB], overlay);
+
+    expect(catalog.items).toHaveLength(2);
+    expect(catalog.items.find((i) => i.id === reviewA.id)?.id).toBe(reviewA.id);
+    expect(catalog.items.find((i) => i.id === reviewB.id)?.id).toBe(reviewB.id);
+    expect(catalog.items.every((i) => i.researchContexts.length === 0)).toBe(true);
   });
 });
