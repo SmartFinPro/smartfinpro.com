@@ -64,6 +64,7 @@ import {
   buildResearchItemListSchema,
   ResearchHubBody,
 } from '@/components/research/ResearchHubPage';
+import { ShortlistRestoreController } from '@/components/research/ResearchShortlist';
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://smartfinpro.com';
 
@@ -380,6 +381,38 @@ describe('research hub merge blocker (JSON-LD vs. raw HTML)', () => {
 
 // --- Honest empty state (Task 3 Step 4) -------------------------------------
 
+/** Minimal React-element-tree type — just enough of `ReactElement`'s shape
+ *  (`type`/`props`) to walk a tree of plain `createElement(...)` results
+ *  without pulling in `@types/react-reconciler` or similar. */
+interface ElementLike {
+  type: unknown;
+  props?: { children?: unknown };
+}
+
+const isElementLike = (value: unknown): value is ElementLike =>
+  typeof value === 'object' && value !== null && 'type' in value && 'props' in value;
+
+/** Walks a React element tree (as returned by calling a component function
+ *  directly, BEFORE it's ever handed to `renderToStaticMarkup`) looking for
+ *  an element whose `type` is `target` — structural, not rendered-output,
+ *  so it survives even for a component (like `ShortlistRestoreController`)
+ *  that always renders `null` and whose `useEffect`s never fire under SSR.
+ *  PR 2 review finding #4: the old version of this test only ever asserted
+ *  on the RENDERED HTML STRING, which is identical whether or not the
+ *  mount is present at all — this is the fix. */
+function findElementByType(node: unknown, target: unknown): ElementLike | null {
+  if (Array.isArray(node)) {
+    for (const child of node) {
+      const found = findElementByType(child, target);
+      if (found) return found;
+    }
+    return null;
+  }
+  if (!isElementLike(node)) return null;
+  if (node.type === target) return node;
+  return findElementByType(node.props?.children, target);
+}
+
 describe('ResearchHubBody — empty catalog', () => {
   it('renders one H1, the empty-state copy, zero product cards, and no fabricated score/date text', () => {
     const copy = getResearchHubCopy('uk');
@@ -406,15 +439,29 @@ describe('ResearchHubBody — empty catalog', () => {
       unavailableScopes: [],
     };
 
-    const html = renderToStaticMarkup(
-      ResearchHubBody({
-        market: 'uk',
-        catalog: emptyCatalog,
-        copy,
-        nodes: [],
-        scopeSnapshot: emptyScopeSnapshot,
-      }) as Parameters<typeof renderToStaticMarkup>[0],
-    );
+    const element = ResearchHubBody({
+      market: 'uk',
+      catalog: emptyCatalog,
+      copy,
+      nodes: [],
+      scopeSnapshot: emptyScopeSnapshot,
+    });
+
+    // Structural proof the restore controller is actually mounted — checked
+    // on the ELEMENT TREE, before rendering, so this fails if the mount is
+    // ever deleted even though `ShortlistRestoreController` itself renders
+    // `null` and its `useEffect` never fires under `renderToStaticMarkup`
+    // (PR 2 review finding #4: the previous version of this test only
+    // asserted on the rendered HTML string, which cannot tell "the mount
+    // is present but invisible" apart from "the mount was deleted").
+    const restoreControllerElement = findElementByType(element, ShortlistRestoreController);
+    expect(restoreControllerElement).not.toBeNull();
+    expect(restoreControllerElement?.props).toEqual({
+      market: 'uk',
+      scopeSnapshot: emptyScopeSnapshot,
+    });
+
+    const html = renderToStaticMarkup(element as Parameters<typeof renderToStaticMarkup>[0]);
 
     expect((html.match(/<h1[ >]/g) ?? []).length).toBe(1);
     expect(html).toContain(copy.h1);
