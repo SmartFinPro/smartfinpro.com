@@ -567,6 +567,53 @@ it("a throwing storage.setItem leaves the legacy key intact", () => {
   ).toBeNull();
 });
 
+it("retries and completes after a partial failure: v2 write succeeds, pointer write throws, then a later call finishes the job", () => {
+  const legacyKey = "research-shortlist:us:trading-platforms";
+  const v2Key = "research-shortlist:us:trading:trading-platforms";
+  const pointerKey = "research-shortlist-active:us";
+  const store = new Map<string, string>([[legacyKey, '["fidelity","charles-schwab"]']]);
+  let throwOnPointerWrite = true;
+  const storage: StorageLike = {
+    getItem: (key) => (store.has(key) ? store.get(key)! : null),
+    setItem: (key, value) => {
+      if (key === pointerKey && throwOnPointerWrite) {
+        throw new Error("quota exceeded");
+      }
+      store.set(key, value);
+    },
+    removeItem: (key) => {
+      store.delete(key);
+    },
+  };
+
+  // Call 1: the v2 write succeeds, but the pointer write throws — the
+  // legacy key must survive so a later call can retry the failed step.
+  migrateLegacyTradingShortlist(storage);
+  expect(storage.getItem(v2Key)).toBe('["fidelity","charles-schwab"]');
+  expect(storage.getItem(pointerKey)).toBeNull();
+  expect(storage.getItem(legacyKey)).toBe('["fidelity","charles-schwab"]');
+
+  // Call 2 (retry, storage healthy again): v2 already holds a value so its
+  // write is skipped entirely; only the still-absent pointer is attempted,
+  // and this time it succeeds — completing the migration.
+  throwOnPointerWrite = false;
+  migrateLegacyTradingShortlist(storage);
+  expect(storage.getItem(pointerKey)).toBe("trading:trading-platforms");
+  expect(storage.getItem(legacyKey)).toBeNull();
+
+  const validScopes = new Map<CockpitKey, ReadonlySet<string>>([
+    [
+      "us/trading/trading-platforms",
+      new Set(["fidelity", "charles-schwab", "etrade"]),
+    ],
+  ]);
+  const restored = restoreScopedShortlist(storage, "us", validScopes);
+  expect(restored).toEqual({
+    cockpitKey: "us/trading/trading-platforms",
+    slugs: ["fidelity", "charles-schwab"],
+  });
+});
+
 it("migration is idempotent end-to-end", () => {
   const storage = memoryStorage({
     "research-shortlist:us:trading-platforms":
