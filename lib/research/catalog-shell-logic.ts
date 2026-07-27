@@ -1,4 +1,5 @@
 import type { Category, Market } from "@/lib/i18n/config";
+import { marketCategories } from "@/lib/i18n/config";
 
 export type ResearchStatus = "audited" | "provisional";
 export type ResearchConfidence = "high" | "medium" | "low";
@@ -103,3 +104,378 @@ export const projectionNodeKey = (
   itemId: string,
   cockpitKey: CockpitKey | null,
 ): string => `${itemId}${cockpitKey ?? "review"}`;
+
+export const EMPTY_DISCOVERY_FILTERS: DiscoveryFilters = {
+  query: "",
+  category: null,
+  type: null,
+  status: null,
+  confidence: null,
+  fresh: null,
+  topic: null,
+  specs: [],
+};
+
+export interface DiscoveryFacets {
+  categories: Array<{ value: Category; count: number }>;
+  types: Array<{ value: DiscoveryKind; count: number }>;
+  statuses: Array<{ value: ResearchStatus; count: number }>;
+  confidences: Array<{ value: ResearchConfidence; count: number }>;
+  freshnessDates: Array<{ value: string; count: number }>;
+  topics: Array<{ value: string; label: string; count: number }>;
+}
+
+/** Trim + locale-stable lowercase + collapse internal whitespace, so query
+ *  and searchText compare the same way regardless of incidental spacing. */
+const normalize = (value: string): string =>
+  value.trim().toLocaleLowerCase("en").replace(/\s+/g, " ");
+
+/** Context-level predicate for status/confidence/fresh/topic. `specs` is
+ *  handled separately below because it needs the topic:key:value parser. */
+const contextMatches = (
+  context: ResearchContext,
+  filters: DiscoveryFilters,
+): boolean =>
+  (!filters.status || context.status === filters.status) &&
+  (!filters.confidence ||
+    (context.status === "audited" &&
+      context.confidence === filters.confidence)) &&
+  (!filters.fresh ||
+    (context.status === "audited" &&
+      context.dataVerifiedAt !== null &&
+      context.dataVerifiedAt >= filters.fresh)) &&
+  (!filters.topic || context.topic === filters.topic);
+
+interface SpecGroup {
+  topic: string;
+  key: string;
+  values: Set<string>;
+}
+
+/** Parses `"<topic>:<key>:<value>"` tokens, splitting only the first two
+ *  colons (the value itself may contain further colons). Tokens are grouped
+ *  by topic+key so multiple values for the same key OR together, while
+ *  distinct topic/key groups AND together. This parser stays private to PR 1;
+ *  PR 4 promotes it into the registry-validating facet module. */
+const parseSpecGroups = (specs: readonly string[]): SpecGroup[] => {
+  const groups = new Map<string, SpecGroup>();
+  for (const token of specs) {
+    const firstColon = token.indexOf(":");
+    if (firstColon === -1) continue;
+    const secondColon = token.indexOf(":", firstColon + 1);
+    if (secondColon === -1) continue;
+    const topic = token.slice(0, firstColon);
+    const key = token.slice(firstColon + 1, secondColon);
+    const value = token.slice(secondColon + 1);
+    const groupKey = `${topic}${key}`;
+    const existing = groups.get(groupKey);
+    if (existing) {
+      existing.values.add(value);
+    } else {
+      groups.set(groupKey, { topic, key, values: new Set([value]) });
+    }
+  }
+  return [...groups.values()];
+};
+
+/** A context matches the specs filter when, for every active topic/key group,
+ *  its topic matches and its own keyFacts[key] value is in that group's
+ *  selected value set. Groups with no keyFacts[key] at all never match. */
+const specGroupsMatch = (
+  context: ResearchContext,
+  groups: readonly SpecGroup[],
+): boolean =>
+  groups.every(
+    (group) =>
+      context.topic === group.topic &&
+      group.values.has(context.keyFacts[group.key]),
+  );
+
+export function matchesItemQuery(item: DiscoveryItem, query: string): boolean {
+  const normalizedQuery = normalize(query);
+  if (normalizedQuery === "") return true;
+  return normalize(item.display.searchText).includes(normalizedQuery);
+}
+
+export function matchingContexts(
+  item: DiscoveryItem,
+  filters: DiscoveryFilters,
+): ResearchContext[] {
+  const specGroups = parseSpecGroups(filters.specs);
+  return item.researchContexts.filter(
+    (context) =>
+      contextMatches(context, filters) && specGroupsMatch(context, specGroups),
+  );
+}
+
+/** Multi-context selection: explicit topic wins when present among the
+ *  already-matched contexts, otherwise the first context in manifest order. */
+const selectContext = (
+  contexts: readonly ResearchContext[],
+  explicitTopic: string | null,
+): ResearchContext | null => {
+  if (contexts.length === 0) return null;
+  if (explicitTopic) {
+    const explicit = contexts.find((context) => context.topic === explicitTopic);
+    if (explicit) return explicit;
+  }
+  return [...contexts].sort((a, b) => a.manifestOrder - b.manifestOrder)[0];
+};
+
+const isResearchOnlyFilterActive = (filters: DiscoveryFilters): boolean =>
+  filters.status !== null ||
+  filters.confidence !== null ||
+  filters.fresh !== null ||
+  filters.topic !== null ||
+  filters.specs.length > 0;
+
+export function projectDiscoveryItems(
+  items: readonly DiscoveryItem[],
+  filters: DiscoveryFilters,
+): DiscoveryProjection[] {
+  const researchOnlyFilterActive = isResearchOnlyFilterActive(filters);
+  const projections: DiscoveryProjection[] = [];
+
+  for (const item of items) {
+    if (filters.category && item.category !== filters.category) continue;
+    if (!matchesItemQuery(item, filters.query)) continue;
+
+    const matched = matchingContexts(item, filters);
+    if (researchOnlyFilterActive && matched.length === 0) continue;
+
+    if (filters.type === "review") {
+      if (item.review) {
+        projections.push({ itemId: item.id, kind: "review", item, context: null });
+      }
+      continue;
+    }
+
+    if (filters.type === "dossier") {
+      const context = selectContext(matched, filters.topic);
+      if (context) {
+        projections.push({ itemId: item.id, kind: "dossier", item, context });
+      }
+      continue;
+    }
+
+    const context = selectContext(matched, filters.topic);
+    if (context) {
+      projections.push({ itemId: item.id, kind: "dossier", item, context });
+    } else if (item.review) {
+      projections.push({ itemId: item.id, kind: "review", item, context: null });
+    }
+  }
+
+  return projections;
+}
+
+export function computeDiscoveryFacets(
+  items: readonly DiscoveryItem[],
+  filters: DiscoveryFilters,
+): DiscoveryFacets {
+  const market = items[0]?.market ?? null;
+  const categoryOrder: readonly Category[] = market ? marketCategories[market] : [];
+
+  const categoryCounts = new Map<Category, number>();
+  for (const projection of projectDiscoveryItems(items, {
+    ...filters,
+    category: EMPTY_DISCOVERY_FILTERS.category,
+  })) {
+    categoryCounts.set(
+      projection.item.category,
+      (categoryCounts.get(projection.item.category) ?? 0) + 1,
+    );
+  }
+
+  const typeCounts = new Map<DiscoveryKind, number>();
+  for (const projection of projectDiscoveryItems(items, {
+    ...filters,
+    type: EMPTY_DISCOVERY_FILTERS.type,
+  })) {
+    typeCounts.set(projection.kind, (typeCounts.get(projection.kind) ?? 0) + 1);
+  }
+
+  const statusCounts = new Map<ResearchStatus, number>();
+  for (const projection of projectDiscoveryItems(items, {
+    ...filters,
+    status: EMPTY_DISCOVERY_FILTERS.status,
+  })) {
+    if (projection.kind !== "dossier") continue;
+    statusCounts.set(
+      projection.context.status,
+      (statusCounts.get(projection.context.status) ?? 0) + 1,
+    );
+  }
+
+  const confidenceCounts = new Map<ResearchConfidence, number>();
+  for (const projection of projectDiscoveryItems(items, {
+    ...filters,
+    confidence: EMPTY_DISCOVERY_FILTERS.confidence,
+  })) {
+    if (projection.kind !== "dossier") continue;
+    if (projection.context.status !== "audited" || !projection.context.confidence) {
+      continue;
+    }
+    confidenceCounts.set(
+      projection.context.confidence,
+      (confidenceCounts.get(projection.context.confidence) ?? 0) + 1,
+    );
+  }
+
+  const freshnessCounts = new Map<string, number>();
+  for (const projection of projectDiscoveryItems(items, {
+    ...filters,
+    fresh: EMPTY_DISCOVERY_FILTERS.fresh,
+  })) {
+    if (projection.kind !== "dossier") continue;
+    if (projection.context.status !== "audited" || !projection.context.dataVerifiedAt) {
+      continue;
+    }
+    const value = projection.context.dataVerifiedAt;
+    freshnessCounts.set(value, (freshnessCounts.get(value) ?? 0) + 1);
+  }
+
+  const topicCounts = new Map<
+    string,
+    { label: string; order: number; count: number }
+  >();
+  for (const projection of projectDiscoveryItems(items, {
+    ...filters,
+    topic: EMPTY_DISCOVERY_FILTERS.topic,
+  })) {
+    if (projection.kind !== "dossier") continue;
+    const existing = topicCounts.get(projection.context.topic);
+    if (existing) {
+      existing.count += 1;
+    } else {
+      topicCounts.set(projection.context.topic, {
+        label: projection.context.topicLabel,
+        order: projection.context.manifestOrder,
+        count: 1,
+      });
+    }
+  }
+
+  return {
+    categories: categoryOrder
+      .filter((category) => categoryCounts.has(category))
+      .map((category) => ({ value: category, count: categoryCounts.get(category)! })),
+    types: (["review", "dossier"] as const)
+      .filter((kind) => typeCounts.has(kind))
+      .map((kind) => ({ value: kind, count: typeCounts.get(kind)! })),
+    statuses: (["audited", "provisional"] as const)
+      .filter((status) => statusCounts.has(status))
+      .map((status) => ({ value: status, count: statusCounts.get(status)! })),
+    confidences: (["high", "medium", "low"] as const)
+      .filter((confidence) => confidenceCounts.has(confidence))
+      .map((confidence) => ({
+        value: confidence,
+        count: confidenceCounts.get(confidence)!,
+      })),
+    freshnessDates: [...freshnessCounts.entries()]
+      .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+      .map(([value, count]) => ({ value, count })),
+    topics: [...topicCounts.entries()]
+      .sort(([, a], [, b]) => a.order - b.order)
+      .map(([value, meta]) => ({ value, label: meta.label, count: meta.count })),
+  };
+}
+
+/** Hub sort: dossiers ordered by their topic's manifest position, then
+ *  audited rank, then provisional entries by productSlug; reviews ordered by
+ *  modifiedDate descending; item.id is the final stable tiebreak throughout. */
+const compareHubProjections = (
+  a: DiscoveryProjection,
+  b: DiscoveryProjection,
+): number => {
+  if (a.kind !== b.kind) {
+    return a.kind === "dossier" ? -1 : 1;
+  }
+
+  if (a.kind === "dossier" && b.kind === "dossier") {
+    if (a.context.manifestOrder !== b.context.manifestOrder) {
+      return a.context.manifestOrder - b.context.manifestOrder;
+    }
+    if (a.context.status !== b.context.status) {
+      return a.context.status === "audited" ? -1 : 1;
+    }
+    if (a.context.status === "audited") {
+      const rankA = a.context.auditedRank ?? Number.MAX_SAFE_INTEGER;
+      const rankB = b.context.auditedRank ?? Number.MAX_SAFE_INTEGER;
+      if (rankA !== rankB) return rankA - rankB;
+    } else if (a.context.productSlug !== b.context.productSlug) {
+      return a.context.productSlug < b.context.productSlug ? -1 : 1;
+    }
+  } else {
+    const dateA = a.item.review?.modifiedDate ?? "";
+    const dateB = b.item.review?.modifiedDate ?? "";
+    if (dateA !== dateB) {
+      return dateA > dateB ? -1 : 1;
+    }
+  }
+
+  if (a.itemId !== b.itemId) return a.itemId < b.itemId ? -1 : 1;
+  return 0;
+};
+
+export function sortHubProjections(
+  projections: readonly DiscoveryProjection[],
+): DiscoveryProjection[] {
+  return [...projections].sort(compareHubProjections);
+}
+
+export function sortFinderItems(
+  items: readonly DiscoveryItem[],
+  filters: Pick<DiscoveryFilters, "query" | "category">,
+): DiscoveryItem[] {
+  const matching = items.filter(
+    (item) =>
+      (!filters.category || item.category === filters.category) &&
+      matchesItemQuery(item, filters.query),
+  );
+
+  return matching.sort((a, b) => {
+    const featuredA = a.review?.featured ? 1 : 0;
+    const featuredB = b.review?.featured ? 1 : 0;
+    if (featuredA !== featuredB) return featuredB - featuredA;
+
+    const dateA = a.display.sortDate;
+    const dateB = b.display.sortDate;
+    if (dateA !== dateB) {
+      if (dateA === null) return 1;
+      if (dateB === null) return -1;
+      return dateA > dateB ? -1 : 1;
+    }
+
+    if (a.id !== b.id) return a.id < b.id ? -1 : 1;
+    return 0;
+  });
+}
+
+export function countDiscoveryItems(
+  items: readonly DiscoveryItem[],
+): DiscoveryCounts {
+  let reviewBackedCount = 0;
+  let dossierCount = 0;
+  let auditedItemCount = 0;
+  let verifiedDataPointCount = 0;
+
+  for (const item of items) {
+    if (item.review) reviewBackedCount += 1;
+    if (item.researchContexts.length > 0) dossierCount += 1;
+    if (item.researchContexts.some((context) => context.status === "audited")) {
+      auditedItemCount += 1;
+    }
+    for (const context of item.researchContexts) {
+      verifiedDataPointCount += context.dataPoints;
+    }
+  }
+
+  return {
+    reviewBackedCount,
+    dossierCount,
+    discoveryItemCount: items.length,
+    auditedItemCount,
+    verifiedDataPointCount,
+  };
+}
