@@ -76,14 +76,26 @@ vi.mock('@/lib/logging', () => ({
 // Imported AFTER the mocks are registered.
 import {
   buildDiscoveryCatalog,
+  flattenQualifiedOverlayRows,
   loadMarketReviewItems,
   loadMarketResearchContexts,
+  loadOneTopicOverlay,
   resolveOverlayContexts,
+  __resetTopicOverlayBackoffForTests,
+  type TopicOverlayResult,
 } from '@/lib/research/catalog';
 
 beforeEach(() => {
   vi.resetAllMocks();
   mockGetTopicConfig.mockReturnValue(FAKE_CONFIG);
+  // The 60s failure-backoff map (spec §5.3.1) is module-level state, not a vi
+  // mock — vi.resetAllMocks() above does not touch it. Without this reset, a
+  // backoff entry set by one test (e.g. the "other topics unaffected" test
+  // below, which fails 'business-banking' under the REAL Date.now clock)
+  // would leak into a later test's fake-clock timeline for the same
+  // CockpitKey and silently report "backoff" instead of the state that test
+  // actually means to exercise.
+  __resetTopicOverlayBackoffForTests();
 });
 
 // --- fixtures ----------------------------------------------------------------
@@ -546,10 +558,35 @@ describe('loadMarketReviewItems', () => {
   });
 });
 
-// --- loadMarketResearchContexts — Promise.allSettled overlay loader --------
+// --- loadOneTopicOverlay — uncached single-topic loader (spec §5.3.1) ------
+// This is the function `getCachedTopicOverlay` wraps in a per-topic
+// unstable_cache entry. It is the loader boundary the amended spec (§5.3.1)
+// requires to stop collapsing "loaded fine, zero qualifying rows" and "failed
+// to load" into the same `[]` — every call below returns a discriminated
+// TopicOverlayResult instead.
 
-describe('loadMarketResearchContexts', () => {
-  it('excludes an unmatched unavailable product — no row is created', async () => {
+describe('loadOneTopicOverlay', () => {
+  const entryFor = (category: string, topic: string): BestXManifestEntry =>
+    TEST_MANIFEST.find((e) => e.category === category && e.topic === topic) as unknown as BestXManifestEntry;
+
+  it('resolves ok:true with its contexts for a qualified topic', async () => {
+    mockGetCockpitData.mockImplementation(async (_market: string, category: string) => {
+      if (category !== 'trading') return [];
+      return [
+        makeProduct({ slug: 'acme', category: 'trading', reviewSlug: null, researchStatus: 'audited', fieldSources: { fee: src() } }),
+      ];
+    });
+
+    const result = await loadOneTopicOverlay('us', entryFor('trading', 'trading-platforms'), 0);
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error('expected ok:true');
+    expect(result.contexts).toHaveLength(1);
+    expect(result.contexts[0].cockpitKey).toBe('us/trading/trading-platforms');
+    expect(result.rows).toHaveLength(1);
+  });
+
+  it('resolves ok:true with an EMPTY contexts array when nothing qualifies — explicitly NOT ok:false (the merge-blocker distinction spec §5.3.1 exists to fix)', async () => {
     mockGetCockpitData.mockImplementation(async (_market: string, category: string) => {
       if (category === 'forex') {
         return [makeProduct({ slug: 'shaky', category: 'forex', reviewSlug: null, researchStatus: 'unavailable' })];
@@ -557,54 +594,37 @@ describe('loadMarketResearchContexts', () => {
       return [];
     });
 
-    const overlay = await loadMarketResearchContexts('us');
+    const result = await loadOneTopicOverlay('us', entryFor('forex', 'forex-brokers'), 2);
 
-    expect(overlay).toHaveLength(0);
+    expect(result).toEqual({
+      ok: true,
+      entry: entryFor('forex', 'forex-brokers'),
+      contexts: [],
+      rows: [],
+    });
   });
 
-  it('keeps the fulfilled topic and every review when one topic rejects, logging exactly one warning', async () => {
-    mockGetCockpitData.mockImplementation(async (_market: string, category: string) => {
-      if (category === 'business-banking') throw new Error('DB unavailable');
-      if (category === 'trading') {
-        return [
-          makeProduct({ slug: 'acme', category: 'trading', reviewSlug: null, researchStatus: 'audited', fieldSources: { fee: src() } }),
-        ];
-      }
-      return [];
+  it('resolves ok:false missing_topic_config when the manifest entry has no resolvable TopicConfig', async () => {
+    mockGetTopicConfig.mockReturnValue(null);
+
+    const result = await loadOneTopicOverlay('us', entryFor('trading', 'trading-platforms'), 0);
+
+    expect(result).toEqual({
+      ok: false,
+      entry: entryFor('trading', 'trading-platforms'),
+      reason: 'missing_topic_config',
+    });
+    expect(mockGetCockpitData).not.toHaveBeenCalled();
+  });
+
+  it('rejects (does not catch) when getCockpitData fails, so unstable_cache never caches a transient failure for the full 3600s success TTL', async () => {
+    mockGetCockpitData.mockImplementation(async () => {
+      throw new Error('DB unavailable');
     });
 
-    const overlay = await loadMarketResearchContexts('us');
-
-    expect(overlay).toHaveLength(1);
-    expect(overlay[0].context.cockpitKey).toBe('us/trading/trading-platforms');
-    expect(mockLoggerWarn).toHaveBeenCalledTimes(1);
-    expect(mockLoggerWarn).toHaveBeenCalledWith('Research discovery topic unavailable', {
-      market: 'us',
-      category: 'business-banking',
-      topic: 'business-bank-accounts',
-      errorType: 'Error',
-    });
-
-    // Every review (independent of the overlay) and the fulfilled context
-    // both remain once assembled into the catalog.
-    const reviewA = makeDiscoveryItem({
-      id: reviewItemId('/us/personal-finance/rev-a'),
-      category: 'personal-finance',
-      review: makeReview({ slug: 'rev-a', href: '/us/personal-finance/rev-a' }),
-    });
-    const reviewB = makeDiscoveryItem({
-      id: reviewItemId('/us/forex/rev-b'),
-      category: 'forex',
-      review: makeReview({ slug: 'rev-b', href: '/us/forex/rev-b' }),
-    });
-
-    const { catalog } = buildDiscoveryCatalog('us', [reviewA, reviewB], overlay);
-
-    expect(catalog.items.find((i) => i.id === reviewA.id)).toBeTruthy();
-    expect(catalog.items.find((i) => i.id === reviewB.id)).toBeTruthy();
-    const cockpitOnly = catalog.items.find((i) => i.id === 'product:us:trading:acme');
-    expect(cockpitOnly).toBeTruthy();
-    expect(cockpitOnly!.researchContexts).toHaveLength(1);
+    await expect(loadOneTopicOverlay('us', entryFor('trading', 'trading-platforms'), 0)).rejects.toThrow(
+      'DB unavailable',
+    );
   });
 
   it('invariant 5 (spec §15) — only an audited context carries score, rank, and confidence; a provisional context nulls all three', async () => {
@@ -634,10 +654,11 @@ describe('loadMarketResearchContexts', () => {
       ];
     });
 
-    const overlay = await loadMarketResearchContexts('us');
+    const result = await loadOneTopicOverlay('us', entryFor('trading', 'trading-platforms'), 0);
+    if (!result.ok) throw new Error('expected ok:true');
 
-    const auditedRow = overlay.find((r) => r.context.productSlug === 'audited-co')!;
-    const provisionalRow = overlay.find((r) => r.context.productSlug === 'provisional-co')!;
+    const auditedRow = result.rows.find((r) => r.context.productSlug === 'audited-co')!;
+    const provisionalRow = result.rows.find((r) => r.context.productSlug === 'provisional-co')!;
 
     expect(auditedRow.context.status).toBe('audited');
     expect(auditedRow.context.confidence).toBe('high');
@@ -649,6 +670,72 @@ describe('loadMarketResearchContexts', () => {
     expect(provisionalRow.context.auditedScore).toBeNull();
     expect(provisionalRow.context.auditedRank).toBeNull();
   });
+});
+
+// --- loadMarketResearchContexts — per-topic typed results (spec §5.3.1) ----
+// Fans out across every manifest topic for the market. Unlike the old
+// Promise.allSettled loader, no individual topic promise ever rejects here —
+// loadTopic (injected as the uncached loadOneTopicOverlay in these tests, so
+// the real unstable_cache/Next.js runtime is never touched) is called inside
+// a try/catch that turns a rejection into `{ok:false, reason:'load_failed'}`
+// plus exactly one structured warn.
+
+describe('loadMarketResearchContexts', () => {
+  it('reports load_failed for a rejecting topic, leaves every other topic unaffected, and logs exactly one structured warning', async () => {
+    mockGetCockpitData.mockImplementation(async (_market: string, category: string) => {
+      if (category === 'business-banking') throw new Error('DB unavailable');
+      if (category === 'trading') {
+        return [
+          makeProduct({ slug: 'acme', category: 'trading', reviewSlug: null, researchStatus: 'audited', fieldSources: { fee: src() } }),
+        ];
+      }
+      return []; // forex — loads fine, zero qualifying rows
+    });
+
+    const results = await loadMarketResearchContexts('us', () => 0, loadOneTopicOverlay);
+
+    expect(results).toHaveLength(TEST_MANIFEST.length);
+    const trading = results.find((r) => r.entry.category === 'trading')!;
+    const businessBanking = results.find((r) => r.entry.category === 'business-banking')!;
+    const forex = results.find((r) => r.entry.category === 'forex')!;
+
+    expect(trading.ok).toBe(true);
+    expect(businessBanking).toEqual({ ok: false, entry: businessBanking.entry, reason: 'load_failed' });
+    // The merge-blocker distinction: forex loaded fine with zero qualifying
+    // rows — ok:true, NOT the same ok:false shape as the topic that actually
+    // failed to load.
+    expect(forex).toEqual({ ok: true, entry: forex.entry, contexts: [], rows: [] });
+
+    expect(mockLoggerWarn).toHaveBeenCalledTimes(1);
+    expect(mockLoggerWarn).toHaveBeenCalledWith('Research discovery topic unavailable', {
+      market: 'us',
+      category: 'business-banking',
+      topic: 'business-bank-accounts',
+      reason: 'load_failed',
+    });
+
+    // Every review (independent of the overlay) and the fulfilled context
+    // both remain once assembled into the catalog via the flatten helper.
+    const reviewA = makeDiscoveryItem({
+      id: reviewItemId('/us/personal-finance/rev-a'),
+      category: 'personal-finance',
+      review: makeReview({ slug: 'rev-a', href: '/us/personal-finance/rev-a' }),
+    });
+    const reviewB = makeDiscoveryItem({
+      id: reviewItemId('/us/forex/rev-b'),
+      category: 'forex',
+      review: makeReview({ slug: 'rev-b', href: '/us/forex/rev-b' }),
+    });
+
+    const overlay = flattenQualifiedOverlayRows(results);
+    const { catalog } = buildDiscoveryCatalog('us', [reviewA, reviewB], overlay);
+
+    expect(catalog.items.find((i) => i.id === reviewA.id)).toBeTruthy();
+    expect(catalog.items.find((i) => i.id === reviewB.id)).toBeTruthy();
+    const cockpitOnly = catalog.items.find((i) => i.id === 'product:us:trading:acme');
+    expect(cockpitOnly).toBeTruthy();
+    expect(cockpitOnly!.researchContexts).toHaveLength(1);
+  });
 
   it('invariant 11 (spec §15) — every overlay topic rejecting leaves review ids byte-identical and context-free', async () => {
     // Spec §13 degradation matrix: "Gesamtes Overlay scheitert -> Hub bleibt
@@ -659,9 +746,9 @@ describe('loadMarketResearchContexts', () => {
       throw new Error('Cockpit unreachable');
     });
 
-    const overlay = await loadMarketResearchContexts('us');
+    const results = await loadMarketResearchContexts('us', () => 0, loadOneTopicOverlay);
 
-    expect(overlay).toHaveLength(0);
+    expect(results.every((r) => !r.ok && r.reason === 'load_failed')).toBe(true);
     expect(mockLoggerWarn).toHaveBeenCalledTimes(TEST_MANIFEST.length);
 
     const reviewA = makeDiscoveryItem({
@@ -675,12 +762,129 @@ describe('loadMarketResearchContexts', () => {
       review: makeReview({ slug: 'rev-b', href: '/us/forex/rev-b' }),
     });
 
+    const overlay = flattenQualifiedOverlayRows(results);
+    expect(overlay).toHaveLength(0);
     const { catalog } = buildDiscoveryCatalog('us', [reviewA, reviewB], overlay);
 
     expect(catalog.items).toHaveLength(2);
     expect(catalog.items.find((i) => i.id === reviewA.id)?.id).toBe(reviewA.id);
     expect(catalog.items.find((i) => i.id === reviewB.id)?.id).toBe(reviewB.id);
     expect(catalog.items.every((i) => i.researchContexts.length === 0)).toBe(true);
+  });
+});
+
+// --- loadMarketResearchContexts — 60s failure backoff (spec §5.3.1) --------
+// Exercises the module-level Map<CockpitKey, retryAfterEpochMs> directly via
+// an injected `loadTopic` stub (not loadOneTopicOverlay) and an injected
+// clock, so the timeline is fully deterministic and independent of
+// getCockpitData/getTopicConfig plumbing already covered above.
+
+describe('loadMarketResearchContexts — 60s failure backoff', () => {
+  const stubResult = (entry: BestXManifestEntry): TopicOverlayResult => ({
+    ok: true,
+    entry,
+    contexts: [],
+    rows: [],
+  });
+
+  it('does not re-invoke a topic still inside its 60s backoff window, reporting backoff instead of load_failed', async () => {
+    let clock = 0;
+    const now = () => clock;
+    let failBusinessBanking = true;
+    const loadTopic = vi.fn(async (_market: string, entry: BestXManifestEntry) => {
+      if (entry.category === 'business-banking' && failBusinessBanking) {
+        throw new Error('DB unavailable');
+      }
+      return stubResult(entry);
+    });
+
+    // t=0: business-banking fails for the first time.
+    const first = await loadMarketResearchContexts('us', now, loadTopic);
+    const firstBB = first.find((r) => r.entry.category === 'business-banking')!;
+    expect(firstBB).toEqual({ ok: false, entry: firstBB.entry, reason: 'load_failed' });
+    expect(loadTopic).toHaveBeenCalledTimes(TEST_MANIFEST.length);
+
+    // t=30_000 (30s later, still inside the 60s window): must NOT call
+    // loadTopic again for business-banking — only the other two topics.
+    clock = 30_000;
+    loadTopic.mockClear();
+    const second = await loadMarketResearchContexts('us', now, loadTopic);
+    const secondBB = second.find((r) => r.entry.category === 'business-banking')!;
+    expect(secondBB).toEqual({ ok: false, entry: secondBB.entry, reason: 'backoff' });
+    expect(loadTopic).toHaveBeenCalledTimes(TEST_MANIFEST.length - 1);
+    expect(loadTopic).not.toHaveBeenCalledWith(
+      'us',
+      expect.objectContaining({ category: 'business-banking' }),
+      expect.anything(),
+    );
+
+    // t=61_000 (past the 60s window): retries automatically and can succeed.
+    clock = 61_000;
+    failBusinessBanking = false;
+    loadTopic.mockClear();
+    const third = await loadMarketResearchContexts('us', now, loadTopic);
+    const thirdBB = third.find((r) => r.entry.category === 'business-banking')!;
+    expect(thirdBB.ok).toBe(true);
+    expect(loadTopic).toHaveBeenCalledTimes(TEST_MANIFEST.length);
+  });
+
+  it('logs the structured warning exactly once per backoff window, not on every request that lands inside it', async () => {
+    let clock = 0;
+    const now = () => clock;
+    const loadTopic = vi.fn(async (_market: string, entry: BestXManifestEntry) => {
+      if (entry.category === 'forex') throw new Error('DB unavailable');
+      return stubResult(entry);
+    });
+
+    await loadMarketResearchContexts('us', now, loadTopic); // t=0 — first failure, one warn
+    expect(mockLoggerWarn).toHaveBeenCalledTimes(1);
+    expect(mockLoggerWarn).toHaveBeenCalledWith('Research discovery topic unavailable', {
+      market: 'us',
+      category: 'forex',
+      topic: 'forex-brokers',
+      reason: 'load_failed',
+    });
+
+    clock = 30_000; // still inside the window — a second request
+    await loadMarketResearchContexts('us', now, loadTopic);
+    expect(mockLoggerWarn).toHaveBeenCalledTimes(1); // no new warn
+
+    clock = 45_000; // still inside the window — a third request
+    await loadMarketResearchContexts('us', now, loadTopic);
+    expect(mockLoggerWarn).toHaveBeenCalledTimes(1); // still no new warn (this test's core claim)
+
+    clock = 61_000; // window elapsed — a genuinely new failure opens a new window
+    await loadMarketResearchContexts('us', now, loadTopic);
+    expect(mockLoggerWarn).toHaveBeenCalledTimes(2);
+  });
+});
+
+// --- flattenQualifiedOverlayRows — thin back-compat helper (spec §5.3.1) ---
+
+describe('flattenQualifiedOverlayRows', () => {
+  it('feeds existing NormalizedOverlayRow[] consumers unchanged: only the rows of successful topics, in order, skipping failed/backoff/missing-config topics entirely', () => {
+    const rowA = makeOverlayRow({ category: 'trading', topic: 'trading-platforms', productSlug: 'acme' });
+    const rowB = makeOverlayRow({ category: 'forex', topic: 'forex-brokers', productSlug: 'zeta' });
+
+    const results: TopicOverlayResult[] = [
+      { ok: true, entry: rowA.entry, contexts: [rowA.context], rows: [rowA] },
+      { ok: false, entry: rowA.entry, reason: 'load_failed' },
+      { ok: false, entry: rowA.entry, reason: 'backoff' },
+      { ok: false, entry: rowA.entry, reason: 'missing_topic_config' },
+      { ok: true, entry: rowB.entry, contexts: [rowB.context], rows: [rowB] },
+    ];
+
+    expect(flattenQualifiedOverlayRows(results)).toEqual([rowA, rowB]);
+  });
+
+  it('returns an empty array when every topic is unavailable', () => {
+    const rowA = makeOverlayRow({ category: 'trading', topic: 'trading-platforms', productSlug: 'acme' });
+    const results: TopicOverlayResult[] = [
+      { ok: false, entry: rowA.entry, reason: 'load_failed' },
+      { ok: false, entry: rowA.entry, reason: 'backoff' },
+    ];
+
+    expect(flattenQualifiedOverlayRows(results)).toEqual([]);
   });
 });
 

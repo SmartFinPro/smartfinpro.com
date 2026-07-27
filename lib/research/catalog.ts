@@ -4,11 +4,31 @@
 // loaded Cockpit topic overlays (lib/comparison) into one market-wide
 // DiscoveryCatalog (spec §5). `buildDiscoveryCatalog` is a pure assembly
 // function: it never does I/O itself, so it is unit-testable with fixtures.
-// The two uncached loaders (`loadMarketReviewItems`, `loadMarketResearchContexts`)
-// are exported for the same reason — direct, network-free unit coverage of the
-// MDX filter and the Promise.allSettled per-topic resilience, mirroring how
+// The uncached loaders (`loadMarketReviewItems`, `loadOneTopicOverlay`) are
+// exported for the same reason — direct, network-free unit coverage of the
+// MDX filter and the per-topic overlay contract, mirroring how
 // research-adapter.test.ts fixture-tests buildResearchView instead of the
 // Supabase-backed lib/research/data.ts wrapper.
+//
+// Per-topic cache + 60s failure backoff (spec §5.3.1, amendment 2026-07-27):
+// the overlay cache moved from one entry per MARKET to one entry per TOPIC
+// (`loadOneTopicOverlay`, wrapped by `getCachedTopicOverlay`) so one bad
+// manifest entry can no longer hold the whole market's overlay hostage for
+// the full 3600s revalidate window. Every per-topic load now resolves to a
+// discriminated `TopicOverlayResult` (`loadMarketResearchContexts` returns
+// the array of these, NOT a flattened list) instead of collapsing "loaded
+// fine, zero qualifying rows" and "failed to load" into the same `[]` — that
+// collapse is exactly the distinction the three-tier `ShortlistScopeSnapshot`
+// (catalog-shell-logic.ts, §11.2.1) depends on to avoid destructively
+// clearing a shortlist it simply couldn't verify. Because `unstable_cache`
+// only ever caches a resolved value — never a thrown error — a real
+// **transient** failure must REJECT out of the cached function so it isn't
+// cached for the full 3600s success TTL; the independent 60s backoff for that
+// case lives in `loadMarketResearchContexts`, keyed by an injectable clock so
+// tests can fast-forward the window deterministically. `flattenQualifiedOverlayRows`
+// is the thin back-compat helper that keeps `buildDiscoveryCatalog` and every
+// other pre-Decision-A consumer of the flat `NormalizedOverlayRow[]` shape
+// working unchanged.
 //
 // `import 'server-only'` guards the whole module: DiscoveryCatalogBundle.
 // dossierRows carries the complete ResearchProduct (full Cockpit provenance)
@@ -23,6 +43,7 @@ import { marketCategories, categoryConfig } from '@/lib/i18n/config';
 import { getContentByMarketAndCategory } from '@/lib/mdx';
 import { BEST_X_MANIFEST, type BestXManifestEntry } from '@/lib/comparison/topics/manifest';
 import { getTopicConfig } from '@/lib/comparison/topics/index';
+import type { TopicConfig } from '@/lib/comparison/topics/types';
 import { getCockpitData } from '@/lib/comparison/loader';
 import { buildResearchView, type ResearchProduct } from '@/lib/research/adapter';
 import { logger } from '@/lib/logging';
@@ -39,6 +60,7 @@ import {
   type DiscoveryItem,
   type DiscoveryReview,
   type ResearchContext,
+  type UnavailableScopeReason,
 } from '@/lib/research/catalog-shell-logic';
 
 export interface DiscoveryCatalog {
@@ -65,14 +87,57 @@ export interface DiscoveryCatalogBundle {
 
 /** One already-qualified (audited/provisional) Cockpit row, normalized to its
  *  ResearchContext, still carrying the manifest entry (needed for the review
- *  join key) and the full ResearchProduct (needed only by dossierRows). Not
- *  exported — an internal shape between the two loaders and the join below. */
-interface NormalizedOverlayRow {
+ *  join key) and the full ResearchProduct (needed only by dossierRows).
+ *  Exported only because it appears in `TopicOverlaySuccess.rows` — the join
+ *  below is still the only real consumer. */
+export interface NormalizedOverlayRow {
   entry: BestXManifestEntry;
   context: ResearchContext;
   researchProduct: ResearchProduct;
   reviewSlug: string | null;
 }
+
+// ── Typed per-topic overlay result (spec §5.3.1) ────────────────────────────
+// Replaces the old contract where a topic that loaded fine with zero
+// qualifying rows and a topic that failed to load both surfaced as the same
+// `[]` — a collapse the three-tier ShortlistScopeSnapshot (catalog-shell-logic
+// §11.2.1) cannot tolerate, since it needs to tell "verified empty" apart from
+// "currently unverifiable" to avoid destructively clearing a stored shortlist
+// it simply couldn't check. `TopicOverlayFailureReason` is deliberately a
+// subset of catalog-shell-logic's `UnavailableScopeReason` (excluding
+// `unknown_state`, which only ever describes an inconsistent SNAPSHOT built
+// downstream — the loader itself always knows exactly why a topic failed).
+
+/** Every reason this loader itself can assign to a failed/unavailable topic.
+ *  `unknown_state` is intentionally excluded — see catalog-shell-logic.ts. */
+export type TopicOverlayFailureReason = Exclude<UnavailableScopeReason, 'unknown_state'>;
+
+export interface TopicOverlaySuccess {
+  ok: true;
+  entry: BestXManifestEntry;
+  /** Convenience projection of `rows.map(row => row.context)` — same order. */
+  contexts: ResearchContext[];
+  rows: NormalizedOverlayRow[];
+}
+
+export interface TopicOverlayFailure {
+  ok: false;
+  entry: BestXManifestEntry;
+  reason: TopicOverlayFailureReason;
+}
+
+export type TopicOverlayResult = TopicOverlaySuccess | TopicOverlayFailure;
+
+/** The shape `loadMarketResearchContexts` calls per manifest topic — the real
+ *  default is the per-topic-cached `getCachedTopicOverlay`; tests inject the
+ *  uncached `loadOneTopicOverlay` (bypassing unstable_cache, which requires a
+ *  Next.js request runtime this vitest suite never has) or a bare stub to
+ *  drive the backoff Map's timeline deterministically. */
+export type TopicOverlayLoader = (
+  market: Market,
+  entry: BestXManifestEntry,
+  manifestOrder: number,
+) => Promise<TopicOverlayResult>;
 
 // ── Shared display computation (spec §4.3, §4.4) ────────────────────────────
 // Used both by loadMarketReviewItems (contexts always [] at that stage) and by
@@ -215,20 +280,21 @@ export async function loadMarketReviewItems(market: Market): Promise<DiscoveryIt
   return items;
 }
 
-// ── Step 2: uncached overlay loader (wrapped by getCachedResearchContexts) ──
+// ── Step 2: uncached overlay loader (wrapped by getCachedTopicOverlay) ──────
 
 /** Loads one manifest topic's Cockpit rows and normalizes only the qualified
  *  (audited/provisional) ones into NormalizedOverlayRow — unavailable rows are
- *  dropped here and never create a DiscoveryItem (spec §4.2). Can reject (a
- *  bad getCockpitData/getTopicConfig call); the caller below settles it. */
+ *  dropped here and never create a DiscoveryItem (spec §4.2). Takes an
+ *  already-resolved `config` (the caller, `loadOneTopicOverlay`, owns the
+ *  getTopicConfig null-check and its distinct `missing_topic_config` outcome)
+ *  so THIS function's only failure mode is a genuine getCockpitData rejection
+ *  — the caller settles that. */
 async function loadTopicOverlayRows(
   market: Market,
   entry: BestXManifestEntry,
   manifestOrder: number,
+  config: TopicConfig,
 ): Promise<NormalizedOverlayRow[]> {
-  const config = getTopicConfig(entry.category, entry.topic, entry.market);
-  if (!config) return [];
-
   const products = await getCockpitData(entry.market, entry.category, entry.topic);
   const requiredFieldKeys = config.specColumns.map((column) => column.key);
   const rows = buildResearchView(products, requiredFieldKeys);
@@ -272,38 +338,159 @@ async function loadTopicOverlayRows(
   });
 }
 
-/** Loads every manifest topic for `market` via Promise.allSettled (spec §5.2):
- *  a rejected topic logs exactly one structured warning (market, category,
- *  topic, error type) and is simply absent from the result — every other
- *  topic's rows, and all reviews (loaded independently), are unaffected. Never
- *  logs raw row contents or user data.
+/** Uncached, single-topic overlay load (spec §5.3.1) — the function
+ *  `getCachedTopicOverlay` wraps in a per-TOPIC `unstable_cache` entry
+ *  (`['research-discovery-contexts', market, category, topic]`, 3600s).
  *
- *  @internal — test seam only; production callers must use
- *  getDiscoveryCatalog / getDiscoveryCatalogBundle. */
-export async function loadMarketResearchContexts(market: Market): Promise<NormalizedOverlayRow[]> {
+ *  Resolves `{ok:false, reason:'missing_topic_config'}` — a normal, CACHEABLE
+ *  return — when the manifest entry's TopicConfig doesn't resolve; that is a
+ *  static configuration problem, not a transient one, so letting it ride the
+ *  same 3600s success TTL as a real load is correct (and still logs once per
+ *  cache window, since the log line only runs on cache miss).
+ *
+ *  REJECTS (never catches) when getCockpitData fails — deliberately. Per
+ *  spec §5.3.1, `unstable_cache` can only ever cache a resolved value; if this
+ *  function caught the failure and returned an `ok:false` sentinel instead of
+ *  throwing, that sentinel would itself get cached for the full 3600s success
+ *  TTL, not the 60s a transient failure warrants. The 60s backoff for that
+ *  case is therefore handled one layer up, in `loadMarketResearchContexts`,
+ *  entirely outside `unstable_cache`.
+ *
+ *  @internal — test seam; production callers use loadMarketResearchContexts /
+ *  getDiscoveryCatalog(Bundle). */
+export async function loadOneTopicOverlay(
+  market: Market,
+  entry: BestXManifestEntry,
+  manifestOrder: number,
+): Promise<TopicOverlayResult> {
+  const config = getTopicConfig(entry.category, entry.topic, entry.market);
+  if (!config) {
+    logger.warn('Research discovery topic has no TopicConfig', {
+      market,
+      category: entry.category,
+      topic: entry.topic,
+      reason: 'missing_topic_config',
+    });
+    return { ok: false, entry, reason: 'missing_topic_config' };
+  }
+
+  const rows = await loadTopicOverlayRows(market, entry, manifestOrder, config);
+  return { ok: true, entry, contexts: rows.map((row) => row.context), rows };
+}
+
+/** Per-topic cache (spec §5.3.1): one `unstable_cache` entry per
+ *  (market, category, topic), 3600s, tag `research-catalog` — replaces the
+ *  single market-wide entry the old `getCachedResearchContexts` used, so one
+ *  bad manifest topic can no longer hold the whole market's overlay hostage
+ *  for an hour. Constructing `unstable_cache(...)` per call is cheap (pure
+ *  closure setup, no I/O) and lets the key vary per topic without a
+ *  module-level cache-function-per-topic registry. */
+function getCachedTopicOverlay(
+  market: Market,
+  entry: BestXManifestEntry,
+  manifestOrder: number,
+): Promise<TopicOverlayResult> {
+  return unstable_cache(
+    () => loadOneTopicOverlay(market, entry, manifestOrder),
+    ['research-discovery-contexts', market, entry.category, entry.topic],
+    { revalidate: 3600, tags: ['research-catalog'] },
+  )();
+}
+
+const BACKOFF_WINDOW_MS = 60_000;
+
+/** Module-level 60s post-failure backoff (spec §5.3.1) — deliberately OUTSIDE
+ *  `unstable_cache`, which can never cache a thrown error and would otherwise
+ *  let a popular, persistently-failing topic re-hit `getCockpitData` on every
+ *  single request. Cleared only in `__resetTopicOverlayBackoffForTests`. */
+const topicBackoffUntil = new Map<CockpitKey, number>();
+
+/** @internal test-only — clears the module-level backoff Map so each test in
+ *  research-catalog.test.ts starts from a clean slate regardless of
+ *  execution order or which CockpitKey an earlier test touched. Never called
+ *  by production code. */
+export function __resetTopicOverlayBackoffForTests(): void {
+  topicBackoffUntil.clear();
+}
+
+/** Loads every manifest topic for `market` (spec §5.2, amended §5.3.1): each
+ *  topic now resolves to a typed `TopicOverlayResult` — NOT a flattened array
+ *  — instead of the old Promise.allSettled loader collapsing "loaded fine,
+ *  zero qualifying rows" and "failed to load" into the same absent-from-array
+ *  `[]`. No individual topic promise rejects out of this function: `loadTopic`
+ *  (the real per-topic-cached loader by default) runs inside a try/catch that
+ *  applies the 60s backoff and turns a rejection into
+ *  `{ok:false, reason:'load_failed'}`.
+ *
+ *  Per-topic flow:
+ *  1. A `CockpitKey` already inside its backoff window is reported
+ *     `{ok:false, reason:'backoff'}` WITHOUT calling `loadTopic` again — no
+ *     repeat request to getCockpitData/getTopicConfig, no repeat warn.
+ *  2. Otherwise `loadTopic` runs. Success clears any (possibly stale) backoff
+ *     entry for that key. A rejection sets `retryAfterEpochMs = now() +
+ *     60_000` and logs exactly once — this is the transition INTO a new
+ *     backoff window, which is exactly why the log line lives in this catch
+ *     branch and nowhere else: once step 1 above starts short-circuiting on
+ *     the next call, this branch (and its warn) simply doesn't run again
+ *     until the window has elapsed and a genuinely new failure occurs.
+ *
+ *  `now` defaults to `Date.now` but is always injectable so tests can
+ *  fast-forward the 60s window deterministically; `loadTopic` defaults to the
+ *  real per-topic-cached `getCachedTopicOverlay` but is always injectable so
+ *  tests never have to go through `unstable_cache` (which requires a Next.js
+ *  request runtime this vitest suite doesn't have).
+ *
+ *  @internal — test seam only for the `now`/`loadTopic` overrides; production
+ *  callers must use getDiscoveryCatalog / getDiscoveryCatalogBundle. */
+export async function loadMarketResearchContexts(
+  market: Market,
+  now: () => number = Date.now,
+  loadTopic: TopicOverlayLoader = getCachedTopicOverlay,
+): Promise<TopicOverlayResult[]> {
   const entries = BEST_X_MANIFEST.map((entry, manifestOrder) => ({ entry, manifestOrder })).filter(
     ({ entry }) => entry.market === market,
   );
 
-  const settled = await Promise.allSettled(
-    entries.map(({ entry, manifestOrder }) => loadTopicOverlayRows(market, entry, manifestOrder)),
+  return Promise.all(
+    entries.map(async ({ entry, manifestOrder }): Promise<TopicOverlayResult> => {
+      const cockpitKey = cockpitKeyFor(market, entry.category, entry.topic);
+      const retryAfter = topicBackoffUntil.get(cockpitKey);
+      if (retryAfter !== undefined && retryAfter > now()) {
+        return { ok: false, entry, reason: 'backoff' };
+      }
+
+      try {
+        const result = await loadTopic(market, entry, manifestOrder);
+        topicBackoffUntil.delete(cockpitKey);
+        return result;
+      } catch {
+        topicBackoffUntil.set(cockpitKey, now() + BACKOFF_WINDOW_MS);
+        logger.warn('Research discovery topic unavailable', {
+          market,
+          category: entry.category,
+          topic: entry.topic,
+          reason: 'load_failed',
+        });
+        return { ok: false, entry, reason: 'load_failed' };
+      }
+    }),
   );
+}
 
+/** Thin back-compat helper (spec §5.3.1): flattens only the rows of
+ *  successfully loaded topics, in order — keeps `buildDiscoveryCatalog` and
+ *  every other pre-Decision-A consumer of the flat `NormalizedOverlayRow[]`
+ *  overlay shape working unchanged. A topic currently `backoff`,
+ *  `load_failed`, or `missing_topic_config` contributes nothing, the same
+ *  visible effect the old flat array had when it simply omitted a rejected
+ *  topic. */
+export function flattenQualifiedOverlayRows(
+  results: readonly TopicOverlayResult[],
+): NormalizedOverlayRow[] {
   const rows: NormalizedOverlayRow[] = [];
-  settled.forEach((result, index) => {
-    if (result.status === 'fulfilled') {
-      rows.push(...result.value);
-      return;
-    }
-    const { entry } = entries[index];
-    logger.warn('Research discovery topic unavailable', {
-      market,
-      category: entry.category,
-      topic: entry.topic,
-      errorType: result.reason instanceof Error ? result.reason.name : typeof result.reason,
-    });
-  });
-
+  for (const result of results) {
+    if (result.ok) rows.push(...result.rows);
+  }
   return rows;
 }
 
@@ -389,11 +576,15 @@ export function buildDiscoveryCatalog(
 }
 
 // ── Step 4: independent caches (spec §5.3) + public entry points ───────────
-// Kept as two separate unstable_cache wrappers so MDX (fast-moving editorial
-// content) and the Cockpit overlay (slower-moving, DB-backed) use their own
-// required lifetimes; the market is a cache argument on both. Precedents:
-// getMarketReviews (app/(marketing)/[market]/page.tsx) and
-// cachedResolveDecisionBridgeData (lib/comparison/bridge.ts).
+// The MDX review cache stays one entry per market (fast-moving editorial
+// content, 300s). The Cockpit overlay cache is now one entry per TOPIC (spec
+// §5.3.1) via getCachedTopicOverlay above, not a second market-wide
+// unstable_cache wrapper here — loadAndFlattenMarketOverlay below is the thin
+// glue that fans out through loadMarketResearchContexts (per-topic cache +
+// 60s backoff) and flattens the result back to the flat NormalizedOverlayRow[]
+// shape this file's pure buildDiscoveryCatalog has always consumed. Precedents
+// for the review cache: getMarketReviews (app/(marketing)/[market]/page.tsx)
+// and cachedResolveDecisionBridgeData (lib/comparison/bridge.ts).
 
 const getCachedReviewItems = unstable_cache(
   loadMarketReviewItems,
@@ -401,28 +592,30 @@ const getCachedReviewItems = unstable_cache(
   { revalidate: 300, tags: ['market-reviews', 'research-catalog'] },
 );
 
-const getCachedResearchContexts = unstable_cache(
-  loadMarketResearchContexts,
-  ['research-discovery-contexts'],
-  { revalidate: 3600, tags: ['research-catalog'] },
-);
+/** Default `load` for resolveOverlayContexts: runs the full per-topic
+ *  cache + 60s-backoff pipeline, then flattens to the pre-Decision-A shape. */
+async function loadAndFlattenMarketOverlay(market: Market): Promise<NormalizedOverlayRow[]> {
+  return flattenQualifiedOverlayRows(await loadMarketResearchContexts(market));
+}
 
 /** Resolves the cached Cockpit overlay for `market`, failing soft: a throw
  *  from the cache LAYER itself — `unstable_cache`, or the logger it might
  *  call — is caught, logged exactly once with a structured payload, and
  *  turned into an empty overlay so the Hub still renders its full review
- *  catalog (spec §13: HTTP 200 even when Cockpit data is unreachable). This
- *  is distinct from loadMarketResearchContexts's own per-TOPIC resilience
- *  (Promise.allSettled) above, which already isolates one bad manifest entry
- *  from the rest — this seam guards the layer wrapping ALL of them together.
- *  `load` defaults to the real cached loader and exists purely so tests can
- *  inject a rejecting stub without mocking next/cache.
+ *  catalog (spec §13: HTTP 200 even when Cockpit data is unreachable). This is
+ *  distinct from loadMarketResearchContexts's own per-TOPIC resilience above
+ *  (typed results + 60s backoff, spec §5.3.1), which already isolates one bad
+ *  manifest entry from the rest and never itself rejects — this seam guards
+ *  defensively against the (now largely theoretical, but still checked) case
+ *  of the surrounding layer throwing regardless. `load` defaults to the real
+ *  cached+flattened loader and exists purely so tests can inject a rejecting
+ *  stub without mocking next/cache.
  *
  *  @internal — test seam only; production callers must use
  *  getDiscoveryCatalog / getDiscoveryCatalogBundle. */
 export async function resolveOverlayContexts(
   market: Market,
-  load: (market: Market) => Promise<NormalizedOverlayRow[]> = getCachedResearchContexts,
+  load: (market: Market) => Promise<NormalizedOverlayRow[]> = loadAndFlattenMarketOverlay,
 ): Promise<NormalizedOverlayRow[]> {
   try {
     return await load(market);
