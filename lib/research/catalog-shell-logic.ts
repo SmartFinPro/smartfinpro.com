@@ -452,6 +452,29 @@ export function sortFinderItems(
   });
 }
 
+/** Canonical multi-topic context ordering for one DiscoveryItem (spec §4.1):
+ *  manifest position first — topics never collide on manifestOrder within a
+ *  single item, since a product appears at most once per topic — then
+ *  audited rank, then productSlug as a final deterministic tiebreak for any
+ *  remaining tie. Used by the server catalog builder (lib/research/catalog.ts)
+ *  when it merges overlay rows onto a DiscoveryItem's researchContexts. */
+export function sortResearchContexts(
+  contexts: readonly ResearchContext[],
+): ResearchContext[] {
+  return [...contexts].sort((a, b) => {
+    if (a.manifestOrder !== b.manifestOrder) return a.manifestOrder - b.manifestOrder;
+    const aAudited = a.status === "audited";
+    const bAudited = b.status === "audited";
+    if (aAudited !== bAudited) return aAudited ? -1 : 1;
+    if (aAudited) {
+      const rankA = a.auditedRank ?? Number.MAX_SAFE_INTEGER;
+      const rankB = b.auditedRank ?? Number.MAX_SAFE_INTEGER;
+      if (rankA !== rankB) return rankA - rankB;
+    }
+    return a.productSlug < b.productSlug ? -1 : a.productSlug > b.productSlug ? 1 : 0;
+  });
+}
+
 export function countDiscoveryItems(
   items: readonly DiscoveryItem[],
 ): DiscoveryCounts {
