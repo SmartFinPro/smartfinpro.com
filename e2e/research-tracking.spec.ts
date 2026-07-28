@@ -84,6 +84,17 @@ test.describe('Research Library tracking (research_v1)', () => {
     batches = await interceptTrack(page);
     await page.goto('/research');
     await expect(page.getByPlaceholder(SEARCH)).toBeVisible(); // hydrated
+    // The search box alone is not a sufficient interactivity signal: it also
+    // exists in the server-rendered browse fallback, so a chip resolved right
+    // after it appears can be clicked on a subtree React is still replacing —
+    // the click then lands on a detached node and nothing happens (observed as
+    // a 5s URL timeout on the Type chip). The aria-live region is rendered by
+    // the client shell ONLY (ResearchHub.tsx; the fallback has none), so
+    // waiting for its result count proves the interactive tree is live.
+    // Scoped to the shell's own sr-only counter: Playwright injects its own
+    // aria-live notification region into every page, so an unscoped selector
+    // matches two elements and trips strict mode.
+    await expect(page.locator('p.sr-only[aria-live="polite"]')).toContainText(/result/i);
   });
 
   // Reads the SR-live-region result count the hub itself renders
@@ -320,8 +331,20 @@ test.describe('Research Library tracking (research_v1)', () => {
     await page.getByRole('button', { name: 'In verification', exact: true }).click();
     await expect(page).toHaveURL(/status=provisional/);
     const filteredRenderedCount = await renderedResultCount(page);
-    await expect.poll(() => named(batches, 'research_filter_change').length).toBeGreaterThan(0);
-    const filterEvent = named(batches, 'research_filter_change')[0];
+    // Select the STATUS event by its facet, not by position. This test clicks
+    // through the Category chips further up, and since `9c3fbc4` those emit
+    // research_filter_change too — so `[0]` silently became a category event
+    // and compared its count against the status-filtered rendering. Matching
+    // on `facet` states which event is meant and cannot drift again when
+    // another facet starts reporting.
+    await expect
+      .poll(() =>
+        named(batches, 'research_filter_change').filter((e) => props(e).facet === 'status').length,
+      )
+      .toBeGreaterThan(0);
+    const filterEvent = named(batches, 'research_filter_change')
+      .filter((e) => props(e).facet === 'status')
+      .at(-1)!;
     expect(props(filterEvent).resultCount).toBe(filteredRenderedCount);
   });
 
