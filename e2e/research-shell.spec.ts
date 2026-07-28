@@ -73,6 +73,48 @@ test.describe('Research Library shell — desktop', () => {
     await expect(page.getByTestId('dossier-trading-platforms')).toBeVisible();
   });
 
+  // Adversarial coverage, commit 5 (unified-research-discovery-pr2-hubs plan,
+  // review of PR #122 / P1 fix 08c8959 "render every projection a filter can
+  // select"). Fidelity is real production data: audited #1 in
+  // us/trading/trading-platforms (a qualifying Cockpit context) AND the
+  // subject of its own MDX review (content/us/trading/fidelity-review.mdx)
+  // — so its DEFAULT projection (projectDiscoveryItems + EMPTY_DISCOVERY_
+  // FILTERS) is the DOSSIER, proven by the first assertion below reusing the
+  // same dossier section the "stable topic scope" test above already relies
+  // on. Before the P1 fix, buildResearchHubNodes (now buildResearchNodeBank)
+  // only ever resolved each item's single DEFAULT projection into a node —
+  // so under `?type=review`, projectDiscoveryItems correctly still emitted
+  // Fidelity's REVIEW projection (spec: filters.type === 'review' only needs
+  // item.review), but no node existed for it, and ResearchHub's client-side
+  // resolveEntry silently dropped the entry: Fidelity vanished from the page
+  // entirely instead of degrading to its CatalogCard review view. Verified
+  // against this exact live production build (2026-07-28) before writing
+  // this assertion — see this repo's commit-5 report for the RED/GREEN
+  // revert evidence.
+  test('a review-backed item whose default projection is a dossier stays visible as a review under ?type=review (P1 node-bank fix)', async ({
+    page,
+  }) => {
+    const tradingDossier = page.getByTestId('dossier-trading-platforms');
+    await expect(tradingDossier.getByRole('heading', { name: 'Fidelity', exact: true })).toBeVisible();
+
+    await page.getByRole('button', { name: 'Reviews', exact: true }).click();
+    await expect(page).toHaveURL(/[?&]type=review/);
+
+    // No dossier projections exist at all once type=review is active — the
+    // whole dossier section (zero entries) never renders.
+    await expect(page.getByTestId('dossier-trading-platforms')).toHaveCount(0);
+
+    // Fidelity itself is still on the page — degraded to its review
+    // projection, in the "More independent reviews" grid, keyed by its own
+    // MDX title (the exact heading CatalogCard renders for a review
+    // projection) rather than having silently disappeared.
+    const reviewGrid = page.getByTestId('research-review-grid');
+    await expect(reviewGrid).toBeVisible();
+    await expect(
+      reviewGrid.getByRole('heading', { name: 'Fidelity Review 2026: $0 Trades and Zero-Fee Index Funds' }),
+    ).toBeVisible();
+  });
+
   test('credit-repair and debt-relief render as two separate dossier sections, never merged under one heading', async ({
     page,
   }) => {
@@ -278,6 +320,25 @@ test.describe('Research Library shell — desktop', () => {
     const dialog = page.getByRole('dialog', { name: 'Switch research topic' });
     await expect(dialog).toBeVisible();
     await expect(dialog.getByText('Shortlists compare within one research topic.')).toBeVisible();
+
+    // Adversarial coverage, commit 5, case (c): the REACHABLE half of the
+    // "open dialog -> wait -> cancel -> storage byte-identical" guarantee
+    // (spec §11.3.1). The unavailable-scope half (a restored-but-
+    // unverifiable active scope) has no live-data seam to reach in a real
+    // e2e run today — see __tests__/unit/research-hub-integration.test.ts's
+    // header comment for that investigation; it stays proven at the
+    // pure-logic level in __tests__/unit/research-shortlist-ui-state.test.ts.
+    // This IS the reachable half: an explicit wait with the dialog open,
+    // proposing a cross-scope switch, before Cancel — a real timer tick with
+    // nothing else happening. Before P1 fix ca48fb3 ("never touch storage
+    // while a switch is only proposed"), pendingSwitch lived INSIDE the
+    // reducer, so merely opening this dialog already changed `state` and
+    // fired the unconditional persist effect (useEffect(..., [state,
+    // market])) — waiting here doesn't change whether that reproduces, it
+    // hardens against any FUTURE regression that reintroduces a delayed/
+    // timer-driven persist path the immediate-assertion version wouldn't
+    // catch.
+    await page.waitForTimeout(600);
 
     // Cancel leaves storage byte-identical — the whole point of the dialog.
     await dialog.getByRole('button', { name: 'Cancel' }).click();
