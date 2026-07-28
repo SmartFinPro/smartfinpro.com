@@ -26,7 +26,7 @@ import type {
   ResearchContext,
   ShortlistScopeSnapshotDTO,
 } from '@/lib/research/catalog-shell-logic';
-import { cockpitKeyFor, reviewItemId } from '@/lib/research/catalog-shell-logic';
+import { cockpitKeyFor, projectionNodeKey, reviewItemId } from '@/lib/research/catalog-shell-logic';
 
 vi.mock('next/link', async () => {
   const { createElement } = await import('react');
@@ -62,9 +62,12 @@ import { getResearchHubCopy } from '@/lib/research/hub-copy';
 import {
   buildResearchHubNodes,
   buildResearchItemListSchema,
+  buildResearchNodeBank,
   ResearchHubBody,
 } from '@/components/research/ResearchHubPage';
 import { ShortlistRestoreController } from '@/components/research/ResearchShortlist';
+import { CatalogCard } from '@/components/research/CatalogCard';
+import { ResearchCard } from '@/components/research/ResearchCard';
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://smartfinpro.com';
 
@@ -251,6 +254,129 @@ function makeOverlayRow(params: {
   );
   return { entry, context, researchProduct, reviewSlug };
 }
+
+// --- buildResearchNodeBank — COMPLETE projection coverage (P1 merge-blocker
+//     fix, adversarial review of PR #122): `buildResearchHubNodes` builds a
+//     node ONLY for each item's single DEFAULT projection
+//     (`projectDiscoveryItems` + `EMPTY_DISCOVERY_FILTERS` picks exactly one
+//     per item — the dossier when the item has any qualifying context, else
+//     the review). Two consequences, both reachable in the live client shell
+//     (ResearchHub.tsx's `resolveEntry`, which looks nodes up by
+//     `projectionNodeKey(itemId, cockpitKey)`): a review-backed item whose
+//     default projection is a DOSSIER has NO review node to show under
+//     `?type=review` (the projection is silently dropped), and a SECOND
+//     qualifying context (an explicit `topic` filter picking the item's
+//     other Cockpit context) has no node either, even though
+//     `computeDiscoveryFacets` still counts it. `buildResearchNodeBank`
+//     fixes this by resolving EVERY selectable projection per item — the
+//     review projection (when `item.review` exists) AND one dossier
+//     projection per `item.researchContexts` entry — through the exact same
+//     `resolveHubNode` degrade rules `buildResearchHubNodes` already uses,
+//     so a missing dossier sidecar row still degrades/drops exactly the same
+//     way. `ResearchHubBody` feeds this COMPLETE bank to the client shell's
+//     `nodes` prop while `buildResearchHubNodes`'s own default-only list
+//     keeps driving the SSR `BrowseFallback` and the JSON-LD unchanged (see
+//     the second test below) — the merge-blocker invariant at the top of
+//     this file is about that default list only, and must not be affected by
+//     the bank's existence.
+describe('buildResearchNodeBank — complete projection coverage (P1 merge-blocker fix)', () => {
+  it('an item whose DEFAULT projection is a dossier still yields BOTH a review node and a dossier node in the bank', () => {
+    const fidelityRow = makeOverlayRow({
+      category: 'trading',
+      topic: 'trading-platforms',
+      productSlug: 'fidelity',
+      reviewSlug: 'fidelity',
+      manifestOrder: 0,
+    });
+    const { catalog, dossierRows } = buildDiscoveryCatalog('us', [makeDiscoveryItem()], [fidelityRow]);
+
+    // Sanity — confirms the premise the bug depends on: the DEFAULT list
+    // really does only carry the dossier node for this review-backed item.
+    const defaultNodes = buildResearchHubNodes({ catalog, dossierRows });
+    expect(defaultNodes).toHaveLength(1);
+    expect(defaultNodes[0].projection.kind).toBe('dossier');
+
+    const bank = buildResearchNodeBank({ catalog, dossierRows });
+    const reviewKey = projectionNodeKey('review:/us/trading/fidelity', null);
+    const dossierKey = projectionNodeKey('review:/us/trading/fidelity', 'us/trading/trading-platforms');
+
+    const reviewEntry = bank.find((n) => n.key === reviewKey);
+    const dossierEntry = bank.find((n) => n.key === dossierKey);
+    expect(reviewEntry, `node bank is missing the review projection's node (key ${reviewKey})`).toBeDefined();
+    expect(dossierEntry, `node bank is missing the dossier projection's node (key ${dossierKey})`).toBeDefined();
+    expect(reviewEntry!.projection.kind).toBe('review');
+    expect(dossierEntry!.projection.kind).toBe('dossier');
+
+    // Genuinely two DIFFERENT card components, not the same node duplicated
+    // under two keys — CatalogCard for the plain review, ResearchCard for
+    // the review-backed dossier context (mirrors resolveHubNode's own rule).
+    expect((reviewEntry!.node as any).type).toBe(CatalogCard);
+    expect((dossierEntry!.node as any).type).toBe(ResearchCard);
+
+    const reviewHtml = renderToStaticMarkup(reviewEntry!.node as Parameters<typeof renderToStaticMarkup>[0]);
+    const dossierHtml = renderToStaticMarkup(dossierEntry!.node as Parameters<typeof renderToStaticMarkup>[0]);
+    expect(reviewHtml).toContain('href="/us/trading/fidelity"');
+    expect(dossierHtml).toContain('href="/us/trading/fidelity"');
+  });
+
+  it('a second qualifying context for the SAME item also gets its own node — never only the default-selected context', () => {
+    // Fidelity qualifies in TWO topics (trading-platforms is the default —
+    // lower manifestOrder — options-brokers is the second context an
+    // explicit `?topic=options-brokers` filter would select instead).
+    const fidelityRowA = makeOverlayRow({
+      category: 'trading',
+      topic: 'trading-platforms',
+      productSlug: 'fidelity',
+      reviewSlug: 'fidelity',
+      manifestOrder: 0,
+    });
+    const fidelityRowB = makeOverlayRow({
+      category: 'trading',
+      topic: 'options-brokers',
+      productSlug: 'fidelity',
+      reviewSlug: 'fidelity',
+      manifestOrder: 1,
+    });
+    const { catalog, dossierRows } = buildDiscoveryCatalog(
+      'us',
+      [makeDiscoveryItem()],
+      [fidelityRowA, fidelityRowB],
+    );
+
+    const bank = buildResearchNodeBank({ catalog, dossierRows });
+    const defaultContextKey = projectionNodeKey('review:/us/trading/fidelity', 'us/trading/trading-platforms');
+    const secondContextKey = projectionNodeKey('review:/us/trading/fidelity', 'us/trading/options-brokers');
+
+    expect(bank.find((n) => n.key === defaultContextKey)).toBeDefined();
+    expect(
+      bank.find((n) => n.key === secondContextKey),
+      `node bank is missing the item's SECOND qualifying context (key ${secondContextKey}) — a facet can count it but the shell would have nothing to render`,
+    ).toBeDefined();
+  });
+
+  it('never changes what buildResearchHubNodes (and therefore the JSON-LD) produces — the bank is an ADDITIONAL, separately-consumed list', () => {
+    const fidelityRow = makeOverlayRow({
+      category: 'trading',
+      topic: 'trading-platforms',
+      productSlug: 'fidelity',
+      reviewSlug: 'fidelity',
+      manifestOrder: 0,
+    });
+    const { catalog, dossierRows } = buildDiscoveryCatalog('us', [makeDiscoveryItem()], [fidelityRow]);
+
+    const nodesBeforeBank = buildResearchHubNodes({ catalog, dossierRows });
+    buildResearchNodeBank({ catalog, dossierRows }); // built and discarded
+    const nodesAfterBank = buildResearchHubNodes({ catalog, dossierRows });
+
+    expect(nodesAfterBank.map((n) => n.key)).toEqual(nodesBeforeBank.map((n) => n.key));
+    expect(nodesAfterBank.map((n) => n.projection.kind)).toEqual(nodesBeforeBank.map((n) => n.projection.kind));
+
+    const copy = getResearchHubCopy('us');
+    const schemaBefore = buildResearchItemListSchema('us', nodesBeforeBank.map((n) => n.projection), copy);
+    const schemaAfter = buildResearchItemListSchema('us', nodesAfterBank.map((n) => n.projection), copy);
+    expect(schemaAfter).toEqual(schemaBefore);
+  });
+});
 
 // --- "emits only unique audited dossier products in ItemList order" --------
 // (plan's literal Task 3 example, adapted to this file's local fixtures.)

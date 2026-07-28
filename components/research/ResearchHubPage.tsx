@@ -125,7 +125,13 @@ function resolveHubNode(
 /** Builds every server-rendered node for the market's default (unfiltered)
  *  browse projection, in display order (spec §6.3). This is the single list
  *  both the browse fallback AND the JSON-LD are derived from — see the
- *  merge-blocker note above. */
+ *  merge-blocker note above. Only ever ONE node per item — the item's
+ *  DEFAULT projection (`projectDiscoveryItems` + `EMPTY_DISCOVERY_FILTERS`
+ *  picks exactly one: the dossier when the item has any qualifying context,
+ *  else the review) — which is exactly right for a single unfiltered browse
+ *  view, but is NOT a complete map of every projection the client shell can
+ *  ever select once a filter narrows or an explicit `topic` picks a
+ *  different context. See `buildResearchNodeBank` below for that. */
 export function buildResearchHubNodes(
   bundle: Pick<DiscoveryCatalogBundle, 'catalog' | 'dossierRows'>,
 ): ResearchHubNode[] {
@@ -145,6 +151,68 @@ export function buildResearchHubNodes(
       node: resolved.node,
     });
   }
+  return nodes;
+}
+
+/** Builds a COMPLETE node bank — every projection a filter can ever select,
+ *  not just each item's single default one (P1 merge-blocker fix, adversarial
+ *  review of PR #122). `buildResearchHubNodes` above only ever resolves ONE
+ *  projection per item (its default), so the client shell's `resolveEntry`
+ *  (ResearchHub.tsx) — which looks a node up by
+ *  `projectionNodeKey(itemId, cockpitKey)` for whatever projection the
+ *  CURRENT filters actually picked — could miss:
+ *
+ *  1. A review-backed item whose default projection is a dossier: under
+ *     `?type=review`, `projectDiscoveryItems` correctly still emits this
+ *     item's REVIEW projection (spec: `filters.type === 'review'` only needs
+ *     `item.review`), but the default-only bank never built a node keyed
+ *     `projectionNodeKey(itemId, null)` for it — the item silently
+ *     disappeared from the filtered view entirely.
+ *  2. A second qualifying context on the SAME item (an explicit `topic`
+ *     filter picking the item's OTHER Cockpit context): `computeDiscoveryFacets`
+ *     counts it (it re-runs the real projection pipeline per candidate
+ *     value), but no node was ever built for its `cockpitKey` — a facet chip
+ *     could claim a result the shell then has nothing to render.
+ *
+ *  Resolves the review projection (whenever `item.review` exists) AND one
+ *  dossier projection per `item.researchContexts` entry, through the exact
+ *  same `resolveHubNode` used above — a missing dossier sidecar row still
+ *  throws in development and degrades/drops in production identically. Never
+ *  read for the SSR `BrowseFallback` or the JSON-LD — see this file's
+ *  MERGE-BLOCKER INVARIANT note: `buildResearchHubNodes`'s own default-only
+ *  list keeps driving both of those unchanged; this bank exists solely to
+ *  give the CLIENT shell (`ResearchHub`'s `nodes` prop) a node for whatever
+ *  it actually selects. */
+export function buildResearchNodeBank(
+  bundle: Pick<DiscoveryCatalogBundle, 'catalog' | 'dossierRows'>,
+): ResearchHubNode[] {
+  const dossierRowsByKey = new Map(bundle.dossierRows.map((row) => [row.key, row]));
+  const nodes: ResearchHubNode[] = [];
+  const seenKeys = new Set<string>();
+
+  const resolveAndPush = (projection: DiscoveryProjection): void => {
+    const resolved = resolveHubNode(projection, dossierRowsByKey);
+    if (!resolved) return;
+    const cockpitKey = resolved.projection.kind === 'dossier' ? resolved.projection.context.cockpitKey : null;
+    const key = projectionNodeKey(resolved.projection.itemId, cockpitKey);
+    // A dossier row that FAILS to resolve degrades to the item's review
+    // projection (resolveHubNode's own production fallback) — which, for an
+    // item this loop already visited (review pushed first, below), would
+    // otherwise be pushed a second time under the identical review key.
+    if (seenKeys.has(key)) return;
+    seenKeys.add(key);
+    nodes.push({ key, projection: resolved.projection, node: resolved.node });
+  };
+
+  for (const item of bundle.catalog.items) {
+    if (item.review) {
+      resolveAndPush({ itemId: item.id, kind: 'review', item, context: null });
+    }
+    for (const context of item.researchContexts) {
+      resolveAndPush({ itemId: item.id, kind: 'dossier', item, context });
+    }
+  }
+
   return nodes;
 }
 
@@ -391,7 +459,18 @@ export interface ResearchHubBodyProps {
   market: Market;
   catalog: DiscoveryCatalog;
   copy: ResearchHubCopy;
+  /** The DEFAULT (unfiltered) list — drives the SSR `BrowseFallback` and the
+   *  JSON-LD ItemList ONLY. Never the source for the client shell's own node
+   *  lookup; see `nodeBank` below (P1 merge-blocker fix). */
   nodes: ResearchHubNode[];
+  /** EVERY selectable projection's node (P1 merge-blocker fix) — fed to
+   *  `<ResearchHub>`'s `nodes` prop so a filter (`?type=review`, an explicit
+   *  `topic` picking a second context) always has a node to render, not just
+   *  each item's single default projection. Defaults to `[]` so the existing
+   *  fixture-driven unit tests that construct `ResearchHubBodyProps` by hand
+   *  (predating this field) keep compiling unchanged — production always
+   *  supplies it via `ResearchHubPage`'s `buildResearchNodeBank`. */
+  nodeBank?: ResearchHubNode[];
   /** Server-built, serializable shortlist scope snapshot (spec §11.2.1,
    *  operator ONE-FAN-OUT merge-blocker fix 2026-07-27) — from
    *  `getDiscoveryCatalogBundle(market).scopeSnapshot`, the SAME single
@@ -405,7 +484,7 @@ export interface ResearchHubBodyProps {
  *  `ResearchHubPage` so unit tests (e.g. the empty-catalog case) can render
  *  it directly from a fixture bundle, without exercising the real
  *  'server-only' catalog I/O. */
-export function ResearchHubBody({ market, catalog, copy, nodes, scopeSnapshot }: ResearchHubBodyProps) {
+export function ResearchHubBody({ market, catalog, copy, nodes, nodeBank, scopeSnapshot }: ResearchHubBodyProps) {
   const homeHref = market === 'us' ? '/' : `/${market}`;
 
   if (catalog.items.length === 0) {
@@ -495,7 +574,7 @@ export function ResearchHubBody({ market, catalog, copy, nodes, scopeSnapshot }:
         <ResearchHub
           market={market}
           items={catalog.items}
-          nodes={buildClientHubNodes(nodes)}
+          nodes={buildClientHubNodes(nodeBank ?? [])}
           browseFallback={<BrowseFallback nodes={nodes} />}
           scopeSnapshot={scopeSnapshot}
         />
@@ -552,12 +631,14 @@ export async function ResearchHubPage({ market }: { market: Market }) {
     Promise.resolve(getResearchHubCopy(market)),
   ]);
   const nodes = buildResearchHubNodes(bundle);
+  const nodeBank = buildResearchNodeBank(bundle);
   return (
     <ResearchHubBody
       market={market}
       catalog={bundle.catalog}
       copy={copy}
       nodes={nodes}
+      nodeBank={nodeBank}
       scopeSnapshot={bundle.scopeSnapshot}
     />
   );
