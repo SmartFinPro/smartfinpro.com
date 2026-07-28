@@ -38,9 +38,7 @@ import {
   Market,
   marketConfig,
   markets,
-  marketCategories,
   categoryConfig,
-  Category,
   getNavGroupsForMarket,
 } from '@/lib/i18n/config';
 import { detectMarketFromPath, marketSiloConfig } from '@/config/navigation';
@@ -114,7 +112,7 @@ function detectMarket(pathname: string): Market {
 
 // ── Mobile Market-Specific Links ────────────────────────────────
 
-function MobileMarketLinks({ market, prefix, onClose }: { market: Market; prefix: string; onClose: () => void }) {
+function MobileMarketLinks({ market, onClose }: { market: Market; onClose: () => void }) {
   const cls = 'flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-100 transition-colors';
   return (
     <>
@@ -172,8 +170,23 @@ export default function Header({ market: marketProp }: HeaderProps) {
   // Hydration-safe: always use 'us' as default (matches static export)
   // then update on client after mount to avoid server/client mismatch
   const [mounted, setMounted] = useState(false);
+  // Deliberate mount-detection idiom, not a state sync worth restructuring
+  // here (out of scope for the P1 fix below, which only changes
+  // `detectedMarket`'s own two consumers). eslint-plugin-react-hooks'
+  // newer set-state-in-effect rule flags any setState-in-effect body on
+  // principle; this one only ever runs once, on mount, with an empty
+  // dependency array.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { setMounted(true); }, []);
 
+  // `detectedMarket` is ALREADY correct on the very first SSR render —
+  // `usePathname()` returns the real pathname synchronously even during SSR,
+  // and `detectMarket` is a pure function of it (config/navigation.ts). The
+  // `mounted` gate below exists for OTHER market-dependent header state
+  // (currentMarket/prefix/navGroups/featuredLinks/tool cards), left
+  // unchanged here (P1 fix, adversarial review of PR #122, is scoped to the
+  // Research link + market-switcher hrefs only — see their own two call
+  // sites below, both keyed off `detectedMarket` directly, never `market`).
   const detectedMarket = marketProp || detectMarket(pathname);
   const market = mounted ? detectedMarket : 'us';
   const currentMarket = marketConfig[market];
@@ -193,8 +206,12 @@ export default function Header({ market: marketProp }: HeaderProps) {
 
   // Keeps rendering the last-open panel's content while it fades out,
   // so the flyout never flashes empty during the close transition.
+  // Deliberate — out of scope for the P1 fix below (unrelated to market
+  // detection); see the `mounted` effect's own comment above for why this
+  // pre-existing pattern is disabled rather than restructured here.
   const [lastMenu, setLastMenu] = useState<string | null>(null);
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (activeMenu) setLastMenu(activeMenu);
   }, [activeMenu]);
   const displayMenu = activeMenu ?? lastMenu;
@@ -246,8 +263,13 @@ export default function Header({ market: marketProp }: HeaderProps) {
                 </button>
               </div>
             ))}
+            {/* P1 fix (adversarial review of PR #122): `detectedMarket`, not
+                the `mounted`-gated `market` — SSR already resolves the real
+                market from `pathname` correctly on the very first render, so
+                a JS-disabled crawler on /uk/research must see its OWN hub
+                here, never the US one `market` would force pre-hydration. */}
             <Link
-              href={researchBaseForMarket(market)}
+              href={researchBaseForMarket(detectedMarket)}
               className="rounded-lg px-4 py-2 text-[13px] font-medium text-white/85 hover:bg-white/10"
             >
               Research
@@ -331,7 +353,7 @@ export default function Header({ market: marketProp }: HeaderProps) {
                                 </Link>
                               );
                             })}
-                            {group === 'Investing' && <MobileMarketLinks market={market} prefix={prefix} onClose={() => setMobileMenuOpen(false)} />}
+                            {group === 'Investing' && <MobileMarketLinks market={market} onClose={() => setMobileMenuOpen(false)} />}
                             {group === 'Trading' && (
                               <>
                                 <div className="mt-2 pt-2 border-t border-gray-200"><p className="px-3 py-1 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Top Reviews</p></div>
@@ -350,9 +372,14 @@ export default function Header({ market: marketProp }: HeaderProps) {
                   </div>
                 ))}
 
-                {/* Research — top-level, same destination as the desktop link */}
+                {/* Research — top-level, same destination as the desktop link.
+                    `detectedMarket`, matching the desktop link's P1 fix above
+                    — this Sheet only ever renders once opened (post-hydration,
+                    `market === detectedMarket` already), but keeping both
+                    Research links on the same non-gated source avoids a
+                    latent repeat of the same bug if that ever changes. */}
                 <Link
-                  href={researchBaseForMarket(market)}
+                  href={researchBaseForMarket(detectedMarket)}
                   className="flex items-center justify-between w-full py-4 text-sm font-medium border-b border-gray-200"
                   style={{ color: 'var(--sfp-navy)' }}
                   onClick={() => setMobileMenuOpen(false)}

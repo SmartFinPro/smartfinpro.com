@@ -184,13 +184,20 @@ test.describe('Research hub filter-state robots headers', () => {
 });
 
 // ── Navigation (Step 6: header + every market switch target researchBaseForMarket()) ──
-// Header (components/marketing/header.tsx) is a Client Component that
-// deliberately renders as the US market on first paint ("Hydration-safe:
-// always use 'us' as default... then update on client after mount") and
-// only reflects the real market once React hydrates — pre-existing
-// behavior for every market-dependent header link, not specific to
-// Research. These two navigation checks therefore need real hydration
-// (`javaScriptEnabled: true`), unlike every other describe block above.
+// Header (components/marketing/header.tsx) is a Client Component that still
+// deliberately renders MOST market-dependent state as the US market on first
+// paint ("Hydration-safe: always use 'us' as default... then update on
+// client after mount") and only reflects the real market once React
+// hydrates — but the Research nav link (and the market switcher's
+// research-aware hrefs) is the ONE exception (P1 fix, adversarial review of
+// PR #122): it resolves from `detectedMarket` — computed from `pathname` via
+// `usePathname()`, correct on the very first SSR render — never the
+// `mounted`-gated `market`, precisely so a JS-disabled crawler on
+// /uk/research is never sent to /research (proven with JS OFF in
+// e2e/research-raw-html.spec.ts). These two navigation checks below still
+// run WITH real hydration (`javaScriptEnabled: true`) because they exercise
+// interactive navigation (a real click through the market switcher), not
+// because the Research link itself needs hydration to be correct.
 test.describe('Research hub navigation', () => {
   test.use({ javaScriptEnabled: true });
 

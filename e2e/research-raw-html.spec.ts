@@ -98,14 +98,67 @@ test.describe('Research hubs — raw HTML with JavaScript disabled', () => {
   });
 
   // OPERATOR MERGE BLOCKER: a link that 404s is not "navigable" — prove at
-  // least one sampled href per market genuinely resolves, not just that its
-  // string appears in the markup.
+  // least one sampled review href per market genuinely resolves, not just
+  // that its string appears in the markup.
   test('a sampled review href from each hub is genuinely navigable (200)', async ({ request }) => {
     for (const path of RESEARCH_PATHS) {
       const expectedHrefs = expectedReviewHrefsFor(path);
       const middle = expectedHrefs[Math.floor(expectedHrefs.length / 2)];
       const res = await request.get(middle);
       expect(res.status(), `${middle} (linked from ${path}) did not return 200`).toBe(200);
+    }
+  });
+
+  // P1 fix (adversarial review of PR #122): the header (components/marketing/
+  // header.tsx) is a Client Component that used to render EVERY
+  // market-dependent link — including the Research nav link — as if the
+  // market were always 'us' until React hydrates ("const market = mounted ?
+  // detectedMarket : 'us'"). Since this file's whole point is to prove what a
+  // crawler that NEVER runs JavaScript actually sees (no
+  // `javaScriptEnabled: true` override anywhere in this file — see the file
+  // header), that pre-hydration render is exactly what ships: every one of
+  // `/uk/research`, `/ca/research`, `/au/research` had a raw-HTML nav link
+  // pointing at `/research` (the US hub), never its own market's hub. Fixed
+  // by resolving the Research link (and the market switcher's
+  // research-aware hrefs) from `detectedMarket` — computed from `pathname`
+  // via `usePathname()`, which is correct on the very first SSR pass, no
+  // `mounted` gate needed — for THESE links only; every other
+  // market-dependent header link keeps its existing pre-hydration behavior
+  // unchanged (out of scope for this fix).
+  test('each market hub carries its OWN nav Research link in raw HTML, never the US one, with JavaScript still disabled', async ({
+    request,
+  }) => {
+    const expectedOwnHref: Record<(typeof RESEARCH_PATHS)[number], string> = {
+      '/research': '/research',
+      '/uk/research': '/uk/research',
+      '/ca/research': '/ca/research',
+      '/au/research': '/au/research',
+    };
+
+    for (const path of RESEARCH_PATHS) {
+      const response = await request.get(path);
+      expect(response.status(), `${path} did not return 200`).toBe(200);
+      const html = await response.text();
+
+      // The desktop header's top-level "Research" nav link
+      // (components/marketing/header.tsx) — accessible name exactly
+      // "Research" (research-shell.spec.ts's `getByRole('link', {name:
+      // 'Research', exact: true})` already relies on this). The mobile
+      // Sheet's own "Research" link is a Radix Dialog.Content with no
+      // `forceMount` — closed by default, so it renders NOTHING in the raw
+      // SSR HTML; only the desktop anchor is ever present here.
+      const researchLinkHrefs = [...html.matchAll(/<a[^>]*\shref="([^"]*)"[^>]*>Research<\/a>/g)].map((m) => m[1]);
+      expect(
+        researchLinkHrefs.length,
+        `${path}: no raw-HTML nav link with the exact text "Research" was found at all`,
+      ).toBeGreaterThan(0);
+
+      for (const href of researchLinkHrefs) {
+        expect(
+          href,
+          `${path}: raw-HTML nav Research link points at "${href}", expected "${expectedOwnHref[path]}" — a JS-disabled visitor/crawler on this market's hub must never be sent to a DIFFERENT market's Research hub`,
+        ).toBe(expectedOwnHref[path]);
+      }
     }
   });
 });
