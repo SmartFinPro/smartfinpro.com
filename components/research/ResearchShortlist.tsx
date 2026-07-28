@@ -570,6 +570,16 @@ export function ShortlistSwitchDialog({
     >
       <DialogContent
         showCloseButton={false}
+        // Explicit, not a Radix default: `@radix-ui/react-dialog`'s Content
+        // does NOT set `aria-modal` itself (verified live — absent from the
+        // rendered DOM without this) even for a modal `Dialog.Root`, relying
+        // instead on the real focus trap + DismissableLayer's outside-
+        // interaction blocking. The operator's own bug report named
+        // `aria-modal="true"` specifically as a promise the old markup made
+        // and never kept — now that the behavior actually IS modal (focus
+        // trap, Escape, focus return, all verified below), this makes the
+        // attribute explicit again rather than silently dropping it.
+        aria-modal="true"
         className="max-w-sm rounded-2xl p-6 shadow-2xl sm:max-w-sm"
         style={{ background: '#ffffff' }}
         onCloseAutoFocus={(event) => {
