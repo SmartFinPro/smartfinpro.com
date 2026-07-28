@@ -315,11 +315,30 @@ test.describe('Research Library shell — desktop', () => {
     // BEST_X_MANIFEST order, live with real qualifying products since
     // 2026-06-29. Adding from it must be blocked, not silently applied.
     const roboDossier = page.getByTestId('dossier-robo-advisors');
-    await roboDossier.getByRole('button', { name: /add .+ to shortlist/i }).first().click();
+    // Kept as its OWN locator (not re-queried each time) — this is the exact
+    // trigger element the operator's A11y fix (PR #122 merge blocker) must
+    // return focus to on every dismiss path (Radix DialogContent's
+    // `onCloseAutoFocus`, ResearchShortlist.tsx). Re-querying by role/name
+    // would still resolve to the same DOM node here (React keeps it mounted
+    // across this whole flow — same `key`, same position), but holding one
+    // Locator makes the "did focus really come BACK to the thing that was
+    // clicked" intent explicit rather than incidental.
+    const roboToggleButton = roboDossier.getByRole('button', { name: /add .+ to shortlist/i }).first();
+    await roboToggleButton.click();
 
     const dialog = page.getByRole('dialog', { name: 'Switch research topic' });
     await expect(dialog).toBeVisible();
     await expect(dialog.getByText('Shortlists compare within one research topic.')).toBeVisible();
+
+    // A11y merge-blocker fix (operator, PR #122): `aria-modal="true"` is a
+    // promise that everything outside is inert — before the Radix migration
+    // this dialog never actually kept it (focus stayed on the covered
+    // trigger, Tab walked straight into the page behind it). Initial focus
+    // must land INSIDE the dialog the moment it opens — Radix's default
+    // FocusScope behavior focuses the first tabbable descendant, which in
+    // this dialog's DOM order is the Cancel button (no visible title, no
+    // close [x] — showCloseButton={false}).
+    await expect(dialog.getByRole('button', { name: 'Cancel' })).toBeFocused();
 
     // Adversarial coverage, commit 5, case (c): the REACHABLE half of the
     // "open dialog -> wait -> cancel -> storage byte-identical" guarantee
@@ -345,10 +364,14 @@ test.describe('Research Library shell — desktop', () => {
     await expect(dialog).toBeHidden();
     await expect(page.getByText('1/4')).toBeVisible();
     expect(await fullSessionStorageSnapshot(page)).toEqual(beforeAttempt);
+    // Focus-return contract (A11y fix): Cancel must land focus back on the
+    // exact button that opened the dialog, not merely "somewhere on the
+    // page" or the (now gone) document.body default.
+    await expect(roboToggleButton).toBeFocused();
 
     // Retry, this time confirming: the old scope's key is gone, the new
     // scope's pointer + key are set for the newly-added robo-advisors slug.
-    await roboDossier.getByRole('button', { name: /add .+ to shortlist/i }).first().click();
+    await roboToggleButton.click();
     await expect(dialog).toBeVisible();
     await dialog.getByRole('button', { name: 'Switch & add' }).click();
     await expect(dialog).toBeHidden();
@@ -356,7 +379,71 @@ test.describe('Research Library shell — desktop', () => {
     expect(await sessionStorageItem(page, TRADING_SCOPED_KEY)).toBeNull();
     expect(await sessionStorageItem(page, TRADING_POINTER_KEY)).toBe('personal-finance:robo-advisors');
     await expect(page.getByText('1/4')).toBeVisible();
-    await expect(roboDossier.getByRole('button', { name: /shortlist/i, pressed: true })).toHaveCount(1);
+    const roboPressedButton = roboDossier.getByRole('button', { name: /shortlist/i, pressed: true });
+    await expect(roboPressedButton).toHaveCount(1);
+    // Confirm also returns focus sensibly — to the SAME card's own toggle,
+    // which now reads "Remove Betterment from shortlist" / pressed:true
+    // rather than to nowhere. `roboToggleButton`'s original accessible name
+    // ("Add ... to shortlist") no longer matches post-confirm, so this reads
+    // the card's current control by its NEW pressed state instead of
+    // re-resolving the stale locator by its old name.
+    await expect(roboPressedButton).toBeFocused();
+  });
+
+  // A11y merge-blocker fix (operator, PR #122): the two dismiss paths the
+  // test above doesn't cover — a real Escape keypress (rather than clicking
+  // Cancel) and a hardened Tab-trap proof (repeated Tab presses, not just a
+  // single before/after focus check). Together with the test above, this
+  // proves EVERY documented pre-fix defect: focus starts inside the dialog,
+  // Tab can never walk into the covered background page no matter how many
+  // times it's pressed, Escape actually closes the dialog (it silently did
+  // nothing before this fix), and storage stays byte-identical + focus
+  // returns to the trigger regardless of which dismiss path was used.
+  test('scope switch dialog traps Tab focus for real and Escape dismisses it byte-identically', async ({
+    page,
+  }) => {
+    const tradingDossier = page.getByTestId('dossier-trading-platforms');
+    await tradingDossier.getByRole('button', { name: /add .+ to shortlist/i }).first().click();
+    await expect(page.getByText('1/4')).toBeVisible();
+
+    const beforeAttempt = await fullSessionStorageSnapshot(page);
+
+    const roboDossier = page.getByTestId('dossier-robo-advisors');
+    const roboToggleButton = roboDossier.getByRole('button', { name: /add .+ to shortlist/i }).first();
+    await roboToggleButton.click();
+
+    const dialog = page.getByRole('dialog', { name: 'Switch research topic' });
+    await expect(dialog).toBeVisible();
+
+    // Tab repeatedly — this dialog has exactly two tabbable elements
+    // (Cancel, "Switch & add"; no visible title, no close [x]), so a real
+    // focus trap cycles between just those two forever. Before the fix, Tab
+    // walked straight into the covered background page (provider links,
+    // "Read research", "Compare", "Visit provider") within the first couple
+    // of presses — asserting after EVERY single press (not just once at the
+    // end) proves the trap holds continuously, not merely that it happens to
+    // land back inside after some fixed number of steps.
+    for (let i = 0; i < 6; i++) {
+      await page.keyboard.press('Tab');
+      // Exactly one element INSIDE the dialog currently has focus — proves
+      // focus stayed IN the dialog on every single step, without hardcoding
+      // which of the two buttons it should land on for any given step (loop
+      // direction/starting point are Radix internals this test shouldn't
+      // need to know). If Tab had walked out to the covered background page
+      // (the pre-fix defect — straight into "Betterment"/"Read research"/
+      // "Compare"/"Visit provider" links), this scoped locator would resolve
+      // to 0, not 1, and fail here immediately.
+      await expect(dialog.locator(':focus')).toHaveCount(1);
+    }
+
+    // Escape — the old hand-rolled `<div role="dialog">` never listened for
+    // it at all; Radix's DismissableLayer wires it to onOpenChange(false) by
+    // default, which this component treats identically to Cancel.
+    await page.keyboard.press('Escape');
+    await expect(dialog).toBeHidden();
+    await expect(page.getByText('1/4')).toBeVisible();
+    expect(await fullSessionStorageSnapshot(page)).toEqual(beforeAttempt);
+    await expect(roboToggleButton).toBeFocused();
   });
 
   test('the affiliate disclosure is never hidden behind the fixed shortlist bar', async ({ page }) => {

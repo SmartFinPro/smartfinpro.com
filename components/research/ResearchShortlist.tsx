@@ -44,6 +44,8 @@
 
 import { useEffect, useMemo, useReducer, useRef, useState, type ReactNode } from 'react';
 import { GitCompare, X } from 'lucide-react';
+import { VisuallyHidden } from 'radix-ui';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import type { Market } from '@/lib/i18n/config';
 import {
   MAX_SHORTLIST,
@@ -486,7 +488,53 @@ export function ShortlistToggleCard({
  *  for `no-switch` so a caller can mount it unconditionally. The two
  *  non-null branches read `ScopeSwitchDescription.kind` — never guess from
  *  UI-local state — because only the snapshot-driven description actually
- *  knows whether the scope about to be replaced is currently verifiable. */
+ *  knows whether the scope about to be replaced is currently verifiable.
+ *
+ *  A11Y FIX (operator merge-blocker, PR #122): this used to be a hand-rolled
+ *  `role="dialog" aria-modal="true"` `<div>` that never actually BEHAVED like
+ *  a modal — initial focus stayed on the (now-covered) trigger button, Tab
+ *  walked straight into the background page, Escape did nothing, and there
+ *  was no focus-return contract. `aria-modal="true"` is a promise to
+ *  assistive tech that everything outside is inert; the old markup never
+ *  kept it. Rebuilt on the project's existing Radix `Dialog`
+ *  (components/ui/dialog.tsx, already used throughout components/dashboard
+ *  and components/marketing) instead of a second hand-rolled pattern — Radix
+ *  gives initial focus, a real focus trap, Escape-to-dismiss, an inert
+ *  background, and focus-return to the trigger for free.
+ *
+ *  No `DialogTrigger` is wired here on purpose: the real trigger is one of
+ *  MANY per-card "+ Shortlist" pills rendered elsewhere in the tree
+ *  (ShortlistToggleCard, above) — `ResearchHub` mounts this dialog
+ *  conditionally, once `shortlist.pendingSwitchDescription` is non-null,
+ *  disconnected from whichever specific card's button was actually clicked.
+ *  This means focus-return needs EXPLICIT wiring, not just the swapped
+ *  markup: `@radix-ui/react-focus-scope`'s own default unmount behavior
+ *  would restore focus to `document.activeElement` as captured at mount time
+ *  (the clicked pill, still focused — a click handler doesn't blur its own
+ *  button) — but `@radix-ui/react-dialog`'s MODAL content wrapper
+ *  (`DialogContentModal`, verified against its own source) unconditionally
+ *  overrides `onCloseAutoFocus` to `event.preventDefault();
+ *  context.triggerRef.current?.focus()` — and `triggerRef` is only ever
+ *  populated by an actual `<DialogTrigger>`, which this file never renders.
+ *  Left alone, that override calls `preventDefault()` (suppressing
+ *  FocusScope's own correct fallback) and then focuses `null` — the dialog
+ *  would close and drop focus to nowhere (`document.body`), exactly the kind
+ *  of silent regression "swap the markup" would produce. `triggerElement`
+ *  below captures `document.activeElement` at this component's OWN first
+ *  render (the clicked pill, read before Radix's mount effect even runs) and
+ *  the `onCloseAutoFocus` handler passed to `DialogContent` explicitly
+ *  restores focus to it — `composeEventHandlers` (Radix's own event
+ *  composition helper) runs THIS handler first, and skips the library's
+ *  default once this one calls `event.preventDefault()`.
+ *
+ *  `open` is always `true` while this component is mounted — the CALLER
+ *  (`ResearchHub`) already conditionally mounts/unmounts it based on
+ *  `shortlist.pendingSwitchDescription`, so there is no separate boolean to
+ *  thread through. Any Radix-initiated close (Escape, overlay click, the
+ *  imperative `Dialog.Close` this file doesn't use) surfaces through
+ *  `onOpenChange(false)` and is treated identically to the explicit Cancel
+ *  button — every one of those paths must leave storage byte-identical
+ *  (spec §11.3.1), and none of them ever calls `onConfirm`. */
 export function ShortlistSwitchDialog({
   description,
   onCancel,
@@ -496,6 +544,16 @@ export function ShortlistSwitchDialog({
   onCancel: () => void;
   onConfirm: () => void;
 }) {
+  // Captured at THIS component's first render — before Radix's own
+  // FocusScope mount effect even runs — so it reliably reads the pill
+  // button whose click just caused this component to mount. Must be called
+  // unconditionally (Rules of Hooks), before the `no-switch` early return
+  // below. A lazy initializer, not a bare `useState(document.activeElement)`
+  // call, so it's read exactly once per mount, not on every re-render.
+  const [triggerElement] = useState<HTMLElement | null>(() =>
+    typeof document !== 'undefined' ? (document.activeElement as HTMLElement | null) : null,
+  );
+
   if (description.kind === 'no-switch') return null;
 
   const copy =
@@ -504,14 +562,34 @@ export function ShortlistSwitchDialog({
       : 'Shortlists compare within one research topic.';
 
   return (
-    <div
-      className="fixed inset-0 z-[100] flex items-center justify-center p-4"
-      style={{ background: 'rgba(26, 26, 46, 0.5)' }}
-      role="dialog"
-      aria-modal="true"
-      aria-label="Switch research topic"
+    <Dialog
+      open
+      onOpenChange={(open) => {
+        if (!open) onCancel();
+      }}
     >
-      <div className="w-full max-w-sm rounded-2xl p-6 shadow-2xl" style={{ background: '#ffffff' }}>
+      <DialogContent
+        showCloseButton={false}
+        className="max-w-sm rounded-2xl p-6 shadow-2xl sm:max-w-sm"
+        style={{ background: '#ffffff' }}
+        onCloseAutoFocus={(event) => {
+          // See the file-level doc comment above: without this, Radix's own
+          // modal wrapper silently swallows the focus-return entirely
+          // (it preventDefaults and focuses a triggerRef that's always null
+          // here, since no <DialogTrigger> is rendered).
+          event.preventDefault();
+          triggerElement?.focus();
+        }}
+      >
+        {/* Visually hidden — the original design had no visible heading, only
+            the body copy below, but Radix's Content still needs an
+            accessible name/description pair for assistive tech. Text
+            preserved verbatim from the old `aria-label="Switch research
+            topic"` so `getByRole('dialog', { name: 'Switch research topic' })`
+            (e2e/research-shell.spec.ts) keeps matching unchanged. */}
+        <VisuallyHidden.Root>
+          <DialogTitle>Switch research topic</DialogTitle>
+        </VisuallyHidden.Root>
         <p className="text-sm leading-relaxed" style={{ color: 'var(--sfp-ink)' }}>
           {copy}
         </p>
@@ -533,8 +611,8 @@ export function ShortlistSwitchDialog({
             Switch &amp; add
           </button>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 

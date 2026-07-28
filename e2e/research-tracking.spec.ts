@@ -306,6 +306,62 @@ test.describe('Research Library tracking (research_v1)', () => {
     expect((props(handoff[0]).productSlugs as string[]).length).toBe(2);
   });
 
+  // A11y merge-blocker fix (operator, PR #122) — ShortlistSwitchDialog moved
+  // to Radix Dialog for real focus management; this test proves the
+  // ANALYTICS half of the same guarantee still holds unchanged (spec §12,
+  // §11.3): a merely PROPOSED-then-cancelled switch reports nothing at all
+  // (P1 fix, adversarial review of PR #122 — handleShortlistToggle only
+  // remembers the pending target locally; handleCancelSwitch never tracks),
+  // and only an explicit confirm reports the full clear(old)+add(target)
+  // pair, in that order, each with its OWN scope's real topic/category —
+  // never the hub's bound 'hub' topic, and never emitted twice.
+  test('a proposed-then-cancelled scope switch reports nothing; confirming reports clear(old) then add(target) with each scope\'s real topic/category', async ({
+    page,
+  }) => {
+    const tradingDossier = page.getByTestId('dossier-trading-platforms');
+    await tradingDossier.getByRole('button', { name: /add .+ to shortlist/i }).first().click();
+    await expect(page.getByText('1/4')).toBeVisible();
+    await expect.poll(() => named(batches, 'research_shortlist_change').length).toBeGreaterThanOrEqual(1);
+    const beforeSwitch = named(batches, 'research_shortlist_change').length;
+
+    const roboDossier = page.getByTestId('dossier-robo-advisors');
+    const roboToggleButton = roboDossier.getByRole('button', { name: /add .+ to shortlist/i }).first();
+    await roboToggleButton.click();
+
+    const dialog = page.getByRole('dialog', { name: 'Switch research topic' });
+    await expect(dialog).toBeVisible();
+
+    // Cancel: nothing has actually changed, so nothing may be reported —
+    // proposing a switch is not itself a mutation.
+    await dialog.getByRole('button', { name: 'Cancel' }).click();
+    await expect(dialog).toBeHidden();
+    await page.waitForTimeout(400);
+    expect(named(batches, 'research_shortlist_change')).toHaveLength(beforeSwitch);
+
+    // Retry, this time confirming the SAME cross-scope target.
+    await roboToggleButton.click();
+    await expect(dialog).toBeVisible();
+    await dialog.getByRole('button', { name: 'Switch & add' }).click();
+    await expect(dialog).toBeHidden();
+
+    await expect.poll(() => named(batches, 'research_shortlist_change').length).toBe(beforeSwitch + 2);
+    const [clearEvent, addEvent] = named(batches, 'research_shortlist_change').slice(beforeSwitch);
+
+    expect(props(clearEvent).action).toBe('clear');
+    expect(props(clearEvent).productSlug).toBeNull();
+    expect(props(clearEvent).count).toBe(0);
+    expect(props(clearEvent).topic).toBe('trading-platforms');
+    expect(props(clearEvent).category).toBe('trading');
+    expect(props(clearEvent).kind).toBe('dossier');
+
+    expect(props(addEvent).action).toBe('add');
+    expect(typeof props(addEvent).productSlug).toBe('string');
+    expect(props(addEvent).count).toBe(1);
+    expect(props(addEvent).topic).toBe('robo-advisors');
+    expect(props(addEvent).category).toBe('personal-finance');
+    expect(props(addEvent).kind).toBe('dossier');
+  });
+
   test('following a card review link sends research_review_click with its rendered position', async ({ page }) => {
     // The first "Read research" link in DOM order is position 1 in the
     // browse view — on the generalized (Task 6) multi-category hub this is
