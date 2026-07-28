@@ -59,8 +59,15 @@ export const RESEARCH_EVENT_NAMES = [
 ] as const;
 export type ResearchEventName = (typeof RESEARCH_EVENT_NAMES)[number];
 
-/** The three filter dimensions the shell actually renders (shell-logic facets). */
-export type ResearchFacet = 'status' | 'confidence' | 'fresh';
+/** The filter dimensions the shell actually renders (shell-logic facets).
+ *  'status'|'confidence'|'fresh' shipped with Task 6; 'category' and 'type'
+ *  join additively (PR 5 gap-close, spec §12) — this was supposed to land in
+ *  PR 2 Task 6 alongside the other three and did not, leaving both the hub's
+ *  and the Homepage Quick Finder's category (and the hub's type) chips
+ *  analytically unmeasurable. deriveLabel/deriveValue below are unchanged:
+ *  both are already facet-agnostic (label = the facet name itself, value =
+ *  resultCount), so no new branch is needed for either new value. */
+export type ResearchFacet = 'status' | 'confidence' | 'fresh' | 'category' | 'type';
 /** Mirrors ResearchLibraryItemMeta['status'] — the verification states. */
 export type ResearchProductStatus = 'audited' | 'provisional' | 'unavailable';
 export type ShortlistAction = 'add' | 'remove' | 'clear';

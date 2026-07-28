@@ -239,7 +239,10 @@ const ResearchV1PropertiesSchema = z
     // research_search — the trimmed CHARACTER COUNT, never the query itself.
     queryLength: z.number().int().min(0).max(500).optional(),
     resultCount: z.number().int().min(0).max(100_000).optional(),
-    facet: z.enum(['status', 'confidence', 'fresh']).optional(),
+    // 'category'/'type' join additively (PR 5 gap-close) — see ResearchFacet
+    // in lib/analytics/research-events.ts for why these two arrived later
+    // than the original three.
+    facet: z.enum(['status', 'confidence', 'fresh', 'category', 'type']).optional(),
     value: z.string().max(60).nullable().optional(),
     active: z.boolean().optional(),
     productSlug: z.string().max(200).nullable().optional(),

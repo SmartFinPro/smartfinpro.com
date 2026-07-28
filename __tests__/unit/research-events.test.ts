@@ -114,6 +114,44 @@ describe('research_filter_change', () => {
   });
 });
 
+// PR 5 gap-close (this task) — Task 6 (unified-research-discovery-pr2-hubs
+// plan) only ever wired 'status'|'confidence'|'fresh' through ResearchFacet,
+// leaving the category/type chips both hubs and the Homepage Quick Finder
+// actually render analytically unmeasurable. Additive: 'category' and 'type'
+// join the union, deriveLabel/deriveValue stay untouched (both are already
+// facet-agnostic — label is the facet name itself, value is resultCount).
+describe('research_filter_change — category/type facets (PR 5 gap-close)', () => {
+  it('labels by facet for a category chip, same shape as the frozen three', () => {
+    const data = buildResearchEventData('research_filter_change', CTX, {
+      facet: 'category',
+      value: 'trading',
+      active: true,
+      resultCount: 5,
+    });
+    expect(data.eventAction).toBe('filter_change');
+    expect(data.eventLabel).toBe('category');
+    expect(data.eventValue).toBe(5);
+    expect(data.properties.facet).toBe('category');
+    expect(data.properties.value).toBe('trading');
+    expect(data.properties.active).toBe(true);
+  });
+
+  it('labels by facet for a type chip and keeps an explicit cleared value', () => {
+    const data = buildResearchEventData('research_filter_change', CTX, {
+      facet: 'type',
+      value: null,
+      active: false,
+      resultCount: 12,
+    });
+    expect(data.eventAction).toBe('filter_change');
+    expect(data.eventLabel).toBe('type');
+    expect(data.eventValue).toBe(12);
+    expect(data.properties.facet).toBe('type');
+    expect(data.properties.value).toBeNull();
+    expect(data.properties.active).toBe(false);
+  });
+});
+
 describe('research_evidence_open', () => {
   it('labels by product slug and reports the data-point count as the value', () => {
     const data = buildResearchEventData('research_evidence_open', CTX, {

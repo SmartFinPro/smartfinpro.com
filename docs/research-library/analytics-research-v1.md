@@ -49,7 +49,7 @@ All events share: `sessionId`, `market`, `topic`, plus the properties below.
 | Event | When | Properties |
 |---|---|---|
 | `research_search` | after the search debounce settles / the URL `q` is stable — **never per keystroke** | `queryLength` (int), `resultCount` (int), `surface` |
-| `research_filter_change` | a filter chip is toggled | `facet` (`status`\|`confidence`\|`fresh`), `value` (string\|null), `active` (bool), `resultCount` (int), `surface` |
+| `research_filter_change` | a filter chip is toggled | `facet` (`status`\|`confidence`\|`fresh`\|`category`\|`type`), `value` (string\|null), `active` (bool), `resultCount` (int), `surface` |
 | `research_evidence_open` | a card's "View evidence" disclosure is opened (open only, not close) | `productSlug`, `status`, `dataPoints` (int), `kind`, `category` |
 | `research_review_click` | a card's review link is followed | `productSlug`, `status`, `rank` (int\|null), `position` (1-based index in the rendered list), `kind`, `category` |
 | `research_shortlist_change` | shortlist mutates | `action` (`add`\|`remove`\|`clear`), `productSlug` (null for `clear`), `count` (new size), `kind`, `category` |
@@ -131,6 +131,33 @@ sent by `trackFinderCta()` (`lib/analytics/research-tracking.ts`):
   render, mount, search, or filter changes.
 - Same privacy rule as every other event in this contract: the raw query
   text is never serialized, only its trimmed `queryLength`.
+
+## Category/type filter facets (v1.3, additive — PR 5 gap-close)
+
+`ResearchFacet` (`lib/analytics/research-events.ts`) and its strict Zod
+counterpart (`lib/validation/index.ts`) originally shipped with only
+`'status' | 'confidence' | 'fresh'` (Task 6) — the category chips both hubs
+render, and the type chip the universal hub renders, had no legal facet value
+to report through `research_filter_change` at all. This was supposed to land
+in PR 2 Task 6 alongside the other three and did not; it arrives here,
+additively, because it closes a real measurement gap rather than because
+anything about category/type filtering itself changed: PR 3's Quick Finder
+correctly declined to invent an out-of-contract facet value rather than widen
+a frozen enum outside its own scope, so the category dimension stayed a blind
+spot on both surfaces until now.
+
+- **`'category'`** — the category chip on both the universal hub (`/research`
+  and its market variants) and the Homepage Quick Finder. `surface: 'hub'` or
+  `surface: 'finder'` respectively, same as every other `research_filter_change`.
+- **`'type'`** — the `review`/`dossier` type chip on the universal hub only
+  (the Quick Finder has no type chip). `surface: 'hub'`.
+- `deriveLabel`/`deriveValue` (`lib/analytics/research-events.ts`) needed no
+  new branch for either value: both were already facet-agnostic (`eventLabel`
+  is the facet name itself, `eventValue` is `resultCount`) — only the
+  `ResearchFacet` union and the Zod `facet` enum widened.
+- Same emission discipline as every other `research_filter_change`: fires on
+  the toggle, carries the resulting `resultCount` (the count AFTER the change,
+  never the count before it).
 
 ## Success metrics
 

@@ -736,13 +736,13 @@ export function ResearchHub({ market, items, nodes, scopeSnapshot }: ResearchHub
 
   // Facet toggle: router.push() (a NEW history entry), so Back after a chip
   // click undoes just that chip, never the settled search underneath it.
-  // `tracked` is set ONLY for the three facets research_v1 actually measures
-  // (status/confidence/fresh, ResearchFacet — contract-frozen); `category`/
-  // `type` are hub-only browse dimensions with no analytics facet of their
-  // own and stay untracked, same as before this task. The result count is
-  // computed for the FILTER'S OWN next state (not read from `resultCount`,
-  // which describes the CURRENT render) — mirrors the pilot's `setParam`
-  // (components/research/ResearchLibrary.tsx).
+  // `tracked` is set for every facet research_v1 measures — originally just
+  // status/confidence/fresh (Task 6); `category`/`type` joined additively
+  // (PR 5 gap-close, ResearchFacet — lib/analytics/research-events.ts) once
+  // the frozen-but-additive contract grew a legal facet value for them. The
+  // result count is computed for the FILTER'S OWN next state (not read from
+  // `resultCount`, which describes the CURRENT render) — mirrors the pilot's
+  // `setParam` (components/research/ResearchLibrary.tsx).
   const applyFacet = useCallback(
     (partial: Partial<DiscoveryFilters>, tracked?: { facet: ResearchFacet; value: string | null }) => {
       const next: DiscoveryFilters = { ...activeFilters, ...partial };
@@ -1035,7 +1035,9 @@ export function ResearchHub({ market, items, nodes, scopeSnapshot }: ResearchHub
                   label: categoryConfig[entry.value].name,
                   count: entry.count,
                 }))}
-                onChange={(value) => applyFacet({ category: value as Category | null })}
+                onChange={(value) =>
+                  applyFacet({ category: value as Category | null }, { facet: 'category', value })
+                }
               />
               <FilterChips
                 label="Type"
@@ -1045,7 +1047,7 @@ export function ResearchHub({ market, items, nodes, scopeSnapshot }: ResearchHub
                   label: TYPE_LABEL[entry.value],
                   count: entry.count,
                 }))}
-                onChange={(value) => applyFacet({ type: value as DiscoveryKind | null })}
+                onChange={(value) => applyFacet({ type: value as DiscoveryKind | null }, { facet: 'type', value })}
               />
               <FilterChips
                 label="Status"

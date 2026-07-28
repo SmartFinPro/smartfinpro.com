@@ -26,16 +26,19 @@
 //     only, mirroring ResearchHub's own debounce (components/research/
 //     ResearchHub.tsx) — but against LOCAL state only, never a router/URL
 //     write;
-//   - category: the visible result set updates INSTANTLY (no debounce) but a
-//     category change is NOT separately tracked. `ResearchFacet`
+//   - category: the visible result set updates INSTANTLY (no debounce) AND a
+//     category change now fires `research_filter_change` (facet: 'category',
+//     surface: 'finder') — PR 5 gap-close. `ResearchFacet`
 //     (lib/analytics/research-events.ts) and its strict Zod counterpart
-//     (lib/validation/index.ts) are frozen by Task 1 (already merged, out of
-//     this task's file scope) to 'status'|'confidence'|'fresh' — the Finder's
-//     `category` filter has no legal facet value to report through
-//     `trackFilterChange`. This plan's own Task 4 analytics assertions (Step
-//     2) confirm the actual wire contract: only research_search,
-//     research_finder_cta, and research_review_click are checked — never a
-//     category research_filter_change;
+//     (lib/validation/index.ts) originally shipped frozen to
+//     'status'|'confidence'|'fresh' (Task 6), so this Finder's `category`
+//     chip genuinely had no legal facet value to report through when it
+//     first shipped; the union widened additively (`'category' | 'type'`
+//     joined) specifically to close this gap, and the hub's own equivalent
+//     chip (components/research/ResearchHub.tsx). `resolveCategoryFilterChange`
+//     below is the pure, exported computation of that event's args — the
+//     component's onChange calls it directly, then hands the result to
+//     `tracker.trackFilterChange`;
 //   - a review-backed title click fires `research_review_click` immediately;
 //   - a Cockpit-only card's own click fires `trackFinderCta('dossier_item', …)`;
 //   - the "View all" CTA fires `trackFinderCta('view_all', …)` with the
@@ -52,6 +55,7 @@ import {
   finderResults,
   finderViewAllHref,
   type DiscoveryItem,
+  type FinderFilters,
 } from '@/lib/research/catalog-shell-logic';
 import { FilterChips } from './FilterChips';
 import { useResearchTracking } from '@/lib/analytics/research-tracking';
@@ -60,6 +64,28 @@ import { toQueryLength, type ResearchProductStatus } from '@/lib/analytics/resea
 export interface QuickFinderProps {
   market: Market;
   items: DiscoveryItem[];
+}
+
+/** Pure computation of the Quick Finder's category chip `research_filter_change`
+ *  event args (PR 5 gap-close, spec §12; docs/research-library/
+ *  analytics-research-v1.md). Exported the same way ResearchHub.tsx exports
+ *  resolveShortlistToggleAnalytics/resolveConfirmSwitchAnalytics/
+ *  trackedDimensionsFor — QuickFinder is a 'use client' component with no
+ *  DOM-free render seam in this repo's vitest setup (environment: 'node', no
+ *  jsdom/@testing-library/react), so this pure function is the honest limit
+ *  of what a unit test can prove; that a real chip click actually calls it
+ *  exactly once is a browser-level (e2e) concern, same as the Hub's own
+ *  status/confidence/fresh chips (e2e/research-tracking.spec.ts).
+ *  `resultCount` is a REAL re-filter via `finderResults` — the SAME
+ *  six-card-capped projection the visible grid itself uses for
+ *  `nextCategory` — never the count already on screen before the click. */
+export function resolveCategoryFilterChange(
+  items: DiscoveryItem[],
+  filters: FinderFilters,
+  nextCategory: Category | null,
+): { facet: 'category'; value: Category | null; active: boolean; resultCount: number } {
+  const resultCount = finderResults(items, { ...filters, category: nextCategory }).length;
+  return { facet: 'category', value: nextCategory, active: nextCategory !== null, resultCount };
 }
 
 export function QuickFinder({ market, items }: QuickFinderProps) {
@@ -91,6 +117,21 @@ export function QuickFinder({ market, items }: QuickFinderProps) {
     setQuery('');
     setCategory(null);
   }, []);
+
+  // Category chip: fires immediately on selection/clear (no debounce, unlike
+  // search) — `resolveCategoryFilterChange` (module scope, above) computes
+  // the event args from a REAL re-filter of `items`, never the `results`
+  // already on screen before this change.
+  const handleCategoryChange = useCallback(
+    (value: Category | null) => {
+      const change = resolveCategoryFilterChange(items, filters, value);
+      tracker.trackFilterChange(change.facet, change.value, change.active, change.resultCount, {
+        surface: 'finder',
+      });
+      setCategory(value);
+    },
+    [items, filters, tracker],
+  );
 
   // Settled-query analytics only — the visible `results` above already
   // update on every keystroke. `trackedQueryRef` mirrors ResearchHub's own
@@ -190,7 +231,7 @@ export function QuickFinder({ market, items }: QuickFinderProps) {
             label="Category"
             value={category}
             options={categoryOptions}
-            onChange={(value) => setCategory(value as Category | null)}
+            onChange={(value) => handleCategoryChange(value as Category | null)}
           />
           {isActive && (
             <button
