@@ -5,6 +5,7 @@ import { markets, marketCategories, Market } from '@/lib/i18n/config';
 const overviewCategories = new Set(['remortgaging', 'savings', 'superannuation', 'housing']);
 import { pillarHeroImages, reviewImages } from '@/lib/images/asset-registry';
 import { getSitemapToolEntries } from '@/lib/tools/registry';
+import { researchBaseForMarket } from '@/lib/research/catalog-shell-logic';
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://smartfinpro.com';
 
@@ -45,8 +46,10 @@ const landingPages = [
 ];
 
 // Other static pages (not market-prefixed)
+// NOTE: '/research' is NOT here — it now gets its own per-market entry
+// (section 1b) with an MDX-derived lastModified instead of `now`, alongside
+// its uk/ca/au siblings.
 const staticPages = [
-  '/research',
   '/trading-platforms/tradingview',
   '/downloads/ai-finance-workflow',
   '/privacy',
@@ -97,6 +100,28 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       }
     }
 
+    // Build a map: market → most recent real content date across every
+    // category (spec §7.4: "das jüngste echte MDX-modifiedDate bzw.
+    // publishDate"). Deliberately MDX-only — the Research hub spans every
+    // topic/category in a market, not one category like pillarLastMod above,
+    // and must never call the Cockpit/Supabase overlay from sitemap
+    // generation (that data has its own lastmod on the /best/{topic} routes,
+    // section 9c below).
+    const researchLastMod = new Map<Market, Date>();
+    for (const content of allContent) {
+      if (content.slug === 'index') continue;
+      const m = (content.meta.market || 'us') as Market;
+      const contentDate = content.meta.modifiedDate
+        ? new Date(content.meta.modifiedDate)
+        : content.meta.publishDate
+          ? new Date(content.meta.publishDate)
+          : now;
+      const existing = researchLastMod.get(m);
+      if (!existing || contentDate > existing) {
+        researchLastMod.set(m, contentDate);
+      }
+    }
+
     // ============================================================
     // 1. MARKET HOMEPAGES — Priority 1.0/0.9
     // ============================================================
@@ -108,6 +133,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         lastModified: now,
         changeFrequency: 'daily',
         priority: market === 'us' ? 1.0 : 0.9,
+      });
+    }
+
+    // ============================================================
+    // 1b. RESEARCH HUBS — Priority 0.8
+    // The four universal Research discovery hubs (unified-research-
+    // discovery-pr2-hubs plan, Task 7; spec §7.4). URL comes from
+    // researchBaseForMarket() — the single source of truth also used by the
+    // header, market switcher and hub-copy.ts canonical/hreflang — never a
+    // hand-built '/{market}/research' string, which would be wrong for US.
+    // ============================================================
+
+    for (const market of markets) {
+      entries.push({
+        url: `${BASE_URL}${researchBaseForMarket(market)}`,
+        lastModified: researchLastMod.get(market) || now,
+        changeFrequency: 'weekly',
+        priority: 0.8,
       });
     }
 

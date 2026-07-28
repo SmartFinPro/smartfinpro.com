@@ -38,13 +38,12 @@ import {
   Market,
   marketConfig,
   markets,
-  marketCategories,
   categoryConfig,
-  Category,
   getNavGroupsForMarket,
 } from '@/lib/i18n/config';
 import { detectMarketFromPath, marketSiloConfig } from '@/config/navigation';
 import { getHubPathForMarket } from '@/lib/tools/registry';
+import { researchBaseForMarket } from '@/lib/research/catalog-shell-logic';
 
 interface HeaderProps {
   market?: Market;
@@ -113,7 +112,7 @@ function detectMarket(pathname: string): Market {
 
 // ── Mobile Market-Specific Links ────────────────────────────────
 
-function MobileMarketLinks({ market, prefix, onClose }: { market: Market; prefix: string; onClose: () => void }) {
+function MobileMarketLinks({ market, onClose }: { market: Market; onClose: () => void }) {
   const cls = 'flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-100 transition-colors';
   return (
     <>
@@ -171,8 +170,23 @@ export default function Header({ market: marketProp }: HeaderProps) {
   // Hydration-safe: always use 'us' as default (matches static export)
   // then update on client after mount to avoid server/client mismatch
   const [mounted, setMounted] = useState(false);
+  // Deliberate mount-detection idiom, not a state sync worth restructuring
+  // here (out of scope for the P1 fix below, which only changes
+  // `detectedMarket`'s own two consumers). eslint-plugin-react-hooks'
+  // newer set-state-in-effect rule flags any setState-in-effect body on
+  // principle; this one only ever runs once, on mount, with an empty
+  // dependency array.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { setMounted(true); }, []);
 
+  // `detectedMarket` is ALREADY correct on the very first SSR render —
+  // `usePathname()` returns the real pathname synchronously even during SSR,
+  // and `detectMarket` is a pure function of it (config/navigation.ts). The
+  // `mounted` gate below exists for OTHER market-dependent header state
+  // (currentMarket/prefix/navGroups/featuredLinks/tool cards), left
+  // unchanged here (P1 fix, adversarial review of PR #122, is scoped to the
+  // Research link + market-switcher hrefs only — see their own two call
+  // sites below, both keyed off `detectedMarket` directly, never `market`).
   const detectedMarket = marketProp || detectMarket(pathname);
   const market = mounted ? detectedMarket : 'us';
   const currentMarket = marketConfig[market];
@@ -180,10 +194,24 @@ export default function Header({ market: marketProp }: HeaderProps) {
   const navGroups = getNavGroupsForMarket(market);
   const featuredLinks = marketSiloConfig[market]?.featured || [];
 
+  // Market switcher on a Research route (spec §7.1): switching markets must
+  // keep the visitor on Research via researchBaseForMarket(target), never
+  // the generic '/'  / '/{market}' swap below — that would land a UK/CA/AU
+  // reader on the market homepage instead of their Research hub, and would
+  // send a US reader to the legacy '/us/research' shape this PR redirects
+  // away from. Every other route keeps the existing behavior untouched.
+  const isOnResearchRoute = markets.some((m) => pathname === researchBaseForMarket(m));
+  const marketHref = (target: Market): string =>
+    isOnResearchRoute ? researchBaseForMarket(target) : target === 'us' ? '/' : `/${target}`;
+
   // Keeps rendering the last-open panel's content while it fades out,
   // so the flyout never flashes empty during the close transition.
+  // Deliberate — out of scope for the P1 fix below (unrelated to market
+  // detection); see the `mounted` effect's own comment above for why this
+  // pre-existing pattern is disabled rather than restructured here.
   const [lastMenu, setLastMenu] = useState<string | null>(null);
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (activeMenu) setLastMenu(activeMenu);
   }, [activeMenu]);
   const displayMenu = activeMenu ?? lastMenu;
@@ -225,7 +253,7 @@ export default function Header({ market: marketProp }: HeaderProps) {
             <span className="text-[19px] font-bold tracking-[-0.6px]" style={{ color: '#fff' }}>Smart<span style={{ color: 'rgba(255,255,255,0.85)' }}>Fin</span>Pro</span>
           </Link>
 
-          {/* Desktop Navigation — Investing | Banking | Trading | Tools */}
+          {/* Desktop Navigation — Investing | Banking | Trading | Tools | Research */}
           <div className="hidden lg:flex lg:items-center lg:space-x-1 ml-8">
             {navGroups.map(({ group }) => (
               <div key={group} onMouseEnter={() => openMenu(group.toLowerCase())} onMouseLeave={closeMenu}>
@@ -235,6 +263,17 @@ export default function Header({ market: marketProp }: HeaderProps) {
                 </button>
               </div>
             ))}
+            {/* P1 fix (adversarial review of PR #122): `detectedMarket`, not
+                the `mounted`-gated `market` — SSR already resolves the real
+                market from `pathname` correctly on the very first render, so
+                a JS-disabled crawler on /uk/research must see its OWN hub
+                here, never the US one `market` would force pre-hydration. */}
+            <Link
+              href={researchBaseForMarket(detectedMarket)}
+              className="rounded-lg px-4 py-2 text-[13px] font-medium text-white/85 hover:bg-white/10"
+            >
+              Research
+            </Link>
           </div>
 
           {/* Right side */}
@@ -250,7 +289,7 @@ export default function Header({ market: marketProp }: HeaderProps) {
               <DropdownMenuContent align="end" className="bg-white border-gray-200 shadow-lg">
                 {Object.entries(marketConfig).map(([key, config]) => (
                   <DropdownMenuItem key={key} asChild className="focus:bg-gray-100" style={{ color: 'var(--sfp-ink)' }}>
-                    <Link href={key === 'us' ? '/' : `/${key}`}><span className="mr-2">{config.flag}</span>{config.name}</Link>
+                    <Link href={marketHref(key as Market)}><span className="mr-2">{config.flag}</span>{config.name}</Link>
                   </DropdownMenuItem>
                 ))}
               </DropdownMenuContent>
@@ -314,7 +353,7 @@ export default function Header({ market: marketProp }: HeaderProps) {
                                 </Link>
                               );
                             })}
-                            {group === 'Investing' && <MobileMarketLinks market={market} prefix={prefix} onClose={() => setMobileMenuOpen(false)} />}
+                            {group === 'Investing' && <MobileMarketLinks market={market} onClose={() => setMobileMenuOpen(false)} />}
                             {group === 'Trading' && (
                               <>
                                 <div className="mt-2 pt-2 border-t border-gray-200"><p className="px-3 py-1 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Top Reviews</p></div>
@@ -333,12 +372,27 @@ export default function Header({ market: marketProp }: HeaderProps) {
                   </div>
                 ))}
 
+                {/* Research — top-level, same destination as the desktop link.
+                    `detectedMarket`, matching the desktop link's P1 fix above
+                    — this Sheet only ever renders once opened (post-hydration,
+                    `market === detectedMarket` already), but keeping both
+                    Research links on the same non-gated source avoids a
+                    latent repeat of the same bug if that ever changes. */}
+                <Link
+                  href={researchBaseForMarket(detectedMarket)}
+                  className="flex items-center justify-between w-full py-4 text-sm font-medium border-b border-gray-200"
+                  style={{ color: 'var(--sfp-navy)' }}
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Research
+                </Link>
+
                 {/* Region */}
                 <div className="pt-6 pb-4">
                   <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">Select Region</p>
                   <div className="space-y-1">
                     {Object.entries(marketConfig).map(([key, config]) => (
-                      <Link key={key} href={key === 'us' ? '/' : `/${key}`} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${key === market ? 'font-semibold bg-gray-100' : 'hover:bg-gray-100'}`} style={{ color: key === market ? 'var(--sfp-navy)' : 'var(--sfp-ink)' }} onClick={() => setMobileMenuOpen(false)}>
+                      <Link key={key} href={marketHref(key as Market)} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${key === market ? 'font-semibold bg-gray-100' : 'hover:bg-gray-100'}`} style={{ color: key === market ? 'var(--sfp-navy)' : 'var(--sfp-ink)' }} onClick={() => setMobileMenuOpen(false)}>
                         <span>{config.flag}</span><span>{config.name}</span>
                       </Link>
                     ))}
@@ -413,27 +467,6 @@ export default function Header({ market: marketProp }: HeaderProps) {
                         </div>
                       )}
                     </div>
-
-                    {/* Research Library entry point. US only — the pilot covers
-                        exactly one topic (US trading platforms), so offering it
-                        under UK/CA/AU would promise a hub that does not exist.
-                        Sits in the Trading panel rather than the top-level nav
-                        for the same reason: it is trading research today, not a
-                        sitewide research hub. */}
-                    {group === 'Trading' && market === 'us' && (
-                      <div className="mt-4 pt-3 border-t border-white/10">
-                        <Link
-                          href="/research"
-                          className="inline-flex items-center gap-2 text-xs font-medium text-white hover:underline"
-                          onClick={() => setActiveMenu(null)}
-                        >
-                          <span className="text-[10px] font-semibold uppercase tracking-wider text-white/50">
-                            Platform Research
-                          </span>
-                          <span className="text-white/85">Verified data &amp; sources for 9 US platforms</span>
-                        </Link>
-                      </div>
-                    )}
 
                     {/* Broker reviews in Trading mega-panel — compact text pills */}
                     {group === 'Trading' && (

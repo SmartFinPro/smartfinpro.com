@@ -25,6 +25,16 @@ const CTX: ResearchContext = {
   pagePath: '/research',
 };
 
+// Task 6 (unified-research-discovery-pr2-hubs plan, spec §12): the universal
+// hub binds its tracker with topic: 'hub' for its whole lifetime — a GLOBAL
+// event (search, the hub-wide filter chip) keeps that bound topic; an ITEM
+// event overrides it via `dimensions`.
+const HUB_CTX: ResearchContext = {
+  market: 'us',
+  topic: 'hub',
+  pagePath: '/research',
+};
+
 describe('research_v1 event names', () => {
   it('is exactly the six events of the frozen contract', () => {
     expect([...RESEARCH_EVENT_NAMES]).toEqual([
@@ -159,6 +169,66 @@ describe('research_cockpit_handoff', () => {
     expect(data.eventLabel).toBe('fidelity,charles-schwab');
     expect(data.eventValue).toBe(2);
     expect(data.properties.productSlugs).toEqual(['fidelity', 'charles-schwab']);
+  });
+});
+
+// Task 6 (unified-research-discovery-pr2-hubs plan, spec §12) — additive hub
+// dimensions: `surface`/`kind`/`trigger`/`category` as new optional
+// properties, and the builder's new `dimensions` argument which overrides
+// `topic`/stamps `category` ONLY while constructing `properties` — it is
+// never itself a serialized key (`topicOverride` is a build-time argument,
+// not a property).
+describe('hub dimensions (Task 6, spec §12)', () => {
+  it('uses hub context for global events', () => {
+    const event = buildResearchEventData('research_search', HUB_CTX, {
+      surface: 'hub',
+      queryLength: 4,
+      resultCount: 2,
+    });
+    expect(event.properties.topic).toBe('hub');
+    expect(event.properties.surface).toBe('hub');
+  });
+
+  it('overrides topic and category for an item event', () => {
+    const event = buildResearchEventData(
+      'research_review_click',
+      HUB_CTX,
+      { productSlug: 'fidelity', kind: 'dossier' },
+      { topic: 'trading-platforms', category: 'trading' },
+    );
+    expect(event.properties.topic).toBe('trading-platforms');
+    expect(event.properties.category).toBe('trading');
+  });
+
+  it('an item event without a dimensions override falls back to the bound ctx.topic and carries no category', () => {
+    const event = buildResearchEventData('research_evidence_open', HUB_CTX, {
+      productSlug: 'fidelity',
+      status: 'audited',
+      dataPoints: 3,
+      kind: 'dossier',
+    });
+    expect(event.properties.topic).toBe('hub');
+    expect(event.properties.category).toBeUndefined();
+  });
+
+  it('every pre-Task-6 call site (no 4th argument at all) stays byte-identical', () => {
+    const event = buildResearchEventData('research_search', CTX, { queryLength: 6, resultCount: 1 });
+    expect(event.properties.topic).toBe('trading-platforms');
+    expect(event.properties.surface).toBeUndefined();
+    expect(event.properties.kind).toBeUndefined();
+    expect(event.properties.trigger).toBeUndefined();
+    expect(event.properties.category).toBeUndefined();
+  });
+
+  it("carries kind ('review' | 'dossier') independently of the topic/category override", () => {
+    const reviewEvent = buildResearchEventData(
+      'research_review_click',
+      HUB_CTX,
+      { productSlug: 'merrill-edge', status: 'unavailable', rank: null, position: 3, kind: 'review' },
+    );
+    expect(reviewEvent.properties.kind).toBe('review');
+    expect(reviewEvent.properties.topic).toBe('hub');
+    expect(reviewEvent.properties.category).toBeUndefined();
   });
 });
 

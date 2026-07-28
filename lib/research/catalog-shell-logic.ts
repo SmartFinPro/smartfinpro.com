@@ -1,5 +1,6 @@
 import type { Category, Market } from "@/lib/i18n/config";
 import { marketCategories } from "@/lib/i18n/config";
+import { BEST_X_MANIFEST } from "@/lib/comparison/topics/manifest";
 
 export type ResearchStatus = "audited" | "provisional";
 export type ResearchConfidence = "high" | "medium" | "low";
@@ -116,6 +117,131 @@ export const EMPTY_DISCOVERY_FILTERS: DiscoveryFilters = {
   topic: null,
   specs: [],
 };
+
+// --- URL round-trip (spec §6.1) ---------------------------------------------
+// The Research hub keeps every filter in the URL (query, category, type,
+// status, confidence, fresh) so a search is shareable and survives Back —
+// `ResearchHub` (Task 4) is the only consumer of these two functions today,
+// but `topic`/`specs` are parsed and serialized here too because
+// `DiscoveryFilters` is the one contract PR 4's topic/spec facets (spec §10)
+// will also read and write. An invalid or unrecognized raw value is DROPPED,
+// never preserved or defaulted to something else — a stale/bogus query
+// string degrades to "no filter", not to a thrown error.
+
+const isDiscoveryKind = (value: string): value is DiscoveryKind =>
+  value === "review" || value === "dossier";
+
+const isResearchStatus = (value: string): value is ResearchStatus =>
+  value === "audited" || value === "provisional";
+
+const isResearchConfidence = (value: string): value is ResearchConfidence =>
+  value === "high" || value === "medium" || value === "low";
+
+const FRESH_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+const collectKnownTopics = (items: readonly DiscoveryItem[]): Set<string> => {
+  const topics = new Set<string>();
+  for (const item of items) {
+    for (const context of item.researchContexts) topics.add(context.topic);
+  }
+  return topics;
+};
+
+/** Parses one `"<topic>:<key>:<value>"` spec token the same way
+ *  `parseSpecGroups` (below) does — splitting only the first two colons —
+ *  and reports whether ANY context in `items` actually has that
+ *  topic/key/value combination. A token nobody could ever match is dropped
+ *  at the URL boundary rather than silently carried into a filter that can
+ *  never select anything. */
+const specTokenIsKnown = (
+  items: readonly DiscoveryItem[],
+  token: string,
+): boolean => {
+  const firstColon = token.indexOf(":");
+  if (firstColon === -1) return false;
+  const secondColon = token.indexOf(":", firstColon + 1);
+  if (secondColon === -1) return false;
+  const topic = token.slice(0, firstColon);
+  const key = token.slice(firstColon + 1, secondColon);
+  const value = token.slice(secondColon + 1);
+  return items.some((item) =>
+    item.researchContexts.some(
+      (context) => context.topic === topic && context.keyFacts[key] === value,
+    ),
+  );
+};
+
+/** Reads `DiscoveryFilters` out of a `URLSearchParams`-shaped source, dropping
+ *  (never preserving) any value that isn't a recognized enum member, isn't a
+ *  market-valid category, isn't a topic/spec combination actually present in
+ *  `items`, or isn't a `YYYY-MM-DD` date. `query` is the one field with no
+ *  "invalid" state — it is only ever trimmed. */
+export function parseDiscoverySearchParams(
+  params: Pick<URLSearchParams, "get" | "getAll">,
+  market: Market,
+  items: readonly DiscoveryItem[],
+): DiscoveryFilters {
+  const rawCategory = params.get("category");
+  const validCategories: readonly string[] = marketCategories[market];
+  const category =
+    rawCategory && validCategories.includes(rawCategory)
+      ? (rawCategory as Category)
+      : null;
+
+  const rawType = params.get("type");
+  const type = rawType && isDiscoveryKind(rawType) ? rawType : null;
+
+  const rawStatus = params.get("status");
+  const status = rawStatus && isResearchStatus(rawStatus) ? rawStatus : null;
+
+  const rawConfidence = params.get("confidence");
+  const confidence =
+    rawConfidence && isResearchConfidence(rawConfidence) ? rawConfidence : null;
+
+  const rawFresh = params.get("fresh");
+  const fresh = rawFresh && FRESH_DATE_PATTERN.test(rawFresh) ? rawFresh : null;
+
+  const knownTopics = collectKnownTopics(items);
+  const rawTopic = params.get("topic");
+  const topic = rawTopic && knownTopics.has(rawTopic) ? rawTopic : null;
+
+  const specs = params
+    .getAll("spec")
+    .filter((token) => specTokenIsKnown(items, token));
+
+  return {
+    query: (params.get("q") ?? "").trim(),
+    category,
+    type,
+    status,
+    confidence,
+    fresh,
+    topic,
+    specs,
+  };
+}
+
+/** The inverse of `parseDiscoverySearchParams`: builds a `URLSearchParams`
+ *  containing only the filters that are actually set, via `.set()`/`.append()`
+ *  only (never the constructor's query-string form) — an empty/default
+ *  `DiscoveryFilters` round-trips to an empty `URLSearchParams`. */
+export function buildDiscoverySearchParams(
+  filters: DiscoveryFilters,
+): URLSearchParams {
+  const params = new URLSearchParams();
+
+  const trimmedQuery = filters.query.trim();
+  if (trimmedQuery) params.set("q", trimmedQuery);
+  if (filters.category) params.set("category", filters.category);
+  if (filters.type) params.set("type", filters.type);
+  if (filters.status) params.set("status", filters.status);
+  if (filters.confidence) params.set("confidence", filters.confidence);
+  if (filters.fresh) params.set("fresh", filters.fresh);
+  if (filters.topic) params.set("topic", filters.topic);
+  for (const spec of filters.specs) params.append("spec", spec);
+
+  return params;
+}
 
 /** Every value returned here has count > 0 and is genuinely selectable.
  *  RENDER GATING IS THE CONSUMER'S JOB: spec §6.2 says a dimension is only
@@ -423,6 +549,57 @@ export function sortHubProjections(
   return [...projections].sort(compareHubProjections);
 }
 
+/** Every topic name BEST_X_MANIFEST assigns to MORE THAN ONE category within
+ *  `market` — e.g. the bare string `"companies"` identifies both
+ *  `us/credit-repair/companies` and `us/debt-relief/companies`. This is the
+ *  defect the hub's dossier grouping (`ResearchHubPage.tsx`'s
+ *  `groupBrowseNodes`, `ResearchHub.tsx`'s `groupResolvedEntries`) fixes by
+ *  keying its Map on the full `cockpitKey` rather than the bare topic —
+ *  `dossierGroupTestId` below is the one remaining place a bare topic name
+ *  is still user-/DOM-visible (the `data-testid`), so it needs this same
+ *  ambiguity signal to stay collision-free.
+ *
+ *  Grounded in the STATIC manifest, never in live catalog rows (`items`,
+ *  qualifying dossier counts, etc.): a data-testid's shape must never flip
+ *  just because a topic's qualifying-row count changed today — only an
+ *  actual BEST_X_MANIFEST edit (adding/removing a topic/category pairing)
+ *  can change which topics are ambiguous. */
+export function computeAmbiguousDossierTopics(market: Market): ReadonlySet<string> {
+  const categoriesByTopic = new Map<string, Set<Category>>();
+  for (const entry of BEST_X_MANIFEST) {
+    if (entry.market !== market) continue;
+    let categories = categoriesByTopic.get(entry.topic);
+    if (!categories) {
+      categories = new Set();
+      categoriesByTopic.set(entry.topic, categories);
+    }
+    categories.add(entry.category);
+  }
+
+  const ambiguous = new Set<string>();
+  for (const [topic, categories] of categoriesByTopic) {
+    if (categories.size > 1) ambiguous.add(topic);
+  }
+  return ambiguous;
+}
+
+/** The Research hub's per-dossier-group `data-testid`. Bare `dossier-<topic>`
+ *  when `topic` is unique within this market — the stable, pre-existing shape
+ *  `dossier-trading-platforms` and `dossier-robo-advisors` already rely on
+ *  (e2e/research-shell.spec.ts), which this function NEVER renames.
+ *  `dossier-<category>-<topic>` only for a topic name `ambiguousTopics`
+ *  (built by `computeAmbiguousDossierTopics` above) actually flags as reused
+ *  across categories in this market — e.g. `dossier-credit-repair-companies`
+ *  vs. `dossier-debt-relief-companies`, so two same-named-topic sections can
+ *  never collide in the DOM. */
+export function dossierGroupTestId(
+  topic: string,
+  category: Category,
+  ambiguousTopics: ReadonlySet<string>,
+): string {
+  return ambiguousTopics.has(topic) ? `dossier-${category}-${topic}` : `dossier-${topic}`;
+}
+
 export function sortFinderItems(
   items: readonly DiscoveryItem[],
   filters: Pick<DiscoveryFilters, "query" | "category">,
@@ -523,6 +700,202 @@ export interface ScopedShortlist {
   slugs: string[];
 }
 
+/** `restoreScopedShortlist`'s actual return shape — a `ScopedShortlist` PLUS
+ *  one optional field that only Rules 2/2b (below) ever set. `cockpitKey`
+ *  above deliberately stays `null` for those two rules — never repurposed to
+ *  carry the unverifiable scope — because `persistScopedShortlist` treats
+ *  ANY non-null `cockpitKey` paired with an empty `slugs` as "the user
+ *  cleared this scope" and destructively removes BOTH its pointer and its
+ *  scoped storage entry (see its own `if (!shortlist.cockpitKey ||
+ *  shortlist.slugs.length === 0)` branch). Since every later state change
+ *  (e.g. `request-switch`) re-runs the persist effect with whatever
+ *  `cockpitKey` the reducer currently holds, putting the unverifiable key
+ *  there would eventually feed it straight into that branch and silently
+ *  destroy the exact storage entry Rule 2/2b exists to protect — defeating
+ *  the byte-identical guarantee one render later instead of immediately.
+ *  `unverifiableCockpitKey` is therefore a SEPARATE, never-persisted signal:
+ *  it lets a caller (the shortlist reducer) distinguish "no scope was ever
+ *  active" from "a scope IS active but its current load state can't be
+ *  verified right now", so a cross-scope toggle can still route through the
+ *  honest `describeScopeSwitch` "active-unavailable" dialog instead of
+ *  silently repointing the market pointer with no warning (spec §11.3.1). */
+export interface RestoredShortlist extends ScopedShortlist {
+  unverifiableCockpitKey?: CockpitKey | null;
+}
+
+/** Why a manifest Cockpit key currently has no authoritative slug set (spec
+ *  §11.2.1). `load_failed` and `backoff` both come from the per-topic overlay
+ *  loader (§5.3.1: a topic in its 60s post-failure backoff window is reported
+ *  the same way as one that just failed, since neither can be verified right
+ *  now); `missing_topic_config` is a manifest entry whose `getTopicConfig`
+ *  never resolves — structurally different (a config problem, not a
+ *  transient load problem) but identically non-destructive for restore.
+ *  `unknown_state` is NEVER assigned by the overlay loader into
+ *  `ShortlistScopeSnapshot.unavailableScopes` itself — it exists solely for
+ *  `describeScopeSwitch`'s defensive fallback, when a known Cockpit key is
+ *  present in NEITHER `availableScopes` NOR `unavailableScopes` (an
+ *  inconsistent-snapshot signal). Labelling that case `load_failed` would
+ *  fabricate a specific cause we do not actually know. */
+export type UnavailableScopeReason =
+  | "load_failed"
+  | "backoff"
+  | "missing_topic_config"
+  | "unknown_state";
+
+/** Three-tier replacement for the old flat `ReadonlyMap<CockpitKey,
+ *  ReadonlySet<string>>` "validScopes" contract (spec §11.2.1). The old flat
+ *  map could not distinguish "this scope doesn't exist" from "this scope
+ *  exists but couldn't be loaded right now" — both looked like "absent from
+ *  the map" and triggered the same destructive clear. Always built from the
+ *  FULL, unfiltered market catalog: a search/category/topic filter narrowing
+ *  what's currently visible must never shrink `knownScopes`, or a perfectly
+ *  valid stored shortlist for a topic the user simply isn't looking at right
+ *  now would be wiped out as "stale". */
+export interface ShortlistScopeSnapshot {
+  /** Every manifest Cockpit key for this market (static, from
+   *  BEST_X_MANIFEST). The universe against which "genuinely stale" is
+   *  judged. */
+  knownScopes: ReadonlySet<CockpitKey>;
+  /** Successfully loaded keys → their authoritative slug set (possibly
+   *  empty, meaning the topic loaded fine but currently qualifies zero
+   *  products). */
+  availableScopes: ReadonlyMap<CockpitKey, ReadonlySet<string>>;
+  /** Keys that failed to load, are inside the 60s post-failure backoff
+   *  window, or whose manifest entry has no resolvable TopicConfig — each
+   *  with a structured reason so a UI/log consumer knows which. */
+  unavailableScopes: ReadonlyMap<CockpitKey, UnavailableScopeReason>;
+}
+
+/** All manifest Cockpit keys for `market` — the static universe a
+ *  `ShortlistScopeSnapshot` classifies against (spec §11.2.1). Relocated here
+ *  (operator merge-blocker fix, 2026-07-27) from
+ *  components/research/ResearchShortlist.tsx's now-removed client-only
+ *  `buildShortlistScopeSnapshot`: the snapshot is built SERVER-SIDE now (see
+ *  `buildShortlistScopeSnapshotDTO` below, and lib/research/catalog.ts's
+ *  `buildDiscoveryScopeSnapshot`, which is the only caller that actually has
+ *  the typed per-topic `TopicOverlayResult[]` this needs to classify
+ *  correctly), never re-derived client-side from the already-flattened
+ *  `DiscoveryItem[]` the RSC boundary hands the client — that re-derivation
+ *  is exactly the bug this fix closes (see the DTO doc comment below). */
+export function knownScopesFor(market: Market): ReadonlySet<CockpitKey> {
+  const scopes = new Set<CockpitKey>();
+  for (const entry of BEST_X_MANIFEST) {
+    if (entry.market === market) scopes.add(cockpitKeyFor(market, entry.category, entry.topic));
+  }
+  return scopes;
+}
+
+// --- Serializable ShortlistScopeSnapshot DTO (spec §11.2.1, operator fix) --
+// A `ReadonlySet`/`ReadonlyMap` cannot cross the Server-Component ->
+// Client-Component (RSC) boundary — only plain, JSON-shaped arrays/objects
+// survive that serialization. `ShortlistScopeSnapshotDTO` is the wire shape;
+// `hydrateShortlistScopeSnapshot` turns it back into the Set/Map shape
+// `restoreScopedShortlist`/`describeScopeSwitch` already operate on. Building
+// the DTO itself requires the TYPED per-topic `TopicOverlayResult[]` load
+// (lib/research/catalog.ts, 'server-only') — this file stays import-clean of
+// that module (it must remain safely importable from a client component), so
+// `buildShortlistScopeSnapshotDTO` below takes the minimal, STRUCTURALLY
+// compatible `TopicScopeResult` shape instead of importing `TopicOverlayResult`
+// itself; catalog.ts's `buildDiscoveryScopeSnapshot` is the thin adapter that
+// maps its real typed results into this shape before calling here.
+
+export interface AvailableScopeEntryDTO {
+  cockpitKey: CockpitKey;
+  slugs: readonly string[];
+}
+
+export interface UnavailableScopeEntryDTO {
+  cockpitKey: CockpitKey;
+  reason: UnavailableScopeReason;
+}
+
+export interface ShortlistScopeSnapshotDTO {
+  knownScopes: readonly CockpitKey[];
+  availableScopes: readonly AvailableScopeEntryDTO[];
+  unavailableScopes: readonly UnavailableScopeEntryDTO[];
+}
+
+/** Pure reshaping only — every classification decision (available vs.
+ *  unavailable, and which reason) was already made SERVER-SIDE by
+ *  `buildShortlistScopeSnapshotDTO` from the real per-topic load; this
+ *  function never re-derives or second-guesses any of it, it only rebuilds
+ *  the Set/Map shape the rest of this file's restore/switch logic expects. */
+export function hydrateShortlistScopeSnapshot(
+  dto: ShortlistScopeSnapshotDTO,
+): ShortlistScopeSnapshot {
+  return {
+    knownScopes: new Set(dto.knownScopes),
+    availableScopes: new Map(
+      dto.availableScopes.map((entry) => [entry.cockpitKey, new Set(entry.slugs)]),
+    ),
+    unavailableScopes: new Map(
+      dto.unavailableScopes.map((entry) => [entry.cockpitKey, entry.reason]),
+    ),
+  };
+}
+
+/** One manifest topic's classification input for
+ *  `buildShortlistScopeSnapshotDTO` below — structurally compatible with (but
+ *  deliberately NOT importing) lib/research/catalog.ts's `TopicOverlayResult`
+ *  discriminated union, since that module is 'server-only' and this file must
+ *  stay importable from the client. `ok:true` with an EMPTY `slugs` array is
+ *  the authoritative "this topic loaded fine, zero qualifying products right
+ *  now" result (spec §11.2.1 Rule 4) — it must land in `availableScopes`,
+ *  never be guessed into `unavailableScopes` just because it looks the same
+ *  as a load failure once the slug count hits zero. */
+export interface TopicScopeResult {
+  cockpitKey: CockpitKey;
+  ok: boolean;
+  slugs: readonly string[];
+  reason: UnavailableScopeReason | null;
+}
+
+/** Builds the three-tier `ShortlistScopeSnapshotDTO` from ONE normalized
+ *  result per manifest topic (spec §11.2.1, operator merge-blocker fix
+ *  2026-07-27 — the third occurrence of the "same defect": a `[]` doing
+ *  double duty for two different meanings at a boundary). Every member of
+ *  `knownScopesFor(market)` lands in EXACTLY ONE of
+ *  `availableScopes`/`unavailableScopes`:
+ *
+ *  - A result with `ok:true` is ALWAYS available, even with a zero-length
+ *    `slugs` — that IS the authoritative "loaded fine, zero rows" case Rule 4
+ *    depends on to trigger its destructive shortlist cleanup.
+ *  - A result with `ok:false` carries its own real reason (`load_failed` |
+ *    `backoff` | `missing_topic_config`) straight through — never defaulted
+ *    to `unknown_state`.
+ *  - A known Cockpit key with NO corresponding result at all — a genuinely
+ *    missing result bucket (a manifest edit landing between two reads, or a
+ *    market-wide cache-layer failure that passes `results: []` because it
+ *    cannot vouch for ANY topic right now) — is the ONE place `unknown_state`
+ *    is used, and only as this fallback, never as a substitute for a real
+ *    ok:true-zero-rows or ok:false result. */
+export function buildShortlistScopeSnapshotDTO(
+  market: Market,
+  results: readonly TopicScopeResult[],
+): ShortlistScopeSnapshotDTO {
+  const knownScopes = knownScopesFor(market);
+  const resultByKey = new Map<CockpitKey, TopicScopeResult>();
+  for (const result of results) resultByKey.set(result.cockpitKey, result);
+
+  const availableScopes: AvailableScopeEntryDTO[] = [];
+  const unavailableScopes: UnavailableScopeEntryDTO[] = [];
+
+  for (const cockpitKey of knownScopes) {
+    const result = resultByKey.get(cockpitKey);
+    if (!result) {
+      unavailableScopes.push({ cockpitKey, reason: "unknown_state" });
+      continue;
+    }
+    if (result.ok) {
+      availableScopes.push({ cockpitKey, slugs: result.slugs });
+    } else {
+      unavailableScopes.push({ cockpitKey, reason: result.reason ?? "unknown_state" });
+    }
+  }
+
+  return { knownScopes: [...knownScopes], availableScopes, unavailableScopes };
+}
+
 export const shortlistStorageKey = (key: CockpitKey): string => {
   const [market, category, topic] = key.split("/");
   return `research-shortlist:${market}:${category}:${topic}`;
@@ -545,22 +918,45 @@ const cockpitKeyFromPointer = (
 };
 
 /** Restores a scoped shortlist without an effect-order hazard: reads the
- *  market pointer, rejects any Cockpit key absent from the caller's
- *  `validScopes` map, then keeps only unique persisted slugs that belong to
- *  that Cockpit's own product set (capped at MAX_SHORTLIST). Any invalid step
- *  clears the leftover pointer/scoped storage and returns a clean empty
- *  state — callers get either a fully valid scope or nothing, never a partial
- *  or stale one. */
+ *  market pointer, then classifies its Cockpit key against the three-tier
+ *  `ShortlistScopeSnapshot` (spec §11.2.1) before touching anything. Only
+ *  POSITIVE evidence ever justifies destructive cleanup — its absence never
+ *  does:
+ *
+ *  1. Absent from `knownScopes` → genuinely stale: clear pointer + scoped
+ *     storage, return empty.
+ *  2. Present in `unavailableScopes` (backoff / load failure / missing topic
+ *     config) → storage stays BYTE-IDENTICAL (not even the pointer is
+ *     touched); return empty so the UI goes temporarily inactive without
+ *     destroying anything it cannot currently verify.
+ *  2b. Present in NEITHER map (defensive — an inconsistent-snapshot signal,
+ *      e.g. a snapshot-builder bug or a topic whose failure the builder
+ *      forgot to record; NOT evidence of staleness) → identical
+ *      non-destructive treatment as rule 2. Not knowing a scope's state is
+ *      never itself grounds to delete what's stored for it.
+ *  3. Present in `availableScopes` → keep only unique persisted slugs that
+ *     belong to that Cockpit's own authoritative product set (capped at
+ *     MAX_SHORTLIST); an empty raw value, unparsable JSON, or an
+ *     authoritatively empty slug set all clear the same as rule 1's stale
+ *     case — that IS positive evidence (a successful load reporting zero
+ *     qualifying products), not an absence of information.
+ *
+ *  Callers get either a fully valid scope, nothing, or (rule 2/2b) an
+ *  untouched pass-through — never a partial or silently-lost one. Rules 2/2b
+ *  additionally surface the untouched scope's key via
+ *  `RestoredShortlist.unverifiableCockpitKey` (see its own doc comment) —
+ *  `cockpitKey` itself stays `null`, so this is purely informational, never
+ *  something a persist path could mistake for a real active scope. */
 export function restoreScopedShortlist(
   storage: StorageLike,
   market: Market,
-  validScopes: ReadonlyMap<CockpitKey, ReadonlySet<string>>,
-): ScopedShortlist {
+  snapshot: ShortlistScopeSnapshot,
+): RestoredShortlist {
   const pointerKey = shortlistPointerKey(market);
   const pointer = storage.getItem(pointerKey);
   if (!pointer) return { cockpitKey: null, slugs: [] };
 
-  const clearAndReturnEmpty = (): ScopedShortlist => {
+  const clearAndReturnEmpty = (): RestoredShortlist => {
     storage.removeItem(pointerKey);
     return { cockpitKey: null, slugs: [] };
   };
@@ -568,10 +964,35 @@ export function restoreScopedShortlist(
   const cockpitKey = cockpitKeyFromPointer(market, pointer);
   if (!cockpitKey) return clearAndReturnEmpty();
 
-  const validSlugs = validScopes.get(cockpitKey);
-  if (!validSlugs) {
+  if (!snapshot.knownScopes.has(cockpitKey)) {
+    // Rule 1: genuinely stale — this scope no longer exists at all.
     storage.removeItem(shortlistStorageKey(cockpitKey));
     return clearAndReturnEmpty();
+  }
+
+  if (snapshot.unavailableScopes.has(cockpitKey)) {
+    // Rule 2: known but currently unverifiable (backoff / load failure /
+    // missing topic config). Deliberately does NOT call
+    // clearAndReturnEmpty() — that would remove the pointer. Nothing in
+    // storage is read, written, or removed here. `cockpitKey` stays `null`
+    // (byte-identical guarantee — see RestoredShortlist's doc comment);
+    // `unverifiableCockpitKey` carries the scope a caller cannot currently
+    // verify, so it can still be told apart from "nothing was ever active".
+    return { cockpitKey: null, slugs: [], unverifiableCockpitKey: cockpitKey };
+  }
+
+  const validSlugs = snapshot.availableScopes.get(cockpitKey);
+  if (!validSlugs) {
+    // Rule 2b (defensive): known, but present in NEITHER map — a
+    // snapshot-builder bug, or a topic whose failure the builder forgot to
+    // record in `unavailableScopes`. This is an inconsistent-snapshot signal
+    // to whoever built `snapshot`, not proof of staleness. It gets the exact
+    // same non-destructive treatment as rule 2: we do not have positive
+    // evidence this scope is empty or gone, so nothing is read, written, or
+    // removed. Absence of information must never be a delete reason — that
+    // was the whole point of splitting `validScopes` into three tiers.
+    // Same `unverifiableCockpitKey` treatment as rule 2, for the same reason.
+    return { cockpitKey: null, slugs: [], unverifiableCockpitKey: cockpitKey };
   }
 
   const scopedKey = shortlistStorageKey(cockpitKey);
@@ -754,6 +1175,59 @@ export function toggleScopedShortlist(
   return {
     next: { cockpitKey, slugs: [...current.slugs, slug] },
     requiresScopeSwitch: false,
+  };
+}
+
+/** Discriminated result for the cross-topic switch dialog (spec §11.3.1): it
+ *  tells the UI only whether the CURRENTLY ACTIVE scope (the one about to be
+ *  replaced) is `available` (known-good, normal "Switch & add" wording) or
+ *  `unavailable` (backoff/load failure/missing topic config — the dialog must
+ *  say a currently-unverifiable stored shortlist will be REPLACED, and must
+ *  never claim the user can "clear" a topic they cannot see). No UI text and
+ *  no storage mutation live here; this is a pure read of the snapshot. */
+export type ScopeSwitchDescription =
+  | { kind: "no-switch" }
+  | { kind: "active-available"; activeCockpitKey: CockpitKey }
+  | {
+      kind: "active-unavailable";
+      activeCockpitKey: CockpitKey;
+      reason: UnavailableScopeReason;
+    };
+
+export function describeScopeSwitch(
+  snapshot: ShortlistScopeSnapshot,
+  activeCockpitKey: CockpitKey | null,
+  targetCockpitKey: CockpitKey,
+): ScopeSwitchDescription {
+  if (!activeCockpitKey || activeCockpitKey === targetCockpitKey) {
+    return { kind: "no-switch" };
+  }
+
+  const unavailableReason = snapshot.unavailableScopes.get(activeCockpitKey);
+  if (unavailableReason) {
+    return {
+      kind: "active-unavailable",
+      activeCockpitKey,
+      reason: unavailableReason,
+    };
+  }
+
+  if (snapshot.availableScopes.has(activeCockpitKey)) {
+    return { kind: "active-available", activeCockpitKey };
+  }
+
+  // Defensive: the active scope isn't in either bucket — an
+  // inconsistent-snapshot signal (a snapshot-builder bug, or a topic whose
+  // failure the builder forgot to record), not a real load failure. Reusing
+  // "load_failed" here would fabricate a cause we do not actually know, so
+  // this gets its own honest `unknown_state` reason — but the SAME
+  // non-destructive "can't verify, will still replace" `active-unavailable`
+  // treatment as an explicit failure. It must never be reported as
+  // `active-available`: absence of information is not evidence of safety.
+  return {
+    kind: "active-unavailable",
+    activeCockpitKey,
+    reason: "unknown_state",
   };
 }
 

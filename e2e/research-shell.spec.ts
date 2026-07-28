@@ -28,39 +28,155 @@ async function gotoResearch(page: Page) {
   await expect(page.getByPlaceholder(SEARCH)).toBeVisible();
 }
 
-/** Add the first N not-yet-shortlisted products. */
+/** Add the first N not-yet-shortlisted TRADING products. Scoped to the
+ *  trading dossier (unified-research-discovery-pr2-hubs plan, Task 5): the
+ *  generalized hub now shows every manifest topic on one page, and
+ *  robo-advisors — not trading-platforms — is first in BEST_X_MANIFEST order
+ *  (lib/comparison/topics/manifest.ts), so an unscoped "first N add buttons
+ *  on the page" would silently shortlist the wrong topic. Scoping-only fix,
+ *  same precedent as commit 7c64d80 (research-discovery-pr2-known-red.md,
+ *  "#3 — echter Fund, behoben") — every existing assertion this helper feeds
+ *  (max-of-four, the Cockpit handoff URL, the sessionStorage round-trip) is
+ *  specifically about the trading dossier and is unchanged. */
 async function shortlist(page: Page, n: number) {
+  const tradingDossier = page.getByTestId('dossier-trading-platforms');
   for (let i = 0; i < n; i++) {
-    await page.getByRole('button', { name: /add .+ to shortlist/i }).first().click();
+    await tradingDossier.getByRole('button', { name: /add .+ to shortlist/i }).first().click();
   }
+}
+
+// Storage v2 keys (lib/research/catalog-shell-logic.ts: shortlistPointerKey /
+// shortlistStorageKey) — read directly so a UI-only assertion can't hide a
+// storage-layer regression (spec's Task 5 Step 5: "Each test reads the exact
+// v2 storage key through page.evaluate()").
+const TRADING_POINTER_KEY = 'research-shortlist-active:us';
+const TRADING_SCOPED_KEY = 'research-shortlist:us:trading:trading-platforms';
+const CREDIT_REPAIR_SCOPED_KEY = 'research-shortlist:us:credit-repair:companies';
+const DEBT_RELIEF_SCOPED_KEY = 'research-shortlist:us:debt-relief:companies';
+
+async function sessionStorageItem(page: Page, key: string): Promise<string | null> {
+  return page.evaluate((k) => window.sessionStorage.getItem(k), key);
+}
+
+/** A full, order-independent sessionStorage snapshot — used to prove Cancel
+ *  leaves storage BYTE-IDENTICAL (spec §11.3.1): a key-by-key read could miss
+ *  an unexpected key appearing or disappearing elsewhere in storage; this
+ *  reads every entry. */
+async function fullSessionStorageSnapshot(page: Page): Promise<Record<string, string>> {
+  return page.evaluate(() => ({ ...window.sessionStorage }));
 }
 
 test.describe('Research Library shell — desktop', () => {
   test.beforeEach(async ({ page }) => gotoResearch(page));
 
+  test('the trading pilot has a stable topic scope', async ({ page }) => {
+    await expect(page.getByTestId('dossier-trading-platforms')).toBeVisible();
+  });
+
+  // Adversarial coverage, commit 5 (unified-research-discovery-pr2-hubs plan,
+  // review of PR #122 / P1 fix 08c8959 "render every projection a filter can
+  // select"). Fidelity is real production data: audited #1 in
+  // us/trading/trading-platforms (a qualifying Cockpit context) AND the
+  // subject of its own MDX review (content/us/trading/fidelity-review.mdx)
+  // — so its DEFAULT projection (projectDiscoveryItems + EMPTY_DISCOVERY_
+  // FILTERS) is the DOSSIER, proven by the first assertion below reusing the
+  // same dossier section the "stable topic scope" test above already relies
+  // on. Before the P1 fix, buildResearchHubNodes (now buildResearchNodeBank)
+  // only ever resolved each item's single DEFAULT projection into a node —
+  // so under `?type=review`, projectDiscoveryItems correctly still emitted
+  // Fidelity's REVIEW projection (spec: filters.type === 'review' only needs
+  // item.review), but no node existed for it, and ResearchHub's client-side
+  // resolveEntry silently dropped the entry: Fidelity vanished from the page
+  // entirely instead of degrading to its CatalogCard review view. Verified
+  // against this exact live production build (2026-07-28) before writing
+  // this assertion — see this repo's commit-5 report for the RED/GREEN
+  // revert evidence.
+  test('a review-backed item whose default projection is a dossier stays visible as a review under ?type=review (P1 node-bank fix)', async ({
+    page,
+  }) => {
+    const tradingDossier = page.getByTestId('dossier-trading-platforms');
+    await expect(tradingDossier.getByRole('heading', { name: 'Fidelity', exact: true })).toBeVisible();
+
+    await page.getByRole('button', { name: 'Reviews', exact: true }).click();
+    await expect(page).toHaveURL(/[?&]type=review/);
+
+    // No dossier projections exist at all once type=review is active — the
+    // whole dossier section (zero entries) never renders.
+    await expect(page.getByTestId('dossier-trading-platforms')).toHaveCount(0);
+
+    // Fidelity itself is still on the page — degraded to its review
+    // projection, in the "More independent reviews" grid, keyed by its own
+    // MDX title (the exact heading CatalogCard renders for a review
+    // projection) rather than having silently disappeared.
+    const reviewGrid = page.getByTestId('research-review-grid');
+    await expect(reviewGrid).toBeVisible();
+    await expect(
+      reviewGrid.getByRole('heading', { name: 'Fidelity Review 2026: $0 Trades and Zero-Fee Index Funds' }),
+    ).toBeVisible();
+  });
+
+  test('credit-repair and debt-relief render as two separate dossier sections, never merged under one heading', async ({
+    page,
+  }) => {
+    // us/credit-repair/companies and us/debt-relief/companies share the bare
+    // topic string "companies" (lib/comparison/topics/manifest.ts) but are
+    // different Cockpit keys (spec §4.1) — grouping by the bare topic string
+    // used to silently merge both categories' products into ONE section
+    // under whichever manifest entry's label was seen first (credit-repair),
+    // so a visitor would see debt-relief products under "Best Credit Repair".
+    // Fixed by grouping on cockpitKey (lib/research/catalog-shell-logic.ts's
+    // `computeAmbiguousDossierTopics` / `dossierGroupTestId`) — each category
+    // now gets its OWN section, its OWN heading, and its OWN disambiguated
+    // data-testid since "companies" is ambiguous in the us market.
+    const creditRepair = page.getByTestId('dossier-credit-repair-companies');
+    const debtRelief = page.getByTestId('dossier-debt-relief-companies');
+    await expect(creditRepair).toBeVisible();
+    await expect(debtRelief).toBeVisible();
+
+    // Two separate sections with two distinct headings — never one heading
+    // shared between both categories' products.
+    await expect(creditRepair.getByRole('heading', { name: 'Best Credit Repair' })).toBeVisible();
+    await expect(debtRelief.getByRole('heading', { name: 'Best Debt Relief Companies' })).toBeVisible();
+
+    // No cross-topic leakage: a real, currently-qualifying debt-relief
+    // product never renders inside the credit-repair section, and vice versa
+    // (same real slugs the "key collision" storage test below already
+    // relies on as currently-qualifying production data).
+    await expect(creditRepair.getByRole('heading', { name: 'National Debt Relief' })).toHaveCount(0);
+    await expect(debtRelief.getByRole('heading', { name: 'Credit Saint' })).toHaveCount(0);
+  });
+
   test('default browse shows the featured winner + all nine cards', async ({ page }) => {
-    await expect(page.getByText('#1 Overall')).toBeVisible();
-    await expect(page.locator('section article')).toHaveCount(9);
+    const tradingDossier = page.getByTestId('dossier-trading-platforms');
+    await expect(tradingDossier.getByText('#1 Overall')).toBeVisible();
+    await expect(tradingDossier.locator('article')).toHaveCount(9);
   });
 
   test('search filters to matches and drops the featured pin', async ({ page }) => {
+    const tradingDossier = page.getByTestId('dossier-trading-platforms');
     await page.getByPlaceholder(SEARCH).fill('schwab');
     await expect(page).toHaveURL(/[?&]q=schwab/);
-    await expect(page.locator('section article')).toHaveCount(1);
-    await expect(page.getByRole('heading', { name: 'Charles Schwab' })).toBeVisible();
-    await expect(page.getByText('#1 Overall')).toHaveCount(0); // featured suppressed
+    await expect(tradingDossier.locator('article')).toHaveCount(1);
+    // Scoped like its siblings: searching "schwab" legitimately matches a SECOND
+    // product now — the Cockpit-only, provisional Schwab entry in us/forex, which
+    // is a distinct DiscoveryItem because category is part of a cockpit-only id
+    // (spec §4.1). Page-wide, this assertion would fail on strict mode, not on a
+    // defect. The trading dossier still holds exactly one match.
+    await expect(tradingDossier.getByRole('heading', { name: 'Charles Schwab' })).toBeVisible();
+    await expect(tradingDossier.getByText('#1 Overall')).toHaveCount(0); // featured suppressed
   });
 
   test('status filter narrows, and Reset restores the browse view', async ({ page }) => {
+    const tradingDossier = page.getByTestId('dossier-trading-platforms');
     await page.getByRole('button', { name: 'In verification', exact: true }).click();
     await expect(page).toHaveURL(/status=provisional/);
-    await expect(page.locator('section article')).toHaveCount(1);
+    await expect(tradingDossier.locator('article')).toHaveCount(1);
     await expect(page.getByRole('heading', { name: 'eToro' })).toBeVisible();
 
     await page.getByRole('button', { name: 'Reset' }).click();
     await expect(page).toHaveURL(/\/research(\?)?$/);
-    await expect(page.getByText('#1 Overall')).toBeVisible(); // featured back
-    await expect(page.locator('section article')).toHaveCount(9);
+    await expect(tradingDossier.getByText('#1 Overall')).toBeVisible(); // featured back
+    await expect(tradingDossier.locator('article')).toHaveCount(9);
   });
 
   test('browser Back restores the search + filter state from the URL', async ({ page }) => {
@@ -97,6 +213,12 @@ test.describe('Research Library shell — desktop', () => {
 
   test('shortlist survives the Cockpit round-trip via Back (sessionStorage)', async ({ page }) => {
     await shortlist(page, 2);
+    // The exact v2 storage key already holds both slugs BEFORE the handoff —
+    // proves persistence, not just the restore that follows.
+    const beforeHandoff = await sessionStorageItem(page, TRADING_SCOPED_KEY);
+    expect(beforeHandoff).not.toBeNull();
+    expect(JSON.parse(beforeHandoff!)).toHaveLength(2);
+
     await page.getByRole('region', { name: 'Research shortlist' }).getByRole('link', { name: /compare/i }).click();
     await expect(page).toHaveURL(/view=compare/);
 
@@ -108,6 +230,277 @@ test.describe('Research Library shell — desktop', () => {
     // "Remove … from shortlist" but carry no aria-pressed) don't inflate it.
     await expect(page.getByText('2/4')).toBeVisible();
     await expect(page.getByRole('button', { name: /shortlist/i, pressed: true })).toHaveCount(2);
+    // And the exact v2 key + pointer are what actually drove that restore —
+    // still holding the original two slugs, byte-for-byte.
+    expect(await sessionStorageItem(page, TRADING_POINTER_KEY)).toBe('trading:trading-platforms');
+    expect(await sessionStorageItem(page, TRADING_SCOPED_KEY)).toBe(beforeHandoff);
+  });
+
+  test('shortlist persists across a plain page reload (sessionStorage v2 key)', async ({ page }) => {
+    await shortlist(page, 2);
+    const stored = await sessionStorageItem(page, TRADING_SCOPED_KEY);
+    expect(stored).not.toBeNull();
+    expect(JSON.parse(stored!)).toHaveLength(2);
+
+    await page.reload();
+    await dismissCookies(page);
+    await expect(page.getByPlaceholder(SEARCH)).toBeVisible();
+
+    // Two pressed toggles restored, and the v2 Trading key is unchanged.
+    await expect(page.getByText('2/4')).toBeVisible();
+    await expect(page.getByRole('button', { name: /shortlist/i, pressed: true })).toHaveCount(2);
+    expect(await sessionStorageItem(page, TRADING_POINTER_KEY)).toBe('trading:trading-platforms');
+    expect(await sessionStorageItem(page, TRADING_SCOPED_KEY)).toBe(stored);
+  });
+
+  test('key collision: restoring one companies-topic scope leaves the other companies-topic scope untouched', async ({ page }) => {
+    // us/credit-repair/companies and us/debt-relief/companies share the bare
+    // topic string "companies" but are different Cockpit keys (spec §11.1) —
+    // preseed BOTH v2 scoped keys, point the market pointer at credit-repair
+    // only, and prove restoring it never reads or writes debt-relief's own
+    // entry. Real, currently-qualifying product slugs (not test fixtures).
+    const creditRepairValue = JSON.stringify(['credit-saint', 'sky-blue-credit']);
+    const debtReliefValue = JSON.stringify(['national-debt-relief', 'accredited-debt-relief']);
+
+    await page.addInitScript(
+      ({ pointerKey, creditRepairKey, creditRepairValue, debtReliefKey, debtReliefValue }) => {
+        window.sessionStorage.setItem(pointerKey, 'credit-repair:companies');
+        window.sessionStorage.setItem(creditRepairKey, creditRepairValue);
+        window.sessionStorage.setItem(debtReliefKey, debtReliefValue);
+      },
+      {
+        pointerKey: TRADING_POINTER_KEY,
+        creditRepairKey: CREDIT_REPAIR_SCOPED_KEY,
+        creditRepairValue,
+        debtReliefKey: DEBT_RELIEF_SCOPED_KEY,
+        debtReliefValue,
+      },
+    );
+
+    await gotoResearch(page);
+
+    // The credit-repair scope actually restored: both its products read as
+    // pressed. Located by exact accessible product name (not a dossier
+    // testid) since "companies" is shared between the two topics — and
+    // scoped by `pressed: true` (the card's own toggle carries aria-pressed;
+    // the shortlist bar's chip-✕ button shares the same accessible name but
+    // carries no aria-pressed, same collision the Back test above notes).
+    await expect(
+      page.getByRole('button', { name: 'Remove Credit Saint from shortlist', pressed: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: 'Remove Sky Blue Credit from shortlist', pressed: true }),
+    ).toBeVisible();
+
+    // debt-relief's own storage entry is byte-identical to what was seeded —
+    // restore only ever reads/writes the POINTER's own scope.
+    expect(await sessionStorageItem(page, DEBT_RELIEF_SCOPED_KEY)).toBe(debtReliefValue);
+    // And its products were never marked selected.
+    await expect(
+      page.getByRole('button', { name: /add national debt relief to shortlist/i }),
+    ).toBeVisible();
+  });
+
+  test('scope switch: adding from another research topic is blocked behind a dialog until "Switch & add"', async ({
+    page,
+  }) => {
+    const tradingDossier = page.getByTestId('dossier-trading-platforms');
+    await tradingDossier.getByRole('button', { name: /add .+ to shortlist/i }).first().click();
+    await expect(page.getByText('1/4')).toBeVisible();
+
+    const beforeAttempt = await fullSessionStorageSnapshot(page);
+
+    // robo-advisors is a DIFFERENT Cockpit topic (personal-finance, not
+    // trading) that always renders on /research — first in
+    // BEST_X_MANIFEST order, live with real qualifying products since
+    // 2026-06-29. Adding from it must be blocked, not silently applied.
+    const roboDossier = page.getByTestId('dossier-robo-advisors');
+    // Kept as its OWN locator (not re-queried each time) — this is the exact
+    // trigger element the operator's A11y fix (PR #122 merge blocker) must
+    // return focus to on every dismiss path (Radix DialogContent's
+    // `onCloseAutoFocus`, ResearchShortlist.tsx). Re-querying by role/name
+    // would still resolve to the same DOM node here (React keeps it mounted
+    // across this whole flow — same `key`, same position), but holding one
+    // Locator makes the "did focus really come BACK to the thing that was
+    // clicked" intent explicit rather than incidental.
+    const roboToggleButton = roboDossier.getByRole('button', { name: /add .+ to shortlist/i }).first();
+    await roboToggleButton.click();
+
+    const dialog = page.getByRole('dialog', { name: 'Switch research topic' });
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByText('Shortlists compare within one research topic.')).toBeVisible();
+
+    // A11y merge-blocker fix (operator, PR #122): `aria-modal="true"` is a
+    // promise that everything outside is inert — before the Radix migration
+    // this dialog never actually kept it (focus stayed on the covered
+    // trigger, Tab walked straight into the page behind it). Initial focus
+    // must land INSIDE the dialog the moment it opens — Radix's default
+    // FocusScope behavior focuses the first tabbable descendant, which in
+    // this dialog's DOM order is the Cancel button (no visible title, no
+    // close [x] — showCloseButton={false}).
+    await expect(dialog.getByRole('button', { name: 'Cancel' })).toBeFocused();
+
+    // Adversarial coverage, commit 5, case (c): the REACHABLE half of the
+    // "open dialog -> wait -> cancel -> storage byte-identical" guarantee
+    // (spec §11.3.1). The unavailable-scope half (a restored-but-
+    // unverifiable active scope) has no live-data seam to reach in a real
+    // e2e run today — see __tests__/unit/research-hub-integration.test.ts's
+    // header comment for that investigation; it stays proven at the
+    // pure-logic level in __tests__/unit/research-shortlist-ui-state.test.ts.
+    // This IS the reachable half: an explicit wait with the dialog open,
+    // proposing a cross-scope switch, before Cancel — a real timer tick with
+    // nothing else happening. Before P1 fix ca48fb3 ("never touch storage
+    // while a switch is only proposed"), pendingSwitch lived INSIDE the
+    // reducer, so merely opening this dialog already changed `state` and
+    // fired the unconditional persist effect (useEffect(..., [state,
+    // market])) — waiting here doesn't change whether that reproduces, it
+    // hardens against any FUTURE regression that reintroduces a delayed/
+    // timer-driven persist path the immediate-assertion version wouldn't
+    // catch.
+    await page.waitForTimeout(600);
+
+    // Cancel leaves storage byte-identical — the whole point of the dialog.
+    await dialog.getByRole('button', { name: 'Cancel' }).click();
+    await expect(dialog).toBeHidden();
+    await expect(page.getByText('1/4')).toBeVisible();
+    expect(await fullSessionStorageSnapshot(page)).toEqual(beforeAttempt);
+    // Focus-return contract (A11y fix): Cancel must land focus back on the
+    // exact button that opened the dialog, not merely "somewhere on the
+    // page" or the (now gone) document.body default.
+    await expect(roboToggleButton).toBeFocused();
+
+    // Retry, this time confirming: the old scope's key is gone, the new
+    // scope's pointer + key are set for the newly-added robo-advisors slug.
+    await roboToggleButton.click();
+    await expect(dialog).toBeVisible();
+    await dialog.getByRole('button', { name: 'Switch & add' }).click();
+    await expect(dialog).toBeHidden();
+
+    expect(await sessionStorageItem(page, TRADING_SCOPED_KEY)).toBeNull();
+    expect(await sessionStorageItem(page, TRADING_POINTER_KEY)).toBe('personal-finance:robo-advisors');
+    await expect(page.getByText('1/4')).toBeVisible();
+    const roboPressedButton = roboDossier.getByRole('button', { name: /shortlist/i, pressed: true });
+    await expect(roboPressedButton).toHaveCount(1);
+    // Confirm also returns focus sensibly — to the SAME card's own toggle,
+    // which now reads "Remove Betterment from shortlist" / pressed:true
+    // rather than to nowhere. `roboToggleButton`'s original accessible name
+    // ("Add ... to shortlist") no longer matches post-confirm, so this reads
+    // the card's current control by its NEW pressed state instead of
+    // re-resolving the stale locator by its old name.
+    await expect(roboPressedButton).toBeFocused();
+  });
+
+  // A11y merge-blocker fix (operator, PR #122): the two dismiss paths the
+  // test above doesn't cover — a real Escape keypress (rather than clicking
+  // Cancel) and a hardened Tab-trap proof (repeated Tab presses, not just a
+  // single before/after focus check). Together with the test above, this
+  // proves EVERY documented pre-fix defect: focus starts inside the dialog,
+  // Tab can never walk into the covered background page no matter how many
+  // times it's pressed, Escape actually closes the dialog (it silently did
+  // nothing before this fix), and storage stays byte-identical + focus
+  // returns to the trigger regardless of which dismiss path was used.
+  test('scope switch dialog traps Tab focus for real and Escape dismisses it byte-identically', async ({
+    page,
+  }) => {
+    const tradingDossier = page.getByTestId('dossier-trading-platforms');
+    await tradingDossier.getByRole('button', { name: /add .+ to shortlist/i }).first().click();
+    await expect(page.getByText('1/4')).toBeVisible();
+
+    const beforeAttempt = await fullSessionStorageSnapshot(page);
+
+    const roboDossier = page.getByTestId('dossier-robo-advisors');
+    const roboToggleButton = roboDossier.getByRole('button', { name: /add .+ to shortlist/i }).first();
+    await roboToggleButton.click();
+
+    const dialog = page.getByRole('dialog', { name: 'Switch research topic' });
+    await expect(dialog).toBeVisible();
+
+    // Tab repeatedly — this dialog has exactly two tabbable elements
+    // (Cancel, "Switch & add"; no visible title, no close [x]), so a real
+    // focus trap cycles between just those two forever. Before the fix, Tab
+    // walked straight into the covered background page (provider links,
+    // "Read research", "Compare", "Visit provider") within the first couple
+    // of presses — asserting after EVERY single press (not just once at the
+    // end) proves the trap holds continuously, not merely that it happens to
+    // land back inside after some fixed number of steps.
+    for (let i = 0; i < 6; i++) {
+      await page.keyboard.press('Tab');
+      // Exactly one element INSIDE the dialog currently has focus — proves
+      // focus stayed IN the dialog on every single step, without hardcoding
+      // which of the two buttons it should land on for any given step (loop
+      // direction/starting point are Radix internals this test shouldn't
+      // need to know). If Tab had walked out to the covered background page
+      // (the pre-fix defect — straight into "Betterment"/"Read research"/
+      // "Compare"/"Visit provider" links), this scoped locator would resolve
+      // to 0, not 1, and fail here immediately.
+      await expect(dialog.locator(':focus')).toHaveCount(1);
+    }
+
+    // Escape — the old hand-rolled `<div role="dialog">` never listened for
+    // it at all; Radix's DismissableLayer wires it to onOpenChange(false) by
+    // default, which this component treats identically to Cancel.
+    await page.keyboard.press('Escape');
+    await expect(dialog).toBeHidden();
+    await expect(page.getByText('1/4')).toBeVisible();
+    expect(await fullSessionStorageSnapshot(page)).toEqual(beforeAttempt);
+    await expect(roboToggleButton).toBeFocused();
+  });
+
+  test('the scope switch dialog describes itself with the replacement warning', async ({ page }) => {
+    const tradingDossier = page.getByTestId('dossier-trading-platforms');
+    await tradingDossier.getByRole('button', { name: /add .+ to shortlist/i }).first().click();
+    await expect(page.getByText('1/4')).toBeVisible();
+
+    const roboDossier = page.getByTestId('dossier-robo-advisors');
+    await roboDossier.getByRole('button', { name: /add .+ to shortlist/i }).first().click();
+
+    const dialog = page.getByRole('dialog', { name: 'Switch research topic' });
+    await expect(dialog).toBeVisible();
+
+    // `aria-describedby` must RESOLVE. A plain <p> left Radix's generated id
+    // dangling: assistive tech was promised an explanation that did not
+    // exist (and Radix logged "Missing Description for DialogContent"), so
+    // the one sentence that warns the stored shortlist will be REPLACED was
+    // never announced. Asserting the attribute alone would not catch that —
+    // the attribute was always present. Resolve it and read the element.
+    const describedBy = await dialog.getAttribute('aria-describedby');
+    expect(describedBy).toBeTruthy();
+    const description = page.locator(`#${describedBy}`);
+    await expect(description).toHaveCount(1);
+    // This path exercises the AVAILABLE-scope branch (robo-advisors loads
+    // fine), so the copy is the plain one. The unavailable branch's stronger
+    // "…will still replace it" wording lives behind a precondition no live
+    // topic currently produces — it is covered at the pure-logic level in
+    // __tests__/unit/research-catalog-shell-logic.test.ts rather than faked
+    // here.
+    await expect(description).toHaveText('Shortlists compare within one research topic.');
+  });
+
+  test('dismissing the scope switch by overlay click leaves storage byte-identical', async ({
+    page,
+  }) => {
+    const tradingDossier = page.getByTestId('dossier-trading-platforms');
+    await tradingDossier.getByRole('button', { name: /add .+ to shortlist/i }).first().click();
+    await expect(page.getByText('1/4')).toBeVisible();
+
+    const beforeAttempt = await fullSessionStorageSnapshot(page);
+
+    const roboDossier = page.getByTestId('dossier-robo-advisors');
+    const roboToggleButton = roboDossier.getByRole('button', { name: /add .+ to shortlist/i }).first();
+    await roboToggleButton.click();
+
+    const dialog = page.getByRole('dialog', { name: 'Switch research topic' });
+    await expect(dialog).toBeVisible();
+
+    // The third dismiss path. Cancel and Escape are covered above; the
+    // overlay is the one a mouse user hits by accident, so it carries the
+    // same byte-identity and focus-return guarantee (spec §11.3.1) and needs
+    // its own regression net rather than being assumed equivalent.
+    await page.locator('[data-slot="dialog-overlay"]').click({ position: { x: 5, y: 5 } });
+    await expect(dialog).toBeHidden();
+    await expect(page.getByText('1/4')).toBeVisible();
+    expect(await fullSessionStorageSnapshot(page)).toEqual(beforeAttempt);
+    await expect(roboToggleButton).toBeFocused();
   });
 
   test('the affiliate disclosure is never hidden behind the fixed shortlist bar', async ({ page }) => {
@@ -122,6 +515,44 @@ test.describe('Research Library shell — desktop', () => {
     // Disclosure bottom sits ABOVE the fixed bar's top — not covered.
     expect(dBox!.y + dBox!.height).toBeLessThanOrEqual(barBox!.y + 1);
   });
+});
+
+// unified-research-discovery-pr2-hubs plan, Task 8 (Global Constraints:
+// "Header and market switcher must work at 1024, 1100, and 1280 pixels") —
+// 1024px is the Tailwind `lg` breakpoint (components/marketing/header.tsx's
+// desktop nav is `hidden lg:flex`), the exact width where the desktop
+// Research link and market switcher first appear; 1100/1280 prove the gap
+// holds as the viewport grows. Needs real hydration (javaScriptEnabled,
+// already set file-wide above) — the header renders as the 'us' market
+// until it mounts (see research-hub-markets.spec.ts's own note on this).
+test.describe('Research hub header — responsive breakpoints', () => {
+  for (const width of [1024, 1100, 1280]) {
+    test(`at ${width}px the Research link and market switcher are both visible and never overlap`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto('/research');
+      await dismissCookies(page);
+
+      const researchLink = page.getByRole('link', { name: 'Research', exact: true });
+      const marketSwitcher = page.getByRole('button', { name: /United States/i });
+      await expect(researchLink).toBeVisible();
+      await expect(marketSwitcher).toBeVisible();
+
+      const researchBox = await researchLink.boundingBox();
+      const switcherBox = await marketSwitcher.boundingBox();
+      expect(researchBox, `Research link has no bounding box at ${width}px`).not.toBeNull();
+      expect(switcherBox, `market switcher has no bounding box at ${width}px`).not.toBeNull();
+
+      // The desktop nav reads left-to-right (nav groups -> Research ->
+      // market switcher -> Get Started), so the Research link's right edge
+      // must sit at or before the market switcher's left edge — no overlap.
+      expect(
+        researchBox!.x + researchBox!.width,
+        `Research link overlaps the market switcher at ${width}px`,
+      ).toBeLessThanOrEqual(switcherBox!.x + 1);
+    });
+  }
 });
 
 test.describe('Research Library shell — mobile', () => {

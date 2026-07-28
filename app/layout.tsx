@@ -8,6 +8,7 @@ import DevCacheBuster from '@/components/providers/dev-cache-buster';
 import ChunkRecoveryProvider from '@/components/providers/chunk-recovery-provider';
 import { generateOrganizationSchema, generateWebsiteSchema } from '@/lib/seo/schema';
 import WebVitalsReporter from '@/components/providers/web-vitals-reporter';
+import { TITLE_TEMPLATE_SUFFIX } from '@/lib/seo/title-template';
 
 const inter = Inter({
   variable: '--font-inter',
@@ -21,7 +22,7 @@ export const metadata: Metadata = {
   },
   title: {
     default: 'SmartFinPro - Financial Intelligence for Modern Professionals',
-    template: '%s | SmartFinPro',
+    template: `%s${TITLE_TEMPLATE_SUFFIX}`,
   },
   description:
     'Compare AI-powered tools, cybersecurity solutions, and trading platforms across 4 global markets. Expert reviews and free calculators.',

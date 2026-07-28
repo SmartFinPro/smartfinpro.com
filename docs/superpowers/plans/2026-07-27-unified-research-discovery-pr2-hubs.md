@@ -8,6 +8,42 @@
 
 **Tech Stack:** Next.js App Router · React Server Components · React client shell · Zod · Vitest · Playwright · existing Research analytics transport
 
+## Amended preconditions (2026-07-27)
+
+Two operator-approved decisions amend the PR 1 contract this plan builds on.
+Both are documented in `docs/superpowers/specs/2026-07-27-research-discovery-catalog-design.md`
+(§5.3.1 and §11.2.1/§11.3.1) and landed in code ahead of this plan via
+`feat(research): three-tier scope snapshot guards stored shortlists`
+(`lib/research/catalog-shell-logic.ts`). **No task below may re-implement the
+old flat contract** — read the linked section before touching the named file.
+
+- **Decision A — per-topic overlay cache + 60s failure backoff (spec §5.3.1).**
+  The Research overlay cache moves from one entry per market to one entry per
+  topic (`['research-discovery-contexts', market, category, topic]`,
+  `revalidate: 3600`), plus an in-process `Map<CockpitKey, retryAfterEpochMs>`
+  backoff (injectable clock) for a topic that just failed, because
+  `unstable_cache` never stores a thrown error. **Task 3** (server nodes,
+  `getDiscoveryCatalogBundle` consumption) and any later task that touches
+  `lib/research/catalog.ts`'s overlay loaders (`getCachedResearchContexts`,
+  `loadMarketResearchContexts`, `loadTopicOverlayRows`) must wire this
+  per-topic cache and backoff instead of reusing the single market-wide
+  `unstable_cache` entry that exists today. `logger.warn` fires once per
+  backoff window, not once per request.
+- **Decision B — three-tier `ShortlistScopeSnapshot` (spec §11.2.1/§11.3.1).**
+  `restoreScopedShortlist` no longer takes a flat
+  `ReadonlyMap<CockpitKey, ReadonlySet<string>>`; it takes a
+  `ShortlistScopeSnapshot { knownScopes, availableScopes, unavailableScopes }`.
+  A scope currently in `unavailableScopes` (backoff, load failure, or
+  `missing_topic_config`) leaves storage byte-identical and returns an empty
+  state — it is NOT treated the same as a scope absent from `knownScopes`
+  (which is genuinely stale and does get cleared). **Task 4** (client hub /
+  `ResearchHub.tsx` restore-on-mount call) and **Task 5** (shortlist UI,
+  `describeScopeSwitch` dialog wording) must build this snapshot from the
+  full, unfiltered market catalog — never from the currently visible/filtered
+  projection — and must use the shipped `describeScopeSwitch()` helper for the
+  cross-topic switch dialog's copy instead of writing new dialog-state logic
+  that assumes the active scope is always verifiable.
+
 ## Global Constraints
 
 - PR 1 must be merged; import only its public catalog and shell interfaces.
