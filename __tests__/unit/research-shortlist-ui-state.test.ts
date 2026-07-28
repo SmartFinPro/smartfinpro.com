@@ -60,6 +60,7 @@ import {
   type CockpitKey,
   type DiscoveryItem,
   type ResearchContext,
+  type RestoredShortlist,
   type ScopedShortlist,
   type ShortlistScopeSnapshot,
   type StorageLike,
@@ -142,90 +143,102 @@ describe('shortlistReducer', () => {
     });
     expect(next.cockpitKey).toBe('us/trading/trading-platforms');
     expect(next.slugs).toEqual(['fidelity', 'charles-schwab']);
-    expect(next.pendingSwitch).toBeNull();
   });
 
-  it('"request-switch" sets pendingSwitch WITHOUT touching cockpitKey/slugs — a blocked mutation', () => {
-    const before = restoredState();
-    const requested = shortlistReducer(before, {
-      type: 'request-switch',
-      cockpitKey: 'us/personal-finance/robo-advisors',
-      slug: 'betterment',
-    });
-    expect(requested.cockpitKey).toBe(before.cockpitKey);
-    expect(requested.slugs).toEqual(before.slugs);
-    expect(requested.pendingSwitch).toEqual({
-      cockpitKey: 'us/personal-finance/robo-advisors',
-      slug: 'betterment',
-    });
-  });
+  // A PROPOSED cross-scope switch (spec §11.3.1) is no longer a reducer
+  // action at all (MERGE BLOCKER fix, adversarial review of PR #122) — it
+  // lives entirely in `useScopedResearchShortlist`'s own separate
+  // `pendingSwitch` useState, which `shortlistReducer`/`shortlistPersistCommand`
+  // can never see. Proposing/cancelling a switch therefore NEVER produces a
+  // new `ResearchShortlistState` reference at all — there is no
+  // 'request-switch'/'cancel-switch' action to dispatch, so there is nothing
+  // for the persist effect (still plainly `[state, market]`) to react to.
+  // See `describe('proposing/cancelling a cross-scope switch never touches
+  // the reducer ...')` below for the behavioral proof, and
+  // e2e/research-shell.spec.ts's "scope switch" test for the real-browser,
+  // real-sessionStorage byte-identical proof.
 
-  it('"cancel-switch" clears pendingSwitch and leaves cockpitKey/slugs untouched', () => {
-    const requested = shortlistReducer(restoredState(), {
-      type: 'request-switch',
-      cockpitKey: 'us/personal-finance/robo-advisors',
-      slug: 'betterment',
-    });
-    const cancelled = shortlistReducer(requested, { type: 'cancel-switch' });
-    expect(cancelled.pendingSwitch).toBeNull();
-    expect(cancelled.cockpitKey).toBe('us/trading/trading-platforms');
-    expect(cancelled.slugs).toEqual(['fidelity']);
-  });
-
-  it('"cancel-switch" leaves the PERSIST COMMAND unchanged — the pure-logic half of the byte-identical guarantee (spec §11.3.1). The other half — real sessionStorage never touched — is proven end-to-end in e2e/research-shell.spec.ts.', () => {
-    const requested = shortlistReducer(restoredState(), {
-      type: 'request-switch',
-      cockpitKey: 'us/personal-finance/robo-advisors',
-      slug: 'betterment',
-    });
-    const beforeCancel = shortlistPersistCommand(requested);
-    const cancelled = shortlistReducer(requested, { type: 'cancel-switch' });
-    const afterCancel = shortlistPersistCommand(cancelled);
-    expect(afterCancel).toEqual(beforeCancel);
-  });
-
-  it('"cancel-switch" with no pendingSwitch is a no-op (returns the exact same state reference)', () => {
-    const before = restoredState();
-    const after = shortlistReducer(before, { type: 'cancel-switch' });
-    expect(after).toBe(before);
-  });
-
-  it('"confirm-switch" applies the pending scope with EXACTLY its one requested slug — it never merges the old scope\'s other slugs into the new one', () => {
+  it('"confirm-switch" applies the target scope with EXACTLY its one requested slug — it never merges the old scope\'s other slugs into the new one', () => {
     const twoSlugState = shortlistReducer(restoredState(), {
       type: 'set',
       value: { cockpitKey: 'us/trading/trading-platforms', slugs: ['fidelity', 'charles-schwab'] },
     });
-    const requested = shortlistReducer(twoSlugState, {
-      type: 'request-switch',
+    const confirmed = shortlistReducer(twoSlugState, {
+      type: 'confirm-switch',
       cockpitKey: 'us/personal-finance/robo-advisors',
       slug: 'betterment',
     });
-    const confirmed = shortlistReducer(requested, { type: 'confirm-switch' });
     expect(confirmed.cockpitKey).toBe('us/personal-finance/robo-advisors');
     expect(confirmed.slugs).toEqual(['betterment']);
-    expect(confirmed.pendingSwitch).toBeNull();
+    expect(confirmed.unverifiableCockpitKey).toBeNull();
   });
 
-  it('"confirm-switch" with no pendingSwitch is a defensive no-op', () => {
-    const before = restoredState();
-    const after = shortlistReducer(before, { type: 'confirm-switch' });
-    expect(after).toBe(before);
-  });
-
-  it('"clear" resets cockpitKey/slugs/pendingSwitch to empty', () => {
-    const requested = shortlistReducer(restoredState(), {
-      type: 'request-switch',
-      cockpitKey: 'us/personal-finance/robo-advisors',
-      slug: 'betterment',
-    });
-    const cleared = shortlistReducer(requested, { type: 'clear' });
+  it('"clear" resets cockpitKey/slugs to empty', () => {
+    const cleared = shortlistReducer(restoredState(), { type: 'clear' });
     expect(cleared).toEqual({
       hasRestored: true,
       cockpitKey: null,
       slugs: [],
       unverifiableCockpitKey: null,
-      pendingSwitch: null,
     });
+  });
+});
+
+// ── Proposing/cancelling a cross-scope switch never touches the reducer
+//    (spec §11.3.1 MERGE BLOCKER fix, adversarial review of PR #122) ───────
+// The old design kept `pendingSwitch` INSIDE `ResearchShortlistState` and
+// dispatched 'request-switch'/'cancel-switch' reducer actions for it. Since
+// the persist effect (components/research/ResearchShortlist.tsx) reacts to
+// ANY `state` reference change via `useEffect(..., [state, market])`, that
+// meant merely OPENING the switch dialog — and then CANCELLING it — still
+// produced a new `state` and fired the persist effect, even though neither
+// `cockpitKey` nor `slugs` (the only two fields `shortlistPersistCommand`
+// reads) had changed. For an unavailable active scope (`cockpitKey` stays
+// `null`, the real scope lives only in `unverifiableCockpitKey`), that
+// re-fired effect called `persistScopedShortlist` with
+// `{cockpitKey: null, slugs: []}` — which deletes the market pointer
+// `restoreScopedShortlist`'s Rule 2 had deliberately left untouched,
+// breaking the byte-identical guarantee just by opening (and cancelling!) a
+// dialog.
+//
+// The fix moves the proposal OUT of the reducer entirely — this block
+// proves the reducer-level half: `shortlistReducer`'s own action union no
+// longer has a way to represent "propose" or "cancel" at all, so simulating
+// exactly what `useScopedResearchShortlist`'s `toggle()`/`cancelSwitch()`
+// now do (compute the pure primitives, store the proposal in a plain local
+// variable — never `dispatch`) leaves the SAME `ResearchShortlistState`
+// object reference, and therefore the SAME persist command, throughout.
+describe('proposing/cancelling a cross-scope switch never touches the reducer (spec §11.3.1 MERGE BLOCKER fix)', () => {
+  const tradingKey: CockpitKey = 'us/trading/trading-platforms';
+  const roboKey: CockpitKey = 'us/personal-finance/robo-advisors';
+
+  it('an unavailable active scope: open (propose) requires a scope switch, yet the reducer state — and therefore the persist command — stays the exact SAME reference all the way through cancel', () => {
+    const restored: RestoredShortlist = { cockpitKey: null, slugs: [], unverifiableCockpitKey: tradingKey };
+    const stateAfterRestore = shortlistReducer(initialShortlistState(), { type: 'restored', value: restored });
+    const commandBeforeOpen = shortlistPersistCommand(stateAfterRestore);
+
+    // "Open" — mirrors useScopedResearchShortlist's toggle(): a cross-scope
+    // add computes toggleScopedShortlist and, since it requires a scope
+    // switch, the hook calls ONLY `setPendingSwitch(...)` — never
+    // `dispatch`. `toggleScopedShortlist` itself is the pure primitive the
+    // hook actually calls; nothing here reaches `shortlistReducer`.
+    const effectiveCockpitKey = stateAfterRestore.cockpitKey ?? stateAfterRestore.unverifiableCockpitKey;
+    const current: ScopedShortlist = { cockpitKey: effectiveCockpitKey, slugs: stateAfterRestore.slugs };
+    const toggleResult = toggleScopedShortlist(current, roboKey, 'betterment', new Set(['betterment']));
+    expect(toggleResult.requiresScopeSwitch).toBe(true);
+    const pendingSwitch: { cockpitKey: CockpitKey; slug: string } = { cockpitKey: roboKey, slug: 'betterment' };
+    expect(pendingSwitch).toEqual({ cockpitKey: roboKey, slug: 'betterment' });
+
+    // No reducer action exists to represent "open" or "cancel" a switch
+    // (ResearchShortlistAction's union is 'restored' | 'set' |
+    // 'confirm-switch' | 'clear' only) — the state this test started with is
+    // therefore still the CURRENT state, unconditionally, both immediately
+    // after "open" and after "cancel" (which — mirroring cancelSwitch() —
+    // does nothing but discard the local `pendingSwitch` value above).
+    // Because `shortlistPersistCommand` is a pure function of `state`, an
+    // unchanged `state` reference is exactly what makes the persist effect's
+    // OWN `[state, market]` dependency never re-fire.
+    expect(shortlistPersistCommand(stateAfterRestore)).toEqual(commandBeforeOpen);
   });
 });
 
@@ -514,7 +527,7 @@ describe('cross-scope switch after a Rule-2 restore is reachable, not silently d
     expect(restored).toEqual({ cockpitKey: null, slugs: [], unverifiableCockpitKey: tradingKey });
     expect(storage.snapshot()).toEqual(before);
 
-    let state = shortlistReducer(initialShortlistState(), { type: 'restored', value: restored });
+    const state = shortlistReducer(initialShortlistState(), { type: 'restored', value: restored });
     expect(state.cockpitKey).toBeNull();
     expect(state.unverifiableCockpitKey).toBe(tradingKey);
 
@@ -531,27 +544,35 @@ describe('cross-scope switch after a Rule-2 restore is reachable, not silently d
     // with ANY target scope, so this would have been `false` and the add
     // would have applied silently, with no dialog at all.
     expect(result.requiresScopeSwitch).toBe(true);
-    state = shortlistReducer(state, { type: 'request-switch', cockpitKey: roboKey, slug: 'betterment' });
+    // Spec §11.3.1 MERGE BLOCKER fix (adversarial review of PR #122): a
+    // PROPOSED switch is no longer a reducer action/state field at all — it
+    // lives in useScopedResearchShortlist's own separate `pendingSwitch`
+    // useState, mirrored here as a plain local variable. `state` itself is
+    // therefore NEVER reassigned across "open"/"cancel" below.
+    const pendingSwitch: { cockpitKey: CockpitKey; slug: string } = { cockpitKey: roboKey, slug: 'betterment' };
 
     // --- Step 3: the switch description is the honest active-unavailable
     //     kind — not the old scope's real reason fabricated as
     //     active-available, and not silently skipped as no-switch. --------
     const activeCockpitKey = state.cockpitKey ?? state.unverifiableCockpitKey;
-    const description = describeScopeSwitch(snapshot, activeCockpitKey, state.pendingSwitch!.cockpitKey);
+    const description = describeScopeSwitch(snapshot, activeCockpitKey, pendingSwitch.cockpitKey);
     expect(description).toEqual({ kind: 'active-unavailable', activeCockpitKey: tradingKey, reason: 'backoff' });
 
-    // Cancelling leaves storage untouched and keeps the unverifiable key
-    // around for a possible retry.
-    const cancelled = shortlistReducer(state, { type: 'cancel-switch' });
-    expect(cancelled.pendingSwitch).toBeNull();
-    expect(cancelled.unverifiableCockpitKey).toBe(tradingKey);
+    // Cancelling ("mirrors cancelSwitch(): discard the local proposal only,
+    // never dispatch") leaves storage AND the reducer state untouched, and
+    // keeps the unverifiable key around for a possible retry.
+    expect(state.unverifiableCockpitKey).toBe(tradingKey);
     expect(storage.snapshot()).toEqual(before);
 
     // --- Step 4: only an EXPLICIT confirm applies the switch and clears
     //     the old scope's (previously untouched) storage entry — mirrors
     //     useScopedResearchShortlist's confirmSwitch(). -------------------
     const previousCockpitKey = state.cockpitKey ?? state.unverifiableCockpitKey;
-    const confirmed = shortlistReducer(state, { type: 'confirm-switch' });
+    const confirmed = shortlistReducer(state, {
+      type: 'confirm-switch',
+      cockpitKey: pendingSwitch.cockpitKey,
+      slug: pendingSwitch.slug,
+    });
     if (previousCockpitKey) storage.removeItem(shortlistStorageKey(previousCockpitKey));
 
     expect(confirmed.cockpitKey).toBe(roboKey);

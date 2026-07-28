@@ -78,19 +78,37 @@ export interface ResearchShortlistState {
    *  storage guarantee holds regardless of what happens to state afterward
    *  (see `RestoredShortlist`'s own doc comment for why that matters).
    *  Cleared once a genuine active scope is established (`set`/
-   *  `confirm-switch`) or the user explicitly clears everything; preserved
-   *  across `request-switch`/`cancel-switch` so the switch dialog and a
-   *  retried confirm can still read it. */
+   *  `confirm-switch`) or the user explicitly clears everything. */
   unverifiableCockpitKey: CockpitKey | null;
-  pendingSwitch: { cockpitKey: CockpitKey; slug: string } | null;
 }
 
+// A PROPOSED cross-scope switch (spec §11.3.1) is deliberately NOT part of
+// this reducer's state (MERGE BLOCKER fix, adversarial review of PR #122):
+// `useScopedResearchShortlist` below holds it in its OWN separate `useState`
+// instead. Before this fix, `pendingSwitch` lived HERE, and 'request-switch'/
+// 'cancel-switch' were reducer actions — which meant merely OPENING the
+// switch dialog (and then cancelling) produced a NEW `state` object
+// reference even though neither `cockpitKey` nor `slugs` actually changed.
+// The persist effect's `useEffect(..., [state, market])` reacts to ANY
+// `state` reference change, so it fired for that transition too — and for
+// an unavailable active scope (`cockpitKey` genuinely `null`,
+// `unverifiableCockpitKey` carrying the real, currently-unverifiable scope),
+// `shortlistPersistCommand` returns `{cockpitKey: null, slugs: []}`, which
+// `persistScopedShortlist` treats as "the user cleared this scope" and
+// deletes the market pointer `restoreScopedShortlist`'s Rule 2 had
+// deliberately left untouched — turning a temporarily-unverifiable scope
+// into a permanently lost one, just by opening (and cancelling!) a dialog.
+// `shortlistPersistCommand` already never read `pendingSwitch` — the bug was
+// never in WHAT got persisted, only in the effect firing AT ALL for a
+// transition that commits nothing. Removing `pendingSwitch` from this
+// reducer's state entirely is the fix: propose/cancel now never dispatch
+// here, so `state` (and therefore the persist effect, still simply
+// `[state, market]`) never even reacts to them — nothing to compare, nothing
+// to paper over.
 export type ResearchShortlistAction =
   | { type: 'restored'; value: RestoredShortlist }
   | { type: 'set'; value: ScopedShortlist }
-  | { type: 'request-switch'; cockpitKey: CockpitKey; slug: string }
-  | { type: 'cancel-switch' }
-  | { type: 'confirm-switch' }
+  | { type: 'confirm-switch'; cockpitKey: CockpitKey; slug: string }
   | { type: 'clear' };
 
 export const initialShortlistState = (): ResearchShortlistState => ({
@@ -98,16 +116,15 @@ export const initialShortlistState = (): ResearchShortlistState => ({
   cockpitKey: null,
   slugs: [],
   unverifiableCockpitKey: null,
-  pendingSwitch: null,
 });
 
-/** Pure reducer — no storage I/O, no side effects. `confirm-switch` applies
- *  the pending switch's target scope with exactly its one requested slug
- *  (mirrors `toggleScopedShortlist`'s own cross-scope result: a switch never
- *  merges the old scope's other slugs into the new one). A `confirm-switch`
- *  with no `pendingSwitch` set is a no-op (defensive — the dialog is never
- *  rendered without one, but the reducer itself must not assume the caller
- *  got that right). */
+/** Pure reducer — no storage I/O, no side effects. Every action here is a
+ *  COMMITTED transition (spec §11.3.1 MERGE BLOCKER fix) — a merely proposed
+ *  or cancelled cross-scope switch never reaches this function at all; see
+ *  the file's own note above `ResearchShortlistAction`. `confirm-switch`
+ *  applies its target scope with exactly its one requested slug (mirrors
+ *  `toggleScopedShortlist`'s own cross-scope result: a switch never merges
+ *  the old scope's other slugs into the new one). */
 export function shortlistReducer(
   state: ResearchShortlistState,
   action: ResearchShortlistAction,
@@ -119,26 +136,13 @@ export function shortlistReducer(
         cockpitKey: action.value.cockpitKey,
         slugs: action.value.slugs,
         unverifiableCockpitKey: action.value.unverifiableCockpitKey ?? null,
-        pendingSwitch: null,
       };
     case 'set':
       return { ...state, cockpitKey: action.value.cockpitKey, slugs: action.value.slugs, unverifiableCockpitKey: null };
-    case 'request-switch':
-      return { ...state, pendingSwitch: { cockpitKey: action.cockpitKey, slug: action.slug } };
-    case 'cancel-switch':
-      return state.pendingSwitch ? { ...state, pendingSwitch: null } : state;
-    case 'confirm-switch': {
-      if (!state.pendingSwitch) return state;
-      return {
-        ...state,
-        cockpitKey: state.pendingSwitch.cockpitKey,
-        slugs: [state.pendingSwitch.slug],
-        unverifiableCockpitKey: null,
-        pendingSwitch: null,
-      };
-    }
+    case 'confirm-switch':
+      return { ...state, cockpitKey: action.cockpitKey, slugs: [action.slug], unverifiableCockpitKey: null };
     case 'clear':
-      return { ...state, cockpitKey: null, slugs: [], unverifiableCockpitKey: null, pendingSwitch: null };
+      return { ...state, cockpitKey: null, slugs: [], unverifiableCockpitKey: null };
     default:
       return state;
   }
@@ -200,6 +204,15 @@ export function useScopedResearchShortlist(
   scopeSnapshot: ShortlistScopeSnapshotDTO,
 ): UseScopedResearchShortlistResult {
   const [state, dispatch] = useReducer(shortlistReducer, undefined, initialShortlistState);
+
+  // A PROPOSED cross-scope switch lives in its OWN state slot — deliberately
+  // NOT inside `state` above (spec §11.3.1 MERGE BLOCKER fix; see the file's
+  // note above `ResearchShortlistAction`). Proposing (`toggle`'s
+  // cross-scope branch) and cancelling (`cancelSwitch`) only ever call
+  // `setPendingSwitch` here, never `dispatch` — so `state` (and the persist
+  // effect below, which still simply depends on `[state, market]`) never
+  // reacts to either.
+  const [pendingSwitch, setPendingSwitch] = useState<{ cockpitKey: CockpitKey; slug: string } | null>(null);
 
   // Server-built (spec §11.2.1, operator fix 2026-07-27) — this hook only
   // HYDRATES the DTO back into the Set/Map shape restoreScopedShortlist and
@@ -264,7 +277,7 @@ export function useScopedResearchShortlist(
     const current: ScopedShortlist = { cockpitKey: effectiveCockpitKey, slugs: state.slugs };
     const result = toggleScopedShortlist(current, cockpitKey, slug, validSlugsFor(cockpitKey));
     if (result.requiresScopeSwitch) {
-      dispatch({ type: 'request-switch', cockpitKey, slug });
+      setPendingSwitch({ cockpitKey, slug });
       return;
     }
     // A genuine no-op (invalid slug, already-full shortlist, etc.) always
@@ -303,14 +316,15 @@ export function useScopedResearchShortlist(
   };
 
   const confirmSwitch = (): void => {
-    if (!state.pendingSwitch) return;
+    if (!pendingSwitch) return;
     // Same effective-key reasoning as `toggle()` above: a confirmed switch
     // away from a restored-but-unverifiable scope (spec §11.3.1 fix) must
     // still clear ITS storage entry — that's the whole point of the
     // "switching topics will still replace it" dialog copy — even though
     // `state.cockpitKey` itself was never repointed to it.
     const previousCockpitKey = state.cockpitKey ?? state.unverifiableCockpitKey;
-    dispatch({ type: 'confirm-switch' });
+    dispatch({ type: 'confirm-switch', cockpitKey: pendingSwitch.cockpitKey, slug: pendingSwitch.slug });
+    setPendingSwitch(null);
     // Spec §11.3: "alten scoped Storage-Eintrag löschen" — the persist effect
     // (below) writes the NEW scope's pointer + value, but only this explicit
     // call removes the OLD scope's now-orphaned storage entry.
@@ -323,19 +337,22 @@ export function useScopedResearchShortlist(
     }
   };
 
+  // Discards the proposal ONLY — never touches `state`/`dispatch`, so this
+  // can never trigger the persist effect below (spec §11.3.1 byte-identical
+  // guarantee: cancelling a switch must leave storage untouched).
   const cancelSwitch = (): void => {
-    dispatch({ type: 'cancel-switch' });
+    setPendingSwitch(null);
   };
 
   const pendingSwitchDescription = useMemo<ScopeSwitchDescription | null>(() => {
-    if (!state.pendingSwitch) return null;
+    if (!pendingSwitch) return null;
     // Effective active key (see `toggle()` above) — this is what actually
     // makes the honest "active-unavailable" dialog reachable at all: without
     // it, `describeScopeSwitch` always received `null` for a
     // restored-but-unverifiable scope and short-circuited to `no-switch`.
     const activeCockpitKey = state.cockpitKey ?? state.unverifiableCockpitKey;
-    return describeScopeSwitch(snapshot, activeCockpitKey, state.pendingSwitch.cockpitKey);
-  }, [snapshot, state.cockpitKey, state.unverifiableCockpitKey, state.pendingSwitch]);
+    return describeScopeSwitch(snapshot, activeCockpitKey, pendingSwitch.cockpitKey);
+  }, [snapshot, state.cockpitKey, state.unverifiableCockpitKey, pendingSwitch]);
 
   const compareUrl = state.cockpitKey
     ? buildScopedCompareUrl(
