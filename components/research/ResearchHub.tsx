@@ -152,10 +152,17 @@ export interface ResolvedEntry {
   kind: DiscoveryKind;
   topic: string | null;
   topicLabel: string | null;
-  // The dossier's category — null for a review-kind entry, same pattern as
-  // `cockpitKey`/`productSlug`/`displayName` below. Needed (alongside
-  // `topic`) to compute this entry's group's disambiguated data-testid
-  // (`dossierGroupTestId`) without re-deriving it from `cockpitKey`.
+  // The item's REAL category (`DiscoveryItem.category`) — set for EVERY
+  // entry, dossier or review (P1 fix, adversarial review of PR #122: a
+  // review-kind entry used to hardcode this `null`, following the same
+  // pattern as `cockpitKey`/`productSlug`/`displayName` below — but unlike
+  // those three, which genuinely don't exist for a plain review with no
+  // Cockpit product, `category` always does; every `DiscoveryItem` has one).
+  // Also needed (alongside `topic`) to compute a DOSSIER entry's group's
+  // disambiguated data-testid (`dossierGroupTestId`) without re-deriving it
+  // from `cockpitKey` — `groupResolvedEntries` below still gates that
+  // grouping on `kind === 'dossier'` first, so a review entry's now-real
+  // `category` never routes it into a dossier group.
   category: Category | null;
   isFeatured: boolean;
   node: ReactNode;
@@ -195,8 +202,11 @@ export interface ResolvedEntry {
 /** Resolves one projection to its already-built opaque node, applying the
  *  dossier→review degrade rule described in the file header. Returns `null`
  *  when even the degraded lookup misses (the projection is dropped, not
- *  shown broken). */
-function resolveEntry(
+ *  shown broken). Exported for direct unit coverage of the P1 category fix
+ *  (__tests__/unit/research-hub-tracking.test.ts) — the analytics fields this
+ *  function sets are otherwise only reachable by rendering the whole
+ *  `ResearchHub` client component. */
+export function resolveEntry(
   projection: DiscoveryProjection,
   nodeByKey: ReadonlyMap<string, ReactNode>,
 ): ResolvedEntry | null {
@@ -212,7 +222,13 @@ function resolveEntry(
           kind: 'review',
           topic: null,
           topicLabel: null,
-          category: null,
+          // The item's REAL category — P1 fix (adversarial review of PR
+          // #122): this used to hardcode `null`, which dropped
+          // research_review_click's `category` for every review-kind entry
+          // (e.g. a review filtered into view via `?type=review`), even
+          // though `DiscoveryItem.category` always has a real value. `topic`
+          // stays `null` — a plain review genuinely has no Cockpit topic.
+          category: projection.item.category,
           isFeatured: false,
           node,
           cockpitKey: null,
@@ -259,7 +275,9 @@ function resolveEntry(
         kind: 'review',
         topic: null,
         topicLabel: null,
-        category: null,
+        // Same P1 fix as the top branch above — the item's real category,
+        // never a hardcoded `null`.
+        category: projection.item.category,
         isFeatured: false,
         node: reviewNode,
         cockpitKey: null,
@@ -407,6 +425,82 @@ function dimensionsForCockpitKey(
   const rest = cockpitKey.slice(market.length + 1);
   const slashIndex = rest.indexOf('/');
   return { category: rest.slice(0, slashIndex) as Category, topic: rest.slice(slashIndex + 1) };
+}
+
+/** The click/evidence-open tracking dimensions for one resolved entry (P1
+ *  fix, adversarial review of PR #122): `dossierDimensions` (the
+ *  topic+category pair `resolveEntry`'s dossier branch always builds) when
+ *  present, else — for a review-kind entry — `{category: entry.category}`
+ *  alone. A review-kind entry has no dossier `topic` (there is no Cockpit
+ *  context to name), but DOES have a real `category` (`resolveEntry` sets it
+ *  from `DiscoveryItem.category`, which is never null) — before this fix,
+ *  `entriesForRender` only ever spread the dossier-strict pair, so ANY
+ *  review-kind click/evidence-open event silently reported no `category` at
+ *  all, even for e.g. a credit-repair review shown under `?type=review`.
+ *  Exported for direct unit coverage
+ *  (__tests__/unit/research-hub-tracking.test.ts). */
+export function trackedDimensionsFor(
+  entry: Pick<ResolvedEntry, 'category'>,
+  dossierDimensions: { topic: string; category: Category } | undefined,
+): Partial<{ topic: string; category: Category }> {
+  if (dossierDimensions) return dossierDimensions;
+  return entry.category ? { category: entry.category } : {};
+}
+
+/** What (if anything) a shortlist toggle click should report IMMEDIATELY
+ *  (P1 fix, adversarial review of PR #122, spec §12/§11.3). Pure — mirrors
+ *  `useScopedResearchShortlist`'s OWN "effective active key" reasoning
+ *  (`cockpitKey ?? unverifiableCockpitKey`) so a toggle away from a
+ *  restored-but-currently-UNVERIFIABLE scope (Rule 2/2b) is recognized as a
+ *  genuine cross-scope switch — never as "no scope active, apply
+ *  immediately". Before this fix, `handleShortlistToggle` checked the bare
+ *  (always-`null`-while-unverifiable) `shortlist.cockpitKey` alone, so it
+ *  fired a wrong 'add' event the instant the dialog opened — before the
+ *  user confirmed anything — and a subsequent Cancel left that false event
+ *  standing with nothing to correct it. */
+export function resolveShortlistToggleAnalytics(
+  selected: boolean,
+  effectiveCockpitKey: CockpitKey | null,
+  targetCockpitKey: CockpitKey,
+): { kind: 'remove' } | { kind: 'add' } | { kind: 'pending' } {
+  if (selected) return { kind: 'remove' };
+  if (effectiveCockpitKey === null || effectiveCockpitKey === targetCockpitKey) return { kind: 'add' };
+  return { kind: 'pending' };
+}
+
+/** The ordered `research_shortlist_change` calls a CONFIRMED cross-scope
+ *  switch should report (P1 fix, adversarial review of PR #122, spec §12):
+ *  `clear` for the OLD scope (when one was genuinely active — available or
+ *  merely unverifiable) followed by `add` for the target, in that order.
+ *  Before this fix `handleConfirmSwitch` only ever emitted the `add` half —
+ *  the contract's own `clear(old)` + `add(target)` pair was never complete.
+ *  Pure — takes the already-resolved old-scope dimensions (or `null` when
+ *  there was no real prior scope) rather than a `CockpitKey`, so this stays
+ *  free of `dimensionsForCockpitKey`/`market` and is directly unit-testable. */
+export function resolveConfirmSwitchAnalytics(
+  previousCockpitKey: CockpitKey | null,
+  previousDimensions: { topic: string; category: Category } | null,
+  pending: { productSlug: string; dimensions: { topic: string; category: Category } },
+): Array<{
+  action: 'clear' | 'add';
+  productSlug: string | null;
+  count: number;
+  dimensions: { topic: string; category: Category };
+}> {
+  const events: Array<{
+    action: 'clear' | 'add';
+    productSlug: string | null;
+    count: number;
+    dimensions: { topic: string; category: Category };
+  }> = [];
+  if (previousCockpitKey && previousDimensions) {
+    events.push({ action: 'clear', productSlug: null, count: 0, dimensions: previousDimensions });
+  }
+  // confirm-switch always lands on exactly the one requested slug
+  // (shortlistReducer, components/research/ResearchShortlist.tsx) — the
+  // resulting count is always 1, never derived from the prior scope's size.
+  events.push({ action: 'add', productSlug: pending.productSlug, count: 1, dimensions: pending.dimensions });
+  return events;
 }
 
 export interface DossierGroup {
@@ -753,14 +847,21 @@ export function ResearchHub({ market, items, nodes, scopeSnapshot }: ResearchHub
   const handleShortlistToggle = useCallback(
     (cockpitKey: CockpitKey, productSlug: string, dimensions: { topic: string; category: Category }) => {
       const { selected } = shortlist.cardState(cockpitKey, productSlug);
-      if (selected) {
+      // Effective active key (mirrors the hook's own toggle()/confirmSwitch()
+      // reasoning) — a restored-but-currently-unverifiable scope (Rule 2/2b)
+      // must still be recognized as "a scope IS active", or a toggle away
+      // from it misreads as a fresh/same-scope add (P1 fix, adversarial
+      // review of PR #122).
+      const effectiveCockpitKey = shortlist.cockpitKey ?? shortlist.unverifiableCockpitKey;
+      const decision = resolveShortlistToggleAnalytics(selected, effectiveCockpitKey, cockpitKey);
+      if (decision.kind === 'remove') {
         // Removing FROM the active scope is always same-scope and immediate
         // — deterministic, no ambiguity.
         tracker.trackShortlistChange('remove', productSlug, shortlist.slugs.length - 1, {
           ...dimensions,
           kind: 'dossier',
         });
-      } else if (shortlist.cockpitKey === null || shortlist.cockpitKey === cockpitKey) {
+      } else if (decision.kind === 'add') {
         // A same-(or fresh-)scope add. The full-capacity block is a disabled
         // button (ShortlistToggleCard) — onToggle never fires for it, so
         // reaching this branch always means the add actually applies.
@@ -771,7 +872,9 @@ export function ResearchHub({ market, items, nodes, scopeSnapshot }: ResearchHub
       } else {
         // Cross-scope: toggle() below will request the switch dialog (or, if
         // the target scope is unavailable, silently no-op) — remember the
-        // target for the dialog's own confirm handler; nothing tracked yet.
+        // target for the dialog's own confirm handler; nothing tracked yet
+        // (P1 fix: no premature event, so a Cancel has nothing false to
+        // leave behind).
         pendingSwitchTrackingRef.current = { productSlug, dimensions };
       }
       shortlist.toggle(cockpitKey, productSlug);
@@ -783,13 +886,22 @@ export function ResearchHub({ market, items, nodes, scopeSnapshot }: ResearchHub
     const pending = pendingSwitchTrackingRef.current;
     pendingSwitchTrackingRef.current = null;
     if (pending) {
-      // confirm-switch always lands on exactly the one requested slug
-      // (shortlistReducer, components/research/ResearchShortlist.tsx) — the
-      // resulting count is always 1, never derived from the prior scope's size.
-      tracker.trackShortlistChange('add', pending.productSlug, 1, { ...pending.dimensions, kind: 'dossier' });
+      // P1 fix (adversarial review of PR #122): report the OLD scope's
+      // `clear` before the target's `add` — the full contract pair, not just
+      // the `add` half. Read BEFORE `shortlist.confirmSwitch()` runs, so
+      // this always reflects the scope that's actually about to be replaced
+      // (available or merely unverifiable — either way a real prior scope).
+      const previousCockpitKey = shortlist.cockpitKey ?? shortlist.unverifiableCockpitKey;
+      const previousDimensions = previousCockpitKey ? dimensionsForCockpitKey(previousCockpitKey, market) : null;
+      for (const event of resolveConfirmSwitchAnalytics(previousCockpitKey, previousDimensions, pending)) {
+        tracker.trackShortlistChange(event.action, event.productSlug, event.count, {
+          ...event.dimensions,
+          kind: 'dossier',
+        });
+      }
     }
     shortlist.confirmSwitch();
-  }, [shortlist, tracker]);
+  }, [shortlist, tracker, market]);
 
   const handleCancelSwitch = useCallback(() => {
     pendingSwitchTrackingRef.current = null;
@@ -841,20 +953,30 @@ export function ResearchHub({ market, items, nodes, scopeSnapshot }: ResearchHub
     const rank = entry.rank ?? null;
     const dataPoints = entry.dataPoints ?? 0;
     const analyticsSlug = entry.analyticsProductSlug ?? entry.key;
+    // Dossier-STRICT dimensions — used ONLY to gate the shortlist toggle
+    // below (a shortlist entry always needs a real topic+cockpitKey), never
+    // for click/evidence tracking (see `trackedDimensionsFor`).
     const itemDimensions: { topic: string; category: Category } | undefined =
       entry.kind === 'dossier' && entry.topic && entry.category
         ? { topic: entry.topic, category: entry.category }
         : undefined;
+    // Click/evidence tracking dimensions (P1 fix, adversarial review of PR
+    // #122): a review-kind entry has no dossier `topic`, but DOES have a
+    // real `category` now that `resolveEntry` no longer hardcodes it `null`
+    // — `trackedDimensionsFor` surfaces that category-only shape instead of
+    // dropping it just because the dossier-strict `itemDimensions` above is
+    // `undefined` for it.
+    const trackedDimensions = trackedDimensionsFor(entry, itemDimensions);
 
     const trackedNode = (
       <TrackedCard
         node={entry.node}
         reviewHref={entry.reviewHref ?? null}
         onReviewClick={() =>
-          tracker.trackReviewClick(analyticsSlug, status, rank, position, { ...itemDimensions, kind: entry.kind })
+          tracker.trackReviewClick(analyticsSlug, status, rank, position, { ...trackedDimensions, kind: entry.kind })
         }
         onEvidenceOpen={() =>
-          tracker.trackEvidenceOpen(analyticsSlug, status, dataPoints, { ...itemDimensions, kind: entry.kind })
+          tracker.trackEvidenceOpen(analyticsSlug, status, dataPoints, { ...trackedDimensions, kind: entry.kind })
         }
       />
     );

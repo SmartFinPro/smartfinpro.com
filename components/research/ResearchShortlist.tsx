@@ -186,6 +186,16 @@ export function buildCockpitTopicIndex(
 
 export interface UseScopedResearchShortlistResult {
   cockpitKey: CockpitKey | null;
+  /** Set only by a restore that landed on Rule 2/2b (a known scope whose
+   *  current load state can't be verified — see `ResearchShortlistState`'s
+   *  own doc comment). Exposed (P1 analytics fix, adversarial review of PR
+   *  #122) so a caller can compute the shortlist's EFFECTIVE active scope
+   *  (`cockpitKey ?? unverifiableCockpitKey`) the same way this hook's own
+   *  `toggle()`/`confirmSwitch()` already do internally — without it, a
+   *  caller could only ever see the always-`null` `cockpitKey` for an
+   *  unverifiable scope and would misclassify a cross-scope toggle as a
+   *  same-/fresh-scope one. */
+  unverifiableCockpitKey: CockpitKey | null;
   slugs: string[];
   compareUrl: string | null;
   displayNameFor(slug: string): string;
@@ -375,6 +385,7 @@ export function useScopedResearchShortlist(
 
   return {
     cockpitKey: state.cockpitKey,
+    unverifiableCockpitKey: state.unverifiableCockpitKey,
     slugs: state.slugs,
     compareUrl,
     displayNameFor,
