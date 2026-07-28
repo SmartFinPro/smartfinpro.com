@@ -675,4 +675,3 @@ export function ShortlistBar({
     </div>
   );
 }
-

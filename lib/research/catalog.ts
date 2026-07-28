@@ -637,7 +637,18 @@ export async function loadMarketResearchContexts(
       // declaration also lets it reference `attempt` directly — no
       // self-referential-const TDZ hazard, and no extra `attemptRef`
       // variable to keep in sync.
-      attempt.finally(() => {
+      // `.finally()` returns its OWN new promise — distinct from `attempt`,
+      // which every caller above still awaits for its real
+      // TopicOverlayResult and must keep receiving unchanged. Left as a bare
+      // statement, that derived promise would be discarded: if its callback
+      // ever threw, nothing would be observing the rejection this produces
+      // (Map#get/#delete don't throw for these inputs today, but nothing
+      // guarantees that forever, and an unobserved rejection is a real
+      // process-level warning/crash risk regardless). Capturing it and
+      // attaching a no-op `.catch()` — to this derived promise ONLY, never
+      // to `attempt` itself — closes that off without touching what callers
+      // actually receive.
+      const cleanup = attempt.finally(() => {
         // Only remove the map entry if it still holds THIS attempt. An
         // older attempt settling late — e.g. after
         // __resetTopicOverlayBackoffForTests cleared the map mid-flight and
@@ -647,6 +658,7 @@ export async function loadMarketResearchContexts(
           inFlightTopicLoads.delete(cockpitKey);
         }
       });
+      cleanup.catch(() => {});
 
       inFlightTopicLoads.set(cockpitKey, attempt);
       return attempt;

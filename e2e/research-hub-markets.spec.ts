@@ -75,6 +75,21 @@ test.describe('Research hub route matrix', () => {
   }
 });
 
+// commit 6, nit (d): the legacy `/us/research` -> `/research` redirect
+// (next.config.ts, landed in f427dd0 — see app/(marketing)/research/page.tsx's
+// own file-header comment) has no named params in source or destination, so
+// Next.js is documented to pass the incoming query string straight through
+// unchanged. A request-level check (never following the redirect) proves
+// that in practice: exact 308 status, exact Location header including the
+// original query string byte-for-byte.
+test.describe('Research hub legacy redirect', () => {
+  test('/us/research preserves the query string across the 308 to /research', async ({ request }) => {
+    const res = await request.get('/us/research?q=x&status=y', { maxRedirects: 0 });
+    expect(res.status()).toBe(308);
+    expect(res.headers()['location']).toBe('/research?q=x&status=y');
+  });
+});
+
 // ── Document metadata (Step 6: "one H1 and five-language hreflang map") ───
 test.describe('Research hub document metadata', () => {
   for (const market of MARKETS) {
