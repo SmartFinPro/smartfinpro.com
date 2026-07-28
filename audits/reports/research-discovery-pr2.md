@@ -293,6 +293,29 @@ build`, port 3012), no artificial numbers:
 | `/ca/research` | 526,965 |
 | `/au/research` | 577,030 |
 
+**RE-MEASURED 2026-07-28 (A11y merge-blocker fix task, `fix(research): make
+the scope-switch dialog genuinely modal`)** — same methodology, same host
+(`curl -s -D - -H "Accept-Encoding: gzip" http://127.0.0.1:3012<path>`,
+`Content-Length` read off a fresh `next start -p 3012` of this task's own
+`npm run build`), against the CURRENT head, not the numbers above:
+
+| Route | Raw HTML bytes (uncompressed) | vs. the table above |
+|---|---|---|
+| `/research` | **1,713,210** | +551,951 bytes, **≈ +47.5%** |
+| `/uk/research` | 805,947 | +200,178 bytes, ≈ +33.0% |
+| `/ca/research` | 698,138 | +171,173 bytes, ≈ +32.5% |
+| `/au/research` | 766,128 | +189,098 bytes, ≈ +32.8% |
+
+This growth is unrelated to the A11y fix itself (which touches only
+`components/research/ResearchShortlist.tsx`'s scope-switch dialog markup) —
+it reflects the full projection node bank (`buildResearchNodeBank`,
+`ResearchHubPage.tsx`) that landed on this branch between the two
+measurements, which renders every selectable projection's node up front
+(pilot precedent noted in that function's own doc comment), not just each
+item's single default one. **There is no defined HTML size limit for this
+page** — this number is recorded as observed fact, not evaluated against a
+budget that does not exist, and not adjusted or minimized in any way.
+
 Compression note: `curl -H "Accept-Encoding: gzip"` against `/research`
 returned the response uncompressed (`Content-Length: 1161259`, no
 `Content-Encoding` header), despite `next.config.ts`'s `compress: true` —
@@ -301,7 +324,9 @@ the response carries `Cache-Control: ...no-transform` and
 appears to bypass Next's compression middleware on this fast path in the
 standalone server. This is reported as observed, not adjusted — production
 traffic through Cloudflare (the site's actual CDN) may compress
-independently, but that was not measured in this test harness.
+independently, but that was not measured in this test harness. The
+re-measurement above reproduces the identical uncompressed behavior
+(`Content-Length: 1713210`, no `Content-Encoding` header).
 
 JS payload for a full `/research` page load (Playwright network capture,
 `domcontentloaded` → `networkidle`, decompressed body sizes summed):
