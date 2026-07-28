@@ -35,8 +35,15 @@ const HUB_CTX: ResearchContext = {
   pagePath: '/research',
 };
 
+// PR 3 Task 1 (spec §12) — the Homepage Quick Finder's own CTA event.
+const FINDER_CTX: ResearchContext = {
+  market: 'us',
+  topic: 'hub',
+  pagePath: '/',
+};
+
 describe('research_v1 event names', () => {
-  it('is exactly the six events of the frozen contract', () => {
+  it('is exactly the seven events of the additive contract (PR 3 Task 1 adds research_finder_cta)', () => {
     expect([...RESEARCH_EVENT_NAMES]).toEqual([
       'research_search',
       'research_filter_change',
@@ -44,6 +51,7 @@ describe('research_v1 event names', () => {
       'research_review_click',
       'research_shortlist_change',
       'research_cockpit_handoff',
+      'research_finder_cta',
     ]);
   });
 });
@@ -229,6 +237,55 @@ describe('hub dimensions (Task 6, spec §12)', () => {
     expect(reviewEvent.properties.kind).toBe('review');
     expect(reviewEvent.properties.topic).toBe('hub');
     expect(reviewEvent.properties.category).toBeUndefined();
+  });
+});
+
+// PR 3 Task 1 (spec §12) — the Homepage Quick Finder's own event, additive
+// on top of the frozen six: `trigger: 'view_all'` (the Finder's main CTA, a
+// GLOBAL event, topic 'hub') and `trigger: 'dossier_item'` (a Cockpit-only
+// card's CTA, an ITEM event carrying the card's real topic/category).
+describe('research_finder_cta (PR 3 Task 1, spec §12)', () => {
+  it('includes the Finder CTA event in the additive contract', () => {
+    expect(RESEARCH_EVENT_NAMES).toContain('research_finder_cta');
+  });
+
+  it('builds a view-all Finder CTA without raw query text', () => {
+    const event = buildResearchEventData('research_finder_cta', FINDER_CTX, {
+      surface: 'finder',
+      trigger: 'view_all',
+      queryLength: 6,
+      resultCount: 2,
+    });
+    expect(event.eventAction).toBe('finder_cta');
+    expect(event.properties.trigger).toBe('view_all');
+    expect(JSON.stringify(event)).not.toContain('schwab');
+  });
+
+  it('builds a dossier-item CTA with actual topic and category', () => {
+    const event = buildResearchEventData(
+      'research_finder_cta',
+      FINDER_CTX,
+      {
+        surface: 'finder',
+        kind: 'dossier',
+        trigger: 'dossier_item',
+        productSlug: 'merrill-edge',
+      },
+      { topic: 'trading-platforms', category: 'trading' },
+    );
+    expect(event.properties.topic).toBe('trading-platforms');
+    expect(event.properties.category).toBe('trading');
+  });
+
+  it("reports the resultCount VISIBLE AT CLICK TIME as the event value — the exact caller-supplied number, never recomputed", () => {
+    const event = buildResearchEventData('research_finder_cta', FINDER_CTX, {
+      surface: 'finder',
+      trigger: 'view_all',
+      queryLength: 6,
+      resultCount: 4,
+    });
+    expect(event.eventValue).toBe(4);
+    expect(event.properties.resultCount).toBe(4);
   });
 });
 

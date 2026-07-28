@@ -232,6 +232,70 @@ describe('ResearchTrackOptions (Task 6, spec §12)', () => {
   });
 });
 
+// PR 3 Task 1 (spec §12) — trackFinderCta: the Homepage Quick Finder's own
+// CTA event. Both triggers navigate away, so both are sent IMMEDIATELY (same
+// discipline as trackReviewClick/trackCockpitHandoff). The operator
+// requirement this proves: `trigger: 'view_all'` fires ONLY when the caller
+// explicitly invokes it (never on render/search/filter) and always carries
+// the EXACT resultCount the caller supplied at click time — never a stale
+// value left over from an earlier, still-queued trackSearch call.
+describe('trackFinderCta (PR 3 Task 1, spec §12)', () => {
+  it("sends 'view_all' IMMEDIATELY with surface:'finder' and the exact resultCount supplied", async () => {
+    const env = stubBrowserEnv();
+    const { createResearchTracker } = await freshModule();
+    const tracker = createResearchTracker({ market: 'us', topic: 'hub', pagePath: '/' });
+    tracker.trackFinderCta('view_all', { queryLength: 6, resultCount: 4 }, { surface: 'finder' });
+
+    // No timer advance: the batch must already be on the wire — this is a
+    // real CTA click, not a queued render/search/filter event.
+    expect(env.sentBatches).toHaveLength(1);
+    const event = allEvents(env)[0];
+    expect(event.eventName).toBe('research_finder_cta');
+    const props = event.properties as Record<string, unknown>;
+    expect(props.trigger).toBe('view_all');
+    expect(props.surface).toBe('finder');
+    expect(props.queryLength).toBe(6);
+    expect(props.resultCount).toBe(4);
+    expect(event.eventValue).toBe(4);
+  });
+
+  it("sends 'dossier_item' immediately with the card's real topic/category, productSlug and kind", async () => {
+    const env = stubBrowserEnv();
+    const { createResearchTracker } = await freshModule();
+    const tracker = createResearchTracker({ market: 'us', topic: 'hub', pagePath: '/' });
+    tracker.trackFinderCta(
+      'dossier_item',
+      { queryLength: 0, resultCount: 6, productSlug: 'merrill-edge', kind: 'dossier' },
+      { surface: 'finder', topic: 'trading-platforms', category: 'trading' },
+    );
+
+    expect(env.sentBatches).toHaveLength(1);
+    const props = allEvents(env)[0].properties as Record<string, unknown>;
+    expect(props.trigger).toBe('dossier_item');
+    expect(props.productSlug).toBe('merrill-edge');
+    expect(props.kind).toBe('dossier');
+    expect(props.topic).toBe('trading-platforms');
+    expect(props.category).toBe('trading');
+  });
+
+  it('carries the resultCount from the click itself, never a stale value from an earlier, still-queued search', async () => {
+    const env = stubBrowserEnv();
+    const { createResearchTracker } = await freshModule();
+    const tracker = createResearchTracker({ market: 'us', topic: 'hub', pagePath: '/' });
+
+    // Queued (not yet flushed — no timer advance) with a DIFFERENT resultCount.
+    tracker.trackSearch(6, 10, { surface: 'finder' });
+    // The click itself reports its own, smaller resultCount.
+    tracker.trackFinderCta('view_all', { queryLength: 6, resultCount: 3 }, { surface: 'finder' });
+
+    // trackFinderCta must be on the wire immediately, in its own batch —
+    // proving it never reads a "last known resultCount" from trackSearch.
+    expect(env.sentBatches).toHaveLength(1);
+    const finderEvent = allEvents(env).find((e) => e.eventName === 'research_finder_cta')!;
+    expect((finderEvent.properties as Record<string, unknown>).resultCount).toBe(3);
+  });
+});
+
 describe('killswitch + fail-soft', () => {
   it("NEXT_PUBLIC_ENABLE_ANALYTICS='false' silences every entry point", async () => {
     const env = stubBrowserEnv();
@@ -244,6 +308,7 @@ describe('killswitch + fail-soft', () => {
     tracker.trackReviewClick('fidelity', 'audited', 1, 1);
     tracker.trackShortlistChange('add', 'fidelity', 1);
     tracker.trackCockpitHandoff(['fidelity', 'charles-schwab']);
+    tracker.trackFinderCta('view_all', { queryLength: 6, resultCount: 4 });
     vi.advanceTimersByTime(800);
 
     expect(env.sentBatches).toHaveLength(0);

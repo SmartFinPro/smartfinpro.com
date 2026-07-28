@@ -29,6 +29,15 @@
 // alone cannot. `topicOverride`-style values are NEVER a serialized property;
 // they are the `dimensions` argument below and only ever replace
 // `properties.topic`/`properties.category` at build time.
+//
+// FINDER CTA (PR 3 Task 1, spec §12): `research_finder_cta` is the Homepage
+// Quick Finder's own event (surface: 'finder') — a 7th, additive sibling of
+// the six names above. `trigger: 'view_all'` is a GLOBAL event (topic: 'hub')
+// for the Finder's main CTA; `trigger: 'dossier_item'` is an ITEM event (real
+// topic/category via `dimensions`) for a Cockpit-only card's CTA. Both fire
+// only on an actual click via `trackFinderCta()` — never on render, search,
+// or filter changes — and `resultCount` is always the caller-supplied value
+// visible at click time, never recomputed here.
 
 import type { Category } from '@/lib/i18n/config';
 
@@ -44,6 +53,9 @@ export const RESEARCH_EVENT_NAMES = [
   'research_review_click',
   'research_shortlist_change',
   'research_cockpit_handoff',
+  // PR 3 Task 1 (spec §12) — the Homepage Quick Finder's own CTA event.
+  // Additive: the six names above stay frozen, this is a 7th sibling.
+  'research_finder_cta',
 ] as const;
 export type ResearchEventName = (typeof RESEARCH_EVENT_NAMES)[number];
 
@@ -69,14 +81,16 @@ export interface ResearchV1Properties {
    *  Never set directly by a call site; only via `dimensions` (see
    *  `ResearchItemDimensions` / `buildResearchEventData`). */
   category?: Category;
-  /** 'hub' (universal Research hub) — the only value today; 'finder'
-   *  (Homepage Quick Finder) ships in PR 3. */
+  /** 'hub' for the universal Research hub; 'finder' for the Homepage Quick
+   *  Finder (PR 3 Task 1). */
   surface?: 'hub' | 'finder';
   /** The clicked/opened/shortlisted item's own kind — mirrors
    *  `DiscoveryProjection['kind']`. */
   kind?: 'review' | 'dossier';
-  /** research_finder_cta only (PR 3) — reserved here so the strict schema
-   *  never needs a second additive round just for this field. */
+  /** research_finder_cta only (PR 3 Task 1) — which Finder CTA fired:
+   *  'view_all' (the main CTA, a GLOBAL event, topic: 'hub') or
+   *  'dossier_item' (a Cockpit-only card's CTA, an ITEM event carrying the
+   *  card's real topic/category). */
   trigger?: 'view_all' | 'dossier_item';
   /** research_search — trimmed CHARACTER COUNT only, never the query itself. */
   queryLength?: number;
@@ -116,6 +130,7 @@ const EVENT_ACTIONS: Record<ResearchEventName, string> = {
   research_review_click: 'review_click',
   research_shortlist_change: 'shortlist_change',
   research_cockpit_handoff: 'cockpit_handoff',
+  research_finder_cta: 'finder_cta',
 };
 
 /** The human-readable dimension of the event — NEVER the search string. */
@@ -130,6 +145,9 @@ function deriveLabel(name: ResearchEventName, p: ResearchV1Properties): string {
       return p.action ?? '';
     case 'research_cockpit_handoff':
       return (p.productSlugs ?? []).join(',');
+    case 'research_finder_cta':
+      // 'view_all' or 'dossier_item' — which CTA fired, never the query.
+      return p.trigger ?? '';
     default:
       // research_search — the topic, so the label column stays queryable
       // without ever carrying user input.
@@ -142,6 +160,10 @@ function deriveValue(name: ResearchEventName, p: ResearchV1Properties): number |
   switch (name) {
     case 'research_search':
     case 'research_filter_change':
+    case 'research_finder_cta':
+      // research_finder_cta: the resultCount VISIBLE AT CLICK TIME — the
+      // caller (trackFinderCta) is the only source of truth for this value;
+      // it is never recomputed or defaulted here.
       return p.resultCount;
     case 'research_evidence_open':
       return p.dataPoints;

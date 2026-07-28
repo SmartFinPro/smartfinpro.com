@@ -246,6 +246,91 @@ describe('POST /api/track — research_event_batch case', () => {
     expect(lastStatus).toBe(429);
   });
 
+  // PR 3 Task 1 (spec §12) — research_finder_cta is a 7th, additive event
+  // name; strict route acceptance means it must validate through the SAME
+  // TrackResearchEventBatchSchema as the original six, with no route change.
+  it('a research_finder_cta (view_all) batch → 200, one insert with event_category=research', async () => {
+    const { POST } = await import('@/app/api/track/route');
+    const item = researchItem({
+      eventName: 'research_finder_cta',
+      eventAction: 'finder_cta',
+      eventLabel: 'view_all',
+      eventValue: 4,
+      properties: {
+        schemaVersion: 'research_v1',
+        market: 'us',
+        topic: 'hub',
+        surface: 'finder',
+        trigger: 'view_all',
+        queryLength: 6,
+        resultCount: 4,
+      },
+    });
+    const req = makeRequest(
+      { type: 'research_event_batch', sessionId: 'session-abc12345', data: { events: [item] } },
+      { 'x-forwarded-for': freshIp(), 'user-agent': NORMAL_UA },
+    );
+    const res = (await POST(req)) as unknown as MockedTrackResponse;
+    expect(res.status).toBe(200);
+    expect(insertMock).toHaveBeenCalledTimes(1);
+    const rows = insertMock.mock.calls[0][0] as Array<Record<string, unknown>>;
+    expect(rows).toHaveLength(1);
+    expect(rows[0].event_category).toBe('research');
+    expect(rows[0].event_value).toBe(4);
+  });
+
+  it('a research_finder_cta (dossier_item) batch with item dimensions → 200, one insert', async () => {
+    const { POST } = await import('@/app/api/track/route');
+    const item = researchItem({
+      eventName: 'research_finder_cta',
+      eventAction: 'finder_cta',
+      eventLabel: 'dossier_item',
+      properties: {
+        schemaVersion: 'research_v1',
+        market: 'us',
+        topic: 'trading-platforms',
+        category: 'trading',
+        surface: 'finder',
+        trigger: 'dossier_item',
+        kind: 'dossier',
+        productSlug: 'merrill-edge',
+        queryLength: 0,
+        resultCount: 6,
+      },
+    });
+    const req = makeRequest(
+      { type: 'research_event_batch', sessionId: 'session-abc12345', data: { events: [item] } },
+      { 'x-forwarded-for': freshIp(), 'user-agent': NORMAL_UA },
+    );
+    const res = (await POST(req)) as unknown as MockedTrackResponse;
+    expect(res.status).toBe(200);
+    const rows = insertMock.mock.calls[0][0] as Array<Record<string, unknown>>;
+    expect(rows[0].event_category).toBe('research');
+  });
+
+  it('an invalid trigger value on research_finder_cta → 400, 0 inserts', async () => {
+    const { POST } = await import('@/app/api/track/route');
+    const badItem = researchItem({
+      eventName: 'research_finder_cta',
+      properties: {
+        schemaVersion: 'research_v1',
+        market: 'us',
+        topic: 'hub',
+        surface: 'finder',
+        trigger: 'not_a_real_trigger',
+        queryLength: 6,
+        resultCount: 4,
+      },
+    });
+    const req = makeRequest(
+      { type: 'research_event_batch', sessionId: 'session-abc12345', data: { events: [badItem] } },
+      { 'x-forwarded-for': freshIp(), 'user-agent': NORMAL_UA },
+    );
+    const res = (await POST(req)) as unknown as MockedTrackResponse;
+    expect(res.status).toBe(400);
+    expect(insertMock).not.toHaveBeenCalled();
+  });
+
   it('REGRESSION: the tool_event_batch case still works unchanged', async () => {
     const { POST } = await import('@/app/api/track/route');
     const req = makeRequest(

@@ -22,6 +22,16 @@
 //   - trackReviewClick / trackCockpitHandoff are sent IMMEDIATELY: the page is
 //     navigating away and a queued batch could die with it.
 //   - a throwing tracker must never break the UI — every entry point is wrapped.
+//
+// trackFinderCta (PR 3 Task 1, spec §12) — the Homepage Quick Finder's own
+// CTA event, added additively on top of the frozen six above:
+//   - sent IMMEDIATELY too (both 'view_all' and 'dossier_item' navigate away);
+//   - fires ONLY when the caller invokes it — never on render, search, or
+//     filter changes, so it can only ever represent a real CTA click;
+//   - `props.resultCount` is forwarded byte-for-byte from the caller — this
+//     module holds no "last known resultCount" state, so a click always
+//     reports exactly what was on screen at that moment, never a stale or
+//     recomputed value.
 
 import { useEffect, useState } from 'react';
 import { createEventQueue, type EventQueue } from '@/lib/analytics/event-queue';
@@ -82,6 +92,24 @@ export interface ResearchTracker {
   /** Immediate — the handoff navigates to the Cockpit. ITEM event: pass
    *  `options.topic`/`options.category` for the shortlist's scoped cockpitKey. */
   trackCockpitHandoff(productSlugs: string[], options?: ResearchTrackOptions): void;
+  /** Immediate — both Finder CTA variants navigate away (PR 3 Task 1).
+   *  `trigger: 'view_all'` is the Finder's main CTA — a GLOBAL event; pass
+   *  only `options.surface: 'finder'`, never `options.topic`/`category`.
+   *  `trigger: 'dossier_item'` is a Cockpit-only card's CTA — an ITEM event;
+   *  pass `options.topic`/`options.category` for that card's real
+   *  projection. `props.resultCount` MUST be the count the caller actually
+   *  saw at click time — this function forwards it verbatim, it is never
+   *  recomputed or defaulted here. */
+  trackFinderCta(
+    trigger: 'view_all' | 'dossier_item',
+    props: {
+      queryLength: number;
+      resultCount: number;
+      productSlug?: string;
+      kind?: 'review' | 'dossier';
+    },
+    options?: ResearchTrackOptions,
+  ): void;
   /** Flushes the shared queue — call on pagehide. */
   flush(): void;
 }
@@ -197,6 +225,24 @@ export function createResearchTracker(ctx: ResearchContext): ResearchTracker {
       enqueue(
         'research_cockpit_handoff',
         { productSlugs, count: productSlugs.length },
+        options,
+        { immediate: true },
+      );
+    },
+
+    trackFinderCta(trigger, props, options) {
+      enqueue(
+        'research_finder_cta',
+        {
+          trigger,
+          queryLength: props.queryLength,
+          // The caller's OWN resultCount, forwarded verbatim — never
+          // recomputed or defaulted here (contract: it must be the count
+          // actually visible at click time).
+          resultCount: props.resultCount,
+          ...(props.productSlug !== undefined ? { productSlug: props.productSlug } : {}),
+          ...(props.kind !== undefined ? { kind: props.kind } : {}),
+        },
         options,
         { immediate: true },
       );

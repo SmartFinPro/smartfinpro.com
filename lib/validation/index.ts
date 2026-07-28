@@ -205,6 +205,10 @@ export const TrackToolEventBatchSchema = z.array(TrackToolEventItemSchema).min(1
 // union (lib/i18n/config.ts), not the narrower 6-item `VALID_CATEGORIES`
 // above (that list predates the multi-market comparison topics research_v1
 // items can belong to, e.g. `credit-repair`/`debt-relief`).
+//
+// PR 3 Task 1 (spec §12) put `surface: 'finder'` and `trigger` to use for the
+// first time, via the new `research_finder_cta` event name below — the
+// properties bag itself needed no new fields, they already existed.
 
 const RESEARCH_EVENT_NAMES = [
   'research_search',
@@ -213,6 +217,8 @@ const RESEARCH_EVENT_NAMES = [
   'research_review_click',
   'research_shortlist_change',
   'research_cockpit_handoff',
+  // PR 3 Task 1 (spec §12) — Homepage Quick Finder CTA, additive 7th name.
+  'research_finder_cta',
 ] as const;
 
 /** Strict research_v1 properties bag — unknown keys rejected (.strict()).

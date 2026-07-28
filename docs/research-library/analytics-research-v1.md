@@ -1,16 +1,18 @@
 # research_v1 — Event contract & success metrics
 
 Status: **contract frozen** (implement against this, don't drift). The schema
-string (`research_v1`) and the six event names are frozen; the dimensions
-below are an ADDITIVE extension (unified-research-discovery-pr2-hubs plan
-Task 6, spec §12) — every future change here still lands in the TypeScript
-builder (`lib/analytics/research-events.ts`) and the strict Zod schema
-(`lib/validation/index.ts`) in the SAME commit as this doc, never one without
-the other.
+string (`research_v1`) and the original six event names are frozen; the
+dimensions below and the 7th event name (`research_finder_cta`, PR 3 Task 1)
+are ADDITIVE extensions (unified-research-discovery-pr2-hubs plan Task 6 /
+research-discovery-pr3 plan Task 1, spec §12) — every future change here
+still lands in the TypeScript builder (`lib/analytics/research-events.ts`)
+and the strict Zod schema (`lib/validation/index.ts`) in the SAME commit as
+this doc, never one without the other.
 Scope: the Research Library discovery surface. Pilot: US trading platforms
 (`/research`). Generalized (Task 6) to every market hub — `/research`,
 `/uk/research`, `/ca/research`, `/au/research` — and every category/topic
-each hub's catalog contains.
+each hub's catalog contains. Extended (PR 3 Task 1) to the Homepage Quick
+Finder's own CTA event, ahead of the Finder surface itself shipping.
 
 ## Why this exists
 
@@ -52,6 +54,7 @@ All events share: `sessionId`, `market`, `topic`, plus the properties below.
 | `research_review_click` | a card's review link is followed | `productSlug`, `status`, `rank` (int\|null), `position` (1-based index in the rendered list), `kind`, `category` |
 | `research_shortlist_change` | shortlist mutates | `action` (`add`\|`remove`\|`clear`), `productSlug` (null for `clear`), `count` (new size), `kind`, `category` |
 | `research_cockpit_handoff` | "Compare in the cockpit" is followed | `productSlugs` (string[]), `count` (int), `kind`, `category` |
+| `research_finder_cta` | the Homepage Quick Finder's own CTA is clicked (PR 3 Task 1) | `trigger` (`view_all`\|`dossier_item`), `surface: 'finder'`, `queryLength` (int), `resultCount` (int — the count VISIBLE AT CLICK TIME), `productSlug`/`kind` (`dossier_item` only) |
 
 Emission discipline:
 - `research_search` fires on the **settled** query only (same debounce that writes
@@ -59,6 +62,10 @@ Emission discipline:
 - `research_evidence_open` fires once per card per open (close is not an event).
 - `research_cockpit_handoff` is sent **immediately** (not queued) — the page is
   navigating away.
+- `research_finder_cta` is sent **immediately** too, for both triggers — both
+  navigate away. It fires **only on an actual CTA click** (never on render,
+  search, or filter changes), and `resultCount` is always the exact number of
+  cards visible to the user at that click — never recomputed or stale.
 - A throwing tracker must never break the UI: every entry point is fail-soft.
 
 ## Hub dimensions (v1.1, additive — Task 6, spec §12)
@@ -92,11 +99,8 @@ category?: Category;
   `properties.category`) at build time — it never appears as its own key on
   the wire.
 - **`surface`** identifies which discovery surface emitted the event —
-  `'hub'` for the universal Research hub (Task 6); `'finder'` is reserved for
-  the Homepage Quick Finder, which ships its own event name
-  (`research_finder_cta`, with `trigger: 'view_all'` or `'dossier_item'`) in
-  **PR 3** — accepting the `finder`/`trigger` values now means the strict
-  schema never needs a second additive round just for that later PR.
+  `'hub'` for the universal Research hub (Task 6); `'finder'` for the
+  Homepage Quick Finder (PR 3 Task 1).
 - **`kind`** mirrors the clicked/opened/shortlisted item's own
   `DiscoveryProjection['kind']` (`'review'` or `'dossier'`).
 - Raw search text is still never transmitted — this extension changes
@@ -105,6 +109,28 @@ category?: Category;
 Track functions accept an optional final `options` argument
 (`{ topic?, category?, surface?, kind?, trigger? }`) carrying these
 dimensions; omitting it keeps every pre-Task-6 call site byte-identical.
+
+## Quick Finder CTA event (v1.2, additive — PR 3 Task 1, spec §12)
+
+The Homepage Quick Finder is a `surface: 'finder'` client (never writes the
+homepage URL) that reuses `research_v1` end to end — no new schema string, no
+new endpoint, no new table. It ships one new event, `research_finder_cta`,
+sent by `trackFinderCta()` (`lib/analytics/research-tracking.ts`):
+
+- **`trigger: 'view_all'`** — the Finder's primary "View all research" CTA.
+  This is a **GLOBAL** event: `topic: 'hub'`, no `category`, same as
+  `research_search`. `resultCount` MUST be the exact number of cards the user
+  saw when they clicked — never a value recomputed after the click or left
+  over (stale) from an earlier `research_search`/`research_filter_change`.
+- **`trigger: 'dossier_item'`** — a Cockpit-only card's own CTA (no review
+  exists yet). This is an **ITEM** event: pass the card's real `topic`/
+  `category` dimensions (same override mechanism as `research_review_click`)
+  plus `productSlug` and `kind: 'dossier'`.
+- Sent **immediately** (not queued) — both variants navigate away.
+- Fires **only** when the Finder's own CTA is actually clicked — never on
+  render, mount, search, or filter changes.
+- Same privacy rule as every other event in this contract: the raw query
+  text is never serialized, only its trimmed `queryLength`.
 
 ## Success metrics
 

@@ -62,6 +62,13 @@ describe('TrackResearchEventBatchSchema', () => {
         productSlugs: ['fidelity', 'charles-schwab'],
         count: 2,
       }),
+      // PR 3 Task 1 (spec §12) — 7th, additive event name.
+      buildResearchEventData('research_finder_cta', CTX, {
+        surface: 'finder',
+        trigger: 'view_all',
+        queryLength: 6,
+        resultCount: 4,
+      }),
     ];
     expect(batch).toHaveLength(RESEARCH_EVENT_NAMES.length);
     const result = TrackResearchEventBatchSchema.safeParse(batch);
