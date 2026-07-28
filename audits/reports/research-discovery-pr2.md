@@ -297,14 +297,15 @@ build`, port 3012), no artificial numbers:
 the scope-switch dialog genuinely modal`)** — same methodology, same host
 (`curl -s -D - -H "Accept-Encoding: gzip" http://127.0.0.1:3012<path>`,
 `Content-Length` read off a fresh `next start -p 3012` of this task's own
-`npm run build`), against the CURRENT head, not the numbers above:
+final `npm run build`, re-confirmed stable across two consecutive requests),
+against the CURRENT head, not the numbers above:
 
 | Route | Raw HTML bytes (uncompressed) | vs. the table above |
 |---|---|---|
-| `/research` | **1,713,210** | +551,951 bytes, **≈ +47.5%** |
-| `/uk/research` | 805,947 | +200,178 bytes, ≈ +33.0% |
-| `/ca/research` | 698,138 | +171,173 bytes, ≈ +32.5% |
-| `/au/research` | 766,128 | +189,098 bytes, ≈ +32.8% |
+| `/research` | **1,712,927** | +551,668 bytes, **≈ +47.5%** |
+| `/uk/research` | 805,663 | +199,894 bytes, ≈ +33.0% |
+| `/ca/research` | 697,854 | +170,889 bytes, ≈ +32.4% |
+| `/au/research` | 765,845 | +188,815 bytes, ≈ +32.7% |
 
 This growth is unrelated to the A11y fix itself (which touches only
 `components/research/ResearchShortlist.tsx`'s scope-switch dialog markup) —
@@ -326,7 +327,7 @@ standalone server. This is reported as observed, not adjusted — production
 traffic through Cloudflare (the site's actual CDN) may compress
 independently, but that was not measured in this test harness. The
 re-measurement above reproduces the identical uncompressed behavior
-(`Content-Length: 1713210`, no `Content-Encoding` header).
+(`Content-Length: 1712927`, no `Content-Encoding` header).
 
 JS payload for a full `/research` page load (Playwright network capture,
 `domcontentloaded` → `networkidle`, decompressed body sizes summed):
