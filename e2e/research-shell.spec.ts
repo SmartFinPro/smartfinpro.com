@@ -446,6 +446,63 @@ test.describe('Research Library shell — desktop', () => {
     await expect(roboToggleButton).toBeFocused();
   });
 
+  test('the scope switch dialog describes itself with the replacement warning', async ({ page }) => {
+    const tradingDossier = page.getByTestId('dossier-trading-platforms');
+    await tradingDossier.getByRole('button', { name: /add .+ to shortlist/i }).first().click();
+    await expect(page.getByText('1/4')).toBeVisible();
+
+    const roboDossier = page.getByTestId('dossier-robo-advisors');
+    await roboDossier.getByRole('button', { name: /add .+ to shortlist/i }).first().click();
+
+    const dialog = page.getByRole('dialog', { name: 'Switch research topic' });
+    await expect(dialog).toBeVisible();
+
+    // `aria-describedby` must RESOLVE. A plain <p> left Radix's generated id
+    // dangling: assistive tech was promised an explanation that did not
+    // exist (and Radix logged "Missing Description for DialogContent"), so
+    // the one sentence that warns the stored shortlist will be REPLACED was
+    // never announced. Asserting the attribute alone would not catch that —
+    // the attribute was always present. Resolve it and read the element.
+    const describedBy = await dialog.getAttribute('aria-describedby');
+    expect(describedBy).toBeTruthy();
+    const description = page.locator(`#${describedBy}`);
+    await expect(description).toHaveCount(1);
+    // This path exercises the AVAILABLE-scope branch (robo-advisors loads
+    // fine), so the copy is the plain one. The unavailable branch's stronger
+    // "…will still replace it" wording lives behind a precondition no live
+    // topic currently produces — it is covered at the pure-logic level in
+    // __tests__/unit/research-catalog-shell-logic.test.ts rather than faked
+    // here.
+    await expect(description).toHaveText('Shortlists compare within one research topic.');
+  });
+
+  test('dismissing the scope switch by overlay click leaves storage byte-identical', async ({
+    page,
+  }) => {
+    const tradingDossier = page.getByTestId('dossier-trading-platforms');
+    await tradingDossier.getByRole('button', { name: /add .+ to shortlist/i }).first().click();
+    await expect(page.getByText('1/4')).toBeVisible();
+
+    const beforeAttempt = await fullSessionStorageSnapshot(page);
+
+    const roboDossier = page.getByTestId('dossier-robo-advisors');
+    const roboToggleButton = roboDossier.getByRole('button', { name: /add .+ to shortlist/i }).first();
+    await roboToggleButton.click();
+
+    const dialog = page.getByRole('dialog', { name: 'Switch research topic' });
+    await expect(dialog).toBeVisible();
+
+    // The third dismiss path. Cancel and Escape are covered above; the
+    // overlay is the one a mouse user hits by accident, so it carries the
+    // same byte-identity and focus-return guarantee (spec §11.3.1) and needs
+    // its own regression net rather than being assumed equivalent.
+    await page.locator('[data-slot="dialog-overlay"]').click({ position: { x: 5, y: 5 } });
+    await expect(dialog).toBeHidden();
+    await expect(page.getByText('1/4')).toBeVisible();
+    expect(await fullSessionStorageSnapshot(page)).toEqual(beforeAttempt);
+    await expect(roboToggleButton).toBeFocused();
+  });
+
   test('the affiliate disclosure is never hidden behind the fixed shortlist bar', async ({ page }) => {
     await shortlist(page, 4);
     const disclosure = page.getByText(/advertising disclosure/i);

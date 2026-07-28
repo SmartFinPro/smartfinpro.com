@@ -45,7 +45,7 @@
 import { useEffect, useMemo, useReducer, useRef, useState, type ReactNode } from 'react';
 import { GitCompare, X } from 'lucide-react';
 import { VisuallyHidden } from 'radix-ui';
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import type { Market } from '@/lib/i18n/config';
 import {
   MAX_SHORTLIST,
@@ -600,9 +600,16 @@ export function ShortlistSwitchDialog({
         <VisuallyHidden.Root>
           <DialogTitle>Switch research topic</DialogTitle>
         </VisuallyHidden.Root>
-        <p className="text-sm leading-relaxed" style={{ color: 'var(--sfp-ink)' }}>
+        {/* DialogDescription, not a plain <p>: Radix puts `aria-describedby`
+            on the Content pointing at the description's generated id, so a
+            bare paragraph leaves that attribute dangling — assistive tech is
+            promised an explanation that does not resolve, and Radix logs
+            "Missing Description for DialogContent". This copy is the branch
+            that tells the user their stored shortlist will be REPLACED, so
+            it is exactly the sentence that must be announced. */}
+        <DialogDescription className="text-sm leading-relaxed" style={{ color: 'var(--sfp-ink)' }}>
           {copy}
-        </p>
+        </DialogDescription>
         <div className="mt-5 flex justify-end gap-3">
           <button
             type="button"
