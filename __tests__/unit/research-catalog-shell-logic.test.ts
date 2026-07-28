@@ -6,6 +6,9 @@ import {
   computeDiscoveryFacets,
   countDiscoveryItems,
   describeScopeSwitch,
+  finderItemHref,
+  finderResults,
+  finderViewAllHref,
   migrateLegacyTradingShortlist,
   parseDiscoverySearchParams,
   persistScopedShortlist,
@@ -455,6 +458,273 @@ it("sortFinderItems: featured beats a newer sortDate, and equal featured+sortDat
     featuredOlderTie.id,
     nonFeaturedNewer.id, // not featured -> last despite the newest sortDate
   ]);
+});
+
+describe("Quick Finder pure contracts (finderResults / finderItemHref / finderViewAllHref)", () => {
+  const finderItem = (
+    id: string,
+    over: Partial<DiscoveryItem> = {},
+  ): DiscoveryItem =>
+    makeDiscoveryItem({
+      id,
+      display: {
+        ...makeDiscoveryItem().display,
+        title: id,
+        searchText: id.toLowerCase(),
+      },
+      ...over,
+    });
+
+  it("limits Finder results to six even when more items match", () => {
+    const eightItems = Array.from({ length: 8 }, (_, index) =>
+      finderItem(`item-${index}`),
+    );
+    expect(
+      finderResults(eightItems, { query: "", category: null }),
+    ).toHaveLength(6);
+  });
+
+  it("caps at six under completely empty filters (no q, no category), using the default ranking", () => {
+    const eightItems = Array.from({ length: 8 }, (_, index) =>
+      finderItem(`item-${index}`),
+    );
+    const results = finderResults(eightItems, { query: "", category: null });
+    expect(results).toHaveLength(6);
+    // No featured/sortDate differences among these eight -> falls back to the
+    // stable item.id tiebreak (spec §6.3): the first six ids in order.
+    expect(results.map((resultItem) => resultItem.id)).toEqual([
+      "item-0",
+      "item-1",
+      "item-2",
+      "item-3",
+      "item-4",
+      "item-5",
+    ]);
+  });
+
+  it("returns zero results when nothing matches the query", () => {
+    const items = [finderItem("fidelity"), finderItem("schwab")];
+    expect(
+      finderResults(items, {
+        query: "nonexistent-broker-xyz",
+        category: null,
+      }),
+    ).toHaveLength(0);
+  });
+
+  it("puts featured review-backed items first in the default state", () => {
+    const featuredReview = finderItem("featured", {
+      review: makeReview({ featured: true }),
+    });
+    const newerOrdinary = finderItem("newer", {
+      review: makeReview({ featured: false, modifiedDate: "2026-07-27" }),
+    });
+    expect(
+      finderResults([newerOrdinary, featuredReview], {
+        query: "",
+        category: null,
+      })[0].id,
+    ).toBe(featuredReview.id);
+  });
+
+  it("sends review-backed items directly to the review, even alongside a research context", () => {
+    const reviewWithContext = finderItem("fidelity-with-context", {
+      review: makeReview({ href: "/us/trading/fidelity-review" }),
+      researchContexts: [makeContext()],
+    });
+    expect(finderItemHref(reviewWithContext)).toBe(
+      "/us/trading/fidelity-review",
+    );
+  });
+
+  it("sends cockpit-only items to a URLSearchParams-built hub URL", () => {
+    const cockpitOnly = finderItem("merrill-edge", {
+      review: null,
+      display: {
+        title: "Merrill Edge",
+        description: "Broker research",
+        bestFor: null,
+        searchText: "merrill edge broker research",
+        sortDate: "2026-07-03",
+      },
+      researchContexts: [
+        makeContext({
+          productSlug: "merrill-edge",
+          displayName: "Merrill Edge",
+        }),
+      ],
+    });
+    expect(finderItemHref(cockpitOnly)).toBe(
+      "/research?type=dossier&topic=trading-platforms&q=Merrill+Edge",
+    );
+  });
+
+  // Adversarial case: market switch. The item's OWN market must drive the
+  // hub base — not a hardcoded "us" default — for the exact same shape of
+  // query (type=dossier&topic=...&q=...).
+  it("threads a non-US item's own market into its cockpit-only href, not a hardcoded default", () => {
+    const ukCockpitOnly = finderItem("merrill-edge-uk", {
+      market: "uk",
+      category: "trading",
+      review: null,
+      display: {
+        title: "Merrill Edge UK",
+        description: "Broker research",
+        bestFor: null,
+        searchText: "merrill edge uk broker research",
+        sortDate: "2026-07-03",
+      },
+      researchContexts: [
+        makeContext({
+          cockpitKey: "uk/trading/trading-platforms",
+          topic: "trading-platforms",
+          productSlug: "merrill-edge",
+          displayName: "Merrill Edge UK",
+        }),
+      ],
+    });
+    expect(finderItemHref(ukCockpitOnly)).toBe(
+      "/uk/research?type=dossier&topic=trading-platforms&q=Merrill+Edge+UK",
+    );
+  });
+
+  // Adversarial case: multi-context item. A cockpit-only item that is
+  // qualified in more than one topic still stays exactly one Finder result,
+  // and its href resolves deterministically off the first (manifest-order)
+  // context rather than crashing or picking an unstable one.
+  it("keeps a multi-context cockpit-only item as a single result and hrefs its first (manifest-order) context", () => {
+    const multiContext = finderItem("multi-context-broker", {
+      review: null,
+      display: {
+        title: "Multi Context Broker",
+        description: "Broker research",
+        bestFor: null,
+        searchText: "multi context broker research",
+        sortDate: "2026-07-03",
+      },
+      researchContexts: [
+        makeContext({
+          topic: "trading-platforms",
+          topicLabel: "Best Trading Platforms",
+          manifestOrder: 0,
+          productSlug: "multi-context-broker",
+          displayName: "Multi Context Broker",
+        }),
+        makeContext({
+          topic: "options-brokers",
+          topicLabel: "Best Options Brokers",
+          manifestOrder: 1,
+          productSlug: "multi-context-broker",
+          displayName: "Multi Context Broker",
+        }),
+      ],
+    });
+
+    const results = finderResults([multiContext], {
+      query: "",
+      category: null,
+    });
+    expect(results).toHaveLength(1);
+    expect(finderItemHref(multiContext)).toBe(
+      "/research?type=dossier&topic=trading-platforms&q=Multi+Context+Broker",
+    );
+  });
+
+  // Adversarial case: two products sharing the same topic name in different
+  // categories (the live pair: us/credit-repair/companies vs
+  // us/debt-relief/companies, spec §11.1 / test invariant #10). They must
+  // stay two distinct Finder results with two distinct hrefs, disambiguated
+  // by the product's own display name even though `topic` collides.
+  it("keeps same-named topics in different categories as separate results with disambiguating hrefs (us/credit-repair/companies vs us/debt-relief/companies)", () => {
+    const creditRepairCompanies = finderItem("credit-repair-companies", {
+      category: "credit-repair",
+      review: null,
+      display: {
+        title: "Lexington Law",
+        description: "Credit repair research",
+        bestFor: null,
+        searchText: "lexington law credit repair companies",
+        sortDate: "2026-07-03",
+      },
+      researchContexts: [
+        makeContext({
+          cockpitKey: "us/credit-repair/companies",
+          topic: "companies",
+          topicLabel: "Best Credit Repair Companies",
+          productSlug: "lexington-law",
+          displayName: "Lexington Law",
+        }),
+      ],
+    });
+    const debtReliefCompanies = finderItem("debt-relief-companies", {
+      category: "debt-relief",
+      review: null,
+      display: {
+        title: "National Debt Relief",
+        description: "Debt relief research",
+        bestFor: null,
+        searchText: "national debt relief companies",
+        sortDate: "2026-07-03",
+      },
+      researchContexts: [
+        makeContext({
+          cockpitKey: "us/debt-relief/companies",
+          topic: "companies",
+          topicLabel: "Best Debt Relief Companies",
+          productSlug: "national-debt-relief",
+          displayName: "National Debt Relief",
+        }),
+      ],
+    });
+
+    const results = finderResults(
+      [creditRepairCompanies, debtReliefCompanies],
+      { query: "", category: null },
+    );
+    expect(results).toHaveLength(2);
+    expect(results.map((resultItem) => resultItem.id).sort()).toEqual(
+      [creditRepairCompanies.id, debtReliefCompanies.id].sort(),
+    );
+
+    const creditHref = finderItemHref(creditRepairCompanies);
+    const debtHref = finderItemHref(debtReliefCompanies);
+    expect(creditHref).toBe(
+      "/research?type=dossier&topic=companies&q=Lexington+Law",
+    );
+    expect(debtHref).toBe(
+      "/research?type=dossier&topic=companies&q=National+Debt+Relief",
+    );
+    expect(creditHref).not.toBe(debtHref);
+  });
+
+  // Adversarial case: market switch on the view-all CTA itself. The same
+  // query text must resolve against each market's own research base.
+  it("resolves the same query/category to each market's own base (market switch)", () => {
+    expect(finderViewAllHref("us", { query: "schwab", category: null })).toBe(
+      "/research?q=schwab",
+    );
+    expect(finderViewAllHref("uk", { query: "schwab", category: null })).toBe(
+      "/uk/research?q=schwab",
+    );
+    expect(finderViewAllHref("ca", { query: "schwab", category: null })).toBe(
+      "/ca/research?q=schwab",
+    );
+    expect(finderViewAllHref("au", { query: "schwab", category: null })).toBe(
+      "/au/research?q=schwab",
+    );
+  });
+
+  it("carries both q and category via URLSearchParams", () => {
+    expect(
+      finderViewAllHref("us", { query: "schwab", category: "trading" }),
+    ).toBe("/research?q=schwab&category=trading");
+  });
+
+  it("omits empty view-all parameters", () => {
+    expect(finderViewAllHref("uk", { query: " ", category: null })).toBe(
+      "/uk/research",
+    );
+  });
 });
 
 // In-memory StorageLike stub so the storage contract stays testable without

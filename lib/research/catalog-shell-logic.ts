@@ -628,6 +628,68 @@ export function sortFinderItems(
   });
 }
 
+/** Homepage Quick Finder filter shape (spec §9.3): only `query` and
+ *  `category` — the Finder never touches type/status/confidence/fresh/topic
+ *  /specs, those are Hub-only (spec §6.1). */
+export interface FinderFilters {
+  query: string;
+  category: Category | null;
+}
+
+/** Finder result list (spec §6.3, §9.3): same default ranking as
+ *  `sortFinderItems` (review-backed `featured` first, then newest real
+ *  `sortDate`, then `item.id` as the stable tiebreak), capped at `limit`
+ *  (six by default). The six-card cap is part of the pure contract, not a
+ *  CSS/rendering trick — a caller with more matches still only ever gets
+ *  `limit` items back. */
+export function finderResults(
+  items: readonly DiscoveryItem[],
+  filters: FinderFilters,
+  limit = 6,
+): DiscoveryItem[] {
+  return sortFinderItems(items, filters).slice(0, limit);
+}
+
+/** One Finder card's destination href (spec §9.3). Review-backed items go
+ *  straight to their review, regardless of any research context they might
+ *  also carry. Cockpit-only items go to the market's Research hub,
+ *  prefiltered by `type=dossier`, the first (manifest-order) context's
+ *  topic, and the item's own display title as `q` — never to the Cockpit
+ *  directly (spec §2.6). Built exclusively with `URLSearchParams`, never
+ *  string interpolation, so the topic/title values are safely encoded even
+ *  when two categories reuse the same topic name (e.g.
+ *  us/credit-repair/companies vs us/debt-relief/companies) — the product's
+ *  own title is what disambiguates those two hrefs. */
+export function finderItemHref(item: DiscoveryItem): string {
+  if (item.review) return item.review.href;
+
+  const context = item.researchContexts[0];
+  if (!context) return researchBaseForMarket(item.market);
+
+  const params = new URLSearchParams();
+  params.set("type", "dossier");
+  params.set("topic", context.topic);
+  params.set("q", item.display.title);
+  return `${researchBaseForMarket(item.market)}?${params.toString()}`;
+}
+
+/** The Finder's main "View all" CTA href (spec §9.3): the active market's
+ *  Research hub, carrying only the non-empty `q`/`category` filter values —
+ *  an absent or whitespace-only query and a null category are OMITTED
+ *  entirely rather than emitted as empty params. Built exclusively with
+ *  `URLSearchParams`. */
+export function finderViewAllHref(
+  market: Market,
+  filters: FinderFilters,
+): string {
+  const params = new URLSearchParams();
+  const query = filters.query.trim();
+  if (query) params.set("q", query);
+  if (filters.category) params.set("category", filters.category);
+  const queryString = params.toString();
+  return `${researchBaseForMarket(market)}${queryString ? `?${queryString}` : ""}`;
+}
+
 /** Canonical multi-topic context ordering for one DiscoveryItem (spec §4.1):
  *  manifest position first — topics never collide on manifestOrder within a
  *  single item, since a product appears at most once per topic — then
