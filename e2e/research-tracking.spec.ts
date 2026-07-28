@@ -197,6 +197,61 @@ test.describe('Research Library tracking (research_v1)', () => {
     expect(props(event).topic).toBe('hub');
   });
 
+  // research-discovery-pr3 plan, Task 4 Step 5 (gap-close for the analytics
+  // widened in 9c3fbc4, lib/analytics/research-events.ts): 'category' and
+  // 'type' joined ResearchFacet additively alongside 'status'/'confidence'/
+  // 'fresh', and ResearchHub.tsx's own Category/Type FilterChips rows were
+  // wired to `tracker.trackFilterChange` in that same commit — but the only
+  // e2e click-wiring proof for ANY hub chip was the status chip above. This
+  // is the click-wiring proof for the hub's own Category chip specifically
+  // (the Homepage Quick Finder's SEPARATE category chip — surface: 'finder'
+  // — is proven in e2e/homepage-quick-finder.spec.ts; this hub chip is a
+  // different component instance with its own onChange call site).
+  test('the hub Category facet chip sends facet:category, its value and the resulting count (surface: hub)', async ({
+    page,
+  }) => {
+    // "Trading Platforms" is a stable, always-present Category option — the
+    // trading dossier is used as a fixture throughout this file (e.g. the
+    // shortlist/switch tests above).
+    await page.getByRole('button', { name: 'Trading Platforms', exact: true }).click();
+    await expect(page).toHaveURL(/[?&]category=trading/);
+    const visibleCount = await visibleResultCount(page);
+    const renderedCount = await renderedResultCount(page);
+    await expect.poll(() => named(batches, 'research_filter_change').length).toBeGreaterThan(0);
+
+    const event = named(batches, 'research_filter_change')[0];
+    expect(props(event).facet).toBe('category');
+    expect(props(event).value).toBe('trading');
+    expect(props(event).active).toBe(true);
+    expect(props(event).resultCount).toBe(renderedCount);
+    expect(visibleCount).toBe(renderedCount);
+    // Same GLOBAL-event contract as every other hub-wide chip: surface
+    // 'hub', topic 'hub' — never an item's own topic.
+    expect(props(event).surface).toBe('hub');
+    expect(props(event).topic).toBe('hub');
+  });
+
+  // Same gap-close, the hub's Type chip (Reviews/Dossiers) — the OTHER new
+  // facet value 9c3fbc4 widened ResearchFacet to accept.
+  test('the hub Type facet chip sends facet:type, its value and the resulting count (surface: hub)', async ({
+    page,
+  }) => {
+    await page.getByRole('button', { name: 'Dossiers', exact: true }).click();
+    await expect(page).toHaveURL(/[?&]type=dossier/);
+    const visibleCount = await visibleResultCount(page);
+    const renderedCount = await renderedResultCount(page);
+    await expect.poll(() => named(batches, 'research_filter_change').length).toBeGreaterThan(0);
+
+    const event = named(batches, 'research_filter_change')[0];
+    expect(props(event).facet).toBe('type');
+    expect(props(event).value).toBe('dossier');
+    expect(props(event).active).toBe(true);
+    expect(props(event).resultCount).toBe(renderedCount);
+    expect(visibleCount).toBe(renderedCount);
+    expect(props(event).surface).toBe('hub');
+    expect(props(event).topic).toBe('hub');
+  });
+
   // Task 8 (unified-research-discovery-pr2-hubs plan) — spec invariant 13
   // ("Hero, Facetten, CTA und Events melden konsistente Counts", §15). The
   // shipped PR 2 UI does not paint a literal number on each Category chip
