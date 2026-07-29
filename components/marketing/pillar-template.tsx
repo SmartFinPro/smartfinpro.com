@@ -80,7 +80,7 @@ export function PillarTemplate({
         </nav>
 
         <Badge variant="secondary" className="mb-4">
-          Updated {new Date().getFullYear()}
+          Updated {new Date(modifiedDate).getFullYear()}
         </Badge>
 
         <h1 className="font-bold leading-tight mb-4" style={{ fontSize: 'clamp(2.25rem, 5vw, 3rem)' }}>{title}</h1>

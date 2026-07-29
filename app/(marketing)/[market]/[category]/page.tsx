@@ -268,11 +268,15 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
               <BarChart3 className="h-3.5 w-3.5" />
               {config.currency} Pricing
             </span>
-            <span className="text-gray-300">|</span>
-            <span className="inline-flex items-center gap-1.5" style={{ color: 'var(--sfp-slate)' }}>
-              <Calendar className="h-3.5 w-3.5" />
-              Updated {new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
-            </span>
+            {pillarContent?.meta.modifiedDate && (
+              <>
+                <span className="text-gray-300">|</span>
+                <span className="inline-flex items-center gap-1.5" style={{ color: 'var(--sfp-slate)' }}>
+                  <Calendar className="h-3.5 w-3.5" />
+                  Updated {new Date(pillarContent.meta.modifiedDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                </span>
+              </>
+            )}
             {hasComparePage && (
               <>
                 <span className="text-gray-300">|</span>
@@ -486,12 +490,14 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
                         : 'Jan 2026'}
                     </span>
                   </div>
-                  <div className="flex flex-col justify-center px-5 py-3 min-w-[120px]">
-                    <span className="text-xs font-bold" style={{ color: 'var(--sfp-ink)' }}>Last Updated</span>
-                    <span className="text-xs" style={{ color: 'var(--sfp-slate)' }}>
-                      {new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
-                    </span>
-                  </div>
+                  {pillarContent?.meta.modifiedDate && (
+                    <div className="flex flex-col justify-center px-5 py-3 min-w-[120px]">
+                      <span className="text-xs font-bold" style={{ color: 'var(--sfp-ink)' }}>Last Updated</span>
+                      <span className="text-xs" style={{ color: 'var(--sfp-slate)' }}>
+                        {new Date(pillarContent.meta.modifiedDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      </span>
+                    </div>
+                  )}
                   <div className="flex flex-col justify-center px-5 py-3 min-w-[140px]">
                     <span className="text-xs font-bold" style={{ color: 'var(--sfp-ink)' }}>Reviewed By</span>
                     <span className="text-xs" style={{ color: 'var(--sfp-slate)' }}>SmartFinPro Research</span>
