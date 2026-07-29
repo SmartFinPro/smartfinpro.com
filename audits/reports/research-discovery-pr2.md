@@ -424,3 +424,217 @@ responsive header check), `e2e/research-tracking.spec.ts` (modified:
 surface/topic assertions + invariant-13 test), this report.
 
 `git diff --check` clean. `git status --short` empty after commit.
+
+---
+
+# Addendum 2026-07-29 — node-bank payload deduplication
+
+Corrects the payload regression this report measured above: commit `08c8959`
+(`fix(research): render every projection a filter can select`) introduced
+`buildResearchNodeBank` and grew `/research` by ≈47.5% (the RE-MEASURED table
+in the payload section).
+
+Base: `4790c45` (`fix(research): make the dialog description resolve`), the head
+of `codex/research-discovery-pr2` at the time of writing. **PR #122 is still
+OPEN** — `origin/main` ends at `f6abdc0` (#120) — so this is stacked on the PR
+head, i.e. exactly the state `main` will carry once #122 merges. Every number
+below was re-measured against `4790c45`, not carried over from an earlier base.
+
+**This is a payload deduplication and nothing else.** It is deliberately NOT
+claimed as a fix for any navigation flake: a payload reduction is not on its own
+evidence of a causal link, and no immediate-click A/B run or revert reproduction
+was performed to establish one.
+
+## Root cause
+
+React Flight deduplicates by OBJECT REFERENCE. `ResearchHubBody` hands the
+default node list to `<Suspense fallback>` and to `<ResearchHub browseFallback>`,
+and the bank to `<ResearchHub nodes>` — a card shared by reference across all
+three is serialized into the RSC payload once and referenced thereafter.
+`buildResearchNodeBank` built its own fresh elements for every projection,
+including keys the default list already covered, so each default card was
+written into the payload a SECOND time.
+
+Counting `data-discovery-item` occurrences inside the `self.__next_f.push(...)`
+chunks, per market:
+
+| Route | occurrences before | distinct before | occurrences after | distinct after | identity set unchanged |
+|---|---|---|---|---|---|
+| `/research` | 217 | 125 | **125** | 125 | yes |
+| `/uk/research` | 206 | 103 | **103** | 103 | yes |
+| `/ca/research` | 178 | 89 | **89** | 89 | yes |
+| `/au/research` | 196 | 98 | **98** | 98 | yes |
+
+The **set** of card identities is identical in both directions for every market
+(`before − after` and `after − before` are both empty) — nothing was removed but
+duplication. `/research` decomposes exactly: 92 duplicated defaults (2×92=184)
+plus the 33 genuinely new review projections commit `08c8959` exists to
+provide = 217. UK/CA/AU are a clean 2× throughout: those markets have no extra
+projections at all, so their entire regression was duplicated text.
+
+## Fix
+
+`buildResearchNodeBank(bundle, defaultNodes)` — second parameter REQUIRED, not
+optional. Reuse happens in place inside the existing per-item iteration
+(`defaultsByKey.get(key) ?? freshEntry`), so the bank's order is unchanged: per
+item, the review projection first, then one dossier projection per
+`researchContexts` entry in manifest order. Defaults are never hoisted ahead of
+extras.
+
+A shared key always describes the same RESOLVED projection in both lists — both
+sides run the identical `resolveHubNode`, degrade path included — so this swaps
+object identity only, never semantics.
+
+The parameter is required on purpose: an omittable one silently reinstates the
+duplication, and the resulting page stays perfectly correct (same cards, same
+keys, same DOM), so no functional test would ever notice. Four call sites
+updated (`research-hub-schema.test.ts` ×3, `research-hub-integration.test.ts` ×1).
+
+Regression guard: `research-hub-schema.test.ts` → *"reuses the DEFAULT list's
+node objects by reference for every key it already covers"*. It iterates over
+EVERY default entry — never the intersection, since a bank that silently lost a
+default key would satisfy an intersection-only loop while breaking the client
+shell's own lookup — and asserts `toBe`, never `toEqual`, which compares
+structurally and passes on a duplicate. Verified RED before the fix with the
+exact diagnostic *"Compared values have no visual difference"*. A second test
+pins the iteration order.
+
+## Payload — measured
+
+Uncompressed bytes, read from the on-disk build artefacts
+(`.next/server/app/<route>.html`) of two full `npm run build` runs off the same
+base — identical to the `Content-Length` the standalone server returns, and
+immune to the ISR effect documented under "Harness note" below. Both builds
+exited 0 and reproduced their figures across two runs each.
+
+### Whole HTTP response (SSR markup + embedded Flight/RSC payload)
+
+| Route | before (`4790c45`) | after | Δ |
+|---|---|---|---|
+| `/research` | 1,712,924 | **1,235,352** | −477,572 (−27.9%) |
+| `/uk/research` | 805,660 | **606,334** | −199,326 (−24.7%) |
+| `/ca/research` | 697,851 | **527,524** | −170,327 (−24.4%) |
+| `/au/research` | 765,842 | **577,589** | −188,253 (−24.6%) |
+
+The before-column reproduces the RE-MEASURED table above to within 3 bytes per
+route (that table read 1,712,927 / 805,663 / 697,854 / 765,845 off a different
+worktree path, which is the whole of the difference).
+
+### Embedded Flight/RSC payload alone
+
+| Route | before | after | Δ |
+|---|---|---|---|
+| `/research` | 1,328,135 | **857,371** | −470,764 |
+| `/uk/research` | 623,093 | **427,874** | −195,219 |
+| `/ca/research` | 536,805 | **369,919** | −166,886 |
+| `/au/research` | 591,371 | **406,929** | −184,442 |
+
+### SSR markup alone — what a crawler parses, Flight scripts stripped
+
+| Route | before | after | Δ |
+|---|---|---|---|
+| `/research` | 369,360 | **369,360** | **0** |
+| `/uk/research` | 174,501 | **174,501** | **0** |
+| `/ca/research` | 154,090 | **154,090** | **0** |
+| `/au/research` | 166,886 | **166,886** | **0** |
+
+**Byte-identical in all four markets.** The entire reduction comes out of the
+Flight payload; none of it out of the crawlable markup. This is the direct
+measurement behind the claim that `buildResearchHubNodes` — the sole source of
+`BrowseFallback` and of the JSON-LD ItemList — is untouched, and it is what the
+raw-HTML/no-JS spec independently re-confirms (3/3, below).
+
+### Against the pre-regression baseline
+
+| Route | pre-`08c8959` | after | Δ |
+|---|---|---|---|
+| `/research` | 1,161,259 | 1,235,352 | +74,093 |
+| `/uk/research` | 605,769 | 606,334 | +565 |
+| `/ca/research` | 526,965 | 527,524 | +559 |
+| `/au/research` | 577,030 | 577,589 | +559 |
+
+`/research`'s +74,093 is the 33 genuinely new review nodes. The ~+560 on the
+other three is NOT node-bank related — those markets have zero extra
+projections (see the 2× table above); it is the three scope-switch-dialog
+commits (`eaa3ca7`, `75488f3`, `4790c45`) that landed between the baseline and
+this measurement.
+
+### On the wire
+
+`/research`, for scale: gzip 132,151 → 106,553; brotli 70,453 → 66,548. The raw
+≈47.5% regression cost roughly **3.9 KB brotli** in real transfer — duplicated
+text compresses almost entirely away. The cost it did carry was CPU: the client
+runtime deserialized every default card twice.
+
+## Gates
+
+| Command | Result |
+|---|---|
+| `npx tsc --noEmit` | exit 0, zero output |
+| `npx vitest run` (full suite) | **133 files passed \| 1 skipped (134)**, **1776 tests passed \| 1 skipped (1777)** |
+| `npx eslint` (3 touched files) | 8 errors — **all pre-existing**, see below |
+| `npm run build` | exit 0; `/research`, `/uk/research`, `/ca/research`, `/au/research` all `○ Static` |
+| Research E2E (5 specs, prod build) | **94 passed, 0 failed** |
+
+The 1 skip is the same pre-existing, unrelated `lib/editorial/forbidden-claims.test.ts` skip as above.
+
+**ESLint** was run on `components/research/ResearchHubPage.tsx`,
+`__tests__/unit/research-hub-schema.test.ts` and
+`__tests__/unit/research-hub-integration.test.ts`. It reports 8
+`@typescript-eslint/no-explicit-any` errors — the identical 8 the same command
+reports on the unmodified base (verified by stashing the change and re-running:
+same files, same rule, same count; two line numbers shift purely from the
+inserted test). **No new findings.** The repo has no blocking ESLint gate over
+these paths (`lint:repo` runs `--max-warnings=999` and is non-blocking in
+`ci:full`).
+
+### E2E detail (stock `playwright.config.ts`, no overrides)
+
+Against the standalone production build on port 3022 (checked free with
+`lsof -ti` first), each spec run separately against a freshly restored
+prerender:
+
+| Spec | Passed | Failed | Duration | Integrity |
+|---|---|---|---|---|
+| `research-shell.spec.ts` | 22 | 0 | 13.1s | pre=1 post=1 |
+| `research-a11y.spec.ts` | 7 | 0 | 13.6s | pre=1 post=1 |
+| `research-tracking.spec.ts` | 10 | 0 | 11.8s | pre=1 post=1 |
+| `research-hub-markets.spec.ts` | 52 | 0 | 8.1s | pre=1 post=1 |
+| `research-raw-html.spec.ts` | 3 | 0 | 5.4s | pre=1 post=1 |
+| **Total** | **94** | **0** | — | all VALID |
+
+## Harness note — why the "Integrity" column exists
+
+Early E2E attempts produced 7, 18, 14 and 8 failures whose MEMBERSHIP changed
+between runs on identical code. Root cause was the harness, not the build: a
+locally started `.next/standalone` server writes revalidations back into its OWN
+`.next/server/app/` tree, and this sandbox has no outbound network to Supabase
+(`TypeError: fetch failed`). The four research routes carry `revalidate: 5m`, so
+once a run crossed that window the correct prerender was replaced on disk by a
+data-less one — `/research` dropped to 447,350 bytes with hero tiles reading
+"Audited 0 / Verified data points 0" and no dossier sections at all, which takes
+every dossier/shortlist/tracking test with it while the No-JS and robots-header
+specs stay green. On an idle host the suite runs in ~25s and never reaches the
+window; this host was carrying load average 20–51 from several unrelated
+`next build` processes in other worktrees.
+
+Fixed by placing `.env.local` INSIDE the standalone directory, restoring
+`.next/server` from the build root before each spec, and asserting AFTER each
+spec that the page still carries its dossier sections — the `Integrity` column.
+A spec result without that post-check is not evidence.
+
+None of this touched test logic or product code. An interim run did raise the
+Playwright time limits while the cause was still unknown; that config was
+deleted and the table above is from the stock configuration. The same host load
+also failed one `npm run build` on Next's 60s-per-page prerender budget; the
+builds reported here waited for a quiet host and exited 0.
+
+## This addendum's own commit
+
+```
+perf(research): stop serializing every default hub card twice
+```
+
+Files: `components/research/ResearchHubPage.tsx`,
+`__tests__/unit/research-hub-schema.test.ts`,
+`__tests__/unit/research-hub-integration.test.ts`, this report.

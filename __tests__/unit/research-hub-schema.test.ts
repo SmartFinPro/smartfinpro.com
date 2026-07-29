@@ -296,7 +296,7 @@ describe('buildResearchNodeBank — complete projection coverage (P1 merge-block
     expect(defaultNodes).toHaveLength(1);
     expect(defaultNodes[0].projection.kind).toBe('dossier');
 
-    const bank = buildResearchNodeBank({ catalog, dossierRows });
+    const bank = buildResearchNodeBank({ catalog, dossierRows }, defaultNodes);
     const reviewKey = projectionNodeKey('review:/us/trading/fidelity', null);
     const dossierKey = projectionNodeKey('review:/us/trading/fidelity', 'us/trading/trading-platforms');
 
@@ -343,7 +343,7 @@ describe('buildResearchNodeBank — complete projection coverage (P1 merge-block
       [fidelityRowA, fidelityRowB],
     );
 
-    const bank = buildResearchNodeBank({ catalog, dossierRows });
+    const bank = buildResearchNodeBank({ catalog, dossierRows }, buildResearchHubNodes({ catalog, dossierRows }));
     const defaultContextKey = projectionNodeKey('review:/us/trading/fidelity', 'us/trading/trading-platforms');
     const secondContextKey = projectionNodeKey('review:/us/trading/fidelity', 'us/trading/options-brokers');
 
@@ -365,7 +365,12 @@ describe('buildResearchNodeBank — complete projection coverage (P1 merge-block
     const { catalog, dossierRows } = buildDiscoveryCatalog('us', [makeDiscoveryItem()], [fidelityRow]);
 
     const nodesBeforeBank = buildResearchHubNodes({ catalog, dossierRows });
-    buildResearchNodeBank({ catalog, dossierRows }); // built and discarded
+    // Fed the real default list (production wiring), then discarded: the bank
+    // now READS that list to reuse its node objects, so this also proves the
+    // reuse never mutates the list it was handed — `nodesAfterBank` below is
+    // rebuilt from scratch and compared against `nodesBeforeBank`, which the
+    // bank has meanwhile had a reference to.
+    buildResearchNodeBank({ catalog, dossierRows }, nodesBeforeBank);
     const nodesAfterBank = buildResearchHubNodes({ catalog, dossierRows });
 
     expect(nodesAfterBank.map((n) => n.key)).toEqual(nodesBeforeBank.map((n) => n.key));
@@ -375,6 +380,113 @@ describe('buildResearchNodeBank — complete projection coverage (P1 merge-block
     const schemaBefore = buildResearchItemListSchema('us', nodesBeforeBank.map((n) => n.projection), copy);
     const schemaAfter = buildResearchItemListSchema('us', nodesAfterBank.map((n) => n.projection), copy);
     expect(schemaAfter).toEqual(schemaBefore);
+  });
+
+  // PAYLOAD DEDUPLICATION (2026-07-29). React Flight deduplicates by OBJECT
+  // REFERENCE: `ResearchHubBody` hands the default node list to
+  // `<Suspense fallback>` and to `<ResearchHub browseFallback>`, and the bank
+  // to `<ResearchHub nodes>`. As long as a shared key carries the SAME node
+  // object in all of them, that card is serialized into the RSC payload
+  // exactly once and referenced thereafter. When the bank built its own fresh
+  // elements for keys the default list already covered, every default card
+  // was written into the payload a SECOND time — measured on the live
+  // standalone build as `/research` 1,161,259 -> 1,712,307 raw bytes (+47.4%),
+  // with UK/CA/AU inflating by ~33% purely from that duplication (those three
+  // markets have no extra projections at all, so their entire growth was
+  // duplicate text).
+  //
+  // This test is the guard that keeps the sharing from silently rotting: a
+  // future refactor that reintroduces a fresh element for an already-covered
+  // key still produces a CORRECT page — same cards, same keys, same DOM — and
+  // would pass every other test in this file and the whole E2E suite. Only a
+  // reference-identity assertion catches it. `toBe`, never `toEqual`:
+  // `toEqual` compares structurally and passes on a duplicate.
+  it('reuses the DEFAULT list\'s node objects by reference for every key it already covers — Flight must serialize each default card once, not twice', () => {
+    // Two items with genuinely different default projections, so the check
+    // spans both card components: Fidelity is review-backed AND has a
+    // qualifying context (default = dossier -> ResearchCard, plus a review
+    // EXTRA the bank adds on its own), Merrill is Cockpit-only provisional
+    // (default = CatalogCard, no extra).
+    const fidelityRow = makeOverlayRow({
+      category: 'trading',
+      topic: 'trading-platforms',
+      productSlug: 'fidelity',
+      reviewSlug: 'fidelity',
+      manifestOrder: 0,
+    });
+    const merrillRow = makeOverlayRow({
+      category: 'trading',
+      topic: 'trading-platforms',
+      productSlug: 'merrill-edge',
+      reviewSlug: null,
+      status: 'provisional',
+      manifestOrder: 0,
+    });
+    const { catalog, dossierRows } = buildDiscoveryCatalog(
+      'us',
+      [makeDiscoveryItem()],
+      [fidelityRow, merrillRow],
+    );
+
+    const defaultNodes = buildResearchHubNodes({ catalog, dossierRows });
+    expect(defaultNodes.length, 'fixture must produce at least two default nodes').toBeGreaterThan(1);
+
+    const bank = buildResearchNodeBank({ catalog, dossierRows }, defaultNodes);
+    const bankByKey = new Map(bank.map((entry) => [entry.key, entry]));
+
+    // Iterate over EVERY default entry, never over the intersection: a bank
+    // that silently LOST a default key would trivially satisfy an
+    // intersection-only loop while breaking the client shell's own lookup.
+    for (const defaultEntry of defaultNodes) {
+      const bankEntry = bankByKey.get(defaultEntry.key);
+      expect(bankEntry, `node bank is missing the default key ${defaultEntry.key}`).toBeDefined();
+      expect(
+        bankEntry!.node,
+        `node bank rebuilt a fresh element for ${defaultEntry.key} instead of reusing the default one — Flight will serialize that card twice`,
+      ).toBe(defaultEntry.node);
+    }
+
+    // The bank is still a SUPERSET, not a copy: Fidelity's review projection
+    // is an extra the default list (dossier-only for that item) never had.
+    const reviewExtraKey = projectionNodeKey('review:/us/trading/fidelity', null);
+    expect(bankByKey.has(reviewExtraKey), 'the bank lost its own extra review projection').toBe(true);
+    expect(defaultNodes.some((entry) => entry.key === reviewExtraKey)).toBe(false);
+  });
+
+  it('keeps the bank in its original per-item iteration order — reuse substitutes objects in place, it never reorders defaults ahead of extras', () => {
+    const fidelityRowA = makeOverlayRow({
+      category: 'trading',
+      topic: 'trading-platforms',
+      productSlug: 'fidelity',
+      reviewSlug: 'fidelity',
+      manifestOrder: 0,
+    });
+    const fidelityRowB = makeOverlayRow({
+      category: 'trading',
+      topic: 'options-brokers',
+      productSlug: 'fidelity',
+      reviewSlug: 'fidelity',
+      manifestOrder: 1,
+    });
+    const { catalog, dossierRows } = buildDiscoveryCatalog(
+      'us',
+      [makeDiscoveryItem()],
+      [fidelityRowA, fidelityRowB],
+    );
+
+    const defaultNodes = buildResearchHubNodes({ catalog, dossierRows });
+    const bank = buildResearchNodeBank({ catalog, dossierRows }, defaultNodes);
+
+    // Per item: the review projection first, then one dossier projection per
+    // researchContexts entry in manifest order — exactly what the bank built
+    // before reuse existed. The DEFAULT here is the trading-platforms dossier
+    // (manifestOrder 0), i.e. the reused object sits in the MIDDLE of this
+    // list, not at its front.
+    expect(bank.map((entry) => entry.key)).toEqual([
+      projectionNodeKey('review:/us/trading/fidelity', null),
+      projectionNodeKey('review:/us/trading/fidelity', 'us/trading/trading-platforms'),
+      projectionNodeKey('review:/us/trading/fidelity', 'us/trading/options-brokers'),
+    ]);
   });
 });
 

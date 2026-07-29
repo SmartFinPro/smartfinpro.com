@@ -182,15 +182,47 @@ export function buildResearchHubNodes(
  *  MERGE-BLOCKER INVARIANT note: `buildResearchHubNodes`'s own default-only
  *  list keeps driving both of those unchanged; this bank exists solely to
  *  give the CLIENT shell (`ResearchHub`'s `nodes` prop) a node for whatever
- *  it actually selects. */
+ *  it actually selects.
+ *
+ *  PAYLOAD DEDUPLICATION (2026-07-29) — `defaultNodes` is REQUIRED, not
+ *  optional, and must be the very `buildResearchHubNodes(bundle)` list the
+ *  caller also renders. React Flight deduplicates by OBJECT REFERENCE: a
+ *  default card reached through `<Suspense fallback>`, `<ResearchHub
+ *  browseFallback>` and `<ResearchHub nodes>` is written into the RSC payload
+ *  ONCE and referenced thereafter — but only while all three see the same
+ *  object. Building this bank from scratch broke that for every key the
+ *  default list already covered, writing a second full copy of each default
+ *  card into the payload: measured on the live standalone build as
+ *  `/research` 1,161,259 -> 1,712,307 raw bytes (+47.4%), and +33% on
+ *  UK/CA/AU, which have no extra projections at all — their entire growth was
+ *  duplicated text. So every resolved key is looked up in `defaultNodes`
+ *  first and that exact entry reused; only genuine EXTRAS get a fresh
+ *  element. The parameter is deliberately not optional: an omittable one
+ *  silently reinstates the duplication, and the resulting page is perfectly
+ *  correct — same cards, same keys, same DOM — so nothing but a reference
+ *  check would ever notice. See __tests__/unit/research-hub-schema.test.ts
+ *  ("reuses the DEFAULT list's node objects by reference").
+ *
+ *  Reuse happens IN PLACE, inside the existing per-item iteration — the
+ *  bank's order (per item: the review projection, then one dossier per
+ *  `researchContexts` entry in manifest order) is unchanged, never
+ *  re-sequenced into "all defaults first, extras appended". */
 export function buildResearchNodeBank(
   bundle: Pick<DiscoveryCatalogBundle, 'catalog' | 'dossierRows'>,
+  defaultNodes: readonly ResearchHubNode[],
 ): ResearchHubNode[] {
   const dossierRowsByKey = new Map(bundle.dossierRows.map((row) => [row.key, row]));
+  const defaultsByKey = new Map(defaultNodes.map((entry) => [entry.key, entry]));
   const nodes: ResearchHubNode[] = [];
   const seenKeys = new Set<string>();
 
   const resolveAndPush = (projection: DiscoveryProjection): void => {
+    // `resolveHubNode` runs even when a default already covers this key: the
+    // key itself depends on the RESOLVED (possibly degraded) projection, so
+    // it cannot be known before resolving, and re-deriving it any other way
+    // would fork the degrade rule into a second implementation that can
+    // drift. The discarded element is a plain object literal — created, never
+    // rendered, never serialized.
     const resolved = resolveHubNode(projection, dossierRowsByKey);
     if (!resolved) return;
     const cockpitKey = resolved.projection.kind === 'dossier' ? resolved.projection.context.cockpitKey : null;
@@ -201,7 +233,11 @@ export function buildResearchNodeBank(
     // otherwise be pushed a second time under the identical review key.
     if (seenKeys.has(key)) return;
     seenKeys.add(key);
-    nodes.push({ key, projection: resolved.projection, node: resolved.node });
+    // Reuse over rebuild (see the payload note above). A shared key always
+    // describes the SAME resolved projection in both lists — both sides run
+    // this identical `resolveHubNode`, degrade included — so this swaps
+    // object identity only, never semantics.
+    nodes.push(defaultsByKey.get(key) ?? { key, projection: resolved.projection, node: resolved.node });
   };
 
   for (const item of bundle.catalog.items) {
@@ -631,7 +667,10 @@ export async function ResearchHubPage({ market }: { market: Market }) {
     Promise.resolve(getResearchHubCopy(market)),
   ]);
   const nodes = buildResearchHubNodes(bundle);
-  const nodeBank = buildResearchNodeBank(bundle);
+  // `nodes` is passed in so the bank can reuse those exact node objects for
+  // every key it shares with them — the Flight payload then carries each
+  // default card once instead of twice (see buildResearchNodeBank's own note).
+  const nodeBank = buildResearchNodeBank(bundle, nodes);
   return (
     <ResearchHubBody
       market={market}
