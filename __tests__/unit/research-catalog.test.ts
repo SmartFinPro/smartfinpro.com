@@ -17,8 +17,12 @@ import type { BestXManifestEntry } from '@/lib/comparison/topics/manifest';
 import type { ResearchProduct } from '@/lib/research/adapter';
 import {
   cockpitKeyFor,
+  computeFinderCounts,
+  projectDiscoveryItems,
   reviewItemId,
   sortResearchContexts,
+  toFinderClientItems,
+  type DiscoveryFilters,
   type DiscoveryItem,
   type DiscoveryReview,
   type ResearchContext,
@@ -1440,5 +1444,105 @@ describe('buildDiscoveryScopeSnapshot', () => {
       cockpitKey: 'us/forex/forex-brokers',
       reason: 'unknown_state',
     });
+  });
+});
+
+// --- Homepage Finder / Hub parity (PR 3 closure review, commit 1, P1 BLOCKING) ---
+// The Homepage Quick Finder's client payload (toFinderClientItems,
+// catalog-shell-logic.ts) recomputes display.searchText from a SUBSET of
+// what the real catalog searchText (buildSearchText, exercised here via
+// buildDiscoveryCatalog itself) carries. Before this fix that subset dropped
+// every attached context's topicLabel/displayName, so a query that only ever
+// matches via the topic label (e.g. "Best Trading Platforms") found real
+// results on the Hub — which reads the full, untrimmed catalog.items via
+// projectDiscoveryItems — and ZERO on the Finder for the IDENTICAL catalog
+// build (spec §15 invariant 13). The PR 3 closure review measured this on a
+// real production build (both payloads from the SAME build); reproducing
+// that as an e2e cross-surface comparison is impractical to run reliably
+// under this machine's current load, so the assertion is pinned here
+// instead, at unit level, against the same catalog fixture (built via the
+// real buildDiscoveryCatalog) that both surfaces actually consume.
+describe('Homepage Finder matches the Hub result count (PR 3 closure review, commit 1)', () => {
+  const baseFilters: Omit<DiscoveryFilters, 'query' | 'category'> = {
+    type: null,
+    status: null,
+    confidence: null,
+    fresh: null,
+    topic: null,
+    specs: [],
+  };
+
+  it('"Best Trading Platforms" — a query that only matches via topicLabel — returns the SAME count on the Finder and the Hub', () => {
+    const schwabReview = makeDiscoveryItem({
+      id: reviewItemId('/us/trading/schwab'),
+      category: 'trading',
+      review: makeReview({
+        slug: 'schwab',
+        href: '/us/trading/schwab',
+        title: 'Charles Schwab Review',
+        description: 'Full-service broker',
+        bestFor: 'Long-term investors',
+      }),
+    });
+    const fidelityReview = makeDiscoveryItem({
+      id: reviewItemId('/us/trading/fidelity'),
+      category: 'trading',
+      review: makeReview({
+        slug: 'fidelity',
+        href: '/us/trading/fidelity',
+        title: 'Fidelity Review',
+        description: 'Independent broker review',
+        bestFor: 'Active traders',
+      }),
+    });
+    // Distractor: a review-backed item with no attached context at all —
+    // its title/description/bestFor/category never mention trading
+    // platforms, so it must match on neither surface.
+    const unrelatedReview = makeDiscoveryItem({
+      id: reviewItemId('/us/personal-finance/budget-app'),
+      category: 'personal-finance',
+      review: makeReview({
+        slug: 'budget-app',
+        href: '/us/personal-finance/budget-app',
+        title: 'Budget App Review',
+        description: 'Personal finance tracking',
+        bestFor: 'Hands-off budgeters',
+      }),
+    });
+
+    const rowSchwab = makeOverlayRow({
+      category: 'trading',
+      topic: 'trading-platforms',
+      productSlug: 'schwab',
+      reviewSlug: 'schwab',
+      contextOver: { topicLabel: 'Best Trading Platforms', displayName: 'Charles Schwab' },
+    });
+    const rowFidelity = makeOverlayRow({
+      category: 'trading',
+      topic: 'trading-platforms',
+      productSlug: 'fidelity',
+      reviewSlug: 'fidelity',
+      contextOver: { topicLabel: 'Best Trading Platforms', displayName: 'Fidelity' },
+    });
+
+    const { catalog } = buildDiscoveryCatalog(
+      'us',
+      [schwabReview, fidelityReview, unrelatedReview],
+      [rowSchwab, rowFidelity],
+    );
+
+    const filters: DiscoveryFilters = { query: 'Best Trading Platforms', category: null, ...baseFilters };
+    const hubCount = projectDiscoveryItems(catalog.items, filters).length;
+
+    const finderItems = toFinderClientItems(catalog.items);
+    const { totalMatches } = computeFinderCounts(finderItems, {
+      query: filters.query,
+      category: null,
+    });
+
+    // Sanity: the query really does match exactly the two trading-platform
+    // items on the Hub (never 0, never the distractor).
+    expect(hubCount).toBe(2);
+    expect(totalMatches).toBe(hubCount);
   });
 });

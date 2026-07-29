@@ -1630,6 +1630,38 @@ describe("toFinderClientItems (client payload projection)", () => {
     expect(matchesItemQuery(trimmed, categoryConfig.trading.name)).toBe(true);
   });
 
+  // PR 3 closure review, commit 1 (P1 BLOCKING): the trimmed searchText was
+  // built from title/description/bestFor/categoryLabel only, dropping the
+  // first context's topicLabel/displayName entirely. Since the real catalog
+  // searchText (lib/research/catalog.ts buildSearchText) DOES fold in every
+  // attached context's topicLabel, a query that only ever matches via the
+  // topic label (e.g. "Best Trading Platforms") found real results on the
+  // Hub and ZERO on the Homepage Finder for the identical catalog — a direct
+  // violation of spec §15 invariant 13. This item's title/description/bestFor
+  // deliberately contain none of the query text, so this only passes once
+  // the topic label itself is folded into the recomputed searchText.
+  it("is found by a query that only matches the first context's topicLabel (PR 3 closure review, commit 1)", () => {
+    const original = finderItem("fidelity-review", {
+      category: "trading",
+      review: makeReview({
+        title: "Fidelity Investments Review",
+        description: "Independent broker review",
+      }),
+      display: {
+        title: "Fidelity Investments Review",
+        description: "Independent broker review",
+        bestFor: "Long-term investors",
+        searchText: "irrelevant original search text",
+        sortDate: "2026-07-01",
+      },
+      researchContexts: [
+        makeContext({ topicLabel: "Best Trading Platforms", displayName: "Fidelity" }),
+      ],
+    });
+    const [trimmed] = toFinderClientItems([original]);
+    expect(matchesItemQuery(trimmed, "Best Trading Platforms")).toBe(true);
+  });
+
   it("never carries a context's keyFacts, tagline, or review/product slug text in the trimmed searchText", () => {
     const original = finderItem("fidelity-review", {
       review: makeReview({ slug: "unique-review-slug-xyz" }),

@@ -750,13 +750,22 @@ export function finderViewAllHref(
  *    syntactically valid `CockpitKey` template-literal type).
  *  - `display.searchText` is RECOMPUTED from fields the Finder already
  *    carries for other reasons (title, description, bestFor, the item's own
- *    category label) instead of the full catalog searchText (spec §4.4),
- *    which additionally folds in review/product slugs and EVERY research
- *    context's displayName/tagline/topicLabel — none of which a Finder card
- *    ever displays or needs to match against. This narrows what a Finder
- *    search can match (e.g. no longer a bare slug substring), a deliberate,
- *    documented trade-off for the lightweight teaser surface (never applied
- *    to the Hub's own catalog fetch, which keeps the full searchText). */
+ *    category label) PLUS the surviving (first, manifest-order) context's
+ *    `topicLabel`/`displayName` (PR 3 closure review fix, commit 1, P1
+ *    BLOCKING, spec §15 invariant 13 — without these two fields, a query
+ *    that only ever matches via the topic label, e.g. "Best Trading
+ *    Platforms", found real results on the Hub (which reads the full,
+ *    untrimmed catalog searchText) and ZERO on the Finder for the identical
+ *    catalog build; measured on this branch: 0/9, 0/8, 0/8, 0/5 across four
+ *    of the five sampled queries — see the commit message for the full
+ *    table and the re-measured payload delta). It still never restores the
+ *    full catalog searchText (spec §4.4), which additionally folds in
+ *    review/product slugs and every context's `tagline` — none of which a
+ *    Finder card ever displays. This still narrows what a Finder search can
+ *    match relative to the Hub (e.g. still no bare slug/tagline substring),
+ *    a deliberate, documented trade-off for the lightweight teaser surface
+ *    (never applied to the Hub's own catalog fetch, which keeps the full
+ *    searchText). */
 export function toFinderClientItems(
   items: readonly DiscoveryItem[],
 ): DiscoveryItem[] {
@@ -768,6 +777,8 @@ export function toFinderClientItems(
       item.display.description,
       item.display.bestFor,
       categoryLabel,
+      firstContext?.topicLabel ?? null,
+      firstContext?.displayName ?? null,
     ]
       .filter((part): part is string => Boolean(part && part.trim().length > 0))
       .join(" ");
