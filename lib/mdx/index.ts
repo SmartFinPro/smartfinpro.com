@@ -115,7 +115,9 @@ function normalizeFrontmatter(raw: Record<string, unknown>): ContentMeta {
     author: String(raw.author || 'SmartFinPro Editorial Team'),
     reviewedBy: (raw.reviewedBy as string) || undefined,
     publishDate: String(raw.publishDate || raw.date || today),
-    modifiedDate: String(raw.modifiedDate || raw.date || today),
+    // Without an explicit modifiedDate, claim the publish date — never the build
+    // date, which would fake freshness in JSON-LD on every deploy.
+    modifiedDate: String(raw.modifiedDate || raw.date || raw.publishDate || today),
     category: (raw.category || '') as Category,
     market: (raw.market || 'us') as Market,
     rating: (raw.rating as number) ?? (schema.rating as number) ?? undefined,

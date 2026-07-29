@@ -211,8 +211,8 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
             __html: JSON.stringify(generateArticleSchema({
               title: pillarContent.meta.title || `Best ${categoryInfo.name} 2026`,
               description: pillarContent.meta.description || categoryInfo.description,
-              publishDate: pillarContent.meta.publishDate || new Date().toISOString(),
-              modifiedDate: pillarContent.meta.modifiedDate || new Date().toISOString(),
+              publishDate: pillarContent.meta.publishDate,
+              modifiedDate: pillarContent.meta.modifiedDate,
               author: pillarContent.meta.author || 'SmartFinPro',
               url: canonicalUrl,
             })),
