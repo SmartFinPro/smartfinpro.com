@@ -72,7 +72,7 @@ import {
   type DiscoveryFilters,
 } from '@/lib/research/catalog-shell-logic';
 import { buildDiscoveryCatalog } from '@/lib/research/catalog';
-import { buildResearchNodeBank } from '@/components/research/ResearchHubPage';
+import { buildResearchHubNodes, buildResearchNodeBank } from '@/components/research/ResearchHubPage';
 import { resolveEntry } from '@/components/research/ResearchHub';
 
 vi.mock('next/link', async () => {
@@ -311,7 +311,10 @@ describe('(b) fixture-driven substitute: a secondary context is visible, and DOM
 
     // The COMPLETE node bank (P1 fix) — this is what the client shell's
     // `nodes` prop is actually built from now (ResearchHubPage.tsx).
-    const nodeBank = buildResearchNodeBank({ catalog, dossierRows });
+    const nodeBank = buildResearchNodeBank(
+      { catalog, dossierRows },
+      buildResearchHubNodes({ catalog, dossierRows }),
+    );
     const nodeByKey = new Map(nodeBank.map((n) => [n.key, n.node]));
 
     // --- Witness 1: resolved entries for `?topic=options-brokers` — this
