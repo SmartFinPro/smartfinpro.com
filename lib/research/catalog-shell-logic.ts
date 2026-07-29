@@ -1,5 +1,5 @@
 import type { Category, Market } from "@/lib/i18n/config";
-import { marketCategories } from "@/lib/i18n/config";
+import { categoryConfig, marketCategories } from "@/lib/i18n/config";
 import { BEST_X_MANIFEST } from "@/lib/comparison/topics/manifest";
 
 export type ResearchStatus = "audited" | "provisional";
@@ -722,6 +722,83 @@ export function finderViewAllHref(
   if (filters.category) params.set("category", filters.category);
   const queryString = params.toString();
   return `${researchBaseForMarket(market)}${queryString ? `?${queryString}` : ""}`;
+}
+
+/** Trims a `DiscoveryItem[]` down to exactly what the Homepage Quick Finder's
+ *  CLIENT bundle needs to render, search, and route (PR 3 review fix — the
+ *  section server component was handing `<QuickFinder>` the ENTIRE
+ *  `catalog.items`, incl. `searchText`, `description`, and every
+ *  `researchContexts` entry with its full `keyFacts`, measured as a
+ *  +17.0 KiB / +43% gzip regression on `/`). The return type stays
+ *  `DiscoveryItem[]` — no second, Finder-specific item type (this file's own
+ *  architecture rule, see QuickFinder.tsx's header) — only the VALUES shrink,
+ *  so `matchesItemQuery`/`sortFinderItems`/`finderResults`/`finderItemHref`
+ *  are all completely unchanged: they just read whatever `display.searchText`
+ *  / `researchContexts` they're given.
+ *
+ *  Two cuts:
+ *  - `researchContexts` is capped at its own first (manifest-order) entry —
+ *    `finderItemHref`/`QuickFinder`'s click handlers never read past index 0
+ *    — and that surviving context is reduced to exactly the four fields
+ *    `QuickFinder.tsx` actually reads (`topic`, `status`, `auditedRank`,
+ *    `productSlug`); every other `ResearchContext` field (`topicLabel`,
+ *    `manifestOrder`, `displayName`, `tagline`, `bestFor`, `confidence`,
+ *    `dataVerifiedAt`, `auditedScore`, `dataPoints`, `compareBaseHref`,
+ *    `keyFacts`) is blanked to its type's zero value rather than omitted —
+ *    the return type stays exactly `ResearchContext`, no second, partial
+ *    variant. `cockpitKey` is kept real (cheap, and needed to stay a
+ *    syntactically valid `CockpitKey` template-literal type).
+ *  - `display.searchText` is RECOMPUTED from fields the Finder already
+ *    carries for other reasons (title, description, bestFor, the item's own
+ *    category label) instead of the full catalog searchText (spec §4.4),
+ *    which additionally folds in review/product slugs and EVERY research
+ *    context's displayName/tagline/topicLabel — none of which a Finder card
+ *    ever displays or needs to match against. This narrows what a Finder
+ *    search can match (e.g. no longer a bare slug substring), a deliberate,
+ *    documented trade-off for the lightweight teaser surface (never applied
+ *    to the Hub's own catalog fetch, which keeps the full searchText). */
+export function toFinderClientItems(
+  items: readonly DiscoveryItem[],
+): DiscoveryItem[] {
+  return items.map((item) => {
+    const [firstContext] = item.researchContexts;
+    const categoryLabel = categoryConfig[item.category]?.name ?? item.category;
+    const searchText = [
+      item.display.title,
+      item.display.description,
+      item.display.bestFor,
+      categoryLabel,
+    ]
+      .filter((part): part is string => Boolean(part && part.trim().length > 0))
+      .join(" ");
+
+    const trimmedContext: ResearchContext | null = firstContext
+      ? {
+          cockpitKey: firstContext.cockpitKey,
+          topic: firstContext.topic,
+          topicLabel: "",
+          manifestOrder: 0,
+          productSlug: firstContext.productSlug,
+          displayName: "",
+          tagline: null,
+          bestFor: null,
+          status: firstContext.status,
+          confidence: null,
+          dataVerifiedAt: null,
+          auditedScore: null,
+          auditedRank: firstContext.auditedRank,
+          dataPoints: 0,
+          compareBaseHref: "",
+          keyFacts: {},
+        }
+      : null;
+
+    return {
+      ...item,
+      display: { ...item.display, searchText },
+      researchContexts: trimmedContext ? [trimmedContext] : [],
+    };
+  });
 }
 
 /** Canonical multi-topic context ordering for one DiscoveryItem (spec §4.1):

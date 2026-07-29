@@ -7,8 +7,13 @@
 // universal /research hub uses — the caller ([market]/page.tsx) resolves
 // `getDiscoveryCatalog(market)` exactly ONCE per request and hands the
 // already-built `catalog` down here (spec's "one fan-out" rule; see
-// lib/research/catalog.ts's own header) — and hands the client shell nothing
-// but the normalized, MDX-body-free `DiscoveryItem[]`.
+// lib/research/catalog.ts's own header). What actually crosses the
+// RSC/client boundary into `<QuickFinder>` is `toFinderClientItems(catalog
+// .items)` (lib/research/catalog-shell-logic.ts, PR 3 review fix) — the
+// normalized, MDX-body-free `DiscoveryItem[]` FURTHER trimmed to what the
+// Finder actually renders/searches/routes with (no `keyFacts`, at most one
+// research context, a shorter recomputed `searchText`); `catalog.items`
+// itself still powers the server-only category-count nav below.
 //
 // Statically prerenderable: no searchParams/headers()/cookies() anywhere in
 // this server tree — `catalog` was already resolved by the caller, and the
@@ -23,7 +28,7 @@
 import Link from 'next/link';
 import type { Category, Market } from '@/lib/i18n/config';
 import { categoryConfig } from '@/lib/i18n/config';
-import { researchBaseForMarket } from '@/lib/research/catalog-shell-logic';
+import { researchBaseForMarket, toFinderClientItems } from '@/lib/research/catalog-shell-logic';
 import type { DiscoveryCatalog } from '@/lib/research/catalog';
 import { QuickFinder } from '@/components/research/QuickFinder';
 
@@ -89,7 +94,14 @@ export function ResearchQuickFinderSection({ market, catalog }: ResearchQuickFin
             )}
           </div>
 
-          <QuickFinder market={market} items={catalog.items} />
+          {/* PR 3 review fix: `toFinderClientItems` trims what actually
+              crosses the RSC/client boundary here — the Finder never needs
+              the full catalog searchText/keyFacts/every research context,
+              only what it renders, searches, and routes with (see the
+              function's own doc comment, lib/research/catalog-shell-logic.ts).
+              `catalog.items` itself (the untrimmed source) still powers the
+              category-count nav above, which stays server-rendered only. */}
+          <QuickFinder market={market} items={toFinderClientItems(catalog.items)} />
         </div>
       </div>
     </section>

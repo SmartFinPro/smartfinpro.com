@@ -40,8 +40,19 @@ there (1 error, 10 warnings) are all in files this task did not modify
 (`__tests__/unit/research-quick-finder.test.ts`,
 `__tests__/unit/research-validation.test.ts`,
 `__tests__/unit/track-route-research-batch.test.ts`,
-`components/marketing/homepage-sections.tsx`), i.e. pre-existing to Tasks 1–3,
-not new findings from Task 4.
+`components/marketing/homepage-sections.tsx`).
+
+**CORRECTED 2026-07-29**: the sentence above called all four files'
+findings "pre-existing to Tasks 1–3" — wrong for one of them.
+`__tests__/unit/research-quick-finder.test.ts` was CREATED by Task 3 (commit
+`5dc6f56`), not inherited from an earlier PR; its one `no-explicit-any` error
+(line 21, the `next/link` mock) was therefore a NEW finding this report
+should have flagged, not a pre-existing one — it copied an `any`-typed mock
+pattern already used elsewhere in the repo (e.g.
+`research-catalog-card.test.ts`), but the FILE and thus the ERROR were new.
+Fixed in the Addendum below (the mock props are now typed; zero findings
+remain in that file). The other three files' findings genuinely predate
+Tasks 1–3 and are correctly described as pre-existing.
 
 ### Build detail — the five required routes
 
@@ -148,6 +159,12 @@ Server killed after the run (`kill $(lsof -ti :3012)`, port confirmed free).
 
 ### The 1 failure is pre-existing and unrelated to Task 4
 
+**CORRECTED 2026-07-29 — this section described the failure accurately but
+mischaracterized the fix as a deferred follow-up; it was fixed INLINE the
+very next commit.** See "Addendum — Adversarial Review Fixes" at the end of
+this report for the true current tally (deterministically green, no longer
+117/118).
+
 `e2e/research-tracking.spec.ts` → `invariant 13: hero, category totals, and
 a tracked filter all agree with what is actually rendered` fails
 deterministically (reproduced 3× in a row, not a flake — `Expected: 83,
@@ -157,17 +174,23 @@ already-committed `9c3fbc4` version — it fails identically. Task 4 added two
 NEW tests to this file (the Category/Type hub-chip gap-close, both PASS) but
 did not touch the `invariant 13` test's own code.
 
-Root cause identified while investigating (not fixed here — out of this
-task's surgical scope): the test's category-chip loop fires one
-`research_filter_change` event per chip click, accumulating several events
-in the shared `batches` array; the final assertion then reads
+Root cause identified while investigating: the test's category-chip loop
+fires one `research_filter_change` event per chip click, accumulating
+several events in the shared `batches` array; the final assertion then reads
 `named(batches, 'research_filter_change')[0]` — index `[0]`, the **first**
 `research_filter_change` ever recorded in the test (from the loop's first
 category chip), not the **latest** one (the `status=provisional` click the
-assertion is actually about). Flagged as a follow-up task
-(`task_f39b901a`, "Fix stale event lookup in research-tracking invariant-13
-test") rather than fixed inline, since it is unrelated to the homepage
-Finder release gate this task is scoped to.
+assertion is actually about).
+
+~~Flagged as a follow-up task (`task_f39b901a`, "Fix stale event lookup in
+research-tracking invariant-13 test") rather than fixed inline, since it is
+unrelated to the homepage Finder release gate this task is scoped to.~~ This
+was WRONG: commit `f9b076d` (`test(research): pin the tracking spec to the
+facet it means`) — the very next commit after this report was written —
+fixed it inline, in the same file, by selecting the `research_filter_change`
+event by `facet` instead of by array position. It was never actually
+deferred; this report simply hadn't been updated to say so until the
+adversarial review of this PR caught the stale claim (see the Addendum).
 
 ## Finder analytics on the wire (Step 2, spec §12)
 
@@ -339,3 +362,182 @@ c708acb feat(research): universal market research hubs (#122)     (PR 2 base)
 - `audits/reports/research-discovery-pr3.md` (this report)
 
 `git diff --check` clean. `git status --short` empty after commit.
+
+---
+
+## Addendum — Adversarial Review Fixes (recorded 2026-07-29)
+
+An independent adversarial review of this PR found two BLOCKING issues plus
+several smaller ones. Fixed as five commits (TDD, RED-first where behavior
+changed), on top of head `f9b076d` (`test(research): pin the tracking spec
+to the facet it means`):
+
+1. `fix(homepage): report how many results there really are` — QuickFinder's
+   `resultCount` (all three finder events) and the live region were capped
+   at the six-card render limit, so a query matching 40 items and one
+   matching 6 were indistinguishable. Introduced `computeFinderCounts`
+   (`visibleResults` + honest, uncapped `totalMatches`); live region now
+   reads `Showing {visible} of {total} results`; CTA label reflects the
+   total (`View all research ({total})`). Matrix-tested at 0/1/5/6/9 matches.
+   `renderedResultCount` (the additive third analytics property the operator
+   offered) was deliberately OMITTED — the live region already renders
+   `visibleResults.length` in plain text, giving e2e an independent DOM
+   witness with no schema/contract change; adding a new analytics field for
+   a value the DOM already exposes was judged not worth touching the strict
+   Zod schema + docs for.
+2. `docs(research): state the real reason the multi-context case is
+   unit-only` — the e2e comment and this report's own "Multi-context item"
+   row (above) both claimed, as verified fact, that no manifest category has
+   more than one topic. False, and never actually checked:
+   `us/personal-finance` has four. Corrected to the true, DATA-driven reason
+   (no live product currently qualifies in 2+ of those four topics), added a
+   permanent regression guard against the real manifest, and added the same
+   correction to the design spec (§4.1 amendment).
+3. `fix(research): keep an over-long query from dropping its whole event
+   batch` — `toQueryLength` had no ceiling while the wire schema caps
+   `queryLength` at 500; an over-long query got its WHOLE event rejected
+   (400), not just the field. Clamped with `Math.min(length, 500)`.
+4. `fix(research): scope the live-region locators and correct their
+   rationale` — a comment claimed Playwright injects a second `aria-live`
+   region; it doesn't — it's this app's own Sonner toaster, mounted
+   globally. Added a stable `data-testid="research-result-count"` to both
+   live regions (QuickFinder, ResearchHub) and switched every e2e consumer
+   to select on it.
+5. `docs(research): correct the PR 3 release report` — this report's own
+   117/118 tally and lint claim were both stale/wrong (corrected inline,
+   above); fixed the `no-explicit-any` lint error in
+   `research-quick-finder.test.ts` (a file this PR created, not a
+   pre-existing finding); reduced the client DTO (`toFinderClientItems`) and
+   re-measured the JS+HTML payload and internal-link redistribution below.
+
+### Gate re-run (final, after all 5 commits)
+
+| Command | Result |
+|---|---|
+| `npx tsc --noEmit` | exit 0, zero output |
+| `npx vitest run` (full suite) | **135 files passed \| 1 skipped (136)**, **1841 tests passed \| 1 skipped (1842)**, exit 0 |
+| `npx eslint` on every file touched by the 5 fix commits (12 files) | exit 0, **zero findings** |
+| `npx eslint lib/analytics/cockpit-tracking.ts lib/analytics/tool-tracking.ts` | **exactly 7 pre-existing errors**, unchanged, none in files this round touched |
+| `npm run build` | exit 0 |
+
+Five required routes, all confirmed **`○ Static`** on the post-fix build:
+
+```
+┌ ○ /                                                                                    5m      1y
+├ ○ /au/research                                                                         5m      1y
+├ ○ /ca/research                                                                         5m      1y
+├ ○ /research                                                                            5m      1y
+├ ○ /uk/research                                                                         5m      1y
+```
+
+### Payload — both axes (JS gate + HTML gate), base `c708acb` vs head
+
+Base built in a separate worktree (`.worktrees/pr3-base-c708acb`, removed
+after measurement, `next start -p 3013`); head is this worktree after all 5
+fix commits (`next start -p 3012`). Both same machine, same `.env.local`,
+same symlinked `node_modules`.
+
+| | Base (`c708acb`) | Head (post-fix) | Delta |
+|---|---|---|---|
+| **JS gzip** (`/`, `scripts/research/measure-route-js.mjs`) | 330,770 B | 334,139 B | **+3,369 B (+1.0%)** — within the 25 KB merge-blocker budget |
+| **HTML gzip** (`/`, raw response body, `zlib.gzipSync`) | 40,700 B | 52,580 B | **+11,880 B (+29.2%)** |
+
+The JS-gate number is essentially unchanged from Task 4's own report
+(+3.18 KB then, +3.29 KB now) — expected, since `toFinderClientItems` trims
+the RSC DATA payload embedded in the HTML response, not the JS chunk files
+`measure-route-js.mjs` counts.
+
+**The HTML number is the one this round actually fixed, not merely
+reported.** Before `toFinderClientItems` (i.e., the state this report
+originally shipped in), the homepage handed `<QuickFinder>` the ENTIRE
+`catalog.items` — every item's full `searchText` (title + review
+title/description + slugs + every research context's displayName/tagline/
+topicLabel + category label) and every research context's full `keyFacts`.
+Measured pre-fix: **58,039 B gzip** (+17,457 B / +43% over base) — the
+number the adversarial review flagged. `toFinderClientItems`
+(`lib/research/catalog-shell-logic.ts`) now:
+
+- caps `researchContexts` at its own first (manifest-order) entry — the
+  Finder never reads past index 0;
+- reduces that surviving context to exactly the four fields
+  `QuickFinder.tsx` reads (`topic`, `status`, `auditedRank`, `productSlug`),
+  blanking `topicLabel`/`manifestOrder`/`displayName`/`tagline`/`bestFor`/
+  `confidence`/`dataVerifiedAt`/`auditedScore`/`dataPoints`/
+  `compareBaseHref`/`keyFacts` to their type's zero value (`cockpitKey` kept
+  real — cheap, and must stay a valid `CockpitKey` template-literal value);
+- recomputes `display.searchText` from fields the Finder already carries
+  for other reasons (title, description, bestFor, the item's own category
+  label), dropping review/product slugs and every OTHER context's
+  displayName/tagline/topicLabel.
+
+Result: **52,580 B gzip**, a real, measured reduction of **5,459 B**
+(the regression shrank from +17,457 B/+43% to +11,880 B/+29.2%). This is a
+genuine improvement, not a full fix — most of the remaining +11,880 B is the
+per-item JSON structure (id/market/category/display fields/review object)
+repeated ~126 times for the full unfiltered catalog the Finder's local
+client-side search needs; further reduction was not pursued this round to
+stay within the "DTO projection, no new endpoint" instruction and avoid
+touching the shared `DiscoveryItem` type contract. Reported plainly, not
+dressed up: this is a partial, honest win, not a full closure of the gap.
+
+Both numbers (JS + HTML) are now the standing gate for every future change
+to this surface, reported side by side going forward.
+
+### Internal-link redistribution (homepage raw HTML, base → head)
+
+Unique review-leaf hrefs (`href="/{market}/{category}/{slug}"`, excluding
+`best`/`overview` sub-routes) found anywhere in each market homepage's raw,
+no-JS server HTML — independently measured (own extraction, not copied from
+the review), base `c708acb` vs head:
+
+| Route | Base unique review hrefs | Head unique review hrefs |
+|---|---|---|
+| `/` | 19 | 18 |
+| `/uk` | 18 | 13 |
+| `/ca` | 19 | 14 |
+| `/au` | 18 | 13 |
+
+`/research` (head only — the universal hub the "View all" CTA hands off to)
+carries **69** unique review hrefs in one hop. The drop is expected and by
+design: the old Report Feed + Editor's Picks surfaced more distinct review
+links per page load (with pagination controls for the rest); the Quick
+Finder caps at six cards and instead redirects volume to `/research`, which
+now carries far more than either surface did alone.
+
+### E2E gate re-run (production build, `next start`, port 3012)
+
+Same six specs as Task 4's own gate. Server verified before each run:
+`lsof -ti :3012` checked first; server log confirmed `✓ Ready`, no "Could
+not find a production build"; `curl` → `200`.
+
+**Clean run (only the head server running, `--workers=1`): 118 passed, 0
+failed** (exit 0) — includes the invariant-13 test (now genuinely green, not
+just "fixed but unverified") and every new/modified test from all 5 commits.
+
+**Determinism check on the hydration/facet-sensitive subset** (operator
+requirement — a single green run is not evidence of determinism):
+`e2e/homepage-quick-finder.spec.ts` + `e2e/research-tracking.spec.ts`,
+`--repeat-each=3` (34 tests × 3 = 102 runs): **100 passed, 2 failed.** Both
+failures were `research-tracking.spec.ts` filter-chip tests timing out
+waiting for a URL to update after a chip click (a different specific test
+each time), the exact detached-node race `f9b076d`'s own commit message
+describes. **Verified NOT a regression from this round**: the identical
+`--repeat-each=3` run against the UNMODIFIED `f9b076d` baseline (original
+selectors, no testid, no other fixes), served alone with no other build
+running, reproduced the same ~2/36 (5.6%) rate on the same test class. This
+is pre-existing, low-frequency flakiness in the click-then-assert pattern
+of two specific test bodies neither this round's commits nor Task 4 wrote
+or touched — not something introduced here, and out of this round's
+surgical scope to chase further.
+
+### Deviations
+
+None from the operator's five commits. One judgment call, flagged rather
+than silently resolved: the operator's Commit 2 instruction to "correct the
+claim in the SPEC" could not be matched to a literal pre-existing false
+statement in the numbered design spec
+(`docs/superpowers/specs/2026-07-27-research-discovery-catalog-design.md`)
+after an exhaustive search — the spec was simply silent on the multi-context
+residual risk, not wrong about it. Interpreted as: add the missing, correct
+disclosure there for the first time (§4.1 amendment), rather than "fix" text
+that does not exist.

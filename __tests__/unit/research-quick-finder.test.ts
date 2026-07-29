@@ -11,14 +11,23 @@
 // CatalogCard): no star icon, no `reviewCount`, no nested anchors.
 
 import { describe, it, expect, vi } from 'vitest';
-import { createElement } from 'react';
+import { createElement, type ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import type { DiscoveryItem } from '@/lib/research/catalog-shell-logic';
+
+// Minimal shape of the `next/link` props this mock actually reads —
+// `href` (string, or an object carrying `pathname`) and `children`; every
+// other prop (className, onClick, style, …) passes through untyped-but-not-
+// `any` via the `Record<string, unknown>` spread.
+type MockLinkProps = {
+  href: string | { pathname?: string };
+  children?: ReactNode;
+} & Record<string, unknown>;
 
 vi.mock('next/link', async () => {
   const { createElement } = await import('react');
   return {
-    default: ({ href, children, ...rest }: any) =>
+    default: ({ href, children, ...rest }: MockLinkProps) =>
       createElement('a', { href: typeof href === 'string' ? href : href?.pathname ?? '#', ...rest }, children),
   };
 });

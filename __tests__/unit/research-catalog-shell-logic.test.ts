@@ -10,6 +10,7 @@ import {
   finderItemHref,
   finderResults,
   finderViewAllHref,
+  matchesItemQuery,
   migrateLegacyTradingShortlist,
   parseDiscoverySearchParams,
   persistScopedShortlist,
@@ -21,8 +22,10 @@ import {
   shortlistStorageKey,
   sortFinderItems,
   sortHubProjections,
+  toFinderClientItems,
   toggleScopedShortlist,
 } from "@/lib/research/catalog-shell-logic";
+import { categoryConfig } from "@/lib/i18n/config";
 import type {
   CockpitKey,
   DiscoveryItem,
@@ -1465,5 +1468,187 @@ describe("BEST_X_MANIFEST multi-topic-per-category shape (regression guard)", ()
         "credit-monitoring",
       ]),
     );
+  });
+});
+
+// --- toFinderClientItems (PR 3 review fix — client payload projection) -----
+// The homepage Quick Finder was handed the ENTIRE catalog.items (incl.
+// searchText, description, every researchContexts entry with keyFacts) as
+// client-component props, measured as a +17.0 KiB (+43%) gzip regression on
+// `/` (see audits/reports/research-discovery-pr3.md). QuickFinder only ever
+// reads researchContexts[0] (finderItemHref, handleItemClick) and renders
+// nothing from keyFacts, so this trims the DTO server-side, before it
+// crosses the RSC/client boundary — the TYPE stays `DiscoveryItem[]` (no
+// second Finder-specific item type, per this file's own architecture rule),
+// only the VALUES shrink. `matchesItemQuery`/`sortFinderItems`/
+// `finderResults` are unchanged; they just read whatever `display.searchText`
+// they're given.
+describe("toFinderClientItems (client payload projection)", () => {
+  const finderItem = (
+    id: string,
+    over: Partial<DiscoveryItem> = {},
+  ): DiscoveryItem =>
+    makeDiscoveryItem({
+      id,
+      display: {
+        ...makeDiscoveryItem().display,
+        title: id,
+        searchText: id.toLowerCase(),
+      },
+      ...over,
+    });
+
+  it("keeps id/market/category/review/display title-description-bestFor-sortDate byte-identical", () => {
+    const original = finderItem("fidelity-review");
+    const [trimmed] = toFinderClientItems([original]);
+    expect(trimmed.id).toBe(original.id);
+    expect(trimmed.market).toBe(original.market);
+    expect(trimmed.category).toBe(original.category);
+    expect(trimmed.review).toEqual(original.review);
+    expect(trimmed.display.title).toBe(original.display.title);
+    expect(trimmed.display.description).toBe(original.display.description);
+    expect(trimmed.display.bestFor).toBe(original.display.bestFor);
+    expect(trimmed.display.sortDate).toBe(original.display.sortDate);
+  });
+
+  it("empties keyFacts on the surviving context but keeps every field the Finder actually reads", () => {
+    const original = finderItem("fidelity-review", {
+      researchContexts: [
+        makeContext({ keyFacts: { optionsFee: "$0.65", minDeposit: "$0" } }),
+      ],
+    });
+    const [trimmed] = toFinderClientItems([original]);
+    expect(trimmed.researchContexts).toHaveLength(1);
+    expect(trimmed.researchContexts[0].keyFacts).toEqual({});
+    expect(trimmed.researchContexts[0].topic).toBe(original.researchContexts[0].topic);
+    expect(trimmed.researchContexts[0].productSlug).toBe(
+      original.researchContexts[0].productSlug,
+    );
+    expect(trimmed.researchContexts[0].status).toBe(original.researchContexts[0].status);
+    expect(trimmed.researchContexts[0].auditedRank).toBe(
+      original.researchContexts[0].auditedRank,
+    );
+  });
+
+  // QuickFinder's own code (components/research/QuickFinder.tsx) only ever
+  // reads context.topic/status/auditedRank/productSlug — every other
+  // ResearchContext field (topicLabel, manifestOrder, displayName, tagline,
+  // bestFor, confidence, dataVerifiedAt, auditedScore, dataPoints,
+  // compareBaseHref) is dead weight on this wire specifically (it matters to
+  // the HUB's own catalog fetch, which is untouched — see this describe
+  // block's own header). Blanked rather than omitted, so the return type
+  // stays exactly `ResearchContext` (no second, optional-fields variant).
+  it("blanks every OTHER context field the Finder never reads, not just keyFacts", () => {
+    const original = finderItem("fidelity-review", {
+      researchContexts: [
+        makeContext({
+          topicLabel: "Best Trading Platforms",
+          manifestOrder: 3,
+          displayName: "Fidelity",
+          tagline: "Full-service investing",
+          bestFor: "Long-term investors",
+          confidence: "high",
+          dataVerifiedAt: "2026-07-03",
+          auditedScore: 9.6,
+          dataPoints: 4,
+          compareBaseHref: "/us/trading/best/trading-platforms",
+        }),
+      ],
+    });
+    const [trimmed] = toFinderClientItems([original]);
+    const context = trimmed.researchContexts[0];
+    expect(context.topicLabel).toBe("");
+    expect(context.manifestOrder).toBe(0);
+    expect(context.displayName).toBe("");
+    expect(context.tagline).toBeNull();
+    expect(context.bestFor).toBeNull();
+    expect(context.confidence).toBeNull();
+    expect(context.dataVerifiedAt).toBeNull();
+    expect(context.auditedScore).toBeNull();
+    expect(context.dataPoints).toBe(0);
+    expect(context.compareBaseHref).toBe("");
+    // The four fields the Finder actually reads survive untouched.
+    expect(context.topic).toBe(original.researchContexts[0].topic);
+    expect(context.status).toBe(original.researchContexts[0].status);
+    expect(context.productSlug).toBe(original.researchContexts[0].productSlug);
+    expect(context.auditedRank).toBe(original.researchContexts[0].auditedRank);
+  });
+
+  it("drops every research context after the first (manifest-order) one — the Finder never reads past index 0", () => {
+    const original = finderItem("multi-context-broker", {
+      review: null,
+      researchContexts: [
+        makeContext({ topic: "trading-platforms", manifestOrder: 0 }),
+        makeContext({ topic: "options-brokers", manifestOrder: 1 }),
+      ],
+    });
+    const [trimmed] = toFinderClientItems([original]);
+    expect(trimmed.researchContexts).toHaveLength(1);
+    expect(trimmed.researchContexts[0].topic).toBe("trading-platforms");
+  });
+
+  it("keeps a cockpit-only item's finderItemHref byte-identical after trimming", () => {
+    const original = finderItem("merrill-edge", {
+      review: null,
+      display: {
+        title: "Merrill Edge",
+        description: "Broker research",
+        bestFor: null,
+        searchText: "irrelevant original search text",
+        sortDate: "2026-07-03",
+      },
+      researchContexts: [
+        makeContext({
+          productSlug: "merrill-edge",
+          displayName: "Merrill Edge",
+          topic: "trading-platforms",
+        }),
+      ],
+    });
+    const [trimmed] = toFinderClientItems([original]);
+    expect(finderItemHref(trimmed)).toBe(finderItemHref(original));
+  });
+
+  it("recomputes a shorter searchText that still matches the item's own title, description, bestFor and category label", () => {
+    const original = finderItem("schwab-review", {
+      category: "trading",
+      review: makeReview({
+        title: "Charles Schwab Review",
+        description: "Full-service broker",
+      }),
+      display: {
+        title: "Charles Schwab Review",
+        description: "Full-service broker",
+        bestFor: "Long-term investors",
+        searchText: "original full search text with slugs and taglines",
+        sortDate: "2026-07-01",
+      },
+    });
+    const [trimmed] = toFinderClientItems([original]);
+    expect(matchesItemQuery(trimmed, "schwab")).toBe(true);
+    expect(matchesItemQuery(trimmed, "long-term investors")).toBe(true);
+    expect(matchesItemQuery(trimmed, categoryConfig.trading.name)).toBe(true);
+  });
+
+  it("never carries a context's keyFacts, tagline, or review/product slug text in the trimmed searchText", () => {
+    const original = finderItem("fidelity-review", {
+      review: makeReview({ slug: "unique-review-slug-xyz" }),
+      researchContexts: [
+        makeContext({
+          tagline: "unique-tagline-marker-xyz",
+          keyFacts: { fee: "unique-keyfact-marker-xyz" },
+        }),
+      ],
+    });
+    const [trimmed] = toFinderClientItems([original]);
+    expect(trimmed.display.searchText).not.toContain("unique-review-slug-xyz");
+    expect(trimmed.display.searchText).not.toContain("unique-tagline-marker-xyz");
+    expect(trimmed.display.searchText).not.toContain("unique-keyfact-marker-xyz");
+  });
+
+  it("leaves an empty researchContexts array empty (no context to keep)", () => {
+    const original = finderItem("fidelity-review", { researchContexts: [] });
+    const [trimmed] = toFinderClientItems([original]);
+    expect(trimmed.researchContexts).toEqual([]);
   });
 });
