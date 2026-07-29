@@ -734,6 +734,32 @@ export function ResearchHub({ market, items, nodes, scopeSnapshot }: ResearchHub
   );
   const isActive = hasActiveDiscoveryFilters(activeFilters);
 
+  // NOT a style choice and NOT removable: a `router.push()` issued
+  // SYNCHRONOUSLY from inside a discrete click handler is silently DROPPED by
+  // the Next 16 App Router when the click lands in the first ~100–200 ms after
+  // the router mounted. The action is dispatched and the navigation's own RSC
+  // request is issued and answered 200 — but the router never commits the new
+  // canonical URL: no history entry, `useSearchParams()` never changes, so the
+  // chip never becomes pressed and the results never filter. It never
+  // recovers, and a second click is lost the same way; only a reload does.
+  // Because every filter on this hub is URL-derived, that leaves the whole
+  // discovery UI dead for a fast clicker.
+  //
+  // Handing the push to the next task dodges it. Measured on a production
+  // build, one worker, 111 clicks per arm at the same click timing (p50 121 ms
+  // after router mount): 10 lost navigations (9.0%) issuing the push inline,
+  // 0 issuing it deferred. e2e/research-filter-chip-navigation.spec.ts is the
+  // regression guard and fails within a few iterations if this is inlined
+  // again. Only the push is deferred — the target URL and the analytics event
+  // are still computed synchronously from the click's own state, so nothing
+  // about ordering or the reported counts changes.
+  const pushUrl = useCallback(
+    (href: string) => {
+      setTimeout(() => router.push(href, { scroll: false }), 0);
+    },
+    [router],
+  );
+
   // Facet toggle: router.push() (a NEW history entry), so Back after a chip
   // click undoes just that chip, never the settled search underneath it.
   // `tracked` is set for every facet research_v1 measures — originally just
@@ -753,15 +779,15 @@ export function ResearchHub({ market, items, nodes, scopeSnapshot }: ResearchHub
         });
       }
       const qs = buildDiscoverySearchParams(next).toString();
-      router.push(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+      pushUrl(qs ? `${pathname}?${qs}` : pathname);
     },
-    [activeFilters, pathname, router, items, tracker],
+    [activeFilters, pathname, pushUrl, items, tracker],
   );
 
   const resetAll = useCallback(() => {
     setQuery('');
-    router.push(pathname, { scroll: false });
-  }, [pathname, router]);
+    pushUrl(pathname);
+  }, [pathname, pushUrl]);
 
   const facets = useMemo(
     () => computeDiscoveryFacets(items, activeFilters),
