@@ -24,7 +24,6 @@ import { ReportCard } from '@/components/marketing/report-card';
 import { CategorySummary } from '@/components/marketing/category-summary';
 import { ReportPagination } from '@/components/marketing/report-pagination';
 import { NewsletterBox } from '@/components/marketing/newsletter-box';
-import { getFirstMondayOfMonth } from '@/lib/utils/date-helpers';
 import { RegionalHeroImage } from '@/components/marketing/regional-hero-image';
 
 const categoryTools: Record<string, { name: string; href: string; description: string }[]> = {
@@ -501,12 +500,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
                   <div className="flex flex-col justify-center px-5 py-3 min-w-[140px]">
                     <span className="text-xs font-bold" style={{ color: 'var(--sfp-ink)' }}>Reviewed By</span>
                     <span className="text-xs" style={{ color: 'var(--sfp-slate)' }}>SmartFinPro Research</span>
-                  </div>
-                  <div className="flex flex-col justify-center px-5 py-3 min-w-[130px]">
-                    <span className="text-xs font-bold" style={{ color: 'var(--sfp-ink)' }}>Fact-Checked</span>
-                    <span className="text-xs" style={{ color: 'var(--sfp-slate)' }}>{getFirstMondayOfMonth()}</span>
-                  </div>
-                </div>
+                  </div>                </div>
               </div>
             </div>
 
