@@ -34,6 +34,7 @@ import type {
   StorageLike,
   UnavailableScopeReason,
 } from "@/lib/research/catalog-shell-logic";
+import { BEST_X_MANIFEST } from "@/lib/comparison/topics/manifest";
 
 describe("Discovery identity", () => {
   it("keeps topic out of a cockpit-only item id", () => {
@@ -1424,5 +1425,45 @@ describe("buildDiscoverySearchParams", () => {
 
   it("produces an empty URLSearchParams for the empty filter set", () => {
     expect(buildDiscoverySearchParams(filters).toString()).toBe("");
+  });
+});
+
+// --- Multi-context residual risk guard (PR 3 review, spec §4.1 amendment
+// 2026-07-29) -----------------------------------------------------------
+// A DELIBERATE regression guard, not proof that no LIVE multi-context item
+// exists today — that would require reading real Supabase
+// `product_attributes` rows, which this unit suite never does (see the spec
+// amendment and audits/reports/research-discovery-pr3.md for the honest,
+// data-driven residual risk this test does NOT close). What this test DOES
+// prove, against the REAL manifest (not a fixture): today, BEST_X_MANIFEST
+// has EXACTLY ONE (market, category) pair carrying more than one topic. If
+// a future manifest edit adds a second such pair, this test fails loudly —
+// forcing whoever made that edit to notice a multi-context DiscoveryItem
+// just became structurally reachable in one more place, and to add real
+// browser coverage for it (e2e/homepage-quick-finder.spec.ts,
+// e2e/research-shell.spec.ts) instead of leaving it silently unit-only.
+describe("BEST_X_MANIFEST multi-topic-per-category shape (regression guard)", () => {
+  it("has exactly one (market, category) pair with more than one topic today: us/personal-finance", () => {
+    const topicsByMarketCategory = new Map<string, Set<string>>();
+    for (const entry of BEST_X_MANIFEST) {
+      const key = `${entry.market}/${entry.category}`;
+      const topics = topicsByMarketCategory.get(key) ?? new Set<string>();
+      topics.add(entry.topic);
+      topicsByMarketCategory.set(key, topics);
+    }
+
+    const multiTopicPairs = [...topicsByMarketCategory.entries()].filter(
+      ([, topics]) => topics.size > 1,
+    );
+
+    expect(multiTopicPairs.map(([key]) => key)).toEqual(["us/personal-finance"]);
+    expect(multiTopicPairs[0][1]).toEqual(
+      new Set([
+        "robo-advisors",
+        "high-yield-savings",
+        "credit-card-companies",
+        "credit-monitoring",
+      ]),
+    );
   });
 });

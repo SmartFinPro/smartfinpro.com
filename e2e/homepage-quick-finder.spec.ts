@@ -259,19 +259,32 @@ test.describe('Homepage Quick Finder — adversarial cases', () => {
   // singular — lib/research/catalog-shell-logic.ts's DiscoveryItem shape —
   // so two topics in DIFFERENT categories, like the credit-repair/debt-relief
   // pair below, produce two separate items, not one multi-context item).
-  // Every BEST_X_MANIFEST entry (lib/comparison/topics/manifest.ts) was
-  // inspected across all four markets (us/uk/ca/au) before writing this
-  // comment: no category in the live manifest currently has more than ONE
-  // topic. There is therefore no live product today that could honestly
-  // produce a multi-context DiscoveryItem — staging one here would require
-  // writing fabricated catalog data into a real page response, which the
-  // operator's instructions explicitly forbid ("do NOT stage a fake browser
-  // scenario"). This case is fully proven at the unit level instead:
-  // __tests__/unit/research-catalog-shell-logic.test.ts, "keeps a
-  // multi-context cockpit-only item as a single result and hrefs its first
-  // (manifest-order) context" (a synthetic two-topic fixture, since no real
-  // one exists) — asserting exactly the invariant this case cares about:
-  // ONE Finder result, hrefed off the first (manifest-order) context.
+  //
+  // CORRECTED PREMISE (PR 3 review, this is a DATA fact, not a code fact —
+  // an earlier version of this comment claimed no category in the live
+  // manifest has more than one topic, which is FALSE and was never actually
+  // verified against lib/comparison/topics/manifest.ts): BEST_X_MANIFEST has
+  // exactly ONE (market, category) pair with more than one topic —
+  // us/personal-finance (robo-advisors, high-yield-savings,
+  // credit-card-companies, credit-monitoring) — every other category has at
+  // most one topic per market, so a multi-context item is structurally
+  // impossible anywhere else. This case is unit-only because no PRODUCT
+  // currently qualifies in 2+ of those four us/personal-finance topics at
+  // once (a Supabase `product_attributes` fact, verified live — see
+  // __tests__/unit/research-hub-integration.test.ts's own header for the
+  // per-topic slug counts checked), not because the manifest shape forbids
+  // it. A single new product row qualifying in two of those topics would
+  // create a live multi-context item with NO code change and NO failing
+  // test — at which point `finderItemHref` silently picks
+  // `researchContexts[0]` (manifest order) on a real homepage card. That
+  // residual risk is data-driven and cannot be closed by this spec file;
+  // it is flagged in audits/reports/research-discovery-pr3.md instead.
+  // This case is fully proven at the unit level: __tests__/unit/
+  // research-catalog-shell-logic.test.ts, "keeps a multi-context cockpit-only
+  // item as a single result and hrefs its first (manifest-order) context"
+  // (a synthetic two-topic fixture, since no live one exists today) —
+  // asserting exactly the invariant this case cares about: ONE Finder
+  // result, hrefed off the first (manifest-order) context, never the second.
 
   // Two products sharing the SAME bare topic string ("companies") in
   // different categories — the live pair named by the operator. Verified

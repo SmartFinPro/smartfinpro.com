@@ -170,6 +170,26 @@ type DiscoveryProjection =
 - IDs müssen katalogweit eindeutig sein. Eine Kollision ist ein Testfehler,
   kein Last-write-wins-Fall.
 
+#### Amendment (2026-07-29): Multi-Context ist ein Daten-, kein Code-Risiko
+
+`BEST_X_MANIFEST` (`lib/comparison/topics/manifest.ts`) hat genau ein
+(Market, Kategorie)-Paar mit mehr als einem Topic: `us/personal-finance`
+(robo-advisors, high-yield-savings, credit-card-companies,
+credit-monitoring). Jede andere Kategorie trägt höchstens ein Topic pro
+Markt — ein Multi-Context-Item ist dort strukturell unmöglich. Ob heute ein
+echtes Multi-Context-Item existiert, ist damit KEINE Manifest-Frage mehr,
+sondern eine reine Supabase-`product_attributes`-Datenfrage: qualifiziert
+ein Produkt in ≥2 der vier `us/personal-finance`-Topics gleichzeitig? Zum
+Zeitpunkt dieses Amendments: nein (verifiziert, 0 Slug-Overlap über alle
+vier Topics). Das kann sich durch eine einzelne neue Produktzeile ändern —
+ohne Code-Änderung und ohne fehlschlagenden Test. Der oben dokumentierte
+Sortier-/Href-Mechanismus (Manifest-Reihenfolge zuerst) ist dafür bereits
+korrekt und deterministisch getestet
+(`__tests__/unit/research-catalog-shell-logic.test.ts`, synthetisches
+Zwei-Topic-Fixture); dieses Amendment korrigiert nur eine frühere, nie
+gegen den Manifest-Code verifizierte Behauptung, dass Multi-Context
+strukturell für JEDE Kategorie ausgeschlossen sei.
+
 ### 4.2 Qualifizierter Research-Context
 
 Nur `audited` und `provisional` werden als `ResearchContext` in Discovery
