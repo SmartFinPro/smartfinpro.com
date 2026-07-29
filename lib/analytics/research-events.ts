@@ -239,9 +239,18 @@ export function buildResearchEventData(
  * The ONLY sanctioned way to derive a search event's payload from a raw query:
  * the trimmed character count. Anything that would put the string itself into
  * an event is a contract violation.
+ *
+ * Clamped to 500 — the wire cap `properties.queryLength` is validated against
+ * (ResearchV1PropertiesSchema, lib/validation/index.ts, z.number().max(500)).
+ * An uncapped length here could exceed that Zod max and get the WHOLE event
+ * rejected (400) by /api/track, not just this one field; trackFinderCta sends
+ * its event immediately and alone, so one over-long query on a CTA click
+ * would silently lose its entire event. 500 is already an absurd search-box
+ * input, so clamping can only ever under-report an already-meaningless
+ * outlier length — it can never lose a real event.
  */
 export function toQueryLength(raw: string): number {
-  return raw.trim().length;
+  return Math.min(raw.trim().length, 500);
 }
 
 /**

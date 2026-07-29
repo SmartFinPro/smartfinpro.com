@@ -96,6 +96,27 @@ describe('toQueryLength', () => {
     expect(toQueryLength('   ')).toBe(0);
     expect(toQueryLength('')).toBe(0);
   });
+
+  // PR 3 review fix: properties.queryLength is capped at 500 by the strict
+  // wire schema (ResearchV1PropertiesSchema, lib/validation/index.ts:240,
+  // z.number().int().min(0).max(500)), but toQueryLength itself had no
+  // ceiling. An uncapped length over 500 fails that Zod max, and since the
+  // properties bag is a single item in a batch array, the WHOLE event batch
+  // is rejected (400) — not just this one field. trackFinderCta sends its
+  // event immediately and alone, so one over-long query on a CTA click lost
+  // its entire event. Clamping here guarantees toQueryLength can never
+  // itself produce a value the wire schema would reject.
+  it('clamps at exactly the wire cap (500) so a longer query never gets its whole event rejected', () => {
+    expect(toQueryLength('a'.repeat(500))).toBe(500);
+  });
+
+  it('clamps a query one character over the wire cap down to 500', () => {
+    expect(toQueryLength('a'.repeat(501))).toBe(500);
+  });
+
+  it('clamps a wildly over-long query (e.g. a pasted paragraph) down to 500', () => {
+    expect(toQueryLength('a'.repeat(2000))).toBe(500);
+  });
 });
 
 describe('research_filter_change', () => {
