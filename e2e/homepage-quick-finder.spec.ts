@@ -97,11 +97,17 @@ async function finderCardIds(page: Page): Promise<string[]> {
   return finderCards(page).evaluateAll((nodes) => nodes.map((n) => n.getAttribute('data-finder-item') ?? ''));
 }
 
+// PR 3 review fix (spec §15 invariant 13): the live region now reads
+// "Showing {visible} of {total} results" — `total` is the HONEST, uncapped
+// match count (the same value every finder analytics event's `resultCount`
+// carries), never the six-card-capped visible count. This reads the TOTAL
+// specifically (the "of N results" number), not the first digit in the
+// string.
 async function resultCountText(page: Page): Promise<number> {
   const text = await page.locator('#reports [aria-live="polite"]').first().textContent();
-  const match = text?.match(/\d+/);
-  if (!match) throw new Error(`could not read a result count from "${text}"`);
-  return Number(match[0]);
+  const match = text?.match(/of (\d+) results/);
+  if (!match) throw new Error(`could not read a total result count from "${text}"`);
+  return Number(match[1]);
 }
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -369,13 +375,17 @@ test.describe('Homepage Quick Finder — research_v1 analytics (surface: finder)
     page,
   }) => {
     await page.getByRole('searchbox', { name: SEARCH_LABEL }).fill('schwab');
-    const renderedCount = await finderCards(page).count();
     await expect.poll(() => named(batches, 'research_search').length).toBeGreaterThan(0);
+    // PR 3 review fix (spec §15 invariant 13): `resultCount` is the honest,
+    // uncapped total — read the SAME total off the live region (an
+    // independent DOM witness of what's actually announced), never the
+    // six-card-capped `finderCards(page).count()`.
+    const totalFromRegion = await resultCountText(page);
 
     const events = named(batches, 'research_search');
     expect(events).toHaveLength(1);
     expect(props(events[0]).queryLength).toBe(6);
-    expect(props(events[0]).resultCount).toBe(renderedCount);
+    expect(props(events[0]).resultCount).toBe(totalFromRegion);
     expect(props(events[0]).surface).toBe('finder');
     expect(props(events[0]).schemaVersion).toBe('research_v1');
     expect(props(events[0]).market).toBe('us');
@@ -385,14 +395,15 @@ test.describe('Homepage Quick Finder — research_v1 analytics (surface: finder)
   // PR 5 gap-close (9c3fbc4) click-wiring proof — requirement 5.
   test('the Category chip sends facet:category, surface:finder and the resulting count', async ({ page }) => {
     await page.locator('#reports').getByRole('button', { name: 'Trading Platforms', exact: true }).click();
-    const renderedCount = await finderCards(page).count();
     await expect.poll(() => named(batches, 'research_filter_change').length).toBeGreaterThan(0);
+    // PR 3 review fix: same honest-total witness as the search test above.
+    const totalFromRegion = await resultCountText(page);
 
     const event = named(batches, 'research_filter_change')[0];
     expect(props(event).facet).toBe('category');
     expect(props(event).value).toBe('trading');
     expect(props(event).active).toBe(true);
-    expect(props(event).resultCount).toBe(renderedCount);
+    expect(props(event).resultCount).toBe(totalFromRegion);
     expect(props(event).surface).toBe('finder');
   });
 
@@ -400,7 +411,9 @@ test.describe('Homepage Quick Finder — research_v1 analytics (surface: finder)
     page,
   }) => {
     await page.getByRole('searchbox', { name: SEARCH_LABEL }).fill('trading');
-    const visibleAtClick = await finderCards(page).count();
+    // Captured BEFORE the click (the click navigates away) — PR 3 review fix:
+    // the honest, uncapped total at that moment, not the six-card DOM count.
+    const totalAtClick = await resultCountText(page);
 
     await page.getByRole('link', { name: /view all research/i }).click();
     await expect.poll(() => named(batches, 'research_finder_cta').length).toBeGreaterThan(0);
@@ -408,7 +421,7 @@ test.describe('Homepage Quick Finder — research_v1 analytics (surface: finder)
     const event = named(batches, 'research_finder_cta')[0];
     expect(props(event).trigger).toBe('view_all');
     expect(props(event).surface).toBe('finder');
-    expect(props(event).resultCount).toBe(visibleAtClick);
+    expect(props(event).resultCount).toBe(totalAtClick);
     expect(props(event).topic).toBe('hub');
   });
 

@@ -4,6 +4,7 @@ import {
   buildScopedCompareUrl,
   cockpitKeyFor,
   computeDiscoveryFacets,
+  computeFinderCounts,
   countDiscoveryItems,
   describeScopeSwitch,
   finderItemHref,
@@ -724,6 +725,74 @@ describe("Quick Finder pure contracts (finderResults / finderItemHref / finderVi
     expect(finderViewAllHref("uk", { query: " ", category: null })).toBe(
       "/uk/research",
     );
+  });
+
+  // --- computeFinderCounts (PR 3 review fix, spec §15 invariant 13) --------
+  // Before this fix, every Finder analytics event AND the live region both
+  // reported the six-card-capped `finderResults(...).length` as the result
+  // count, so a query matching 40 items and one matching 6 were
+  // indistinguishable. `computeFinderCounts` names the two quantities
+  // explicitly: `visibleResults` (unchanged — exactly `finderResults`'
+  // six-card-capped projection) and `totalMatches` (the HONEST, uncapped
+  // `sortFinderItems(...).length`). The matrix below covers every boundary
+  // the operator flagged: 0, 1, fewer than six, exactly six (the case that
+  // must NOT look like a special "hide the cap" branch — total and visible
+  // are equal there for a genuine reason, not a coincidence), and more than
+  // six (where they must genuinely differ).
+  describe("computeFinderCounts (visibleResults vs totalMatches)", () => {
+    it.each([
+      [0, 0, 0],
+      [1, 1, 1],
+      [5, 5, 5],
+      [6, 6, 6],
+      [9, 6, 9],
+    ])(
+      "%i matching item(s) -> visibleResults.length=%i, totalMatches=%i",
+      (matchCount, expectedVisible, expectedTotal) => {
+        const items = Array.from({ length: matchCount }, (_, index) =>
+          finderItem(`item-${index}`),
+        );
+        const counts = computeFinderCounts(items, { query: "", category: null });
+        expect(counts.visibleResults).toHaveLength(expectedVisible);
+        expect(counts.totalMatches).toBe(expectedTotal);
+      },
+    );
+
+    it("at exactly six matches, totalMatches equals visibleResults.length for a genuine reason, not a special case", () => {
+      const items = Array.from({ length: 6 }, (_, index) => finderItem(`item-${index}`));
+      const counts = computeFinderCounts(items, { query: "", category: null });
+      expect(counts.totalMatches).toBe(counts.visibleResults.length);
+      expect(counts.totalMatches).toBe(6);
+    });
+
+    it("above six matches, totalMatches is the true uncapped count while visibleResults stays capped at six", () => {
+      const items = Array.from({ length: 9 }, (_, index) => finderItem(`item-${index}`));
+      const counts = computeFinderCounts(items, { query: "", category: null });
+      expect(counts.totalMatches).toBe(9);
+      expect(counts.visibleResults).toHaveLength(6);
+      expect(counts.totalMatches).not.toBe(counts.visibleResults.length);
+    });
+
+    it("visibleResults is byte-identical to finderResults for the same items/filters — never a second ranking rule", () => {
+      const items = Array.from({ length: 9 }, (_, index) => finderItem(`item-${index}`));
+      const filters = { query: "", category: null };
+      const counts = computeFinderCounts(items, filters);
+      expect(counts.visibleResults.map((resultItem) => resultItem.id)).toEqual(
+        finderResults(items, filters).map((resultItem) => resultItem.id),
+      );
+    });
+
+    it("totalMatches counts a real query+category intersection, not just the unfiltered item count", () => {
+      const items = [
+        finderItem("acme-trading", { category: "trading" }),
+        finderItem("zenith-trading", { category: "trading" }),
+        finderItem("acme-personal-finance", { category: "personal-finance" }),
+      ];
+      // Only "acme-trading" matches BOTH category:'trading' AND the 'acme' query.
+      const counts = computeFinderCounts(items, { query: "acme", category: "trading" });
+      expect(counts.totalMatches).toBe(1);
+      expect(counts.visibleResults).toHaveLength(1);
+    });
   });
 });
 

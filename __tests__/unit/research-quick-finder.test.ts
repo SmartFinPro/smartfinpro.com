@@ -57,6 +57,9 @@ const makeFinderItem = (index: number): DiscoveryItem => ({
 
 const eightItems = Array.from({ length: 8 }, (_, index) => makeFinderItem(index));
 
+const makeItems = (count: number): DiscoveryItem[] =>
+  Array.from({ length: count }, (_, index) => makeFinderItem(index));
+
 // `.test.ts` (not `.test.tsx`) has no JSX pragma — `createElement` builds the
 // same element `<QuickFinder market="us" items={eightItems} />` would,
 // without hooks-invoked-outside-React's-dispatcher errors that a plain
@@ -65,6 +68,9 @@ const eightItems = Array.from({ length: 8 }, (_, index) => makeFinderItem(index)
 // through React's real render path).
 const renderQuickFinder = (): string =>
   renderToStaticMarkup(createElement(QuickFinder, { market: 'us', items: eightItems }));
+
+const renderQuickFinderWithItems = (items: DiscoveryItem[]): string =>
+  renderToStaticMarkup(createElement(QuickFinder, { market: 'us', items }));
 
 const countOccurrences = (value: string, needle: string): number =>
   value.split(needle).length - 1;
@@ -85,5 +91,40 @@ describe('QuickFinder', () => {
     const html = renderQuickFinder();
     expect(html).not.toContain('reviewCount');
     expect(html).not.toContain('aria-label="star"');
+  });
+});
+
+// PR 3 review fix (spec §15 invariant 13, "Hero, Facetten, CTA und Events
+// melden konsistente Counts"): the live region and the "View all" CTA must
+// both report the HONEST, uncapped total — never the six-card render cap.
+// Default state (no query, no category) means totalMatches === items.length,
+// so this matrix also covers the boundary the operator flagged as the
+// interesting one: at exactly six items, "Showing 6 of 6" must be true
+// because there are genuinely six matches, not because a cap silently
+// kicked in and happened to also read 6.
+describe('QuickFinder — visibleResults vs totalMatches (default state)', () => {
+  it.each([
+    [0, 0],
+    [1, 1],
+    [5, 5],
+    [6, 6],
+    [9, 6],
+  ])('%i item(s) in the catalog render %i card(s), and both counts are announced honestly', (itemCount, expectedCards) => {
+    const html = renderQuickFinderWithItems(makeItems(itemCount));
+    expect(countOccurrences(html, 'data-finder-item=')).toBe(expectedCards);
+    expect(html).toContain(`Showing ${expectedCards} of ${itemCount} results`);
+    expect(html).toContain(`View all research (${itemCount})`);
+  });
+
+  it('at exactly six items, the visible count and the total are equal for a genuine reason, not a hidden cap', () => {
+    const html = renderQuickFinderWithItems(makeItems(6));
+    expect(html).toContain('Showing 6 of 6 results');
+  });
+
+  it('above six items, the announced total is the true uncapped count while only six cards render', () => {
+    const html = renderQuickFinderWithItems(makeItems(9));
+    expect(countOccurrences(html, 'data-finder-item=')).toBe(6);
+    expect(html).toContain('Showing 6 of 9 results');
+    expect(html).not.toContain('Showing 9 of 9');
   });
 });

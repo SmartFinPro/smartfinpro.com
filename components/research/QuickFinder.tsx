@@ -42,8 +42,10 @@
 //   - a review-backed title click fires `research_review_click` immediately;
 //   - a Cockpit-only card's own click fires `trackFinderCta('dossier_item', …)`;
 //   - the "View all" CTA fires `trackFinderCta('view_all', …)` with the
-//     `resultCount` actually on screen at click time (never recomputed after
-//     the click).
+//     honest, uncapped `resultCount` (`computeFinderCounts(...).totalMatches`,
+//     PR 3 review fix, spec §15 invariant 13) captured AT CLICK TIME — never
+//     the six-card-capped `visibleResults.length`, and never recomputed after
+//     the click.
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -51,8 +53,8 @@ import Link from 'next/link';
 import { Search } from 'lucide-react';
 import { categoryConfig, marketCategories, type Category, type Market } from '@/lib/i18n/config';
 import {
+  computeFinderCounts,
   finderItemHref,
-  finderResults,
   finderViewAllHref,
   type DiscoveryItem,
   type FinderFilters,
@@ -76,16 +78,19 @@ export interface QuickFinderProps {
  *  of what a unit test can prove; that a real chip click actually calls it
  *  exactly once is a browser-level (e2e) concern, same as the Hub's own
  *  status/confidence/fresh chips (e2e/research-tracking.spec.ts).
- *  `resultCount` is a REAL re-filter via `finderResults` — the SAME
- *  six-card-capped projection the visible grid itself uses for
- *  `nextCategory` — never the count already on screen before the click. */
+ *
+ *  `resultCount` is `computeFinderCounts(...).totalMatches` (PR 3 review
+ *  fix, spec §15 invariant 13) — the HONEST, uncapped match count for
+ *  `nextCategory`, via a REAL re-filter — never the six-card-capped count
+ *  the visible grid renders, and never the count already on screen before
+ *  the click. */
 export function resolveCategoryFilterChange(
   items: DiscoveryItem[],
   filters: FinderFilters,
   nextCategory: Category | null,
 ): { facet: 'category'; value: Category | null; active: boolean; resultCount: number } {
-  const resultCount = finderResults(items, { ...filters, category: nextCategory }).length;
-  return { facet: 'category', value: nextCategory, active: nextCategory !== null, resultCount };
+  const { totalMatches } = computeFinderCounts(items, { ...filters, category: nextCategory });
+  return { facet: 'category', value: nextCategory, active: nextCategory !== null, resultCount: totalMatches };
 }
 
 export function QuickFinder({ market, items }: QuickFinderProps) {
@@ -96,7 +101,11 @@ export function QuickFinder({ market, items }: QuickFinderProps) {
   const [category, setCategory] = useState<Category | null>(null);
 
   const filters = useMemo(() => ({ query, category }), [query, category]);
-  const results = useMemo(() => finderResults(items, filters), [items, filters]);
+  // PR 3 review fix (spec §15 invariant 13): `visibleResults` is exactly what
+  // renders (six-card cap, unchanged); `totalMatches` is the HONEST, uncapped
+  // match count — every finder tracking call below reports `.totalMatches`,
+  // never `visibleResults.length`.
+  const { visibleResults, totalMatches } = useMemo(() => computeFinderCounts(items, filters), [items, filters]);
 
   // Category chips only for categories this market's catalog actually has —
   // FilterChips itself additionally hides the whole row when fewer than two
@@ -120,8 +129,8 @@ export function QuickFinder({ market, items }: QuickFinderProps) {
 
   // Category chip: fires immediately on selection/clear (no debounce, unlike
   // search) — `resolveCategoryFilterChange` (module scope, above) computes
-  // the event args from a REAL re-filter of `items`, never the `results`
-  // already on screen before this change.
+  // the event args from a REAL re-filter of `items`, never the count already
+  // on screen before this change.
   const handleCategoryChange = useCallback(
     (value: Category | null) => {
       const change = resolveCategoryFilterChange(items, filters, value);
@@ -133,22 +142,24 @@ export function QuickFinder({ market, items }: QuickFinderProps) {
     [items, filters, tracker],
   );
 
-  // Settled-query analytics only — the visible `results` above already
+  // Settled-query analytics only — the visible `visibleResults` above already
   // update on every keystroke. `trackedQueryRef` mirrors ResearchHub's own
   // "already reported this value" guard (its `filters.query` comparison) so
-  // an unrelated category change — which also changes `results.length`, a
+  // an unrelated category change — which also changes `totalMatches`, a
   // dependency here — never re-fires `research_search` for a query that
-  // has not actually changed since the last report.
+  // has not actually changed since the last report. `resultCount` is the
+  // honest, uncapped `totalMatches` (PR 3 review fix, spec §15 invariant 13)
+  // — never the six-card-capped `visibleResults.length`.
   const trackedQueryRef = useRef('');
   useEffect(() => {
     const trimmed = query.trim();
     if (trimmed === trackedQueryRef.current) return;
     const id = setTimeout(() => {
       trackedQueryRef.current = trimmed;
-      tracker.trackSearch(toQueryLength(trimmed), results.length, { surface: 'finder' });
+      tracker.trackSearch(toQueryLength(trimmed), totalMatches, { surface: 'finder' });
     }, 300);
     return () => clearTimeout(id);
-  }, [query, results.length, tracker]);
+  }, [query, totalMatches, tracker]);
 
   const handleItemClick = useCallback(
     (item: DiscoveryItem, position: number) => {
@@ -172,23 +183,26 @@ export function QuickFinder({ market, items }: QuickFinderProps) {
         'dossier_item',
         {
           queryLength: toQueryLength(query),
-          resultCount: results.length,
+          // Honest, uncapped total (PR 3 review fix) — not visibleResults.length.
+          resultCount: totalMatches,
           productSlug: context.productSlug,
           kind: 'dossier',
         },
         { surface: 'finder', topic: context.topic, category: item.category },
       );
     },
-    [tracker, query, results.length],
+    [tracker, query, totalMatches],
   );
 
   const handleViewAllClick = useCallback(() => {
     tracker.trackFinderCta(
       'view_all',
-      { queryLength: toQueryLength(query), resultCount: results.length },
+      // Honest, uncapped total AT CLICK TIME (PR 3 review fix) — not
+      // visibleResults.length, and never recomputed after navigation.
+      { queryLength: toQueryLength(query), resultCount: totalMatches },
       { surface: 'finder' },
     );
-  }, [tracker, query, results.length]);
+  }, [tracker, query, totalMatches]);
 
   const viewAllHref = finderViewAllHref(market, filters);
 
@@ -214,14 +228,19 @@ export function QuickFinder({ market, items }: QuickFinderProps) {
         </div>
         {/* Permanently-mounted live region (never conditionally mounted) —
             visible AND announced, so it doubles as the on-screen result
-            count and the a11y announcement in one element. */}
+            count and the a11y announcement in one element. PR 3 review fix
+            (spec §15 invariant 13): distinguishes what's actually SHOWN
+            (visibleResults.length, capped at six) from the honest, uncapped
+            TOTAL (totalMatches) — the old "{n} results" wording collapsed
+            both into the capped number, so a query with 40 matches announced
+            "6 results", indistinguishable from a query with exactly 6. */}
         <p
           aria-live="polite"
           aria-atomic="true"
           className="text-sm font-medium shrink-0"
           style={{ color: 'var(--sfp-slate)' }}
         >
-          {results.length} results
+          Showing {visibleResults.length} of {totalMatches} results
         </p>
       </div>
 
@@ -246,7 +265,7 @@ export function QuickFinder({ market, items }: QuickFinderProps) {
         </div>
       )}
 
-      {results.length === 0 ? (
+      {visibleResults.length === 0 ? (
         <div
           className="rounded-xl border p-8 text-center"
           style={{ borderColor: 'var(--sfp-hairline)', background: 'var(--sfp-gray)' }}
@@ -257,7 +276,7 @@ export function QuickFinder({ market, items }: QuickFinderProps) {
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {results.map((item, index) => {
+          {visibleResults.map((item, index) => {
             const href = finderItemHref(item);
             const ratingLabel = item.review
               ? `Editorial · ${item.review.editorialRating.toFixed(1)}/5`
@@ -318,7 +337,10 @@ export function QuickFinder({ market, items }: QuickFinderProps) {
         className="inline-flex w-fit items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-bold no-underline"
         style={{ background: 'var(--sfp-navy)', color: '#ffffff' }}
       >
-        View all research
+        {/* PR 3 review fix: the label now reflects the honest, uncapped total
+            — its purpose is to say there is more than the six cards above,
+            which a static "View all research" never communicated. */}
+        View all research ({totalMatches})
       </Link>
     </div>
   );

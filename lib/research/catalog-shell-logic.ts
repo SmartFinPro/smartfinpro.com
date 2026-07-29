@@ -650,6 +650,40 @@ export function finderResults(
   return sortFinderItems(items, filters).slice(0, limit);
 }
 
+/** The Finder's two named result quantities (PR 3 review fix, spec §15
+ *  invariant 13: "Hero, Facetten, CTA und Events melden konsistente
+ *  Counts"). Before this fix, every Finder analytics event
+ *  (research_search / research_filter_change / research_finder_cta) AND the
+ *  live region both reported the six-card-capped `finderResults(...).length`
+ *  as `resultCount` — so a query matching 40 items and one matching 6 were
+ *  analytically indistinguishable, and the live region undersold how much
+ *  research actually existed for the current query/category state.
+ *
+ *  `visibleResults` is byte-identical to `finderResults` (the render cap
+ *  stays — never changed by this fix); `totalMatches` is the HONEST,
+ *  uncapped `sortFinderItems(...).length` — the same pure ranking
+ *  `finderResults` slices from, never a second/different filter path. Both
+ *  fields are derived from the SAME `items`+`filters` input in the same
+ *  call, so they can never drift out of sync with each other. Callers
+ *  (QuickFinder's render, `resolveCategoryFilterChange`, the search/CTA
+ *  tracking call sites) read `.totalMatches` for every `resultCount` they
+ *  send, and `.visibleResults` for what they actually render. */
+export interface FinderCounts {
+  visibleResults: DiscoveryItem[];
+  totalMatches: number;
+}
+
+export function computeFinderCounts(
+  items: readonly DiscoveryItem[],
+  filters: FinderFilters,
+  limit = 6,
+): FinderCounts {
+  return {
+    visibleResults: finderResults(items, filters, limit),
+    totalMatches: sortFinderItems(items, filters).length,
+  };
+}
+
 /** One Finder card's destination href (spec §9.3). Review-backed items go
  *  straight to their review, regardless of any research context they might
  *  also carry. Cockpit-only items go to the market's Research hub,

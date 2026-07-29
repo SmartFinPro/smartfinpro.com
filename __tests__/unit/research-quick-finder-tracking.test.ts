@@ -1,7 +1,7 @@
 // __tests__/unit/research-quick-finder-tracking.test.ts
-// PR 5 gap-close (this task, docs/research-library/analytics-research-v1.md):
-// the Homepage Quick Finder's category chip previously had no legal
-// ResearchFacet value to report through `trackFilterChange` — Task 6
+// PR 5 gap-close (docs/research-library/analytics-research-v1.md): the
+// Homepage Quick Finder's category chip previously had no legal ResearchFacet
+// value to report through `trackFilterChange` — Task 6
 // (unified-research-discovery-pr2-hubs plan) only ever wired
 // 'status'|'confidence'|'fresh'. This proves the pure computation
 // `resolveCategoryFilterChange` (components/research/QuickFinder.tsx, exported
@@ -9,9 +9,20 @@
 // resolveConfirmSwitchAnalytics / trackedDimensionsFor) always derives the
 // EXACT research_filter_change args a category chip click now sends:
 // facet: 'category', the selected value, active, and the post-filter
-// resultCount — computed via a REAL re-filter of `finderResults`
-// (lib/research/catalog-shell-logic.ts), not read off the count already on
-// screen, and capped at the SAME six-card limit the visible grid uses.
+// resultCount.
+//
+// PR 3 review fix (spec §15 invariant 13, "Hero, Facetten, CTA und Events
+// melden konsistente Counts"): `resultCount` is the HONEST, UNCAPPED match
+// total (`computeFinderCounts(...).totalMatches`, lib/research/
+// catalog-shell-logic.ts) — never the six-card-capped `finderResults(...)
+// .length` the visible grid renders. Before this fix, a query matching 40
+// items and one matching 6 both reported `resultCount: 6`, which was
+// indistinguishable in analytics and undersold the true match count. The
+// matrix below (0, 1, fewer-than-six, exactly-six, more-than-six) proves
+// `resultCount` tracks the real total at every one of those boundaries —
+// exactly-six in particular must NOT look like a coincidental "still capped"
+// case: it is 6 because there are genuinely only 6 matches, not because a cap
+// silently kicked in.
 //
 // QuickFinder is a 'use client' component with no DOM-free render seam in
 // this repo's vitest setup (environment: 'node', no jsdom/
@@ -79,16 +90,8 @@ describe('resolveCategoryFilterChange (QuickFinder, PR 5 gap-close)', () => {
     expect(change.facet).toBe('category');
     expect(change.value).toBeNull();
     expect(change.active).toBe(false);
-    // All 5 fixtures, under the 6-card cap.
+    // All 5 fixtures — under the render cap, so total and visible coincide.
     expect(change.resultCount).toBe(5);
-  });
-
-  it('caps the result count at six — the SAME limit the visible Finder grid uses, never the uncapped match total', () => {
-    const trading = Array.from({ length: 8 }, (_, i) => makeItem('trading', i));
-
-    const change = resolveCategoryFilterChange(trading, { query: '', category: null }, 'trading');
-
-    expect(change.resultCount).toBe(6);
   });
 
   it('intersects the category change with an active search query, never just the category alone', () => {
@@ -104,5 +107,33 @@ describe('resolveCategoryFilterChange (QuickFinder, PR 5 gap-close)', () => {
     // the 'acme' query — item 1 is trading but doesn't match the query, item
     // 2 matches the query but is a different category.
     expect(change.resultCount).toBe(1);
+  });
+
+  // PR 3 review fix: the full boundary matrix (0, 1, fewer than six, exactly
+  // six, more than six matches). `resultCount` must equal the TRUE match
+  // count at every point — never the six-card render cap.
+  it.each([
+    [0, 0],
+    [1, 1],
+    [5, 5],
+    [6, 6],
+    [9, 9],
+  ])('with %i matching "trading" items, resultCount is the true total (%i), never capped at six', (matchCount, expectedResultCount) => {
+    const trading = Array.from({ length: matchCount }, (_, i) => makeItem('trading', i));
+
+    const change = resolveCategoryFilterChange(trading, { query: '', category: null }, 'trading');
+
+    expect(change.resultCount).toBe(expectedResultCount);
+  });
+
+  it('above six matches, resultCount is the true uncapped total — never the six-card render cap', () => {
+    const trading = Array.from({ length: 8 }, (_, i) => makeItem('trading', i));
+
+    const change = resolveCategoryFilterChange(trading, { query: '', category: null }, 'trading');
+
+    // Independent witness: 8 fixtures constructed above, all category
+    // 'trading' — the true match count is 8, even though the visible Finder
+    // grid would only ever render 6 of them.
+    expect(change.resultCount).toBe(8);
   });
 });
