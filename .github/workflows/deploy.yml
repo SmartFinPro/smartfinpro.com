@@ -340,18 +340,23 @@ jobs:
       # lottery, misdiagnosed for months as a "415 cold-start flake").
       # Rollback (step 12) and the success path (14b/15) key on THIS outcome.
       # continue-on-error is intentionally NOT set so the outcome is 'failure'.
+      #
+      # The script is shipped via ssh-stdin (NOT scp): modern scp speaks the
+      # SFTP protocol, which Cloudways restricts — every scp to /tmp failed
+      # with `dest open "/tmp/...": No such file or directory` for the step's
+      # entire observational life (masked by continue-on-error; first exposed
+      # by run 30466222132 when this became the gate). The interactive SSH
+      # shell CAN write /tmp (proven by the image warm-up step above), so we
+      # pipe the script over stdin instead of relying on scp/SFTP at all.
       - name: Origin Smoke Test (via SSH) — deploy gate
         id: origin_smoketest
         if: steps.healthcheck.outcome == 'success'
         run: |
-          scp -i ~/.ssh/deploy_key \
-            -o StrictHostKeyChecking=no \
-            scripts/smoke-test.mjs \
-            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/tmp/sfp-smoke-test.mjs
           ssh -i ~/.ssh/deploy_key \
             -o StrictHostKeyChecking=no \
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
-            "node /tmp/sfp-smoke-test.mjs http://localhost:3000 ${{ secrets.NEXT_PUBLIC_SITE_URL }}; EXIT=\$?; rm -f /tmp/sfp-smoke-test.mjs; exit \$EXIT"
+            "cat > /tmp/sfp-smoke-test.mjs && node /tmp/sfp-smoke-test.mjs http://localhost:3000 ${{ secrets.NEXT_PUBLIC_SITE_URL }}; EXIT=\$?; rm -f /tmp/sfp-smoke-test.mjs; exit \$EXIT" \
+            < scripts/smoke-test.mjs
 
       # ── 11c. CDN Smoke Test — best-effort (NOT a gate) ────────
       # Same URLs through Cloudflare. Runner IPs get intermittently
