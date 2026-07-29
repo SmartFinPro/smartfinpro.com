@@ -541,3 +541,125 @@ after an exhaustive search — the spec was simply silent on the multi-context
 residual risk, not wrong about it. Interpreted as: add the missing, correct
 disclosure there for the first time (§4.1 amendment), rather than "fix" text
 that does not exist.
+
+## Post-report fix — dropped filter-chip navigation (commit `bed106f`)
+
+**Claim (binding wording, operator-mandated):** this fix is a **wirksame
+Beseitigung des beobachteten Rennens** — an *effective elimination of the
+OBSERVED race*, verified by an interleaved before/after measurement and by
+the deterministic regression guards below. It is **not** a claim that the
+Next.js App Router's internal reason for dropping the commit was
+identified or fixed. The investigation (commit `bed106f`'s own message)
+established WHAT fails to happen — `router.push()` issued synchronously
+from the chip's discrete click handler is answered 200 on the wire (the
+`research_filter_change` analytics event proves the handler ran) but the
+App Router never commits `history.pushState`, so `useSearchParams()` never
+changes — and that deferring the same push by one task (`setTimeout(...,
+0)`) removes the observed failure. It did **not** establish, and does not
+claim to establish, why the App Router's internals drop the commit in that
+window. Any future edit to this area (or its documentation) must preserve
+that distinction — "the observed race is eliminated," not "the root cause
+inside Next.js is fixed."
+
+**Methodology this claim rests on — record permanently:**
+
+- **Interleaving is mandatory; batch comparisons are invalid on this
+  measurement.** Two nominally identical configurations, run as separate
+  batches rather than interleaved, produced wildly different rates on the
+  same code: **0/400** in one batch and **~16% (≈48/300)** in another. Both
+  batches used the same build and the same code path — the only variable
+  was which unrelated batch of runs happened to precede them (machine
+  load, OS scheduler noise, and warm vs. cold HTTP/RSC caches all move the
+  click-to-router-mount timing). A single non-interleaved run — before-only
+  or after-only, in either order — is therefore not evidence of anything
+  by itself; both arms (inline push vs. deferred push) must be measured
+  *interleaved* (alternating or randomly ordered within the same
+  measurement session, same machine, same load) for a before/after
+  comparison to mean anything here.
+- **Click delay after router mount is the control variable and must be
+  reported with every measurement.** The defect's window is only reachable
+  in the ~100–200 ms after the App Router mounts; a click delivered later
+  cannot exhibit it even with the bug present. Every comparison must
+  therefore record the click delay distribution (p10/p50/p90) alongside
+  the pass/fail rate — a run whose p50 sits well above ~200 ms proves
+  nothing about the defect either way, pass or fail. The commit's own
+  interleaved measurement (same click timing across both arms, p50 121 ms
+  after router mount, 111 clicks per arm): **10 lost navigations (9.0%)
+  inline vs. 0 deferred.** The wider before/after harness run under the
+  same discipline: **27/250 (10.8%) inline → 0/250 deferred.**
+- Any future report of a "success rate" or "regression rate" for this
+  defect that does not state (a) that the arms were interleaved and (b)
+  the click-delay distribution the run achieved is not comparable to the
+  numbers above and should be treated as inconclusive, not as confirming
+  or refuting the fix.
+
+**What changed (this task, not `bed106f` itself):** `bed106f` fixed
+`components/research/ResearchHub.tsx`'s `pushUrl` by wrapping the push in
+`setTimeout(..., 0)` inline. That left the scheduling contract provable
+only by the probabilistic e2e guard
+(`e2e/research-filter-chip-navigation.spec.ts`). This task extracts the
+scheduling into a framework-free seam,
+`lib/research/deferred-navigation.ts` (`schedulePush`), wires
+`ResearchHub.tsx`'s `pushUrl` through it with identical behavior, and adds
+a deterministic unit test,
+`__tests__/unit/research-deferred-navigation.test.ts`, with an injected
+scheduler (this repo's vitest runs in the `node` environment; no
+jsdom/RTL). The e2e spec remains the system-level, probabilistic proof
+that the observed race is gone in a real browser against a real Next.js
+router; the unit test pins the scheduling contract
+(`schedulePush`/`pushUrl`) deterministically — no push in the calling
+stack, exactly one push per call, byte-identical href — so a future
+regression on that narrower contract fails a fast, deterministic test
+instead of only an occasionally-flaky e2e loop. The `{ scroll: false }`
+option passed to `router.push()` is unchanged and still lives at the call
+site (`ResearchHub.tsx` line ~765), not inside `schedulePush` — verified by
+reading the code, not by a unit test, since a focused test of
+`ResearchHub`'s own call site would need jsdom/RTL, which this repo
+deliberately does not have.
+
+**New evidence gathered by this task, reinforcing "effective" over
+"absolute" elimination — and a live demonstration of the machine-load
+confound above:** the required e2e gate run
+(`e2e/research-filter-chip-navigation.spec.ts` +
+`e2e/research-tracking.spec.ts` + `e2e/homepage-quick-finder.spec.ts`,
+`--workers=1`, this worktree served via `next start -p 3112`) first failed
+on all three specs while this machine's load average was 14–28 — confirmed
+by `ps aux` to be carrying *other, unrelated* concurrently-running Claude
+Code sessions (playwright runs and a `next build` in sibling worktrees at
+the same time). That is exactly the uncontrolled-load confound this
+section warns about, caught in the act, not hypothesized. To isolate
+whether the failures were that confound or an actual regression from this
+task's `schedulePush` extraction, both the unmodified `bed106f` code and
+this task's refactor were built and served separately (`next start -p
+3112`, same machine, similar load ~10–18 both times) and each run through
+`e2e/research-filter-chip-navigation.spec.ts --repeat-each=5`
+(300 clicks per arm, click delay consistently p50 ≈ 106–112 ms — squarely
+in the defect's ~100–200 ms window both times, confirmed by the spec's own
+per-run log line):
+
+| Code under test | Result | Failing iteration |
+|---|---|---|
+| Unmodified `bed106f` (baseline) | 1 failed / 5 runs (1/300 clicks) | iteration 33, "Dossiers" |
+| This task's `schedulePush` refactor | 1 failed / 5 runs (1/300 clicks) | iteration 51, "Dossiers" |
+
+Statistically indistinguishable (~0.33% both arms) — **this task's
+extraction introduces no regression**, and the residual, non-zero failure
+rate is a genuine property of the already-merged `bed106f` fix under real
+timing jitter, not something this task's refactor added or could have
+removed. This is direct, first-party confirmation of why the report's
+claim above is "wirksame Beseitigung des beobachteten Rennens" (an
+*effective*, ~30x reduction from the pre-fix ~9–11% rate) and not a claim
+of zero residual probability or of the App Router's internal cause being
+fixed.
+
+The final official gate run (same three specs, load back down to ~10–16
+after the competing sessions' work finished) passed
+`research-filter-chip-navigation.spec.ts` cleanly; it hit 1 failure
+(`homepage-quick-finder.spec.ts`'s LCP-budget test, a load-sensitive
+performance assertion unrelated to this fix) and 2 flaky results in
+`research-tracking.spec.ts` (a shortlist double-click event count and a
+`page.goto` 15s timeout) — both inside the pre-existing "click-then-assert"
+flake class this same report already documented above (~5.6% rate,
+verified not a regression at the time `f9b076d` was the baseline). 32
+passed. See the top-level report for the exact tally this task's caller
+recorded.

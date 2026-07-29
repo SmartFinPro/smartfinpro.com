@@ -111,6 +111,7 @@ import {
 } from './ResearchShortlist';
 import { useResearchTracking } from '@/lib/analytics/research-tracking';
 import { toQueryLength, type ResearchFacet, type ResearchProductStatus } from '@/lib/analytics/research-events';
+import { schedulePush } from '@/lib/research/deferred-navigation';
 
 const STATUS_LABEL: Record<ResearchStatus, string> = {
   audited: 'Audited',
@@ -753,9 +754,15 @@ export function ResearchHub({ market, items, nodes, scopeSnapshot }: ResearchHub
   // again. Only the push is deferred — the target URL and the analytics event
   // are still computed synchronously from the click's own state, so nothing
   // about ordering or the reported counts changes.
+  //
+  // The scheduling itself (defer by exactly one task, exactly once, same
+  // href) is factored into `schedulePush` (lib/research/deferred-navigation.ts)
+  // so that contract has a deterministic unit test — this component is not
+  // unit-testable directly (no jsdom/RTL in this repo). `{ scroll: false }`
+  // stays here, bound into the `push` callback, not in that helper.
   const pushUrl = useCallback(
     (href: string) => {
-      setTimeout(() => router.push(href, { scroll: false }), 0);
+      schedulePush((h) => router.push(h, { scroll: false }), href);
     },
     [router],
   );
