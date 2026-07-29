@@ -91,10 +91,16 @@ test.describe('Research Library tracking (research_v1)', () => {
     // a 5s URL timeout on the Type chip). The aria-live region is rendered by
     // the client shell ONLY (ResearchHub.tsx; the fallback has none), so
     // waiting for its result count proves the interactive tree is live.
-    // Scoped to the shell's own sr-only counter: Playwright injects its own
-    // aria-live notification region into every page, so an unscoped selector
-    // matches two elements and trips strict mode.
-    await expect(page.locator('p.sr-only[aria-live="polite"]')).toContainText(/result/i);
+    // Scoped via `data-testid="research-result-count"` (PR 3 review fix,
+    // commit 4) rather than the element's tag/class shape: the SECOND
+    // `aria-live="polite"` region on this page is NOT injected by Playwright
+    // — it is this app's own Sonner toaster (components/ui/sonner.tsx,
+    // mounted globally in app/layout.tsx), which renders a real
+    // `<section aria-label="Notifications alt+T" aria-live="polite">` in the
+    // production server HTML regardless of whether any toast is showing. An
+    // unscoped `[aria-live="polite"]` selector matches both elements and
+    // trips strict mode; the testid matches only the hub's own region.
+    await expect(page.locator('[data-testid="research-result-count"]')).toContainText(/result/i);
   });
 
   // Reads the SR-live-region result count the hub itself renders
@@ -110,7 +116,13 @@ test.describe('Research Library tracking (research_v1)', () => {
   // "Charles Schwab" collision in research-shell.spec.ts: the FIXTURE
   // assumption changed with the generalization, not the counted behavior.
   async function visibleResultCount(page: Page): Promise<number> {
-    const text = await page.locator('[aria-live="polite"]').first().textContent();
+    // Scoped via the stable testid (PR 3 review fix, commit 4) — not a bare
+    // `[aria-live="polite"]` + `.first()`, which only ever worked because
+    // this app's own Sonner toaster (a real second `aria-live="polite"`
+    // region, mounted globally, not a Playwright artifact) happens to follow
+    // the hub's region in DOM order. That's a coincidence of markup order,
+    // not a real match — the testid can't ever collide with the toaster.
+    const text = await page.locator('[data-testid="research-result-count"]').textContent();
     const match = text?.match(/\d+/);
     if (!match) throw new Error(`Could not read a result count from "${text}"`);
     return Number(match[0]);

@@ -103,8 +103,16 @@ async function finderCardIds(page: Page): Promise<string[]> {
 // carries), never the six-card-capped visible count. This reads the TOTAL
 // specifically (the "of N results" number), not the first digit in the
 // string.
+//
+// Scoped via `data-testid="research-result-count"` (PR 3 review fix, commit
+// 4), not `#reports [aria-live="polite"]` + `.first()`: this app also mounts
+// a Sonner toaster (components/ui/sonner.tsx, app/layout.tsx) with its own
+// real `aria-live="polite"` region globally — outside `#reports` on this
+// page, so the old `#reports`-scoped selector happened to still work, but
+// only by relying on the toaster never rendering inside that section rather
+// than on anything the testid now guarantees directly.
 async function resultCountText(page: Page): Promise<number> {
-  const text = await page.locator('#reports [aria-live="polite"]').first().textContent();
+  const text = await page.locator('#reports [data-testid="research-result-count"]').textContent();
   const match = text?.match(/of (\d+) results/);
   if (!match) throw new Error(`could not read a total result count from "${text}"`);
   return Number(match[1]);
@@ -133,7 +141,7 @@ test.describe('Homepage Quick Finder — functional', () => {
     const before = await finderCards(page).count();
 
     await page.getByRole('searchbox', { name: SEARCH_LABEL }).fill('schwab');
-    await expect(page.locator('#reports [aria-live="polite"]').first()).toContainText(/result/);
+    await expect(page.locator('#reports [data-testid="research-result-count"]')).toContainText(/result/);
 
     const after = await finderCards(page).count();
     expect(after).not.toBe(before);
@@ -226,7 +234,7 @@ test.describe('Homepage Quick Finder — functional', () => {
     const before = await resultCountText(page);
 
     await page.getByRole('searchbox', { name: SEARCH_LABEL }).fill('zzz-nonexistent-broker-xyz-987');
-    await expect(page.locator('#reports [aria-live="polite"]').first()).toContainText('0 results');
+    await expect(page.locator('#reports [data-testid="research-result-count"]')).toContainText('0 results');
 
     const after = await resultCountText(page);
     expect(after).not.toBe(before);

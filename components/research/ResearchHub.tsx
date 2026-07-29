@@ -1086,8 +1086,16 @@ export function ResearchHub({ market, items, nodes, scopeSnapshot }: ResearchHub
 
           {/* Permanently-mounted SR live region (spec Task 4: never mounted
               conditionally) — the visible count below is aria-hidden so the
-              result count is announced exactly once. */}
-          <p className="sr-only" aria-live="polite" aria-atomic="true">
+              result count is announced exactly once.
+              `data-testid="research-result-count"` (PR 3 review fix, commit
+              4): a stable e2e selector — the app also mounts a Sonner
+              toaster (components/ui/sonner.tsx) with its own
+              `aria-live="polite"` region on every page, so a bare aria-live
+              selector needs either DOM-order luck or `.first()` to find the
+              right one. Mirrored on QuickFinder's own result-count region
+              (components/research/QuickFinder.tsx) — the two never render on
+              the same page, so one shared name is unambiguous. */}
+          <p className="sr-only" aria-live="polite" aria-atomic="true" data-testid="research-result-count">
             {resultCount} {resultCount === 1 ? 'result' : 'results'}
           </p>
 

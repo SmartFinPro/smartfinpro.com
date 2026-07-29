@@ -233,10 +233,19 @@ export function QuickFinder({ market, items }: QuickFinderProps) {
             (visibleResults.length, capped at six) from the honest, uncapped
             TOTAL (totalMatches) — the old "{n} results" wording collapsed
             both into the capped number, so a query with 40 matches announced
-            "6 results", indistinguishable from a query with exactly 6. */}
+            "6 results", indistinguishable from a query with exactly 6.
+            `data-testid="research-result-count"` (PR 3 review fix, commit 4):
+            a stable selector for e2e — the app also mounts a Sonner toaster
+            (components/ui/sonner.tsx) with its own `aria-live="polite"`
+            region on every page, so a bare aria-live selector needs either
+            DOM-order luck or `.first()` to find the right one. This same
+            testid is mirrored on ResearchHub's own result-count region
+            (components/research/ResearchHub.tsx) — the two never render on
+            the same page, so one shared name is unambiguous. */}
         <p
           aria-live="polite"
           aria-atomic="true"
+          data-testid="research-result-count"
           className="text-sm font-medium shrink-0"
           style={{ color: 'var(--sfp-slate)' }}
         >
