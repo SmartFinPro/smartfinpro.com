@@ -454,14 +454,10 @@ renders a Research hub — no `components/research/*`, no `lib/research/*`; only
 integrity page, one AU `index.mdx` (excluded from the catalog by its own
 `slug !== 'index'` rule) and 4 lines in `lib/mdx/index.ts`.
 
-`/ca/research` is the one exception and it is a HARNESS failure, not a base
-effect: on the re-measurement the CA build produced `Products 33 / 0 dossier
-sections` (308,078 → 242,292 bytes) against `Products 89 / 8 dossier sections`
-on the measured base — the Supabase overlay fetch did not complete during that
-build, which ran while the host carried load average 66–72. Both CA figures are
-internally consistent with each other (same reduced catalog on both sides), so
-they still show the same effect, but they are not comparable in absolute terms
-and the table below deliberately keeps the full-catalog figures.
+`/ca/research` is the one market that could NOT be re-measured on the `main`
+base — a data-source outage in that build, not a base effect. Full provenance
+is recorded directly under the payload table below, where the retained CA
+figures are used.
 
 **This is a payload deduplication and nothing else.** It is deliberately NOT
 claimed as a fix for any navigation flake: a payload reduction is not on its own
@@ -532,12 +528,32 @@ exited 0 and reproduced their figures across two runs each.
 
 ### Whole HTTP response (SSR markup + embedded Flight/RSC payload)
 
-| Route | before (`4790c45`) | after | Δ |
-|---|---|---|---|
-| `/research` | 1,712,924 | **1,235,352** | −477,572 (−27.9%) |
-| `/uk/research` | 805,660 | **606,334** | −199,326 (−24.7%) |
-| `/ca/research` | 697,851 | **527,524** | −170,327 (−24.4%) |
-| `/au/research` | 765,842 | **577,589** | −188,253 (−24.6%) |
+**Every row below is measured on the `4790c45` base.** Three of the four were
+additionally re-measured on the current `main` base and reproduced
+byte-identically; `/ca/research` could not be, and its row is NOT a
+same-time-as-main comparison — see the note directly under the table.
+
+| Route | before (`4790c45`) | after | Δ | also reproduced on `main` base |
+|---|---|---|---|---|
+| `/research` | 1,712,924 | **1,235,352** | −477,572 (−27.9%) | yes, byte-identical |
+| `/uk/research` | 805,660 | **606,334** | −199,326 (−24.7%) | yes, byte-identical |
+| `/ca/research` | 697,851 | **527,524** | −170,327 (−24.4%) | **no — see below** |
+| `/au/research` | 765,842 | **577,589** | −188,253 (−24.6%) | yes, byte-identical |
+
+**`/ca/research` — provenance of the retained figures.** The `main`-base
+re-measurement of CA is unusable and is deliberately NOT the source of the row
+above. That build produced `Products 33 / 0 dossier sections` (308,078 →
+242,292 bytes) against `Products 89 / 8 dossier sections` on the `4790c45`
+base: the Supabase overlay fetch did not complete during a build that ran while
+the host carried load average 66–72, so CA was built from MDX reviews alone. It
+is a data-source outage in the build, not a property of either base or of this
+change. The two CA figures from that run are internally consistent with each
+other — same reduced catalog on both sides, same direction, −21.4% — but they
+describe a different, smaller catalog and are not comparable to the other three
+markets in absolute terms. The row above therefore retains the full-catalog
+`4790c45` measurement, which is the only CA pair measured against a complete
+overlay. A CA figure measured concurrently with the other three on the `main`
+base does not exist in this report.
 
 The before-column reproduces the RE-MEASURED table above to within 3 bytes per
 route (that table read 1,712,927 / 805,663 / 697,854 / 765,845 off a different
@@ -586,8 +602,18 @@ this measurement.
 
 `/research`, for scale: gzip 132,151 → 106,553; brotli 70,453 → 66,548. The raw
 ≈47.5% regression cost roughly **3.9 KB brotli** in real transfer — duplicated
-text compresses almost entirely away. The cost it did carry was CPU: the client
-runtime deserialized every default card twice.
+text compresses almost entirely away.
+
+**What is measured, and what is not.** Measured here: the payload duplication
+(the occurrence/distinct counts per market), the uncompressed HTML reduction,
+and the gzip/brotli difference. NOT measured: parse and hydration CPU. Since
+the transfer saving is small while the duplicated bytes still had to be parsed
+and deserialized on every load, client CPU is the *probable* main effect of
+this change — but that remains an inference from the payload structure, not a
+result. Establishing it would need a profile of parse/hydration time before and
+after; none was taken. The lab LCP/CLS figures in the E2E section are not that
+evidence either: they are single-run numbers from a loaded host and were
+collected as a budget check, not as a before/after comparison.
 
 ## Gates
 
