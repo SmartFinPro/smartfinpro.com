@@ -141,6 +141,8 @@ interface CockpitVerdictProps {
   market: string;
   category: string;
   topic: string;
+  /** TopicConfig.ratingsUnsourced — suppresses the stars on each pick card. */
+  hideRating?: boolean;
 }
 
 /** Tier 1 — compact decision block, rendered above the cockpit.
@@ -155,6 +157,7 @@ export function CockpitVerdict({
   market,
   category,
   topic,
+  hideRating,
 }: CockpitVerdictProps) {
   return (
     <section className="mb-6">
@@ -178,7 +181,7 @@ export function CockpitVerdict({
             the cockpit's winner-cell green) — light enough that the ink/slate text
             stays readable, so no color flips needed. */}
         {picks.map((p) => (
-          <CockpitVerdictCta key={p.rank} {...p} market={market} category={category} topic={topic} />
+          <CockpitVerdictCta key={p.rank} {...p} market={market} category={category} topic={topic} hideRating={hideRating} />
         ))}
       </div>
     </section>

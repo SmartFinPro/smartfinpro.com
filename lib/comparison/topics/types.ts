@@ -157,9 +157,53 @@ export interface TopicConfig {
    */
   sources?: { label: string; url: string }[];
   /**
+   * Suppress every star-rating surface for this topic.
+   *
+   * The cockpit renders two different things side by side: the ranking, which
+   * comes from the audited SmartFinPro score (0-10), and star ratings plus
+   * review counts, which come from the generic `rating` / `review_count`
+   * columns in product_attributes. Those columns carry no provenance — no
+   * source, no source URL, no as-of date, no market scope — and on
+   * us/trading they contradict the ranking outright: Fidelity leads at 9.6
+   * while showing 4.5 stars above Interactive Brokers' 4.8.
+   *
+   * Set this where the numbers cannot be attributed, and the cockpit drops
+   * the star block and review count on the cards, the Rating column and its
+   * sort, the "Our rating" compare row, the stars in the verdict CTA, the
+   * "Top rated" chip and the "Best rated" sort option. The audited score is
+   * untouched and keeps driving the ranking.
+   *
+   * Deliberately opt-in per topic rather than a global default: other
+   * categories can carry genuinely sourced ratings, and flipping the default
+   * would blank all 38 topics silently.
+   *
+   * To bring ratings back, the data needs full provenance first — source,
+   * source URL, as-of date, market/scope, and rating plus count as nullable
+   * fields — after which this flag comes off.
+   */
+  ratingsUnsourced?: boolean;
+  /**
    * Internal related links (category pillar, tools/calculators, methodology,
    * existing reviews) rendered in CockpitBody (SEO addendum §7). Canonical
    * site-relative hrefs only — no redirecting/legacy variants.
    */
   relatedLinks?: { label: string; href: string }[];
+}
+
+/* --- Rating-provenance accessors -------------------------------------- *
+ * Single place that decides whether a rating-driven control is offered.
+ * Every render site AND orderProducts go through these, so a `?sort=rating`
+ * URL cannot resurrect a suppressed sort. Topics keep their definitions —
+ * they are filtered at read time, not deleted from 38 config files. */
+
+/** Sort options the user may pick — rating sorts drop out where unsourced. */
+export function visibleSortOptions(config: TopicConfig): SortOption[] {
+  if (!config.ratingsUnsourced) return config.sortOptions;
+  return config.sortOptions.filter((o) => o.value !== 'rating');
+}
+
+/** "In a hurry?" chips — those that trigger a rating sort drop out too. */
+export function visiblePriorityChips(config: TopicConfig): IntentDef[] {
+  if (!config.ratingsUnsourced) return config.priorityChips;
+  return config.priorityChips.filter((c) => c.sort !== 'rating');
 }

@@ -33,6 +33,8 @@ export interface CockpitVerdictCtaProps {
   market: string;
   category: string;
   topic: string;
+  /** TopicConfig.ratingsUnsourced — hides the star + rating number. */
+  hideRating?: boolean;
 }
 
 export function CockpitVerdictCta(p: CockpitVerdictCtaProps) {
@@ -121,7 +123,7 @@ export function CockpitVerdictCta(p: CockpitVerdictCtaProps) {
       </span>
       <span className="mt-2.5 flex items-center justify-between">
         <span className="inline-flex items-center gap-1 text-[13px] font-semibold text-[color:var(--sfp-ink)]">
-          {p.reviewCount === 0 ? (
+          {p.hideRating ? null : p.reviewCount === 0 ? (
             <span style={{ fontStyle: 'italic', color: 'var(--sfp-slate)' }}>Not yet rated</span>
           ) : (
             <>
