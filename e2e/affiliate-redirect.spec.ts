@@ -16,19 +16,35 @@ import { test, expect } from '@playwright/test';
 // 1. Unknown slug — should fall back to homepage, never 404/500
 // ──────────────────────────────────────────────────────────────────────────────
 test.describe('Affiliate redirect — fallback behaviour', () => {
-  test('unknown slug redirects to homepage (not 404)', async ({ page }) => {
-    const response = await page.goto('/go/nonexistent-slug-xyz-123', {
-      waitUntil: 'commit',        // capture the first response including redirects
+  // Playwright's default headless Chromium UA contains "HeadlessChrome", which the
+  // route's bot gate (app/(marketing)/go/[slug]/route.ts) rejects with a silent 403 by
+  // design — this is the pre-existing bot gate, unrelated to the prefetch guard. Use a
+  // real browser UA so this test exercises the fallback-redirect path it's meant to check,
+  // and pin a TEST-NET-3 (RFC 5737) address so the run never touches the shared prod IP
+  // blocklist (see memory: local runs read/write the production Supabase).
+  test.describe('with a real browser UA', () => {
+    test.use({
+      userAgent:
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      extraHTTPHeaders: {
+        'X-Forwarded-For': '203.0.113.99',
+      },
     });
 
-    // The handler must return a redirect or a 200 (never 4xx/5xx for UX)
-    const status = response?.status() ?? 0;
-    expect(status).not.toBe(404);
-    expect(status).not.toBe(500);
+    test('unknown slug redirects to homepage (not 404)', async ({ page }) => {
+      const response = await page.goto('/go/nonexistent-slug-xyz-123', {
+        waitUntil: 'commit',        // capture the first response including redirects
+      });
 
-    // After following redirects, we should be on the homepage or a known page
-    const finalUrl = page.url();
-    expect(finalUrl).not.toContain('/go/');
+      // The handler must return a redirect or a 200 (never 4xx/5xx for UX)
+      const status = response?.status() ?? 0;
+      expect(status).not.toBe(404);
+      expect(status).not.toBe(500);
+
+      // After following redirects, we should be on the homepage or a known page
+      const finalUrl = page.url();
+      expect(finalUrl).not.toContain('/go/');
+    });
   });
 
   test('handler never returns a 5xx error', async ({ request }) => {
@@ -99,30 +115,30 @@ test.describe('Affiliate redirect — route availability', () => {
     expect(response.status()).toBeLessThan(500);
   });
 
-  test('/api/health reports ok or degraded (never down) on fresh start', async ({
+  // NOTE: /api/health is the intentionally minimal PUBLIC liveness endpoint — it was
+  // hardened (commit f75a225, H-05) down to `{ status: 'ok' | 'down', timestamp }` with
+  // no infrastructure details. `version`/`environment`/`uptime` live behind the
+  // Bearer-token-protected /api/internal/health instead; don't resurrect them here.
+  test('/api/health reports ok (never down) on fresh start', async ({
     request,
   }) => {
-    const response = await request.get('/api/health?quick=1');
+    const response = await request.get('/api/health');
     expect(response.status()).toBe(200);
 
     const json = await response.json();
     expect(json).toHaveProperty('status');
-    expect(['ok', 'degraded']).toContain(json.status);
-    expect(json).toHaveProperty('uptime');
-    expect(typeof json.uptime).toBe('number');
+    expect(json.status).toBe('ok');
+    expect(json).toHaveProperty('timestamp');
   });
 
-  test('/api/health quick liveness check includes required fields', async ({
+  test('/api/health liveness check includes required fields', async ({
     request,
   }) => {
-    const response = await request.get('/api/health?quick=1');
+    const response = await request.get('/api/health');
     const json = await response.json();
 
     expect(json).toMatchObject({
       status: expect.any(String),
-      version: expect.any(String),
-      environment: expect.any(String),
-      uptime: expect.any(Number),
       timestamp: expect.any(String),
     });
 
