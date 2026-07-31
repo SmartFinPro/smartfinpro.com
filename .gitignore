@@ -72,6 +72,7 @@ experts-collage.jpg
 *.claude-prompt-*.txt
 supabase/.temp/
 test-results/
+/.worktrees/
 
 # Audit verify run logs
 audits/reports/verify-*.log
@@ -82,3 +83,7 @@ audits/reports/verify-status.json
 # (F10, 2026-07-26 editorial-integrity review).
 audits/reports/unit-latest.json
 screenshots/
+
+# Lokale Tool-/Scratch-Verzeichnisse
+.codex/
+.scratch-migration/

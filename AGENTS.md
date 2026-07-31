@@ -60,7 +60,7 @@ Ab jetzt gilt für alle Änderungen an Review-/Comparison-Seiten (MDX + zugehör
 ```
 Quality = W×0.30 + S×0.25 + L×0.20 + C×0.25
 
-W = word score     (100 = 4000–7000 Wörter)
+W = word score     (100 = 2600–3600 Wörter)
 S = structure score (H2×8 max 8 + H3×3 max 6 + FAQ+10 + ProsCons+8, cap 100)
 L = link score     min(internalLinks,8)×7 + min(externalLinks,6)×7  (cap 100)
 C = component score min(components,6)×12 + min(images,4)×7          (cap 100)
@@ -72,7 +72,7 @@ C = component score min(components,6)×12 + min(images,4)×7          (cap 100)
 |--------|-------|
 | Title | 45–60 Zeichen |
 | Description | 140–160 Zeichen |
-| Words | 4000–7000 |
+| Words | 2600–3600 |
 | Internal links | ≥ 8 |
 | External links | ≥ 6 |
 | MDX components (tracked) | ≥ 6 |

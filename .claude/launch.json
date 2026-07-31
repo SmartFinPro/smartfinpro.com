@@ -9,10 +9,24 @@
       "url": "http://localhost:3002"
     },
     {
+      "name": "dev-3006",
+      "runtimeExecutable": "/opt/homebrew/bin/node",
+      "runtimeArgs": ["node_modules/.bin/next", "dev", "--webpack", "-p", "3006"],
+      "port": 3006,
+      "url": "http://localhost:3006"
+    },
+    {
       "name": "landing",
       "runtimeExecutable": "npx",
       "runtimeArgs": ["serve", "landing", "-l", "3003"],
       "port": 3003
+    },
+    {
+      "name": "standalone-3111",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-c", "PORT=3111 HOSTNAME=127.0.0.1 /opt/homebrew/bin/node --env-file=.env.local .next/standalone/server.js"],
+      "port": 3111,
+      "url": "http://localhost:3111"
     }
   ]
 }
