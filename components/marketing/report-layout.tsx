@@ -116,10 +116,14 @@ export function ReportLayout({
   const marketPrefix = `/${market}`;
   const categoryName = categoryConfig[category]?.name || category.replace('-', ' ');
   const year = new Date().getFullYear();
-  const formattedDate = new Date(review.modifiedDate).toLocaleDateString('en-US', {
-    month: 'short',
-    year: 'numeric',
-  });
+  // No date invented when frontmatter has none — the date rows simply disappear.
+  const lastUpdated = review.modifiedDate || review.publishDate;
+  const formattedDate = lastUpdated
+    ? new Date(lastUpdated).toLocaleDateString('en-US', {
+        month: 'short',
+        year: 'numeric',
+      })
+    : null;
   // Guide mode: no rating, no CTA, no pros/cons — clean research paper style
   const isGuide = review.isGuide || false;
   const hasRating = !isGuide && review.rating > 0;
@@ -240,11 +244,15 @@ export function ReportLayout({
               className="flex flex-wrap items-center gap-x-4 gap-y-2 px-5 py-3.5 rounded-xl text-sm mb-6"
               style={{ background: 'var(--sfp-gray)' }}
             >
-              <div className="flex items-center gap-2" style={{ color: 'var(--sfp-slate)' }}>
-                <Calendar className="h-3.5 w-3.5" />
-                <span>Published: <strong style={{ color: 'var(--sfp-ink)' }}>{formattedDate}</strong></span>
-              </div>
-              <div className="w-px h-4 bg-gray-300 hidden md:block" />
+              {formattedDate && (
+                <>
+                  <div className="flex items-center gap-2" style={{ color: 'var(--sfp-slate)' }}>
+                    <Calendar className="h-3.5 w-3.5" />
+                    <span>Published: <strong style={{ color: 'var(--sfp-ink)' }}>{formattedDate}</strong></span>
+                  </div>
+                  <div className="w-px h-4 bg-gray-300 hidden md:block" />
+                </>
+              )}
               <div className="flex items-center gap-2" style={{ color: 'var(--sfp-slate)' }}>
                 <FileText className="h-3.5 w-3.5" />
                 <span>Sections: <strong style={{ color: 'var(--sfp-ink)' }}>{review.sections?.length || 0}</strong></span>
@@ -525,24 +533,28 @@ export function ReportLayout({
                 Editorial Transparency
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-                <div className="flex items-start gap-2">
-                  <Calendar className="h-4 w-4 mt-0.5 flex-shrink-0" style={{ color: 'var(--sfp-slate)' }} />
-                  <div>
-                    <span className="font-medium" style={{ color: 'var(--sfp-ink)' }}>Published: </span>
-                    <span style={{ color: 'var(--sfp-slate)' }}>
-                      {new Date(review.publishDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-                    </span>
+                {review.publishDate && (
+                  <div className="flex items-start gap-2">
+                    <Calendar className="h-4 w-4 mt-0.5 flex-shrink-0" style={{ color: 'var(--sfp-slate)' }} />
+                    <div>
+                      <span className="font-medium" style={{ color: 'var(--sfp-ink)' }}>Published: </span>
+                      <span style={{ color: 'var(--sfp-slate)' }}>
+                        {new Date(review.publishDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                      </span>
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-start gap-2">
-                  <Clock className="h-4 w-4 mt-0.5 flex-shrink-0" style={{ color: 'var(--sfp-slate)' }} />
-                  <div>
-                    <span className="font-medium" style={{ color: 'var(--sfp-ink)' }}>Last updated: </span>
-                    <span style={{ color: 'var(--sfp-slate)' }}>
-                      {new Date(review.modifiedDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-                    </span>
+                )}
+                {lastUpdated && (
+                  <div className="flex items-start gap-2">
+                    <Clock className="h-4 w-4 mt-0.5 flex-shrink-0" style={{ color: 'var(--sfp-slate)' }} />
+                    <div>
+                      <span className="font-medium" style={{ color: 'var(--sfp-ink)' }}>Last updated: </span>
+                      <span style={{ color: 'var(--sfp-slate)' }}>
+                        {new Date(lastUpdated).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                      </span>
+                    </div>
                   </div>
-                </div>
+                )}
                 <div className="flex items-start gap-2">
                   <User className="h-4 w-4 mt-0.5 flex-shrink-0" style={{ color: 'var(--sfp-slate)' }} />
                   <div>
@@ -559,7 +571,7 @@ export function ReportLayout({
                 </div>
               </div>
               {/* Change Log — shows what was updated */}
-              {review.modifiedDate !== review.publishDate && (
+              {review.modifiedDate && review.publishDate && review.modifiedDate !== review.publishDate && (
                 <div className="mt-3 pt-3 border-t border-gray-100">
                   <p className="text-xs font-medium mb-1.5" style={{ color: 'var(--sfp-navy)' }}>What changed since last update:</p>
                   <ul className="text-xs space-y-1" style={{ color: 'var(--sfp-slate)' }}>
@@ -827,7 +839,7 @@ export function ReportLayout({
                         <div className="w-px h-3 bg-gray-300" />
                         <span>
                           {(item.meta.modifiedDate || item.meta.publishDate)
-                            ? new Date(item.meta.modifiedDate || item.meta.publishDate).toLocaleDateString('en-US', {
+                            ? new Date(item.meta.modifiedDate || item.meta.publishDate || 0).toLocaleDateString('en-US', {
                                 month: 'short',
                                 year: 'numeric',
                               })
@@ -879,10 +891,12 @@ export function ReportLayout({
                         </div>
                       </div>
                     </div>
-                    <div className="flex justify-between text-sm">
-                      <span style={{ color: 'var(--sfp-slate)' }}>Published</span>
-                      <span className="font-semibold" style={{ color: 'var(--sfp-ink)' }}>{formattedDate}</span>
-                    </div>
+                    {formattedDate && (
+                      <div className="flex justify-between text-sm">
+                        <span style={{ color: 'var(--sfp-slate)' }}>Published</span>
+                        <span className="font-semibold" style={{ color: 'var(--sfp-ink)' }}>{formattedDate}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -915,14 +929,16 @@ export function ReportLayout({
                   </div>
                   <div>
                     <div className="text-sm font-semibold" style={{ color: 'var(--sfp-ink)' }}>{review.author}</div>
-                    <div className="text-xs" style={{ color: 'var(--sfp-slate)' }}>
-                      Updated{' '}
-                      {new Date(review.modifiedDate).toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric',
-                      })}
-                    </div>
+                    {lastUpdated && (
+                      <div className="text-xs" style={{ color: 'var(--sfp-slate)' }}>
+                        Updated{' '}
+                        {new Date(lastUpdated).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric',
+                        })}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

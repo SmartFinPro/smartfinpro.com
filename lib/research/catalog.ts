@@ -296,8 +296,8 @@ export async function loadMarketReviewItems(market: Market): Promise<DiscoveryIt
             ? contentItem.meta.bestFor.trim()
             : null,
         editorialRating: contentItem.meta.rating,
-        publishDate: contentItem.meta.publishDate,
-        modifiedDate: contentItem.meta.modifiedDate,
+        publishDate: contentItem.meta.publishDate ?? null,
+        modifiedDate: contentItem.meta.modifiedDate ?? null,
         readingWords: contentItem.readingTime.words,
         featured: contentItem.meta.featured === true,
         pricing: contentItem.meta.pricing ?? null,

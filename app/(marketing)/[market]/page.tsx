@@ -29,8 +29,8 @@ const getMarketReviews = unstable_cache(
       .filter((item) => item.slug !== 'index' && item.meta.rating)
       .sort(
         (a, b) =>
-          new Date(b.meta.modifiedDate || b.meta.publishDate).getTime() -
-          new Date(a.meta.modifiedDate || a.meta.publishDate).getTime()
+          new Date(b.meta.modifiedDate || b.meta.publishDate || 0).getTime() -
+          new Date(a.meta.modifiedDate || a.meta.publishDate || 0).getTime()
       )
       // Strip full MDX body before caching — meta+slug is all the homepage needs.
       .map(({ slug, meta, readingTime }) => ({ slug, meta, readingTime }));
