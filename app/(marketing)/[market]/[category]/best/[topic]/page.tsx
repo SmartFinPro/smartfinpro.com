@@ -243,6 +243,7 @@ export default async function CockpitPage({ params }: CockpitPageProps) {
             market={market}
             category={category}
             topic={topic}
+            hideRating={config.ratingsUnsourced}
           />
         </div>
       )}

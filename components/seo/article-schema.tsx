@@ -3,8 +3,9 @@ import { generateArticleSchema } from '@/lib/seo/schema';
 interface ArticleSchemaProps {
   title: string;
   description: string;
-  publishDate: string;
-  modifiedDate: string;
+  /** Optional — omitted from the JSON-LD when absent (never defaulted to today). */
+  publishDate?: string;
+  modifiedDate?: string;
   author: string;
   image?: string;
   url: string;

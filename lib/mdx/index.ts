@@ -14,8 +14,13 @@ export interface ContentMeta {
   description: string;
   author: string;
   reviewedBy?: string;
-  publishDate: string;
-  modifiedDate: string;
+  /**
+   * Missing dates stay undefined — never defaulted to "today" (fake-freshness
+   * hazard). scripts/check-frontmatter.mjs enforces publishDate at build time,
+   * so real content always carries one; modifiedDate may legitimately be absent.
+   */
+  publishDate?: string;
+  modifiedDate?: string;
   category: Category;
   market: Market;
   rating?: number;
@@ -103,10 +108,12 @@ const MARKET_CURRENCY: Record<string, string> = {
  * Normalize raw frontmatter data to the canonical ContentMeta schema.
  * Handles both camelCase (new) and snake_case (legacy) field names,
  * and flattens nested `schema` objects used by some older MDX files.
+ * Exported for unit tests only — not part of the public content API.
  */
-function normalizeFrontmatter(raw: Record<string, unknown>): ContentMeta {
-  const today = new Date().toISOString().split('T')[0];
+export function normalizeFrontmatter(raw: Record<string, unknown>): ContentMeta {
   const schema = (raw.schema || {}) as Record<string, unknown>;
+  const rawPublishDate = raw.publishDate || raw.date;
+  const rawModifiedDate = raw.modifiedDate || raw.date;
 
   return {
     title: String(raw.title || ''),
@@ -114,8 +121,8 @@ function normalizeFrontmatter(raw: Record<string, unknown>): ContentMeta {
     description: String(raw.description || ''),
     author: String(raw.author || 'SmartFinPro Editorial Team'),
     reviewedBy: (raw.reviewedBy as string) || undefined,
-    publishDate: String(raw.publishDate || raw.date || today),
-    modifiedDate: String(raw.modifiedDate || raw.date || today),
+    publishDate: rawPublishDate ? String(rawPublishDate) : undefined,
+    modifiedDate: rawModifiedDate ? String(rawModifiedDate) : undefined,
     category: (raw.category || '') as Category,
     market: (raw.market || 'us') as Market,
     rating: (raw.rating as number) ?? (schema.rating as number) ?? undefined,

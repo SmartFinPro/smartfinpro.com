@@ -125,8 +125,9 @@ export interface ReviewData {
   pricing: string;
   currency?: string; // USD, GBP, CAD, AUD - used for Schema.org
   guarantee?: string;
-  publishDate: string;
-  modifiedDate: string;
+  /** Optional: mirrors ContentMeta — a missing frontmatter date is never invented. */
+  publishDate?: string;
+  modifiedDate?: string;
   author: string;
   reviewedBy?: string;
   readingTime?: string; // e.g. "8 min read"

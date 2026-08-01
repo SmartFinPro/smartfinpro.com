@@ -1,13 +1,16 @@
 #!/usr/bin/env node
 /**
  * scripts/smoke-test.mjs
- * Post-deploy smoke test — runs 15 critical URLs against the live site.
+ * Post-deploy smoke test — runs every URL in CRITICAL_URLS against the live site.
  *
  * Two check tiers:
  *   FULL  — status + canonical (host+path) + noindex + JSON-LD schema + title
  *   BASIC — status + noindex + title only
  *           (used for tool pages without generateMetadata canonical,
  *            and pages that may hit Cloudflare bot checks on certain keywords)
+ *
+ * URLs flagged `originOnly` are tested ONLY in origin mode (Step 11b) —
+ * Cloudflare would bot-challenge them on the CDN path (see IS_ORIGIN_MODE).
  *
  * Exit code 0 = all checks passed. Exit code 1 = at least one failure.
  *
@@ -20,13 +23,23 @@
  *                    node scripts/smoke-test.mjs http://localhost:3000 https://smartfinpro.com
  *
  * Integrated into deploy.yml:
- *   Step 11b — CDN smoke test (BASE_URL = prod URL)
- *   Step 11c — Origin smoke test via SSH (BASE_URL = localhost, CANONICAL_BASE = prod URL)
+ *   Step 11b — Origin smoke test via SSH (BASE_URL = localhost, CANONICAL_BASE = prod URL)
+ *              → DEPLOY GATE: failure triggers rollback
+ *   Step 11c — CDN smoke test (BASE_URL = prod URL) — best-effort, NOT a gate
+ *              (Cloudflare intermittently bot-challenges GH-Actions runner IPs)
  */
 
 const BASE_URL = (process.argv[2] || process.env.NEXT_PUBLIC_SITE_URL || 'https://smartfinpro.com')
   .replace(/\/$/, '');
 const CANONICAL_BASE = (process.argv[3] || BASE_URL).replace(/\/$/, '');
+
+// Origin mode = fetching the origin directly instead of going through Cloudflare
+// (Step 11b: SSH → localhost:3000). Detected via the CANONICAL_BASE override
+// (origin runs fetch from localhost but validate prod canonicals) or a plain
+// localhost BASE_URL. Only origin mode runs the `originOnly` URLs below.
+const IS_ORIGIN_MODE =
+  CANONICAL_BASE !== BASE_URL ||
+  /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(BASE_URL);
 
 // ── URL list ─────────────────────────────────────────────────────────────────
 // tier: 'full'  → all 5 checks
@@ -40,12 +53,14 @@ const CRITICAL_URLS = [
   { path: '/au',  tier: 'full' },
 
   // Category hub / pillar pages
-  // /us/trading is EXCLUDED from CDN test — Cloudflare Bot Fight Mode serves a JS
-  // interstitial (no <title>) to GH Actions datacenter IPs for the "trading" keyword.
-  // It is fully covered by the origin smoke test (Step 11c, SSH→localhost:3000).
+  // /us/trading is originOnly — Cloudflare Bot Fight Mode serves a JS interstitial
+  // (no <title>) to GH Actions datacenter IPs for the "trading" keyword (fb707da),
+  // so the CDN run (Step 11c) skips it. The origin run (Step 11b,
+  // SSH→localhost:3000) bypasses Cloudflare and is the only test covering it.
   // /us/personal-finance — EXCLUDED: category page returns empty response (no route handler)
   // /us/cybersecurity/nordvpn-review — EXCLUDED: MDX page renders empty on VPS
-  // TODO: fix these pages and re-add to smoke test
+  // TODO: fix these two pages and re-add to smoke test
+  { path: '/us/trading',          tier: 'full', originOnly: true },
   { path: '/us/ai-tools',         tier: 'full'  },
   { path: '/uk/personal-finance', tier: 'full'  },
   { path: '/au/superannuation',   tier: 'full'  },
@@ -64,6 +79,11 @@ const CRITICAL_URLS = [
   // Static / legal pages — no JSON-LD by design
   { path: '/affiliate-disclosure', tier: 'basic' },
 ];
+
+// URLs actually tested in this run — CDN mode skips originOnly entries.
+const ACTIVE_URLS = IS_ORIGIN_MODE
+  ? CRITICAL_URLS
+  : CRITICAL_URLS.filter((u) => !u.originOnly);
 
 const TIMEOUT_MS = 30_000;
 
@@ -274,27 +294,35 @@ async function smokeTest({ path, tier }) {
 
 // ── Main ─────────────────────────────────────────────────────────────────────
 async function run() {
-  const fullCount  = CRITICAL_URLS.filter((u) => u.tier === 'full').length;
-  const basicCount = CRITICAL_URLS.filter((u) => u.tier === 'basic').length;
+  const fullCount  = ACTIVE_URLS.filter((u) => u.tier === 'full').length;
+  const basicCount = ACTIVE_URLS.filter((u) => u.tier === 'basic').length;
+  const skippedOriginOnly = CRITICAL_URLS.length - ACTIVE_URLS.length;
 
   console.log(`\n${BOLD}🔥 SmartFinPro Post-Deploy Smoke Test${RESET}`);
   console.log(`   Target:  ${BOLD}${BASE_URL}${RESET}`);
   if (CANONICAL_BASE !== BASE_URL) {
     console.log(`   Canon:   ${BOLD}${CANONICAL_BASE}${RESET} (override)`);
   }
-  console.log(`   URLs:    ${CRITICAL_URLS.length} pages (${fullCount} full · ${basicCount} basic)`);
+  console.log(`   Mode:    ${BOLD}${IS_ORIGIN_MODE ? 'origin' : 'cdn'}${RESET}`);
+  console.log(`   URLs:    ${ACTIVE_URLS.length} pages (${fullCount} full · ${basicCount} basic)`);
+  if (skippedOriginOnly > 0) {
+    console.log(
+      `   ${YELLOW}Skipped: ${skippedOriginOnly} origin-only URL(s) — ` +
+      `CDN mode (Cloudflare bot-challenges them on runner IPs)${RESET}`
+    );
+  }
   console.log(`   Timeout: ${TIMEOUT_MS}ms per request\n`);
   console.log('─'.repeat(60));
 
   // Sequential — avoids hammering the server immediately post-deploy
-  for (const entry of CRITICAL_URLS) {
+  for (const entry of ACTIVE_URLS) {
     await smokeTest(entry);
   }
 
   console.log('─'.repeat(60));
   console.log(
     `\n${BOLD}Results:${RESET} ${GREEN}${passed} passed${RESET} / ` +
-    `${failed > 0 ? RED : GREEN}${failed} failed${RESET} / ${CRITICAL_URLS.length} total\n`
+    `${failed > 0 ? RED : GREEN}${failed} failed${RESET} / ${ACTIVE_URLS.length} total\n`
   );
 
   if (failures.length > 0) {

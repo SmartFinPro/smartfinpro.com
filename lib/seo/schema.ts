@@ -146,8 +146,9 @@ export interface BestXReviewSchemaInput {
   topStrengths: string[];
   mainLimitation: string;
   market: string;
-  datePublished: string;
-  dateModified: string;
+  /** Optional — when absent, the key is omitted from the JSON-LD (never defaulted to today). */
+  datePublished?: string;
+  dateModified?: string;
 }
 
 export function generateBestXReviewSchema(input: BestXReviewSchemaInput) {
@@ -307,8 +308,9 @@ export function generateBreadcrumbSchema(
 export function generateArticleSchema(article: {
   title: string;
   description: string;
-  publishDate: string;
-  modifiedDate: string;
+  /** Optional — when absent, datePublished/dateModified are omitted from the JSON-LD. */
+  publishDate?: string;
+  modifiedDate?: string;
   author: string;
   image?: string;
   url: string;

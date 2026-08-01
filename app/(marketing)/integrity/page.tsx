@@ -121,9 +121,11 @@ export default function IntegrityPage() {
       }).format(data.integrationTimestamp)
     : 'Not available';
 
+  // Without a real audit timestamp the JSON-LD date fields are omitted entirely —
+  // stamping the build date would fake freshness (visible UI already says 'Not available').
   const lastReviewedISO = data.integrationTimestamp
     ? data.integrationTimestamp.toISOString().split('T')[0]
-    : new Date().toISOString().split('T')[0];
+    : null;
 
   return (
     <main className="min-h-screen">
@@ -702,7 +704,7 @@ export default function IntegrityPage() {
             description:
               'Evidence-based financial data integrity report for SmartFinPro. Verified via integration tests and S2S deduplication.',
             url: 'https://smartfinpro.com/integrity',
-            lastReviewed: lastReviewedISO,
+            ...(lastReviewedISO && { lastReviewed: lastReviewedISO }),
             author: {
               '@type': 'Organization',
               name: 'SmartFinPro Integrity Engine',
@@ -717,7 +719,7 @@ export default function IntegrityPage() {
               name: 'S2S Postback & Data Accuracy Audit',
               description:
                 'Verification of server-to-server data deduplication and database constraints.',
-              datePublished: lastReviewedISO,
+              ...(lastReviewedISO && { datePublished: lastReviewedISO }),
               author: {
                 '@type': 'Organization',
                 name: 'SmartFinPro Technical Board',

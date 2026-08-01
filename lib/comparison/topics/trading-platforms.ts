@@ -142,6 +142,12 @@ export const tradingPlatformsConfig: TopicConfig = {
     { key: 'noMin', label: 'No minimum deposit', predicate: (p) => p.accountMinimum === 0 },
   ],
 
+  // The generic rating/review_count columns for this field have no source,
+  // no as-of date and no scope, and they order the platforms differently
+  // from the audited score this cockpit ranks by. Hidden until they can be
+  // attributed — see TopicConfig.ratingsUnsourced.
+  ratingsUnsourced: true,
+
   priorityChips: [
     { id: 'fee', label: 'Cheapest options', icon: 'Percent', sort: 'fee' },
     { id: 'min', label: 'No minimum', icon: 'Wallet', sort: 'min' },
@@ -273,7 +279,7 @@ export const tradingPlatformsConfig: TopicConfig = {
     },
     {
       q: 'How does SmartFinPro rank trading platforms?',
-      a: 'Our Smart Rank blends our independent score, options fees, minimum deposit and ratings. The order never depends on commissions.',
+      a: 'Smart Rank orders by our independent 0-10 score, which we set from the tested criteria in our methodology — options fees, minimum deposit, asset access, platform tooling and SIPC coverage. Star ratings play no part in it, and the order never depends on commissions. The other sort options re-order by a single criterion.',
     },
     {
       q: 'Are these affiliate links?',

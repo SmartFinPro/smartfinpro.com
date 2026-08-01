@@ -103,7 +103,9 @@ export function CockpitTable({
             <th scope="col" className="ck-sticky-c2" style={{ textAlign: 'left', padding: '10px 8px', fontSize: 11.5, fontWeight: 600, color: C.slate, textTransform: 'uppercase', letterSpacing: '.3px' }}>
               Provider
             </th>
-            <SortHead label="Rating" sortKey="rating" active={sort === 'rating'} dir={dir} onSort={onSort} />
+            {!config.ratingsUnsourced && (
+              <SortHead label="Rating" sortKey="rating" active={sort === 'rating'} dir={dir} onSort={onSort} />
+            )}
             {config.specColumns.map((col) => (
               <SortHead key={col.key} label={col.label} sortKey={col.sortKey} active={sort === col.sortKey} dir={dir} onSort={onSort} />
             ))}
@@ -151,11 +153,13 @@ export function CockpitTable({
                     </span>
                   </div>
                 </td>
-                <td style={{ padding: '10px 8px', fontSize: 13, fontWeight: 600, color: p.reviewCount === 0 ? C.slate : isColWinner('rating', p) ? C.greenDark : C.ink }}>
-                  {p.reviewCount === 0 ? '—' : (<>
-                    <Star size={11} aria-hidden="true" style={{ verticalAlign: -1 }} /> {p.rating.toFixed(1)}
-                  </>)}
-                </td>
+                {!config.ratingsUnsourced && (
+                  <td style={{ padding: '10px 8px', fontSize: 13, fontWeight: 600, color: p.reviewCount === 0 ? C.slate : isColWinner('rating', p) ? C.greenDark : C.ink }}>
+                    {p.reviewCount === 0 ? '—' : (<>
+                      <Star size={11} aria-hidden="true" style={{ verticalAlign: -1 }} /> {p.rating.toFixed(1)}
+                    </>)}
+                  </td>
+                )}
                 {config.specColumns.map((col) => {
                   const raw = col.accessor(p);
                   const win = isColWinner(col.key, p);

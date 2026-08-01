@@ -140,8 +140,8 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
     const scoreDiff = computeQualityScore(b) - computeQualityScore(a);
     if (scoreDiff !== 0) return scoreDiff;
     return (
-      new Date(b.meta.modifiedDate || b.meta.publishDate).getTime() -
-      new Date(a.meta.modifiedDate || a.meta.publishDate).getTime()
+      new Date(b.meta.modifiedDate || b.meta.publishDate || 0).getTime() -
+      new Date(a.meta.modifiedDate || a.meta.publishDate || 0).getTime()
     );
   };
 
@@ -211,8 +211,10 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
             __html: JSON.stringify(generateArticleSchema({
               title: pillarContent.meta.title || `Best ${categoryInfo.name} 2026`,
               description: pillarContent.meta.description || categoryInfo.description,
-              publishDate: pillarContent.meta.publishDate || new Date().toISOString(),
-              modifiedDate: pillarContent.meta.modifiedDate || new Date().toISOString(),
+              // No fallback to "today" — a missing date is omitted from the
+              // schema entirely (fake-freshness guard; enforced by check-frontmatter).
+              publishDate: pillarContent.meta.publishDate,
+              modifiedDate: pillarContent.meta.modifiedDate || pillarContent.meta.publishDate,
               author: pillarContent.meta.author || 'SmartFinPro',
               url: canonicalUrl,
             })),
