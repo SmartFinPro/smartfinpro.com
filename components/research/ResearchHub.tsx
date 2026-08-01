@@ -749,10 +749,17 @@ export function ResearchHub({ market, items, nodes, scopeSnapshot }: ResearchHub
   // Handing the push to the next task dodges it. Measured on a production
   // build, one worker, 111 clicks per arm at the same click timing (p50 121 ms
   // after router mount): 10 lost navigations (9.0%) issuing the push inline,
-  // 0 issuing it deferred. e2e/research-filter-chip-navigation.spec.ts is the
-  // regression guard and fails within a few iterations if this is inlined
-  // again. Only the push is deferred — the target URL and the analytics event
-  // are still computed synchronously from the click's own state, so nothing
+  // 0 issuing it deferred. A separate 300-click measurement (5 runs of 60)
+  // found a genuine, non-zero RESIDUAL of 1/300 (~0.3%) on this deferred fix
+  // itself — real App Router timing jitter unrelated to the synchronous-push
+  // bug, not something a future change here could drive to exactly zero (see
+  // audits/reports/research-discovery-pr3.md). e2e/research-filter-chip-
+  // navigation.spec.ts is the regression guard: it tolerates that residual
+  // (a single dropped click across its 60-iteration run) and only fails once
+  // a SECOND drop appears in the same run — the signature of the ~9-11%
+  // reintroduced-regression rate, not the ~0.3% residual. Only the push is
+  // deferred — the target URL and the analytics event are still computed
+  // synchronously from the click's own state, so nothing
   // about ordering or the reported counts changes.
   //
   // The scheduling itself (defer by exactly one task, exactly once, same
