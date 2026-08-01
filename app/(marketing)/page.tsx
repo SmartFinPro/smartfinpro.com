@@ -97,7 +97,7 @@ export default async function RootHomePage() {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(itemList.schema) }}
         />
       )}
-      {await MarketHomePage({ params: Promise.resolve({ market: 'us' }), searchParams: Promise.resolve({}) })}
+      {await MarketHomePage({ params: Promise.resolve({ market: 'us' }) })}
     </>
   );
 }

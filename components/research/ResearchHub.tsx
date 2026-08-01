@@ -111,6 +111,7 @@ import {
 } from './ResearchShortlist';
 import { useResearchTracking } from '@/lib/analytics/research-tracking';
 import { toQueryLength, type ResearchFacet, type ResearchProductStatus } from '@/lib/analytics/research-events';
+import { schedulePush } from '@/lib/research/deferred-navigation';
 
 const STATUS_LABEL: Record<ResearchStatus, string> = {
   audited: 'Audited',
@@ -734,15 +735,54 @@ export function ResearchHub({ market, items, nodes, scopeSnapshot }: ResearchHub
   );
   const isActive = hasActiveDiscoveryFilters(activeFilters);
 
+  // NOT a style choice and NOT removable: a `router.push()` issued
+  // SYNCHRONOUSLY from inside a discrete click handler is silently DROPPED by
+  // the Next 16 App Router when the click lands in the first ~100–200 ms after
+  // the router mounted. The action is dispatched and the navigation's own RSC
+  // request is issued and answered 200 — but the router never commits the new
+  // canonical URL: no history entry, `useSearchParams()` never changes, so the
+  // chip never becomes pressed and the results never filter. It never
+  // recovers, and a second click is lost the same way; only a reload does.
+  // Because every filter on this hub is URL-derived, that leaves the whole
+  // discovery UI dead for a fast clicker.
+  //
+  // Handing the push to the next task dodges it. Measured on a production
+  // build, one worker, 111 clicks per arm at the same click timing (p50 121 ms
+  // after router mount): 10 lost navigations (9.0%) issuing the push inline,
+  // 0 issuing it deferred. A separate 300-click measurement (5 runs of 60)
+  // found a genuine, non-zero RESIDUAL of 1/300 (~0.3%) on this deferred fix
+  // itself — real App Router timing jitter unrelated to the synchronous-push
+  // bug, not something a future change here could drive to exactly zero (see
+  // audits/reports/research-discovery-pr3.md). e2e/research-filter-chip-
+  // navigation.spec.ts is the regression guard: it tolerates that residual
+  // (a single dropped click across its 60-iteration run) and only fails once
+  // a SECOND drop appears in the same run — the signature of the ~9-11%
+  // reintroduced-regression rate, not the ~0.3% residual. Only the push is
+  // deferred — the target URL and the analytics event are still computed
+  // synchronously from the click's own state, so nothing
+  // about ordering or the reported counts changes.
+  //
+  // The scheduling itself (defer by exactly one task, exactly once, same
+  // href) is factored into `schedulePush` (lib/research/deferred-navigation.ts)
+  // so that contract has a deterministic unit test — this component is not
+  // unit-testable directly (no jsdom/RTL in this repo). `{ scroll: false }`
+  // stays here, bound into the `push` callback, not in that helper.
+  const pushUrl = useCallback(
+    (href: string) => {
+      schedulePush((h) => router.push(h, { scroll: false }), href);
+    },
+    [router],
+  );
+
   // Facet toggle: router.push() (a NEW history entry), so Back after a chip
   // click undoes just that chip, never the settled search underneath it.
-  // `tracked` is set ONLY for the three facets research_v1 actually measures
-  // (status/confidence/fresh, ResearchFacet — contract-frozen); `category`/
-  // `type` are hub-only browse dimensions with no analytics facet of their
-  // own and stay untracked, same as before this task. The result count is
-  // computed for the FILTER'S OWN next state (not read from `resultCount`,
-  // which describes the CURRENT render) — mirrors the pilot's `setParam`
-  // (components/research/ResearchLibrary.tsx).
+  // `tracked` is set for every facet research_v1 measures — originally just
+  // status/confidence/fresh (Task 6); `category`/`type` joined additively
+  // (PR 5 gap-close, ResearchFacet — lib/analytics/research-events.ts) once
+  // the frozen-but-additive contract grew a legal facet value for them. The
+  // result count is computed for the FILTER'S OWN next state (not read from
+  // `resultCount`, which describes the CURRENT render) — mirrors the pilot's
+  // `setParam` (components/research/ResearchLibrary.tsx).
   const applyFacet = useCallback(
     (partial: Partial<DiscoveryFilters>, tracked?: { facet: ResearchFacet; value: string | null }) => {
       const next: DiscoveryFilters = { ...activeFilters, ...partial };
@@ -753,15 +793,15 @@ export function ResearchHub({ market, items, nodes, scopeSnapshot }: ResearchHub
         });
       }
       const qs = buildDiscoverySearchParams(next).toString();
-      router.push(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+      pushUrl(qs ? `${pathname}?${qs}` : pathname);
     },
-    [activeFilters, pathname, router, items, tracker],
+    [activeFilters, pathname, pushUrl, items, tracker],
   );
 
   const resetAll = useCallback(() => {
     setQuery('');
-    router.push(pathname, { scroll: false });
-  }, [pathname, router]);
+    pushUrl(pathname);
+  }, [pathname, pushUrl]);
 
   const facets = useMemo(
     () => computeDiscoveryFacets(items, activeFilters),
@@ -1035,7 +1075,9 @@ export function ResearchHub({ market, items, nodes, scopeSnapshot }: ResearchHub
                   label: categoryConfig[entry.value].name,
                   count: entry.count,
                 }))}
-                onChange={(value) => applyFacet({ category: value as Category | null })}
+                onChange={(value) =>
+                  applyFacet({ category: value as Category | null }, { facet: 'category', value })
+                }
               />
               <FilterChips
                 label="Type"
@@ -1045,7 +1087,7 @@ export function ResearchHub({ market, items, nodes, scopeSnapshot }: ResearchHub
                   label: TYPE_LABEL[entry.value],
                   count: entry.count,
                 }))}
-                onChange={(value) => applyFacet({ type: value as DiscoveryKind | null })}
+                onChange={(value) => applyFacet({ type: value as DiscoveryKind | null }, { facet: 'type', value })}
               />
               <FilterChips
                 label="Status"
@@ -1084,8 +1126,16 @@ export function ResearchHub({ market, items, nodes, scopeSnapshot }: ResearchHub
 
           {/* Permanently-mounted SR live region (spec Task 4: never mounted
               conditionally) — the visible count below is aria-hidden so the
-              result count is announced exactly once. */}
-          <p className="sr-only" aria-live="polite" aria-atomic="true">
+              result count is announced exactly once.
+              `data-testid="research-result-count"` (PR 3 review fix, commit
+              4): a stable e2e selector — the app also mounts a Sonner
+              toaster (components/ui/sonner.tsx) with its own
+              `aria-live="polite"` region on every page, so a bare aria-live
+              selector needs either DOM-order luck or `.first()` to find the
+              right one. Mirrored on QuickFinder's own result-count region
+              (components/research/QuickFinder.tsx) — the two never render on
+              the same page, so one shared name is unambiguous. */}
+          <p className="sr-only" aria-live="polite" aria-atomic="true" data-testid="research-result-count">
             {resultCount} {resultCount === 1 ? 'result' : 'results'}
           </p>
 

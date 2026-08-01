@@ -4,8 +4,13 @@ import {
   buildScopedCompareUrl,
   cockpitKeyFor,
   computeDiscoveryFacets,
+  computeFinderCounts,
   countDiscoveryItems,
   describeScopeSwitch,
+  finderItemHref,
+  finderResults,
+  finderViewAllHref,
+  matchesItemQuery,
   migrateLegacyTradingShortlist,
   parseDiscoverySearchParams,
   persistScopedShortlist,
@@ -17,8 +22,10 @@ import {
   shortlistStorageKey,
   sortFinderItems,
   sortHubProjections,
+  toFinderClientItems,
   toggleScopedShortlist,
 } from "@/lib/research/catalog-shell-logic";
+import { categoryConfig } from "@/lib/i18n/config";
 import type {
   CockpitKey,
   DiscoveryItem,
@@ -30,6 +37,7 @@ import type {
   StorageLike,
   UnavailableScopeReason,
 } from "@/lib/research/catalog-shell-logic";
+import { BEST_X_MANIFEST } from "@/lib/comparison/topics/manifest";
 
 describe("Discovery identity", () => {
   it("keeps topic out of a cockpit-only item id", () => {
@@ -455,6 +463,341 @@ it("sortFinderItems: featured beats a newer sortDate, and equal featured+sortDat
     featuredOlderTie.id,
     nonFeaturedNewer.id, // not featured -> last despite the newest sortDate
   ]);
+});
+
+describe("Quick Finder pure contracts (finderResults / finderItemHref / finderViewAllHref)", () => {
+  const finderItem = (
+    id: string,
+    over: Partial<DiscoveryItem> = {},
+  ): DiscoveryItem =>
+    makeDiscoveryItem({
+      id,
+      display: {
+        ...makeDiscoveryItem().display,
+        title: id,
+        searchText: id.toLowerCase(),
+      },
+      ...over,
+    });
+
+  it("limits Finder results to six even when more items match", () => {
+    const eightItems = Array.from({ length: 8 }, (_, index) =>
+      finderItem(`item-${index}`),
+    );
+    expect(
+      finderResults(eightItems, { query: "", category: null }),
+    ).toHaveLength(6);
+  });
+
+  it("caps at six under completely empty filters (no q, no category), using the default ranking", () => {
+    const eightItems = Array.from({ length: 8 }, (_, index) =>
+      finderItem(`item-${index}`),
+    );
+    const results = finderResults(eightItems, { query: "", category: null });
+    expect(results).toHaveLength(6);
+    // No featured/sortDate differences among these eight -> falls back to the
+    // stable item.id tiebreak (spec §6.3): the first six ids in order.
+    expect(results.map((resultItem) => resultItem.id)).toEqual([
+      "item-0",
+      "item-1",
+      "item-2",
+      "item-3",
+      "item-4",
+      "item-5",
+    ]);
+  });
+
+  it("returns zero results when nothing matches the query", () => {
+    const items = [finderItem("fidelity"), finderItem("schwab")];
+    expect(
+      finderResults(items, {
+        query: "nonexistent-broker-xyz",
+        category: null,
+      }),
+    ).toHaveLength(0);
+  });
+
+  it("puts featured review-backed items first in the default state", () => {
+    const featuredReview = finderItem("featured", {
+      review: makeReview({ featured: true }),
+    });
+    const newerOrdinary = finderItem("newer", {
+      review: makeReview({ featured: false, modifiedDate: "2026-07-27" }),
+    });
+    expect(
+      finderResults([newerOrdinary, featuredReview], {
+        query: "",
+        category: null,
+      })[0].id,
+    ).toBe(featuredReview.id);
+  });
+
+  it("sends review-backed items directly to the review, even alongside a research context", () => {
+    const reviewWithContext = finderItem("fidelity-with-context", {
+      review: makeReview({ href: "/us/trading/fidelity-review" }),
+      researchContexts: [makeContext()],
+    });
+    expect(finderItemHref(reviewWithContext)).toBe(
+      "/us/trading/fidelity-review",
+    );
+  });
+
+  it("sends cockpit-only items to a URLSearchParams-built hub URL", () => {
+    const cockpitOnly = finderItem("merrill-edge", {
+      review: null,
+      display: {
+        title: "Merrill Edge",
+        description: "Broker research",
+        bestFor: null,
+        searchText: "merrill edge broker research",
+        sortDate: "2026-07-03",
+      },
+      researchContexts: [
+        makeContext({
+          productSlug: "merrill-edge",
+          displayName: "Merrill Edge",
+        }),
+      ],
+    });
+    expect(finderItemHref(cockpitOnly)).toBe(
+      "/research?type=dossier&topic=trading-platforms&q=Merrill+Edge",
+    );
+  });
+
+  // Adversarial case: market switch. The item's OWN market must drive the
+  // hub base — not a hardcoded "us" default — for the exact same shape of
+  // query (type=dossier&topic=...&q=...).
+  it("threads a non-US item's own market into its cockpit-only href, not a hardcoded default", () => {
+    const ukCockpitOnly = finderItem("merrill-edge-uk", {
+      market: "uk",
+      category: "trading",
+      review: null,
+      display: {
+        title: "Merrill Edge UK",
+        description: "Broker research",
+        bestFor: null,
+        searchText: "merrill edge uk broker research",
+        sortDate: "2026-07-03",
+      },
+      researchContexts: [
+        makeContext({
+          cockpitKey: "uk/trading/trading-platforms",
+          topic: "trading-platforms",
+          productSlug: "merrill-edge",
+          displayName: "Merrill Edge UK",
+        }),
+      ],
+    });
+    expect(finderItemHref(ukCockpitOnly)).toBe(
+      "/uk/research?type=dossier&topic=trading-platforms&q=Merrill+Edge+UK",
+    );
+  });
+
+  // Adversarial case: multi-context item. A cockpit-only item that is
+  // qualified in more than one topic still stays exactly one Finder result,
+  // and its href resolves deterministically off the first (manifest-order)
+  // context rather than crashing or picking an unstable one.
+  it("keeps a multi-context cockpit-only item as a single result and hrefs its first (manifest-order) context", () => {
+    const multiContext = finderItem("multi-context-broker", {
+      review: null,
+      display: {
+        title: "Multi Context Broker",
+        description: "Broker research",
+        bestFor: null,
+        searchText: "multi context broker research",
+        sortDate: "2026-07-03",
+      },
+      researchContexts: [
+        makeContext({
+          topic: "trading-platforms",
+          topicLabel: "Best Trading Platforms",
+          manifestOrder: 0,
+          productSlug: "multi-context-broker",
+          displayName: "Multi Context Broker",
+        }),
+        makeContext({
+          topic: "options-brokers",
+          topicLabel: "Best Options Brokers",
+          manifestOrder: 1,
+          productSlug: "multi-context-broker",
+          displayName: "Multi Context Broker",
+        }),
+      ],
+    });
+
+    const results = finderResults([multiContext], {
+      query: "",
+      category: null,
+    });
+    expect(results).toHaveLength(1);
+    expect(finderItemHref(multiContext)).toBe(
+      "/research?type=dossier&topic=trading-platforms&q=Multi+Context+Broker",
+    );
+  });
+
+  // Adversarial case: two products sharing the same topic name in different
+  // categories (the live pair: us/credit-repair/companies vs
+  // us/debt-relief/companies, spec §11.1 / test invariant #10). They must
+  // stay two distinct Finder results with two distinct hrefs, disambiguated
+  // by the product's own display name even though `topic` collides.
+  it("keeps same-named topics in different categories as separate results with disambiguating hrefs (us/credit-repair/companies vs us/debt-relief/companies)", () => {
+    const creditRepairCompanies = finderItem("credit-repair-companies", {
+      category: "credit-repair",
+      review: null,
+      display: {
+        title: "Lexington Law",
+        description: "Credit repair research",
+        bestFor: null,
+        searchText: "lexington law credit repair companies",
+        sortDate: "2026-07-03",
+      },
+      researchContexts: [
+        makeContext({
+          cockpitKey: "us/credit-repair/companies",
+          topic: "companies",
+          topicLabel: "Best Credit Repair Companies",
+          productSlug: "lexington-law",
+          displayName: "Lexington Law",
+        }),
+      ],
+    });
+    const debtReliefCompanies = finderItem("debt-relief-companies", {
+      category: "debt-relief",
+      review: null,
+      display: {
+        title: "National Debt Relief",
+        description: "Debt relief research",
+        bestFor: null,
+        searchText: "national debt relief companies",
+        sortDate: "2026-07-03",
+      },
+      researchContexts: [
+        makeContext({
+          cockpitKey: "us/debt-relief/companies",
+          topic: "companies",
+          topicLabel: "Best Debt Relief Companies",
+          productSlug: "national-debt-relief",
+          displayName: "National Debt Relief",
+        }),
+      ],
+    });
+
+    const results = finderResults(
+      [creditRepairCompanies, debtReliefCompanies],
+      { query: "", category: null },
+    );
+    expect(results).toHaveLength(2);
+    expect(results.map((resultItem) => resultItem.id).sort()).toEqual(
+      [creditRepairCompanies.id, debtReliefCompanies.id].sort(),
+    );
+
+    const creditHref = finderItemHref(creditRepairCompanies);
+    const debtHref = finderItemHref(debtReliefCompanies);
+    expect(creditHref).toBe(
+      "/research?type=dossier&topic=companies&q=Lexington+Law",
+    );
+    expect(debtHref).toBe(
+      "/research?type=dossier&topic=companies&q=National+Debt+Relief",
+    );
+    expect(creditHref).not.toBe(debtHref);
+  });
+
+  // Adversarial case: market switch on the view-all CTA itself. The same
+  // query text must resolve against each market's own research base.
+  it("resolves the same query/category to each market's own base (market switch)", () => {
+    expect(finderViewAllHref("us", { query: "schwab", category: null })).toBe(
+      "/research?q=schwab",
+    );
+    expect(finderViewAllHref("uk", { query: "schwab", category: null })).toBe(
+      "/uk/research?q=schwab",
+    );
+    expect(finderViewAllHref("ca", { query: "schwab", category: null })).toBe(
+      "/ca/research?q=schwab",
+    );
+    expect(finderViewAllHref("au", { query: "schwab", category: null })).toBe(
+      "/au/research?q=schwab",
+    );
+  });
+
+  it("carries both q and category via URLSearchParams", () => {
+    expect(
+      finderViewAllHref("us", { query: "schwab", category: "trading" }),
+    ).toBe("/research?q=schwab&category=trading");
+  });
+
+  it("omits empty view-all parameters", () => {
+    expect(finderViewAllHref("uk", { query: " ", category: null })).toBe(
+      "/uk/research",
+    );
+  });
+
+  // --- computeFinderCounts (PR 3 review fix, spec §15 invariant 13) --------
+  // Before this fix, every Finder analytics event AND the live region both
+  // reported the six-card-capped `finderResults(...).length` as the result
+  // count, so a query matching 40 items and one matching 6 were
+  // indistinguishable. `computeFinderCounts` names the two quantities
+  // explicitly: `visibleResults` (unchanged — exactly `finderResults`'
+  // six-card-capped projection) and `totalMatches` (the HONEST, uncapped
+  // `sortFinderItems(...).length`). The matrix below covers every boundary
+  // the operator flagged: 0, 1, fewer than six, exactly six (the case that
+  // must NOT look like a special "hide the cap" branch — total and visible
+  // are equal there for a genuine reason, not a coincidence), and more than
+  // six (where they must genuinely differ).
+  describe("computeFinderCounts (visibleResults vs totalMatches)", () => {
+    it.each([
+      [0, 0, 0],
+      [1, 1, 1],
+      [5, 5, 5],
+      [6, 6, 6],
+      [9, 6, 9],
+    ])(
+      "%i matching item(s) -> visibleResults.length=%i, totalMatches=%i",
+      (matchCount, expectedVisible, expectedTotal) => {
+        const items = Array.from({ length: matchCount }, (_, index) =>
+          finderItem(`item-${index}`),
+        );
+        const counts = computeFinderCounts(items, { query: "", category: null });
+        expect(counts.visibleResults).toHaveLength(expectedVisible);
+        expect(counts.totalMatches).toBe(expectedTotal);
+      },
+    );
+
+    it("at exactly six matches, totalMatches equals visibleResults.length for a genuine reason, not a special case", () => {
+      const items = Array.from({ length: 6 }, (_, index) => finderItem(`item-${index}`));
+      const counts = computeFinderCounts(items, { query: "", category: null });
+      expect(counts.totalMatches).toBe(counts.visibleResults.length);
+      expect(counts.totalMatches).toBe(6);
+    });
+
+    it("above six matches, totalMatches is the true uncapped count while visibleResults stays capped at six", () => {
+      const items = Array.from({ length: 9 }, (_, index) => finderItem(`item-${index}`));
+      const counts = computeFinderCounts(items, { query: "", category: null });
+      expect(counts.totalMatches).toBe(9);
+      expect(counts.visibleResults).toHaveLength(6);
+      expect(counts.totalMatches).not.toBe(counts.visibleResults.length);
+    });
+
+    it("visibleResults is byte-identical to finderResults for the same items/filters — never a second ranking rule", () => {
+      const items = Array.from({ length: 9 }, (_, index) => finderItem(`item-${index}`));
+      const filters = { query: "", category: null };
+      const counts = computeFinderCounts(items, filters);
+      expect(counts.visibleResults.map((resultItem) => resultItem.id)).toEqual(
+        finderResults(items, filters).map((resultItem) => resultItem.id),
+      );
+    });
+
+    it("totalMatches counts a real query+category intersection, not just the unfiltered item count", () => {
+      const items = [
+        finderItem("acme-trading", { category: "trading" }),
+        finderItem("zenith-trading", { category: "trading" }),
+        finderItem("acme-personal-finance", { category: "personal-finance" }),
+      ];
+      // Only "acme-trading" matches BOTH category:'trading' AND the 'acme' query.
+      const counts = computeFinderCounts(items, { query: "acme", category: "trading" });
+      expect(counts.totalMatches).toBe(1);
+      expect(counts.visibleResults).toHaveLength(1);
+    });
+  });
 });
 
 // In-memory StorageLike stub so the storage contract stays testable without
@@ -1085,5 +1428,259 @@ describe("buildDiscoverySearchParams", () => {
 
   it("produces an empty URLSearchParams for the empty filter set", () => {
     expect(buildDiscoverySearchParams(filters).toString()).toBe("");
+  });
+});
+
+// --- Multi-context residual risk guard (PR 3 review, spec §4.1 amendment
+// 2026-07-29) -----------------------------------------------------------
+// A DELIBERATE regression guard, not proof that no LIVE multi-context item
+// exists today — that would require reading real Supabase
+// `product_attributes` rows, which this unit suite never does (see the spec
+// amendment and audits/reports/research-discovery-pr3.md for the honest,
+// data-driven residual risk this test does NOT close). What this test DOES
+// prove, against the REAL manifest (not a fixture): today, BEST_X_MANIFEST
+// has EXACTLY ONE (market, category) pair carrying more than one topic. If
+// a future manifest edit adds a second such pair, this test fails loudly —
+// forcing whoever made that edit to notice a multi-context DiscoveryItem
+// just became structurally reachable in one more place, and to add real
+// browser coverage for it (e2e/homepage-quick-finder.spec.ts,
+// e2e/research-shell.spec.ts) instead of leaving it silently unit-only.
+describe("BEST_X_MANIFEST multi-topic-per-category shape (regression guard)", () => {
+  it("has exactly one (market, category) pair with more than one topic today: us/personal-finance", () => {
+    const topicsByMarketCategory = new Map<string, Set<string>>();
+    for (const entry of BEST_X_MANIFEST) {
+      const key = `${entry.market}/${entry.category}`;
+      const topics = topicsByMarketCategory.get(key) ?? new Set<string>();
+      topics.add(entry.topic);
+      topicsByMarketCategory.set(key, topics);
+    }
+
+    const multiTopicPairs = [...topicsByMarketCategory.entries()].filter(
+      ([, topics]) => topics.size > 1,
+    );
+
+    expect(multiTopicPairs.map(([key]) => key)).toEqual(["us/personal-finance"]);
+    expect(multiTopicPairs[0][1]).toEqual(
+      new Set([
+        "robo-advisors",
+        "high-yield-savings",
+        "credit-card-companies",
+        "credit-monitoring",
+      ]),
+    );
+  });
+});
+
+// --- toFinderClientItems (PR 3 review fix — client payload projection) -----
+// The homepage Quick Finder was handed the ENTIRE catalog.items (incl.
+// searchText, description, every researchContexts entry with keyFacts) as
+// client-component props, measured as a +17.0 KiB (+43%) gzip regression on
+// `/` (see audits/reports/research-discovery-pr3.md). QuickFinder only ever
+// reads researchContexts[0] (finderItemHref, handleItemClick) and renders
+// nothing from keyFacts, so this trims the DTO server-side, before it
+// crosses the RSC/client boundary — the TYPE stays `DiscoveryItem[]` (no
+// second Finder-specific item type, per this file's own architecture rule),
+// only the VALUES shrink. `matchesItemQuery`/`sortFinderItems`/
+// `finderResults` are unchanged; they just read whatever `display.searchText`
+// they're given.
+describe("toFinderClientItems (client payload projection)", () => {
+  const finderItem = (
+    id: string,
+    over: Partial<DiscoveryItem> = {},
+  ): DiscoveryItem =>
+    makeDiscoveryItem({
+      id,
+      display: {
+        ...makeDiscoveryItem().display,
+        title: id,
+        searchText: id.toLowerCase(),
+      },
+      ...over,
+    });
+
+  it("keeps id/market/category/review/display title-description-bestFor-sortDate byte-identical", () => {
+    const original = finderItem("fidelity-review");
+    const [trimmed] = toFinderClientItems([original]);
+    expect(trimmed.id).toBe(original.id);
+    expect(trimmed.market).toBe(original.market);
+    expect(trimmed.category).toBe(original.category);
+    expect(trimmed.review).toEqual(original.review);
+    expect(trimmed.display.title).toBe(original.display.title);
+    expect(trimmed.display.description).toBe(original.display.description);
+    expect(trimmed.display.bestFor).toBe(original.display.bestFor);
+    expect(trimmed.display.sortDate).toBe(original.display.sortDate);
+  });
+
+  it("empties keyFacts on the surviving context but keeps every field the Finder actually reads", () => {
+    const original = finderItem("fidelity-review", {
+      researchContexts: [
+        makeContext({ keyFacts: { optionsFee: "$0.65", minDeposit: "$0" } }),
+      ],
+    });
+    const [trimmed] = toFinderClientItems([original]);
+    expect(trimmed.researchContexts).toHaveLength(1);
+    expect(trimmed.researchContexts[0].keyFacts).toEqual({});
+    expect(trimmed.researchContexts[0].topic).toBe(original.researchContexts[0].topic);
+    expect(trimmed.researchContexts[0].productSlug).toBe(
+      original.researchContexts[0].productSlug,
+    );
+    expect(trimmed.researchContexts[0].status).toBe(original.researchContexts[0].status);
+    expect(trimmed.researchContexts[0].auditedRank).toBe(
+      original.researchContexts[0].auditedRank,
+    );
+  });
+
+  // QuickFinder's own code (components/research/QuickFinder.tsx) only ever
+  // reads context.topic/status/auditedRank/productSlug — every other
+  // ResearchContext field (topicLabel, manifestOrder, displayName, tagline,
+  // bestFor, confidence, dataVerifiedAt, auditedScore, dataPoints,
+  // compareBaseHref) is dead weight on this wire specifically (it matters to
+  // the HUB's own catalog fetch, which is untouched — see this describe
+  // block's own header). Blanked rather than omitted, so the return type
+  // stays exactly `ResearchContext` (no second, optional-fields variant).
+  it("blanks every OTHER context field the Finder never reads, not just keyFacts", () => {
+    const original = finderItem("fidelity-review", {
+      researchContexts: [
+        makeContext({
+          topicLabel: "Best Trading Platforms",
+          manifestOrder: 3,
+          displayName: "Fidelity",
+          tagline: "Full-service investing",
+          bestFor: "Long-term investors",
+          confidence: "high",
+          dataVerifiedAt: "2026-07-03",
+          auditedScore: 9.6,
+          dataPoints: 4,
+          compareBaseHref: "/us/trading/best/trading-platforms",
+        }),
+      ],
+    });
+    const [trimmed] = toFinderClientItems([original]);
+    const context = trimmed.researchContexts[0];
+    expect(context.topicLabel).toBe("");
+    expect(context.manifestOrder).toBe(0);
+    expect(context.displayName).toBe("");
+    expect(context.tagline).toBeNull();
+    expect(context.bestFor).toBeNull();
+    expect(context.confidence).toBeNull();
+    expect(context.dataVerifiedAt).toBeNull();
+    expect(context.auditedScore).toBeNull();
+    expect(context.dataPoints).toBe(0);
+    expect(context.compareBaseHref).toBe("");
+    // The four fields the Finder actually reads survive untouched.
+    expect(context.topic).toBe(original.researchContexts[0].topic);
+    expect(context.status).toBe(original.researchContexts[0].status);
+    expect(context.productSlug).toBe(original.researchContexts[0].productSlug);
+    expect(context.auditedRank).toBe(original.researchContexts[0].auditedRank);
+  });
+
+  it("drops every research context after the first (manifest-order) one — the Finder never reads past index 0", () => {
+    const original = finderItem("multi-context-broker", {
+      review: null,
+      researchContexts: [
+        makeContext({ topic: "trading-platforms", manifestOrder: 0 }),
+        makeContext({ topic: "options-brokers", manifestOrder: 1 }),
+      ],
+    });
+    const [trimmed] = toFinderClientItems([original]);
+    expect(trimmed.researchContexts).toHaveLength(1);
+    expect(trimmed.researchContexts[0].topic).toBe("trading-platforms");
+  });
+
+  it("keeps a cockpit-only item's finderItemHref byte-identical after trimming", () => {
+    const original = finderItem("merrill-edge", {
+      review: null,
+      display: {
+        title: "Merrill Edge",
+        description: "Broker research",
+        bestFor: null,
+        searchText: "irrelevant original search text",
+        sortDate: "2026-07-03",
+      },
+      researchContexts: [
+        makeContext({
+          productSlug: "merrill-edge",
+          displayName: "Merrill Edge",
+          topic: "trading-platforms",
+        }),
+      ],
+    });
+    const [trimmed] = toFinderClientItems([original]);
+    expect(finderItemHref(trimmed)).toBe(finderItemHref(original));
+  });
+
+  it("recomputes a shorter searchText that still matches the item's own title, description, bestFor and category label", () => {
+    const original = finderItem("schwab-review", {
+      category: "trading",
+      review: makeReview({
+        title: "Charles Schwab Review",
+        description: "Full-service broker",
+      }),
+      display: {
+        title: "Charles Schwab Review",
+        description: "Full-service broker",
+        bestFor: "Long-term investors",
+        searchText: "original full search text with slugs and taglines",
+        sortDate: "2026-07-01",
+      },
+    });
+    const [trimmed] = toFinderClientItems([original]);
+    expect(matchesItemQuery(trimmed, "schwab")).toBe(true);
+    expect(matchesItemQuery(trimmed, "long-term investors")).toBe(true);
+    expect(matchesItemQuery(trimmed, categoryConfig.trading.name)).toBe(true);
+  });
+
+  // PR 3 closure review, commit 1 (P1 BLOCKING): the trimmed searchText was
+  // built from title/description/bestFor/categoryLabel only, dropping the
+  // first context's topicLabel/displayName entirely. Since the real catalog
+  // searchText (lib/research/catalog.ts buildSearchText) DOES fold in every
+  // attached context's topicLabel, a query that only ever matches via the
+  // topic label (e.g. "Best Trading Platforms") found real results on the
+  // Hub and ZERO on the Homepage Finder for the identical catalog — a direct
+  // violation of spec §15 invariant 13. This item's title/description/bestFor
+  // deliberately contain none of the query text, so this only passes once
+  // the topic label itself is folded into the recomputed searchText.
+  it("is found by a query that only matches the first context's topicLabel (PR 3 closure review, commit 1)", () => {
+    const original = finderItem("fidelity-review", {
+      category: "trading",
+      review: makeReview({
+        title: "Fidelity Investments Review",
+        description: "Independent broker review",
+      }),
+      display: {
+        title: "Fidelity Investments Review",
+        description: "Independent broker review",
+        bestFor: "Long-term investors",
+        searchText: "irrelevant original search text",
+        sortDate: "2026-07-01",
+      },
+      researchContexts: [
+        makeContext({ topicLabel: "Best Trading Platforms", displayName: "Fidelity" }),
+      ],
+    });
+    const [trimmed] = toFinderClientItems([original]);
+    expect(matchesItemQuery(trimmed, "Best Trading Platforms")).toBe(true);
+  });
+
+  it("never carries a context's keyFacts, tagline, or review/product slug text in the trimmed searchText", () => {
+    const original = finderItem("fidelity-review", {
+      review: makeReview({ slug: "unique-review-slug-xyz" }),
+      researchContexts: [
+        makeContext({
+          tagline: "unique-tagline-marker-xyz",
+          keyFacts: { fee: "unique-keyfact-marker-xyz" },
+        }),
+      ],
+    });
+    const [trimmed] = toFinderClientItems([original]);
+    expect(trimmed.display.searchText).not.toContain("unique-review-slug-xyz");
+    expect(trimmed.display.searchText).not.toContain("unique-tagline-marker-xyz");
+    expect(trimmed.display.searchText).not.toContain("unique-keyfact-marker-xyz");
+  });
+
+  it("leaves an empty researchContexts array empty (no context to keep)", () => {
+    const original = finderItem("fidelity-review", { researchContexts: [] });
+    const [trimmed] = toFinderClientItems([original]);
+    expect(trimmed.researchContexts).toEqual([]);
   });
 });

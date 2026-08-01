@@ -1,5 +1,5 @@
 import type { Category, Market } from "@/lib/i18n/config";
-import { marketCategories } from "@/lib/i18n/config";
+import { categoryConfig, marketCategories } from "@/lib/i18n/config";
 import { BEST_X_MANIFEST } from "@/lib/comparison/topics/manifest";
 
 export type ResearchStatus = "audited" | "provisional";
@@ -626,6 +626,190 @@ export function sortFinderItems(
 
     if (a.id !== b.id) return a.id < b.id ? -1 : 1;
     return 0;
+  });
+}
+
+/** Homepage Quick Finder filter shape (spec §9.3): only `query` and
+ *  `category` — the Finder never touches type/status/confidence/fresh/topic
+ *  /specs, those are Hub-only (spec §6.1). */
+export interface FinderFilters {
+  query: string;
+  category: Category | null;
+}
+
+/** Finder result list (spec §6.3, §9.3): same default ranking as
+ *  `sortFinderItems` (review-backed `featured` first, then newest real
+ *  `sortDate`, then `item.id` as the stable tiebreak), capped at `limit`
+ *  (six by default). The six-card cap is part of the pure contract, not a
+ *  CSS/rendering trick — a caller with more matches still only ever gets
+ *  `limit` items back. */
+export function finderResults(
+  items: readonly DiscoveryItem[],
+  filters: FinderFilters,
+  limit = 6,
+): DiscoveryItem[] {
+  return sortFinderItems(items, filters).slice(0, limit);
+}
+
+/** The Finder's two named result quantities (PR 3 review fix, spec §15
+ *  invariant 13: "Hero, Facetten, CTA und Events melden konsistente
+ *  Counts"). Before this fix, every Finder analytics event
+ *  (research_search / research_filter_change / research_finder_cta) AND the
+ *  live region both reported the six-card-capped `finderResults(...).length`
+ *  as `resultCount` — so a query matching 40 items and one matching 6 were
+ *  analytically indistinguishable, and the live region undersold how much
+ *  research actually existed for the current query/category state.
+ *
+ *  `visibleResults` is byte-identical to `finderResults` (the render cap
+ *  stays — never changed by this fix); `totalMatches` is the HONEST,
+ *  uncapped `sortFinderItems(...).length` — the same pure ranking
+ *  `finderResults` slices from, never a second/different filter path. Both
+ *  fields are derived from the SAME `items`+`filters` input in the same
+ *  call, so they can never drift out of sync with each other. Callers
+ *  (QuickFinder's render, `resolveCategoryFilterChange`, the search/CTA
+ *  tracking call sites) read `.totalMatches` for every `resultCount` they
+ *  send, and `.visibleResults` for what they actually render. */
+export interface FinderCounts {
+  visibleResults: DiscoveryItem[];
+  totalMatches: number;
+}
+
+export function computeFinderCounts(
+  items: readonly DiscoveryItem[],
+  filters: FinderFilters,
+  limit = 6,
+): FinderCounts {
+  return {
+    visibleResults: finderResults(items, filters, limit),
+    totalMatches: sortFinderItems(items, filters).length,
+  };
+}
+
+/** One Finder card's destination href (spec §9.3). Review-backed items go
+ *  straight to their review, regardless of any research context they might
+ *  also carry. Cockpit-only items go to the market's Research hub,
+ *  prefiltered by `type=dossier`, the first (manifest-order) context's
+ *  topic, and the item's own display title as `q` — never to the Cockpit
+ *  directly (spec §2.6). Built exclusively with `URLSearchParams`, never
+ *  string interpolation, so the topic/title values are safely encoded even
+ *  when two categories reuse the same topic name (e.g.
+ *  us/credit-repair/companies vs us/debt-relief/companies) — the product's
+ *  own title is what disambiguates those two hrefs. */
+export function finderItemHref(item: DiscoveryItem): string {
+  if (item.review) return item.review.href;
+
+  const context = item.researchContexts[0];
+  if (!context) return researchBaseForMarket(item.market);
+
+  const params = new URLSearchParams();
+  params.set("type", "dossier");
+  params.set("topic", context.topic);
+  params.set("q", item.display.title);
+  return `${researchBaseForMarket(item.market)}?${params.toString()}`;
+}
+
+/** The Finder's main "View all" CTA href (spec §9.3): the active market's
+ *  Research hub, carrying only the non-empty `q`/`category` filter values —
+ *  an absent or whitespace-only query and a null category are OMITTED
+ *  entirely rather than emitted as empty params. Built exclusively with
+ *  `URLSearchParams`. */
+export function finderViewAllHref(
+  market: Market,
+  filters: FinderFilters,
+): string {
+  const params = new URLSearchParams();
+  const query = filters.query.trim();
+  if (query) params.set("q", query);
+  if (filters.category) params.set("category", filters.category);
+  const queryString = params.toString();
+  return `${researchBaseForMarket(market)}${queryString ? `?${queryString}` : ""}`;
+}
+
+/** Trims a `DiscoveryItem[]` down to exactly what the Homepage Quick Finder's
+ *  CLIENT bundle needs to render, search, and route (PR 3 review fix — the
+ *  section server component was handing `<QuickFinder>` the ENTIRE
+ *  `catalog.items`, incl. `searchText`, `description`, and every
+ *  `researchContexts` entry with its full `keyFacts`, measured as a
+ *  +17.0 KiB / +43% gzip regression on `/`). The return type stays
+ *  `DiscoveryItem[]` — no second, Finder-specific item type (this file's own
+ *  architecture rule, see QuickFinder.tsx's header) — only the VALUES shrink,
+ *  so `matchesItemQuery`/`sortFinderItems`/`finderResults`/`finderItemHref`
+ *  are all completely unchanged: they just read whatever `display.searchText`
+ *  / `researchContexts` they're given.
+ *
+ *  Two cuts:
+ *  - `researchContexts` is capped at its own first (manifest-order) entry —
+ *    `finderItemHref`/`QuickFinder`'s click handlers never read past index 0
+ *    — and that surviving context is reduced to exactly the four fields
+ *    `QuickFinder.tsx` actually reads (`topic`, `status`, `auditedRank`,
+ *    `productSlug`); every other `ResearchContext` field (`topicLabel`,
+ *    `manifestOrder`, `displayName`, `tagline`, `bestFor`, `confidence`,
+ *    `dataVerifiedAt`, `auditedScore`, `dataPoints`, `compareBaseHref`,
+ *    `keyFacts`) is blanked to its type's zero value rather than omitted —
+ *    the return type stays exactly `ResearchContext`, no second, partial
+ *    variant. `cockpitKey` is kept real (cheap, and needed to stay a
+ *    syntactically valid `CockpitKey` template-literal type).
+ *  - `display.searchText` is RECOMPUTED from fields the Finder already
+ *    carries for other reasons (title, description, bestFor, the item's own
+ *    category label) PLUS the surviving (first, manifest-order) context's
+ *    `topicLabel`/`displayName` (PR 3 closure review fix, commit 1, P1
+ *    BLOCKING, spec §15 invariant 13 — without these two fields, a query
+ *    that only ever matches via the topic label, e.g. "Best Trading
+ *    Platforms", found real results on the Hub (which reads the full,
+ *    untrimmed catalog searchText) and ZERO on the Finder for the identical
+ *    catalog build; measured on this branch: 0/9, 0/8, 0/8, 0/5 across four
+ *    of the five sampled queries — see the commit message for the full
+ *    table and the re-measured payload delta). It still never restores the
+ *    full catalog searchText (spec §4.4), which additionally folds in
+ *    review/product slugs and every context's `tagline` — none of which a
+ *    Finder card ever displays. This still narrows what a Finder search can
+ *    match relative to the Hub (e.g. still no bare slug/tagline substring),
+ *    a deliberate, documented trade-off for the lightweight teaser surface
+ *    (never applied to the Hub's own catalog fetch, which keeps the full
+ *    searchText). */
+export function toFinderClientItems(
+  items: readonly DiscoveryItem[],
+): DiscoveryItem[] {
+  return items.map((item) => {
+    const [firstContext] = item.researchContexts;
+    const categoryLabel = categoryConfig[item.category]?.name ?? item.category;
+    const searchText = [
+      item.display.title,
+      item.display.description,
+      item.display.bestFor,
+      categoryLabel,
+      firstContext?.topicLabel ?? null,
+      firstContext?.displayName ?? null,
+    ]
+      .filter((part): part is string => Boolean(part && part.trim().length > 0))
+      .join(" ");
+
+    const trimmedContext: ResearchContext | null = firstContext
+      ? {
+          cockpitKey: firstContext.cockpitKey,
+          topic: firstContext.topic,
+          topicLabel: "",
+          manifestOrder: 0,
+          productSlug: firstContext.productSlug,
+          displayName: "",
+          tagline: null,
+          bestFor: null,
+          status: firstContext.status,
+          confidence: null,
+          dataVerifiedAt: null,
+          auditedScore: null,
+          auditedRank: firstContext.auditedRank,
+          dataPoints: 0,
+          compareBaseHref: "",
+          keyFacts: {},
+        }
+      : null;
+
+    return {
+      ...item,
+      display: { ...item.display, searchText },
+      researchContexts: trimmedContext ? [trimmedContext] : [],
+    };
   });
 }
 

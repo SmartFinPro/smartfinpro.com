@@ -84,6 +84,23 @@ test.describe('Research Library tracking (research_v1)', () => {
     batches = await interceptTrack(page);
     await page.goto('/research');
     await expect(page.getByPlaceholder(SEARCH)).toBeVisible(); // hydrated
+    // The search box alone is not a sufficient interactivity signal: it also
+    // exists in the server-rendered browse fallback, so a chip resolved right
+    // after it appears can be clicked on a subtree React is still replacing —
+    // the click then lands on a detached node and nothing happens (observed as
+    // a 5s URL timeout on the Type chip). The aria-live region is rendered by
+    // the client shell ONLY (ResearchHub.tsx; the fallback has none), so
+    // waiting for its result count proves the interactive tree is live.
+    // Scoped via `data-testid="research-result-count"` (PR 3 review fix,
+    // commit 4) rather than the element's tag/class shape: the SECOND
+    // `aria-live="polite"` region on this page is NOT injected by Playwright
+    // — it is this app's own Sonner toaster (components/ui/sonner.tsx,
+    // mounted globally in app/layout.tsx), which renders a real
+    // `<section aria-label="Notifications alt+T" aria-live="polite">` in the
+    // production server HTML regardless of whether any toast is showing. An
+    // unscoped `[aria-live="polite"]` selector matches both elements and
+    // trips strict mode; the testid matches only the hub's own region.
+    await expect(page.locator('[data-testid="research-result-count"]')).toContainText(/result/i);
   });
 
   // Reads the SR-live-region result count the hub itself renders
@@ -99,7 +116,13 @@ test.describe('Research Library tracking (research_v1)', () => {
   // "Charles Schwab" collision in research-shell.spec.ts: the FIXTURE
   // assumption changed with the generalization, not the counted behavior.
   async function visibleResultCount(page: Page): Promise<number> {
-    const text = await page.locator('[aria-live="polite"]').first().textContent();
+    // Scoped via the stable testid (PR 3 review fix, commit 4) — not a bare
+    // `[aria-live="polite"]` + `.first()`, which only ever worked because
+    // this app's own Sonner toaster (a real second `aria-live="polite"`
+    // region, mounted globally, not a Playwright artifact) happens to follow
+    // the hub's region in DOM order. That's a coincidence of markup order,
+    // not a real match — the testid can't ever collide with the toaster.
+    const text = await page.locator('[data-testid="research-result-count"]').textContent();
     const match = text?.match(/\d+/);
     if (!match) throw new Error(`Could not read a result count from "${text}"`);
     return Number(match[0]);
@@ -197,6 +220,61 @@ test.describe('Research Library tracking (research_v1)', () => {
     expect(props(event).topic).toBe('hub');
   });
 
+  // research-discovery-pr3 plan, Task 4 Step 5 (gap-close for the analytics
+  // widened in 9c3fbc4, lib/analytics/research-events.ts): 'category' and
+  // 'type' joined ResearchFacet additively alongside 'status'/'confidence'/
+  // 'fresh', and ResearchHub.tsx's own Category/Type FilterChips rows were
+  // wired to `tracker.trackFilterChange` in that same commit — but the only
+  // e2e click-wiring proof for ANY hub chip was the status chip above. This
+  // is the click-wiring proof for the hub's own Category chip specifically
+  // (the Homepage Quick Finder's SEPARATE category chip — surface: 'finder'
+  // — is proven in e2e/homepage-quick-finder.spec.ts; this hub chip is a
+  // different component instance with its own onChange call site).
+  test('the hub Category facet chip sends facet:category, its value and the resulting count (surface: hub)', async ({
+    page,
+  }) => {
+    // "Trading Platforms" is a stable, always-present Category option — the
+    // trading dossier is used as a fixture throughout this file (e.g. the
+    // shortlist/switch tests above).
+    await page.getByRole('button', { name: 'Trading Platforms', exact: true }).click();
+    await expect(page).toHaveURL(/[?&]category=trading/);
+    const visibleCount = await visibleResultCount(page);
+    const renderedCount = await renderedResultCount(page);
+    await expect.poll(() => named(batches, 'research_filter_change').length).toBeGreaterThan(0);
+
+    const event = named(batches, 'research_filter_change')[0];
+    expect(props(event).facet).toBe('category');
+    expect(props(event).value).toBe('trading');
+    expect(props(event).active).toBe(true);
+    expect(props(event).resultCount).toBe(renderedCount);
+    expect(visibleCount).toBe(renderedCount);
+    // Same GLOBAL-event contract as every other hub-wide chip: surface
+    // 'hub', topic 'hub' — never an item's own topic.
+    expect(props(event).surface).toBe('hub');
+    expect(props(event).topic).toBe('hub');
+  });
+
+  // Same gap-close, the hub's Type chip (Reviews/Dossiers) — the OTHER new
+  // facet value 9c3fbc4 widened ResearchFacet to accept.
+  test('the hub Type facet chip sends facet:type, its value and the resulting count (surface: hub)', async ({
+    page,
+  }) => {
+    await page.getByRole('button', { name: 'Dossiers', exact: true }).click();
+    await expect(page).toHaveURL(/[?&]type=dossier/);
+    const visibleCount = await visibleResultCount(page);
+    const renderedCount = await renderedResultCount(page);
+    await expect.poll(() => named(batches, 'research_filter_change').length).toBeGreaterThan(0);
+
+    const event = named(batches, 'research_filter_change')[0];
+    expect(props(event).facet).toBe('type');
+    expect(props(event).value).toBe('dossier');
+    expect(props(event).active).toBe(true);
+    expect(props(event).resultCount).toBe(renderedCount);
+    expect(visibleCount).toBe(renderedCount);
+    expect(props(event).surface).toBe('hub');
+    expect(props(event).topic).toBe('hub');
+  });
+
   // Task 8 (unified-research-discovery-pr2-hubs plan) — spec invariant 13
   // ("Hero, Facetten, CTA und Events melden konsistente Counts", §15). The
   // shipped PR 2 UI does not paint a literal number on each Category chip
@@ -265,8 +343,20 @@ test.describe('Research Library tracking (research_v1)', () => {
     await page.getByRole('button', { name: 'In verification', exact: true }).click();
     await expect(page).toHaveURL(/status=provisional/);
     const filteredRenderedCount = await renderedResultCount(page);
-    await expect.poll(() => named(batches, 'research_filter_change').length).toBeGreaterThan(0);
-    const filterEvent = named(batches, 'research_filter_change')[0];
+    // Select the STATUS event by its facet, not by position. This test clicks
+    // through the Category chips further up, and since `9c3fbc4` those emit
+    // research_filter_change too — so `[0]` silently became a category event
+    // and compared its count against the status-filtered rendering. Matching
+    // on `facet` states which event is meant and cannot drift again when
+    // another facet starts reporting.
+    await expect
+      .poll(() =>
+        named(batches, 'research_filter_change').filter((e) => props(e).facet === 'status').length,
+      )
+      .toBeGreaterThan(0);
+    const filterEvent = named(batches, 'research_filter_change')
+      .filter((e) => props(e).facet === 'status')
+      .at(-1)!;
     expect(props(filterEvent).resultCount).toBe(filteredRenderedCount);
   });
 

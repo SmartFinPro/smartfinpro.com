@@ -29,6 +29,18 @@
 // alone cannot. `topicOverride`-style values are NEVER a serialized property;
 // they are the `dimensions` argument below and only ever replace
 // `properties.topic`/`properties.category` at build time.
+//
+// FINDER CTA (PR 3 Task 1, spec §12): `research_finder_cta` is the Homepage
+// Quick Finder's own event (surface: 'finder') — a 7th, additive sibling of
+// the six names above. `trigger: 'view_all'` is a GLOBAL event (topic: 'hub')
+// for the Finder's main CTA; `trigger: 'dossier_item'` is an ITEM event (real
+// topic/category via `dimensions`) for a Cockpit-only card's CTA. Both fire
+// only on an actual click via `trackFinderCta()` — never on render, search,
+// or filter changes — and `resultCount` is always the caller-supplied,
+// uncapped TOTAL match count at click time (computeFinderCounts(...).
+// totalMatches — never the six-card render cap; semantics fixed 2026-07-29,
+// commit bf6723e; see docs/research-library/analytics-research-v1.md
+// "resultCount semantics fix"), never recomputed here.
 
 import type { Category } from '@/lib/i18n/config';
 
@@ -44,11 +56,21 @@ export const RESEARCH_EVENT_NAMES = [
   'research_review_click',
   'research_shortlist_change',
   'research_cockpit_handoff',
+  // PR 3 Task 1 (spec §12) — the Homepage Quick Finder's own CTA event.
+  // Additive: the six names above stay frozen, this is a 7th sibling.
+  'research_finder_cta',
 ] as const;
 export type ResearchEventName = (typeof RESEARCH_EVENT_NAMES)[number];
 
-/** The three filter dimensions the shell actually renders (shell-logic facets). */
-export type ResearchFacet = 'status' | 'confidence' | 'fresh';
+/** The filter dimensions the shell actually renders (shell-logic facets).
+ *  'status'|'confidence'|'fresh' shipped with Task 6; 'category' and 'type'
+ *  join additively (PR 5 gap-close, spec §12) — this was supposed to land in
+ *  PR 2 Task 6 alongside the other three and did not, leaving both the hub's
+ *  and the Homepage Quick Finder's category (and the hub's type) chips
+ *  analytically unmeasurable. deriveLabel/deriveValue below are unchanged:
+ *  both are already facet-agnostic (label = the facet name itself, value =
+ *  resultCount), so no new branch is needed for either new value. */
+export type ResearchFacet = 'status' | 'confidence' | 'fresh' | 'category' | 'type';
 /** Mirrors ResearchLibraryItemMeta['status'] — the verification states. */
 export type ResearchProductStatus = 'audited' | 'provisional' | 'unavailable';
 export type ShortlistAction = 'add' | 'remove' | 'clear';
@@ -69,14 +91,16 @@ export interface ResearchV1Properties {
    *  Never set directly by a call site; only via `dimensions` (see
    *  `ResearchItemDimensions` / `buildResearchEventData`). */
   category?: Category;
-  /** 'hub' (universal Research hub) — the only value today; 'finder'
-   *  (Homepage Quick Finder) ships in PR 3. */
+  /** 'hub' for the universal Research hub; 'finder' for the Homepage Quick
+   *  Finder (PR 3 Task 1). */
   surface?: 'hub' | 'finder';
   /** The clicked/opened/shortlisted item's own kind — mirrors
    *  `DiscoveryProjection['kind']`. */
   kind?: 'review' | 'dossier';
-  /** research_finder_cta only (PR 3) — reserved here so the strict schema
-   *  never needs a second additive round just for this field. */
+  /** research_finder_cta only (PR 3 Task 1) — which Finder CTA fired:
+   *  'view_all' (the main CTA, a GLOBAL event, topic: 'hub') or
+   *  'dossier_item' (a Cockpit-only card's CTA, an ITEM event carrying the
+   *  card's real topic/category). */
   trigger?: 'view_all' | 'dossier_item';
   /** research_search — trimmed CHARACTER COUNT only, never the query itself. */
   queryLength?: number;
@@ -116,6 +140,7 @@ const EVENT_ACTIONS: Record<ResearchEventName, string> = {
   research_review_click: 'review_click',
   research_shortlist_change: 'shortlist_change',
   research_cockpit_handoff: 'cockpit_handoff',
+  research_finder_cta: 'finder_cta',
 };
 
 /** The human-readable dimension of the event — NEVER the search string. */
@@ -130,6 +155,9 @@ function deriveLabel(name: ResearchEventName, p: ResearchV1Properties): string {
       return p.action ?? '';
     case 'research_cockpit_handoff':
       return (p.productSlugs ?? []).join(',');
+    case 'research_finder_cta':
+      // 'view_all' or 'dossier_item' — which CTA fired, never the query.
+      return p.trigger ?? '';
     default:
       // research_search — the topic, so the label column stays queryable
       // without ever carrying user input.
@@ -142,6 +170,13 @@ function deriveValue(name: ResearchEventName, p: ResearchV1Properties): number |
   switch (name) {
     case 'research_search':
     case 'research_filter_change':
+    case 'research_finder_cta':
+      // research_finder_cta: the uncapped TOTAL match count at click time
+      // (not the six-card render cap; semantics fixed 2026-07-29, commit
+      // bf6723e — see docs/research-library/analytics-research-v1.md
+      // "resultCount semantics fix") — the caller (trackFinderCta) is the
+      // only source of truth for this value; it is never recomputed or
+      // defaulted here.
       return p.resultCount;
     case 'research_evidence_open':
       return p.dataPoints;
@@ -210,9 +245,18 @@ export function buildResearchEventData(
  * The ONLY sanctioned way to derive a search event's payload from a raw query:
  * the trimmed character count. Anything that would put the string itself into
  * an event is a contract violation.
+ *
+ * Clamped to 500 — the wire cap `properties.queryLength` is validated against
+ * (ResearchV1PropertiesSchema, lib/validation/index.ts, z.number().max(500)).
+ * An uncapped length here could exceed that Zod max and get the WHOLE event
+ * rejected (400) by /api/track, not just this one field; trackFinderCta sends
+ * its event immediately and alone, so one over-long query on a CTA click
+ * would silently lose its entire event. 500 is already an absurd search-box
+ * input, so clamping can only ever under-report an already-meaningless
+ * outlier length — it can never lose a real event.
  */
 export function toQueryLength(raw: string): number {
-  return raw.trim().length;
+  return Math.min(raw.trim().length, 500);
 }
 
 /**

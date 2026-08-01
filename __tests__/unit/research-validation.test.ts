@@ -62,6 +62,13 @@ describe('TrackResearchEventBatchSchema', () => {
         productSlugs: ['fidelity', 'charles-schwab'],
         count: 2,
       }),
+      // PR 3 Task 1 (spec §12) — 7th, additive event name.
+      buildResearchEventData('research_finder_cta', CTX, {
+        surface: 'finder',
+        trigger: 'view_all',
+        queryLength: 6,
+        resultCount: 4,
+      }),
     ];
     expect(batch).toHaveLength(RESEARCH_EVENT_NAMES.length);
     const result = TrackResearchEventBatchSchema.safeParse(batch);
@@ -122,6 +129,77 @@ describe('TrackResearchEventBatchSchema', () => {
       },
     });
     expect(TrackResearchEventBatchSchema.safeParse([tooMany]).success).toBe(false);
+  });
+
+  // PR 5 gap-close (this task) — 'category'/'type' join the frozen
+  // 'status'|'confidence'|'fresh' facet enum, additively: the hub's and the
+  // Homepage Quick Finder's own category (and the hub's type) chips had no
+  // legal facet value to report through before this change.
+  it('accepts facet: category and facet: type', () => {
+    const categoryItem = researchItem({
+      eventName: 'research_filter_change',
+      eventAction: 'filter_change',
+      eventLabel: 'category',
+      properties: {
+        schemaVersion: 'research_v1',
+        market: 'us',
+        topic: 'hub',
+        facet: 'category',
+        value: 'trading',
+        active: true,
+        resultCount: 5,
+      },
+    });
+    expect(TrackResearchEventBatchSchema.safeParse([categoryItem]).success).toBe(true);
+
+    const typeItem = researchItem({
+      eventName: 'research_filter_change',
+      eventAction: 'filter_change',
+      eventLabel: 'type',
+      properties: {
+        schemaVersion: 'research_v1',
+        market: 'us',
+        topic: 'hub',
+        facet: 'type',
+        value: null,
+        active: false,
+        resultCount: 12,
+      },
+    });
+    expect(TrackResearchEventBatchSchema.safeParse([typeItem]).success).toBe(true);
+  });
+
+  it('still rejects an unknown facet value', () => {
+    const item = researchItem({
+      eventName: 'research_filter_change',
+      properties: {
+        schemaVersion: 'research_v1',
+        market: 'us',
+        topic: 'hub',
+        facet: 'bogus',
+        value: null,
+        active: false,
+        resultCount: 1,
+      },
+    });
+    expect(TrackResearchEventBatchSchema.safeParse([item]).success).toBe(false);
+  });
+
+  it('still rejects an unknown property key (.strict()) alongside the widened facet enum', () => {
+    const item = researchItem({
+      eventName: 'research_filter_change',
+      properties: {
+        schemaVersion: 'research_v1',
+        market: 'us',
+        topic: 'hub',
+        facet: 'category',
+        value: 'trading',
+        active: true,
+        resultCount: 5,
+        foo: 1,
+      },
+    });
+    expect(TrackResearchEventBatchSchema.safeParse([item]).success).toBe(false);
   });
 
   it("TrackSchema accepts type: 'research_event_batch'", () => {

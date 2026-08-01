@@ -1,66 +1,33 @@
 import { Metadata } from 'next';
-import { unstable_cache } from 'next/cache';
 import { notFound } from 'next/navigation';
-import { BarChart3 } from 'lucide-react';
 import {
   isValidMarket,
   Market,
   marketConfig,
   marketCategories,
-  categoryConfig,
 } from '@/lib/i18n/config';
 import { generateAlternates } from '@/lib/seo/hreflang';
-import { getContentByMarketAndCategory } from '@/lib/mdx';
-
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://smartfinpro.com';
-
-// Cache the MDX filesystem scan per market — avoids re-reading 74+ files on every request.
-// Static pages are pre-rendered at build time anyway; this helps ISR and dev mode warm reqs.
-// NOTE: content field is intentionally excluded — it can be 30KB+ per file (3.5MB total for US),
-//       which exceeds Next.js unstable_cache's 2MB hard limit. The homepage only needs meta+slug.
-const getMarketReviews = unstable_cache(
-  async (market: Market) => {
-    const categories = marketCategories[market];
-    const allCategoryContent = await Promise.all(
-      categories.map((cat) => getContentByMarketAndCategory(market, cat))
-    );
-    return allCategoryContent
-      .flat()
-      .filter((item) => item.slug !== 'index' && item.meta.rating)
-      .sort(
-        (a, b) =>
-          new Date(b.meta.modifiedDate || b.meta.publishDate || 0).getTime() -
-          new Date(a.meta.modifiedDate || a.meta.publishDate || 0).getTime()
-      )
-      // Strip full MDX body before caching — meta+slug is all the homepage needs.
-      .map(({ slug, meta, readingTime }) => ({ slug, meta, readingTime }));
-  },
-  ['market-homepage-reviews'],
-  { revalidate: 300, tags: ['market-reviews'] } // 5 min cache, bust via revalidateTag
-);
+import { getDiscoveryCatalog } from '@/lib/research/catalog';
 import Hero from '@/components/marketing/hero';
-import { PortalSidebar } from '@/components/marketing/portal-sidebar';
-import { ReportCard } from '@/components/marketing/report-card';
-import { ReportPagination } from '@/components/marketing/report-pagination';
 import UKBrokerHeroSlider from '@/components/home/uk-broker-hero-slider';
 import { WealthHorizonHeroCard } from '@/components/home/wealth-horizon-hero-card';
 import { whBandGradient } from '@/lib/home/wealth-horizon-palette';
 import {
   BestXIndex,
   CategoryShowcase,
-  EditorsPicks,
   MethodologySection,
   PlatformStats,
   ComplianceBar,
   GlobalTrustSection,
   HomepageFAQSection,
 } from '@/components/marketing/homepage-sections';
+import { ResearchQuickFinderSection } from '@/components/marketing/research-quick-finder-section';
 import { getBestXIndex } from '@/lib/comparison/loader';
 import { buildBestXItemListSchema } from '@/lib/seo/best-x-item-list';
 import { getMarketHomeHeroImage } from '@/lib/images/market-home-hero';
 import { countLiveConcepts } from '@/lib/tools/registry';
 
-import type { Category } from '@/lib/i18n/config';
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://smartfinpro.com';
 
 /* Per-market Hero content */
 const marketHeroContent: Record<string, {
@@ -106,20 +73,14 @@ const marketHeroContent: Record<string, {
   },
 };
 
-const REPORTS_PER_PAGE = 8;
-
 interface MarketPageProps {
   params: Promise<{ market: string }>;
-  searchParams: Promise<{ page?: string }>;
 }
 
 export async function generateMetadata({
   params,
-  searchParams,
 }: MarketPageProps): Promise<Metadata> {
   const { market } = await params;
-  const sp = await searchParams;
-  const currentPage = Math.max(1, parseInt(sp.page || '1', 10) || 1);
 
   if (!isValidMarket(market)) {
     return {};
@@ -148,9 +109,6 @@ export async function generateMetadata({
     // Both branches already contain the brand name once — the template would double it.
     title: { absolute: title },
     description,
-    // Paginated pages (?page=2+) must not be indexed — canonical already points to the
-    // base page, and noindex removes them from GSC's "Alternative with correct canonical" report.
-    ...(currentPage > 1 && { robots: { index: false, follow: true } }),
     alternates: {
       canonical: canonicalBase,
       languages: alternates,
@@ -185,10 +143,8 @@ export async function generateMetadata({
   };
 }
 
-export default async function MarketHomePage({ params, searchParams }: MarketPageProps) {
+export default async function MarketHomePage({ params }: MarketPageProps) {
   const { market } = await params;
-  const sp = await searchParams;
-  const currentPage = Math.max(1, parseInt(sp.page || '1', 10) || 1);
 
   if (!isValidMarket(market)) {
     notFound();
@@ -197,25 +153,24 @@ export default async function MarketHomePage({ params, searchParams }: MarketPag
   const marketData = market as Market;
   const config = marketConfig[marketData];
   const categories = marketCategories[marketData];
-  const marketPrefix = `/${marketData}`;
 
-  // Fetch all reviews via cached MDX scan (fast in dev + ISR; pre-rendered at build in prod)
-  const allReviews = await getMarketReviews(marketData);
+  // The ONE fan-out per request (lib/research/catalog.ts's own header) — the
+  // same DiscoveryCatalog the universal /research hub reads, resolved here
+  // exactly once and handed to ResearchQuickFinderSection below. Replaces the
+  // old market-scoped `getMarketReviews` MDX-only cache: the catalog already
+  // joins reviews with qualifying Cockpit dossiers.
+  const catalog = await getDiscoveryCatalog(marketData);
 
   const heroContent = marketHeroContent[marketData] || marketHeroContent['uk'];
 
-  // Pagination
-  const totalPages = Math.max(1, Math.ceil(allReviews.length / REPORTS_PER_PAGE));
-  const safePage = Math.min(currentPage, totalPages);
-  const paginatedReviews = allReviews.slice((safePage - 1) * REPORTS_PER_PAGE, safePage * REPORTS_PER_PAGE);
-
   // ── Compute data for new landing page sections ──
 
-  // Category counts (reviews per category)
+  // Category counts — Research inventory (reviews + Cockpit dossiers), not
+  // just MDX reviews, since the catalog's DiscoveryItem set is now the
+  // canonical source for homepage category counts.
   const categoryCounts: Record<string, number> = {};
-  for (const item of allReviews) {
-    const cat = item.meta.category;
-    if (cat) categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
+  for (const item of catalog.items) {
+    categoryCounts[item.category] = (categoryCounts[item.category] || 0) + 1;
   }
 
   // Best-X Compare Index (homepage): live winners + coming-soon tiles, per market.
@@ -225,30 +180,6 @@ export default async function MarketHomePage({ params, searchParams }: MarketPag
   // root wrapper (app/(marketing)/page.tsx) which composes this component — the
   // guard prevents a duplicate ItemList on '/'.
   const bestXItemList = marketData !== 'us' ? buildBestXItemListSchema(marketData, bestX) : null;
-
-  // Editor's Picks — top 6 rated reviews (different categories preferred)
-  // 6 picks (up from 3) = stronger Hub→Leaf signal from homepage to leaf review pages.
-  // Diversity filter: max 2 per category to ensure broad coverage across 6 categories.
-  const categoryPickCount = new Map<string, number>();
-  const editorsPicks = allReviews
-    .filter((item) => item.meta.rating && item.meta.rating >= 4.0)
-    .sort((a, b) => (b.meta.rating || 0) - (a.meta.rating || 0))
-    .filter((item) => {
-      // Allow max 2 per category (ensures diversity across 6 picks)
-      const count = categoryPickCount.get(item.meta.category) || 0;
-      if (count >= 2) return false;
-      categoryPickCount.set(item.meta.category, count + 1);
-      return true;
-    })
-    .slice(0, 6)
-    .map((item) => ({
-      title: item.meta.seoTitle || item.meta.title,
-      description: item.meta.description,
-      slug: item.slug,
-      category: item.meta.category as Category,
-      rating: item.meta.rating,
-      reviewCount: item.meta.reviewCount,
-    }));
 
   // Per-market banderole gradient derived from the featured card's own palette
   // (depth → lift) so the flush band reads as the same family as the card.
@@ -311,7 +242,7 @@ export default async function MarketHomePage({ params, searchParams }: MarketPag
         }}
       />
       <div className="lg:hidden">
-        <PlatformStats totalReviews={allReviews.length} totalTools={countLiveConcepts()} />
+        <PlatformStats totalReviews={catalog.counts.reviewBackedCount} totalTools={countLiveConcepts()} />
         <ComplianceBar />
       </div>
 
@@ -325,75 +256,10 @@ export default async function MarketHomePage({ params, searchParams }: MarketPag
       )}
 
       {/* ═══════════════════════════════════════════════════════════════
-          5. REPORT FEED — Two-Column Layout (Sidebar + Reports)
+          5. RESEARCH QUICK FINDER — replaces the old Report Feed + Editor's
+             Picks (research-discovery-pr3 plan, Task 3; spec §9.3)
       ═══════════════════════════════════════════════════════════════ */}
-      <section id="reports" style={{ background: '#fff', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)' }}>
-        <div style={{ maxWidth: '1140px', margin: '0 auto', padding: '80px 40px' }}>
-          <div className="flex flex-col lg:flex-row gap-8">
-
-            {/* LEFT: Sidebar (~25%) — Sticky Category Navigation */}
-            <PortalSidebar market={marketData} categoryCounts={categoryCounts} />
-
-            {/* RIGHT: Main Content (~75%) — Report Feed */}
-            <div className="flex-1 min-w-0">
-
-              {/* Section Title */}
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-8">
-                <div>
-                  <span className="block text-[11px] font-bold uppercase tracking-[2px] mb-2" style={{ color: 'var(--sfp-slate)' }}>
-                    Research Library
-                  </span>
-                  <h2 className="text-2xl font-extrabold" style={{ color: 'var(--sfp-ink)', letterSpacing: '-0.6px', lineHeight: 1.2 }}>
-                    Expert Reviews &amp; Ratings for Financial Products
-                  </h2>
-                </div>
-                <span className="text-sm font-medium shrink-0" style={{ color: 'var(--sfp-slate)' }}>
-                  {allReviews.length} reports available
-                </span>
-              </div>
-
-              {/* Report Cards */}
-              <div className="space-y-4">
-                {paginatedReviews.map((item) => (
-                  <ReportCard
-                    key={`${item.meta.category}-${item.slug}`}
-                    title={item.meta.seoTitle || item.meta.title}
-                    description={item.meta.description}
-                    slug={item.slug}
-                    market={marketData}
-                    category={item.meta.category as Category}
-                    rating={item.meta.rating}
-                    reviewCount={item.meta.reviewCount}
-                    publishDate={item.meta.modifiedDate || item.meta.publishDate}
-                    pricing={item.meta.pricing}
-                  />
-                ))}
-              </div>
-
-              {/* Pagination */}
-              <ReportPagination
-                currentPage={safePage}
-                totalPages={totalPages}
-                basePath={marketPrefix}
-              />
-
-              {/* Empty State */}
-              {allReviews.length === 0 && (
-                <div className="rounded-2xl border border-gray-200 bg-white p-12 text-center shadow-sm">
-                  <BarChart3 className="h-12 w-12 mx-auto mb-4" style={{ color: 'var(--sfp-slate)' }} />
-                  <h3 className="text-lg font-semibold mb-2" style={{ color: 'var(--sfp-ink)' }}>
-                    Reports Coming Soon
-                  </h3>
-                  <p className="text-sm" style={{ color: 'var(--sfp-slate)' }}>
-                    Our expert team is preparing research reports for {config.name}. Check back soon.
-                  </p>
-                </div>
-              )}
-
-            </div>
-          </div>
-        </div>
-      </section>
+      <ResearchQuickFinderSection market={marketData} catalog={catalog} />
 
       {/* ═══════════════════════════════════════════════════════════════
           6. GLOBAL TRUST — Markets + Regulators
@@ -409,11 +275,6 @@ export default async function MarketHomePage({ params, searchParams }: MarketPag
           7b. FAQ — Visible Q&A + FAQPage schema (AEO)
       ═══════════════════════════════════════════════════════════════ */}
       <HomepageFAQSection market={marketData} marketName={config.name} categoryCount={categories.length} />
-
-      {/* ═══════════════════════════════════════════════════════════════
-          8. EDITOR'S PICKS — Top-rated this month
-      ═══════════════════════════════════════════════════════════════ */}
-      <EditorsPicks market={marketData} picks={editorsPicks} />
 
       {/* UK Broker Hero Slider — Exclusive to UK Market */}
       {marketData === 'uk' && (

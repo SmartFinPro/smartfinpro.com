@@ -35,8 +35,15 @@ const HUB_CTX: ResearchContext = {
   pagePath: '/research',
 };
 
+// PR 3 Task 1 (spec §12) — the Homepage Quick Finder's own CTA event.
+const FINDER_CTX: ResearchContext = {
+  market: 'us',
+  topic: 'hub',
+  pagePath: '/',
+};
+
 describe('research_v1 event names', () => {
-  it('is exactly the six events of the frozen contract', () => {
+  it('is exactly the seven events of the additive contract (PR 3 Task 1 adds research_finder_cta)', () => {
     expect([...RESEARCH_EVENT_NAMES]).toEqual([
       'research_search',
       'research_filter_change',
@@ -44,6 +51,7 @@ describe('research_v1 event names', () => {
       'research_review_click',
       'research_shortlist_change',
       'research_cockpit_handoff',
+      'research_finder_cta',
     ]);
   });
 });
@@ -88,6 +96,27 @@ describe('toQueryLength', () => {
     expect(toQueryLength('   ')).toBe(0);
     expect(toQueryLength('')).toBe(0);
   });
+
+  // PR 3 review fix: properties.queryLength is capped at 500 by the strict
+  // wire schema (ResearchV1PropertiesSchema, lib/validation/index.ts:240,
+  // z.number().int().min(0).max(500)), but toQueryLength itself had no
+  // ceiling. An uncapped length over 500 fails that Zod max, and since the
+  // properties bag is a single item in a batch array, the WHOLE event batch
+  // is rejected (400) — not just this one field. trackFinderCta sends its
+  // event immediately and alone, so one over-long query on a CTA click lost
+  // its entire event. Clamping here guarantees toQueryLength can never
+  // itself produce a value the wire schema would reject.
+  it('clamps at exactly the wire cap (500) so a longer query never gets its whole event rejected', () => {
+    expect(toQueryLength('a'.repeat(500))).toBe(500);
+  });
+
+  it('clamps a query one character over the wire cap down to 500', () => {
+    expect(toQueryLength('a'.repeat(501))).toBe(500);
+  });
+
+  it('clamps a wildly over-long query (e.g. a pasted paragraph) down to 500', () => {
+    expect(toQueryLength('a'.repeat(2000))).toBe(500);
+  });
 });
 
 describe('research_filter_change', () => {
@@ -101,6 +130,44 @@ describe('research_filter_change', () => {
     expect(data.eventAction).toBe('filter_change');
     expect(data.eventLabel).toBe('status');
     expect(data.eventValue).toBe(9);
+    expect(data.properties.value).toBeNull();
+    expect(data.properties.active).toBe(false);
+  });
+});
+
+// PR 5 gap-close (this task) — Task 6 (unified-research-discovery-pr2-hubs
+// plan) only ever wired 'status'|'confidence'|'fresh' through ResearchFacet,
+// leaving the category/type chips both hubs and the Homepage Quick Finder
+// actually render analytically unmeasurable. Additive: 'category' and 'type'
+// join the union, deriveLabel/deriveValue stay untouched (both are already
+// facet-agnostic — label is the facet name itself, value is resultCount).
+describe('research_filter_change — category/type facets (PR 5 gap-close)', () => {
+  it('labels by facet for a category chip, same shape as the frozen three', () => {
+    const data = buildResearchEventData('research_filter_change', CTX, {
+      facet: 'category',
+      value: 'trading',
+      active: true,
+      resultCount: 5,
+    });
+    expect(data.eventAction).toBe('filter_change');
+    expect(data.eventLabel).toBe('category');
+    expect(data.eventValue).toBe(5);
+    expect(data.properties.facet).toBe('category');
+    expect(data.properties.value).toBe('trading');
+    expect(data.properties.active).toBe(true);
+  });
+
+  it('labels by facet for a type chip and keeps an explicit cleared value', () => {
+    const data = buildResearchEventData('research_filter_change', CTX, {
+      facet: 'type',
+      value: null,
+      active: false,
+      resultCount: 12,
+    });
+    expect(data.eventAction).toBe('filter_change');
+    expect(data.eventLabel).toBe('type');
+    expect(data.eventValue).toBe(12);
+    expect(data.properties.facet).toBe('type');
     expect(data.properties.value).toBeNull();
     expect(data.properties.active).toBe(false);
   });
@@ -229,6 +296,55 @@ describe('hub dimensions (Task 6, spec §12)', () => {
     expect(reviewEvent.properties.kind).toBe('review');
     expect(reviewEvent.properties.topic).toBe('hub');
     expect(reviewEvent.properties.category).toBeUndefined();
+  });
+});
+
+// PR 3 Task 1 (spec §12) — the Homepage Quick Finder's own event, additive
+// on top of the frozen six: `trigger: 'view_all'` (the Finder's main CTA, a
+// GLOBAL event, topic 'hub') and `trigger: 'dossier_item'` (a Cockpit-only
+// card's CTA, an ITEM event carrying the card's real topic/category).
+describe('research_finder_cta (PR 3 Task 1, spec §12)', () => {
+  it('includes the Finder CTA event in the additive contract', () => {
+    expect(RESEARCH_EVENT_NAMES).toContain('research_finder_cta');
+  });
+
+  it('builds a view-all Finder CTA without raw query text', () => {
+    const event = buildResearchEventData('research_finder_cta', FINDER_CTX, {
+      surface: 'finder',
+      trigger: 'view_all',
+      queryLength: 6,
+      resultCount: 2,
+    });
+    expect(event.eventAction).toBe('finder_cta');
+    expect(event.properties.trigger).toBe('view_all');
+    expect(JSON.stringify(event)).not.toContain('schwab');
+  });
+
+  it('builds a dossier-item CTA with actual topic and category', () => {
+    const event = buildResearchEventData(
+      'research_finder_cta',
+      FINDER_CTX,
+      {
+        surface: 'finder',
+        kind: 'dossier',
+        trigger: 'dossier_item',
+        productSlug: 'merrill-edge',
+      },
+      { topic: 'trading-platforms', category: 'trading' },
+    );
+    expect(event.properties.topic).toBe('trading-platforms');
+    expect(event.properties.category).toBe('trading');
+  });
+
+  it("reports the resultCount VISIBLE AT CLICK TIME as the event value — the exact caller-supplied number, never recomputed", () => {
+    const event = buildResearchEventData('research_finder_cta', FINDER_CTX, {
+      surface: 'finder',
+      trigger: 'view_all',
+      queryLength: 6,
+      resultCount: 4,
+    });
+    expect(event.eventValue).toBe(4);
+    expect(event.properties.resultCount).toBe(4);
   });
 });
 

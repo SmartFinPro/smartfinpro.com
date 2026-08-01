@@ -1,16 +1,18 @@
 # research_v1 — Event contract & success metrics
 
 Status: **contract frozen** (implement against this, don't drift). The schema
-string (`research_v1`) and the six event names are frozen; the dimensions
-below are an ADDITIVE extension (unified-research-discovery-pr2-hubs plan
-Task 6, spec §12) — every future change here still lands in the TypeScript
-builder (`lib/analytics/research-events.ts`) and the strict Zod schema
-(`lib/validation/index.ts`) in the SAME commit as this doc, never one without
-the other.
+string (`research_v1`) and the original six event names are frozen; the
+dimensions below and the 7th event name (`research_finder_cta`, PR 3 Task 1)
+are ADDITIVE extensions (unified-research-discovery-pr2-hubs plan Task 6 /
+research-discovery-pr3 plan Task 1, spec §12) — every future change here
+still lands in the TypeScript builder (`lib/analytics/research-events.ts`)
+and the strict Zod schema (`lib/validation/index.ts`) in the SAME commit as
+this doc, never one without the other.
 Scope: the Research Library discovery surface. Pilot: US trading platforms
 (`/research`). Generalized (Task 6) to every market hub — `/research`,
 `/uk/research`, `/ca/research`, `/au/research` — and every category/topic
-each hub's catalog contains.
+each hub's catalog contains. Extended (PR 3 Task 1) to the Homepage Quick
+Finder's own CTA event, ahead of the Finder surface itself shipping.
 
 ## Why this exists
 
@@ -47,11 +49,12 @@ All events share: `sessionId`, `market`, `topic`, plus the properties below.
 | Event | When | Properties |
 |---|---|---|
 | `research_search` | after the search debounce settles / the URL `q` is stable — **never per keystroke** | `queryLength` (int), `resultCount` (int), `surface` |
-| `research_filter_change` | a filter chip is toggled | `facet` (`status`\|`confidence`\|`fresh`), `value` (string\|null), `active` (bool), `resultCount` (int), `surface` |
+| `research_filter_change` | a filter chip is toggled | `facet` (`status`\|`confidence`\|`fresh`\|`category`\|`type`), `value` (string\|null), `active` (bool), `resultCount` (int), `surface` |
 | `research_evidence_open` | a card's "View evidence" disclosure is opened (open only, not close) | `productSlug`, `status`, `dataPoints` (int), `kind`, `category` |
 | `research_review_click` | a card's review link is followed | `productSlug`, `status`, `rank` (int\|null), `position` (1-based index in the rendered list), `kind`, `category` |
 | `research_shortlist_change` | shortlist mutates | `action` (`add`\|`remove`\|`clear`), `productSlug` (null for `clear`), `count` (new size), `kind`, `category` |
 | `research_cockpit_handoff` | "Compare in the cockpit" is followed | `productSlugs` (string[]), `count` (int), `kind`, `category` |
+| `research_finder_cta` | the Homepage Quick Finder's own CTA is clicked (PR 3 Task 1) | `trigger` (`view_all`\|`dossier_item`), `surface: 'finder'`, `queryLength` (int), `resultCount` (int — the uncapped TOTAL match count at click time, see "resultCount semantics" below), `productSlug`/`kind` (`dossier_item` only) |
 
 Emission discipline:
 - `research_search` fires on the **settled** query only (same debounce that writes
@@ -59,6 +62,12 @@ Emission discipline:
 - `research_evidence_open` fires once per card per open (close is not an event).
 - `research_cockpit_handoff` is sent **immediately** (not queued) — the page is
   navigating away.
+- `research_finder_cta` is sent **immediately** too, for both triggers — both
+  navigate away. It fires **only on an actual CTA click** (never on render,
+  search, or filter changes), and `resultCount` is always the honest, uncapped
+  TOTAL match count at that click (`computeFinderCounts(...).totalMatches`) —
+  never recomputed or stale, and never the six-card render cap (see
+  "resultCount semantics" below).
 - A throwing tracker must never break the UI: every entry point is fail-soft.
 
 ## Hub dimensions (v1.1, additive — Task 6, spec §12)
@@ -92,11 +101,8 @@ category?: Category;
   `properties.category`) at build time — it never appears as its own key on
   the wire.
 - **`surface`** identifies which discovery surface emitted the event —
-  `'hub'` for the universal Research hub (Task 6); `'finder'` is reserved for
-  the Homepage Quick Finder, which ships its own event name
-  (`research_finder_cta`, with `trigger: 'view_all'` or `'dossier_item'`) in
-  **PR 3** — accepting the `finder`/`trigger` values now means the strict
-  schema never needs a second additive round just for that later PR.
+  `'hub'` for the universal Research hub (Task 6); `'finder'` for the
+  Homepage Quick Finder (PR 3 Task 1).
 - **`kind`** mirrors the clicked/opened/shortlisted item's own
   `DiscoveryProjection['kind']` (`'review'` or `'dossier'`).
 - Raw search text is still never transmitted — this extension changes
@@ -105,6 +111,86 @@ category?: Category;
 Track functions accept an optional final `options` argument
 (`{ topic?, category?, surface?, kind?, trigger? }`) carrying these
 dimensions; omitting it keeps every pre-Task-6 call site byte-identical.
+
+## Quick Finder CTA event (v1.2, additive — PR 3 Task 1, spec §12)
+
+The Homepage Quick Finder is a `surface: 'finder'` client (never writes the
+homepage URL) that reuses `research_v1` end to end — no new schema string, no
+new endpoint, no new table. It ships one new event, `research_finder_cta`,
+sent by `trackFinderCta()` (`lib/analytics/research-tracking.ts`):
+
+- **`trigger: 'view_all'`** — the Finder's primary "View all research" CTA.
+  This is a **GLOBAL** event: `topic: 'hub'`, no `category`, same as
+  `research_search`. `resultCount` MUST be the honest, uncapped TOTAL match
+  count at click time (`computeFinderCounts(...).totalMatches`) — never a
+  value recomputed after the click, never left over (stale) from an earlier
+  `research_search`/`research_filter_change`, and never the six-card render
+  cap (`visibleResults.length`) — see "resultCount semantics" below.
+- **`trigger: 'dossier_item'`** — a Cockpit-only card's own CTA (no review
+  exists yet). This is an **ITEM** event: pass the card's real `topic`/
+  `category` dimensions (same override mechanism as `research_review_click`)
+  plus `productSlug` and `kind: 'dossier'`.
+- Sent **immediately** (not queued) — both variants navigate away.
+- Fires **only** when the Finder's own CTA is actually clicked — never on
+  render, mount, search, or filter changes.
+- Same privacy rule as every other event in this contract: the raw query
+  text is never serialized, only its trimmed `queryLength`.
+
+## resultCount semantics fix (v1.4, 2026-07-29, commit `bf6723e`)
+
+**Breaking change to the MEANING of `resultCount` on the Homepage Quick
+Finder, same `schemaVersion: 'research_v1'`.** Before commit `bf6723e`
+("fix(homepage): report how many results there really are", 2026-07-29),
+`resultCount` on all three Finder-emitted events — `research_search`,
+`research_filter_change` (`surface: 'finder'`), and `research_finder_cta` —
+was the six-card render cap (`finderResults.length`), so a query matching 40
+items and one matching 6 were indistinguishable in the data, and the "View
+all" CTA's own `resultCount` undercounted whenever there was more to see.
+
+As of `bf6723e`, `resultCount` on all three of those events is the honest,
+**uncapped TOTAL match count** (`computeFinderCounts(...).totalMatches`,
+`components/research/QuickFinder.tsx`) — the same quantity the Hub's
+`research_search`/`research_filter_change` already reported (the Hub was
+never capped; only the Finder's lightweight teaser surface was). The
+six-card cap that still gates what actually **renders** as cards
+(`visibleResults.length`) is now a purely visual DOM quantity — it is never
+serialized in any event payload.
+
+**Any analysis segmenting `research_finder_cta`/Finder-surface `resultCount`
+by time MUST split at 2026-07-29 (commit `bf6723e`)** — events before and
+after that boundary carry the same `schemaVersion` but a different meaning
+for the same field, and a naive time series (e.g. average `resultCount`,
+zero-result rate) will show a discontinuity that is a measurement-definition
+change, not a real shift in catalog size or user behavior. The Hub's own
+`research_search`/`research_filter_change` `resultCount` is unaffected by
+this commit (it was already uncapped) and needs no such split.
+
+## Category/type filter facets (v1.3, additive — PR 5 gap-close)
+
+`ResearchFacet` (`lib/analytics/research-events.ts`) and its strict Zod
+counterpart (`lib/validation/index.ts`) originally shipped with only
+`'status' | 'confidence' | 'fresh'` (Task 6) — the category chips both hubs
+render, and the type chip the universal hub renders, had no legal facet value
+to report through `research_filter_change` at all. This was supposed to land
+in PR 2 Task 6 alongside the other three and did not; it arrives here,
+additively, because it closes a real measurement gap rather than because
+anything about category/type filtering itself changed: PR 3's Quick Finder
+correctly declined to invent an out-of-contract facet value rather than widen
+a frozen enum outside its own scope, so the category dimension stayed a blind
+spot on both surfaces until now.
+
+- **`'category'`** — the category chip on both the universal hub (`/research`
+  and its market variants) and the Homepage Quick Finder. `surface: 'hub'` or
+  `surface: 'finder'` respectively, same as every other `research_filter_change`.
+- **`'type'`** — the `review`/`dossier` type chip on the universal hub only
+  (the Quick Finder has no type chip). `surface: 'hub'`.
+- `deriveLabel`/`deriveValue` (`lib/analytics/research-events.ts`) needed no
+  new branch for either value: both were already facet-agnostic (`eventLabel`
+  is the facet name itself, `eventValue` is `resultCount`) — only the
+  `ResearchFacet` union and the Zod `facet` enum widened.
+- Same emission discipline as every other `research_filter_change`: fires on
+  the toggle, carries the resulting `resultCount` (the count AFTER the change,
+  never the count before it).
 
 ## Success metrics
 
