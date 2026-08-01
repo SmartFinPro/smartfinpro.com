@@ -87,14 +87,20 @@ test.describe("Research hub filter chips", () => {
         } catch {
           /* storage blocked */
         }
-        (window as any).__routerMountedAt = null;
+        // Typed window cast (pattern also used in e2e/homepage-quick-finder.spec.ts) —
+        // no `any`: the probe's one custom property gets an explicit shape instead.
+        const w = window as unknown as { __routerMountedAt: number | null };
+        w.__routerMountedAt = null;
         const rs = history.replaceState;
-        history.replaceState = function (this: any, ...a: any[]) {
-          if ((window as any).__routerMountedAt === null) {
-            (window as any).__routerMountedAt = performance.now();
+        history.replaceState = function (
+          this: History,
+          ...args: Parameters<typeof rs>
+        ): ReturnType<typeof rs> {
+          if (w.__routerMountedAt === null) {
+            w.__routerMountedAt = performance.now();
           }
-          return (rs as any).apply(this, a);
-        } as any;
+          return rs.apply(this, args);
+        };
       });
     };
 
@@ -126,7 +132,8 @@ test.describe("Research hub filter chips", () => {
 
         delays.push(
           await page.evaluate(() => {
-            const mounted = (window as any).__routerMountedAt;
+            const mounted = (window as unknown as { __routerMountedAt: number | null })
+              .__routerMountedAt;
             return mounted === null
               ? -1
               : Math.round(performance.now() - mounted);

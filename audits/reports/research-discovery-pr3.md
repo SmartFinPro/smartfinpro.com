@@ -663,3 +663,137 @@ flake class this same report already documented above (~5.6% rate,
 verified not a regression at the time `f9b076d` was the baseline). 32
 passed. See the top-level report for the exact tally this task's caller
 recorded.
+
+## PR 3 closure review — commits 1–4 (2026-08-01)
+
+Four commits, resuming an interrupted prior session (which had already
+landed commit 1 before stalling):
+
+1. `44771fb` `fix(homepage): stop the finder trim from blinding its own
+   search` — `toFinderClientItems` folds `firstContext.topicLabel`/
+   `displayName` back into the recomputed Finder `searchText` (spec §15
+   invariant 13).
+2. `62cab58` `docs(research): record that resultCount now means total
+   matches` — updated the versioned analytics contract
+   (`docs/research-library/analytics-research-v1.md`) and five stale
+   in-code comments (`lib/analytics/research-events.ts`,
+   `lib/analytics/research-tracking.ts`) that still described
+   `research_finder_cta`'s `resultCount` as the six-card render cap;
+   commit `bf6723e` had changed the runtime semantics to the uncapped
+   total match count without updating either.
+3. `c3dfd43` `test(research): make the navigation guard fail for the
+   right reason` — `e2e/research-filter-chip-navigation.spec.ts` now
+   asserts on a RATE (fails above `MAX_ACCEPTABLE_DROPS = 1` for
+   `ITERATIONS=60`) instead of the first dropped navigation, so the
+   documented ~0.33% residual (below) can't self-fail a healthy run.
+4. This commit — typed the 8 `any` casts the rewritten spec introduced,
+   and this report update.
+
+### (a) HEAD-level command gate
+
+| Command | Result |
+|---|---|
+| `npx tsc --noEmit` | exit 0, zero output |
+| `npx vitest run` (full suite) | **136 files passed \| 1 skipped (137)**, **1847 tests passed \| 1 skipped (1848)**, exit 0 — supersedes the 135/1841 figures recorded earlier in this report (this round's commits added new coverage; no test was removed) |
+| `npx eslint e2e/` | **exit 0, zero errors** (2 pre-existing, unrelated warnings in `dashboard-smoke.spec.ts`/`multi-market.spec.ts`) — before commit 4, this same command reported exactly 8 `@typescript-eslint/no-explicit-any` errors, all in `e2e/research-filter-chip-navigation.spec.ts`'s `window as any` casts (commit 3's rewrite), the only errors anywhere in `e2e/` |
+| `npx eslint lib/research lib/analytics components/research` | **exactly 7 pre-existing errors**, all `react-hooks/refs` in `lib/analytics/cockpit-tracking.ts` (3) and `lib/analytics/tool-tracking.ts` (4) — none in a file this round touched |
+| `npm run build` | exit 0 |
+
+The 1 skip is the same pre-existing `lib/editorial/forbidden-claims.test.ts`
+skip already documented above.
+
+Five required routes, all confirmed **`○ Static`** on this round's build:
+
+```
+┌ ○ /                                                                                    5m      1y
+├ ○ /au/research                                                                         5m      1y
+├ ○ /ca/research                                                                         5m      1y
+├ ○ /research                                                                            5m      1y
+├ ○ /uk/research                                                                         5m      1y
+```
+
+### (b) Homepage HTML gzip — re-measured after commit 1
+
+Same methodology as this report's own "Payload — both axes" section above
+(`curl` the running production homepage, `zlib.gzipSync` the raw response
+body), same worktree, commit `44771fb` (this round's fix) applied:
+
+| | Bytes (gzip) |
+|---|---|
+| Previously reported (pre-commit-1, this report, above) | 52,580 B |
+| **Re-measured, post-commit-1 (this round)** | **53,304 B** |
+| Delta | **+724 B (+1.4%)** |
+
+This is the honest, expected cost of the correctness fix: restoring
+`topicLabel`/`displayName` (two short strings) into the recomputed
+`searchText` for every Finder item that carries a research context. It does
+not erase the earlier +11,880 B (+29.2%) regression this report already
+accepted as a partial, honest win — it is a small, deliberate ADDITION on
+top of it, paid to stop the Finder returning zero results for queries that
+only ever match a topic label. Still an order of magnitude below the
+pre-`toFinderClientItems` state (58,039 B) and not the JS-gate's concern
+(unaffected — no chunk file changed).
+
+### (c) Finder-vs-Hub match counts — re-verified live after commit 1
+
+Reproduced live (not from the fixture/unit test) against this round's
+running production build (`next start`, US market, 126 catalog items, 8
+audited), homepage Quick Finder vs `/research?q=...`:
+
+| Query | Finder (`totalMatches`) — before commit 1 | Finder — after commit 1 | Hub |
+|---|---|---|---|
+| Best Trading Platforms | 0 | **9** | 9 |
+| Best High-Yield Savings | 0 | **8** | 8 |
+| Best Credit Monitoring | 0 | **8** | 8 |
+| Best Forex Brokers | 0 | **5** | 5 |
+| Best Robo-Advisors | 1 | **7** | 7 |
+
+All five queries now report the SAME count on both surfaces for the
+identical catalog build — the spec §15 invariant 13 violation this report's
+commit 1 fixed is closed, confirmed against live data, not only the unit
+fixture already exercising it (`__tests__/unit/research-catalog.test.ts`,
+"Homepage Finder matches the Hub result count").
+
+### E2E gate re-run (this round, production build, `next start`, port 3112)
+
+```
+BASE_URL=http://localhost:3112 npx playwright test \
+  e2e/homepage-quick-finder.spec.ts \
+  e2e/research-a11y.spec.ts \
+  e2e/research-hub-markets.spec.ts \
+  e2e/research-raw-html.spec.ts \
+  e2e/research-shell.spec.ts \
+  e2e/research-tracking.spec.ts \
+  e2e/research-filter-chip-navigation.spec.ts \
+  --workers=1
+```
+
+**119 passed, 0 failed** (1.6 min). Load average at the start of the run:
+11.20/8.56/7.74 (1/5/15 min); at the end: 5.94/7.40/7.37 — comfortably below
+the ~20 threshold at which this class of test becomes load-correlated, and
+low enough that this green run is meaningful evidence, not a load artifact.
+The chip-navigation guard itself (part of this suite) ran its full 60
+iterations at p10/p50/p90 = 87/102/113 ms after router mount — squarely in
+the defect's ~100–200 ms window — and recorded **0 dropped navigations**,
+well under `MAX_ACCEPTABLE_DROPS = 1`.
+
+**RED evidence for commit 3 (the guard still fails for a real regression):**
+before finalizing, the synchronous `router.push()` was temporarily
+reintroduced in `ResearchHub.tsx`'s `pushUrl` (bypassing `schedulePush`),
+rebuilt, and run against the SAME spec alone: **9 of 60 navigations dropped
+(15%)** — spanning all three chips ("Trading Platforms" ×2, "Dossiers" ×3,
+"In verification" ×4) — correctly exceeding `MAX_ACCEPTABLE_DROPS = 1` and
+failing the test with a message naming every dropped iteration. The change
+was reverted immediately (confirmed via `git diff` showing only the
+intended comment edit) and the app rebuilt again before any further gate
+work. Load during this experiment: 16.89/11.49/8.69 at the start, 10.00/
+10.50/8.55 at the end.
+
+### Deviations
+
+None. Two comments beyond the three the operator named
+(`lib/analytics/research-tracking.ts`'s interface header and its
+`trackFinderCta` doc comment, both describing the same now-stale "visible
+at click time" semantics) were additionally corrected in commit 2, for
+internal consistency within the same file/class of bug — flagged here
+rather than silently expanded in scope.
