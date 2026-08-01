@@ -30,8 +30,9 @@
 //     filter changes, so it can only ever represent a real CTA click;
 //   - `props.resultCount` is forwarded byte-for-byte from the caller — this
 //     module holds no "last known resultCount" state, so a click always
-//     reports exactly what was on screen at that moment, never a stale or
-//     recomputed value.
+//     reports the honest, uncapped TOTAL match count at that moment (never
+//     the six-card render cap; semantics fixed 2026-07-29, commit bf6723e),
+//     never a stale or recomputed value.
 
 import { useEffect, useState } from 'react';
 import { createEventQueue, type EventQueue } from '@/lib/analytics/event-queue';
@@ -97,9 +98,10 @@ export interface ResearchTracker {
    *  only `options.surface: 'finder'`, never `options.topic`/`category`.
    *  `trigger: 'dossier_item'` is a Cockpit-only card's CTA — an ITEM event;
    *  pass `options.topic`/`options.category` for that card's real
-   *  projection. `props.resultCount` MUST be the count the caller actually
-   *  saw at click time — this function forwards it verbatim, it is never
-   *  recomputed or defaulted here. */
+   *  projection. `props.resultCount` MUST be the honest, uncapped TOTAL
+   *  match count at click time (never the six-card render cap; semantics
+   *  fixed 2026-07-29, commit bf6723e) — this function forwards it
+   *  verbatim, it is never recomputed or defaulted here. */
   trackFinderCta(
     trigger: 'view_all' | 'dossier_item',
     props: {
@@ -237,8 +239,11 @@ export function createResearchTracker(ctx: ResearchContext): ResearchTracker {
           trigger,
           queryLength: props.queryLength,
           // The caller's OWN resultCount, forwarded verbatim — never
-          // recomputed or defaulted here (contract: it must be the count
-          // actually visible at click time).
+          // recomputed or defaulted here (contract: it must be the honest,
+          // uncapped TOTAL match count at click time, never the six-card
+          // render cap; semantics fixed 2026-07-29, commit bf6723e — see
+          // docs/research-library/analytics-research-v1.md "resultCount
+          // semantics fix").
           resultCount: props.resultCount,
           ...(props.productSlug !== undefined ? { productSlug: props.productSlug } : {}),
           ...(props.kind !== undefined ? { kind: props.kind } : {}),

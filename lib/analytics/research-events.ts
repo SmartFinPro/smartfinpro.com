@@ -36,8 +36,11 @@
 // for the Finder's main CTA; `trigger: 'dossier_item'` is an ITEM event (real
 // topic/category via `dimensions`) for a Cockpit-only card's CTA. Both fire
 // only on an actual click via `trackFinderCta()` — never on render, search,
-// or filter changes — and `resultCount` is always the caller-supplied value
-// visible at click time, never recomputed here.
+// or filter changes — and `resultCount` is always the caller-supplied,
+// uncapped TOTAL match count at click time (computeFinderCounts(...).
+// totalMatches — never the six-card render cap; semantics fixed 2026-07-29,
+// commit bf6723e; see docs/research-library/analytics-research-v1.md
+// "resultCount semantics fix"), never recomputed here.
 
 import type { Category } from '@/lib/i18n/config';
 
@@ -168,9 +171,12 @@ function deriveValue(name: ResearchEventName, p: ResearchV1Properties): number |
     case 'research_search':
     case 'research_filter_change':
     case 'research_finder_cta':
-      // research_finder_cta: the resultCount VISIBLE AT CLICK TIME — the
-      // caller (trackFinderCta) is the only source of truth for this value;
-      // it is never recomputed or defaulted here.
+      // research_finder_cta: the uncapped TOTAL match count at click time
+      // (not the six-card render cap; semantics fixed 2026-07-29, commit
+      // bf6723e — see docs/research-library/analytics-research-v1.md
+      // "resultCount semantics fix") — the caller (trackFinderCta) is the
+      // only source of truth for this value; it is never recomputed or
+      // defaulted here.
       return p.resultCount;
     case 'research_evidence_open':
       return p.dataPoints;

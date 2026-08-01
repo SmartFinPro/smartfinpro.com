@@ -54,7 +54,7 @@ All events share: `sessionId`, `market`, `topic`, plus the properties below.
 | `research_review_click` | a card's review link is followed | `productSlug`, `status`, `rank` (int\|null), `position` (1-based index in the rendered list), `kind`, `category` |
 | `research_shortlist_change` | shortlist mutates | `action` (`add`\|`remove`\|`clear`), `productSlug` (null for `clear`), `count` (new size), `kind`, `category` |
 | `research_cockpit_handoff` | "Compare in the cockpit" is followed | `productSlugs` (string[]), `count` (int), `kind`, `category` |
-| `research_finder_cta` | the Homepage Quick Finder's own CTA is clicked (PR 3 Task 1) | `trigger` (`view_all`\|`dossier_item`), `surface: 'finder'`, `queryLength` (int), `resultCount` (int — the count VISIBLE AT CLICK TIME), `productSlug`/`kind` (`dossier_item` only) |
+| `research_finder_cta` | the Homepage Quick Finder's own CTA is clicked (PR 3 Task 1) | `trigger` (`view_all`\|`dossier_item`), `surface: 'finder'`, `queryLength` (int), `resultCount` (int — the uncapped TOTAL match count at click time, see "resultCount semantics" below), `productSlug`/`kind` (`dossier_item` only) |
 
 Emission discipline:
 - `research_search` fires on the **settled** query only (same debounce that writes
@@ -64,8 +64,10 @@ Emission discipline:
   navigating away.
 - `research_finder_cta` is sent **immediately** too, for both triggers — both
   navigate away. It fires **only on an actual CTA click** (never on render,
-  search, or filter changes), and `resultCount` is always the exact number of
-  cards visible to the user at that click — never recomputed or stale.
+  search, or filter changes), and `resultCount` is always the honest, uncapped
+  TOTAL match count at that click (`computeFinderCounts(...).totalMatches`) —
+  never recomputed or stale, and never the six-card render cap (see
+  "resultCount semantics" below).
 - A throwing tracker must never break the UI: every entry point is fail-soft.
 
 ## Hub dimensions (v1.1, additive — Task 6, spec §12)
@@ -119,9 +121,11 @@ sent by `trackFinderCta()` (`lib/analytics/research-tracking.ts`):
 
 - **`trigger: 'view_all'`** — the Finder's primary "View all research" CTA.
   This is a **GLOBAL** event: `topic: 'hub'`, no `category`, same as
-  `research_search`. `resultCount` MUST be the exact number of cards the user
-  saw when they clicked — never a value recomputed after the click or left
-  over (stale) from an earlier `research_search`/`research_filter_change`.
+  `research_search`. `resultCount` MUST be the honest, uncapped TOTAL match
+  count at click time (`computeFinderCounts(...).totalMatches`) — never a
+  value recomputed after the click, never left over (stale) from an earlier
+  `research_search`/`research_filter_change`, and never the six-card render
+  cap (`visibleResults.length`) — see "resultCount semantics" below.
 - **`trigger: 'dossier_item'`** — a Cockpit-only card's own CTA (no review
   exists yet). This is an **ITEM** event: pass the card's real `topic`/
   `category` dimensions (same override mechanism as `research_review_click`)
@@ -131,6 +135,35 @@ sent by `trackFinderCta()` (`lib/analytics/research-tracking.ts`):
   render, mount, search, or filter changes.
 - Same privacy rule as every other event in this contract: the raw query
   text is never serialized, only its trimmed `queryLength`.
+
+## resultCount semantics fix (v1.4, 2026-07-29, commit `bf6723e`)
+
+**Breaking change to the MEANING of `resultCount` on the Homepage Quick
+Finder, same `schemaVersion: 'research_v1'`.** Before commit `bf6723e`
+("fix(homepage): report how many results there really are", 2026-07-29),
+`resultCount` on all three Finder-emitted events — `research_search`,
+`research_filter_change` (`surface: 'finder'`), and `research_finder_cta` —
+was the six-card render cap (`finderResults.length`), so a query matching 40
+items and one matching 6 were indistinguishable in the data, and the "View
+all" CTA's own `resultCount` undercounted whenever there was more to see.
+
+As of `bf6723e`, `resultCount` on all three of those events is the honest,
+**uncapped TOTAL match count** (`computeFinderCounts(...).totalMatches`,
+`components/research/QuickFinder.tsx`) — the same quantity the Hub's
+`research_search`/`research_filter_change` already reported (the Hub was
+never capped; only the Finder's lightweight teaser surface was). The
+six-card cap that still gates what actually **renders** as cards
+(`visibleResults.length`) is now a purely visual DOM quantity — it is never
+serialized in any event payload.
+
+**Any analysis segmenting `research_finder_cta`/Finder-surface `resultCount`
+by time MUST split at 2026-07-29 (commit `bf6723e`)** — events before and
+after that boundary carry the same `schemaVersion` but a different meaning
+for the same field, and a naive time series (e.g. average `resultCount`,
+zero-result rate) will show a discontinuity that is a measurement-definition
+change, not a real shift in catalog size or user behavior. The Hub's own
+`research_search`/`research_filter_change` `resultCount` is unaffected by
+this commit (it was already uncapped) and needs no such split.
 
 ## Category/type filter facets (v1.3, additive — PR 5 gap-close)
 
