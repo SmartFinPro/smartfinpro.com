@@ -10,7 +10,6 @@ import {
   Clock,
   User,
   Star,
-  Shield,
   CheckCircle,
   XCircle,
   Zap,
@@ -43,7 +42,6 @@ import { buildBreadcrumbs } from '@/lib/breadcrumbs';
 import type { ContentItem } from '@/lib/mdx';
 import type { ReviewData } from '@/types';
 import type { MDXRemoteSerializeResult } from '@/lib/mdx/types';
-import { getFirstMondayOfMonth } from '@/lib/utils/date-helpers';
 import { CTASlot } from '@/components/marketing/cta-slot';
 import type { EnrichedCtaPartner } from '@/lib/types/page-cta';
 import { StickyReviewNav } from '@/components/marketing/sticky-review-nav';
@@ -131,12 +129,6 @@ export function ReportLayout({
   const hasProscons = !isGuide && (review.pros.length > 0 || review.cons.length > 0);
   const primaryCtaLabel =
     category === 'debt-relief' ? 'Get Free Debt Analysis' : `Visit ${review.productName}`;
-  const factCheckedDate = getFirstMondayOfMonth();
-  const factCheckedLabel = new Date(factCheckedDate).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
 
   return (
     <article className="min-h-screen" style={{ background: 'var(--sfp-gray)' }}>
@@ -561,15 +553,7 @@ export function ReportLayout({
                     <span className="font-medium" style={{ color: 'var(--sfp-ink)' }}>Reviewed by: </span>
                     <span style={{ color: 'var(--sfp-slate)' }}>SmartFinPro Research</span>
                   </div>
-                </div>
-                <div className="flex items-start gap-2">
-                  <Shield className="h-4 w-4 mt-0.5 flex-shrink-0" style={{ color: 'var(--sfp-slate)' }} />
-                  <div>
-                    <span className="font-medium" style={{ color: 'var(--sfp-ink)' }}>Fact-checked: </span>
-                    <span style={{ color: 'var(--sfp-slate)' }}>{factCheckedLabel}</span>
-                  </div>
-                </div>
-              </div>
+                </div>              </div>
               {/* Change Log — shows what was updated */}
               {review.modifiedDate && review.publishDate && review.modifiedDate !== review.publishDate && (
                 <div className="mt-3 pt-3 border-t border-gray-100">
@@ -641,9 +625,6 @@ export function ReportLayout({
                   Research Methodology & Disclosure
                 </h3>
                 <div className="space-y-2 text-sm" style={{ color: 'var(--sfp-ink)' }}>
-                  <p>
-                    <strong>Last fact-check:</strong> {factCheckedLabel}
-                  </p>
                   <p>
                     Reviewed against provider disclosures and public regulator guidance.
                   </p>
