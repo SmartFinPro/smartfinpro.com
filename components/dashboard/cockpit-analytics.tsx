@@ -152,7 +152,7 @@ export function CockpitAnalytics({
         <StatCard
           label="CTA clicks"
           value={k.ctaClicks.toLocaleString('en-US')}
-          subtext={`offer ${data.ctaSplit.offer} · visit ${data.ctaSplit.visit} · review ${data.ctaSplit.review}`}
+          subtext={`offer ${data.ctaSplit.offer} · visit ${data.ctaSplit.visit} · review ${data.ctaSplit.review} · unavailable ${data.ctaSplit.unavailable} · cockpit ${data.ctaSplit.cockpit}`}
           icon={MousePointerClick}
           tone="green"
         />
@@ -197,7 +197,7 @@ export function CockpitAnalytics({
                 <th className="px-3 py-2.5 font-medium text-right">Impr.</th>
                 <th className="px-3 py-2.5 font-medium text-right">Clicks</th>
                 <th className="px-3 py-2.5 font-medium text-right">CTR</th>
-                <th className="px-3 py-2.5 font-medium text-right">Offer / Visit / Review</th>
+                <th className="px-3 py-2.5 font-medium text-right">Offer / Visit / Review / Unavail / Cockpit</th>
                 <th className="px-3 py-2.5 font-medium text-right">Mob / Desk</th>
               </tr>
             </thead>
@@ -222,7 +222,7 @@ export function CockpitAnalytics({
                   <td className="px-3 py-2.5 text-right tabular-nums font-semibold">{row.clicks.toLocaleString('en-US')}</td>
                   <td className="px-3 py-2.5 text-right tabular-nums">{fmtPct(row.ctr)}</td>
                   <td className="px-3 py-2.5 text-right tabular-nums text-slate-500">
-                    {row.offerClicks} / {row.visitClicks} / {row.reviewClicks}
+                    {row.offerClicks} / {row.visitClicks} / {row.reviewClicks} / {row.unavailableClicks} / {row.cockpitClicks}
                   </td>
                   <td className="px-3 py-2.5 text-right tabular-nums text-slate-500">
                     {row.mobileClicks} / {row.desktopClicks}
